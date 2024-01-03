@@ -2,7 +2,7 @@ import Redis from "ioredis";
 
 import colors from "colors";
 
-import { env } from "../env";
+import { env } from "../env.ts";
 import { rateLimitMiddleware } from "./lib/rateLimit.ts";
 import { createResponse } from "./lib/response.ts";
 
