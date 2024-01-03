@@ -2,13 +2,13 @@ import { authRequest } from "../../../helper/request";
 import type { AKServer } from "../authentication/auth";
 import type { AuthSession } from "../authentication/auth-session";
 
-export const getRawData = async (session: AuthSession) => {
+export const getRawData = async (session: AuthSession, server: AKServer) => {
     const data = await (
         await authRequest("account/syncData", session, {
             body: JSON.stringify({
                 platform: 1,
             }),
-        })
+        }, server)
     ).json();
     return data;
 };
@@ -77,6 +77,29 @@ export const searchPlayers = async(session: AuthSession, server: AKServer, nickn
     const uidList = uidData.slice(0, limit ?? uidData.length ?? 1).map((item: { uid: string }) => item.uid);
 
     const data = await getRawFriendInfo(session, server, uidList);
-    console.log(data)
     return data["friends"] ?? [];
+}
+
+export const getPlayers = async(session: AuthSession, server: AKServer, ids: string[]) => {
+    const data = await getRawPlayerInfo(session, server, ids);
+    return data["friends"] ?? [];
+}
+
+export const getPartialPlayers = async(session: AuthSession, server: AKServer, ids: string[]) => {
+    const data = await getRawPlayerInfo(session, server, ids);
+    return data["players"] ?? [];
+}
+
+// TODO: Test
+export const getFriends = async(session: AuthSession, server: AKServer, limit?: number) => {
+    const uidData = await getRawFriendIds(session, server);
+    const uidList = uidData.slice(0, limit ?? uidData.length ?? 1).map((item: { uid: string }) => item.uid);
+
+    const data = await getRawFriendInfo(session, server, uidList);
+    return data;
+}
+
+export const getData = async(session: AuthSession, server: AKServer) => {
+    const data = await getRawData(session, server);
+    return data["user"];
 }

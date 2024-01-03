@@ -26,7 +26,8 @@ export const start = async () => {
     const routeFiles = [
         await import("./impl/stats.ts"),
         await import("./impl/sendCode.ts"),
-        await import("./impl/login.ts")
+        await import("./impl/login.ts"),
+        await import("./impl/player.ts")
     ];
 
     for (const file of routeFiles) {
