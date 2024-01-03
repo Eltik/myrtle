@@ -1,5 +1,5 @@
 {
-  "name": "surtr",
+  "name": "myrtle.moe",
   "description": "Robust Arknights API inspired by ArkPRTS.",
   "module": "index.ts",
   "type": "module",
