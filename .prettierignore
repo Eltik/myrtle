@@ -1,0 +1,16 @@
+node_modules
+*.js
+*.d.ts
+*.md
+*.json
+*.lock
+*.yml
+*.yaml
+Dockerfile
+Dockerfile.*
+.eslintrc
+*.html
+.env.example
+.gitignore
+bun.lockb
+.prettierignore
