@@ -32,17 +32,19 @@ export const requestYostarAuth = async (email: string, server: AKServer) => {
         account: email,
         authlang: "en",
     };
-    const data = await (await requestPassport("account/yostar_auth_request", server, {
-        body: JSON.stringify(body),
-    })).json();
-    
+    const data = await (
+        await requestPassport("account/yostar_auth_request", server, {
+            body: JSON.stringify(body),
+        })
+    ).json();
+
     if (data.result !== 0) {
         console.log(colors.red(`Error sending code to ${email}:`), data);
     } else {
         console.log(colors.gray(`Code sent to ${email} successfully.`));
     }
 
-    return data
+    return data;
 };
 
 export const submitYostarAuth = async (email: string, code: string, server: AKServer): Promise<[string, string]> => {

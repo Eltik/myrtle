@@ -42,12 +42,10 @@ export const handler = async (req: Request): Promise<Response> => {
         }
 
         const session = new AuthSession(uid, secret, seqnum);
-        
+
         try {
             const data = await searchPlayers(session, server, nickname, nicknumber ?? undefined, limit ?? undefined);
-            return createResponse(
-                JSON.stringify(data),
-            );
+            return createResponse(JSON.stringify(data));
         } catch (e: any) {
             return createResponse(e.message, 500);
         }
@@ -71,7 +69,7 @@ type Body = {
     nickname: string;
     nicknumber: string;
     limit: number;
-    
+
     server: AKServer;
 };
 

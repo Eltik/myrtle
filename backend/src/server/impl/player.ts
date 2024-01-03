@@ -38,9 +38,7 @@ export const handler = async (req: Request): Promise<Response> => {
 
         try {
             const data = await getData(session, server);
-            return createResponse(
-                JSON.stringify(data),
-            );
+            return createResponse(JSON.stringify(data));
         } catch (e: any) {
             return createResponse(e.message, 500);
         }
@@ -60,7 +58,7 @@ type Body = {
     uid: string;
     secret: string;
     seqnum: number;
-    
+
     server: AKServer;
 };
 

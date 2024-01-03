@@ -4,7 +4,7 @@ import { start } from "./server";
 (async () => {
     clearDomains();
     clearVersions();
-    
+
     await loadNetworkConfig("all");
     await loadVersionConfig("all");
     await start();

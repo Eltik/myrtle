@@ -39,7 +39,7 @@ export const handler = async (req: Request): Promise<Response> => {
                     token: data[1],
                     uid: session.uid,
                     secret: session.secret,
-                    seqnum: session.seqnum
+                    seqnum: session.seqnum,
                 }),
             );
         } catch (e: any) {

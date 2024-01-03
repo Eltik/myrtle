@@ -4,6 +4,7 @@
     "module": "index.ts",
     "type": "module",
     "scripts": {
+      "install": "cd frontend && bun install && cd ../backend && bun install",
       "build": "cd frontend && bun run build && cd ../backend && bun run build",
       "lint": "cd frontend && bun run lint && cd ../backend && bun run lint"
     },
