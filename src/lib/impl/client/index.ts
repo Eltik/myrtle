@@ -74,7 +74,7 @@ export const searchPlayers = async(session: AuthSession, server: AKServer, nickn
     if (nickname.includes("#")) nickname = nickname.split("#")[0];
 
     const uidData = await searchRawPlayerIDs(session, server, nickname, nicknumber);
-    const uidList = uidData.slice(0, limit ?? uidData.length ?? 1).map((item: { uid: string }) => item.uid);
+    const uidList = uidData.slice(0, limit ? limit : uidData.length).map((item: { uid: string }) => item.uid);
 
     const data = await getRawFriendInfo(session, server, uidList);
     return data["friends"] ?? [];

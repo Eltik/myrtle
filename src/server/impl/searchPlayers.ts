@@ -1,6 +1,6 @@
 import type { AKServer } from "../../lib/impl/authentication/auth";
 import { AuthSession } from "../../lib/impl/authentication/auth-session";
-import { getData } from "../../lib/impl/client";
+import { searchPlayers } from "../../lib/impl/client";
 import { createResponse } from "../lib/response";
 
 export const handler = async (req: Request): Promise<Response> => {
@@ -29,15 +29,22 @@ export const handler = async (req: Request): Promise<Response> => {
             return createResponse(JSON.stringify({ error: "No seqnum provided. You can use the /login route to obtain account details." }), 400);
         }
 
+        const nickname = body?.nickname ?? url.searchParams.get("nickname") ?? null;
+        if (!nickname) {
+            return createResponse(JSON.stringify({ error: "No nickname provided" }), 400);
+        }
+        const nicknumber = body?.nicknumber ?? url.searchParams.get("nicknumber") ?? null;
+        const limit = isNaN(Number(body?.limit ?? url.searchParams.get("limit") ?? null)) ? undefined : Number(body?.limit ?? url.searchParams.get("limit") ?? null);
+
         const server = (body?.server ?? paths[4] ?? url.searchParams.get("server") ?? "en") as AKServer;
         if (!["en", "jp", "kr", "cn", "bili", "tw"].includes(server)) {
             return createResponse(JSON.stringify({ error: "Invalid server given." }), 400);
         }
 
-        const session = new AuthSession(uid, secret, Number(seqnum));
-
+        const session = new AuthSession(uid, secret, seqnum);
+        
         try {
-            const data = await getData(session, server);
+            const data = await searchPlayers(session, server, nickname, nicknumber ?? undefined, limit ?? undefined);
             return createResponse(
                 JSON.stringify(data),
             );
@@ -51,7 +58,7 @@ export const handler = async (req: Request): Promise<Response> => {
 };
 
 const route = {
-    path: "/player",
+    path: "/search-players",
     handler,
     rateLimit: 20,
 };
@@ -60,6 +67,10 @@ type Body = {
     uid: string;
     secret: string;
     seqnum: number;
+
+    nickname: string;
+    nicknumber: string;
+    limit: number;
     
     server: AKServer;
 };
