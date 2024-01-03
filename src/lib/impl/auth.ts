@@ -2,6 +2,8 @@ import { createRandomDeviceIds } from "../../helper";
 import { request } from "../../helper/request";
 import type { AuthSession } from "./auth-session";
 
+import colors from "colors";
+
 export const PASSPORT_DOMAINS = {
     en: "https://passport.arknights.global",
     jp: "https://passport.arknights.jp",
@@ -36,8 +38,6 @@ export const domains: { [key in AKServer]: { [key in AKDomain]: string } } = {} 
 export const versions: Record<AKServer, Record<"resVersion" | "clientVersion", string>> = {} as any;
 
 export const getSecret = async (uid: string, u8Token: string, server: AKServer, session?: AuthSession): Promise<string> => {
-    console.log(`Getting session secret for ${uid}...`);
-
     if (!versions[server]["resVersion"]) {
         await loadVersionConfig(server);
     }
@@ -82,12 +82,11 @@ export const getSecret = async (uid: string, u8Token: string, server: AKServer, 
         secret: secret,
     });
 
-    console.log(`Logged in with UID ${uid}.`);
+    console.log(colors.gray(`Logged in successfully with UID ${uid}.`));
     return secret;
 };
 
 export const getU8Token = async (channelUID: string, accessToken: string, server: AKServer, session?: AuthSession): Promise<[string, string]> => {
-    console.log(`Getting U8 token for ${channelUID}...`);
     const channelID = {
         cn: "1",
         bili: "2",
@@ -160,8 +159,6 @@ export const fromToken = async(server: AKServer, channelUID: string, token: stri
 */
 
 export const loadNetworkConfig = async (server: AKServer | "all"): Promise<void> => {
-    clearDomains();
-
     if (server === "all") {
         for (const server of ["en", "jp", "kr", "cn", "bili", "tw"]) {
             await loadNetworkConfig(server as AKServer);
@@ -169,14 +166,13 @@ export const loadNetworkConfig = async (server: AKServer | "all"): Promise<void>
         return;
     }
 
-    console.log(`Loading network config for ${server}...`);
     const data = JSON.parse((await (await request(NETWORK_ROUTES[server] as AKDomain)).json())["content"]);
     Object.assign(domains[server], data["configs"][data["funcVer"]]["network"]);
+
+    console.log(colors.green(`Loaded network config for ${server}.`));
 };
 
 export const loadVersionConfig = async (server: AKServer | "all") => {
-    clearVersions();
-
     if (server === "all") {
         for (const server of ["en", "jp", "kr", "cn", "bili", "tw"]) {
             await loadVersionConfig(server as AKServer);
@@ -184,9 +180,10 @@ export const loadVersionConfig = async (server: AKServer | "all") => {
         return;
     }
 
-    console.log(`Loading version config for ${server}...`);
     const data = await (await request("hv", null, undefined, server)).json();
     Object.assign(versions[server], data);
+
+    console.log(colors.green(`Loaded version config for ${server}.`));
 };
 
 export const reloadDeviceIds = () => {

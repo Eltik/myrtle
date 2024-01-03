@@ -1,7 +1,10 @@
 import * as readline from "readline";
+
 import { request } from "../../../helper/request";
 import { PASSPORT_DOMAINS, type AKServer, type AKDomain, deviceIds, getU8Token, getSecret } from "../auth";
 import type { AuthSession } from "../auth-session";
+
+import colors from "colors";
 
 const requestPassport = async (endpoint: string, server: AKServer, args?: RequestInit): Promise<Response> => {
     return await request(PASSPORT_DOMAINS[server] as AKDomain, endpoint, args);
@@ -23,17 +26,23 @@ export const getAccessToken = async (channelUID: string, yostarToken: string, se
 };
 
 export const requestYostarAuth = async (email: string, server: AKServer) => {
-    console.log(`Sending code to ${email}...`);
+    console.log(colors.gray(`Sending code to ${email}...`));
     const body = {
         platform: "android",
         account: email,
         authlang: "en",
     };
-    const response = await requestPassport("account/yostar_auth_request", server, {
+    const data = await (await requestPassport("account/yostar_auth_request", server, {
         body: JSON.stringify(body),
-    });
+    })).json();
+    
+    if (data.result !== 0) {
+        console.log(colors.red(`Error sending code to ${email}:`), data);
+    } else {
+        console.log(colors.gray(`Code sent to ${email} successfully.`));
+    }
 
-    return await response.json();
+    return data
 };
 
 export const submitYostarAuth = async (email: string, code: string, server: AKServer): Promise<[string, string]> => {
@@ -116,12 +125,12 @@ export const getTokenFromEmailCode = async (server: AKServer, email?: string, co
             return ["", ""];
         }
 
-        console.log(`Code sent to ${email}.`); // noqa: T201
         code = await getUserInput("Enter code: ");
     }
 
     const [yostarUid, yostarToken] = await submitYostarAuth(email, code, server);
-    console.log(`Yostar UID: ${yostarUid} Yostar Token: ${yostarToken}`);
+
+    console.log(colors.gray(`Successfully fetched token for ${email}.`));
     return getYostarToken(email, yostarUid, yostarToken, server);
 };
 
