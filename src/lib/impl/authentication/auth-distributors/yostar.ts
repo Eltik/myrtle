@@ -1,6 +1,6 @@
 import * as readline from "readline";
 
-import { request } from "../../../helper/request";
+import { request } from "../../../../helper/request";
 import { PASSPORT_DOMAINS, type AKServer, type AKDomain, deviceIds, getU8Token, getSecret } from "../auth";
 import type { AuthSession } from "../auth-session";
 

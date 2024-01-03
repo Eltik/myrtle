@@ -1,5 +1,5 @@
-import type { AKServer } from "../../lib/impl/auth";
-import { requestYostarAuth } from "../../lib/impl/auth-distributors/yostar";
+import type { AKServer } from "../../lib/impl/authentication/auth";
+import { requestYostarAuth } from "../../lib/impl/authentication/auth-distributors/yostar";
 import { createResponse } from "../lib/response";
 
 export const handler = async (req: Request): Promise<Response> => {

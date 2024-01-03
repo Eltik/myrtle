@@ -1,5 +1,5 @@
-import { domains, type AKDomain, type AKServer, DEFAULT_HEADERS, loadNetworkConfig } from "../lib/impl/auth";
-import type { AuthSession } from "../lib/impl/auth-session";
+import { domains, type AKDomain, type AKServer, DEFAULT_HEADERS, loadNetworkConfig } from "../lib/impl/authentication/auth";
+import type { AuthSession } from "../lib/impl/authentication/auth-session";
 
 export const authRequest = async (endpoint: string, session: AuthSession, args?: RequestInit, server?: AKServer): Promise<Response> => {
     server = server ? server : "en";
@@ -7,10 +7,12 @@ export const authRequest = async (endpoint: string, session: AuthSession, args?:
         throw new Error("Not logged in.");
     }
 
-    return await request("gs", endpoint, args, server);
+    session.seqnum++;
+
+    return await request("gs", endpoint, args, server, session);
 };
 
-export const request = async (domain: AKDomain, endpoint: string | null = null, args?: RequestInit, server?: AKServer): Promise<Response> => {
+export const request = async (domain: AKDomain, endpoint: string | null = null, args?: RequestInit, server?: AKServer, session?: AuthSession): Promise<Response> => {
     server = server ? server : "en";
 
     let url: string = "";
@@ -48,6 +50,11 @@ export const request = async (domain: AKDomain, endpoint: string | null = null, 
     }
     if (!args.headers) {
         args.headers = DEFAULT_HEADERS;
+        if (session !== null && session !== undefined) {
+            args.headers["uid"] = session.uid;
+            args.headers["seqnum"] = String(session.seqnum);
+            args.headers["secret"] = session.secret;
+        }
     } else {
         Object.assign(args.headers, DEFAULT_HEADERS);
     }

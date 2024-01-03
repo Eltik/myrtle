@@ -1,4 +1,4 @@
-import { clearDomains, clearVersions, loadNetworkConfig, loadVersionConfig } from "./lib/impl/auth";
+import { clearDomains, clearVersions, loadNetworkConfig, loadVersionConfig } from "./lib/impl/authentication/auth";
 import { start } from "./server";
 
 (async () => {

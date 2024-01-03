@@ -1,5 +1,6 @@
-import type { AKServer } from "../../lib/impl/auth";
-import { loginWithEmailCode } from "../../lib/impl/auth-distributors/yostar";
+import type { AKServer } from "../../lib/impl/authentication/auth";
+import { loginWithEmailCode } from "../../lib/impl/authentication/auth-distributors/yostar";
+import { AuthSession } from "../../lib/impl/authentication/auth-session";
 import { createResponse } from "../lib/response";
 
 export const handler = async (req: Request): Promise<Response> => {
@@ -28,12 +29,17 @@ export const handler = async (req: Request): Promise<Response> => {
             return createResponse(JSON.stringify({ error: "Invalid server given." }), 400);
         }
 
+        const session = new AuthSession();
+
         try {
-            const data = await loginWithEmailCode(server, undefined, email, code);
+            const data = await loginWithEmailCode(server, session, email, code);
             return createResponse(
                 JSON.stringify({
                     channelUID: data[0],
                     token: data[1],
+                    uid: session.uid,
+                    secret: session.secret,
+                    seqnum: session.seqnum
                 }),
             );
         } catch (e: any) {

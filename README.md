@@ -1,15 +1,5 @@
-# surtr
+# myrtle.moe
+An advanced Arknights helper that interacts with the game servers to fetch real-time data.
 
-To install dependencies:
-
-```bash
-bun install
-```
-
-To run:
-
-```bash
-bun run index.ts
-```
-
-This project was created using `bun init` in bun v1.0.20. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+## Credits
+Almost all backend credit goes to [thesadru](https://github.com/thesadru/ArkPRTS) as a base. Huge thanks to them as I wouldn't have figured out 90% of the project without their repository.

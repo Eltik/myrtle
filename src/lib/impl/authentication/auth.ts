@@ -1,5 +1,5 @@
-import { createRandomDeviceIds } from "../../helper";
-import { request } from "../../helper/request";
+import { createRandomDeviceIds } from "../../../helper";
+import { request } from "../../../helper/request";
 import type { AuthSession } from "./auth-session";
 
 import colors from "colors";
