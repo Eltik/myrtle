@@ -1,35 +1,27 @@
-import type { Auth } from "./auth";
+import { authRequest } from "../../helper/request";
+import type { AuthSession } from "./auth-session";
 
-export class Client {
-    private auth: Auth;
-
-    constructor(auth: Auth) {
-        this.auth = auth;
-    }
-
-    public async initAuth() {
-        await this.auth.loadNetworkConfig();
-        await this.auth.loadVersionConfig();
-    }
-
-    public async getRawData() {
-        const data = await (await this.auth.authRequest("account/syncData", {
+export const getRawData = async (session: AuthSession) => {
+    const data = await (
+        await authRequest("account/syncData", session, {
             body: JSON.stringify({
-                platform: 1
-            })
-        })).json();
-        return data;
-    }
+                platform: 1,
+            }),
+        })
+    ).json();
+    return data;
+};
 
-    public async getSocialSortList(type: number, sortKey = ["level"], param = {}, { server = null } = {}) {
-        const data = await (await this.auth.authRequest("social/getSocialSortList", {
+export const getSocialSortList = async (session: AuthSession, type: number, sortKey = ["level"], param = {}, { server = null } = {}) => {
+    const data = await (
+        await authRequest("social/getSocialSortList", session, {
             body: JSON.stringify({
                 type,
                 sortKey,
                 param,
-                server
-            })
-        })).json();
-        return data;
-    }
-}
+                server,
+            }),
+        })
+    ).json();
+    return data;
+};

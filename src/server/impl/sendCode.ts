@@ -1,5 +1,5 @@
-import { cacheTime, redis } from "..";
-import { YostarAuth } from "../../lib/impl/auth";
+import type { AKServer } from "../../lib/impl/auth";
+import { requestYostarAuth } from "../../lib/impl/auth-distributors/yostar";
 import { createResponse } from "../lib/response";
 
 export const handler = async (req: Request): Promise<Response> => {
@@ -20,12 +20,13 @@ export const handler = async (req: Request): Promise<Response> => {
             return createResponse(JSON.stringify({ error: "No email provided." }), 400);
         }
 
-        const auth = new YostarAuth("en");
-        await auth.loadNetworkConfig();
-        await auth.loadVersionConfig();
+        const server = (body?.server ?? paths[2] ?? url.searchParams.get("server") ?? "en") as AKServer;
+        if (!["en", "jp", "kr", "cn", "bili", "tw"].includes(server)) {
+            return createResponse(JSON.stringify({ error: "Invalid server given." }), 400);
+        }
 
         try {
-            const data = await auth.requestYostarAuth(email);
+            const data = await requestYostarAuth(email, server);
             return createResponse(JSON.stringify(data));
         } catch (e: any) {
             return createResponse(e.message, 500);
@@ -44,6 +45,7 @@ const route = {
 
 type Body = {
     email: string;
+    server: AKServer;
 };
 
 export default route;

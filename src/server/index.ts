@@ -23,9 +23,7 @@ export const start = async () => {
     const routes: {
         [key: string]: { path: string; handler: (req: Request) => Promise<Response>; rateLimit: number };
     } = {};
-    const routeFiles = [
-        await import("./impl/stats.ts")
-    ];
+    const routeFiles = [await import("./impl/stats.ts")];
 
     for (const file of routeFiles) {
         const routeModule = await file;
@@ -49,7 +47,7 @@ export const start = async () => {
 
             if (routes[pathName]) {
                 const { path, handler, rateLimit } = routes[pathName];
-                const requests = await rateLimitMiddleware(req, pathName)
+                const requests = await rateLimitMiddleware(req, pathName);
 
                 if (requests && requests.requests > rateLimit) {
                     // Will only log up to 10 times
