@@ -16,3 +16,4 @@ Dockerfile.*
 bun.lockb
 .prettierignore
 *.ico
+/public
