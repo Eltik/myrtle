@@ -57,10 +57,7 @@ export default {
         extend: {
             fontFamily: {
                 sans: ["var(--font-sans)", ...fontFamily.sans],
-            },
-            gridTemplateAreas: {
-                navbar: ["navlogo navtext ."],
-            },
+            }
         },
     },
     plugins: [require("@savvywombat/tailwindcss-grid-areas")],

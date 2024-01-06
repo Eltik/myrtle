@@ -5,7 +5,9 @@ import Navbar from "~/components/navbar";
 export default function Home() {
     return (
         <>
-            <Navbar active="home" />
+            <main className="bg-main-blue-100 h-screen">
+                <Navbar active="home" />
+            </main>
         </>
     );
 }
