@@ -41,3 +41,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 bun.lockb
+
+# misc
+sw.js
+sw.js.*
+workbox-*
