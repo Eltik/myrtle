@@ -1,15 +1,29 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useStore } from "zustand";
+import { useLogin } from "~/store/store";
+import { type Server, type CodeResponse, type LoginResponse } from "~/types/types";
 
 function Navbar({ children }: { children: React.ReactNode }) {
+    const loginData = useStore(useLogin, (state) => (state as unknown as { loginData: LoginResponse | null } | null)?.loginData as LoginResponse | null)
+
+    const [email, setEmail] = useState<string | null>(null);
+
+    const [server, setServer] = useState<Server>("en");
+
     const [showLogin, setShowLogin] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [canLogin, setCanLogin] = useState(false);
+    const [hasOTP, setHasOTP] = useState(false);
     
     const [timer, setTimer] = useState(60);
 
     useEffect(() => {
-        if (!submitted || timer <= 0) return;
+        console.log(loginData);
+    }, []);
+
+    useEffect(() => {
+        if (hasOTP || !submitted || timer <= 0) return;
 
         const otpButton: HTMLButtonElement | null = document.querySelector("#otp-button");
 
@@ -44,8 +58,10 @@ function Navbar({ children }: { children: React.ReactNode }) {
     const sendOTP = async() => {
         if (submitted) return;
 
-        setSubmitted(true);
-        if (timer === 0) setTimer(60);
+        const email: HTMLInputElement | null = document.querySelector("#login-email");
+        if (!email) return alert("Email element not found. This is an error. Please contact the developer.");
+
+        setEmail(email.value);
 
         const otpButton: HTMLButtonElement | null = document.querySelector("#otp-button");
         Object.assign(otpButton ?? {}, {
@@ -53,13 +69,42 @@ function Navbar({ children }: { children: React.ReactNode }) {
         });
         otpButton?.setAttribute("disabled", "true");
         otpButton?.classList.add("disabled:cursor-not-allowed");
+
+        const data = await (await fetch("/api/code", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                email: email.value,
+                server
+            })
+        })).json() as CodeResponse;
+        if (data.result === 0) {
+            console.log("Successfully sent OTP.", data);
+            if (timer === 0) setTimer(60);
+            setSubmitted(true);
+        } else {
+            console.error("Failed to send OTP.", data);
+            alert("Failed to send OTP. Please try again later.");
+            setSubmitted(false);
+            setEmail(null);
+            setTimer(0);
+            otpButton?.removeAttribute("disabled");
+            otpButton?.classList.remove("disabled:cursor-not-allowed");
+            Object.assign(otpButton ?? {}, {
+                innerText: "Submit"
+            });
+        }
     };
 
     const checkOTP = (e: React.KeyboardEvent<HTMLInputElement>) => {
         const input = e.currentTarget.value;
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        const curEmail: string | null = hasOTP ? (document.querySelector("#login-email")! as HTMLInputElement)?.value : email;
         
         const otpButton: HTMLButtonElement | null = document.querySelector("#otp-button");
-        if (input.length > 0) {
+        if (input.length > 0 && curEmail && curEmail.length > 0) {
             setCanLogin(true);
             otpButton?.removeAttribute("disabled");
             otpButton?.classList.remove("disabled:cursor-not-allowed");
@@ -71,6 +116,44 @@ function Navbar({ children }: { children: React.ReactNode }) {
             setCanLogin(false);
             otpButton?.setAttribute("disabled", "true");
             otpButton?.classList.add("disabled:cursor-not-allowed");
+        }
+    };
+
+    const login = async() => {
+        const otpButton: HTMLButtonElement | null = document.querySelector("#otp-button");
+        Object.assign(otpButton ?? {}, {
+            innerText: `Sending...`
+        });
+        otpButton?.setAttribute("disabled", "true");
+        otpButton?.classList.add("disabled:cursor-not-allowed");
+
+        const otp: HTMLInputElement | null = document.querySelector("#otp-code");
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        const curEmail: string | null = hasOTP ? (document.querySelector("#login-email")! as HTMLInputElement)?.value : email;
+        if (otp && otp.value.length > 0 && curEmail && curEmail.length > 0) {
+            console.log("Logging in...");
+            console.log(curEmail);
+            console.log(otp);
+            const data = await (await fetch("/api/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    email: curEmail,
+                    code: otp.value,
+                    server
+                })
+            })).json() as LoginResponse;
+
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+            useLogin.setState({ loginData: data });
+            
+            setShowLogin(false);
+        } else {
+            console.log("OTP or email is empty.")
+            console.log(otp?.value);
+            console.log(email);
         }
     };
 
@@ -172,16 +255,20 @@ function Navbar({ children }: { children: React.ReactNode }) {
             <div className={`fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-white p-6 shadow-lg duration-200 ${showLogin ? "opacity-100 scale-100" : "opacity-0 pointer-events-none scale-95"} sm:rounded-lg sm:max-w-[425px]`}>
                 <div className="flex flex-col space-y-1.5 text-center sm:text-left">
                     <h2 className="text-lg font-semibold leading-none tracking-tight">Login</h2>
-                    <p className="text-sm text-main-grey-200">Use your Yostar email and password. No login information is stored on the server.</p>
+                    <p className="text-sm text-main-grey-200">Use your Yostar email to send an OTP message. No login information is stored on the server.</p>
                 </div>
                 <div className="grid gap-4">
                     {submitted ? 
                     <>
                         <div className="grid gap-2">
                             <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">OTP Code</label>
+                            {hasOTP ? <input id="login-email" className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-main-grey-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" type="email" placeholder="Enter your email..." onKeyUp={checkOTP} /> : null}
                             <input id="otp-code" className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-main-grey-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" type="number" placeholder="Enter the OTP code..." onKeyUp={checkOTP} />
                             <span className="text-sm underline cursor-pointer" onClick={() => {
                                 setSubmitted(false);
+                                setEmail(null);
+                                setHasOTP(false);
+                                setCanLogin(false);
 
                                 const otpButton: HTMLButtonElement | null = document.querySelector("#otp-button");
                                 otpButton?.removeAttribute("disabled");
@@ -196,16 +283,27 @@ function Navbar({ children }: { children: React.ReactNode }) {
                     <>
                         <div className="grid gap-2">
                             <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Email</label>
-                            <input className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-main-grey-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" type="email" placeholder="Enter your email..." />
-                        </div>
-                        <div className="grid gap-2">
-                            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Password</label>
-                            <input className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-main-grey-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" type="password" placeholder="Enter your password..." />
+                            <input id="login-email" className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-main-grey-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" type="email" placeholder="Enter your email..." />
+                            <span className="text-sm underline cursor-pointer" onClick={() => {
+                                setSubmitted(true);
+                                setHasOTP(true);
+                                
+                                const otpButton: HTMLButtonElement | null = document.querySelector("#otp-button");
+                                otpButton?.setAttribute("disabled", "true");
+                                otpButton?.classList.add("disabled:cursor-not-allowed");
+                                Object.assign(otpButton ?? {}, {
+                                    innerText: "Login"
+                                });
+                            }}>I have an OTP</span>
                         </div>
                     </>
                     }
                     <button id="otp-button" type="button" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-main-blue-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-main-blue-300 text-white hover:bg-main-blue-200/90 h-10 px-4 py-2" onClick={() => {
-                        void sendOTP();
+                        if (canLogin) {
+                            void login();
+                        } else {
+                            void sendOTP();
+                        }
                     }}>
                         Submit
                     </button>
