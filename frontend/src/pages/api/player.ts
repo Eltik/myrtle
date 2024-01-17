@@ -1,21 +1,23 @@
 import { type ServerResponse } from "http";
 import { env } from "~/env.mjs";
-import { type LoginResponse, type Server } from "~/types/types";
+import { type PlayerData, type Server } from "~/types/types";
 
 export default async function handler(request: Request, response: ServerResponse) {
     const data = (await (
-        await fetch(`${env.BACKEND_URL}/login`, {
+        await fetch(`${env.BACKEND_URL}/player`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
+                uid: request.body.uid,
                 email: request.body.email,
-                code: request.body.code,
-                server: request.body.server,
+                secret: request.body.secret,
+                seqnum: request.body.seqnum,
+                server: request.body.server
             }),
         })
-    ).json()) as LoginResponse;
+    ).json()) as PlayerData;
 
     response.writeHead(200, { "Content-Type": "application/json" });
     response.write(JSON.stringify(data));
@@ -24,8 +26,10 @@ export default async function handler(request: Request, response: ServerResponse
 
 interface Request {
     body: {
+        uid: string;
         email: string;
-        code: number;
+        secret: string;
+        seqnum: number;
         server: Server;
     };
 }

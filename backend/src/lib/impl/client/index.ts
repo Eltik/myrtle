@@ -130,5 +130,7 @@ export const getFriends = async (session: AuthSession, server: AKServer, limit?:
 
 export const getData = async (session: AuthSession, server: AKServer) => {
     const data = await getRawData(session, server);
-    return data["user"];
+    if (!data.user) return data;
+    
+    return data.user;
 };

@@ -4,5 +4,5 @@
 
 body {
     font-family: "Inter", sans-serif;
-    background-color: rgb(13, 14, 20);
+    background-color: var(--main-blue-200);
 }

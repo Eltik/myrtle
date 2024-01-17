@@ -1,24 +1,34 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { type LoginResponse } from "~/types/types";
+import { type PlayerData, type LoginData } from "~/types/types";
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+export const usePlayer = create(
+    persist(
+        (set, get) => ({
+            playerData: {},
+            setLogin: (playerData: PlayerData) => set({ playerData }),
+        }),
+        {
+            name: "playerData",
+        },
+    ),
+);
+
 export const useLogin = create(
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     persist(
         (set, get) => ({
             loginData: {
                 channelUID: null,
+                email: null,
                 token: null,
                 uid: null,
                 secret: null,
-                seqnum: null
+                seqnum: null,
             },
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
-            setLogin: (loginData: LoginResponse) => set({ loginData }),
+            setLogin: (loginData: LoginData) => set({ loginData }),
         }),
         {
             name: "loginData",
-        }
-    )
+        },
+    ),
 );

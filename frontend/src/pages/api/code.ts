@@ -3,7 +3,7 @@ import { env } from "~/env.mjs";
 import { type Server, type CodeResponse } from "~/types/types";
 
 export default async function handler(request: Request, response: ServerResponse) {
-    const data = await (
+    const data = (await (
         await fetch(`${env.BACKEND_URL}/send-code`, {
             method: "POST",
             headers: {
@@ -11,10 +11,10 @@ export default async function handler(request: Request, response: ServerResponse
             },
             body: JSON.stringify({
                 email: request.body.email,
-                server: request.body.server
+                server: request.body.server,
             }),
         })
-    ).json() as CodeResponse;
+    ).json()) as CodeResponse;
 
     response.writeHead(200, { "Content-Type": "application/json" });
     response.write(JSON.stringify(data));
