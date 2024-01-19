@@ -11,50 +11,66 @@ export default function Profile() {
 
     return (
         <>
-            <main className="bg-main-blue-200">
+            <main className="bg-main-blue-200 h-screen">
                 <Navbar />
-                <div className="px-4 py-4">
+                <div className="px-4 py-24">
                     <div className="flex">
-                        <aside className="w-64">
-                            <ul className="space-y-2">
-                                <li>
-                                    <button type="button" className="inline-flex h-10 items-center justify-start rounded-md px-8 text-sm font-medium shadow transition-colors focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 bg-gray-50 text-gray-900 hover:bg-gray-50/90 focus-visible:ring-gray-300">
-                                        Profile
-                                    </button>
-                                </li>
-                                <li>
-                                    <button type="button" className="inline-flex h-10 items-center justify-start rounded-md px-8 text-sm font-medium shadow transition-colors focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 bg-gray-50 text-gray-900 hover:bg-gray-50/90 focus-visible:ring-gray-300">
-                                        Friends
-                                    </button>
-                                </li>
-                                <li>
-                                    <button type="button" className="inline-flex h-10 items-center justify-start rounded-md px-8 text-sm font-medium shadow transition-colors focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 bg-gray-50 text-gray-900 hover:bg-gray-50/90 focus-visible:ring-gray-300">
-                                        Add
-                                    </button>
-                                </li>
-                                <li>
-                                    <button type="button" className="inline-flex h-10 items-center justify-start rounded-md px-8 text-sm font-medium shadow transition-colors focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 bg-gray-50 text-gray-900 hover:bg-gray-50/90 focus-visible:ring-gray-300">
-                                        Support Unit
-                                    </button>
-                                </li>
-                            </ul>
-                        </aside>
-                        <main className="flex-1 ml-4">
-                            <div className="bg-gray-700 p-4 rounded-lg">
-                                <div className="flex items-center mb-4">
-                                    <span className="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full">
-                                        {/*<Image className="aspect-square h-full w-full" src={""} />*/}
-                                    </span>
-                                    <ClientOnly>
-                                        <div className="ml-4">
-                                            <div className="text-2xl">{playerData.status?.nickName}# {playerData.status?.nickNumber}</div>
-                                            <div className="text-sm text-gray-400">Hired </div>
-                                            <div className="text-sm text-gray-400">ASSISTANT</div>
+                        <ClientOnly>
+                            <main className="flex-grow bg-[#262626] rounded-lg p-4">
+                                <div className="flex justify-between items-center mb-4">
+                                    <span className="text-white text-lg">Hired *some time here*</span>
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex flex-col items-center">
+                                            <span className="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full">
+                                                <Image className="aspect-square h-full w-full" alt="Player Avatar" src={Number(playerData.status?.avatarId) === 0 ? "https://static.wikia.nocookie.net/mrfz/images/4/46/Symbol_profile.png/revision/latest?cb=20220418145951" :`https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${playerData.status?.avatarId}`} width={40} height={40} />
+                                            </span>
+                                            <div className="bg-[#333333] text-white mt-2 px-3 py-1 rounded-full">Dr. {playerData.status?.nickName}</div>
                                         </div>
-                                    </ClientOnly>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white mr-2">
+                                            <circle cx="12" cy="12" r="10" />
+                                            <path d="M12 16v-4" />
+                                            <path d="M12 8h.01" />
+                                        </svg>
+                                    </div>
                                 </div>
-                            </div>
-                        </main>
+                                <div className="flex items-center mb-4 gap-3">
+                                    <div className="rounded-md object-cover" style={{
+                                        backgroundImage: `url("https://gamepress.gg/sites/arknights/files/2019-10/bg.png")`,
+                                        backgroundSize: "cover",
+                                        backgroundPosition: "center",
+                                        aspectRatio: "16/9",
+                                    }}>
+                                        <Image alt="Assistant" className="rounded-md object-cover" src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/${playerData.status?.secretarySkinId.replaceAll("#", "_") ?? ""}.png`} width={300} height={200} style={{
+                                            aspectRatio: "200/200",
+                                        }} />
+                                    </div>
+                                    <div className="flex-grow ml-4">
+                                        <div className="text-white text-lg mb-2">{playerData.status?.secretary}</div>
+                                        <div className="bg-[#333333] text-white rounded-lg p-2 mb-4">Current Stage: {playerData.status?.mainStageProgress}</div>
+                                        <div className="bg-[#333333] text-white rounded-lg p-2">Furniture Owned 588</div>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <div className="flex items-center justify-between bg-[#333333] text-white rounded-lg p-2 mb-4">
+                                            <div>Operators Hired</div>
+                                            <div>{playerData.troop?.curSquadCount ?? 0}</div>
+                                        </div>
+                                        <div className="grid grid-cols-4 gap-4" />
+                                    </div>
+                                    <div>
+                                        <div className="bg-[#333333] text-white rounded-lg p-2 mb-4">
+                                            <div className="flex items-center justify-between">
+                                                <div>Something Here</div>
+                                                {/*<SearchIcon className="text-white" />*/}
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4" />
+                                        </div>
+                                        <div className="flex overflow-x-auto space-x-2 pb-2" />
+                                    </div>
+                                </div>
+                            </main>
+                        </ClientOnly>
                     </div>
                 </div>
             </main>
