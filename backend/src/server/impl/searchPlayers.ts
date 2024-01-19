@@ -1,3 +1,4 @@
+import { cacheTime, redis } from "..";
 import type { AKServer } from "../../lib/impl/authentication/auth";
 import { AuthSession } from "../../lib/impl/authentication/auth-session";
 import { searchPlayers } from "../../lib/impl/client";
@@ -41,10 +42,16 @@ export const handler = async (req: Request): Promise<Response> => {
             return createResponse(JSON.stringify({ error: "Invalid server given." }), 400);
         }
 
+        const cached = await redis.get(`search-players-${server}-${nickname}-${nicknumber}-${limit}`);
+        if (cached) {
+            return createResponse(cached);
+        }
+
         const session = new AuthSession(uid, secret, seqnum);
 
         try {
             const data = await searchPlayers(session, server, nickname, nicknumber ?? undefined, limit ?? undefined);
+            await redis.set(`search-players-${server}-${nickname}-${nicknumber}-${limit}`, JSON.stringify(data), "EX", cacheTime);
             return createResponse(JSON.stringify(data));
         } catch (e: any) {
             return createResponse(e.message, 500);

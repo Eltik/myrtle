@@ -16,6 +16,34 @@ export type LoginData = LoginResponse & {
     email: string;
 };
 
+export type GetPlayerData = {
+    nickName: string;
+    nickNumber: string;
+    uid: string;
+    friendNumLimit: number;
+    serverName: string;
+    level: number;
+    avatarId: string;
+    avatar: {}; // TODO: Figure out what this is
+    assistCharList: [null]; // TODO: Figure out what this is
+    lastOnlineTime: number;
+    medalBoard: {
+        type: string;
+        custom: null; // TODO: Figure out what this is
+        template: null; // TODO: Figure out what this is
+    }
+}
+
+export type GetPlayerResponse = {
+    players: GetPlayerData[];
+    friendStatusList: number[]
+    resultIdList: string[];
+    playerDataDelta: {
+        modified: {}; // TODO: Figure out what this is
+        deleted: {}; // TODO: Figure out what this is
+    }
+}
+
 export type PlayerData = {
     dungeon: {
         stages: Record<string, {
@@ -446,5 +474,57 @@ export type PlayerData = {
             furnitureTs: {}; // TODO: Figure out what this is
         };
     };
-    // STOPPED AT dexNav
+    dexNav: {
+        character: Record<string, {
+            charInstId: number;
+            count: number;
+            classicCount: number;
+        }>;
+        formula: {
+            shop: {}; // TODO: Figure out what this is
+            manufacture: {}; // TODO: Figure out what this is
+            workshop: {}; // TODO: Figure out what this is
+        };
+        teamV2: {
+            rhodes: Record<string, number>;
+            action4: Record<string, number>;
+            sami: Record<string, number>;
+            reserve1: Record<string, number>;
+            reserve4: Record<string, number>;
+            blacksteel: Record<string, number>;
+            columbia: Record<string, number>;
+            laterano: Record<string, number>;
+            lungmen: Record<string, number>;
+            leithanien: Record<string, number>;
+            higashi: Record<string, number>;
+        };
+        enemy: {
+            enemies: Record<string, number>;
+            stage: {}; // TODO: Figure out what this is
+        };
+    };
+    crisis: {
+        current: string;
+        lst: number;
+        nst: number;
+        map: Record<string, {
+            rank: number;
+            confirmed: number;
+        }>;
+        shop: {
+            coin: number;
+            info: []; // TODO: Figure out what this is
+            progressInfo: {}; // TODO: Figure out what this is
+        };
+        training: {
+            currentStage: string[];
+            stage: Record<string, {
+                point: number;
+            }>;
+            nst: number;
+        };
+        season: {}; // TODO: Figure out what this is
+        box: []; // TODO: Figure out what this is
+    };
+    // ended at tshop
 }

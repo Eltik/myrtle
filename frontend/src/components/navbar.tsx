@@ -171,11 +171,14 @@ function Navbar() {
                     uid: loginData.uid,
                     email: loginData.email,
                     secret: loginData.secret,
-                    seqnum: loginData.seqnum,
+                    seqnum: loginData.seqnum++,
                     server,
                 }),
             })
         ).json()) as PlayerData;
+
+        // Inccrease seqnum
+        useLogin.setState({ loginData: { ...loginData, seqnum: loginData.seqnum++ } });
 
         if ((playerData as unknown as { statusCode: number }).statusCode === 401) {
             // Clear login data
@@ -277,7 +280,7 @@ function Navbar() {
                                         <div className="inline-block overflow-hidden text-ellipsis whitespace-nowrap p-[0_6px]">{playerData.status?.nickName}#{playerData.status?.nickNumber}</div>
                                     </button>
                                     <div className="absolute w-full opacity-0 scale-95 pointer-events-none peer-hover:opacity-100 peer-hover:scale-100 peer-hover:pointer-events-auto group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-150 ease-in-out bg-white text-black rounded-md shadow-lg">
-                                        <Link href={"/players/" + playerData.status?.uid} className="block px-4 py-2 text-sm hover:bg-main-blue-500 hover:text-white transition-all duration-150 ease-in-out rounded-t-md">
+                                        <Link href={"/profile"} className="block px-4 py-2 text-sm hover:bg-main-blue-500 hover:text-white transition-all duration-150 ease-in-out rounded-t-md">
                                             Profile
                                         </Link>
                                         <Link href={"/planner/" + playerData.status?.uid } className="block px-4 py-2 text-sm hover:bg-main-blue-500 hover:text-white transition-all duration-150 ease-in-out">
