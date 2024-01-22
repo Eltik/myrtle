@@ -34,49 +34,55 @@ export type GetPlayerData = {
         type: string;
         custom: null; // TODO: Figure out what this is
         template: null; // TODO: Figure out what this is
-    }
-}
+    };
+};
 
 export type GetPlayerResponse = {
     players: GetPlayerData[];
-    friendStatusList: number[]
+    friendStatusList: number[];
     resultIdList: string[];
     playerDataDelta: {
         modified: {}; // TODO: Figure out what this is
         deleted: {}; // TODO: Figure out what this is
-    }
-}
+    };
+};
 
 export type PlayerData = {
     dungeon: {
-        stages: Record<string, {
-            stageId: string;
-            completeTimes: number;
-            startTimes: number;
-            practiceTimes: number;
-            state: number;
-            hasBattleReplay: number;
-            noCostCnt: number;
-        }>;
-        cowLevel: Record<string, {
-            id: string;
-            type: string; // TODO: This could be an enum?
-            val: string[]; // TODO: Unsure whether this is an array of strings or not
-            fts: number;
-            rts: number;
-        }>;
+        stages: Record<
+            string,
+            {
+                stageId: string;
+                completeTimes: number;
+                startTimes: number;
+                practiceTimes: number;
+                state: number;
+                hasBattleReplay: number;
+                noCostCnt: number;
+            }
+        >;
+        cowLevel: Record<
+            string,
+            {
+                id: string;
+                type: string; // TODO: This could be an enum?
+                val: string[]; // TODO: Unsure whether this is an array of strings or not
+                fts: number;
+                rts: number;
+            }
+        >;
     };
     // TODO: This is very incomplete. Need to refer to
     // a more advanced player's data to see what else
     activity: {
         TYPE_ACT9D0: {
             act18sre: {
-                coin: 0,
-                favorList: [],
-                news: {}
-            }
+                coin: 0;
+                favorList: [];
+                news: {};
+            };
         };
-        CHECKIN_VS: {}
+        CHECKIN_VS: {};
         TYPE_ACT27SIDE: {
             act27side: {
                 day: number;
@@ -103,19 +109,19 @@ export type PlayerData = {
                     sellsTmp: {};
                     sells: {};
                 };
-                favorList: string[]
-            }
+                favorList: string[];
+            };
         };
         LOGIN_ONLY: {
             act16login: {
                 reward: number;
-            }
+            };
         };
         CHECKIN_ONLY: {
             act34sign: {
                 lastTs: number; // Date number
                 history: number[];
-            }
+            };
         };
         PRAY_ONLY: {
             act6pray: {
@@ -128,7 +134,7 @@ export type PlayerData = {
                 prayMax: number;
                 prayMaxIndex: number;
                 prayArray: [];
-            }
+            };
         };
     };
     status: {
@@ -198,59 +204,77 @@ export type PlayerData = {
     troop: {
         curCharInstId: number;
         curSquadCount: number;
-        squads: Record<string, {
-            squadId: string;
-            name: string;
-            // TODO: Figure out what currentEquip is. Maybe its module.
-            slots: ({ charInstId: number; skillIndex: number; currentEquip: null } | null)[];
-        }>;
-        chars: Record<string, {
-            instId: number;
-            charId: string;
-            favorPoint: number;
-            potentialRank: number;
-            mainSkillLvl: number;
-            skin: string;
-            level: number;
-            exp: number;
-            evolvePhase: number;
-            defaultSkillIndex: number;
-            gainTime: number;
-            skills: {
-                skillId: string;
-                unlock: number;
-                state: number;
-                specializeLevel: number;
-                completeUpgradeTime: number;
-            }[];
-            voiceLan: string; // Could be fixed string like JP | CN | EN | KR | TW etc.
-            currentEquip: null; // TODO: Figure out what currentEquip is lol. Maybe its module
-            equip: Record<string, {
-                hide: number;
-                locked: number;
+        squads: Record<
+            string,
+            {
+                squadId: string;
+                name: string;
+                // TODO: Figure out what currentEquip is. Maybe its module.
+                slots: ({ charInstId: number; skillIndex: number; currentEquip: null } | null)[];
+            }
+        >;
+        chars: Record<
+            string,
+            {
+                instId: number;
+                charId: string;
+                favorPoint: number;
+                potentialRank: number;
+                mainSkillLvl: number;
+                skin: string;
                 level: number;
-            }>;
-        }>;
-        charGroup: Record<string, {
-            favorPoint: number;
-        }>;
+                exp: number;
+                evolvePhase: number;
+                defaultSkillIndex: number;
+                gainTime: number;
+                skills: {
+                    skillId: string;
+                    unlock: number;
+                    state: number;
+                    specializeLevel: number;
+                    completeUpgradeTime: number;
+                }[];
+                voiceLan: string; // Could be fixed string like JP | CN | EN | KR | TW etc.
+                currentEquip: null; // TODO: Figure out what currentEquip is lol. Maybe its module
+                equip: Record<
+                    string,
+                    {
+                        hide: number;
+                        locked: number;
+                        level: number;
+                    }
+                >;
+            }
+        >;
+        charGroup: Record<
+            string,
+            {
+                favorPoint: number;
+            }
+        >;
         charMission: Record<string, Record<string, number>>;
     };
-    npcAudio: Record<string, {
-        npcShowAudioInfoFlag: string; // Could be fixed string like JP | CN | EN | KR | TW etc.
-    }>;
+    npcAudio: Record<
+        string,
+        {
+            npcShowAudioInfoFlag: string; // Could be fixed string like JP | CN | EN | KR | TW etc.
+        }
+    >;
     recruit: {
         normal: {
-            slots: Record<string, {
-                state: number;
-                tags: number[];
-                selectTags: { tagId: number; pick: number }[];
-                startTs: number;
-                durationInSec: number;
-                maxFinishTs: number;
-                realFinishTs: number;
-            }>
-        }
+            slots: Record<
+                string,
+                {
+                    state: number;
+                    tags: number[];
+                    selectTags: { tagId: number; pick: number }[];
+                    startTs: number;
+                    durationInSec: number;
+                    maxFinishTs: number;
+                    realFinishTs: number;
+                }
+            >;
+        };
     };
     pushFlags: {
         hasGifts: number;
@@ -336,34 +360,55 @@ export type PlayerData = {
     };
     mission: {
         missions: {
-            OPENSERVER: Record<string, {
+            OPENSERVER: Record<
+                string,
+                {
                     state: number;
                     progress: { target: number; value: number }[];
-                }>;
-            DAILY: Record<string, {
+                }
+            >;
+            DAILY: Record<
+                string,
+                {
                     state: number;
                     progress: { target: number; value: number }[];
-                }>;
-            WEEKLY: Record<string, {
+                }
+            >;
+            WEEKLY: Record<
+                string,
+                {
                     state: number;
                     progress: { target: number; value: number }[];
-                }>;
-            GUIDE: Record<string, {
+                }
+            >;
+            GUIDE: Record<
+                string,
+                {
                     state: number;
                     progress: { target: number; value: number }[];
-                }>;
-            MAIN: Record<string, {
+                }
+            >;
+            MAIN: Record<
+                string,
+                {
                     state: number;
                     progress: { target: number; value: number }[];
-                }>;
-            ACTIVITY: Record<string, {
+                }
+            >;
+            ACTIVITY: Record<
+                string,
+                {
                     state: number;
                     progress: { target: number; value: number }[];
-                }>;
-            SUB: Record<string, {
+                }
+            >;
+            SUB: Record<
+                string,
+                {
                     state: number;
                     progress: { target: number; value: number }[];
-                }>;
+                }
+            >;
         };
         missionRewards: {
             dailyPoint: number;
@@ -376,11 +421,13 @@ export type PlayerData = {
         missionGroups: Record<string, number>;
     };
     social: {
-        assistCharList: {
-            charInstId: number;
-            skillIndex: number;
-            currentEquip: null; // TODO: Figure out what this is
-        }[] | null[]; // TODO: Figure out what this is
+        assistCharList:
+            | {
+                  charInstId: number;
+                  skillIndex: number;
+                  currentEquip: null; // TODO: Figure out what this is
+              }[]
+            | null[]; // TODO: Figure out what this is
         yesterdayReward: {
             canReceive: number;
             assistAmount: number;
@@ -401,9 +448,11 @@ export type PlayerData = {
             workshop: {
                 bonusActive: number;
                 bonus: {}; // TODO: Figure out what this is
-            }
+            };
         };
-        chars: Record<string, {
+        chars: Record<
+            string,
+            {
                 charId: string;
                 lastApAddTime: number;
                 ap: number;
@@ -421,16 +470,22 @@ export type PlayerData = {
                     };
                 };
                 workTime: number;
-            }>;
-        roomSlots: Record<string, {
+            }
+        >;
+        roomSlots: Record<
+            string,
+            {
                 level: number;
                 state: number;
                 roomId: string;
                 charInstIds: number[];
                 completeConstructTime: number;
-            }>;
+            }
+        >;
         rooms: {
-            CONTROL: Record<string, {
+            CONTROL: Record<
+                string,
+                {
                     buff: {
                         global: {
                             apCost: number;
@@ -469,12 +524,13 @@ export type PlayerData = {
                         dormitory: {
                             recover: number;
                         };
-                        apCost: {} // TODO: Figure out what this is
-                        point: {} // TODO: Figure out what this is
+                        apCost: {}; // TODO: Figure out what this is
+                        point: {}; // TODO: Figure out what this is
                     };
                     apCost: number;
                     lastUpdateTime: number;
-                }>;
+                }
+            >;
             ELEVATOR: Record<string, {}>;
         };
         furniture: {}; // TODO: Figure out what this is
@@ -485,11 +541,14 @@ export type PlayerData = {
         };
     };
     dexNav: {
-        character: Record<string, {
-            charInstId: number;
-            count: number;
-            classicCount: number;
-        }>;
+        character: Record<
+            string,
+            {
+                charInstId: number;
+                count: number;
+                classicCount: number;
+            }
+        >;
         formula: {
             shop: {}; // TODO: Figure out what this is
             manufacture: {}; // TODO: Figure out what this is
@@ -517,10 +576,13 @@ export type PlayerData = {
         current: string;
         lst: number;
         nst: number;
-        map: Record<string, {
-            rank: number;
-            confirmed: number;
-        }>;
+        map: Record<
+            string,
+            {
+                rank: number;
+                confirmed: number;
+            }
+        >;
         shop: {
             coin: number;
             info: []; // TODO: Figure out what this is
@@ -528,41 +590,56 @@ export type PlayerData = {
         };
         training: {
             currentStage: string[];
-            stage: Record<string, {
-                point: number;
-            }>;
+            stage: Record<
+                string,
+                {
+                    point: number;
+                }
+            >;
             nst: number;
         };
         season: {}; // TODO: Figure out what this is
         box: []; // TODO: Figure out what this is
     };
-    tshop: Record<string, {
-        coin: number;
-        info: []; // TODO: Figure out what this is
-        progressInfo: {}; // TODO: Figure out what this is
-    }>;
+    tshop: Record<
+        string,
+        {
+            coin: number;
+            info: []; // TODO: Figure out what this is
+            progressInfo: {}; // TODO: Figure out what this is
+        }
+    >;
     gacha: {
         newbee: {
             openFlag: number;
             cnt: number;
             poolId: string;
         };
-        normal: Record<string, {
-            cnt: number;
-            maxCnt: number;
-            rarity: number;
-            avail: boolean;
-        }>;
+        normal: Record<
+            string,
+            {
+                cnt: number;
+                maxCnt: number;
+                rarity: number;
+                avail: boolean;
+            }
+        >;
         attain: {}; // TODO: Figure out what this is
-        limit: Record<string, {
-            leastFree: number;
-        }>;
-        single: Record<string, {
-            singleEnsureCnt: number;
-            singleEnsureUse: boolean;
-            singleEnsureChar: string;
-        }>;
+        limit: Record<
+            string,
+            {
+                leastFree: number;
+            }
+        >;
+        single: Record<
+            string,
+            {
+                singleEnsureCnt: number;
+                singleEnsureUse: boolean;
+                singleEnsureChar: string;
+            }
+        >;
         fesClassic: {}; // TODO: Figure out what this is
     };
     // finished at campaignsV2
-}
+};

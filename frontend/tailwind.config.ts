@@ -1,64 +1,75 @@
-import { type Config } from "tailwindcss";
-import { fontFamily } from "tailwindcss/defaultTheme";
+import type { Config } from "tailwindcss";
 
-export default {
-    content: ["./src/**/*.tsx"],
+const config = {
+    darkMode: ["class"],
+    content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
+    prefix: "",
     theme: {
-        colors: ({ colors }) => ({
-            inherit: colors.inherit,
-            current: colors.current,
-            transparent: colors.transparent,
-            black: colors.black,
-            white: colors.white,
-            slate: colors.slate,
-            gray: colors.gray,
-            zinc: colors.zinc,
-            neutral: colors.neutral,
-            stone: colors.stone,
-            red: colors.red,
-            orange: colors.orange,
-            amber: colors.amber,
-            yellow: colors.yellow,
-            lime: colors.lime,
-            green: colors.green,
-            emerald: colors.emerald,
-            teal: colors.teal,
-            cyan: colors.cyan,
-            sky: colors.sky,
-            blue: colors.blue,
-            indigo: colors.indigo,
-            violet: colors.violet,
-            purple: colors.purple,
-            fuchsia: colors.fuchsia,
-            pink: colors.pink,
-            rose: colors.rose,
-
-            "main-pink-100": "rgb(107, 85, 89)" /** */,
-            "main-pink-200": "rgb(153, 121, 127)" /** */,
-            "main-pink-300": "rgb(194, 153, 161)" /** */,
-            "main-pink-400": "rgb(237, 187, 197)" /* navbar text, light pink of logo */,
-            "main-pink-500": "rgb(255, 201, 212)" /* titles that need color */,
-
-            "main-dark-pink-100": "rgb(135, 75, 53)" /** */,
-            "main-dark-pink-200": "rgb(189, 47, 80)" /** */,
-            "main-dark-pink-300": "rgb(220, 55, 94)" /* logo, navbar "myrtle.moe" */,
-            "main-dark-pink-400": "rgb(250, 92, 129)" /* highlights */,
-
-            "main-grey-100": "rgb(128, 128, 128)" /* description text */,
-            "main-grey-200": "rgb(171, 171, 171)" /* sub-subtitle, darker text */,
-            "main-grey-300": "rgb(220, 220, 220)" /* subtitles */,
-
-            "main-blue-100": "rgb(13, 14, 20)" /* background color */,
-            "main-blue-200": "rgb(24, 25, 37)" /* navigation bar background, boxes */,
-            "main-blue-300": "rgb(35, 36, 54)" /* boxes in boxes */,
-            "main-blue-400": "rgb(46, 48, 71)" /** */,
-            "main-blue-500": "rgb(68, 71, 105)" /** */,
-        }),
+        container: {
+            center: true,
+            padding: "2rem",
+            screens: {
+                "2xl": "1400px",
+            },
+        },
         extend: {
-            fontFamily: {
-                sans: ["var(--font-sans)", ...fontFamily.sans],
+            colors: {
+                border: "hsl(var(--border))",
+                input: "hsl(var(--input))",
+                ring: "hsl(var(--ring))",
+                background: "hsl(var(--background))",
+                foreground: "hsl(var(--foreground))",
+                primary: {
+                    DEFAULT: "hsl(var(--primary))",
+                    foreground: "hsl(var(--primary-foreground))",
+                },
+                secondary: {
+                    DEFAULT: "hsl(var(--secondary))",
+                    foreground: "hsl(var(--secondary-foreground))",
+                },
+                destructive: {
+                    DEFAULT: "hsl(var(--destructive))",
+                    foreground: "hsl(var(--destructive-foreground))",
+                },
+                muted: {
+                    DEFAULT: "hsl(var(--muted))",
+                    foreground: "hsl(var(--muted-foreground))",
+                },
+                accent: {
+                    DEFAULT: "hsl(var(--accent))",
+                    foreground: "hsl(var(--accent-foreground))",
+                },
+                popover: {
+                    DEFAULT: "hsl(var(--popover))",
+                    foreground: "hsl(var(--popover-foreground))",
+                },
+                card: {
+                    DEFAULT: "hsl(var(--card))",
+                    foreground: "hsl(var(--card-foreground))",
+                },
+            },
+            borderRadius: {
+                lg: "var(--radius)",
+                md: "calc(var(--radius) - 2px)",
+                sm: "calc(var(--radius) - 4px)",
+            },
+            keyframes: {
+                "accordion-down": {
+                    from: { height: "0" },
+                    to: { height: "var(--radix-accordion-content-height)" },
+                },
+                "accordion-up": {
+                    from: { height: "var(--radix-accordion-content-height)" },
+                    to: { height: "0" },
+                },
+            },
+            animation: {
+                "accordion-down": "accordion-down 0.2s ease-out",
+                "accordion-up": "accordion-up 0.2s ease-out",
             },
         },
     },
-    plugins: [require("@savvywombat/tailwindcss-grid-areas")],
+    plugins: [require("tailwindcss-animate")],
 } satisfies Config;
+
+export default config;

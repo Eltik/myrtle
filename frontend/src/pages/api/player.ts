@@ -14,7 +14,7 @@ export default async function handler(request: Request, response: ServerResponse
                 email: request.body.email,
                 secret: request.body.secret,
                 seqnum: request.body.seqnum,
-                server: request.body.server
+                server: request.body.server,
             }),
         })
     ).json()) as PlayerData;

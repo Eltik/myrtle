@@ -64,5 +64,5 @@ const config = {
 
 export default withPWA({
     dest: "public",
-// @ts-ignore
+    // @ts-ignore
 })(config);
