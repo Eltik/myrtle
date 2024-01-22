@@ -54,10 +54,15 @@ const config = {
                 protocol: "https",
                 hostname: "**.**.*.*",
             },
+            {
+                protocol: "https",
+                hostname: "**.*.*.*",
+            },
         ],
     },
 };
 
 export default withPWA({
     dest: "public",
+// @ts-ignore
 })(config);

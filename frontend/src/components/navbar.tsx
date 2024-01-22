@@ -242,18 +242,18 @@ function Navbar() {
                         <div className="hidden w-full items-center gap-6 md:flex">
                             <div className="flex flex-row items-center justify-start gap-4">
                                 <Link href={"/"}>
-                                    <svg aria-label="Vercel logomark" height="22" role="img" className="w-auto overflow-visible" viewBox="0 0 74 64">
-                                        <path d="M37.5896 0.25L74.5396 64.25H0.639648L37.5896 0.25Z" fill="#fff"></path>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white h-6 w-6">
+                                        <path d="m8 3 4 8 5-5 5 15H2L8 3z" />
                                     </svg>
                                 </Link>
-                                <Link href={"/"} target="_blank" className="flex text-white">
+                                <Link href={"/"} className="flex text-white">
                                     myrtle.moe
                                 </Link>
                             </div>
-                            <Link href={"/players"} className="relative ml-5 text-main-pink-400 transition-all duration-150 ease-in-out hover:text-main-dark-pink-400">
+                            <Link href={"/players"} className="relative ml-5 text-white transition-all duration-150 ease-in-out hover:text-main-dark-pink-400">
                                 Players
                             </Link>
-                            <Link href={"/statistics"} className="relative ml-5 text-main-pink-400 transition-all duration-150 ease-in-out hover:text-main-dark-pink-400">
+                            <Link href={"/statistics"} className="relative ml-5 text-white transition-all duration-150 ease-in-out hover:text-main-dark-pink-400">
                                 Statistics
                             </Link>
                         </div>
@@ -270,20 +270,20 @@ function Navbar() {
                                     ⌘K
                                 </kbd>
                             </button>
-                            {playerData.status?.uid != null ? (
+                            {playerData?.status?.uid != null ? (
                                 <div className="relative inline-block group">
                                     <button
                                         type="button"
                                         id="login-button"
                                         className="peer relative m-0 flex h-8 max-w-full cursor-pointer items-center justify-center rounded-md border-0 bg-main-blue-400 p-[0_12px] font-bold text-gray-50 outline-none transition-all duration-150 ease-in-out hover:bg-main-blue-400/70"
                                     >
-                                        <div className="inline-block overflow-hidden text-ellipsis whitespace-nowrap p-[0_6px]">{playerData.status?.nickName}#{playerData.status?.nickNumber}</div>
+                                        <div className="inline-block overflow-hidden text-ellipsis whitespace-nowrap p-[0_6px]">{playerData?.status?.nickName}#{playerData?.status?.nickNumber}</div>
                                     </button>
                                     <div className="absolute w-full opacity-0 scale-95 pointer-events-none peer-hover:opacity-100 peer-hover:scale-100 peer-hover:pointer-events-auto group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-150 ease-in-out bg-white text-black rounded-md shadow-lg">
                                         <Link href={"/profile"} className="block px-4 py-2 text-sm hover:bg-main-blue-500 hover:text-white transition-all duration-150 ease-in-out rounded-t-md">
                                             Profile
                                         </Link>
-                                        <Link href={"/planner/" + playerData.status?.uid } className="block px-4 py-2 text-sm hover:bg-main-blue-500 hover:text-white transition-all duration-150 ease-in-out">
+                                        <Link href={"/planner/" + playerData?.status?.uid } className="block px-4 py-2 text-sm hover:bg-main-blue-500 hover:text-white transition-all duration-150 ease-in-out">
                                             Missions
                                         </Link>
                                         <Link href={"/settings"} className="block px-4 py-2 text-sm hover:bg-main-blue-500 hover:text-white transition-all duration-150 ease-in-out">

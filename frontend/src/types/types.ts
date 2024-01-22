@@ -24,7 +24,10 @@ export type GetPlayerData = {
     serverName: string;
     level: number;
     avatarId: string;
-    avatar: {}; // TODO: Figure out what this is
+    avatar: {
+        type?: string;
+        id?: string;
+    };
     assistCharList: [null]; // TODO: Figure out what this is
     lastOnlineTime: number;
     medalBoard: {
@@ -47,21 +50,21 @@ export type GetPlayerResponse = {
 export type PlayerData = {
     dungeon: {
         stages: Record<string, {
-                stageId: string;
-                completeTimes: number;
-                startTimes: number;
-                practiceTimes: number;
-                state: number;
-                hasBattleReplay: number;
-                noCostCnt: number;
-            }>;
+            stageId: string;
+            completeTimes: number;
+            startTimes: number;
+            practiceTimes: number;
+            state: number;
+            hasBattleReplay: number;
+            noCostCnt: number;
+        }>;
         cowLevel: Record<string, {
-                id: string;
-                type: string; // TODO: This could be an enum?
-                val: string[]; // TODO: Unsure whether this is an array of strings or not
-                fts: number;
-                rts: number;
-            }>;
+            id: string;
+            type: string; // TODO: This could be an enum?
+            val: string[]; // TODO: Unsure whether this is an array of strings or not
+            fts: number;
+            rts: number;
+        }>;
     };
     // TODO: This is very incomplete. Need to refer to
     // a more advanced player's data to see what else
@@ -180,7 +183,10 @@ export type PlayerData = {
         lastOnlineTs: number;
         serverName: string;
         avatarId: string;
-        avatar: {}; // TODO: View more advanced player for actual type
+        avatar: {
+            type?: string;
+            id?: string;
+        };
         resume: string;
         friendNumLimit: number;
         monthlySubscriptionStartTime: number;
@@ -193,57 +199,57 @@ export type PlayerData = {
         curCharInstId: number;
         curSquadCount: number;
         squads: Record<string, {
-                squadId: string;
-                name: string;
-                // TODO: Figure out what currentEquip is. Maybe its module.
-                slots: ({ charInstId: number; skillIndex: number; currentEquip: null } | null)[];
-            }>;
+            squadId: string;
+            name: string;
+            // TODO: Figure out what currentEquip is. Maybe its module.
+            slots: ({ charInstId: number; skillIndex: number; currentEquip: null } | null)[];
+        }>;
         chars: Record<string, {
-                instId: number;
-                charId: string;
-                favorPoint: number;
-                potentialRank: number;
-                mainSkillLvl: number;
-                skin: string;
+            instId: number;
+            charId: string;
+            favorPoint: number;
+            potentialRank: number;
+            mainSkillLvl: number;
+            skin: string;
+            level: number;
+            exp: number;
+            evolvePhase: number;
+            defaultSkillIndex: number;
+            gainTime: number;
+            skills: {
+                skillId: string;
+                unlock: number;
+                state: number;
+                specializeLevel: number;
+                completeUpgradeTime: number;
+            }[];
+            voiceLan: string; // Could be fixed string like JP | CN | EN | KR | TW etc.
+            currentEquip: null; // TODO: Figure out what currentEquip is lol. Maybe its module
+            equip: Record<string, {
+                hide: number;
+                locked: number;
                 level: number;
-                exp: number;
-                evolvePhase: number;
-                defaultSkillIndex: number;
-                gainTime: number;
-                skills: {
-                    skillId: string;
-                    unlock: number;
-                    state: number;
-                    specializeLevel: number;
-                    completeUpgradeTime: number;
-                }[];
-                voiceLan: string; // Could be fixed string like JP | CN | EN | KR | TW etc.
-                currentEquip: null; // TODO: Figure out what currentEquip is lol. Maybe its module
-                equip: Record<string, {
-                        hide: number;
-                        locked: number;
-                        level: number;
-                    }>;
             }>;
+        }>;
         charGroup: Record<string, {
-                favorPoint: number;
-            }>;
+            favorPoint: number;
+        }>;
         charMission: Record<string, Record<string, number>>;
     };
     npcAudio: Record<string, {
-            npcShowAudioInfoFlag: string; // Could be fixed string like JP | CN | EN | KR | TW etc.
-        }>;
+        npcShowAudioInfoFlag: string; // Could be fixed string like JP | CN | EN | KR | TW etc.
+    }>;
     recruit: {
         normal: {
             slots: Record<string, {
-                    state: number;
-                    tags: number[];
-                    selectTags: { tagId: number; pick: number }[];
-                    startTs: number;
-                    durationInSec: number;
-                    maxFinishTs: number;
-                    realFinishTs: number;
-                }>
+                state: number;
+                tags: number[];
+                selectTags: { tagId: number; pick: number }[];
+                startTs: number;
+                durationInSec: number;
+                maxFinishTs: number;
+                realFinishTs: number;
+            }>
         }
     };
     pushFlags: {
@@ -370,7 +376,11 @@ export type PlayerData = {
         missionGroups: Record<string, number>;
     };
     social: {
-        assitCharList: [null]; // TODO: Figure out what this is
+        assistCharList: {
+            charInstId: number;
+            skillIndex: number;
+            currentEquip: null; // TODO: Figure out what this is
+        }[] | null[]; // TODO: Figure out what this is
         yesterdayReward: {
             canReceive: number;
             assistAmount: number;
@@ -526,5 +536,33 @@ export type PlayerData = {
         season: {}; // TODO: Figure out what this is
         box: []; // TODO: Figure out what this is
     };
-    // ended at tshop
+    tshop: Record<string, {
+        coin: number;
+        info: []; // TODO: Figure out what this is
+        progressInfo: {}; // TODO: Figure out what this is
+    }>;
+    gacha: {
+        newbee: {
+            openFlag: number;
+            cnt: number;
+            poolId: string;
+        };
+        normal: Record<string, {
+            cnt: number;
+            maxCnt: number;
+            rarity: number;
+            avail: boolean;
+        }>;
+        attain: {}; // TODO: Figure out what this is
+        limit: Record<string, {
+            leastFree: number;
+        }>;
+        single: Record<string, {
+            singleEnsureCnt: number;
+            singleEnsureUse: boolean;
+            singleEnsureChar: string;
+        }>;
+        fesClassic: {}; // TODO: Figure out what this is
+    };
+    // finished at campaignsV2
 }
