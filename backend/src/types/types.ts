@@ -25,69 +25,7 @@ export type PlayerData = {
     };
     // TODO: This is very incomplete. Need to refer to
     // a more advanced player's data to see what else
-    activity: {
-        TYPE_ACT9D0: {
-            act18sre: {
-                coin: 0;
-                favorList: [];
-                news: {};
-            };
-        };
-        CHECKIN_VS: {};
-        TYPE_ACT27SIDE: {
-            act27side: {
-                day: number;
-                signedIn: boolean;
-                stock: {};
-                reward: null;
-                milestone: {
-                    point: number;
-                    got: [];
-                };
-                coin: number;
-                campaignCnt: number;
-                state: number;
-                sale: {
-                    stateSell: number;
-                    inquire: {
-                        cur: number;
-                        max: number;
-                    };
-                    groupId: null;
-                    buyers: {};
-                    purchasesTmp: {};
-                    purchases: {};
-                    sellsTmp: {};
-                    sells: {};
-                };
-                favorList: string[];
-            };
-        };
-        LOGIN_ONLY: {
-            act16login: {
-                reward: number;
-            };
-        };
-        CHECKIN_ONLY: {
-            act34sign: {
-                lastTs: number; // Date number
-                history: number[];
-            };
-        };
-        PRAY_ONLY: {
-            act6pray: {
-                lastTs: number;
-                extraCount: number;
-                prayDaily: number;
-                praying: number;
-                insureCount: number;
-                prayCount: number;
-                prayMax: number;
-                prayMaxIndex: number;
-                prayArray: [];
-            };
-        };
-    };
+    activity: Record<string, unknown>;
     status: {
         nickName: string;
         nickNumber: string;
@@ -140,7 +78,10 @@ export type PlayerData = {
         lastOnlineTs: number;
         serverName: string;
         avatarId: string;
-        avatar: {}; // TODO: View more advanced player for actual type
+        avatar: {
+            type?: string;
+            id?: string;
+        };
         resume: string;
         friendNumLimit: number;
         monthlySubscriptionStartTime: number;
@@ -181,6 +122,11 @@ export type PlayerData = {
                     state: number;
                     specializeLevel: number;
                     completeUpgradeTime: number;
+                    static: {
+                        name: string;
+                        description: string;
+                        duration: number;
+                    };
                 }[];
                 voiceLan: string; // Could be fixed string like JP | CN | EN | KR | TW etc.
                 currentEquip: null; // TODO: Figure out what currentEquip is lol. Maybe its module
@@ -192,6 +138,15 @@ export type PlayerData = {
                         level: number;
                     }
                 >;
+                static: {
+                    name: string;
+                    description: string;
+                    nationId: string;
+                    appellation: string;
+                    position: string;
+                    profession: string;
+                    subProfessionId: string;
+                };
             }
         >;
         charGroup: Record<
@@ -231,9 +186,8 @@ export type PlayerData = {
         hasFreeLevelGP: number;
         status: number;
     };
-    // TODO: This is very incomplete. Need to refer
     equipment: {
-        missions: {};
+        missions: unknown;
     };
     // TODO: This is very incomplete. Need to refer
     skin: {
@@ -244,51 +198,41 @@ export type PlayerData = {
         LS: {
             curShopId: string;
             curGroupId: string;
-            // TODO: Incomplete
-            info: [];
+            info: { id: string; count: number }[];
         };
         HS: {
             curShopId: string;
+            info: { id: string; count: number }[];
             // TODO: Incomplete
-            info: [];
-            // TODO: Incomplete
-            progressInfo: {};
+            progressInfo: unknown;
         };
         ES: {
             curShopId: string;
-            // TODO: Incomplete
-            info: [];
+            info: { id: string; count: number }[];
         };
         CASH: {
-            // TODO: Incomplete
-            info: [];
+            info: { id: string; count: number }[];
         };
         GP: {
             oneTime: {
-                // TODO: Incomplete
-                info: [];
+                info: { id: string; count: number }[];
             };
             level: {
-                // TODO: Incomplete
-                info: [];
+                info: { id: string; count: number }[];
             };
             weekly: {
                 curGroupId: string;
-                // TODO: Incomplete
-                info: [];
+                info: { id: string; count: number }[];
             };
             monthly: {
                 curGroupId: string;
-                // TODO: Incomplete
-                info: [];
+                info: { id: string; count: number }[];
             };
             choose: {
-                // TODO: Incomplete
-                info: [];
+                info: { id: string; count: number }[];
             };
             backflow: {
-                // TODO: Incomplete
-                info: [];
+                info: { id: string; count: number }[];
             };
         };
         FURNI: {
@@ -296,14 +240,11 @@ export type PlayerData = {
         };
         SOCIAL: {
             curShopId: string;
-            // TODO: Incomplete
-            info: [];
+            info: { id: string; count: number }[];
         };
         CLASSIC: {
-            // TODO: Incomplete
-            info: [];
-            // TODO: Incomplete
-            progressInfo: {};
+            info: { id: string; count: number }[];
+            progressInfo: unknown;
         };
     };
     mission: {
@@ -369,7 +310,13 @@ export type PlayerData = {
         missionGroups: Record<string, number>;
     };
     social: {
-        assitCharList: [null]; // TODO: Figure out what this is
+        assistCharList:
+            | {
+                  charInstId: number;
+                  skillIndex: number;
+                  currentEquip: null; // TODO: Figure out what this is
+              }[]
+            | null[]; // TODO: Figure out what this is
         yesterdayReward: {
             canReceive: number;
             assistAmount: number;
@@ -389,7 +336,7 @@ export type PlayerData = {
             };
             workshop: {
                 bonusActive: number;
-                bonus: {}; // TODO: Figure out what this is
+                bonus: unknown; // TODO: Figure out what this is
             };
         };
         chars: Record<
@@ -431,26 +378,26 @@ export type PlayerData = {
                     buff: {
                         global: {
                             apCost: number;
-                            roomCnt: {}; // TODO: Figure out what this is
+                            roomCnt: unknown; // TODO: Figure out what this is
                         };
                         manufacture: {
                             speed: number;
                             sSpeed: number;
-                            roomSpeed: {}; // TODO: Figure out what this is
+                            roomSpeed: unknown; // TODO: Figure out what this is
                             apCost: number;
                         };
                         trading: {
                             speed: number;
                             sSpeed: number;
-                            roomSpeed: {}; // TODO: Figure out what this is
-                            charSpeed: {}; // TODO: Figure out what this is
-                            charLimit: {}; // TODO: Figure out what this is
+                            roomSpeed: unknown; // TODO: Figure out what this is
+                            charSpeed: unknown; // TODO: Figure out what this is
+                            charLimit: unknown; // TODO: Figure out what this is
                             apCost: number;
                         };
                         meeting: {
                             clue: number;
                             speedUp: number;
-                            weight: {}; // TODO: Figure out what this is
+                            weight: unknown; // TODO: Figure out what this is
                             apCost: number;
                         };
                         hire: {
@@ -466,21 +413,313 @@ export type PlayerData = {
                         dormitory: {
                             recover: number;
                         };
-                        apCost: {}; // TODO: Figure out what this is
-                        point: {}; // TODO: Figure out what this is
+                        apCost: unknown; // TODO: Figure out what this is
+                        point: unknown; // TODO: Figure out what this is
                     };
                     apCost: number;
                     lastUpdateTime: number;
                 }
             >;
-            ELEVATOR: Record<string, {}>;
+            ELEVATOR: Record<string, unknown>;
+            POWER: Record<
+                string,
+                {
+                    buff: {
+                        global: {
+                            roomCnt: unknown; // TODO: Figure out what this is
+                        };
+                        manufacture: {
+                            charSpeed: unknown; // TODO: Figure out what this is
+                        };
+                        laborSpeed: number;
+                        apCost: {
+                            self: unknown; // TODO: Figure out what this is
+                        };
+                    };
+                }
+            >;
+            MANUFACTURE: Record<
+                string,
+                {
+                    buff: {
+                        apCost: {
+                            self: unknown; // TODO: Figure out what this is
+                        };
+                        speed: number;
+                        capacity: number;
+                        sSpeed: number;
+                        tSpeed: unknown; // TODO: Figure out what this is
+                        cSpeed: number;
+                        capFrom: unknown; // TODO: Figure out what this is
+                        maxSpeed: number;
+                        point: unknown; // TODO: Figure out what this is
+                        flag: unknown; // TODO: Figure out what this is
+                        skillExtend: unknown; // TODO: Figure out what this is
+                    };
+                    state: number;
+                    formulaId: string;
+                    remainSolutionCnt: number;
+                    outputSolutionCnt: number;
+                    lastUpdateTime: number;
+                    saveTime: number;
+                    tailTime: number;
+                    apCost: number;
+                    completeWorkTime: number;
+                    capacity: number;
+                    processPoint: number;
+                    display: {
+                        base: number;
+                        buff: number;
+                    };
+                }
+            >;
+            TRADING: Record<
+                string,
+                {
+                    buff: {
+                        speed: number;
+                        limit: number;
+                        apCost: {
+                            all: number;
+                            single: unknown; // TODO: Figure out what this is
+                            self: unknown; // TODO: Figure out what this is
+                        };
+                        rate: unknown; // TODO: Figure out what this is
+                        tgw: []; // TODO: Figure out what this is
+                        point: unknown; // TODO: Figure out what this is
+                        manuLines: unknown; // TODO: Figure out what this is
+                        orderWtBuff: []; // TODO: Figure out what this is
+                        orderBuff: []; // TODO: Figure out what this is
+                        violatedInfo: {
+                            orderChecker: []; // TODO: Figure out what this is
+                            cntBuff: []; // TODO: Figure out what this is
+                        };
+                    };
+                    state: number;
+                    lastUpdateTime: number;
+                    strategy: string; // Might be an enum such as O_GOLD. Unsure what Originium would be
+                    stockLimit: number;
+                    apCost: number;
+                    stock: {
+                        instId: number;
+                        // "type" might also be an enum such as MATERIAL
+                        delivery: { type: string; id: string; count: number }[];
+                        gain: {
+                            type: string; // Again, might be an enum such as GOLD
+                            id: string;
+                            count: number;
+                        };
+                        type: string; // same type as the one in delivery I think
+                        buff: []; // TODO: Figure out what this is
+                    }[];
+                    next: {
+                        order: number;
+                        processPoint: number;
+                        maxPoint: number;
+                        speed: number;
+                    };
+                    completeWorkTime: number;
+                    display: {
+                        base: number;
+                        buff: number;
+                    };
+                }
+            >;
+            DORMITORY: Record<
+                string,
+                {
+                    buff: {
+                        apCost: {
+                            all: number;
+                            single: {
+                                target: null; // TODO: Figure out what this is
+                                value: number;
+                            };
+                            self: unknown; // TODO: Figure out what this is
+                            exclude: unknown; // TODO: Figure out what this is
+                        };
+                        point: unknown; // TODO: Figure out what this is
+                    };
+                    comfort: number;
+                    diySolution: {
+                        wallPaper: null; // TODO: Figure out what this is
+                        floor: null; // TODO: Figure out what this is
+                        carpet: {
+                            id: string;
+                            coordinate: {
+                                x: number;
+                                y: number;
+                            };
+                        }[];
+                        other: {
+                            id: string;
+                            coordinate: {
+                                x: number;
+                                y: number;
+                            };
+                        }[];
+                    };
+                }
+            >;
+            CORRIDOR: Record<string, unknown>; // TODO: Figure out what this is
+            WORKSHOP: Record<
+                string,
+                {
+                    buff: {
+                        rate: {
+                            all: number;
+                        };
+                        cost: {
+                            type: string;
+                            limit: number;
+                            reduction: number;
+                        };
+                        costRe: {
+                            type: string;
+                            from: number;
+                            change: number;
+                        };
+                        frate: []; // TODO: Figure out what this is
+                        recovery: {
+                            type: string;
+                            pace: number;
+                            recover: number;
+                        };
+                        goldFree: unknown; // TODO: Figure out what this is
+                        costForce: {
+                            type: string;
+                            cost: number;
+                        };
+                        fFix: {
+                            asRarity: unknown; // TODO: Figure out what this is
+                        };
+                        activeBonus: unknown; // TODO: Figure out what this is
+                        apRate: unknown; // TODO: Figure out what this is
+                        costDevide: {
+                            type: string;
+                            limit: number;
+                            denominator: number;
+                        };
+                    };
+                    statistic: {
+                        noAddition: number;
+                    };
+                }
+            >;
         };
-        furniture: {}; // TODO: Figure out what this is
+        furniture: Record<
+            string,
+            {
+                count: number;
+                inUse: number;
+            }
+        >;
         assist: number[];
-        diyPresentSolutions: {}; // TODO: Figure out what this is
+        diyPresentSolutions: unknown; // TODO: Figure out what this is
         solution: {
-            furnitureTs: {}; // TODO: Figure out what this is
+            furnitureTs: Record<string, number>;
         };
     };
-    // STOPPED AT dexNav
+    dexNav: {
+        character: Record<
+            string,
+            {
+                charInstId: number;
+                count: number;
+                classicCount: number;
+            }
+        >;
+        formula: {
+            shop: Record<string, number>; // TODO: Figure out what this is
+            manufacture: Record<string, number>;
+            workshop: Record<string, number>;
+        };
+        teamV2: {
+            rhodes: Record<string, number>;
+            action4: Record<string, number>;
+            sami: Record<string, number>;
+            reserve1: Record<string, number>;
+            reserve4: Record<string, number>;
+            blacksteel: Record<string, number>;
+            columbia: Record<string, number>;
+            laterano: Record<string, number>;
+            lungmen: Record<string, number>;
+            leithanien: Record<string, number>;
+            higashi: Record<string, number>;
+        };
+        enemy: {
+            enemies: Record<string, number>;
+            stage: Record<string, number>;
+        };
+    };
+    crisis: {
+        current: string;
+        lst: number;
+        nst: number;
+        map: Record<
+            string,
+            {
+                rank: number;
+                confirmed: number;
+            }
+        >;
+        shop: {
+            coin: number;
+            info: []; // TODO: Figure out what this is
+            progressInfo: unknown; // TODO: Figure out what this is
+        };
+        training: {
+            currentStage: string[];
+            stage: Record<
+                string,
+                {
+                    point: number;
+                }
+            >;
+            nst: number;
+        };
+        season: unknown; // TODO: Figure out what this is
+        box: []; // TODO: Figure out what this is
+    };
+    tshop: Record<
+        string,
+        {
+            coin: number;
+            info: []; // TODO: Figure out what this is
+            progressInfo: unknown; // TODO: Figure out what this is
+        }
+    >;
+    gacha: {
+        newbee: {
+            openFlag: number;
+            cnt: number;
+            poolId: string;
+        };
+        normal: Record<
+            string,
+            {
+                cnt: number;
+                maxCnt: number;
+                rarity: number;
+                avail: boolean;
+            }
+        >;
+        attain: unknown; // TODO: Figure out what this is
+        limit: Record<
+            string,
+            {
+                leastFree: number;
+            }
+        >;
+        single: Record<
+            string,
+            {
+                singleEnsureCnt: number;
+                singleEnsureUse: boolean;
+                singleEnsureChar: string;
+            }
+        >;
+        fesClassic: unknown; // TODO: Figure out what this is
+    };
+    // finished at campaignsV2
 };

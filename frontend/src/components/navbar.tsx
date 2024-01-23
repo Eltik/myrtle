@@ -296,6 +296,11 @@ function Navbar() {
             description: "Display and share your current operators as well as your materials and resources.",
         },
         {
+            title: "Management",
+            href: "/manage",
+            description: "Account management and connections across various platforms.",
+        },
+        {
             title: "Settings",
             href: "/settings",
             description: "Change your profile settings and preferences on myrtle.moe.",
@@ -316,6 +321,11 @@ function Navbar() {
                             <NavigationMenuItem>
                                 <Link href={"/"} legacyBehavior passHref>
                                     <NavigationMenuLink className={navigationMenuTriggerStyle()}>Home</NavigationMenuLink>
+                                </Link>
+                            </NavigationMenuItem>
+                            <NavigationMenuItem>
+                                <Link href={"/planner"} legacyBehavior passHref>
+                                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>Planner</NavigationMenuLink>
                                 </Link>
                             </NavigationMenuItem>
                             <NavigationMenuItem>

@@ -1,6 +1,8 @@
 import { authRequest } from "../../../helper/request";
+import type { PlayerData } from "../../../types/types";
 import type { AKServer } from "../authentication/auth";
 import type { AuthSession } from "../authentication/auth-session";
+import { getOperator, getSkill } from "../gamedata";
 
 export const getRawData = async (session: AuthSession, server: AKServer) => {
     const data = await (
@@ -132,5 +134,41 @@ export const getData = async (session: AuthSession, server: AKServer) => {
     const data = await getRawData(session, server);
     if (!data.user) return data;
 
-    return data.user;
+    return await formatUser(data.user);
+};
+
+const formatUser = async (data: PlayerData) => {
+    const charsPromises = Object.values(data.troop.chars).map(async (character: any) => {
+        const staticData = await getOperator(character.charId);
+        if (staticData) {
+            Object.assign(character, {
+                static: {
+                    name: staticData.name,
+                    description: staticData.description,
+                    nationId: staticData.nationId,
+                    appellation: staticData.appellation,
+                    position: staticData.position,
+                    profession: staticData.profession,
+                    subProfessionId: staticData.subProfessionId,
+                },
+            });
+
+            const skillsPromises = character.skills.map(async (skill: any) => {
+                const staticData = await getSkill(skill.skillId);
+                Object.assign(skill, {
+                    static: {
+                        name: staticData.levels[character.mainSkillLvl - 1 + skill.specializeLevel].name,
+                        description: staticData.levels[character.mainSkillLvl - 1 + skill.specializeLevel].description,
+                        duration: staticData.levels[character.mainSkillLvl - 1 + skill.specializeLevel].duration,
+                    },
+                });
+            });
+
+            await Promise.all(skillsPromises);
+        }
+    });
+
+    await Promise.all(charsPromises);
+
+    return data;
 };
