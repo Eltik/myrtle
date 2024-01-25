@@ -9,8 +9,9 @@ const fetchGameData = async (name: string) => {
     if (await file.exists()) {
         return await file.json();
     } else {
-        console.log(`Fetching ${name} game data...`);
-        const data = await (await fetch(`https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/gamedata/excel/${name}.json`)).json();
+        // https://github.com/Kengxxiao/ArknightsGameData_YoStar/tree/main/en_US/gamedata
+        // https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData_YoStar/main/en_US/gamedata/excel/character_table.json
+        const data = await (await fetch(`https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData_YoStar/main/en_US/gamedata/excel/${name}.json`)).json();
         await Bun.write(join(import.meta.dir, `./gamedata/excel/${name}.json`), JSON.stringify(data));
         return data;
     }
@@ -35,4 +36,10 @@ export const getSkill = async (id: string) => {
 
 export const getModule = async (id: string) => {
     return (await fetchGameData("uniequip_table")).equipDict[id];
+};
+
+export const calculateTrust = async(trust: number) => {
+    const frames = (await fetchGameData("favor_table")).favorFrames;
+    const keyFrames = frames.map((frame: { data: { favorPoint: number } }) => frame.data.favorPoint);
+    return keyFrames.findIndex((frame: number) => frame >= trust);
 };

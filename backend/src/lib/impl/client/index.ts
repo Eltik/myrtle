@@ -2,7 +2,7 @@ import { authRequest } from "../../../helper/request";
 import type { PlayerData } from "../../../types/types";
 import type { AKServer } from "../authentication/auth";
 import type { AuthSession } from "../authentication/auth-session";
-import { getOperator, getSkill } from "../gamedata";
+import { calculateTrust, getOperator, getSkill } from "../gamedata";
 
 export const getRawData = async (session: AuthSession, server: AKServer) => {
     const data = await (
@@ -141,6 +141,8 @@ const formatUser = async (data: PlayerData) => {
     const charsPromises = Object.values(data.troop.chars).map(async (character: any) => {
         const staticData = await getOperator(character.charId);
         if (staticData) {
+            const trust = await calculateTrust(character.favorPoint);
+            
             Object.assign(character, {
                 static: {
                     name: staticData.name,
@@ -150,6 +152,7 @@ const formatUser = async (data: PlayerData) => {
                     position: staticData.position,
                     profession: staticData.profession,
                     subProfessionId: staticData.subProfessionId,
+                    trust,
                 },
             });
 
@@ -160,6 +163,11 @@ const formatUser = async (data: PlayerData) => {
                         name: staticData.levels[character.mainSkillLvl - 1 + skill.specializeLevel].name,
                         description: staticData.levels[character.mainSkillLvl - 1 + skill.specializeLevel].description,
                         duration: staticData.levels[character.mainSkillLvl - 1 + skill.specializeLevel].duration,
+                        spData: staticData.levels[character.mainSkillLvl - 1 + skill.specializeLevel].spData,
+                        levels: staticData.levels,
+                        skillId: staticData.skillId,
+                        iconId: staticData.iconId,
+                        hidden: staticData.hidden
                     },
                 });
             });

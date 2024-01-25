@@ -13,10 +13,13 @@ import { Input } from "./ui/input";
 import { ToastAction } from "./ui/toast";
 import { useToast } from "./ui/use-toast";
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "./ui/command";
-import { TrendingUp, UploadCloud, Users } from "lucide-react";
+import { Menu, TrendingUp, UploadCloud, Users } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "./ui/dropdown-menu";
 
 function Navbar() {
+    const [showNavbar, setShowNavbar] = useState(false);
+
     const loginData = useStore(useLogin, (state) => (state as { loginData: LoginData })?.loginData);
     const playerData = useStore(usePlayer, (state) => (state as { playerData: PlayerData })?.playerData);
 
@@ -315,77 +318,148 @@ function Navbar() {
     return (
         <ClientOnly>
             <Dialog>
-                <div className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                <div className="sticky top-0 z-50 w-full border-b-2 border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                     <NavigationMenu className="container flex h-14 max-w-screen-2xl justify-between">
                         <NavigationMenuList>
-                            <NavigationMenuItem>
-                                <Link href={"/"} legacyBehavior passHref>
-                                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>Home</NavigationMenuLink>
-                                </Link>
+                            <NavigationMenuItem className="block md:hidden">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild className="cursor-pointer rounded-md transition-all duration-150 ease-in-out">
+                                        <Menu className="h-8 w-8" onClick={() => setShowNavbar((show) => !show)} />
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="ml-5 w-56">
+                                        <DropdownMenuGroup>
+                                            <Link href={"/"}>
+                                                <DropdownMenuItem className="cursor-pointer">
+                                                    <span>Home</span>
+                                                </DropdownMenuItem>
+                                            </Link>
+                                            <Link href={"/planner"}>
+                                                <DropdownMenuItem className="cursor-pointer">
+                                                    <span>Planner</span>
+                                                </DropdownMenuItem>
+                                            </Link>
+                                            <DropdownMenuSub>
+                                                <DropdownMenuSubTrigger className="cursor-pointer">
+                                                    <span>Leaderboard</span>
+                                                </DropdownMenuSubTrigger>
+                                                <DropdownMenuPortal>
+                                                    <DropdownMenuSubContent>
+                                                        {leaderboardComponents.map((component, index) => (
+                                                            <Link href={component.href} key={`leaderboard-component-mobile-${index}`}>
+                                                                <DropdownMenuItem className="cursor-pointer">
+                                                                    <span>{component.title}</span>
+                                                                </DropdownMenuItem>
+                                                            </Link>
+                                                        ))}
+                                                    </DropdownMenuSubContent>
+                                                </DropdownMenuPortal>
+                                            </DropdownMenuSub>
+                                            {playerData.status?.uid ? (
+                                                <DropdownMenuSub>
+                                                    <DropdownMenuSubTrigger className="cursor-pointer">
+                                                        <span>Your Account</span>
+                                                    </DropdownMenuSubTrigger>
+                                                    <DropdownMenuPortal>
+                                                        <DropdownMenuSubContent>
+                                                            {profileComponents.map((component, index) => (
+                                                                <Link href={component.href} key={`profile-component-mobile-${index}`}>
+                                                                    <DropdownMenuItem className="cursor-pointer">
+                                                                        <span>{component.title}</span>
+                                                                    </DropdownMenuItem>
+                                                                </Link>
+                                                            ))}
+                                                        </DropdownMenuSubContent>
+                                                    </DropdownMenuPortal>
+                                                </DropdownMenuSub>
+                                            ) : (
+                                                <DropdownMenuItem
+                                                    className="cursor-pointer"
+                                                    onClick={() => {
+                                                        if (loginData?.uid) {
+                                                            console.log("Already have login data...");
+                                                            void fetchPlayerData(loginData);
+                                                        }
+                                                    }}
+                                                >
+                                                    <DialogTrigger asChild>
+                                                        <span>Login</span>
+                                                    </DialogTrigger>
+                                                </DropdownMenuItem>
+                                            )}
+                                        </DropdownMenuGroup>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </NavigationMenuItem>
-                            <NavigationMenuItem>
-                                <Link href={"/planner"} legacyBehavior passHref>
-                                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>Planner</NavigationMenuLink>
-                                </Link>
-                            </NavigationMenuItem>
-                            <NavigationMenuItem>
-                                <NavigationMenuTrigger>Leaderboard</NavigationMenuTrigger>
-                                <NavigationMenuContent>
-                                    <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                                        {leaderboardComponents.map((component, index) => (
-                                            <ListItem key={`leaderboard-component-${index}`} title={component.title} href={component.href}>
-                                                {component.description}
-                                            </ListItem>
-                                        ))}
-                                    </ul>
-                                </NavigationMenuContent>
-                            </NavigationMenuItem>
-                            {playerData.status?.uid ? (
+                            <div className={"hidden md:flex"}>
                                 <NavigationMenuItem>
-                                    <NavigationMenuTrigger>
-                                        <Avatar className="bg-muted">
-                                            <AvatarImage
-                                                src={
-                                                    playerData.status?.avatarId
-                                                        ? playerData.status.avatar.type === "ASSISTANT"
-                                                            ? `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${
-                                                                  Object.values(playerData.troop.chars)
-                                                                      .find((item) => item.skin === playerData.status?.avatar.id ?? "")
-                                                                      ?.charId.replaceAll("#", "_") ?? ""
-                                                              }.png`
-                                                            : ""
-                                                        : "https://static.wikia.nocookie.net/mrfz/images/4/46/Symbol_profile.png/revision/latest?cb=20220418145951"
-                                                }
-                                                alt="@shadcn"
-                                            />
-                                            <AvatarFallback>{playerData.status?.nickName?.slice(0, 1) ?? "E"}</AvatarFallback>
-                                        </Avatar>
-                                    </NavigationMenuTrigger>
+                                    <Link href={"/"} legacyBehavior passHref>
+                                        <NavigationMenuLink className={navigationMenuTriggerStyle()}>Home</NavigationMenuLink>
+                                    </Link>
+                                </NavigationMenuItem>
+                                <NavigationMenuItem>
+                                    <Link href={"/planner"} legacyBehavior passHref>
+                                        <NavigationMenuLink className={navigationMenuTriggerStyle()}>Planner</NavigationMenuLink>
+                                    </Link>
+                                </NavigationMenuItem>
+                                <NavigationMenuItem>
+                                    <NavigationMenuTrigger>Leaderboard</NavigationMenuTrigger>
                                     <NavigationMenuContent>
                                         <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                                            {profileComponents.map((component, index) => (
-                                                <ListItem key={`profile-component-${index}`} title={component.title} href={component.href}>
+                                            {leaderboardComponents.map((component, index) => (
+                                                <ListItem key={`leaderboard-component-${index}`} title={component.title} href={component.href}>
                                                     {component.description}
                                                 </ListItem>
                                             ))}
                                         </ul>
                                     </NavigationMenuContent>
                                 </NavigationMenuItem>
-                            ) : (
-                                <NavigationMenuItem
-                                    className="cursor-pointer"
-                                    onClick={() => {
-                                        if (loginData?.uid) {
-                                            console.log("Already have login data...");
-                                            void fetchPlayerData(loginData);
-                                        }
-                                    }}
-                                >
-                                    <DialogTrigger asChild>
-                                        <Button variant="outline">Login</Button>
-                                    </DialogTrigger>
-                                </NavigationMenuItem>
-                            )}
+                                {playerData.status?.uid ? (
+                                    <NavigationMenuItem>
+                                        <NavigationMenuTrigger>
+                                            <Avatar className="bg-muted">
+                                                <AvatarImage
+                                                    src={
+                                                        playerData.status?.avatarId
+                                                            ? playerData.status.avatar.type === "ASSISTANT"
+                                                                ? `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${
+                                                                      Object.values(playerData.troop.chars)
+                                                                          .find((item) => item.skin === playerData.status?.avatar.id ?? "")
+                                                                          ?.charId.replaceAll("#", "_") ?? ""
+                                                                  }.png`
+                                                                : ""
+                                                            : "https://static.wikia.nocookie.net/mrfz/images/4/46/Symbol_profile.png/revision/latest?cb=20220418145951"
+                                                    }
+                                                    alt="@shadcn"
+                                                />
+                                                <AvatarFallback>{playerData.status?.nickName?.slice(0, 1) ?? "E"}</AvatarFallback>
+                                            </Avatar>
+                                        </NavigationMenuTrigger>
+                                        <NavigationMenuContent>
+                                            <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+                                                {profileComponents.map((component, index) => (
+                                                    <ListItem key={`profile-component-${index}`} title={component.title} href={component.href}>
+                                                        {component.description}
+                                                    </ListItem>
+                                                ))}
+                                            </ul>
+                                        </NavigationMenuContent>
+                                    </NavigationMenuItem>
+                                ) : (
+                                    <NavigationMenuItem
+                                        className="cursor-pointer"
+                                        onClick={() => {
+                                            if (loginData?.uid) {
+                                                console.log("Already have login data...");
+                                                void fetchPlayerData(loginData);
+                                            }
+                                        }}
+                                    >
+                                        <DialogTrigger asChild>
+                                            <Button variant="outline">Login</Button>
+                                        </DialogTrigger>
+                                    </NavigationMenuItem>
+                                )}
+                            </div>
                         </NavigationMenuList>
                         <div className="flex flex-row gap-3">
                             <div className="flex flex-row items-center justify-center">
