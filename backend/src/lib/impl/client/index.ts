@@ -142,7 +142,7 @@ const formatUser = async (data: PlayerData) => {
         const staticData = await getOperator(character.charId);
         if (staticData) {
             const trust = await calculateTrust(character.favorPoint);
-            
+
             Object.assign(character, {
                 static: {
                     name: staticData.name,
@@ -167,7 +167,7 @@ const formatUser = async (data: PlayerData) => {
                         levels: staticData.levels,
                         skillId: staticData.skillId,
                         iconId: staticData.iconId,
-                        hidden: staticData.hidden
+                        hidden: staticData.hidden,
                     },
                 });
             });

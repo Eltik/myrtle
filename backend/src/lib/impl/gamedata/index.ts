@@ -38,7 +38,7 @@ export const getModule = async (id: string) => {
     return (await fetchGameData("uniequip_table")).equipDict[id];
 };
 
-export const calculateTrust = async(trust: number) => {
+export const calculateTrust = async (trust: number) => {
     const frames = (await fetchGameData("favor_table")).favorFrames;
     const keyFrames = frames.map((frame: { data: { favorPoint: number } }) => frame.data.favorPoint);
     return keyFrames.findIndex((frame: number) => frame >= trust);

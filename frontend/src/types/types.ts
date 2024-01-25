@@ -151,10 +151,7 @@ export type PlayerData = {
                 slots: ({ charInstId: number; skillIndex: number; currentEquip: null } | null)[];
             }
         >;
-        chars: Record<
-            string,
-            CharacterData
-        >;
+        chars: Record<string, CharacterData>;
         charGroup: Record<
             string,
             {
@@ -768,7 +765,7 @@ export type CharacterData = {
                 };
                 prefabId: string;
                 duration: number;
-                blackboard: { key: string, value: number, valueStr: string | null }[];
+                blackboard: { key: string; value: number; valueStr: string | null }[];
             }[];
             skillId: string;
             iconId: string | null;
