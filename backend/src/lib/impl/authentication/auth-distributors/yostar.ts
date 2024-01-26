@@ -17,11 +17,11 @@ export const getAccessToken = async (channelUID: string, yostarToken: string, se
         token: yostarToken,
         deviceId: deviceIds[0],
     };
-    const data = await (
+    const data = (await (
         await requestPassport("user/login", server, {
             body: JSON.stringify(body),
         })
-    ).json();
+    ).json()) as { accessToken: string };
     return data.accessToken;
 };
 
@@ -32,11 +32,11 @@ export const requestYostarAuth = async (email: string, server: AKServer) => {
         account: email,
         authlang: "en",
     };
-    const data = await (
+    const data = (await (
         await requestPassport("account/yostar_auth_request", server, {
             body: JSON.stringify(body),
         })
-    ).json();
+    ).json()) as { result: number };
 
     if (data.result !== 0) {
         console.log(colors.red(`Error sending code to ${email}:`), data);
@@ -53,11 +53,11 @@ export const submitYostarAuth = async (email: string, code: string, server: AKSe
         code: code,
     };
 
-    const data = await (
+    const data = (await (
         await requestPassport("account/yostar_auth_submit", server, {
             body: JSON.stringify(body),
         })
-    ).json();
+    ).json()) as { yostar_uid: string; yostar_token: string };
     return [data.yostar_uid, data.yostar_token];
 };
 
@@ -69,11 +69,11 @@ export const getYostarToken = async (email: string, yostarUID: string, yostarTok
         deviceId: deviceIds[0],
         createNew: "0",
     };
-    const data = await (
+    const data = (await (
         await requestPassport("user/yostar_createlogin", server, {
             body: JSON.stringify(body),
         })
-    ).json();
+    ).json()) as { uid: string; token: string };
     return [data.uid, data.token];
 };
 
@@ -81,11 +81,11 @@ export const createGuestAccount = async (server: AKServer): Promise<[string, str
     const body = {
         deviceId: deviceIds[0],
     };
-    const data = await (
+    const data = (await (
         await requestPassport("user/create", server, {
             body: JSON.stringify(body),
         })
-    ).json();
+    ).json()) as { uid: string; token: string };
     console.log(`Created guest account ${data.uid}`);
     return [data.uid, data.token];
 };

@@ -69,12 +69,12 @@ export const getSecret = async (uid: string, u8Token: string, server: AKServer, 
         uid: uid,
     };
 
-    const data = await (
+    const data = (await (
         await request("gs", "account/login", {
             body: JSON.stringify(body),
             headers,
         })
-    ).json();
+    ).json()) as { secret: string };
 
     const secret = data.secret;
 
@@ -123,14 +123,14 @@ export const getU8Token = async (channelUID: string, accessToken: string, server
         deviceId3: deviceIds[2],
     };
 
-    const data = await (
+    const data = (await (
         await request("u8", "user/v1/getToken", {
             body: JSON.stringify(body),
         })
-    ).json();
+    ).json()) as { uid: string; token: string };
 
-    const uid = data["uid"];
-    const token = data["token"];
+    const uid = data.uid;
+    const token = data.token;
 
     Object.assign(session ?? {}, {
         uid,
@@ -166,8 +166,16 @@ export const loadNetworkConfig = async (server: AKServer | "all"): Promise<void>
         return;
     }
 
-    const data = JSON.parse((await (await request(NETWORK_ROUTES[server] as AKDomain)).json())["content"]);
-    Object.assign(domains[server], data["configs"][data["funcVer"]]["network"]);
+    const data = JSON.parse(
+        (
+            (await (await request(NETWORK_ROUTES[server] as AKDomain)).json()) as {
+                content: string;
+                configs: Record<string, Record<string, Record<string, string>>>;
+                funcVer: string;
+            }
+        ).content,
+    );
+    Object.assign(domains[server], data.configs[data["funcVer"]]["network"]);
 
     console.log(colors.gray(`Loaded network config for ${server}.`));
 };

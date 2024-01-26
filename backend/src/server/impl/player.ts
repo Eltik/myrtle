@@ -39,7 +39,7 @@ export const handler = async (req: Request): Promise<Response> => {
 
         try {
             const data = await getData(session, server);
-            await insertUser(data, server);
+            if (data) await insertUser(data, server);
 
             return createResponse(JSON.stringify(data));
         } catch (e: any) {

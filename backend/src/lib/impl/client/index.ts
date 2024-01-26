@@ -21,7 +21,7 @@ export const getRawData = async (session: AuthSession, server: AKServer) => {
 };
 
 export const getSocialSortList = async (session: AuthSession, server: AKServer, type: number, sortKey = ["level"], param = {}) => {
-    const data = await (
+    const data = (await (
         await authRequest(
             "social/getSortListInfo",
             session,
@@ -34,11 +34,17 @@ export const getSocialSortList = async (session: AuthSession, server: AKServer, 
             },
             server,
         )
-    ).json();
+    ).json()) as {
+        result: {
+            uid: string;
+            level: number;
+            infoShare: number;
+        }[];
+    };
 
-    return data.result.sort((a: any, b: any) => {
-        const aValue = sortKey.map((key) => a[key]);
-        const bValue = sortKey.map((key) => b[key]);
+    return data.result.sort((a, b) => {
+        const aValue = sortKey.map((key) => a[key as keyof typeof a]);
+        const bValue = sortKey.map((key) => b[key as keyof typeof b]);
         for (let i = 0; i < aValue.length; i++) {
             if (aValue[i] < bValue[i]) return 1;
             if (aValue[i] > bValue[i]) return -1;
@@ -107,18 +113,18 @@ export const searchPlayers = async (session: AuthSession, server: AKServer, nick
     const uidData = await searchRawPlayerIDs(session, server, nickname, nicknumber);
     const uidList = uidData.slice(0, limit ? limit : uidData.length).map((item: { uid: string }) => item.uid);
 
-    const data = await getRawFriendInfo(session, server, uidList);
-    return data["friends"] ?? [];
+    const data = (await getRawFriendInfo(session, server, uidList)) as { friends: PlayerData[] };
+    return data.friends ?? [];
 };
 
 export const getPlayers = async (session: AuthSession, server: AKServer, ids: string[]) => {
-    const data = await getRawPlayerInfo(session, server, ids);
-    return data["friends"] ?? [];
+    const data = (await getRawPlayerInfo(session, server, ids)) as { friends: PlayerData[] };
+    return data.friends ?? [];
 };
 
 export const getPartialPlayers = async (session: AuthSession, server: AKServer, ids: string[]) => {
-    const data = await getRawPlayerInfo(session, server, ids);
-    return data["players"] ?? [];
+    const data = (await getRawPlayerInfo(session, server, ids)) as { players: PlayerData[] };
+    return data.players ?? [];
 };
 
 // TODO: Test
@@ -130,9 +136,9 @@ export const getFriends = async (session: AuthSession, server: AKServer, limit?:
     return data;
 };
 
-export const getData = async (session: AuthSession, server: AKServer): Promise<PlayerData> => {
-    const data = await getRawData(session, server);
-    if (!data.user) return data;
+export const getData = async (session: AuthSession, server: AKServer): Promise<PlayerData | null> => {
+    const data = (await getRawData(session, server)) as { user: PlayerData };
+    if (!data.user) return null;
 
     return await formatUser(data.user);
 };
