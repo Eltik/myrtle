@@ -59,6 +59,6 @@ export const request = async (domain: AKDomain, endpoint: string | null = null, 
         Object.assign(args.headers, DEFAULT_HEADERS);
     }
 
-    const data = await await fetch(url, args);
-    return data;
+    const data = await fetch(url, args);
+    return data as Response;
 };

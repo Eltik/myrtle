@@ -13,9 +13,9 @@
   "devDependencies": {
     "@types/bun": "latest",
     "@types/uuid": "^9.0.7",
+    "bun-types": "latest",
     "prettier": "^3.1.1",
-    "tsc": "^2.0.4",
-    "typescript": "^5.3.3"
+    "tsc": "^2.0.4"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
