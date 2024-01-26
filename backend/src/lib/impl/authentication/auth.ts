@@ -169,7 +169,7 @@ export const loadNetworkConfig = async (server: AKServer | "all"): Promise<void>
     const data = JSON.parse((await (await request(NETWORK_ROUTES[server] as AKDomain)).json())["content"]);
     Object.assign(domains[server], data["configs"][data["funcVer"]]["network"]);
 
-    console.log(colors.green(`Loaded network config for ${server}.`));
+    console.log(colors.gray(`Loaded network config for ${server}.`));
 };
 
 export const loadVersionConfig = async (server: AKServer | "all") => {
@@ -183,7 +183,7 @@ export const loadVersionConfig = async (server: AKServer | "all") => {
     const data = await (await request("hv", null, undefined, server)).json();
     Object.assign(versions[server], data);
 
-    console.log(colors.green(`Loaded version config for ${server}.`));
+    console.log(colors.gray(`Loaded version config for ${server}.`));
 };
 
 export const reloadDeviceIds = () => {

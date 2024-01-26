@@ -6,6 +6,7 @@ node_modules
 *.lock
 *.yml
 *.yaml
+*.sqlite
 Dockerfile
 Dockerfile.*
 .eslintrc

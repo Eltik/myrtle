@@ -175,3 +175,4 @@ dist
 .DS_Store
 bun.lockb
 /src/lib/impl/gamedata/gamedata/excel/*
+/db.sqlite

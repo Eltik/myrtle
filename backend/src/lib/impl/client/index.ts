@@ -130,7 +130,7 @@ export const getFriends = async (session: AuthSession, server: AKServer, limit?:
     return data;
 };
 
-export const getData = async (session: AuthSession, server: AKServer) => {
+export const getData = async (session: AuthSession, server: AKServer): Promise<PlayerData> => {
     const data = await getRawData(session, server);
     if (!data.user) return data;
 

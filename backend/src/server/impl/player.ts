@@ -1,6 +1,7 @@
 import type { AKServer } from "../../lib/impl/authentication/auth";
 import { AuthSession } from "../../lib/impl/authentication/auth-session";
 import { getData } from "../../lib/impl/client";
+import { insertUser } from "../../lib/impl/database/impl/insertUser";
 import { createResponse } from "../lib/response";
 
 export const handler = async (req: Request): Promise<Response> => {
@@ -38,6 +39,8 @@ export const handler = async (req: Request): Promise<Response> => {
 
         try {
             const data = await getData(session, server);
+            await insertUser(data, server);
+
             return createResponse(JSON.stringify(data));
         } catch (e: any) {
             return createResponse(e.message, 500);
