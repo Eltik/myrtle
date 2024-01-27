@@ -16,10 +16,10 @@ export function PlayerProfile({ data }: { data: PlayerData }) {
                             data.status?.avatarId
                                 ? data.status.avatar.type === "ASSISTANT"
                                     ? `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${
-                                            Object.values(data.troop.chars)
-                                                .find((item) => item.skin === data.status?.avatar.id ?? "")
-                                                ?.charId.replaceAll("#", "_") ?? ""
-                                        }.png`
+                                          Object.values(data.troop.chars)
+                                              .find((item) => item.skin === data.status?.avatar.id ?? "")
+                                              ?.charId.replaceAll("#", "_") ?? ""
+                                      }.png`
                                     : ""
                                 : "https://static.wikia.nocookie.net/mrfz/images/4/46/Symbol_profile.png/revision/latest?cb=20220418145951"
                         }
@@ -55,34 +55,34 @@ export function PlayerProfile({ data }: { data: PlayerData }) {
                         <div className="grid max-h-96 gap-4 overflow-y-scroll">
                             {data.troop?.chars
                                 ? Object.values(data.troop.chars)
-                                        .sort((a, b) => b.level - a.level)
-                                        .map((character, index) => (
-                                            <>
-                                                <Dialog>
-                                                    <DialogTrigger>
-                                                        <div className="flex cursor-pointer items-center gap-4 rounded-md border-b-2 px-2 py-2 transition-all duration-150 ease-in-out hover:bg-accent" key={`operator-${index}`}>
-                                                            <Avatar className="h-10 w-10">
-                                                                <AvatarImage alt={`${character.static.name} Avatar`} src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/avatars/${character.charId.replaceAll("#", "_")}.png`} />
-                                                                <AvatarFallback>{character.static.name.slice(0, 1)}</AvatarFallback>
-                                                            </Avatar>
-                                                            <div className="grid flex-1 gap-0.5 text-left">
-                                                                <div className="font-medium">{character.static.name}</div>
-                                                                <div className="text-xs text-gray-500 dark:text-gray-400">Level {character.level}</div>
-                                                            </div>
-                                                            <div className="text-right text-sm">HP: 2000 | ATK: 1500</div>
-                                                        </div>
-                                                    </DialogTrigger>
-                                                    <DialogContent className="sm:max-w-[425px]">
-                                                        <CharacterCard data={character} />
-                                                    </DialogContent>
-                                                </Dialog>
-                                            </>
-                                        ))
+                                      .sort((a, b) => b.level - a.level)
+                                      .map((character, index) => (
+                                          <>
+                                              <Dialog>
+                                                  <DialogTrigger>
+                                                      <div className="flex cursor-pointer items-center gap-4 rounded-md border-b-2 px-2 py-2 transition-all duration-150 ease-in-out hover:bg-accent" key={`operator-${index}`}>
+                                                          <Avatar className="h-10 w-10">
+                                                              <AvatarImage alt={`${character.static.name} Avatar`} src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/avatars/${character.charId.replaceAll("#", "_")}.png`} />
+                                                              <AvatarFallback>{character.static.name.slice(0, 1)}</AvatarFallback>
+                                                          </Avatar>
+                                                          <div className="grid flex-1 gap-0.5 text-left">
+                                                              <div className="font-medium">{character.static.name}</div>
+                                                              <div className="text-xs text-gray-500 dark:text-gray-400">Level {character.level}</div>
+                                                          </div>
+                                                          <div className="text-right text-sm">HP: 2000 | ATK: 1500</div>
+                                                      </div>
+                                                  </DialogTrigger>
+                                                  <DialogContent className="sm:max-w-[425px]">
+                                                      <CharacterCard data={character} />
+                                                  </DialogContent>
+                                              </Dialog>
+                                          </>
+                                      ))
                                 : null}
                         </div>
                     </CardContent>
                 </Card>
             </div>
         </div>
-    )
+    );
 }

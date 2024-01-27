@@ -13,7 +13,7 @@ export default async function handler(request: Request, response: ServerResponse
                 nickname: request.body.nickname,
                 nicknumber: request.body.nicknumber,
                 limit: request.body.limit ?? 10,
-                
+
                 uid: request.body.uid,
                 secret: request.body.secret,
                 seqnum: request.body.seqnum,

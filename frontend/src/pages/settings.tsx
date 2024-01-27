@@ -24,8 +24,8 @@ export default function Settings() {
         useLogin.setState({ loginData: { ...loginData, seqnum } });
 
         toast({
-            title: `Successfully updated seqnum value to ${seqnum}.`
-        })
+            title: `Successfully updated seqnum value to ${seqnum}.`,
+        });
     };
 
     return (
@@ -33,7 +33,7 @@ export default function Settings() {
             <main>
                 <Navbar />
                 <ClientOnly>
-                    <div className="grid gap-6 px-12 mt-4">
+                    <div className="mt-4 grid gap-6 px-12">
                         <Card>
                             <CardHeader>
                                 <CardTitle>Seqnum Value</CardTitle>
@@ -62,8 +62,8 @@ export default function Settings() {
                             <CardFooter className="border-t p-6">
                                 <Button onClick={() => toast({ title: "Uh oh! This feature hasn't been added yet.", description: "If you want to add this feature, you can ask in the myrtle.moe Discord!" })}>Save</Button>
                             </CardFooter>
-                            </Card>
-                            <Card>
+                        </Card>
+                        <Card>
                             <CardHeader>
                                 <CardTitle>Delete Account</CardTitle>
                                 <CardDescription>Permanently delete your account and all associated data.</CardDescription>

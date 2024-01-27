@@ -37,7 +37,7 @@ function Navbar() {
     const [timer, setTimer] = useState(60);
 
     const [requesting, setRequesting] = useState(false);
-    const [searchResults, setSearchResults] = useState<(PlayerData[]) | (SearchResponse[])>([]);
+    const [searchResults, setSearchResults] = useState<PlayerData[] | SearchResponse[]>([]);
 
     const { toast } = useToast();
 
@@ -271,7 +271,7 @@ function Navbar() {
     };
 
     let timeout: NodeJS.Timeout | null = null;
-    const search = async(e: React.KeyboardEvent<HTMLInputElement>) => {
+    const search = async (e: React.KeyboardEvent<HTMLInputElement>) => {
         const query = e.currentTarget.value;
         const valid = e.key.match(/^[a-zA-Z0-9 ]*$/);
         if (!valid || e.key === "Backspace" || e.key === "Shift" || e.key === "Meta" || e.key === "Alt" || e.key === "Control" || e.key === "Tab") return;
@@ -281,7 +281,7 @@ function Navbar() {
 
         timeout = setTimeout(function () {
             if (query != undefined && query.length > 0) {
-                void searchRequest(query)
+                void searchRequest(query);
             } else {
                 setRequesting(false);
                 setSearchResults([]);
@@ -289,25 +289,13 @@ function Navbar() {
         }, 1000);
     };
 
-    const searchRequest = async(query: string) => {
+    const searchRequest = async (query: string) => {
         if (query.length < 3) {
             return;
         }
         setRequesting(true);
-        const data = await (await fetch("/api/search", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                nickname: query.includes("#") ? query.split("#")[0]?.trim() : query.trim(),
-                nicknumber: query.includes("#") ? query.split("#")[1]?.trim() : undefined,
-                server,
-            }),
-        })).json() as PlayerData[];
-
-        if (data.length === 0 && loginData.uid) {
-            const data = await (await fetch("/api/searchPlayers", {
+        const data = (await (
+            await fetch("/api/search", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -315,14 +303,30 @@ function Navbar() {
                 body: JSON.stringify({
                     nickname: query.includes("#") ? query.split("#")[0]?.trim() : query.trim(),
                     nicknumber: query.includes("#") ? query.split("#")[1]?.trim() : undefined,
-
-                    uid: loginData.uid,
-                    email: loginData.email,
-                    secret: loginData.secret,
-                    seqnum: loginData.seqnum++,
                     server,
                 }),
-            })).json() as SearchResponse[];
+            })
+        ).json()) as PlayerData[];
+
+        if (data.length === 0 && loginData.uid) {
+            const data = (await (
+                await fetch("/api/searchPlayers", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        nickname: query.includes("#") ? query.split("#")[0]?.trim() : query.trim(),
+                        nicknumber: query.includes("#") ? query.split("#")[1]?.trim() : undefined,
+
+                        uid: loginData.uid,
+                        email: loginData.email,
+                        secret: loginData.secret,
+                        seqnum: loginData.seqnum++,
+                        server,
+                    }),
+                })
+            ).json()) as SearchResponse[];
             console.log(data);
 
             useLogin.setState({ loginData: { ...loginData, seqnum: loginData.seqnum++ } });
@@ -332,7 +336,7 @@ function Navbar() {
             setSearchResults(data);
             setRequesting(false);
         }
-    }
+    };
 
     const leaderboardComponents: { title: string; href: string; description: string }[] = [
         {
@@ -550,43 +554,48 @@ function Navbar() {
                     <CommandInput placeholder="Type a player's nickname..." onKeyUp={search} />
                     {searchResults.length > 0 ? (
                         <>
-                            <div className="flex flex-col max-h-96 md:max-h-64 overflow-y-scroll">
+                            <div className="flex max-h-96 flex-col overflow-y-scroll md:max-h-64">
                                 {searchResults.map((item, index) => {
                                     return (
-                                        <div className="w-full h-full" key={`search-result-${index}`}>
+                                        <div className="h-full w-full" key={`search-result-${index}`}>
                                             <Card>
                                                 <CardContent className="flex items-center gap-4 py-2">
                                                     <Avatar>
-                                                        <AvatarImage src={
-                                                            (item as PlayerData).status ? (item as PlayerData).status?.avatarId
-                                                                ? (item as unknown as PlayerData).status.avatar.type === "ASSISTANT"
-                                                                    ? `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${
-                                                                            Object.values((item as unknown as PlayerData).troop.chars)
-                                                                                .find((data) => data.skin === (item as unknown as PlayerData).status?.avatar.id ?? "")
-                                                                                ?.charId.replaceAll("#", "_") ?? ""
-                                                                        }.png`
-                                                                    : ""
-                                                                : "https://static.wikia.nocookie.net/mrfz/images/4/46/Symbol_profile.png/revision/latest?cb=20220418145951"
-                                                                : `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${(item as PlayerData).status ? (item as PlayerData).status?.secretary : (item as SearchResponse).secretary}.png`
-                                                        } />
+                                                        <AvatarImage
+                                                            src={
+                                                                (item as PlayerData).status
+                                                                    ? (item as PlayerData).status?.avatarId
+                                                                        ? (item as unknown as PlayerData).status.avatar.type === "ASSISTANT"
+                                                                            ? `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${
+                                                                                  Object.values((item as unknown as PlayerData).troop.chars)
+                                                                                      .find((data) => data.skin === (item as unknown as PlayerData).status?.avatar.id ?? "")
+                                                                                      ?.charId.replaceAll("#", "_") ?? ""
+                                                                              }.png`
+                                                                            : ""
+                                                                        : "https://static.wikia.nocookie.net/mrfz/images/4/46/Symbol_profile.png/revision/latest?cb=20220418145951"
+                                                                    : `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${(item as PlayerData).status ? (item as PlayerData).status?.secretary : (item as SearchResponse).secretary}.png`
+                                                            }
+                                                        />
                                                         <AvatarFallback>{(item as PlayerData).status ? getInitials((item as PlayerData).status.nickName) : getInitials((item as SearchResponse).nickName)}</AvatarFallback>
                                                     </Avatar>
                                                     <div className="flex-1 space-y-1">
                                                         <div>
                                                             <h3 className="text-lg font-semibold">{(item as PlayerData).status ? `${(item as PlayerData).status.nickName}#${(item as PlayerData).status.nickNumber}` : `${(item as SearchResponse).nickName}#${(item as SearchResponse).nickNumber}`}</h3>
-                                                            <p className="text-xs line-clamp-1"><i>{((item as PlayerData).status ? (item as PlayerData).status.resume : (item as SearchResponse).resume)?.length === 0 ? "No status found." : ((item as PlayerData).status ? (item as PlayerData).status.resume : (item as SearchResponse).resume)}</i></p>
+                                                            <p className="line-clamp-1 text-xs">
+                                                                <i>{((item as PlayerData).status ? (item as PlayerData).status.resume : (item as SearchResponse).resume)?.length === 0 ? "No status found." : (item as PlayerData).status ? (item as PlayerData).status.resume : (item as SearchResponse).resume}</i>
+                                                            </p>
                                                         </div>
                                                         <p className="text-sm text-gray-500 dark:text-gray-400">
                                                             Level {(item as PlayerData).status ? (item as PlayerData).status.level : (item as SearchResponse).level} | Playing Since {(item as PlayerData).status ? `${new Date((item as PlayerData).status.registerTs * 1000).getFullYear()}/${new Date((item as PlayerData).status.registerTs * 1000).getMonth() + 1}/${new Date((item as PlayerData).status.registerTs * 1000).getDate()}` : `${new Date((item as SearchResponse).registerTs * 1000).getFullYear()}/${new Date((item as SearchResponse).registerTs * 1000).getMonth() + 1}/${new Date((item as SearchResponse).registerTs * 1000).getDate()}`}
                                                         </p>
                                                     </div>
-                                                    <Link href={`/user?id=${(item as PlayerData).status ? (item as PlayerData).status.uid : (item as SearchResponse).uid}`} passHref>
+                                                    <Link href={`/user/${(item as PlayerData).status ? (item as PlayerData).status.uid : (item as SearchResponse).uid}`} passHref>
                                                         <Button variant="outline">View Details</Button>
                                                     </Link>
                                                 </CardContent>
                                             </Card>
                                         </div>
-                                    )
+                                    );
                                 })}
                             </div>
                         </>

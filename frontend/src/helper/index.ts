@@ -1,7 +1,10 @@
 import type { PlayerData } from "~/types/types";
 
 export function getInitials(name: string) {
-    return name?.split(" ").map(word => word[0]?.toUpperCase()).join("");
+    return name
+        ?.split(" ")
+        .map((word) => word[0]?.toUpperCase())
+        .join("");
 }
 
 export function isPlayerData(data: unknown): data is PlayerData {
