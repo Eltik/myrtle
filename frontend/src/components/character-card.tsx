@@ -11,7 +11,7 @@ function CharacterCard({ data }: { data: CharacterData }) {
             <CardContent>
                 <div className="grid gap-3 md:grid-cols-2">
                     <div className="relative h-full w-full">
-                        <Image className="h-full w-full rounded-lg object-cover" alt="Operator Image" width={500} height={500} src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/${data.skin.replaceAll("#", "_")}.png`} />
+                        <Image className="h-full w-full rounded-lg object-cover" alt="Operator Image" width={500} height={500} src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/${encodeURIComponent(data.skin.includes("@") ? data.skin.replaceAll("@", "_") : data.skin.replaceAll("#", "_"))}.png`} />
                     </div>
                     <div className="space-y-4">
                         <div className="space-y-1">
@@ -32,9 +32,13 @@ function CharacterCard({ data }: { data: CharacterData }) {
                         </div>
                         <div className="space-y-1">
                             <div className="flex flex-col">
+                                <div className="pb-2">
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">Recruited</p>
+                                    <p className="text-sm">{new Date(data.gainTime * 1000).toLocaleString()}</p>
+                                </div>
                                 <p className="text-xs text-gray-500 dark:text-gray-400">Trust</p>
                                 <div className="flex flex-row items-center gap-3">
-                                    <Progress value={data.static.trust} className="w-[60%]" />
+                                    <Progress value={data.static.trust / 2} className="w-[60%]" />
                                     {data.static.trust}%
                                 </div>
                             </div>
@@ -47,7 +51,7 @@ function CharacterCard({ data }: { data: CharacterData }) {
                         <Separator />
                     </div>
                     <div className="flex flex-row flex-wrap gap-4">
-                        {data.skills.reverse().map((skill, index) => (
+                        {data.skills.map((skill, index) => (
                             <div className="space-y-1" key={`skill-${index}`}>
                                 <div className="flex w-full flex-row items-center gap-2">
                                     <Image src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/skills/skill_icon_${skill.static.iconId ?? skill.static.skillId}.png`} width={35} height={35} alt="Skill" />

@@ -5,8 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog";
 import CharacterCard from "./character-card";
 import { getInitials } from "~/helper";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { useEffect, useState } from "react";
 
 export function PlayerProfile({ data }: { data: PlayerData }) {
+    const [sort, setSort] = useState("level");
+
+    useEffect(() => {
+        console.log(sort)
+    }, [sort]);
+
     return (
         <div className="flex flex-col gap-6 md:flex-row md:gap-10">
             <div className="flex flex-col items-center gap-4 rounded-lg bg-white p-6 shadow-md dark:bg-accent">
@@ -47,36 +55,59 @@ export function PlayerProfile({ data }: { data: PlayerData }) {
                 <Card>
                     <CardHeader>
                         <div className="space-y-4">
-                            <CardTitle>Operators</CardTitle>
+                            <div className="flex flex-row justify-between items-center">
+                                <CardTitle>Operators</CardTitle>
+                                <Select value={sort} onValueChange={setSort}>
+                                    <SelectTrigger className="w-[180px]">
+                                        <SelectValue placeholder="Level" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="level">Level</SelectItem>
+                                        <SelectItem value="trust">Trust</SelectItem>
+                                        <SelectItem value="obtained">Obtained Time</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                             <Separator />
                         </div>
                     </CardHeader>
                     <CardContent>
                         <div className="grid max-h-96 gap-4 overflow-y-scroll">
                             {data.troop?.chars
-                                ? Object.values(data.troop.chars)
-                                      .sort((a, b) => b.level - a.level)
-                                      .map((character, index) => (
-                                          <>
-                                              <Dialog>
-                                                  <DialogTrigger>
-                                                      <div className="flex cursor-pointer items-center gap-4 rounded-md border-b-2 px-2 py-2 transition-all duration-150 ease-in-out hover:bg-accent" key={`operator-${index}`}>
-                                                          <Avatar className="h-10 w-10">
-                                                              <AvatarImage alt={`${character.static.name} Avatar`} src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/avatars/${character.charId.replaceAll("#", "_")}.png`} />
-                                                              <AvatarFallback>{character.static.name.slice(0, 1)}</AvatarFallback>
-                                                          </Avatar>
-                                                          <div className="grid flex-1 gap-0.5 text-left">
-                                                              <div className="font-medium">{character.static.name}</div>
-                                                              <div className="text-xs text-gray-500 dark:text-gray-400">Level {character.level}</div>
-                                                          </div>
-                                                          <div className="text-right text-sm">HP: 2000 | ATK: 1500</div>
-                                                      </div>
-                                                  </DialogTrigger>
-                                                  <DialogContent className="sm:max-w-[425px]">
-                                                      <CharacterCard data={character} />
-                                                  </DialogContent>
-                                              </Dialog>
-                                          </>
+                                ? (sort === "level" ?
+                                    Object.values(data.troop.chars)
+                                        .sort((a, b) => b.level - a.level)
+                                        .sort((a, b) => b.evolvePhase - a.evolvePhase) :
+                                    sort === "trust" ? 
+                                    Object.values(data.troop.chars)
+                                        .sort((a, b) => b.favorPoint - a.favorPoint) :
+                                    sort === "obtained" ?
+                                        Object.values(data.troop.chars)
+                                        .sort((a, b) => a.gainTime - b.gainTime) :
+                                    Object.values(data.troop.chars)
+                                        .sort((a, b) => b.level - a.level)
+                                        .sort((a, b) => b.evolvePhase - a.evolvePhase))
+                                    .map((character, index) => (
+                                        <>
+                                            <Dialog>
+                                                <DialogTrigger>
+                                                    <div className="flex cursor-pointer items-center gap-4 rounded-md border-b-2 px-2 py-2 transition-all duration-150 ease-in-out hover:bg-accent" key={`operator-${index}`}>
+                                                        <Avatar className="h-10 w-10">
+                                                            <AvatarImage alt={`${character.static.name} Avatar`} src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/avatars/${character.charId.replaceAll("#", "_")}.png`} />
+                                                            <AvatarFallback>{character.static.name.slice(0, 1)}</AvatarFallback>
+                                                        </Avatar>
+                                                        <div className="grid flex-1 gap-0.5 text-left">
+                                                            <div className="font-medium">{character.static.name}</div>
+                                                            <div className="text-xs text-gray-500 dark:text-gray-400">Level {character.level}</div>
+                                                        </div>
+                                                        <div className="text-right text-sm">HP: 2000 | ATK: 1500</div>
+                                                    </div>
+                                                </DialogTrigger>
+                                                <DialogContent className="sm:max-w-[425px]">
+                                                    <CharacterCard data={character} />
+                                                </DialogContent>
+                                            </Dialog>
+                                        </>
                                       ))
                                 : null}
                         </div>

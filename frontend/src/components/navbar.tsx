@@ -495,11 +495,15 @@ function Navbar() {
                                                     src={
                                                         playerData.status?.avatarId
                                                             ? playerData.status.avatar.type === "ASSISTANT"
-                                                                ? `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${
-                                                                      Object.values(playerData.troop.chars)
+                                                                ? `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${encodeURIComponent(
+                                                                      ((Object.values(playerData.troop.chars)
                                                                           .find((item) => item.skin === playerData.status?.avatar.id ?? "")
-                                                                          ?.charId.replaceAll("#", "_") ?? ""
-                                                                  }.png`
+                                                                          ?.charId)?.includes("@") ? (Object.values(playerData.troop.chars)
+                                                                          .find((item) => item.skin === playerData.status?.avatar.id ?? "")
+                                                                          ?.charId)?.replaceAll("@", "_") : (Object.values(playerData.troop.chars)
+                                                                          .find((item) => item.skin === playerData.status?.avatar.id ?? "")
+                                                                          ?.charId)?.replaceAll("#", "_")) ?? ""
+                                                                    )}.png`
                                                                 : ""
                                                             : "https://static.wikia.nocookie.net/mrfz/images/4/46/Symbol_profile.png/revision/latest?cb=20220418145951"
                                                     }
@@ -566,11 +570,17 @@ function Navbar() {
                                                                 (item as PlayerData).status
                                                                     ? (item as PlayerData).status?.avatarId
                                                                         ? (item as unknown as PlayerData).status.avatar.type === "ASSISTANT"
-                                                                            ? `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${
-                                                                                  Object.values((item as unknown as PlayerData).troop.chars)
+                                                                            ? `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${encodeURIComponent(
+                                                                                  ((Object.values((item as unknown as PlayerData).troop.chars)
                                                                                       .find((data) => data.skin === (item as unknown as PlayerData).status?.avatar.id ?? "")
-                                                                                      ?.charId.replaceAll("#", "_") ?? ""
-                                                                              }.png`
+                                                                                      ?.charId)?.includes("@") ?
+                                                                                    (Object.values((item as unknown as PlayerData).troop.chars)
+                                                                                      .find((data) => data.skin === (item as unknown as PlayerData).status?.avatar.id ?? "")
+                                                                                      ?.charId)?.replaceAll("@", "_") :
+                                                                                    (Object.values((item as unknown as PlayerData).troop.chars)
+                                                                                      .find((data) => data.skin === (item as unknown as PlayerData).status?.avatar.id ?? "")
+                                                                                      ?.charId)?.replaceAll("#", "_")) ?? "")
+                                                                                }.png`
                                                                             : ""
                                                                         : "https://static.wikia.nocookie.net/mrfz/images/4/46/Symbol_profile.png/revision/latest?cb=20220418145951"
                                                                     : `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${(item as PlayerData).status ? (item as PlayerData).status?.secretary : (item as SearchResponse).secretary}.png`
