@@ -1,3 +1,5 @@
+export type LeaderboardType = "level" | "trust";
+
 export type Db<T> = {
     [k in keyof T]: T[k] extends string | number ? T[k] : string;
 };
