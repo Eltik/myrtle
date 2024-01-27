@@ -550,7 +550,7 @@ function Navbar() {
                     <CommandInput placeholder="Type a player's nickname..." onKeyUp={search} />
                     {searchResults.length > 0 ? (
                         <>
-                            <div className="flex flex-col">
+                            <div className="flex flex-col max-h-96 md:max-h-64 overflow-y-scroll">
                                 {searchResults.map((item, index) => {
                                     return (
                                         <div className="w-full h-full" key={`search-result-${index}`}>
@@ -558,29 +558,29 @@ function Navbar() {
                                                 <CardContent className="flex items-center gap-4 py-2">
                                                     <Avatar>
                                                         <AvatarImage src={
-                                                            isPlayerData(item) ? item.status?.avatarId
-                                                                ? item.status.avatar.type === "ASSISTANT"
+                                                            (item as PlayerData).status ? (item as PlayerData).status?.avatarId
+                                                                ? (item as unknown as PlayerData).status.avatar.type === "ASSISTANT"
                                                                     ? `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${
-                                                                            Object.values(item.troop.chars)
-                                                                                .find((data) => data.skin === item.status?.avatar.id ?? "")
+                                                                            Object.values((item as unknown as PlayerData).troop.chars)
+                                                                                .find((data) => data.skin === (item as unknown as PlayerData).status?.avatar.id ?? "")
                                                                                 ?.charId.replaceAll("#", "_") ?? ""
                                                                         }.png`
                                                                     : ""
                                                                 : "https://static.wikia.nocookie.net/mrfz/images/4/46/Symbol_profile.png/revision/latest?cb=20220418145951"
-                                                                : `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${item.secretary}.png`
+                                                                : `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${(item as PlayerData).status ? (item as PlayerData).status?.secretary : (item as SearchResponse).secretary}.png`
                                                         } />
-                                                        <AvatarFallback>{isPlayerData(item) ? getInitials(item.status.nickName) : getInitials(item.nickName)}</AvatarFallback>
+                                                        <AvatarFallback>{(item as PlayerData).status ? getInitials((item as PlayerData).status.nickName) : getInitials((item as SearchResponse).nickName)}</AvatarFallback>
                                                     </Avatar>
                                                     <div className="flex-1 space-y-1">
                                                         <div>
-                                                            <h3 className="text-lg font-semibold">{isPlayerData(item) ? `${item.status.nickName}#${item.status.nickNumber}` : `${item.nickName}#${item.nickNumber}`}</h3>
-                                                            <p className="text-xs line-clamp-1"><i>{(isPlayerData(item) ? item.status.resume : item.resume).length === 0 ? "No status found." : (isPlayerData(item) ? item.status.resume : item.resume)}</i></p>
+                                                            <h3 className="text-lg font-semibold">{(item as PlayerData).status ? `${(item as PlayerData).status.nickName}#${(item as PlayerData).status.nickNumber}` : `${(item as SearchResponse).nickName}#${(item as SearchResponse).nickNumber}`}</h3>
+                                                            <p className="text-xs line-clamp-1"><i>{((item as PlayerData).status ? (item as PlayerData).status.resume : (item as SearchResponse).resume)?.length === 0 ? "No status found." : ((item as PlayerData).status ? (item as PlayerData).status.resume : (item as SearchResponse).resume)}</i></p>
                                                         </div>
                                                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                            Level {isPlayerData(item) ? item.status.level : item.level} | Playing Since {isPlayerData(item) ? `${new Date(item.status.registerTs * 1000).getFullYear()}/${new Date(item.status.registerTs * 1000).getMonth()}/${new Date(item.status.registerTs * 1000).getDate()}` : `${new Date(item.registerTs * 1000).getFullYear()}/${new Date(item.registerTs * 1000).getMonth()}/${new Date(item.registerTs * 1000).getDate()}`}
+                                                            Level {(item as PlayerData).status ? (item as PlayerData).status.level : (item as SearchResponse).level} | Playing Since {(item as PlayerData).status ? `${new Date((item as PlayerData).status.registerTs * 1000).getFullYear()}/${new Date((item as PlayerData).status.registerTs * 1000).getMonth() + 1}/${new Date((item as PlayerData).status.registerTs * 1000).getDate()}` : `${new Date((item as SearchResponse).registerTs * 1000).getFullYear()}/${new Date((item as SearchResponse).registerTs * 1000).getMonth() + 1}/${new Date((item as SearchResponse).registerTs * 1000).getDate()}`}
                                                         </p>
                                                     </div>
-                                                    <Link href={`/user?id=${isPlayerData(item) ? item.status.uid : item.uid}`} passHref>
+                                                    <Link href={`/user?id=${(item as PlayerData).status ? (item as PlayerData).status.uid : (item as SearchResponse).uid}`} passHref>
                                                         <Button variant="outline">View Details</Button>
                                                     </Link>
                                                 </CardContent>
