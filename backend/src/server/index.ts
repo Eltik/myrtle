@@ -23,7 +23,7 @@ export const start = async () => {
     const routes: {
         [key: string]: { path: string; handler: (req: Request) => Promise<Response>; rateLimit: number };
     } = {};
-    const routeFiles = [await import("./impl/stats.ts"), await import("./impl/sendCode.ts"), await import("./impl/login.ts"), await import("./impl/player.ts"), await import("./impl/playerRaw.ts"), await import("./impl/searchPlayers.ts")];
+    const routeFiles = [await import("./impl/stats.ts"), await import("./impl/sendCode.ts"), await import("./impl/login.ts"), await import("./impl/refresh.ts"), await import("./impl/playerRaw.ts"), await import("./impl/searchPlayers.ts"), await import("./impl/player.ts"), await import("./impl/search.ts")];
 
     for (const file of routeFiles) {
         const routeModule = await file;

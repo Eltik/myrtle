@@ -1,5 +1,5 @@
 import type { AKServer } from "../../lib/impl/authentication/auth";
-import { getUser } from "../../lib/impl/database/impl/getUser";
+import { search } from "../../lib/impl/database/impl/search";
 import { createResponse } from "../lib/response";
 
 export const handler = async (req: Request): Promise<Response> => {
@@ -15,18 +15,20 @@ export const handler = async (req: Request): Promise<Response> => {
                   })) as Body)
                 : null;
 
-        const uid = body?.uid ?? paths[1] ?? url.searchParams.get("uid") ?? null;
-        if (!uid) {
-            return createResponse(JSON.stringify({ error: "No UID provided." }), 400);
+        const nickname = body?.nickname ?? paths[1] ?? url.searchParams.get("nickname") ?? null;
+        if (!nickname) {
+            return createResponse(JSON.stringify({ error: "No nickname provided." }), 400);
         }
 
-        const server = (body?.server ?? paths[2] ?? url.searchParams.get("server") ?? "en") as AKServer;
-        if (!["en", "jp", "kr", "cn", "bili", "tw"].includes(server)) {
+        const nicknumber = body?.nicknumber ?? paths[2] ?? url.searchParams.get("nicknumber") ?? null;
+
+        const server = (body?.server ?? paths[3] ?? url.searchParams.get("server") ?? "en") as AKServer;
+        if (server && !["en", "jp", "kr", "cn", "bili", "tw"].includes(server)) {
             return createResponse(JSON.stringify({ error: "Invalid server given." }), 400);
         }
 
         try {
-            const data = await getUser(uid, server);
+            const data = await search({ nickname, nicknumber, server });
             return createResponse(JSON.stringify(data));
         } catch (e: any) {
             return createResponse(e.message, 500);
@@ -38,14 +40,15 @@ export const handler = async (req: Request): Promise<Response> => {
 };
 
 const route = {
-    path: "/player",
+    path: "/search",
     handler,
-    rateLimit: 50,
+    rateLimit: 40,
 };
 
 type Body = {
-    uid: string;
-    server: AKServer;
+    nickname: string;
+    nicknumber?: string;
+    server?: AKServer;
 };
 
 export default route;

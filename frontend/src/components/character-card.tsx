@@ -40,31 +40,31 @@ function CharacterCard({ data }: { data: CharacterData }) {
                             </div>
                         </div>
                     </div>
-                    <div className="flex w-full flex-col gap-5">
-                        <div className="space-y-1">
-                            <span className="font-bold">Skills</span>
-                            <Separator />
-                        </div>
-                        <div className="flex flex-row flex-wrap gap-4">
-                            {data.skills.reverse().map((skill, index) => (
-                                <div className="space-y-1" key={`skill-${index}`}>
-                                    <div className="flex w-full flex-row items-center gap-2">
-                                        <Image src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/skills/skill_icon_${skill.static.iconId ?? skill.static.skillId}.png`} width={35} height={35} alt="Skill" />
-                                        <div className="text-md">
-                                            <span>
-                                                Level {data.mainSkillLvl}, M{skill.specializeLevel}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm">
-                                            <b className={`${data.defaultSkillIndex === index ? "text-blue-200" : "text-inherit"}`}>{skill.static.levels[data.mainSkillLvl - 1]?.name}</b>
-                                        </p>
-                                        <span className="line-clamp-2 text-xs">{skill.static.description}</span>
+                </div>
+                <div className="flex w-full flex-col gap-5">
+                    <div className="space-y-1">
+                        <span className="font-bold">Skills</span>
+                        <Separator />
+                    </div>
+                    <div className="flex flex-row flex-wrap gap-4">
+                        {data.skills.reverse().map((skill, index) => (
+                            <div className="space-y-1" key={`skill-${index}`}>
+                                <div className="flex w-full flex-row items-center gap-2">
+                                    <Image src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/skills/skill_icon_${skill.static.iconId ?? skill.static.skillId}.png`} width={35} height={35} alt="Skill" />
+                                    <div className="text-md">
+                                        <span>
+                                            Level {data.mainSkillLvl}, M{skill.specializeLevel}
+                                        </span>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
+                                <div>
+                                    <p className="text-sm">
+                                        <b className={`${data.defaultSkillIndex === index ? "text-blue-200" : "text-inherit"}`}>{skill.static.levels[data.mainSkillLvl - 1]?.name}</b>
+                                    </p>
+                                    <span className="line-clamp-2 text-xs">{skill.static.description}</span>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </CardContent>

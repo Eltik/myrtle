@@ -1,3 +1,13 @@
+import type { PlayerData } from "~/types/types";
+
+export function getInitials(name: string) {
+    return name.split(" ").map(word => word[0]?.toUpperCase()).join("");
+}
+
+export function isPlayerData(data: unknown): data is PlayerData {
+    return (data && typeof data === "object" && "nickname" in data && "level" in data && "trust" in data && "friendship" in data && "potential" in data && "rank" in data && "tags" in data && "skills" in data && "operators" in data && "badges" in data && "base" in data && "stats" in data && "server" in data) as boolean;
+}
+
 export function capitalize(s: string) {
     s = s?.toLowerCase();
     return s && (s[0]?.toUpperCase() ?? "") + s.slice(1);

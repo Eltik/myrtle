@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useStore } from "zustand";
 import ClientOnly from "~/lib/ClientOnly";
 import { useLogin, usePlayer } from "~/store/store";
-import { type Server, type CodeResponse, type LoginResponse, type PlayerData, type LoginData } from "~/types/types";
+import { type Server, type CodeResponse, type LoginResponse, type PlayerData, type LoginData, type SearchResponse } from "~/types/types";
 import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, navigationMenuTriggerStyle } from "./ui/navigation-menu";
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
@@ -16,6 +16,9 @@ import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, C
 import { Menu, TrendingUp, UploadCloud, Users } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import { Card, CardContent } from "./ui/card";
+import { getInitials, isPlayerData } from "~/helper";
+import { Separator } from "@radix-ui/react-separator";
 
 function Navbar() {
     const [showNavbar, setShowNavbar] = useState(false);
@@ -32,6 +35,9 @@ function Navbar() {
     const [hasOTP, setHasOTP] = useState(false);
 
     const [timer, setTimer] = useState(60);
+
+    const [requesting, setRequesting] = useState(false);
+    const [searchResults, setSearchResults] = useState<(PlayerData[]) | (SearchResponse[])>([]);
 
     const { toast } = useToast();
 
@@ -230,7 +236,7 @@ function Navbar() {
     const fetchPlayerData = async (loginData: LoginData) => {
         try {
             const playerData = (await (
-                await fetch("/api/player", {
+                await fetch("/api/refresh", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -263,6 +269,70 @@ function Navbar() {
             });
         }
     };
+
+    let timeout: NodeJS.Timeout | null = null;
+    const search = async(e: React.KeyboardEvent<HTMLInputElement>) => {
+        const query = e.currentTarget.value;
+        const valid = e.key.match(/^[a-zA-Z0-9 ]*$/);
+        if (!valid || e.key === "Backspace" || e.key === "Shift" || e.key === "Meta" || e.key === "Alt" || e.key === "Control" || e.key === "Tab") return;
+
+        setRequesting(true);
+        if (timeout) clearTimeout(timeout);
+
+        timeout = setTimeout(function () {
+            if (query != undefined && query.length > 0) {
+                void searchRequest(query)
+            } else {
+                setRequesting(false);
+                setSearchResults([]);
+            }
+        }, 1000);
+    };
+
+    const searchRequest = async(query: string) => {
+        if (query.length < 3) {
+            return;
+        }
+        setRequesting(true);
+        const data = await (await fetch("/api/search", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                nickname: query.includes("#") ? query.split("#")[0]?.trim() : query.trim(),
+                nicknumber: query.includes("#") ? query.split("#")[1]?.trim() : undefined,
+                server,
+            }),
+        })).json() as PlayerData[];
+
+        if (data.length === 0 && loginData.uid) {
+            const data = await (await fetch("/api/searchPlayers", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    nickname: query.includes("#") ? query.split("#")[0]?.trim() : query.trim(),
+                    nicknumber: query.includes("#") ? query.split("#")[1]?.trim() : undefined,
+
+                    uid: loginData.uid,
+                    email: loginData.email,
+                    secret: loginData.secret,
+                    seqnum: loginData.seqnum++,
+                    server,
+                }),
+            })).json() as SearchResponse[];
+            console.log(data);
+
+            useLogin.setState({ loginData: { ...loginData, seqnum: loginData.seqnum++ } });
+            setSearchResults(data);
+            setRequesting(false);
+        } else {
+            setSearchResults(data);
+            setRequesting(false);
+        }
+    }
 
     const leaderboardComponents: { title: string; href: string; description: string }[] = [
         {
@@ -477,24 +547,68 @@ function Navbar() {
                     </NavigationMenu>
                 </div>
                 <CommandDialog open={searchModel} onOpenChange={setSearchModel}>
-                    <CommandInput placeholder="Type a command or search..." />
-                    <CommandList>
-                        <CommandEmpty>No players found.</CommandEmpty>
-                        <CommandGroup heading="Suggestions">
-                            <CommandItem className="cursor-pointer">
-                                <TrendingUp className="mr-2 h-4 w-4" />
-                                <span>Highest Level</span>
-                            </CommandItem>
-                            <CommandItem className="cursor-pointer">
-                                <Users className="mr-2 h-4 w-4" />
-                                <span>Most Operators</span>
-                            </CommandItem>
-                            <CommandItem className="cursor-pointer">
-                                <UploadCloud className="mr-2 h-4 w-4" />
-                                <span>New Players</span>
-                            </CommandItem>
-                        </CommandGroup>
-                    </CommandList>
+                    <CommandInput placeholder="Type a player's nickname..." onKeyUp={search} />
+                    {searchResults.length > 0 ? (
+                        <>
+                            <div className="flex flex-col">
+                                {searchResults.map((item, index) => {
+                                    return (
+                                        <div className="w-full h-full" key={`search-result-${index}`}>
+                                            <Card>
+                                                <CardContent className="flex items-center gap-4 py-2">
+                                                    <Avatar>
+                                                        <AvatarImage src={
+                                                            isPlayerData(item) ? item.status?.avatarId
+                                                                ? item.status.avatar.type === "ASSISTANT"
+                                                                    ? `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${
+                                                                            Object.values(item.troop.chars)
+                                                                                .find((data) => data.skin === item.status?.avatar.id ?? "")
+                                                                                ?.charId.replaceAll("#", "_") ?? ""
+                                                                        }.png`
+                                                                    : ""
+                                                                : "https://static.wikia.nocookie.net/mrfz/images/4/46/Symbol_profile.png/revision/latest?cb=20220418145951"
+                                                                : `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${item.secretary}.png`
+                                                        } />
+                                                        <AvatarFallback>{isPlayerData(item) ? getInitials(item.status.nickName) : getInitials(item.nickName)}</AvatarFallback>
+                                                    </Avatar>
+                                                    <div className="flex-1 space-y-1">
+                                                        <div>
+                                                            <h3 className="text-lg font-semibold">{isPlayerData(item) ? `${item.status.nickName}#${item.status.nickNumber}` : `${item.nickName}#${item.nickNumber}`}</h3>
+                                                            <p className="text-xs line-clamp-1"><i>{(isPlayerData(item) ? item.status.resume : item.resume).length === 0 ? "No status found." : (isPlayerData(item) ? item.status.resume : item.resume)}</i></p>
+                                                        </div>
+                                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                            Level {isPlayerData(item) ? item.status.level : item.level} | Playing Since {isPlayerData(item) ? `${new Date(item.status.registerTs * 1000).getFullYear()}/${new Date(item.status.registerTs * 1000).getMonth()}/${new Date(item.status.registerTs * 1000).getDate()}` : `${new Date(item.registerTs * 1000).getFullYear()}/${new Date(item.registerTs * 1000).getMonth()}/${new Date(item.registerTs * 1000).getDate()}`}
+                                                        </p>
+                                                    </div>
+                                                    <Link href={`/user?id=${isPlayerData(item) ? item.status.uid : item.uid}`} passHref>
+                                                        <Button variant="outline">View Details</Button>
+                                                    </Link>
+                                                </CardContent>
+                                            </Card>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </>
+                    ) : (
+                        <CommandList>
+                            <CommandEmpty>No Results</CommandEmpty>
+                            <CommandGroup heading="Suggestions">
+                                <CommandItem className="cursor-pointer">
+                                    <TrendingUp className="mr-2 h-4 w-4" />
+                                    <span>Highest Level</span>
+                                </CommandItem>
+                                <CommandItem className="cursor-pointer">
+                                    <Users className="mr-2 h-4 w-4" />
+                                    <span>Most Operators</span>
+                                </CommandItem>
+                                <CommandItem className="cursor-pointer">
+                                    <UploadCloud className="mr-2 h-4 w-4" />
+                                    <span>New Players</span>
+                                </CommandItem>
+                            </CommandGroup>
+                        </CommandList>
+                    )}
                 </CommandDialog>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
