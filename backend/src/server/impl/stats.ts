@@ -1,4 +1,4 @@
-import { cacheTime, redis } from "..";
+import { redis } from "..";
 import { createResponse } from "../lib/response";
 
 export const handler = async (req: Request): Promise<Response> => {
@@ -17,7 +17,7 @@ export const handler = async (req: Request): Promise<Response> => {
             return createResponse(JSON.stringify({ error: "No data found." }), 404);
         }
 
-        await redis.set(`stats`, JSON.stringify(data), "EX", cacheTime);
+        await redis.set(`stats`, JSON.stringify(data), "EX", route.cacheTime);
 
         return createResponse(JSON.stringify(data));
     } catch (e) {
@@ -30,6 +30,7 @@ const route = {
     path: "/stats",
     handler,
     rateLimit: 60,
+    cacheTime: 60 * 60 * 24 * 7
 };
 
 export default route;

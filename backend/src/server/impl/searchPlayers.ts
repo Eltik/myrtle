@@ -1,4 +1,4 @@
-import { cacheTime, redis } from "..";
+import { redis } from "..";
 import type { AKServer } from "../../lib/impl/authentication/auth";
 import { AuthSession } from "../../lib/impl/authentication/auth-session";
 import { searchPlayers } from "../../lib/impl/client";
@@ -51,7 +51,7 @@ export const handler = async (req: Request): Promise<Response> => {
 
         try {
             const data = await searchPlayers(session, server, nickname, nicknumber ?? undefined, limit ?? undefined);
-            await redis.set(`search-players-${server}-${nickname}-${nicknumber}-${limit}`, JSON.stringify(data), "EX", cacheTime);
+            await redis.set(`search-players-${server}-${nickname}-${nicknumber}-${limit}`, JSON.stringify(data), "EX", route.cacheTime);
             return createResponse(JSON.stringify(data));
         } catch (e: any) {
             return createResponse(e.message, 500);
@@ -66,6 +66,7 @@ const route = {
     path: "/search-players",
     handler,
     rateLimit: 20,
+    cacheTime: 60 * 60 * 24 * 7
 };
 
 type Body = {

@@ -17,8 +17,6 @@ export const redis: Redis = env.REDIS_URL
           call: async () => void 0,
       } as any);
 
-export const cacheTime = env.REDIS_CACHE_TIME || 60 * 60 * 24 * 7 * 2;
-
 export const start = async () => {
     const routes: {
         [key: string]: { path: string; handler: (req: Request) => Promise<Response>; rateLimit: number };
@@ -28,7 +26,7 @@ export const start = async () => {
         await import("./impl/sendCode.ts"),
         await import("./impl/login.ts"),
         await import("./impl/refresh.ts"),
-        await import("./impl/playerRaw.ts"),
+        await import("./impl/leaderboard.ts"),
         await import("./impl/searchPlayers.ts"),
         await import("./impl/player.ts"),
         await import("./impl/search.ts"),

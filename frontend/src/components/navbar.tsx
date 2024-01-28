@@ -341,13 +341,13 @@ function Navbar() {
     const leaderboardComponents: { title: string; href: string; description: string }[] = [
         {
             title: "Level",
-            href: "/leaderboard?type=level&sort=desc",
+            href: "/leaderboard/level/desc",
             description: "View the top Arknights players sorted by their level.",
         },
         {
             title: "Operator Trust",
-            href: "/leaderboard?type=trust&sort=desc&operator=amiya",
-            description: "Sort Arknights players based on the trust level of a specific operator.",
+            href: "/leaderboard/trust/desc",
+            description: "Sort Arknights players based on the average trust points of their operators.",
         },
         {
             title: "Operator Mastery",

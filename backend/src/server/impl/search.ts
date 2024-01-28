@@ -43,6 +43,7 @@ const route = {
     path: "/search",
     handler,
     rateLimit: 40,
+    cacheTime: 60 * 60 * 24 * 7
 };
 
 type Body = {
