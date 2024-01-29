@@ -66,7 +66,7 @@ const route = {
     path: "/search-players",
     handler,
     rateLimit: 20,
-    cacheTime: 60 * 60 * 24 * 7
+    cacheTime: 60 * 60 * 24 * 7,
 };
 
 type Body = {

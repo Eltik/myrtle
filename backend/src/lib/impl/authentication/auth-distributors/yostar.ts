@@ -91,6 +91,7 @@ export const createGuestAccount = async (server: AKServer): Promise<[string, str
 };
 
 export const bindNickname = async (server: AKServer, nickname: string) => {
+    console.log(`Binding nickname ${nickname} on server ${server}...`);
     /*
     await this.authRequest("user/bindNickname", {
         body: JSON.stringify({
@@ -122,7 +123,7 @@ export const getTokenFromEmailCode = async (server: AKServer, email?: string, co
     }
 
     if (!code) {
-        await requestYostarAuth(email!, server);
+        await requestYostarAuth(email, server);
         if (!stdin) {
             return ["", ""];
         }

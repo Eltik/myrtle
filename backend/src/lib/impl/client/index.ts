@@ -2,7 +2,7 @@ import { authRequest } from "../../../helper/request";
 import type { PlayerData } from "../../../types/types";
 import type { AKServer } from "../authentication/auth";
 import type { AuthSession } from "../authentication/auth-session";
-import { calculateTrust, getOperator, getSkill } from "../gamedata";
+import { calculateTrust, getItem, getOperator, getSkill } from "../gamedata";
 
 export const getRawData = async (session: AuthSession, server: AKServer) => {
     const data = await (
@@ -99,6 +99,7 @@ export const getRawBattleReplay = async (session: AuthSession, server: AKServer,
         },
         server,
     );
+    console.log(data);
 
     /*
     replay_data = base64.b64decode(data["battleReplay"])
@@ -143,7 +144,23 @@ export const getData = async (session: AuthSession, server: AKServer): Promise<P
     return await formatUser(data.user);
 };
 
-const formatUser = async (data: PlayerData) => {
+export const formatUser = async (data: PlayerData) => {
+    const inventoryPromises = Object.keys(data.inventory).map(async (key) => {
+        const item = await getItem(key);
+        const value = data.inventory[key];
+        Object.assign(item, {
+            amount: value,
+        });
+
+        delete data.inventory[key];
+        Object.assign(data, {
+            inventory: {
+                ...data.inventory,
+                [item.itemId]: item,
+            },
+        });
+    });
+
     const charsPromises = Object.values(data.troop.chars).map(async (character: any) => {
         const staticData = await getOperator(character.charId);
         if (staticData) {
@@ -177,12 +194,11 @@ const formatUser = async (data: PlayerData) => {
                     },
                 });
             });
-
             await Promise.all(skillsPromises);
         }
     });
 
     await Promise.all(charsPromises);
-
+    await Promise.all(inventoryPromises);
     return data;
 };

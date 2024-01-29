@@ -7,7 +7,7 @@ import { rateLimitMiddleware } from "./lib/rateLimit.ts";
 import { createResponse } from "./lib/response.ts";
 
 export const redis: Redis = env.REDIS_URL
-    ? new Redis((env.REDIS_URL as string) || "redis://localhost:6379")
+    ? new Redis(env.REDIS_URL || "redis://localhost:6379")
     : ({
           get: async () => null,
           set: (): Promise<"OK"> => Promise.resolve("OK"),
@@ -15,7 +15,7 @@ export const redis: Redis = env.REDIS_URL
           keys: async () => [],
           connect: async () => void 0,
           call: async () => void 0,
-      } as any);
+      } as unknown as Redis);
 
 export const start = async () => {
     const routes: {
@@ -53,7 +53,7 @@ export const start = async () => {
             const pathName = `/${url.pathname.split("/").slice(1)[0]}`;
 
             if (routes[pathName]) {
-                const { path, handler, rateLimit } = routes[pathName];
+                const { handler, rateLimit } = routes[pathName];
                 const requests = await rateLimitMiddleware(req, pathName);
 
                 if (requests && requests.requests > rateLimit) {

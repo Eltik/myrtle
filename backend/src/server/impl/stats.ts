@@ -30,7 +30,7 @@ const route = {
     path: "/stats",
     handler,
     rateLimit: 60,
-    cacheTime: 60 * 60 * 24 * 7
+    cacheTime: 60 * 60 * 24 * 7,
 };
 
 export default route;

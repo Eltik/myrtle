@@ -203,7 +203,7 @@ export const reloadDeviceIds = () => {
 };
 
 export const clearDomains = () => {
-    for (let server in NETWORK_ROUTES) {
+    for (const server in NETWORK_ROUTES) {
         Object.assign(domains, {
             [server as AKServer]: {},
         });
@@ -211,7 +211,7 @@ export const clearDomains = () => {
 };
 
 export const clearVersions = () => {
-    for (let server in NETWORK_ROUTES) {
+    for (const server in NETWORK_ROUTES) {
         Object.assign(versions, {
             [server as AKServer]: {
                 resVersion: "",

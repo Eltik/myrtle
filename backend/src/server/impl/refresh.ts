@@ -1,7 +1,9 @@
 import type { AKServer } from "../../lib/impl/authentication/auth";
 import { AuthSession } from "../../lib/impl/authentication/auth-session";
 import { getData } from "../../lib/impl/client";
+import { getUser } from "../../lib/impl/database/impl/getUser";
 import { insertUser } from "../../lib/impl/database/impl/insertUser";
+import { updateUser } from "../../lib/impl/database/impl/updateUser";
 import { createResponse } from "../lib/response";
 
 export const handler = async (req: Request): Promise<Response> => {
@@ -39,7 +41,13 @@ export const handler = async (req: Request): Promise<Response> => {
 
         try {
             const data = await getData(session, server);
-            if (data) await insertUser(data, server);
+
+            const stored = await getUser(uid, server);
+            if (!stored) {
+                if (data) await insertUser(data, server);
+            } else {
+                if (data) await updateUser(data, server);
+            }
 
             return createResponse(JSON.stringify(data));
         } catch (e: any) {

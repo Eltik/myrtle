@@ -1,5 +1,5 @@
 import { db, tableName } from "..";
-import type { Db, PlayerData, PlayerDataDB } from "../../../../types/types";
+import type { Db, PlayerDataDB } from "../../../../types/types";
 import { schema } from "./schema";
 
 export const search = async ({ nickname, nicknumber, server }: { nickname: string; nicknumber?: string; server?: string }): Promise<PlayerDataDB[]> => {

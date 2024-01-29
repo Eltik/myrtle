@@ -8,12 +8,14 @@
     "dev": "bun src/index.ts",
     "build": "bun build ./src/index.ts --outdir ./dist --target node",
     "prettier": "bunx prettier --write .",
-    "lint": "bun run prettier && bunx typescript"
+    "lint": "bun run prettier && bunx eslint --fix ."
   },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/uuid": "^9.0.7",
+    "@typescript-eslint/eslint-plugin": "^6.19.1",
     "bun-types": "latest",
+    "eslint": "^8.56.0",
     "prettier": "^3.1.1",
     "tsc": "^2.0.4"
   },

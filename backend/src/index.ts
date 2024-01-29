@@ -11,4 +11,6 @@ import { start } from "./server";
     await loadNetworkConfig("all");
     await loadVersionConfig("all");
     await start();
-})();
+})()
+    .then(() => console.log("Started server."))
+    .catch((err) => console.error(err));

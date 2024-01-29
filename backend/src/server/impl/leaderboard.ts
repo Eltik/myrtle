@@ -1,9 +1,7 @@
 import { redis } from "..";
 import type { AKServer } from "../../lib/impl/authentication/auth";
-import { loginWithEmailCode } from "../../lib/impl/authentication/auth-distributors/yostar";
-import { AuthSession } from "../../lib/impl/authentication/auth-session";
 import { leaderboard } from "../../lib/impl/database/impl/leaderboard";
-import { LeaderboardType } from "../../types/types";
+import { type LeaderboardType } from "../../types/types";
 import { createResponse } from "../lib/response";
 
 export const handler = async (req: Request): Promise<Response> => {
@@ -24,17 +22,17 @@ export const handler = async (req: Request): Promise<Response> => {
             return createResponse(JSON.stringify({ error: "Invalid server given." }), 400);
         }
 
-        const type = (body?.type ?? paths[2] ?? url.searchParams.get("type") ?? "level");
+        const type = body?.type ?? paths[2] ?? url.searchParams.get("type") ?? "level";
         if (type !== "level" && type !== "trust") {
             return createResponse(JSON.stringify({ error: "Invalid leaderboard type given." }));
         }
 
-        const sort = (body?.sort ?? paths[3] ?? url.searchParams.get("sort") ?? "desc");
+        const sort = body?.sort ?? paths[3] ?? url.searchParams.get("sort") ?? "desc";
         if (sort !== "asc" && sort !== "desc") {
             return createResponse(JSON.stringify({ error: "Invalid sort type given." }));
         }
 
-        const limit = (body?.limit ?? paths[4] ?? url.searchParams.get("limit") ?? 20);
+        const limit = body?.limit ?? paths[4] ?? url.searchParams.get("limit") ?? 20;
         if (isNaN(Number(limit))) {
             return createResponse(JSON.stringify({ error: "Invalid limit given." }));
         }
@@ -68,7 +66,7 @@ const route = {
     path: "/leaderboard",
     handler,
     rateLimit: 40,
-    cacheTime: 60 * 60 * 24 * 7
+    cacheTime: 60 * 60 * 24 * 7,
 };
 
 type Body = {

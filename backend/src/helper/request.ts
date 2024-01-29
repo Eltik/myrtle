@@ -60,5 +60,5 @@ export const request = async (domain: AKDomain, endpoint: string | null = null, 
     }
 
     const data = await fetch(url, args);
-    return data as Response;
+    return data;
 };

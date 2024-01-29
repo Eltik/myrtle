@@ -1,20 +1,20 @@
 import { db, tableName } from "..";
-import { Db, LeaderboardType, PlayerDataDB } from "../../../../types/types";
+import { type Db, type LeaderboardType, type PlayerDataDB } from "../../../../types/types";
 import { schema } from "./schema";
 
-export const leaderboard = async({ server, type, sort, limit, fields }: { server: string, type?: LeaderboardType, sort?: "asc" | "desc", limit?: number, fields?: string[] }) => {
+export const leaderboard = async ({ server, type, sort, limit, fields }: { server: string; type?: LeaderboardType; sort?: "asc" | "desc"; limit?: number; fields?: string[] }) => {
     if (!type) type = "level";
     if (!sort) sort = "desc";
     if (!limit) limit = 20;
 
     const params = {
-        $limit: limit
+        $limit: limit,
     };
-    
+
     if (server) Object.assign(params, { $server: server });
 
     const results = db
-        .query<Db<PlayerDataDB>, { $server?: string, $limit?: number }>(
+        .query<Db<PlayerDataDB>, { $server?: string; $limit?: number }>(
             `SELECT *${type === "trust" ? ", (SELECT AVG(json_extract(value, '$.favorPoint')) FROM json_each(troop, '$.chars')) as avg_favorPoint" : ""}
              FROM ${tableName} 
              WHERE ${server ? `server = $server` : "1"}
@@ -43,14 +43,16 @@ export const leaderboard = async({ server, type, sort, limit, fields }: { server
                     delete (item as { [key: string]: any })[key];
                 }
             });
-        })
+        });
     }
 
     return results as unknown as PlayerDataDB[];
 };
 
-export const leaderboardByOperator = async({ server, operatorId, type, sort, limit }: { server: string, operatorId: string, type?: "", sort?: "asc" | "desc", limit?: number }) => {
+export const leaderboardByOperator = async ({ server, operatorId, type, sort, limit }: { server: string; operatorId: string; type?: ""; sort?: "asc" | "desc"; limit?: number }) => {
     if (!type) type = ""; // TODO
     if (!sort) sort = "desc";
     if (!limit) limit = 20;
+
+    console.log(server, operatorId);
 };
