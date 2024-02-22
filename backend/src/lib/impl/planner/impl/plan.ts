@@ -1,61 +1,45 @@
-import { Stage } from "../../../../types/types";
+import { Drop } from "../../../../types/types";
 import { stages } from "./before";
 
 export const getPlan = async (requirements: Record<string, number>, ownedItems: Record<string, number>) => {
-    // Create a list of all possible stages
-    let possibleStages = stages.filter(stage => {
-        // Check if the stage drops an item that is in the requirements
-        return stage.drops.some(drop => requirements[drop.itemId] >  0);
-    });
+    // Initialize a plan object to store the results
+    const plan: Record<string, { stageId: string, times: number }[]> = {};
 
-    // Calculate the expected value of each stage
-    possibleStages = possibleStages.map(stage => {
-        let totalExpectedValue =  0;
-        let totalQuantity =  0;
+    // Loop through each item in the requirements
+    for (const itemId in requirements) {
+        const requiredQuantity = requirements[itemId] - (ownedItems[itemId] ||  0);
+        let remainingQuantity = requiredQuantity;
 
-        stage.drops.forEach(drop => {
-            if (requirements[drop.itemId] >  0) {
-                totalExpectedValue += drop.quantity * (1 - drop.probability);
-                totalQuantity += drop.quantity;
+        // Filter stages that drop the current item and sort them by efficiency
+        const relevantStages = stages
+            .filter(stage => stage.drops.some(drop => drop.itemId === itemId))
+            .sort((a, b) => {
+                const efficiencyA = (a.drops.find(drop => drop.itemId === itemId)?.quantity ?? 0) / (a.drops.find(drop => drop.itemId === itemId)?.times ?? 0) || 0;
+                const efficiencyB = (b.drops.find(drop => drop.itemId === itemId)?.quantity ?? 0) / (b.drops.find(drop => drop.itemId === itemId)?.times ?? 0) || 0;
+                return efficiencyA - efficiencyB;
+            });
+
+        // Determine the number of times each stage needs to be played
+        for (const stage of relevantStages) {
+            const drop = stage.drops.find(d => d.itemId === itemId);
+            if (!drop) continue;
+
+            const efficiency = calculateEfficiency(drop);
+            const timesToFarm = Math.ceil(remainingQuantity / (drop.quantity * efficiency));
+            remainingQuantity -= timesToFarm * drop.quantity;
+
+            if (!plan[itemId]) {
+                plan[itemId] = [];
             }
-        });
+            plan[itemId].push({ stageId: stage.stageId, times: timesToFarm });
 
-        return {
-            ...stage,
-            expectedValue: totalExpectedValue / totalQuantity,
-        };
-    });
-
-    // Sort the stages by expected value in descending order
-    possibleStages.sort((a, b) => (b as Stage & { expectedValue: number }).expectedValue - (a as Stage & { expectedValue: number }).expectedValue);
-
-    // Create a plan
-    const plan: Record<string, {
-        stage: Stage,
-        amount: number
-    }> = {};
-
-    // Iterate through the stages
-    for (const stage of possibleStages) {
-        // Check if the stage drops an item that is in the requirements
-        const drop = stage.drops.find(drop => requirements[drop.itemId] >  0);
-        if (!drop) continue;
-
-        // Check if the player already has the item
-        if (ownedItems[drop.itemId] >= requirements[drop.itemId]) continue;
-
-        // Calculate how much of the item the player needs
-        const needed = requirements[drop.itemId] - (ownedItems[drop.itemId] ||  0);
-
-        // Add the stage to the plan
-        plan[stage.stageId] = {
-            stage,
-            amount: Math.ceil(needed / drop.quantity)
-        };
-
-        // Update the requirements
-        requirements[drop.itemId] -= needed;
+            if (remainingQuantity <=  0) break;
+        }
     }
 
     return plan;
+};
+
+const calculateEfficiency = (drop: Drop) => {
+    return drop.quantity / drop.times;
 };

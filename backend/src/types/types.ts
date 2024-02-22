@@ -76,12 +76,15 @@ export type StageData = {
 };
 
 export type Stage = StageData & {
-    drops: {
-        itemId: string;
-        quantity: number;
-        probability: number; // ex. 0.3417, 0.4443
-        time: number | null; // Amount of time required to get the item
-    }[];
+    drops: Drop[];
+};
+
+export type Drop = {
+    itemId: string;
+    quantity: number; // Amount of drops given for a stage in total recorded
+    times: number; // Amount of times in total a stage has been recorded
+    standardDeviation: number; // Standard deviation of the drops. Ex. 0.634234
+    //time: number | null; // Amount of time required to get the item
 };
 
 export type PlayerDataDB = PlayerData & {

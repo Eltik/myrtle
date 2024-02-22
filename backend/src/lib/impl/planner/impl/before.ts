@@ -21,7 +21,7 @@ export const preprocess = async(materials: { stageId: string }[]) => {
         }
     }
 
-    const promises = stageIds.map(async (stage) => {
+    const promises = stageIds.map(async (stage, index) => {
         if (!stages.find((item) => item.stageId === stage)) {
             const stageData = await getStage(stage);
             return stageData;
@@ -45,7 +45,6 @@ export const preprocess = async(materials: { stageId: string }[]) => {
         start: number;
         end: number | null;
     }[]};
-    // Times is amount of times submitted, and quantity is the amount of times that item has dropped within the amount of times.
 
     for (const stage of data.matrix) {
         const tempStage = tempStages.find((item) => item.stageId === stage.stageId);
@@ -54,18 +53,18 @@ export const preprocess = async(materials: { stageId: string }[]) => {
         if (stages.find((item) => item.stageId === stage.stageId)) {
             stages.find((item) => item.stageId === stage.stageId)?.drops.push({
                 itemId: stage.itemId,
-                quantity: stage.quantity / stage.times,
-                probability: stage.quantity / stage.times * 100,
-                time: stage.start && stage.end ? stage.end - stage.start : null
+                quantity: stage.quantity,
+                times: stage.times,
+                standardDeviation: stage.stdDev
             });
         } else {
             stages.push({
                 ...tempStage,
                 drops: [{
                     itemId: stage.itemId,
-                    quantity: stage.quantity / stage.times,
-                    probability: stage.quantity / stage.times * 100,
-                    time: stage.start && stage.end ? stage.end - stage.start : null
+                    quantity: stage.quantity,
+                    times: stage.times,
+                    standardDeviation: stage.stdDev
                 }],
             });
         }
