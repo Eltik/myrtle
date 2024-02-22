@@ -4,7 +4,7 @@ import { join } from "node:path";
 
 export const stages: Stage[] = [];
 
-export const preprocess = async(materials: { stageId: string }[]) => {
+export const preprocess = async (materials: { stageId: string }[]) => {
     const file = Bun.file(join(import.meta.dir, "./stages.json"));
     if (await file.exists()) {
         const data = await file.json();
@@ -21,7 +21,7 @@ export const preprocess = async(materials: { stageId: string }[]) => {
         }
     }
 
-    const promises = stageIds.map(async (stage, index) => {
+    const promises = stageIds.map(async (stage) => {
         if (!stages.find((item) => item.stageId === stage)) {
             const stageData = await getStage(stage);
             return stageData;
@@ -33,39 +33,45 @@ export const preprocess = async(materials: { stageId: string }[]) => {
 
     tempStages.push(...filteredStages);
 
-    console.log("Loaded temporary stages. Fetching data from Penguin Stats...")
+    console.log("Loaded temporary stages. Fetching data from Penguin Stats...");
 
     // https://penguin-stats.io/PenguinStats/api/v2/result/matrix?show_closed_zone=true
-    const data = await (await fetch("https://penguin-stats.io/PenguinStats/api/v2/result/matrix?show_closed_zone=true")).json() as { matrix: {
-        stageId: string;
-        itemId: string;
-        times: number;
-        quantity: number;
-        stdDev: number;
-        start: number;
-        end: number | null;
-    }[]};
+    const data = (await (await fetch("https://penguin-stats.io/PenguinStats/api/v2/result/matrix?show_closed_zone=true")).json()) as {
+        matrix: {
+            stageId: string;
+            itemId: string;
+            times: number;
+            quantity: number;
+            stdDev: number;
+            start: number;
+            end: number | null;
+        }[];
+    };
 
     for (const stage of data.matrix) {
         const tempStage = tempStages.find((item) => item.stageId === stage.stageId);
         if (!tempStage) continue;
 
         if (stages.find((item) => item.stageId === stage.stageId)) {
-            stages.find((item) => item.stageId === stage.stageId)?.drops.push({
-                itemId: stage.itemId,
-                quantity: stage.quantity,
-                times: stage.times,
-                standardDeviation: stage.stdDev
-            });
-        } else {
-            stages.push({
-                ...tempStage,
-                drops: [{
+            stages
+                .find((item) => item.stageId === stage.stageId)
+                ?.drops.push({
                     itemId: stage.itemId,
                     quantity: stage.quantity,
                     times: stage.times,
-                    standardDeviation: stage.stdDev
-                }],
+                    standardDeviation: stage.stdDev,
+                });
+        } else {
+            stages.push({
+                ...tempStage,
+                drops: [
+                    {
+                        itemId: stage.itemId,
+                        quantity: stage.quantity,
+                        times: stage.times,
+                        standardDeviation: stage.stdDev,
+                    },
+                ],
             });
         }
     }
