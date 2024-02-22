@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { StageData } from "../../../types/types";
 
 /**
  * @description Fetches static data from https://github.com/yuanyan3060/ArknightsGameResource/tree/main/gamedata/excel
@@ -15,6 +16,10 @@ const fetchGameData = async (name: string) => {
         await Bun.write(join(import.meta.dir, `./gamedata/excel/${name}.json`), JSON.stringify(data));
         return data;
     }
+};
+
+export const getStage = async (id: string): Promise<StageData | null> => {
+    return (await fetchGameData("stage_table")).stages[id];
 };
 
 export const getOperator = async (id: string) => {
