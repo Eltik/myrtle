@@ -25,6 +25,7 @@
   "dependencies": {
     "colors": "^1.4.0",
     "crypto": "^1.0.1",
+    "glpk.js": "^4.0.2",
     "ioredis": "^5.3.2",
     "querystring": "^0.2.1",
     "random": "^4.1.0",
