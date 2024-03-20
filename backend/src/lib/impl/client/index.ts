@@ -177,6 +177,7 @@ export const formatUser = async (data: PlayerData) => {
                     position: staticData.position,
                     profession: staticData.profession,
                     subProfessionId: staticData.subProfessionId,
+                    rarity: staticData.rarity,
                     trust,
                 },
             });

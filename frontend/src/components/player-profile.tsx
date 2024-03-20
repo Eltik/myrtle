@@ -8,7 +8,6 @@ import { getInitials } from "~/helper";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card";
 
 export function PlayerProfile({ data }: { data: PlayerData }) {
     const [sort, setSort] = useState("level");
@@ -66,6 +65,7 @@ export function PlayerProfile({ data }: { data: PlayerData }) {
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="level">Level</SelectItem>
+                                            <SelectItem value="rarity">Rarity</SelectItem>
                                             <SelectItem value="trust">Trust</SelectItem>
                                             <SelectItem value="obtained">Obtained Time</SelectItem>
                                         </SelectContent>
@@ -87,6 +87,9 @@ export function PlayerProfile({ data }: { data: PlayerData }) {
                                         sort === "obtained" ?
                                             Object.values(data.troop.chars)
                                             .sort((a, b) => a.gainTime - b.gainTime) :
+                                        sort === "rarity" ?
+                                            Object.values(data.troop.chars)
+                                            .sort((a, b) => a.static.rarity - b.static.rarity) :
                                         Object.values(data.troop.chars)
                                             .sort((a, b) => b.level - a.level)
                                             .sort((a, b) => b.evolvePhase - a.evolvePhase))
