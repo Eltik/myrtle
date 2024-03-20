@@ -205,7 +205,7 @@ function Navbar() {
 
                 toast({
                     title: "Logged in",
-                    description: `Successfully logged into account ${data.uid}. Fetching player data and refreshing the page...`,
+                    description: `Successfully logged into account ${data.uid}. Fetching player data and refreshing the page. This may take a while..`,
                 });
 
                 await fetchPlayerData(data as LoginData);

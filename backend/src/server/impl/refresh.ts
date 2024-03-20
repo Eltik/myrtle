@@ -51,6 +51,7 @@ export const handler = async (req: Request): Promise<Response> => {
 
             return createResponse(JSON.stringify(data));
         } catch (e: any) {
+            console.error(e);
             return createResponse(e.message, 500);
         }
     } catch (e) {

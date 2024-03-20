@@ -893,6 +893,19 @@ export type PlayerData = {
     };
 
     /**
+     * @description Home music theme selected
+     */
+    homeTheme: {
+        selected: string;
+        themes: Record<
+            string,
+            {
+                unlock: number;
+            }
+        >;
+    };
+
+    /**
      * @description: I think this is data for IS/Pinup stages
      */
     rlv2: {

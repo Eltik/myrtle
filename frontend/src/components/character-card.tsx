@@ -15,9 +15,9 @@ function CharacterCard({ data }: { data: CharacterData }) {
                     </div>
                     <div className="space-y-4">
                         <div className="space-y-1">
-                            <h2 className="text-2xl font-bold">{data.static.name}</h2>
+                            <h2 className="text-2xl font-bold">{data.static?.name}</h2>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
-                                {capitalize(data.static.profession)} | {capitalize(data.static.subProfessionId)}
+                                {capitalize(data.static?.profession)} | {capitalize(data.static?.subProfessionId)}
                             </p>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -38,8 +38,8 @@ function CharacterCard({ data }: { data: CharacterData }) {
                                 </div>
                                 <p className="text-xs text-gray-500 dark:text-gray-400">Trust</p>
                                 <div className="flex flex-row items-center gap-3">
-                                    <Progress value={data.static.trust / 2} className="w-[60%]" />
-                                    {data.static.trust}%
+                                    <Progress value={data.static?.trust / 2} className="w-[60%]" />
+                                    {data.static?.trust}%
                                 </div>
                             </div>
                         </div>
@@ -54,7 +54,7 @@ function CharacterCard({ data }: { data: CharacterData }) {
                         {data.skills.map((skill, index) => (
                             <div className="space-y-1" key={`skill-${index}`}>
                                 <div className="flex w-full flex-row items-center gap-2">
-                                    <Image src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/skills/skill_icon_${skill.static.iconId ?? skill.static.skillId}.png`} width={35} height={35} alt="Skill" />
+                                    <Image src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/skills/skill_icon_${skill.static?.iconId ?? skill.static?.skillId}.png`} width={35} height={35} alt="Skill" />
                                     <div className="text-md">
                                         <span>
                                             Level {data.mainSkillLvl}, M{skill.specializeLevel}
@@ -63,9 +63,9 @@ function CharacterCard({ data }: { data: CharacterData }) {
                                 </div>
                                 <div>
                                     <p className="text-sm">
-                                        <b className={`${data.defaultSkillIndex === index ? "text-blue-200" : "text-inherit"}`}>{skill.static.levels[data.mainSkillLvl - 1]?.name}</b>
+                                        <b className={`${data.defaultSkillIndex === index ? "text-blue-200" : "text-inherit"}`}>{skill.static?.levels[data.mainSkillLvl - 1]?.name}</b>
                                     </p>
-                                    <span className="line-clamp-2 text-xs">{skill.static.description}</span>
+                                    <span className="line-clamp-2 text-xs">{skill.static?.description}</span>
                                 </div>
                             </div>
                         ))}

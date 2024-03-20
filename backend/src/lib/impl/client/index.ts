@@ -148,6 +148,8 @@ export const formatUser = async (data: PlayerData) => {
     const inventoryPromises = Object.keys(data.inventory).map(async (key) => {
         const item = await getItem(key);
         const value = data.inventory[key];
+        if (!value) return;
+
         Object.assign(item, {
             amount: value,
         });

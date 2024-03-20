@@ -29,6 +29,7 @@ export const init = async () => {
             mainline JSON NOT NULL,
             avatar JSON NOT NULL,
             background JSON NOT NULL,
+            "homeTheme" JSON NOT NULL,
             rlv2 JSON NOT NULL,
             deepSea JSON NOT NULL,
             tower JSON NOT NULL,

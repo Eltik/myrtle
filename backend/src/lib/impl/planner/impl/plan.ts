@@ -1,4 +1,4 @@
-import glpk, { Options } from 'glpk.js';
+import glpk, { Options } from "glpk.js";
 import { stages } from "./before";
 
 // Good for getting based on the drop percentage. Not for Sanity though.
@@ -49,12 +49,12 @@ export const getPlan = async (requirements: Record<string, number>, ownedItems: 
     // Define the objective function and constraints
     const objective = {
         direction: glpk().GLP_MIN,
-        name: 'obj',
-        vars: []
+        name: "obj",
+        vars: [],
     } as {
-        direction: number,
-        name: string,
-        vars: { name: string, coef: number }[]
+        direction: number;
+        name: string;
+        vars: { name: string; coef: number }[];
     };
 
     const subjectTo = [];
@@ -76,15 +76,15 @@ export const getPlan = async (requirements: Record<string, number>, ownedItems: 
 
         // Add constraints for each item requirement
         for (const itemId in totalRequired) {
-            if (totalRequired[itemId] >  0) {
-                const drop = stage.drops.find(drop => drop.itemId === itemId);
+            if (totalRequired[itemId] > 0) {
+                const drop = stage.drops.find((drop) => drop.itemId === itemId);
                 if (drop) {
                     // Calculate the expected quantity of this item per farm
                     const expectedQuantity = drop.quantity / drop.times;
                     subjectTo.push({
                         name: `${itemId}_${index}`,
                         vars: [{ name: variableName, coef: expectedQuantity }],
-                        bnds: { type: glpk().GLP_LO, lb: totalRequired[itemId], ub: Infinity }
+                        bnds: { type: glpk().GLP_LO, lb: totalRequired[itemId], ub: Infinity },
                     });
                 }
             }
@@ -95,9 +95,9 @@ export const getPlan = async (requirements: Record<string, number>, ownedItems: 
 
     // Add a constraint to ensure we don't farm more than necessary
     subjectTo.push({
-        name: 'total_farm_times',
-        vars: stageVariables.map(variableName => ({ name: variableName, coef: 1 })),
-        bnds: { type: glpk().GLP_LO, lb: 1, ub: Infinity } // Minimize total farms
+        name: "total_farm_times",
+        vars: stageVariables.map((variableName) => ({ name: variableName, coef: 1 })),
+        bnds: { type: glpk().GLP_LO, lb: 1, ub: Infinity }, // Minimize total farms
     });
 
     // Solve the linear programming problem
@@ -106,23 +106,29 @@ export const getPlan = async (requirements: Record<string, number>, ownedItems: 
         presol: true,
         cb: {
             //call: progress => console.log(progress),
-            each: 250
-        }
+            each: 250,
+        },
     } as Options;
 
-    const res = glpk().solve({
-        name: 'FarmingPlan',
-        objective: objective,
-        subjectTo: subjectTo
-    }, options);
+    const res = glpk().solve(
+        {
+            name: "FarmingPlan",
+            objective: objective,
+            subjectTo: subjectTo,
+        },
+        options,
+    );
 
     // Extract the solution
-    const plan = Object.entries(res.result.vars).map((item) => {
-        return {
-            stageId: stages[parseInt(item[0].split('_')[1])].stageId,
-            times: Math.ceil(item[1]) // Round up to ensure we meet the requirement
-        }
-    }).filter((item) => item.times !== 0).sort((a, b) => a.times - b.times);
+    const plan = Object.entries(res.result.vars)
+        .map((item) => {
+            return {
+                stageId: stages[parseInt(item[0].split("_")[1])].stageId,
+                times: Math.ceil(item[1]), // Round up to ensure we meet the requirement
+            };
+        })
+        .filter((item) => item.times !== 0)
+        .sort((a, b) => a.times - b.times);
 
     return plan;
 };
