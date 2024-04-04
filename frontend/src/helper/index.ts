@@ -7,6 +7,10 @@ export function getInitials(name: string) {
         .join("");
 }
 
+export function parseRarity(rarity: string) {
+    return rarity === "TIER_5" ? 5 : rarity === "TIER_4" ? 4 : rarity === "TIER_3" ? 3 : rarity === "TIER_2" ? 2 : rarity === "TIER_1" ? 1 : 0;
+}
+
 export function isPlayerData(data: unknown): data is PlayerData {
     return (data && typeof data === "object" && "nickname" in data && "level" in data && "trust" in data && "friendship" in data && "potential" in data && "rank" in data && "tags" in data && "skills" in data && "operators" in data && "badges" in data && "base" in data && "stats" in data && "server" in data) as boolean;
 }

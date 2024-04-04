@@ -1459,5 +1459,6 @@ export type CharacterData = {
         profession: string;
         subProfessionId: string;
         trust: number;
+        rarity: string;
     };
 };
