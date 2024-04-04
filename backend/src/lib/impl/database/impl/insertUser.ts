@@ -12,32 +12,30 @@ export const insertUser = async (data: PlayerData, server: string): Promise<void
     INSERT INTO ${tableName} (
         uid,
         server,
-        ${Object.keys(data).join(", ")}
+        data
     )
     VALUES (
         $uid,
         $server,
-        ${Object.keys(data)
-            .map((key) => {
-                return `$${key}`;
-            })
-            .join(", ")}
+        $data
     )
     `;
 
     const params = {
         $uid: data.status.uid,
         $server: server,
+        $data: {},
     };
 
-    // Convert all values to strings and assign to params
-    Object.entries(data).forEach(([key, value]) => {
-        Object.assign(params, {
-            [`$${key}`]: typeof value === "string" ? `'${value}'` : typeof value === "object" ? JSON.stringify(value) : value,
-        });
+    Object.assign(params.$data, {
+        ...data,
     });
 
-    db.prepare(query).run(params);
+    Object.assign(params, {
+        $data: JSON.stringify(params.$data),
+    });
+
+    db.prepare(query).run(params as any);
     console.log(colors.green(`Inserted ${data.status.uid} into ${tableName}`));
 
     return;

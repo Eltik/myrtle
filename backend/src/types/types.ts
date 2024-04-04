@@ -87,30 +87,32 @@ export type Drop = {
     //time: number | null; // Amount of time required to get the item
 };
 
-export type PlayerDataDB = PlayerData & {
+export type PlayerDataDB = {
     uid: string;
     server: string;
-    inventory: Record<
-        string,
-        {
-            itemId: string;
-            name: string;
-            description: string;
-            rarity: string; // Could be an enum
-            iconId: string;
-            overrideBkg: null; // TODO: Figure out what this is
-            stackIconId: string;
-            sortId: number;
-            usage: string;
-            obtainApproach: null; // TODO: Figure out what this is
-            hideInItemGet: boolean;
-            classifyType: string; // Could be an enum
-            itemType: string;
-            stageDropList: { stageId: string; occPer: string }[];
-            buildingProductList: { roomType: string; formulaId: string }[];
-            amount: number;
-        }
-    >;
+    data: PlayerData & {
+        inventory: Record<
+            string,
+            {
+                itemId: string;
+                name: string;
+                description: string;
+                rarity: string; // Could be an enum
+                iconId: string;
+                overrideBkg: null; // TODO: Figure out what this is
+                stackIconId: string;
+                sortId: number;
+                usage: string;
+                obtainApproach: null; // TODO: Figure out what this is
+                hideInItemGet: boolean;
+                classifyType: string; // Could be an enum
+                itemType: string;
+                stageDropList: { stageId: string; occPer: string }[];
+                buildingProductList: { roomType: string; formulaId: string }[];
+                amount: number;
+            }
+        >;
+    };
 };
 
 export type PlayerData = {

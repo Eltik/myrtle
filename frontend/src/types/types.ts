@@ -880,15 +880,15 @@ export type PlayerData = {
     /**
      * @description Home music theme selected
      */
-        homeTheme: {
-            selected: string;
-            themes: Record<
-                string,
-                {
-                    unlock: number;
-                }
-            >;
-        };
+    homeTheme: {
+        selected: string;
+        themes: Record<
+            string,
+            {
+                unlock: number;
+            }
+        >;
+    };
 
     /**
      * @description: I think this is data for IS/Pinup stages
@@ -1362,24 +1362,27 @@ export type PlayerData = {
     /**
      * @description: The item ID and then the amount of that item.
      */
-    inventory: Record<string, {
-        itemId: string;
-        name: string;
-        description: string;
-        rarity: string; // Could be an enum
-        iconId: string;
-        overrideBkg: null; // TODO: Figure out what this is
-        stackIconId: string;
-        sortId: number;
-        usage: string;
-        obtainApproach: null; // TODO: Figure out what this is
-        hideInItemGet: boolean;
-        classifyType: string; // Could be an enum
-        itemType: string;
-        stageDropList: { stageId: string; occPer: string; }[];
-        buildingProductList: { roomType: string; formulaId: string }[];
-        amount: number;
-    }>;
+    inventory: Record<
+        string,
+        {
+            itemId: string;
+            name: string;
+            description: string;
+            rarity: string; // Could be an enum
+            iconId: string;
+            overrideBkg: null; // TODO: Figure out what this is
+            stackIconId: string;
+            sortId: number;
+            usage: string;
+            obtainApproach: null; // TODO: Figure out what this is
+            hideInItemGet: boolean;
+            classifyType: string; // Could be an enum
+            itemType: string;
+            stageDropList: { stageId: string; occPer: string }[];
+            buildingProductList: { roomType: string; formulaId: string }[];
+            amount: number;
+        }
+    >;
 
     /**
      * @description: Unsure about this

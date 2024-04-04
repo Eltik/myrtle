@@ -8,7 +8,7 @@ import { env } from "~/env.mjs";
 import ClientOnly from "~/lib/ClientOnly";
 import type { PlayerData } from "~/types/types";
 
-const Leaderboard: NextPage<Props> = ({ data, type }: { data: PlayerData[], type: string }) => {
+const Leaderboard: NextPage<Props> = ({ data, type }: { data: PlayerData[]; type: string }) => {
     return (
         <>
             <main>
@@ -17,9 +17,9 @@ const Leaderboard: NextPage<Props> = ({ data, type }: { data: PlayerData[], type
                     <div className="flex min-h-[calc(100vh_-_theme(spacing.16))] flex-1 flex-col gap-4 p-4 md:gap-8 md:p-10">
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                             <Card>
-                                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <CardTitle className="text-sm font-medium">Player Rank</CardTitle>
-                                    <TrophyIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                                    <TrophyIcon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                                 </CardHeader>
                                 <CardContent>
                                     <div className="text-2xl font-bold">1st</div>
@@ -27,9 +27,9 @@ const Leaderboard: NextPage<Props> = ({ data, type }: { data: PlayerData[], type
                                 </CardContent>
                             </Card>
                             <Card>
-                                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <CardTitle className="text-sm font-medium">Player Score</CardTitle>
-                                    <StarIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                                    <StarIcon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                                 </CardHeader>
                                 <CardContent>
                                     <div className="text-2xl font-bold">1000</div>
@@ -37,9 +37,9 @@ const Leaderboard: NextPage<Props> = ({ data, type }: { data: PlayerData[], type
                                 </CardContent>
                             </Card>
                             <Card>
-                                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <CardTitle className="text-sm font-medium">Player Level</CardTitle>
-                                    <ArrowUpIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                                    <ArrowUpIcon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                                 </CardHeader>
                                 <CardContent>
                                     <div className="text-2xl font-bold">10</div>
@@ -47,9 +47,9 @@ const Leaderboard: NextPage<Props> = ({ data, type }: { data: PlayerData[], type
                                 </CardContent>
                             </Card>
                             <Card>
-                                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <CardTitle className="text-sm font-medium">Player Region</CardTitle>
-                                    <GlobeIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                                    <GlobeIcon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                                 </CardHeader>
                                 <CardContent>
                                     <div className="text-2xl font-bold">Asia</div>
@@ -74,11 +74,9 @@ const Leaderboard: NextPage<Props> = ({ data, type }: { data: PlayerData[], type
                                             <TableRow key={`leaderboard-${index}`}>
                                                 <TableCell className="font-medium">{index + 1}</TableCell>
                                                 <TableCell>
-                                                    <Link href={`/user/${player.status.uid}`}>
-                                                        {player.status.nickName}
-                                                    </Link>
+                                                    <Link href={`/user/${player.status.uid}`}>{player.status.nickName}</Link>
                                                 </TableCell>
-                                                <TableCell>{type === "trust" ? Math.round((player as (PlayerData & { avg_favorPoint: number })).avg_favorPoint) : type === "level" ? player.status.exp : "Unknown"}</TableCell>
+                                                <TableCell>{type === "trust" ? Math.round((player as PlayerData & { avg_favorPoint: number }).avg_favorPoint) : type === "level" ? player.status.exp : "Unknown"}</TableCell>
                                                 <TableCell>{player.status.level}</TableCell>
                                                 <TableCell>{new Date(player.status.registerTs * 1000).toDateString()}</TableCell>
                                             </TableRow>
@@ -94,7 +92,7 @@ const Leaderboard: NextPage<Props> = ({ data, type }: { data: PlayerData[], type
     );
 };
 
-export const getServerSideProps = async ({ query }: { query: { type: string, sort: string } }) => {
+export const getServerSideProps = async ({ query }: { query: { type: string; sort: string } }) => {
     const { type, sort } = query;
     const server = "en";
 

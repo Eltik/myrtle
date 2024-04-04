@@ -1,10 +1,9 @@
 import { db, tableName } from "..";
 import type { Db, PlayerDataDB } from "../../../../types/types";
-import { schema } from "./schema";
 
 export const search = async ({ nickname, nicknumber, server }: { nickname: string; nicknumber?: string; server?: string }): Promise<PlayerDataDB[]> => {
     const params = {
-        $nickname: nickname,
+        $nickname: `%${nickname}%`, // Add wildcards for LIKE operator
     };
 
     if (nicknumber) Object.assign(params, { $nicknumber: nicknumber });
@@ -13,22 +12,20 @@ export const search = async ({ nickname, nicknumber, server }: { nickname: strin
     const results = db
         .query<Db<PlayerDataDB>, { $nickname: string; $nicknumber?: string; server?: string }>(
             `SELECT * FROM ${tableName} WHERE (
-                ${server ? `server = $server AND status->>'nickName' LIKE $nickname` : "status->>'nickName' LIKE $nickname"}
-                ${nicknumber ? "AND status->>'nickNumber' = $nicknumber" : ""})`,
+                ${server ? `server = $server AND data->'status'->>'nickName' LIKE $nickname` : "data->'status'->>'nickName' LIKE $nickname"}
+                ${nicknumber ? "AND data->'status'->>'nickNumber' = $nicknumber" : ""})`,
         )
         .all(params);
 
-    const tableSchema = await schema();
-    tableSchema.map((column) => {
-        if (column.type === "JSON") {
-            results.map((item) => {
-                const columnValue = item?.[column.name as keyof PlayerDataDB];
-                Object.assign(item ?? {}, {
-                    [column.name]: JSON.parse(columnValue ?? "{}"),
-                });
-            });
-        }
-    });
+    for (const result of results) {
+        Object.assign(result, { data: JSON.parse(result.data) });
+
+        Object.entries(result.data).forEach(([key, value]) => {
+            Object.assign(result, { [key]: value });
+        });
+
+        delete (result as any).data;
+    }
 
     return results as unknown as PlayerDataDB[];
 };

@@ -4,23 +4,15 @@ import colors from "colors";
 
 export const updateUser = async (data: PlayerData, server: string) => {
     const query = `
-    UPDATE ${tableName} SET
-        ${Object.keys(data).map((value) => {
-            return `${value} = $${value}`;
-        })}
+    UPDATE ${tableName} SET data = $data
     WHERE uid = $uid AND server = $server
     `;
 
     const params = {
         $uid: data.status.uid,
         $server: server,
+        $data: JSON.stringify(data),
     };
-
-    Object.entries(data).forEach(([key, value]) => {
-        Object.assign(params, {
-            [`$${key}`]: typeof value === "string" ? `'${value}'` : typeof value === "object" ? JSON.stringify(value) : value,
-        });
-    });
 
     db.prepare(query).run(params);
 

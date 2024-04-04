@@ -1,10 +1,9 @@
 import { db, tableName } from "..";
 import type { Db, PlayerData, PlayerDataDB } from "../../../../types/types";
-import { schema } from "./schema";
 
-export const getUser = async (uid: string, server: string): Promise<PlayerDataDB | null> => {
+export const getUser = async (uid: string, server: string): Promise<PlayerData | null> => {
     const data = db
-        .query<Db<PlayerData>, { $uid: string; $server: string }>(
+        .query<Db<PlayerDataDB>, { $uid: string; $server: string }>(
             `SELECT * FROM ${tableName}
             WHERE uid = $uid
             AND server = $server
@@ -12,16 +11,13 @@ export const getUser = async (uid: string, server: string): Promise<PlayerDataDB
         )
         .get({ $uid: uid, $server: server });
 
-    const tableSchema = await schema();
+    if (!data) return null;
 
-    tableSchema.map((column) => {
-        if (column.type === "JSON") {
-            const columnValue = data?.[column.name as keyof PlayerData];
-            Object.assign(data ?? {}, {
-                [column.name]: JSON.parse(columnValue ?? "{}"),
-            });
-        }
-    });
+    const result: PlayerData = {
+        uid: data.uid,
+        server: data.server,
+        ...JSON.parse(data.data),
+    };
 
-    return data as unknown as PlayerDataDB;
+    return result;
 };
