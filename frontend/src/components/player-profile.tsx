@@ -92,7 +92,7 @@ export function PlayerProfile({ data }: { data: PlayerData }) {
                                                     : sort === "alphabetical"
                                                         ? Object.values(data.troop.chars).sort((a, b) => a.static.name.localeCompare(b.static.name))
                                                     : sort === "rarity"
-                                                        ? Object.values(data.troop.chars).sort((a, b) => a.static.rarity - b.static.rarity)
+                                                        ? Object.values(data.troop.chars).sort((a, b) => parseRarity(a.static.rarity) - parseRarity(b.static.rarity))
                                                         : Object.values(data.troop.chars)
                                                             .sort((a, b) => b.level - a.level)
                                                             .sort((a, b) => b.evolvePhase - a.evolvePhase)
