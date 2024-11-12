@@ -27,7 +27,7 @@ export function PlayerProfile({ data }: { data: PlayerData }) {
                                     ? data.status.avatar.type === "ASSISTANT"
                                         ? `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${
                                               Object.values(data.troop.chars)
-                                                  .find((item) => item.skin === data.status?.avatar.id ?? "")
+                                                  .find((item) => item.skin === data.status?.avatar.id)
                                                   ?.charId.replaceAll("#", "_") ?? ""
                                           }.png`
                                         : ""

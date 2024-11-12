@@ -1,6 +1,3 @@
-import { v4 as uuidv4 } from "uuid";
-import random from "random";
-
 import { DEVICE_IDS } from "../../..";
 
 export const loadDeviceIds = () => {
@@ -9,6 +6,18 @@ export const loadDeviceIds = () => {
 };
 
 const createRandomDeviceIds = (): [string, string, string] => {
-    const deviceid2 = "86" + Array.from({ length: 13 }, () => random.int(0, 9)).join("");
-    return [uuidv4(), deviceid2, uuidv4()];
+    const generateUUID = (): string => {
+        return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (char) => {
+            const random = Math.random() * 16 | 0;
+            const value = char === "x" ? random : (random & 0x3) | 0x8;
+            return value.toString(16);
+        });
+    };
+
+    const generateRandomDigits = (length: number): string => {
+        return Array.from({ length }, () => Math.floor(Math.random() * 10)).join("");
+    };
+
+    const deviceid2 = "86" + generateRandomDigits(13);
+    return [generateUUID(), deviceid2, generateUUID()];
 };
