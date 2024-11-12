@@ -87,15 +87,15 @@ export function PlayerProfile({ data }: { data: PlayerData }) {
                                             ? Object.values(data.troop.chars).sort((a, b) => b.favorPoint - a.favorPoint)
                                             : sort === "obtained"
                                               ? Object.values(data.troop.chars).sort((a, b) => a.gainTime - b.gainTime)
-                                                : sort === "potential"
-                                                    ? Object.values(data.troop.chars).sort((a, b) => b.potentialRank - a.potentialRank)
-                                                    : sort === "alphabetical"
-                                                        ? Object.values(data.troop.chars).sort((a, b) => a.static.name.localeCompare(b.static.name))
-                                                    : sort === "rarity"
-                                                        ? Object.values(data.troop.chars).sort((a, b) => parseRarity(a.static.rarity) - parseRarity(b.static.rarity))
-                                                        : Object.values(data.troop.chars)
-                                                            .sort((a, b) => b.level - a.level)
-                                                            .sort((a, b) => b.evolvePhase - a.evolvePhase)
+                                              : sort === "potential"
+                                                ? Object.values(data.troop.chars).sort((a, b) => b.potentialRank - a.potentialRank)
+                                                : sort === "alphabetical"
+                                                  ? Object.values(data.troop.chars).sort((a, b) => a.static.name.localeCompare(b.static.name))
+                                                  : sort === "rarity"
+                                                    ? Object.values(data.troop.chars).sort((a, b) => parseRarity(a.static.rarity) - parseRarity(b.static.rarity))
+                                                    : Object.values(data.troop.chars)
+                                                          .sort((a, b) => b.level - a.level)
+                                                          .sort((a, b) => b.evolvePhase - a.evolvePhase)
                                       ).map((character, index) => (
                                           <>
                                               <Dialog>
@@ -106,20 +106,26 @@ export function PlayerProfile({ data }: { data: PlayerData }) {
                                                               <AvatarFallback>{character.static?.name.slice(0, 1)}</AvatarFallback>
                                                           </Avatar>
                                                           <div className="grid flex-1 gap-0.5 text-left">
-                                                            <div className="font-medium">{character.static?.name}</div>
-                                                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                                                                {sort === "trust" ?
-                                                                    <p>Trust: {character.static?.trust}%</p>
-                                                                : sort === "rarity" ? 
-                                                                    <p>Rarity: {parseRarity(character.static?.rarity ?? "")}*</p>
-                                                                : sort === "potential" ?
-                                                                    <p>Potential: {character.potentialRank}/6</p>
-                                                                : sort === "obtained" ?
-                                                                    <p>Obtained: {new Date(character.gainTime * 1000).toLocaleString()}</p>
-                                                                : <p>E{character.evolvePhase}, Level {character.level}</p>}
-                                                            </div>
+                                                              <div className="font-medium">{character.static?.name}</div>
+                                                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                                  {sort === "trust" ? (
+                                                                      <p>Trust: {character.static?.trust}%</p>
+                                                                  ) : sort === "rarity" ? (
+                                                                      <p>Rarity: {parseRarity(character.static?.rarity ?? "")}*</p>
+                                                                  ) : sort === "potential" ? (
+                                                                      <p>Potential: {character.potentialRank}/6</p>
+                                                                  ) : sort === "obtained" ? (
+                                                                      <p>Obtained: {new Date(character.gainTime * 1000).toLocaleString()}</p>
+                                                                  ) : (
+                                                                      <p>
+                                                                          E{character.evolvePhase}, Level {character.level}
+                                                                      </p>
+                                                                  )}
+                                                              </div>
                                                           </div>
-                                                          <div className="text-right text-xs text-gray-400 dark:text-gray-300">{new Date(character.gainTime * 1000).getFullYear()}/{new Date(character.gainTime * 1000).getMonth() + 1}/{new Date(character.gainTime * 1000).getDay()}</div>
+                                                          <div className="text-right text-xs text-gray-400 dark:text-gray-300">
+                                                              {new Date(character.gainTime * 1000).getFullYear()}/{new Date(character.gainTime * 1000).getMonth() + 1}/{new Date(character.gainTime * 1000).getDay()}
+                                                          </div>
                                                       </div>
                                                   </DialogTrigger>
                                                   <DialogContent className="sm:max-w-[425px]">
