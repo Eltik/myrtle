@@ -1,8 +1,8 @@
 import type { AKServer, AuthSession } from "../../../../../types/impl/lib/impl/authentication";
-import { SearchResults } from "../../../../../types/impl/lib/impl/user/impl/search";
+import type { SearchResponse } from "../../../../../types/impl/lib/impl/user/impl/search";
 import { authRequest } from "../../../authentication/impl/request/impl/auth";
 
-export const search = async (session: AuthSession, server: AKServer, nickName: string, nickNumber?: string, limit?: number) => {
+export default async (session: AuthSession, server: AKServer, nickName: string, nickNumber?: string, limit?: number) => {
     if (nickName.includes("#")) nickName = nickName.split("#")[0];
 
     const sortKey = ["level"];
@@ -43,6 +43,6 @@ export const search = async (session: AuthSession, server: AKServer, nickName: s
 
     const uidList = uidData.slice(0, limit ? limit : uidData.length).map((item: { uid: string }) => item.uid);
 
-    const data = (await (await authRequest("social/searchPlayer", session, { body: JSON.stringify({ idList: uidList }) }, server)).json()) as SearchResults;
+    const data = (await (await authRequest("social/searchPlayer", session, { body: JSON.stringify({ idList: uidList }) }, server)).json()) as SearchResponse;
     return data.players ?? [];
 };

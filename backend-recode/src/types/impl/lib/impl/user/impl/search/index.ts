@@ -1,4 +1,4 @@
-export type SearchResults = {
+export type SearchResponse = {
     players: {
         nickName: string;
         nickNumber: string;
