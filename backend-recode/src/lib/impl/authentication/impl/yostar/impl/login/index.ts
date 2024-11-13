@@ -23,6 +23,7 @@ export default async (email: string, code: string, server: AKServer, session?: A
     const secret = await getSecret(data.uid, u8Token, server);
 
     Object.assign(session, {
+        token: u8Token,
         secret: secret,
     });
 

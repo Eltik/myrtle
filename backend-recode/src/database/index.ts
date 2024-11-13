@@ -103,46 +103,68 @@ class DatabaseHandler {
         }
     }
 
-    // Create a user
-    async createRecord(tableName: string, data: Record<string, any>) {
+    // Generic CRUD operations
+    async create<T extends object>(tableName: string, data: T) {
+        const keys = Object.keys(data);
+        const values = Object.values(data);
+        const placeholders = keys.map((_, index) => `$${index + 1}`).join(", ");
+
+        const query = `INSERT INTO ${tableName} (${keys.join(", ")}) VALUES (${placeholders}) RETURNING *`;
         const client = await this.getClient();
         try {
-            const columns = Object.keys(data).join(", ");
-            const values = Object.values(data);
-            const placeholders = values.map((_, index) => `$${index + 1}`).join(", ");
-            const insertQuery = `INSERT INTO ${tableName} (${columns}) VALUES (${placeholders}) RETURNING *`;
-
-            const result = await client.query(insertQuery, values);
+            const result = await client.query(query, values);
             return result.rows[0];
         } finally {
             client.release();
         }
     }
 
-    // Update a user
-    async updateRecord(tableName: string, id: number, data: Record<string, any>) {
+    async read<T>(tableName: string, conditions: Partial<T> = {}) {
+        const keys = Object.keys(conditions);
+        const values = Object.values(conditions);
+
+        const whereClause = keys.length ? `WHERE ${keys.map((key, index) => `${key} = $${index + 1}`).join(" AND ")}` : "";
+
+        const query = `SELECT * FROM ${tableName} ${whereClause}`;
         const client = await this.getClient();
         try {
-            const updates = Object.keys(data)
-                .map((key, index) => `${key} = $${index + 1}`)
-                .join(", ");
-            const values = [...Object.values(data), id];
-            const updateQuery = `UPDATE ${tableName} SET ${updates} WHERE id = $${values.length} RETURNING *`;
+            const result = await client.query(query, values);
+            return result.rows;
+        } finally {
+            client.release();
+        }
+    }
 
-            const result = await client.query(updateQuery, values);
+    async update<T>(tableName: string, conditions: Partial<T>, updates: Partial<T>) {
+        const conditionKeys = Object.keys(conditions);
+        const conditionValues = Object.values(conditions);
+
+        const updateKeys = Object.keys(updates);
+        const updateValues = Object.values(updates);
+
+        const whereClause = `WHERE ${conditionKeys.map((key, index) => `${key} = $${index + 1}`).join(" AND ")}`;
+        const setClause = `SET ${updateKeys.map((key, index) => `${key} = $${conditionKeys.length + index + 1}`).join(", ")}`;
+
+        const query = `UPDATE ${tableName} ${setClause} ${whereClause} RETURNING *`;
+        const client = await this.getClient();
+        try {
+            const result = await client.query(query, [...conditionValues, ...updateValues]);
             return result.rows[0];
         } finally {
             client.release();
         }
     }
 
-    // Delete a user
-    async deleteRecord(tableName: string, id: number) {
+    async delete<T>(tableName: string, conditions: Partial<T>) {
+        const keys = Object.keys(conditions);
+        const values = Object.values(conditions);
+
+        const whereClause = keys.map((key, index) => `${key} = $${index + 1}`).join(" AND ");
+
+        const query = `DELETE FROM ${tableName} WHERE ${whereClause} RETURNING *`;
         const client = await this.getClient();
         try {
-            const deleteQuery = `DELETE FROM ${tableName} WHERE id = $1 RETURNING *`;
-
-            const result = await client.query(deleteQuery, [id]);
+            const result = await client.query(query, values);
             return result.rows[0];
         } finally {
             client.release();
