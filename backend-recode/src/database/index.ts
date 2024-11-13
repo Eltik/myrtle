@@ -1,7 +1,7 @@
 import { Pool, PoolClient } from "pg";
 import { z } from "zod";
 import { env } from "../env";
-import type { ColumnMetadata } from "../types/impl/database";
+import type { ColumnMetadata, FlattenedKeys, JsonPath } from "../types/impl/database";
 import { tableName as usersTableName, userSchema } from "./impl/users";
 import emitter, { Events } from "../events";
 
@@ -114,6 +114,46 @@ class DatabaseHandler {
         try {
             const result = await client.query(query, values);
             return result.rows[0];
+        } finally {
+            client.release();
+        }
+    }
+
+    async search<T>(
+        tableName: string,
+        filters: {
+            conditions?: Partial<Pick<T, FlattenedKeys<T>>>;
+            jsonConditions?: {
+                column: Extract<keyof T, string>; // Column must exist in T
+                path: JsonPath<T[keyof T]>;
+                operator: "=" | "LIKE"; // Comparison operator
+                value: any; // Value to compare against
+            }[]; // Array of JSON-based conditions
+        },
+    ): Promise<T[]> {
+        const { conditions, jsonConditions = [] } = filters;
+
+        const flatConditions = Object.entries(conditions || {}).map(([key], index) => `${key} = $${index + 1}`);
+
+        const jsonClauses = jsonConditions.map((jsonCondition, index) => {
+            const path = (jsonCondition.path as string[]).map((part) => `'${part}'`).join("->");
+            const operator = jsonCondition.operator;
+            const placeholder = `$${flatConditions.length + index + 1}`;
+            if (operator === "LIKE") {
+                return `(${jsonCondition.column}->${path})::text ${operator} ${placeholder}`;
+            }
+            return `${jsonCondition.column}->${path} ${operator} ${placeholder}`;
+        });
+
+        const whereClause = [...flatConditions, ...jsonClauses].join(" AND ");
+        const values = [...Object.values(conditions || {}), ...jsonConditions.map((cond) => cond.value)];
+
+        const query = `SELECT * FROM ${tableName} ${whereClause ? `WHERE ${whereClause}` : ""}`;
+        const client = await this.getClient();
+
+        try {
+            const result = await client.query(query, values);
+            return result.rows;
         } finally {
             client.release();
         }
