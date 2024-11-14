@@ -1,4 +1,6 @@
-import { sendCode } from "../../../../lib/impl/authentication/impl/yostar";
+import { db } from "../../../../database";
+import { tableName as userTableName } from "../../../../database/impl/users";
+import { UserDB } from "../../../../types/impl/database/impl/users";
 import type { AKServer } from "../../../../types/impl/lib/impl/authentication";
 import middleware from "../../middleware";
 
@@ -15,9 +17,9 @@ const handler = async (req: Request): Promise<Response> => {
                   })) as Body)
                 : null;
 
-        const email = body?.email ?? paths[1] ?? url.searchParams.get("email") ?? null;
-        if (!email) {
-            return middleware.createResponse(JSON.stringify({ error: "No email provided." }), 400);
+        const uid = body?.uid ?? paths[1] ?? url.searchParams.get("uid") ?? null;
+        if (!uid) {
+            return middleware.createResponse(JSON.stringify({ error: "No UID provided." }), 400);
         }
 
         const server = (body?.server ?? paths[2] ?? url.searchParams.get("server") ?? "en") as AKServer;
@@ -26,14 +28,12 @@ const handler = async (req: Request): Promise<Response> => {
         }
 
         try {
-            await sendCode(email, server);
-            return middleware.createResponse(
-                JSON.stringify({
-                    success: true,
-                }),
-            );
+            const data = await db.read<UserDB>(userTableName, {
+                uid,
+                server,
+            });
+            return middleware.createResponse(JSON.stringify(data));
         } catch (e) {
-            console.error(e);
             return middleware.createResponse((e as { message: string }).message, 500);
         }
     } catch (e) {
@@ -43,13 +43,13 @@ const handler = async (req: Request): Promise<Response> => {
 };
 
 const route = {
-    path: "/send-code",
+    path: "/player",
     handler,
-    rateLimit: 20,
+    rateLimit: 50,
 };
 
 type Body = {
-    email: string;
+    uid: string;
     server: AKServer;
 };
 

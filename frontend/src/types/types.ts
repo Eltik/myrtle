@@ -48,54 +48,60 @@ export type GetPlayerResponse = {
 };
 
 export type SearchResponse = {
-    nickName: string;
-    nickNumber: string;
+    id: string;
+    server: string;
     uid: string;
-    registerTs: number;
-    mainStageProgress: string;
-    charCnt: number;
-    furnCnt: number;
-    secretary: string;
-    secretarySkinId: string;
-    resume: string;
-    teamV2: Record<string, number>;
-    friendNumLimit: number;
-    serverName: string;
-    level: number;
-    avatarId: string;
-    avatar: {
-        type: string;
-        id: string;
-    };
-    assistCharList: {
-        charId: string;
-        skinId: string;
-        skills: {
-            skillId: string;
-            unlock: number;
-            state: number;
-            specializeLevel: number;
-            completeUpgradeTime: number;
-        }[];
-        mainSkillLvl: number;
-        skillIndex: number;
-        evolvePhase: number;
-        favorPoint: number;
-        potentialRank: number;
+    data: {
+        nickName: string;
+        nickNumber: string;
+        uid: string;
+        registerTs: number;
+        mainStageProgress: string;
+        charCnt: number;
+        furnCnt: number;
+        secretary: string;
+        secretarySkinId: string;
+        resume: string;
+        teamV2: Record<string, number>;
+        friendNumLimit: number;
+        serverName: string;
         level: number;
-        crisisRecord: unknown;
-        currentEquip: null;
-        equip: unknown;
-    }[];
-    lastOnlineTime: number;
-    board: string[];
-    infoShare: number;
-    medalBoard: {
-        type: string;
-        custom: null;
-        template: null;
+        avatarId: string;
+        avatar: {
+            type: string;
+            id: string;
+        };
+        assistCharList: {
+            charId: string;
+            skinId: string;
+            skills: {
+                skillId: string;
+                unlock: number;
+                state: number;
+                specializeLevel: number;
+                completeUpgradeTime: number;
+            }[];
+            mainSkillLvl: number;
+            skillIndex: number;
+            evolvePhase: number;
+            favorPoint: number;
+            potentialRank: number;
+            level: number;
+            crisisRecord: unknown;
+            currentEquip: null;
+            equip: unknown;
+        }[];
+        lastOnlineTime: number;
+        board: string[];
+        infoShare: number;
+        medalBoard: {
+            type: string;
+            custom: null;
+            template: null;
+        };
+        recentVisited: number;
     };
-    recentVisited: number;
+    created_at: string;
 };
 
 export type PlayerData = {

@@ -55,7 +55,7 @@ export const listener = async () => {
     });
 
     emitter.on(Events.AUTH_YOSTAR_LOGIN_SUCCESS, async (data) => {
-        console.log(colors.green(`Logged in successfully as ${data.email}.`));
+        console.log(colors.green(`Logged in successfully as ${data.uid}.`));
     });
 
     emitter.on(Events.AUTH_YOSTAR_LOGIN_ERROR, async (data) => {

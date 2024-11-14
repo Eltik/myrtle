@@ -37,7 +37,7 @@ function Navbar() {
     const [timer, setTimer] = useState(60);
 
     const [requesting, setRequesting] = useState(false);
-    const [searchResults, setSearchResults] = useState<PlayerData[] | SearchResponse[]>([]);
+    const [searchResults, setSearchResults] = useState<SearchResponse[]>([]);
 
     const { toast } = useToast();
 
@@ -306,7 +306,13 @@ function Navbar() {
                     server,
                 }),
             })
-        ).json()) as PlayerData[];
+        ).json()) as {
+            id: string;
+            uid: string;
+            server: string;
+            data: PlayerData;
+            created_at: number;
+        }[];
 
         if (data.length === 0 && loginData.uid) {
             const data = (await (
@@ -326,14 +332,53 @@ function Navbar() {
                         server,
                     }),
                 })
-            ).json()) as SearchResponse[];
-            console.log(data);
+            ).json()) as PlayerData[];
 
             useLogin.setState({ loginData: { ...loginData, seqnum: loginData.seqnum++ } });
-            setSearchResults(data);
+            setSearchResults(data.map((item) => (
+                {
+                    id: item.status.uid, // Generate random UUID
+                    uid: item.status.uid,
+                    data: item,
+                    server: "en",
+                    created_at: Date.now(),
+                } as unknown as SearchResponse
+            )));
             setRequesting(false);
         } else {
-            setSearchResults(data);
+            setSearchResults(data.map((item) => (
+                {
+                    id: item.uid,
+                    data: {
+                        nickName: item.data.status.nickName,
+                        nickNumber: item.data.status.nickNumber,
+                        uid: item.uid,
+                        registerTs: item.data.status.registerTs,
+                        mainStageProgress: item.data.status.mainStageProgress,
+                        charCnt: 0,
+                        furnCnt: 0,
+                        secretary: item.data.status.secretary,
+                        secretarySkinId: item.data.status.secretarySkinId,
+                        resume: item.data.status.resume,
+                        teamV2: item.data.dexNav.teamV2 as unknown,
+                        friendNumLimit: item.data.status.friendNumLimit,
+                        serverName: item.data.status.serverName,
+                        level: item.data.status.level,
+                        avatarId: item.data.status.avatarId,
+                        avatar: item.data.status.avatar,
+                        assistCharList: item.data.social.assistCharList as unknown,
+                        lastOnlineTime: item.data.status.lastOnlineTs,
+                        board: [""],
+                        infoShare: 0,
+                        medalBoard: {
+                            type: "",
+                            custom: null,
+                            template: null,
+                        },
+                        recentVisited: 0
+                    }
+                } as SearchResponse
+            )));
             setRequesting(false);
         }
     };
@@ -569,39 +614,25 @@ function Navbar() {
                                                     <Avatar>
                                                         <AvatarImage
                                                             src={
-                                                                (item as PlayerData).status
-                                                                    ? (item as PlayerData).status?.avatarId
-                                                                        ? (item as unknown as PlayerData).status.avatar.type === "ASSISTANT"
-                                                                            ? `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${encodeURIComponent(
-                                                                                  (Object.values((item as unknown as PlayerData).troop.chars)
-                                                                                      .find((data) => data.skin === (item as unknown as PlayerData).status?.avatar.id)
-                                                                                      ?.charId?.includes("@")
-                                                                                      ? Object.values((item as unknown as PlayerData).troop.chars)
-                                                                                            .find((data) => data.skin === (item as unknown as PlayerData).status?.avatar.id)
-                                                                                            ?.charId?.replaceAll("@", "_")
-                                                                                      : Object.values((item as unknown as PlayerData).troop.chars)
-                                                                                            .find((data) => data.skin === (item as unknown as PlayerData).status?.avatar.id)
-                                                                                            ?.charId?.replaceAll("#", "_")) ?? "",
-                                                                              )}.png`
-                                                                            : ""
-                                                                        : "https://static.wikia.nocookie.net/mrfz/images/4/46/Symbol_profile.png/revision/latest?cb=20220418145951"
-                                                                    : `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${(item as PlayerData).status ? (item as PlayerData).status?.secretary : (item as SearchResponse).secretary}.png`
+                                                                `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${encodeURIComponent((
+                                                                    (item.data.secretary).replaceAll("#", "_")
+                                                                ))}.png`
                                                             }
                                                         />
-                                                        <AvatarFallback>{(item as PlayerData).status ? getInitials((item as PlayerData).status.nickName) : getInitials((item as SearchResponse).nickName)}</AvatarFallback>
+                                                        <AvatarFallback>{getInitials(item.data.nickName)}</AvatarFallback>
                                                     </Avatar>
                                                     <div className="flex-1 space-y-1">
                                                         <div>
-                                                            <h3 className="text-lg font-semibold">{(item as PlayerData).status ? `${(item as PlayerData).status.nickName}#${(item as PlayerData).status.nickNumber}` : `${(item as SearchResponse).nickName}#${(item as SearchResponse).nickNumber}`}</h3>
+                                                            <h3 className="text-lg font-semibold">{`${item.data.nickName}#${item.data.nickNumber}`}</h3>
                                                             <p className="line-clamp-1 text-xs">
-                                                                <i>{((item as PlayerData).status ? (item as PlayerData).status.resume : (item as SearchResponse).resume)?.length === 0 ? "No status found." : (item as PlayerData).status ? (item as PlayerData).status.resume : (item as SearchResponse).resume}</i>
+                                                                <i>{item.data.resume}</i>
                                                             </p>
                                                         </div>
                                                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                            Level {(item as PlayerData).status ? (item as PlayerData).status.level : (item as SearchResponse).level} | Playing Since {(item as PlayerData).status ? `${new Date((item as PlayerData).status.registerTs * 1000).getFullYear()}/${new Date((item as PlayerData).status.registerTs * 1000).getMonth() + 1}/${new Date((item as PlayerData).status.registerTs * 1000).getDate()}` : `${new Date((item as SearchResponse).registerTs * 1000).getFullYear()}/${new Date((item as SearchResponse).registerTs * 1000).getMonth() + 1}/${new Date((item as SearchResponse).registerTs * 1000).getDate()}`}
+                                                            Level {item.data.level} | Playing Since {`${new Date(item.data.registerTs * 1000).getFullYear()}/${new Date(item.data.registerTs * 1000).getMonth() + 1}/${new Date(item.data.registerTs * 1000).getDate()}`}
                                                         </p>
                                                     </div>
-                                                    <Link href={`/user/${(item as PlayerData).status ? (item as PlayerData).status.uid : (item as SearchResponse).uid}`} passHref>
+                                                    <Link href={`/user/${item.data.uid}`} passHref>
                                                         <Button variant="outline">View Details</Button>
                                                     </Link>
                                                 </CardContent>
