@@ -82,5 +82,6 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: "GeistSans, GeistSans Fallback", "Inter", sans-serif;
   }
 }

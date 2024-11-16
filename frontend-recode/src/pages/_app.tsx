@@ -1,13 +1,13 @@
 import { GeistSans } from "geist/font/sans";
 import { type AppType } from "next/app";
-import Layout from "~/components/layout";
-import { ThemeProvider } from "~/components/theme-provider";
+import Layout from "~/components/base/layout";
+import { ThemeProvider } from "~/components/base/theme-provider";
 
 import "~/styles/globals.css";
 
 const MyApp: AppType = ({ Component, pageProps }) => {
     return (
-        <div className={GeistSans.className}>
+        <div className={GeistSans.className} suppressHydrationWarning={true}>
             <ThemeProvider
                 attribute="class"
                 defaultTheme="dark"

@@ -6,13 +6,16 @@ import { cn } from "~/lib/utils";
 // Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = { light: "", dark: ".dark" } as const;
 
-export type ChartConfig = Record<string, {
-    label?: React.ReactNode;
-    icon?: React.ComponentType;
-} & (
-    | { color?: string; theme?: never }
-    | { color?: never; theme: Record<keyof typeof THEMES, string> }
-)>;
+export type ChartConfig = Record<
+    string,
+    {
+        label?: React.ReactNode;
+        icon?: React.ComponentType;
+    } & (
+        | { color?: string; theme?: never }
+        | { color?: never; theme: Record<keyof typeof THEMES, string> }
+    )
+>;
 
 type ChartContextProps = {
     config: ChartConfig;
@@ -139,7 +142,7 @@ const ChartTooltipContent = React.forwardRef<
             const itemConfig = getPayloadConfigFromPayload(config, item, key);
             const value =
                 !labelKey && typeof label === "string"
-                    ? config[label]?.label ?? label
+                    ? (config[label]?.label ?? label)
                     : itemConfig?.label;
 
             if (labelFormatter) {
@@ -184,7 +187,7 @@ const ChartTooltipContent = React.forwardRef<
                 {!nestLabel ? tooltipLabel : null}
                 <div className="grid gap-1.5">
                     {payload.map((item, index) => {
-                        const key = `${(nameKey ?? (item.name) ?? item.dataKey) ?? "value"}`;
+                        const key = `${nameKey ?? item.name ?? item.dataKey ?? "value"}`;
                         const itemConfig = getPayloadConfigFromPayload(
                             config,
                             item,
@@ -192,7 +195,9 @@ const ChartTooltipContent = React.forwardRef<
                         );
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                         const indicatorColor =
-                            (color ?? (item.payload as { fill: string }).fill) || item.color;
+                            (color ??
+                                (item.payload as { fill: string }).fill) ||
+                            item.color;
 
                         return (
                             <div
@@ -390,9 +395,7 @@ function getPayloadConfigFromPayload(
         ] as string;
     }
 
-    return configLabelKey in config
-        ? config[configLabelKey]
-        : config[key];
+    return configLabelKey in config ? config[configLabelKey] : config[key];
 }
 
 export {
