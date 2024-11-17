@@ -85,7 +85,7 @@ const User: NextPage<Props> = ({ data }: { data: User }) => {
                                         <div
                                             className="cursor-pointer rounded-md border p-2 transition-all duration-150 hover:bg-secondary"
                                             onClick={() => {
-                                                navigator.clipboard.writeText(`${data.status.nickName}#${data.status.nickNumber}`);
+                                                void navigator.clipboard.writeText(`${data.status.nickName}#${data.status.nickNumber}`);
                                                 toast({
                                                     title: "Success!",
                                                     description: "Copied username to clipboard.",
