@@ -11,6 +11,11 @@ import { Input } from "../ui/input";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useToast } from "~/hooks/use-toast";
+import { useCookies } from "react-cookie";
+import type { AKServer } from "~/types/impl/api";
+import type { SendCodeResponse } from "~/types/impl/api/impl/send-code";
+import type { LoginResponse } from "~/types/impl/api/impl/login";
+import type { RefreshResponse } from "~/types/impl/api/impl/refresh";
 
 export function LoginDialogue() {
     const [email, setEmail] = useState("");
@@ -19,6 +24,9 @@ export function LoginDialogue() {
     const [isLoading, setIsLoading] = useState(false);
     const [cooldown, setCooldown] = useState(0);
     const { toast } = useToast();
+    
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [_, setCookie] = useCookies(["login", "playerData"]);
 
     const sendOtp = async () => {
         if (email.length === 0) {
@@ -30,8 +38,21 @@ export function LoginDialogue() {
         }
         setIsLoading(true);
         try {
-            // Simulating an API call to send OTP
-            await new Promise((resolve) => setTimeout(resolve, 2000));
+            const data = await (await fetch("/api/sendCode", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    email,
+                    server: "en" as AKServer,
+                })
+            })).json() as SendCodeResponse;
+
+            if (!data.success || data.message) {
+                throw new Error(data.message);
+            }
+
             setIsOtpSent(true);
             setCooldown(60);
             const interval = setInterval(() => {
@@ -59,14 +80,67 @@ export function LoginDialogue() {
         setIsLoading(true);
         try {
             // Simulating an API call to verify OTP
-            await new Promise((resolve) => setTimeout(resolve, 2000));
-            // Add your login logic here
-            console.log("Logged in successfully");
+            const login = await (await fetch("/api/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    email,
+                    code: otp,
+                    server: "en" as AKServer,
+                })
+            })).json() as LoginResponse;
+
+            if (login.error || login.message) {
+                console.log(login);
+                throw new Error(login.message);
+            }
+
+            setCookie("login", login, {
+                maxAge: 60 * 60 * 24,
+                path: "/",
+            });
+
             toast({
                 title: "Success: Logged in",
                 description:
                     "You have successfully logged in. Fetching player data...",
             });
+
+            const playerData = await (await fetch("/api/refresh", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    uid: login.uid,
+                    secret: login.secret,
+                    seqnum: (login.seqnum ?? 0) + 1,
+                    server: "en" as AKServer,
+                }),
+            })).json() as RefreshResponse;
+
+            if (playerData.error || playerData.message) {
+                console.log(playerData);
+                throw new Error(playerData.message);
+            }
+
+            setCookie("playerData", playerData, {
+                maxAge: 60 * 60 * 24,
+                path: "/",
+            });
+
+            setIsLoading(false);
+
+            toast({
+                title: "Success: Fetched player data",
+                description: "You have successfully logged in. Refreshing...",
+            });
+
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
         } catch (err) {
             console.error(err);
             toast({
@@ -84,7 +158,7 @@ export function LoginDialogue() {
                 <DialogTitle>Login</DialogTitle>
                 <DialogDescription>
                     Use your YoStar email to send a code to your email. No login
-                    information is stored on the server.
+                    information is stored on the server. myrtle.moe keeps you logged in for one day max as a security measure.
                     <br />
                     <br />
                     <b>WARNING:</b> Logging in will log you out of all current

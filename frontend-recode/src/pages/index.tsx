@@ -2,8 +2,14 @@ import { LogIn, Users } from "lucide-react";
 import Head from "next/head";
 import { HomeChart } from "~/components/home/home-chart";
 import { Button } from "~/components/ui/button";
+import { motion } from "framer-motion";
 
 export default function Home() {
+    const fadeIn = {
+        hidden: { opacity: 0, y: -20 },
+        visible: { opacity: 1, y: 0 },
+    };
+
     return (
         <>
             <Head>
@@ -14,8 +20,8 @@ export default function Home() {
                 />
                 <link rel="icon" href="/favicon.ico" />
             </Head>
-            <div className="container flex max-w-screen-xl auto-rows-auto flex-col gap-4 px-4 py-8 md:grid md:grid-cols-12 md:px-8 xl:px-4">
-                <div className="col-span-full rounded-xl border bg-card text-card-foreground shadow">
+            <motion.div initial="hidden" animate="visible" exit={"hidden"} variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.2 } } }} className="container flex max-w-screen-xl auto-rows-auto flex-col gap-4 px-4 py-8 md:grid md:grid-cols-12 md:px-8 xl:px-4">
+                <motion.div variants={fadeIn} className="col-span-full rounded-xl border bg-card text-card-foreground shadow">
                     <div className="flex flex-col space-y-1.5 p-6 pb-2">
                         <h2 className="scroll-m-20 pb-0 text-3xl font-bold tracking-tight lg:text-xl xl:text-4xl">
                             Elevate your Arknights experience to the next level.
@@ -25,8 +31,8 @@ export default function Home() {
                         An advanced Arknights toolkit for the modern player.
                         Manage your operators, track your progress, and more.
                     </p>
-                </div>
-                <div className="relative col-span-full h-full rounded-xl border bg-card text-card-foreground shadow xl:col-span-8">
+                </motion.div>
+                <motion.div variants={fadeIn} className="relative col-span-full h-full rounded-xl border bg-card text-card-foreground shadow xl:col-span-8">
                     <div className="flex scroll-m-20 flex-col p-6">
                         <span className="text-xl font-bold tracking-tight">
                             Get Started
@@ -103,9 +109,9 @@ export default function Home() {
                             </li>
                         </ol>
                     </div>
-                </div>
+                </motion.div>
                 <section className="col-span-full flex flex-col gap-4 xl:col-span-4">
-                    <div className="relative flex-1 rounded-xl border bg-card text-card-foreground shadow">
+                    <motion.div variants={fadeIn} className="relative flex-1 rounded-xl border bg-card text-card-foreground shadow">
                         <div className="flex flex-col gap-0 space-y-0 p-6 pb-2">
                             <h2 className="scroll-m-20 pb-0 text-lg font-bold tracking-tight lg:text-xl xl:text-2xl">
                                 Statistics & Data
@@ -115,8 +121,8 @@ export default function Home() {
                             </p>
                         </div>
                         <HomeChart />
-                    </div>
-                    <div className="relative flex-1 rounded-xl border bg-card text-card-foreground shadow">
+                    </motion.div>
+                    <motion.div variants={fadeIn} className="relative flex-1 rounded-xl border bg-card text-card-foreground shadow">
                         <div className="flex flex-col gap-0 space-y-0 p-6 pb-2">
                             <h2 className="scroll-m-20 pb-0 text-lg font-bold tracking-tight lg:text-xl xl:text-2xl">
                                 Join Our Community!
@@ -132,9 +138,9 @@ export default function Home() {
                             <Button>Reddit</Button>
                             <Button>Twitter</Button>
                         </div>
-                    </div>
+                    </motion.div>
                 </section>
-            </div>
+            </motion.div>
         </>
     );
 }

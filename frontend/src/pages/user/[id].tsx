@@ -31,13 +31,15 @@ export const getServerSideProps = async ({ query }: { query: { id: string } }) =
     const { id } = query;
     const server = "en";
 
-    const data = (await (await fetch(`${env.BACKEND_URL}/player/${id}/${server}`)).json()) as {
-        id: string;
-        uid: string;
-        server: string;
-        data: PlayerData;
-        created_at: string;
-    }[] | null;
+    const data = (await (await fetch(`${env.BACKEND_URL}/player/${id}/${server}`)).json()) as
+        | {
+              id: string;
+              uid: string;
+              server: string;
+              data: PlayerData;
+              created_at: string;
+          }[]
+        | null;
     if (!data) return { props: { notFound: true } };
 
     return {

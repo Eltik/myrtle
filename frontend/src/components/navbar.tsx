@@ -335,50 +335,56 @@ function Navbar() {
             ).json()) as PlayerData[];
 
             useLogin.setState({ loginData: { ...loginData, seqnum: loginData.seqnum++ } });
-            setSearchResults(data.map((item) => (
-                {
-                    id: item.status.uid, // Generate random UUID
-                    uid: item.status.uid,
-                    data: item,
-                    server: "en",
-                    created_at: Date.now(),
-                } as unknown as SearchResponse
-            )));
+            setSearchResults(
+                data.map(
+                    (item) =>
+                        ({
+                            id: item.status.uid, // Generate random UUID
+                            uid: item.status.uid,
+                            data: item,
+                            server: "en",
+                            created_at: Date.now(),
+                        }) as unknown as SearchResponse,
+                ),
+            );
             setRequesting(false);
         } else {
-            setSearchResults(data.map((item) => (
-                {
-                    id: item.uid,
-                    data: {
-                        nickName: item.data.status.nickName,
-                        nickNumber: item.data.status.nickNumber,
-                        uid: item.uid,
-                        registerTs: item.data.status.registerTs,
-                        mainStageProgress: item.data.status.mainStageProgress,
-                        charCnt: 0,
-                        furnCnt: 0,
-                        secretary: item.data.status.secretary,
-                        secretarySkinId: item.data.status.secretarySkinId,
-                        resume: item.data.status.resume,
-                        teamV2: item.data.dexNav.teamV2 as unknown,
-                        friendNumLimit: item.data.status.friendNumLimit,
-                        serverName: item.data.status.serverName,
-                        level: item.data.status.level,
-                        avatarId: item.data.status.avatarId,
-                        avatar: item.data.status.avatar,
-                        assistCharList: item.data.social.assistCharList as unknown,
-                        lastOnlineTime: item.data.status.lastOnlineTs,
-                        board: [""],
-                        infoShare: 0,
-                        medalBoard: {
-                            type: "",
-                            custom: null,
-                            template: null,
-                        },
-                        recentVisited: 0
-                    }
-                } as SearchResponse
-            )));
+            setSearchResults(
+                data.map(
+                    (item) =>
+                        ({
+                            id: item.uid,
+                            data: {
+                                nickName: item.data.status.nickName,
+                                nickNumber: item.data.status.nickNumber,
+                                uid: item.uid,
+                                registerTs: item.data.status.registerTs,
+                                mainStageProgress: item.data.status.mainStageProgress,
+                                charCnt: 0,
+                                furnCnt: 0,
+                                secretary: item.data.status.secretary,
+                                secretarySkinId: item.data.status.secretarySkinId,
+                                resume: item.data.status.resume,
+                                teamV2: item.data.dexNav.teamV2 as unknown,
+                                friendNumLimit: item.data.status.friendNumLimit,
+                                serverName: item.data.status.serverName,
+                                level: item.data.status.level,
+                                avatarId: item.data.status.avatarId,
+                                avatar: item.data.status.avatar,
+                                assistCharList: item.data.social.assistCharList as unknown,
+                                lastOnlineTime: item.data.status.lastOnlineTs,
+                                board: [""],
+                                infoShare: 0,
+                                medalBoard: {
+                                    type: "",
+                                    custom: null,
+                                    template: null,
+                                },
+                                recentVisited: 0,
+                            },
+                        }) as SearchResponse,
+                ),
+            );
             setRequesting(false);
         }
     };
@@ -612,13 +618,7 @@ function Navbar() {
                                             <Card>
                                                 <CardContent className="flex items-center gap-4 py-2">
                                                     <Avatar>
-                                                        <AvatarImage
-                                                            src={
-                                                                `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${encodeURIComponent((
-                                                                    (item.data.secretary).replaceAll("#", "_")
-                                                                ))}.png`
-                                                            }
-                                                        />
+                                                        <AvatarImage src={`https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${encodeURIComponent(item.data.secretary.replaceAll("#", "_"))}.png`} />
                                                         <AvatarFallback>{getInitials(item.data.nickName)}</AvatarFallback>
                                                     </Avatar>
                                                     <div className="flex-1 space-y-1">
