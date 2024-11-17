@@ -1,9 +1,9 @@
 import type { User } from "../../lib/impl/user/impl/get";
 
 export type UserDB = {
-    id?: string;
+    id: string;
     uid: string;
     server: string;
     data: User;
-    created_at?: string;
+    created_at: string;
 };

@@ -46,11 +46,21 @@ const handler = async (req: Request): Promise<Response> => {
             });
 
             if (!stored || stored.length === 0) {
+                const length = 16;
+                const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+                let result = "";
+                for (let i = 0; i < length; i++) {
+                    const randomIndex = Math.floor(Math.random() * chars.length);
+                    result += chars[randomIndex];
+                }
+
                 if (data)
                     await db.create<UserDB>(userTableName, {
+                        id: result,
                         uid: uid,
                         data: data,
                         server: server,
+                        created_at: new Date(Date.now()).toISOString(),
                     });
             } else {
                 if (data)
