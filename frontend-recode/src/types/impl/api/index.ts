@@ -1,3 +1,4 @@
+import type { Item } from "./static/material";
 import type { Operator } from "./static/operator";
 
 export type AKDistributor = "yostar" | "hypergryph" | "bilibili" | "longcheng";
@@ -1234,7 +1235,12 @@ export type User = {
     /**
      * @description: The item ID and then the amount of that item.
      */
-    inventory: Record<string, number>;
+    inventory: Record<
+        string,
+        Item & {
+            amount: number;
+        }
+    >;
 
     /**
      * @description: Unsure about this

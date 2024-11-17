@@ -9,11 +9,39 @@ import CharacterCard from "~/components/user/character-card";
 import Stat from "~/components/user/stat";
 import { env } from "~/env";
 import type { User } from "~/types/impl/api";
+import type { ColumnDef } from "@tanstack/react-table";
+import type { Item } from "~/types/impl/api/static/material";
+import { DataTable } from "~/components/user/data-table";
+import Image from "next/image";
+import { toast } from "~/hooks/use-toast";
 
 const User: NextPage<Props> = ({ data }: { data: User }) => {
     if (!data) {
         return <></>;
     }
+
+    const columns: ColumnDef<
+        | (Item & {
+              amount: number;
+          })
+        | null
+    >[] = [
+        {
+            accessorKey: "icon",
+            header: () => <div className="text-right">Icon</div>,
+            cell: ({ row }) => {
+                return <Image src={`https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/item/${String(row.getValue("icon"))}.png`} width={32} height={32} alt={"Item icon"} />;
+            },
+        },
+        {
+            accessorKey: "name",
+            header: () => <div className="text-right">Name</div>,
+        },
+        {
+            accessorKey: "amount",
+            header: () => <div className="text-right">Amount</div>,
+        },
+    ];
 
     return (
         <>
@@ -54,7 +82,16 @@ const User: NextPage<Props> = ({ data }: { data: User }) => {
                                             {data.status.nickName}
                                             <span className="text-muted-foreground">#{data.status.nickNumber}</span>
                                         </div>
-                                        <div className="rounded-md border p-2 transition-all duration-150 hover:bg-secondary">
+                                        <div
+                                            className="cursor-pointer rounded-md border p-2 transition-all duration-150 hover:bg-secondary"
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(`${data.status.nickName}#${data.status.nickNumber}`);
+                                                toast({
+                                                    title: "Success!",
+                                                    description: "Copied username to clipboard.",
+                                                });
+                                            }}
+                                        >
                                             <Clipboard size={15} />
                                         </div>
                                     </div>
@@ -87,6 +124,21 @@ const User: NextPage<Props> = ({ data }: { data: User }) => {
                                 ))}
                             </div>
                         </ScrollArea>
+                    </TabsContent>
+                    <TabsContent value="items" className="space-y-4">
+                        <h2 className="text-2xl font-bold">Items</h2>
+                        <DataTable
+                            columns={columns}
+                            data={Object.values(data.inventory)
+                                .map((item) => {
+                                    if (!item.iconId) return null;
+                                    return {
+                                        ...item,
+                                        icon: item.iconId,
+                                    };
+                                })
+                                .filter(Boolean)}
+                        />
                     </TabsContent>
                 </Tabs>
             </div>
