@@ -7,4 +7,4 @@ export type Cookies = {
         seqnum: number;
     };
     playerData: User;
-}
+};

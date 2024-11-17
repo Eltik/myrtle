@@ -10,12 +10,7 @@ const MyApp: AppType = ({ Component, pageProps }) => {
     return (
         <CookiesProvider>
             <div className={GeistSans.className} suppressHydrationWarning={true}>
-                <ThemeProvider
-                    attribute="class"
-                    defaultTheme="dark"
-                    enableSystem
-                    disableTransitionOnChange
-                >
+                <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
                     <Layout>
                         <Component {...pageProps} />
                     </Layout>

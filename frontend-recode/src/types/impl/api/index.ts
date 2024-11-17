@@ -84,7 +84,11 @@ export type User = {
                 squadId: string;
                 name: string;
                 // TODO: Figure out what currentEquip is. Maybe its module.
-                slots: ({ charInstId: number; skillIndex: number; currentEquip: null } | null)[];
+                slots: ({
+                    charInstId: number;
+                    skillIndex: number;
+                    currentEquip: null;
+                } | null)[];
             }
         >;
         chars: Record<string, CharacterData>;
@@ -1242,4 +1246,35 @@ export type User = {
      * @description: Again unsure about this.
      */
     ticket: unknown; // TODO: Figure out what this is
+};
+
+export type CharacterData = {
+    instId: string;
+    charId: string;
+    favorPoint: number;
+    potentialRank: number;
+    mainSkillLvl: number;
+    skin: string;
+    level: number;
+    exp: number;
+    evolvePhase: number;
+    defaultSkillIndex: number;
+    gainTime: number;
+    skills: {
+        skillId: string;
+        unlock: number;
+        state: number;
+        specializeLevel: number;
+        completeUpgradeTime: number;
+    }[];
+    voiceLan: string;
+    currentEquip: Record<string, string>;
+    equip: Record<
+        string,
+        {
+            hide: number;
+            locked: number;
+            level: number;
+        }
+    >;
 };
