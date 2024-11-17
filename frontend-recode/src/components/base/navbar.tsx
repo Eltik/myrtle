@@ -27,7 +27,7 @@ export function Navbar() {
                             </Link>
                         </div>
                         <div className="flex flex-1 items-center justify-end space-x-2 lg:mr-14">
-                            {cookies.login && playerData ? (
+                            {cookies.login && playerData && playerData.status !== null && playerData.status !== undefined ? (
                                 <>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger>

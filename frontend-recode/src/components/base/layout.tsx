@@ -15,7 +15,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 
     return (
         <>
-            <SidebarProvider defaultOpen={false} suppressHydrationWarning>
+            <SidebarProvider defaultOpen={false}>
                 <AppSidebar />
                 <Navbar />
                 <motion.main variants={variants} initial={"hidden"} animate={"enter"} exit={"exit"} transition={{ type: "linear" }} className="min-h-[calc(100svh_-_80px)] transition-[margin-left] duration-300 ease-in-out lg:ml-[90px]">

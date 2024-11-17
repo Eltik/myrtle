@@ -45,7 +45,7 @@ const handler = async (req: Request): Promise<Response> => {
                 server: server,
             });
 
-            if (!stored) {
+            if (!stored || stored.length === 0) {
                 if (data)
                     await db.create<UserDB>(userTableName, {
                         uid: uid,

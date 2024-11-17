@@ -31,9 +31,9 @@ export function AppSidebar() {
     return (
         <Sidebar variant="floating" collapsible="icon" className="z-40">
             <div className="invisible absolute -right-[16px] top-[12px] z-30 md:visible">
-                <button type="button" className="rounded-md border bg-background p-1 shadow-lg transition-all duration-150 hover:bg-secondary">
+                <div className="rounded-md border bg-background p-1 shadow-lg transition-all duration-150 hover:bg-secondary">
                     <SidebarTrigger className="hover:bg-inherit" />
-                </button>
+                </div>
             </div>
             <SidebarContent>
                 <SidebarGroup>

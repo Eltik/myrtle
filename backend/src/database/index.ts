@@ -66,6 +66,7 @@ class DatabaseHandler {
             .join(", ");
 
         const createQuery = `CREATE TABLE IF NOT EXISTS ${tableName} (${columnDefinitions})`;
+
         const client = await this.getClient();
         try {
             await client.query(createQuery);
