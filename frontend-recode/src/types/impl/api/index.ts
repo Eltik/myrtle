@@ -1,3 +1,5 @@
+import type { Operator } from "./static/operator";
+
 export type AKDistributor = "yostar" | "hypergryph" | "bilibili" | "longcheng";
 export type AKServer = "en" | "jp" | "kr" | "cn" | "bili" | "tw";
 export type AKDomain = "gs" | "as" | "u8" | "hu" | "hv" | "rc" | "an" | "prean" | "sl" | "of" | "pkgAd" | "pkgIOS";
@@ -1266,6 +1268,29 @@ export type CharacterData = {
         state: number;
         specializeLevel: number;
         completeUpgradeTime: number;
+        static?: {
+            levels: {
+                name: string;
+                rangeId: string | null;
+                description: string;
+                skillType: number;
+                duration: number;
+                spData: {
+                    spType: string;
+                    levelUpCost: [];
+                    maxChargeTime: number;
+                    spCost: number;
+                    initSp: number;
+                    increment: number;
+                };
+                prefabId: string;
+                blackboard: { key: string; value: number; valueStr: string | null }[];
+            }[];
+            skillId: string;
+            iconId: string | null;
+            hidden: boolean;
+            image: string | null;
+        };
     }[];
     voiceLan: string;
     currentEquip: Record<string, string>;
@@ -1277,4 +1302,6 @@ export type CharacterData = {
             level: number;
         }
     >;
+
+    static?: Operator & { trust: number };
 };

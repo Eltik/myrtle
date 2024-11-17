@@ -18,6 +18,22 @@ const config = {
         defaultLocale: "en",
     },
     transpilePackages: ["geist"],
+    images: {
+        remotePatterns: [
+            {
+                protocol: "https",
+                hostname: "**.*.*",
+            },
+            {
+                protocol: "https",
+                hostname: "**.**.*.*",
+            },
+            {
+                protocol: "https",
+                hostname: "**.*.*.*",
+            },
+        ],
+    },
 };
 
 export default config;

@@ -14,6 +14,7 @@ export default function Home() {
         <>
             <Head>
                 <title>myrtle.moe</title>
+                <meta name="title" content="myrtle.moe" />
                 <meta name="description" content="Elevate your Arknights experience to the next level." />
                 <link rel="icon" href="/favicon.ico" />
             </Head>
