@@ -123,7 +123,7 @@ const User: NextPage<Props> = ({ data }: { data: User }) => {
                     </TabsList>
                     <TabsContent value="characters" className="space-y-4">
                         <h2 className="text-2xl font-bold">Characters</h2>
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                             {Object.values(data.troop.chars).map((char) => (
                                 <CharacterCard key={char.charId} data={char} />
                             ))}

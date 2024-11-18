@@ -1,99 +1,64 @@
 import type { CharacterData } from "~/types/impl/api";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Card, CardContent } from "../ui/card";
 import { Progress } from "../ui/progress";
 import Image from "next/image";
 import { Dialog, DialogContent, DialogTrigger } from "../ui/dialog";
 import CharacterDialogueCard from "./character-dialogue-card";
-import type { OperatorRarity } from "~/types/impl/api/static/operator";
-import { Badge } from "../ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { ScrollArea } from "../ui/scroll-area";
 import { formatProfession, formatSkillType, formatSubProfession, insertBlackboard, parseSkillStaticLevel } from "~/helper";
+import { Separator } from "../ui/separator";
+import { ScrollArea } from "../ui/scroll-area";
 
 function CharacterCard({ data }: { data: CharacterData }) {
-    const { static: operatorData, level, evolvePhase, skills } = data;
-
-    if (!operatorData) return null;
-
-    const { name, appellation, rarity, profession, subProfessionId, description } = operatorData;
-
-    const getRarityStars = (rarity: OperatorRarity) => {
-        const starCount = parseInt(rarity.split("_")[1] ?? "0");
-        return "★".repeat(starCount);
-    };
-
     return (
         <Dialog>
-            <Card className="w-full max-w-sm bg-card">
-                <DialogTrigger asChild>
-                    <CardHeader className="relative cursor-pointer transition-all duration-150 hover:bg-secondary">
-                        <div className="relative h-64 w-full">
-                            <Image src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/${data.skin ? encodeURIComponent(data.skin.includes("@") ? data.skin.replaceAll("@", "_") : data.skin.replaceAll("#", "_")) : encodeURIComponent((data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").includes("@") ? (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("@", "_") : (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("#", "_"))}.png`} alt={name} layout="fill" objectFit="cover" className="h-48 w-full rounded-t-lg" />
-                        </div>
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-gray-900 to-transparent p-4">
-                            <CardTitle className="text-3xl font-bold">{name}</CardTitle>
-                            <p className="text-lg">{appellation}</p>
-                            <div className="mt-2 flex items-center space-x-2">
-                                <Badge variant="outline" className="bg-card">
-                                    {getRarityStars(rarity)}
-                                </Badge>
-                                <Badge>{formatProfession(profession)}</Badge>
-                                <Badge>{formatSubProfession(subProfessionId)}</Badge>
-                            </div>
-                        </div>
-                    </CardHeader>
-                </DialogTrigger>
-                <CardContent>
-                    <Tabs defaultValue="info" className="w-full">
-                        <TabsList className="grid w-full grid-cols-4">
-                            <TabsTrigger value="info">Info</TabsTrigger>
-                            <TabsTrigger value="stats">Stats</TabsTrigger>
-                            <TabsTrigger value="skills">Skills</TabsTrigger>
-                            <TabsTrigger value="talents">Talents</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="info">
-                            <ScrollArea className="h-[200px] w-full rounded-md border p-4">
-                                <div className="space-y-2">
-                                    <div className="flex flex-col gap-4">
-                                        <div>
-                                            <h3 className="font-semibold">Description</h3>
-                                            <p className="text-sm text-muted-foreground">{insertBlackboard(description, [])}</p>
+            <DialogTrigger>
+                <Card className="h-[620px] w-full max-w-sm overflow-hidden bg-card transition-all duration-150 hover:bg-secondary md:h-[400px]">
+                    <CardContent className="text-left">
+                        <ScrollArea className="h-[620px] pb-6 md:h-[400px]">
+                            <div className="grid gap-3 md:grid-cols-2">
+                                <div className="relative h-full w-full">
+                                    <Image className="h-full w-full rounded-lg object-cover" alt="Operator Image" width={500} height={500} src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/${data.skin ? encodeURIComponent(data.skin.includes("@") ? data.skin.replaceAll("@", "_") : data.skin.replaceAll("#", "_")) : encodeURIComponent((data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").includes("@") ? (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("@", "_") : (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("#", "_"))}.png`} />
+                                </div>
+                                <div className="space-y-4">
+                                    <div className="space-y-1">
+                                        <h2 className="text-2xl font-bold">{data.static?.name}</h2>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                            {formatProfession(data.static?.profession ?? "")} | {formatSubProfession(data.static?.subProfessionId ?? "")}
+                                        </p>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="">
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">Promotion</p>
+                                            <Image src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/elite/${data.evolvePhase}.png`} width={35} height={35} alt="Promotion" />
                                         </div>
+                                        <div className="space-y-1">
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">Potential</p>
+                                            <Image src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/potential/${data.potentialRank + 1}.png`} width={40} height={40} alt="Potential" />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1">
                                         <div className="flex flex-col">
-                                            <h3 className="font-semibold">Recruited</h3>
-                                            <span className="text-sm text-muted-foreground">{new Date(data.gainTime * 1000).toLocaleString()}</span>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <h3 className="font-semibold">Trust</h3>
-                                        <div className="flex flex-row items-center justify-start gap-2">
-                                            <Progress value={(data.static?.trust ?? 0) / 2} max={100} className="w-[60%]" />
-                                            <p className="text-sm text-muted-foreground">{(data.static?.trust ?? 0) / 2}%</p>
+                                            <div className="pb-2">
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">Recruited</p>
+                                                <p className="text-sm">{new Date(data.gainTime * 1000).toLocaleString()}</p>
+                                            </div>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">Trust</p>
+                                            <div className="flex flex-row items-center gap-3">
+                                                <Progress value={(data.static?.trust ?? 0) / 2} className="w-[60%]" />
+                                                {data.static?.trust}%
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </ScrollArea>
-                        </TabsContent>
-                        <TabsContent value="stats">
-                            <ScrollArea className="h-[200px] w-full rounded-md border p-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <p>Level: {level}</p>
-                                        <p>Elite: {evolvePhase}</p>
-                                    </div>
-                                    <div>
-                                        <p>HP: {operatorData.phases[evolvePhase]?.attributesKeyFrames[0]?.data.maxHp}</p>
-                                        <p>ATK: {operatorData.phases[evolvePhase]?.attributesKeyFrames[0]?.data.atk}</p>
-                                        <p>DEF: {operatorData.phases[evolvePhase]?.attributesKeyFrames[0]?.data.def}</p>
-                                    </div>
+                            </div>
+                            <div className="flex w-full flex-col gap-5">
+                                <div className="space-y-1 text-left">
+                                    <span className="font-bold">Skills</span>
+                                    <Separator />
                                 </div>
-                            </ScrollArea>
-                        </TabsContent>
-                        <TabsContent value="skills">
-                            <ScrollArea className="h-[200px] w-full rounded-md border p-4">
-                                <div className="flex flex-col gap-6">
-                                    {skills.length > 0 ? (
-                                        skills.map((skill, index) => (
+                                <div className="flex h-full flex-row flex-wrap gap-4 text-left">
+                                    {data.skills.length > 0 ? (
+                                        data.skills.map((skill, index) => (
                                             <div className="space-y-1" key={`skill-${index}`}>
                                                 <div className="flex w-full flex-row items-center gap-2">
                                                     <Image src={`https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/skill/skill_icon_${skill.static?.iconId ?? skill.static?.skillId}.png`} width={35} height={35} alt="Skill" />
@@ -124,21 +89,11 @@ function CharacterCard({ data }: { data: CharacterData }) {
                                         <div className="text-sm text-gray-500 dark:text-gray-400">No skills found.</div>
                                     )}
                                 </div>
-                            </ScrollArea>
-                        </TabsContent>
-                        <TabsContent value="talents">
-                            <ScrollArea className="h-[200px] w-full rounded-md border p-4">
-                                {operatorData.talents.map((talent, index) => (
-                                    <div key={index} className="mb-4">
-                                        <h3 className="font-semibold">{talent.candidates[0]?.name}</h3>
-                                        <p className="text-sm text-muted-foreground">{talent.candidates[0]?.description}</p>
-                                    </div>
-                                ))}
-                            </ScrollArea>
-                        </TabsContent>
-                    </Tabs>
-                </CardContent>
-            </Card>
+                            </div>
+                        </ScrollArea>
+                    </CardContent>
+                </Card>
+            </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <CharacterDialogueCard data={data} />
             </DialogContent>
