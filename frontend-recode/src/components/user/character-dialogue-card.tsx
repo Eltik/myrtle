@@ -2,7 +2,7 @@ import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import type { CharacterData } from "~/types/impl/api";
 import { Progress } from "../ui/progress";
-import { formatProfession, formatSkillType, formatSubProfession, getAttributeStats, getCurrentPhase, getMaxAttributeStats, insertBlackboard, parseSkillStaticLevel } from "~/helper";
+import { formatProfession, formatSkillType, formatSubProfession, getAttributeStats, getMaxAttributeStats, insertBlackboard, parseSkillStaticLevel } from "~/helper";
 import { Badge } from "../ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { ScrollArea } from "../ui/scroll-area";
@@ -25,7 +25,7 @@ function CharacterDialogueCard({ data }: { data: CharacterData }) {
         <Card className="grid max-h-[calc(100vh-7rem)] w-full max-w-2xl gap-6 overflow-hidden rounded-lg border-0 shadow-lg md:py-6">
             <CardHeader className="relative">
                 <div className="relative h-64 w-full">
-                    <Image src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/${data.skin ? encodeURIComponent(data.skin.includes("@") ? data.skin.replaceAll("@", "_") : data.skin.replaceAll("#", "_")) : encodeURIComponent((data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").includes("@") ? (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("@", "_") : (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("#", "_"))}.png`} alt={name} layout="fill" objectFit="contain" className="h-48 w-full rounded-t-lg" />
+                    <Image loading="lazy" src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/${data.skin ? encodeURIComponent(data.skin.includes("@") ? data.skin.replaceAll("@", "_") : data.skin.replaceAll("#", "_")) : encodeURIComponent((data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").includes("@") ? (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("@", "_") : (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("#", "_"))}.png`} alt={name} layout="fill" objectFit="contain" className="h-48 w-full rounded-t-lg" />
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 rounded-md bg-gradient-to-t from-gray-900 to-transparent p-4">
                     <CardTitle className="text-3xl font-bold">{name}</CardTitle>

@@ -1,5 +1,43 @@
 import type { CharacterData, User } from "~/types/impl/api";
-import type { Operator } from "~/types/impl/api/static/operator";
+import { type Operator, OperatorRarity } from "~/types/impl/api/static/operator";
+
+export const rarityToNumber = (rarity: OperatorRarity): number => {
+    switch (rarity) {
+        case OperatorRarity.sixStar:
+            return 6;
+        case OperatorRarity.fiveStar:
+            return 5;
+        case OperatorRarity.fourStar:
+            return 4;
+        case OperatorRarity.threeStar:
+            return 3;
+        case OperatorRarity.twoStar:
+            return 2;
+        case OperatorRarity.oneStar:
+            return 1;
+        default:
+            return 0;
+    }
+};
+
+export const stringToOperatorRarity = (string: string): OperatorRarity => {
+    switch (string) {
+        case "TIER_6":
+            return OperatorRarity.sixStar;
+        case "TIER_5":
+            return OperatorRarity.fiveStar;
+        case "TIER_4":
+            return OperatorRarity.fourStar;
+        case "TIER_3":
+            return OperatorRarity.threeStar;
+        case "TIER_2":
+            return OperatorRarity.twoStar;
+        case "TIER_1":
+            return OperatorRarity.oneStar;
+        default:
+            return OperatorRarity.sixStar;
+    }
+};
 
 export const getAttributeStats = (character: CharacterData, level: number): Operator["phases"][number]["attributesKeyFrames"][number]["data"] | null => {
     const phase = getCurrentPhase(character);
