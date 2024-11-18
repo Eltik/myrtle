@@ -1,11 +1,11 @@
 import Image from "next/image";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
 import type { CharacterData } from "~/types/impl/api";
-import { Progress } from "../ui/progress";
+import { Progress } from "../../ui/progress";
 import { formatProfession, formatSkillType, formatSubProfession, getAttributeStats, getMaxAttributeStats, insertBlackboard, parseSkillStaticLevel } from "~/helper";
-import { Badge } from "../ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { ScrollArea } from "../ui/scroll-area";
+import { Badge } from "../../ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
+import { ScrollArea } from "../../ui/scroll-area";
 import type { OperatorRarity } from "~/types/impl/api/static/operator";
 import { ChevronRight, Heart, Shield, Swords, Zap } from "lucide-react";
 

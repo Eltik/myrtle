@@ -5,12 +5,12 @@ import { ChevronDown, ChevronUp, Hammer, MapPin, Package } from "lucide-react";
 
 // Import the types from the provided type definitions
 import { type Item, ItemRarity, ItemClass, ItemType, ItemOccPer, BuildingRoomType, VoucherItemType } from "~/types/impl/api/static/material";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
-import { Badge } from "../ui/badge";
-import { Separator } from "../ui/separator";
-import { ScrollArea } from "../ui/scroll-area";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
-import { Button } from "../ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../../ui/card";
+import { Badge } from "../../ui/badge";
+import { Separator } from "../../ui/separator";
+import { ScrollArea } from "../../ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../ui/tooltip";
+import { Button } from "../../ui/button";
 import Image from "next/image";
 
 const rarityColors = {
