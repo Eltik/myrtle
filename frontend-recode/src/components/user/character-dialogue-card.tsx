@@ -3,7 +3,7 @@ import { Card, CardContent } from "../ui/card";
 import type { CharacterData } from "~/types/impl/api";
 import { Progress } from "../ui/progress";
 import { Separator } from "../ui/separator";
-import { capitalize, formatSkillType, insertBlackboard, parseSkillStaticLevel } from "~/helper";
+import { formatProfession, formatSkillType, formatSubProfession, insertBlackboard, parseSkillStaticLevel } from "~/helper";
 
 function CharacterDialogueCard({ data }: { data: CharacterData }) {
     return (
@@ -17,7 +17,7 @@ function CharacterDialogueCard({ data }: { data: CharacterData }) {
                         <div className="space-y-1">
                             <h2 className="text-2xl font-bold">{data.static?.name}</h2>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
-                                {capitalize(data.static?.profession ?? "")} | {capitalize(data.static?.subProfessionId ?? "")}
+                                {formatProfession(data.static?.profession ?? "")} | {formatSubProfession(data.static?.subProfessionId ?? "")}
                             </p>
                         </div>
                         <div className="grid grid-cols-2 gap-4">

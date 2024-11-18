@@ -1,5 +1,159 @@
 import type { User } from "~/types/impl/api";
 
+export const formatProfession = (profession: string): string => {
+    switch (profession.toLocaleLowerCase()) {
+        case "pioneer":
+            return "Vanguard";
+        case "tank":
+            return "Defender";
+        case "sniper":
+            return "Sniper";
+        case "warrior":
+            return "Guard";
+        case "caster":
+            return "Caster";
+        case "support":
+            return "Supporter";
+        case "special":
+            return "Specialist";
+        case "medic":
+            return "Medic";
+        default:
+            return profession;
+    }
+};
+
+export const formatSubProfession = (subProfession: string): string => {
+    switch (subProfession) {
+        case "physician":
+            return "ST Medic";
+        case "fearless":
+            return "Dreadnought";
+        case "executor":
+            return "Executor";
+        case "fastshot":
+            return "Marksman Sniper";
+        case "bombarder":
+            return "Flinger";
+        case "bard":
+            return "Bard";
+        case "protector":
+            return "Protector";
+        case "ritualist":
+            return "Ritualist";
+        case "pioneer":
+            return "Pioneer";
+        case "corecaster":
+            return "Core Caster";
+        case "splashcaster":
+            return "AOE Caster";
+        case "charger":
+            return "Charger";
+        case "centurion":
+            return "Centurion";
+        case "guardian":
+            return "Guardian";
+        case "slower":
+            return "Decel Binder";
+        case "funnel":
+            return "Mech-Accord Caster";
+        case "mystic":
+            return "Mystic Caster";
+        case "chain":
+            return "Chain Caster";
+        case "aoesniper":
+            return "AOE Sniper";
+        case "reaperrange":
+            return "Spreadshooter";
+        case "longrange":
+            return "Deadeye Sniper";
+        case "closerange":
+            return "Heavyshooter";
+        case "siegesniper":
+            return "Besieger";
+        case "loopshooter":
+            return "Loopshooter";
+        case "bearer":
+            return "Flag Bearer";
+        case "tactician":
+            return "Tactician";
+        case "instructor":
+            return "Instructor";
+        case "lord":
+            return "Lord";
+        case "artsfghter":
+            return "Arts Fighter";
+        case "sword":
+            return "Swordmaster";
+        case "musha":
+            return "Musha";
+        case "crusher":
+            return "Crusher";
+        case "reaper":
+            return "Reaper";
+        case "merchant":
+            return "Merchant";
+        case "hookmaster":
+            return "Hookmaster";
+        case "ringhealer":
+            return "AOE Medic";
+        case "healer":
+            return "Therapist";
+        case "wandermedic":
+            return "Wandering Medic";
+        case "unyield":
+            return "Juggernaught";
+        case "artsprotector":
+            return "Arts Protector";
+        case "summoner":
+            return "Summoner";
+        case "craftsman":
+            return "Artificer";
+        case "stalker":
+            return "Ambusher";
+        case "pusher":
+            return "Pusher";
+        case "dollkeeper":
+            return "Doll Keeper";
+        case "agent":
+            return "Agent";
+        case "fighter":
+            return "Brawler";
+        case "liberator":
+            return "Liberator";
+        case "hammer":
+            return "Earthshaker";
+        case "phalanx":
+            return "Phalanx";
+        case "blastcaster":
+            return "Blast Caster";
+        case "primcaster":
+            return "Primal Caster";
+        case "incantationmedic":
+            return "Incantation Medic";
+        case "chainhealer":
+            return "Chain Healer";
+        case "shotprotector":
+            return "Sentinel";
+        case "fortress":
+            return "Fortress";
+        case "duelist":
+            return "Duelist";
+        case "hunter":
+            return "Hunter";
+        case "geek":
+            return "Geek";
+        case "underminer":
+            return "Hexer";
+        case "blessing":
+            return "Abjurer";
+        case "traper":
+            return "Trapmaster";
+        default:
+            return subProfession;
+    }
+};
+
 export const formatSkillType = (type: string): string => {
     return type === "INCREASE_WHEN_ATTACK" ? "Offensive" : type === "INCREASE_WITH_TIME" ? "Auto" : "Defensive";
 };
