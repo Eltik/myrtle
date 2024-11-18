@@ -1,4 +1,58 @@
-import type { User } from "~/types/impl/api";
+import type { CharacterData, User } from "~/types/impl/api";
+import type { Operator } from "~/types/impl/api/static/operator";
+
+export const getAttributeStats = (character: CharacterData, level: number): Operator["phases"][number]["attributesKeyFrames"][number]["data"] | null => {
+    const phase = getCurrentPhase(character);
+    if (!phase) return null;
+
+    const keyFrames = phase.attributesKeyFrames;
+    if (!keyFrames || keyFrames.length === 0) {
+        return null;
+    }
+
+    if (level < 1 || level > phase.maxLevel) {
+        return null;
+    }
+
+    const lowerFrame = keyFrames.find((frame) => frame.level <= level);
+    const upperFrame = [...keyFrames].reverse().find((frame) => frame.level >= level);
+
+    if (!lowerFrame || !upperFrame) {
+        return null;
+    }
+
+    if (lowerFrame.level === upperFrame.level) {
+        return lowerFrame.data;
+    }
+
+    const interpolate = (lower: number, upper: number, ratio: number): number => {
+        return lower + (upper - lower) * ratio;
+    };
+
+    const ratio = (level - lowerFrame.level) / (upperFrame.level - lowerFrame.level);
+    const interpolatedStats: Record<string, number | boolean> = {};
+    for (const key in lowerFrame.data) {
+        const lowerValue = lowerFrame.data[key as keyof typeof lowerFrame.data];
+        const upperValue = upperFrame.data[key as keyof typeof upperFrame.data];
+
+        if (typeof lowerValue === "number" && typeof upperValue === "number") {
+            interpolatedStats[key] = interpolate(lowerValue, upperValue, ratio);
+        } else {
+            interpolatedStats[key] = lowerValue;
+        }
+    }
+
+    return interpolatedStats as Operator["phases"][number]["attributesKeyFrames"][number]["data"];
+};
+
+export const getMaxAttributeStats = (character: CharacterData): Operator["phases"][number]["attributesKeyFrames"][number]["data"] | null => {
+    return getCurrentPhase(character)?.attributesKeyFrames[(getCurrentPhase(character)?.attributesKeyFrames ?? []).length - 1]?.data ?? null;
+};
+
+export const getCurrentPhase = (character: CharacterData) => {
+    const phase = character.evolvePhase;
+    return character.static?.phases[phase];
+};
 
 export const formatProfession = (profession: string): string => {
     switch (profession.toLocaleLowerCase()) {

@@ -2,14 +2,15 @@ import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import type { CharacterData } from "~/types/impl/api";
 import { Progress } from "../ui/progress";
-import { formatProfession, formatSkillType, formatSubProfession, insertBlackboard, parseSkillStaticLevel } from "~/helper";
+import { formatProfession, formatSkillType, formatSubProfession, getAttributeStats, getCurrentPhase, getMaxAttributeStats, insertBlackboard, parseSkillStaticLevel } from "~/helper";
 import { Badge } from "../ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { ScrollArea } from "../ui/scroll-area";
 import type { OperatorRarity } from "~/types/impl/api/static/operator";
+import { ChevronRight, Heart, Shield, Swords, Zap } from "lucide-react";
 
 function CharacterDialogueCard({ data }: { data: CharacterData }) {
-    const { static: operatorData, level, evolvePhase, skills } = data;
+    const { static: operatorData, skills } = data;
 
     if (!operatorData) return null;
 
@@ -70,19 +71,21 @@ function CharacterDialogueCard({ data }: { data: CharacterData }) {
                         </ScrollArea>
                     </TabsContent>
                     <TabsContent value="stats">
-                        <ScrollArea className="h-[200px] w-full rounded-md border p-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <p>Level: {level}</p>
-                                    <p>Elite: {evolvePhase}</p>
-                                </div>
-                                <div>
-                                    <p>HP: {operatorData.phases[evolvePhase]?.attributesKeyFrames[0]?.data.maxHp}</p>
-                                    <p>ATK: {operatorData.phases[evolvePhase]?.attributesKeyFrames[0]?.data.atk}</p>
-                                    <p>DEF: {operatorData.phases[evolvePhase]?.attributesKeyFrames[0]?.data.def}</p>
-                                </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <h4 className="mb-2 font-semibold">Combat Stats</h4>
+                                <AttributeRow label="HP" value={Math.round(getAttributeStats(data, data.level)?.maxHp ?? 0)} max={getMaxAttributeStats(data)?.maxHp} icon={<Heart className="h-4 w-4" />} />
+                                <AttributeRow label="ATK" value={Math.round(getAttributeStats(data, data.level)?.atk ?? 0)} max={getMaxAttributeStats(data)?.atk} icon={<Swords className="h-4 w-4" />} />
+                                <AttributeRow label="DEF" value={Math.round(getAttributeStats(data, data.level)?.def ?? 0)} max={getMaxAttributeStats(data)?.def} icon={<Shield className="h-4 w-4" />} />
+                                <AttributeRow label="RES" value={getAttributeStats(data, data.level)?.magicResistance ?? 0} max={getMaxAttributeStats(data)?.magicResistance} icon={<Zap className="h-4 w-4" />} />
                             </div>
-                        </ScrollArea>
+                            <div>
+                                <h4 className="mb-2 font-semibold">Deployment</h4>
+                                <AttributeRow label="Cost" value={getMaxAttributeStats(data)?.cost ?? 0} icon={<ChevronRight className="h-4 w-4" />} max={99} />
+                                <AttributeRow label="Block" value={getMaxAttributeStats(data)?.blockCnt ?? 0} icon={<ChevronRight className="h-4 w-4" />} max={5} />
+                                <AttributeRow label="Redeploy" value={getMaxAttributeStats(data)?.respawnTime ?? 0} icon={<ChevronRight className="h-4 w-4" />} max={100} />
+                            </div>
+                        </div>
                     </TabsContent>
                     <TabsContent value="skills">
                         <ScrollArea className="h-[200px] w-full rounded-md border p-4">
@@ -136,5 +139,21 @@ function CharacterDialogueCard({ data }: { data: CharacterData }) {
         </Card>
     );
 }
+
+const getProgressColor = (value: number, max: number) => {
+    const percentage = (value / max) * 100;
+    if (percentage >= 80) return "bg-green-500";
+    if (percentage >= 50) return "bg-yellow-500";
+    return "bg-red-500";
+};
+
+const AttributeRow = ({ label, value, icon, max = 2000 }: { label: string; value: number; icon: React.ReactNode; max?: number }) => (
+    <div className="mb-2 flex items-center space-x-2">
+        {icon}
+        <span className="w-24 text-sm">{label}</span>
+        <Progress value={(value / max) * 100} className={`h-2 w-full ${getProgressColor(value, max)}`} />
+        <span className="w-16 text-right text-sm">{value}</span>
+    </div>
+);
 
 export default CharacterDialogueCard;
