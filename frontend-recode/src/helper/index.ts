@@ -1,4 +1,4 @@
-import { type User } from "~/types/impl/api";
+import type { User } from "~/types/impl/api";
 
 export const formatSkillType = (type: string): string => {
     return type === "INCREASE_WHEN_ATTACK" ? "Offensive" : type === "INCREASE_WITH_TIME" ? "Auto" : "Defensive";
