@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import type { User } from "~/types/impl/api";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
+import { getAvatarSkinId } from "~/helper";
 
 export function Navbar() {
     const [cookies] = useCookies(["login"]);
@@ -33,24 +34,7 @@ export function Navbar() {
                                         <DropdownMenuTrigger>
                                             <div className="flex flex-row rounded-md border px-2 transition-all duration-150 hover:bg-secondary">
                                                 <Avatar className="h-12 w-12">
-                                                    <AvatarImage
-                                                        src={
-                                                            playerData.status?.avatarId
-                                                                ? playerData.status.avatar.type === "ASSISTANT"
-                                                                    ? `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${encodeURIComponent(
-                                                                          (Object.values(playerData.troop.chars).find((item) => item.skin === playerData.status.avatar.id)?.charId ?? "").includes("@")
-                                                                              ? (Object.values(playerData.troop.chars)
-                                                                                    .find((item) => item.skin === playerData.status.avatar.id)
-                                                                                    ?.charId?.replaceAll("@", "_") ?? "")
-                                                                              : (Object.values(playerData.troop.chars)
-                                                                                    .find((item) => item.skin === playerData.status.avatar.id)
-                                                                                    ?.charId?.replaceAll("#", "_") ?? ""),
-                                                                      )}.png`
-                                                                    : ""
-                                                                : "https://static.wikia.nocookie.net/mrfz/images/4/46/Symbol_profile.png/revision/latest?cb=20220418145951"
-                                                        }
-                                                        alt="@shadcn"
-                                                    />
+                                                    <AvatarImage src={getAvatarSkinId(playerData)} alt="@shadcn" />
                                                     <AvatarFallback>{playerData.status?.nickName?.slice(0, 1) ?? "E"}</AvatarFallback>
                                                 </Avatar>
                                                 <div className="flex flex-row items-center gap-2">

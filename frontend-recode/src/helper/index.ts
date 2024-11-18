@@ -1,3 +1,5 @@
+import { type User } from "~/types/impl/api";
+
 export const formatSkillType = (type: string): string => {
     return type === "INCREASE_WHEN_ATTACK" ? "Offensive" : type === "INCREASE_WITH_TIME" ? "Auto" : "Defensive";
 };
@@ -78,5 +80,40 @@ export function parseSkillStaticLevel(mainSkillLevel: number, skillSpecializatio
         return mainSkillLevel - 1 + skillSpecializationLevel;
     } else {
         return mainSkillLevel - 1;
+    }
+}
+
+export function getAvatarSkinId(user: User) {
+    if (!user.status) return "https://static.wikia.nocookie.net/mrfz/images/4/46/Symbol_profile.png/revision/latest?cb=20220418145951";
+
+    let skinId = "";
+    if (user.status.secretarySkinId) {
+        if (user.status.secretarySkinId.includes("@")) {
+            skinId = user.status.secretarySkinId.replaceAll("@", "_");
+        } else {
+            skinId = user.status.secretarySkinId.replaceAll("#", "_");
+        }
+    } else {
+        if (user.status.avatarId) {
+            if (user.status.avatar.type === "ASSISTANT") {
+                if ((Object.values(user.troop.chars).find((item) => item.skin === user.status.avatar.id)?.charId ?? "").includes("@")) {
+                    skinId =
+                        Object.values(user.troop.chars)
+                            .find((item) => item.skin === user.status.avatar.id)
+                            ?.charId?.replaceAll("@", "_") ?? "";
+                } else {
+                    skinId =
+                        Object.values(user.troop.chars)
+                            .find((item) => item.skin === user.status.avatar.id)
+                            ?.charId?.replaceAll("#", "_") ?? "";
+                }
+            }
+        }
+    }
+
+    if (skinId.length > 0) {
+        return `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${encodeURIComponent(skinId)}.png`;
+    } else {
+        return "https://static.wikia.nocookie.net/mrfz/images/4/46/Symbol_profile.png/revision/latest?cb=20220418145951";
     }
 }

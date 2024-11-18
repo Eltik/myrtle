@@ -1,3 +1,5 @@
+import type { Operator } from "../../../local/impl/gamedata/impl/operators";
+
 export type UserResponse = {
     result: number;
     ts: number;
@@ -1258,12 +1260,59 @@ export type CharacterData = {
     evolvePhase: number;
     defaultSkillIndex: number;
     gainTime: number;
+    currentTmpl?: string; // Amiya pog
+    tmpl?: Record<
+        string,
+        {
+            equip: Record<
+                string,
+                {
+                    hide: number;
+                    level: number;
+                    locked: number;
+                }
+            >;
+            skills: {
+                state: number;
+                unlock: number;
+                skillId: string;
+                specializeLevel: number;
+                completeUpgradeTime: number;
+            }[];
+            skinId: string;
+            currentEquip: string;
+            defaultSkillIndex: number;
+        }
+    >; // Amiya pog
     skills: {
         skillId: string;
         unlock: number;
         state: number;
         specializeLevel: number;
         completeUpgradeTime: number;
+        static?: {
+            levels: {
+                name: string;
+                rangeId: string | null;
+                description: string;
+                skillType: number;
+                duration: number;
+                spData: {
+                    spType: string;
+                    levelUpCost: [];
+                    maxChargeTime: number;
+                    spCost: number;
+                    initSp: number;
+                    increment: number;
+                };
+                prefabId: string;
+                blackboard: { key: string; value: number; valueStr: string | null }[];
+            }[];
+            skillId: string;
+            iconId: string | null;
+            hidden: boolean;
+            image: string | null;
+        };
     }[];
     voiceLan: string;
     currentEquip: Record<string, string>;
@@ -1275,4 +1324,6 @@ export type CharacterData = {
             level: number;
         }
     >;
+
+    static?: Operator & { trust: number };
 };

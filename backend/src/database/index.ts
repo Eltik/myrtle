@@ -16,13 +16,15 @@ class DatabaseHandler {
         this.pool = new Pool({ connectionString });
     }
 
-    async init() {
-        const users = {
+    public tables = [
+        {
             tableName: usersTableName,
             schema: userSchema,
-        };
+        },
+    ];
 
-        for (const table of [users]) {
+    async init() {
+        for (const table of this.tables) {
             await this.createTable(table.tableName, table.schema);
             await this.syncTable(table.tableName, table.schema);
         }
@@ -83,18 +85,35 @@ class DatabaseHandler {
         const client = await this.getClient();
 
         try {
-            const { rows: existingColumns } = await client.query(`SELECT column_name FROM information_schema.columns WHERE table_name = $1`, [tableName]);
+            const { rows: existingColumns } = await client.query(
+                `SELECT column_name, data_type 
+                 FROM information_schema.columns 
+                 WHERE table_name = $1`,
+                [tableName],
+            );
 
             const existingColumnNames = existingColumns.map((col: { column_name: string }) => col.column_name);
+            const existingColumnTypes = existingColumns.reduce((acc: Record<string, string>, col: { column_name: string; data_type: string }) => {
+                acc[col.column_name] = col.data_type;
+                return acc;
+            }, {});
 
             for (const [key, value] of Object.entries(parsedSchema)) {
-                if (!existingColumnNames.includes(key)) {
-                    const sqlType = DatabaseHandler.mapZodToSQL(value);
-                    const metadata = (value as any).dbMetadata as ColumnMetadata | undefined;
-                    let alterQuery = `ALTER TABLE ${tableName} ADD COLUMN ${key} ${sqlType}`;
+                const sqlType = DatabaseHandler.mapZodToSQL(value);
+                const currentType = existingColumnTypes[key];
 
-                    if (metadata?.notNull) alterQuery += " NOT NULL";
-                    if (metadata?.defaultValue !== undefined) alterQuery += ` DEFAULT '${metadata.defaultValue}'`;
+                if (!existingColumnNames.includes(key) || currentType?.toUpperCase() !== sqlType) {
+                    const metadata = (value as any).dbMetadata as ColumnMetadata | undefined;
+                    let alterQuery = `ALTER TABLE ${tableName} `;
+
+                    if (!existingColumnNames.includes(key)) {
+                        alterQuery += `ADD COLUMN ${key} ${sqlType}`;
+                    } else if (currentType?.toUpperCase() !== sqlType) {
+                        alterQuery += `ALTER COLUMN ${key} TYPE ${sqlType} USING ${key}::${sqlType}`;
+                    }
+
+                    if (metadata?.notNull && !existingColumnNames.includes(key)) alterQuery += " NOT NULL";
+                    if (metadata?.defaultValue !== undefined && !existingColumnNames.includes(key)) alterQuery += ` DEFAULT '${metadata.defaultValue}'`;
 
                     await client.query(alterQuery);
                 }
@@ -105,16 +124,21 @@ class DatabaseHandler {
     }
 
     // Generic CRUD operations
-    async create<T extends object>(tableName: string, data: T) {
+    async create<T extends object>(tableName: string, data: T, conflictKey?: string) {
         const keys = Object.keys(data);
         const values = Object.values(data);
         const placeholders = keys.map((_, index) => `$${index + 1}`).join(", ");
 
-        const query = `INSERT INTO ${tableName} (${keys.join(", ")}) VALUES (${placeholders}) RETURNING *`;
+        let query = `INSERT INTO ${tableName} (${keys.join(", ")}) VALUES (${placeholders})`;
+        if (conflictKey) {
+            query += ` ON CONFLICT (${conflictKey}) DO NOTHING`;
+        }
+        query += ` RETURNING *`;
+
         const client = await this.getClient();
         try {
             const result = await client.query(query, values);
-            return result.rows[0];
+            return result.rows[0] ?? null;
         } finally {
             client.release();
         }
@@ -207,6 +231,27 @@ class DatabaseHandler {
         try {
             const result = await client.query(query, values);
             return result.rows[0];
+        } finally {
+            client.release();
+        }
+    }
+
+    async getAll(tableName: string, limit?: string, offset?: string) {
+        const query = `SELECT * FROM ${tableName} ${limit ? `LIMIT ${limit}` : ""} ${offset ? `OFFSET ${offset}` : ""}`;
+        const client = await this.getClient();
+        try {
+            const result = await client.query(query);
+            return result.rows;
+        } finally {
+            client.release();
+        }
+    }
+
+    async deleteAll(tableName: string) {
+        const query = `DELETE FROM ${tableName}`;
+        const client = await this.getClient();
+        try {
+            await client.query(query);
         } finally {
             client.release();
         }

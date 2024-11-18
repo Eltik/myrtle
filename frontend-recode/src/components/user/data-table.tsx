@@ -1,20 +1,39 @@
-import { flexRender, getCoreRowModel, useReactTable, getPaginationRowModel } from "@tanstack/react-table";
+import { flexRender, type ColumnFiltersState, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable, type SortingState } from "@tanstack/react-table";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import type { DataTableProps } from "~/types/impl/frontend/impl/users";
 import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogTrigger } from "../ui/dialog";
+import ItemDialogueCard from "./item-dialogue-card";
+import { type Item } from "~/types/impl/api/static/material";
 
 export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData, TValue>) {
+    const [sorting, setSorting] = useState<SortingState>([]);
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+
     const table = useReactTable({
         data,
         columns,
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
+        onSortingChange: setSorting,
+        getSortedRowModel: getSortedRowModel(),
+        onColumnFiltersChange: setColumnFilters,
+        getFilteredRowModel: getFilteredRowModel(),
+        state: {
+            sorting,
+            columnFilters,
+        },
     });
 
     return (
         <>
+            <div className="flex items-center py-4">
+                <Input className="max-w-sm" placeholder="Filter items..." value={(table.getColumn("name")?.getFilterValue() as string) ?? ""} onChange={(event) => table.getColumn("name")?.setFilterValue(event.target.value)} />
+            </div>
             <div className="mx-auto w-full rounded-md border">
-                <Table className="mx-auto w-[95vw] sm:w-[100vw]">
+                <Table className="mx-auto">
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id}>
@@ -27,11 +46,18 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
                     <TableBody>
                         {table.getRowModel().rows?.length ? (
                             table.getRowModel().rows.map((row) => (
-                                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
-                                    {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
-                                    ))}
-                                </TableRow>
+                                <Dialog key={row.id}>
+                                    <DialogTrigger asChild>
+                                        <TableRow data-state={row.getIsSelected() && "selected"} className="cursor-pointer">
+                                            {row.getVisibleCells().map((cell) => (
+                                                <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                                            ))}
+                                        </TableRow>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <ItemDialogueCard item={row.original as Item} />
+                                    </DialogContent>
+                                </Dialog>
                             ))
                         ) : (
                             <TableRow>

@@ -18,7 +18,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             <SidebarProvider defaultOpen={false}>
                 <AppSidebar />
                 <Navbar />
-                <motion.main variants={variants} initial={"hidden"} animate={"enter"} exit={"exit"} transition={{ type: "linear" }} className="min-h-[calc(100svh_-_80px)] transition-[margin-left] duration-300 ease-in-out lg:ml-[90px]">
+                <motion.main variants={variants} initial={"hidden"} animate={"enter"} exit={"exit"} transition={{ type: "linear" }} className="min-h-[calc(100svh_-_80px)] w-full transition-[margin-left] duration-300 ease-in-out lg:ml-[90px]">
                     <div className="fixed inset-0 -z-50 h-full w-full bg-[radial-gradient(#cccccc80_1px,transparent_1px)] [background-size:16px_16px] dark:bg-[radial-gradient(#fafafa12_1px,transparent_1px)]" />
                     <div className="mt-10" />
                     {children}

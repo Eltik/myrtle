@@ -15,9 +15,9 @@ function CharacterCard({ data }: { data: CharacterData }) {
                         <CardDescription>Level {data.level}</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="grid grid-cols-2">
+                        <div className="flex flex-col md:grid md:grid-cols-2">
                             <div className="relative h-full w-full">
-                                <Image className="h-full w-full rounded-lg object-cover" alt="Operator Image" width={500} height={500} src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/${encodeURIComponent(data.skin.includes("@") ? data.skin.replaceAll("@", "_") : data.skin.replaceAll("#", "_"))}.png`} />
+                                <Image className="h-full w-full rounded-lg object-cover" alt="Operator Image" width={500} height={500} src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/${data.skin ? encodeURIComponent(data.skin.includes("@") ? data.skin.replaceAll("@", "_") : data.skin.replaceAll("#", "_")) : encodeURIComponent((data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").includes("@") ? (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("@", "_") : (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("#", "_"))}.png`} />
                             </div>
                             <div>
                                 <div className="flex justify-between">

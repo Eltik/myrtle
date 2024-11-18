@@ -1268,6 +1268,30 @@ export type CharacterData = {
     evolvePhase: number;
     defaultSkillIndex: number;
     gainTime: number;
+    currentTmpl?: string; // Amiya pog
+    tmpl?: Record<
+        string,
+        {
+            equip: Record<
+                string,
+                {
+                    hide: number;
+                    level: number;
+                    locked: number;
+                }
+            >;
+            skills: {
+                state: number;
+                unlock: number;
+                skillId: string;
+                specializeLevel: number;
+                completeUpgradeTime: number;
+            }[];
+            skinId: string;
+            currentEquip: string;
+            defaultSkillIndex: number;
+        }
+    >; // Amiya pog
     skills: {
         skillId: string;
         unlock: number;
