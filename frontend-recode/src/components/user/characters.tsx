@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { rarityToNumber, stringToOperatorRarity } from "~/helper";
 import type { User } from "~/types/impl/api";
 import { OperatorRarity } from "~/types/impl/api/static/operator";
@@ -13,6 +13,7 @@ function Characters({ data }: { data: User }) {
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
     const [filterRarity, setFilterRarity] = useState<OperatorRarity | "all">("all");
     const [searchTerm, setSearchTerm] = useState("");
+    const [displayCount, setDisplayCount] = useState(40);
 
     const sortedAndFilteredCharacters = useMemo(() => {
         return Object.values(data.troop.chars)
@@ -41,6 +42,24 @@ function Characters({ data }: { data: User }) {
     const toggleSortOrder = () => {
         setSortOrder((prevOrder) => (prevOrder === "asc" ? "desc" : "asc"));
     };
+
+    const observer = useRef<IntersectionObserver | null>(null)
+    const lastCharacterRef = useCallback(
+        (node: HTMLDivElement) => {
+            if (observer.current) observer.current.disconnect()
+            observer.current = new IntersectionObserver((entries) => {
+                if (entries[0]?.isIntersecting && displayCount < sortedAndFilteredCharacters.length) {
+                setDisplayCount((prevCount) => Math.min(prevCount + 40, sortedAndFilteredCharacters.length))
+                }
+            })
+            if (node) observer.current.observe(node)
+        },
+        [displayCount, sortedAndFilteredCharacters.length]
+    );
+
+    useEffect(() => {
+        setDisplayCount(40)
+    }, [sortBy, sortOrder, filterRarity, searchTerm])
     
     return (
         <>
@@ -96,8 +115,10 @@ function Characters({ data }: { data: User }) {
                 </Button>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {sortedAndFilteredCharacters.map((char) => (
-                    <CharacterCard key={char.charId} data={char} />
+                {sortedAndFilteredCharacters.slice(0, displayCount).map((char, index) => (
+                    <div key={char.charId} ref={index === displayCount - 1 ? lastCharacterRef : null}>
+                        <CharacterCard data={char} />
+                    </div>
                 ))}
             </div>
         </>
