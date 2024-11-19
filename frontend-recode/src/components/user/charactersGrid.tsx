@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { rarityToNumber, stringToOperatorRarity } from "~/helper";
+import { capitalize, rarityToNumber, stringToOperatorRarity } from "~/helper";
 import type { User } from "~/types/impl/api";
 import { OperatorRarity } from "~/types/impl/api/static/operator";
 import { Input } from "../ui/input";
@@ -8,7 +8,7 @@ import { Button } from "../ui/button";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import CharacterCard from "./components/character-card";
 
-function Characters({ data }: { data: User }) {
+function CharactersGrid({ data }: { data: User }) {
     const [sortBy, setSortBy] = useState<"level" | "rarity" | "obtained">("level");
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
     const [filterRarity, setFilterRarity] = useState<OperatorRarity | "all">("all");
@@ -43,27 +43,26 @@ function Characters({ data }: { data: User }) {
         setSortOrder((prevOrder) => (prevOrder === "asc" ? "desc" : "asc"));
     };
 
-    const observer = useRef<IntersectionObserver | null>(null)
+    const observer = useRef<IntersectionObserver | null>(null);
     const lastCharacterRef = useCallback(
         (node: HTMLDivElement) => {
-            if (observer.current) observer.current.disconnect()
+            if (observer.current) observer.current.disconnect();
             observer.current = new IntersectionObserver((entries) => {
                 if (entries[0]?.isIntersecting && displayCount < sortedAndFilteredCharacters.length) {
-                setDisplayCount((prevCount) => Math.min(prevCount + 40, sortedAndFilteredCharacters.length))
+                    setDisplayCount((prevCount) => Math.min(prevCount + 40, sortedAndFilteredCharacters.length));
                 }
-            })
-            if (node) observer.current.observe(node)
+            });
+            if (node) observer.current.observe(node);
         },
-        [displayCount, sortedAndFilteredCharacters.length]
+        [displayCount, sortedAndFilteredCharacters.length],
     );
 
     useEffect(() => {
-        setDisplayCount(40)
-    }, [sortBy, sortOrder, filterRarity, searchTerm])
-    
+        setDisplayCount(40);
+    }, [sortBy, sortOrder, filterRarity, searchTerm]);
+
     return (
         <>
-            <h2 className="text-2xl font-bold">Characters</h2>
             <div className="flex flex-col space-y-4 md:flex-row md:space-x-4 md:space-y-0">
                 <Input placeholder="Search operators..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="md:w-1/3" />
                 <Select value={sortBy} onValueChange={(value: "level" | "rarity" | "obtained") => setSortBy(value)}>
@@ -110,7 +109,8 @@ function Characters({ data }: { data: User }) {
                         </SelectItem>
                     </SelectContent>
                 </Select>
-                <Button onClick={toggleSortOrder} variant="outline" size="icon">
+                <Button onClick={toggleSortOrder} variant="outline" className="flex flex-row">
+                    <span>{capitalize(sortOrder)}</span>
                     {sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
                 </Button>
             </div>
@@ -122,7 +122,7 @@ function Characters({ data }: { data: User }) {
                 ))}
             </div>
         </>
-    )
+    );
 }
 
-export default Characters;
+export default CharactersGrid;

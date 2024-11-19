@@ -1,4 +1,4 @@
-import { Clipboard } from "lucide-react";
+import { Clipboard, LayoutGrid, List } from "lucide-react";
 import type { NextPage } from "next";
 import Head from "next/head";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
@@ -9,11 +9,21 @@ import { env } from "~/env";
 import type { User } from "~/types/impl/api";
 import { toast } from "~/hooks/use-toast";
 import { getAvatarSkinId } from "~/helper";
-import Characters from "~/components/user/characters";
+import CharactersGrid from "~/components/user/charactersGrid";
 import Items from "~/components/user/items";
 import Base from "~/components/user/base";
+import type { ViewType } from "~/types/impl/frontend/impl/users";
+import { useState } from "react";
+import { Button } from "~/components/ui/button";
+import CharactersList from "~/components/user/charactersList";
 
 const User: NextPage<Props> = ({ data }: { data: User }) => {
+    const [currentView, setCurrentView] = useState<ViewType>("grid");
+
+    const handleViewChange = (view: ViewType) => {
+        setCurrentView(view);
+    };
+
     if (!data) {
         return <></>;
     }
@@ -79,12 +89,25 @@ const User: NextPage<Props> = ({ data }: { data: User }) => {
                         <TabsTrigger value="base">Base</TabsTrigger>
                     </TabsList>
                     <TabsContent value="characters" className="space-y-4">
-                        <Characters data={data} />
+                        <div className="flex flex-row gap-4">
+                            <h2 className="text-2xl font-bold">Characters</h2>
+                            <div className="flex rounded-md shadow-sm" role="group">
+                                <Button variant={currentView === "grid" ? "default" : "outline"} className="rounded-l-md rounded-r-none border-r-0" onClick={() => handleViewChange("grid")} aria-label="Grid view">
+                                    <LayoutGrid className="h-4 w-4" />
+                                </Button>
+                                <Button variant={currentView === "list" ? "default" : "outline"} className="rounded-l-none rounded-r-md border-l-0" onClick={() => handleViewChange("list")} aria-label="List view">
+                                    <List className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+                        {currentView === "grid" ? <CharactersGrid data={data} /> : <CharactersList data={data} />}
                     </TabsContent>
                     <TabsContent value="items" className="space-y-4">
+                        <h2 className="text-2xl font-bold">Items</h2>
                         <Items data={data} />
                     </TabsContent>
                     <TabsContent value="base" className="space-y-4">
+                        <h2 className="text-2xl font-bold">Base</h2>
                         <Base data={data} />
                     </TabsContent>
                 </Tabs>

@@ -1,5 +1,5 @@
 import type { User } from "~/types/impl/api";
-import { DataTable } from "./components/data-table";
+import { ItemsDataTable } from "./components/items-data-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Item } from "~/types/impl/api/static/material";
 import Image from "next/image";
@@ -46,8 +46,7 @@ function Items({ data }: { data: User }) {
 
     return (
         <>
-            <h2 className="text-2xl font-bold">Items</h2>
-            <DataTable
+            <ItemsDataTable
                 columns={columns}
                 data={Object.values(data.inventory)
                     .map((item) => {
@@ -60,7 +59,7 @@ function Items({ data }: { data: User }) {
                     .filter(Boolean)}
             />
         </>
-    )
-};
+    );
+}
 
 export default Items;

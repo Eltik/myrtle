@@ -7,7 +7,6 @@ import { Badge } from "../ui/badge";
 function Base({ data }: { data: User }) {
     return (
         <>
-            <h2 className="text-2xl font-bold">Base</h2>
             <ScrollArea className="h-[100vh] rounded-md border p-4 lg:h-96">
                 <Card className="mb-6">
                     <CardHeader>
@@ -44,7 +43,7 @@ function Base({ data }: { data: User }) {
                 </Card>
             </ScrollArea>
         </>
-    )
+    );
 }
 
 export default Base;

@@ -68,10 +68,10 @@ function CharacterCard({ data }: { data: CharacterData }) {
                                                     </div>
                                                 </div>
                                                 <div className="flex flex-col">
-                                                    <span className="text-base">
-                                                        Level {data.mainSkillLvl}
-                                                        {skill.specializeLevel > 0 ? `, M${skill.specializeLevel}` : ""}
-                                                    </span>
+                                                    <div className="flex flex-row items-center">
+                                                        <span className="text-base">Level {data.mainSkillLvl}</span>
+                                                        {skill.specializeLevel > 0 ? <Image src={`https://ak.gamepress.gg/sites/default/files/2019-10/m-${skill.specializeLevel}_0.png`} className="h-8 w-8" width={50} height={50} alt="M1" /> : null}
+                                                    </div>
                                                     <span className="mb-2 text-sm">
                                                         <b>{formatSkillType(skill.static?.levels[parseSkillStaticLevel(data.mainSkillLvl, skill.specializeLevel)]?.spData.spType ?? "")}</b> | <b>Initial: </b>
                                                         <span className="text-muted-foreground">{skill.static?.levels[parseSkillStaticLevel(data.mainSkillLvl, skill.specializeLevel)]?.spData.initSp ?? 0} SP</span> - <b>Cost: </b>
