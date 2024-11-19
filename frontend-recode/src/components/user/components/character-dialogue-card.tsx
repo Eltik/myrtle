@@ -1,4 +1,4 @@
-import Image from "next/legacy/image";
+import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
 import type { CharacterData } from "~/types/impl/api";
 import { Progress } from "../../ui/progress";
@@ -25,7 +25,17 @@ function CharacterDialogueCard({ data }: { data: CharacterData }) {
         <Card className="grid max-h-[calc(100vh-7rem)] w-full max-w-2xl gap-6 overflow-hidden rounded-lg border-0 shadow-lg md:py-6">
             <CardHeader className="relative">
                 <div className="relative h-64 w-full">
-                    <Image loading="lazy" src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/${data.skin ? encodeURIComponent(data.skin.includes("@") ? data.skin.replaceAll("@", "_") : data.skin.replaceAll("#", "_")) : encodeURIComponent((data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").includes("@") ? (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("@", "_") : (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("#", "_"))}.png`} alt={name} layout="fill" objectFit="contain" className="h-48 w-full rounded-t-lg" />
+                    <Image
+                        loading="lazy"
+                        src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/${data.skin ? encodeURIComponent(data.skin.includes("@") ? data.skin.replaceAll("@", "_") : data.skin.replaceAll("#", "_")) : encodeURIComponent((data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").includes("@") ? (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("@", "_") : (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("#", "_"))}.png`}
+                        alt={name}
+                        className="h-48 w-full rounded-t-lg"
+                        fill
+                        sizes="100vw"
+                        style={{
+                            objectFit: "contain",
+                        }}
+                    />
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 rounded-md bg-gradient-to-t from-gray-900 to-transparent p-4">
                     <CardTitle className="text-3xl font-bold">{name}</CardTitle>
@@ -94,7 +104,16 @@ function CharacterDialogueCard({ data }: { data: CharacterData }) {
                                     skills.map((skill, index) => (
                                         <div className="space-y-1" key={`skill-${index}`}>
                                             <div className="flex w-full flex-row items-center gap-2">
-                                                <Image src={`https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/skill/skill_icon_${skill.static?.iconId ?? skill.static?.skillId}.png`} width={35} height={35} alt="Skill" />
+                                                <Image
+                                                    src={`https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/skill/skill_icon_${skill.static?.iconId ?? skill.static?.skillId}.png`}
+                                                    width={35}
+                                                    height={35}
+                                                    alt="Skill"
+                                                    style={{
+                                                        maxWidth: "100%",
+                                                        height: "auto",
+                                                    }}
+                                                />
                                                 <div className="text-md">
                                                     <b className={`${data.defaultSkillIndex === index ? "text-blue-200" : "text-inherit"}`}>{skill.static?.levels[data.mainSkillLvl - 1]?.name}</b>
                                                 </div>
@@ -102,7 +121,19 @@ function CharacterDialogueCard({ data }: { data: CharacterData }) {
                                             <div className="flex flex-col">
                                                 <div className="flex flex-row items-center">
                                                     <span className="text-base">Level {data.mainSkillLvl}</span>
-                                                    {skill.specializeLevel > 0 ? <Image src={`https://ak.gamepress.gg/sites/default/files/2019-10/m-${skill.specializeLevel}_0.png`} className="h-8 w-8" width={50} height={50} alt="M1" /> : null}
+                                                    {skill.specializeLevel > 0 ? (
+                                                        <Image
+                                                            src={`https://ak.gamepress.gg/sites/default/files/2019-10/m-${skill.specializeLevel}_0.png`}
+                                                            className="h-8 w-8"
+                                                            width={50}
+                                                            height={50}
+                                                            alt="M1"
+                                                            style={{
+                                                                maxWidth: "100%",
+                                                                height: "auto",
+                                                            }}
+                                                        />
+                                                    ) : null}
                                                 </div>
                                                 <span className="mb-2 text-sm">
                                                     <b>{formatSkillType(skill.static?.levels[parseSkillStaticLevel(data.mainSkillLvl, skill.specializeLevel)]?.spData.spType ?? "")}</b> | <b>Initial: </b>

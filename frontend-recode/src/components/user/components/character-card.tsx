@@ -1,7 +1,7 @@
 import type { CharacterData } from "~/types/impl/api";
 import { Card, CardContent } from "../../ui/card";
 import { Progress } from "../../ui/progress";
-import Image from "next/legacy/image";
+import Image from "next/image";
 import { Dialog, DialogContent, DialogTrigger } from "../../ui/dialog";
 import CharacterDialogueCard from "../components/character-dialogue-card";
 import { formatProfession, formatSkillType, formatSubProfession, insertBlackboard, parseSkillStaticLevel } from "~/helper";
@@ -17,8 +17,30 @@ function CharacterCard({ data }: { data: CharacterData }) {
                         <ScrollArea className="h-[620px] pb-6 md:h-[400px]">
                             <div className="grid gap-3 md:grid-cols-2">
                                 <div className="relative h-full w-full">
-                                    <Image loading="lazy" className="invisible hidden h-full w-full rounded-lg md:visible md:block" alt="Operator Image" layout="fill" objectFit="contain" src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/${data.skin ? encodeURIComponent(data.skin.includes("@") ? data.skin.replaceAll("@", "_") : data.skin.replaceAll("#", "_")) : encodeURIComponent((data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").includes("@") ? (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("@", "_") : (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("#", "_"))}.png`} />
-                                    <Image loading="lazy" className="visible block h-full w-full rounded-lg md:invisible md:hidden" alt="Operator Image" width={500} height={500} objectFit="contain" src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/${data.skin ? encodeURIComponent(data.skin.includes("@") ? data.skin.replaceAll("@", "_") : data.skin.replaceAll("#", "_")) : encodeURIComponent((data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").includes("@") ? (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("@", "_") : (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("#", "_"))}.png`} />
+                                    <Image
+                                        loading="lazy"
+                                        className="invisible hidden h-full w-full rounded-lg md:visible md:block"
+                                        alt="Operator Image"
+                                        src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/${data.skin ? encodeURIComponent(data.skin.includes("@") ? data.skin.replaceAll("@", "_") : data.skin.replaceAll("#", "_")) : encodeURIComponent((data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").includes("@") ? (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("@", "_") : (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("#", "_"))}.png`}
+                                        fill
+                                        sizes="100vw"
+                                        style={{
+                                            objectFit: "contain",
+                                        }}
+                                    />
+                                    <Image
+                                        loading="lazy"
+                                        className="visible block h-full w-full rounded-lg md:invisible md:hidden"
+                                        alt="Operator Image"
+                                        width={500}
+                                        height={500}
+                                        src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/${data.skin ? encodeURIComponent(data.skin.includes("@") ? data.skin.replaceAll("@", "_") : data.skin.replaceAll("#", "_")) : encodeURIComponent((data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").includes("@") ? (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("@", "_") : (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("#", "_"))}.png`}
+                                        style={{
+                                            maxWidth: "100%",
+                                            height: "auto",
+                                            objectFit: "contain",
+                                        }}
+                                    />
                                 </div>
                                 <div className="space-y-4 py-3">
                                     <div className="space-y-1">
@@ -30,11 +52,31 @@ function CharacterCard({ data }: { data: CharacterData }) {
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="">
                                             <p className="text-xs text-gray-500 dark:text-gray-400">Promotion</p>
-                                            <Image src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/elite/${data.evolvePhase}.png`} width={35} height={35} alt="Promotion" />
+                                            <Image
+                                                src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/elite/${data.evolvePhase}.png`}
+                                                width={35}
+                                                height={35}
+                                                alt="Promotion"
+                                                style={{
+                                                    maxWidth: "100%",
+                                                    height: "auto",
+                                                    objectFit: "contain",
+                                                }}
+                                            />
                                         </div>
                                         <div className="space-y-1">
                                             <p className="text-xs text-gray-500 dark:text-gray-400">Potential</p>
-                                            <Image src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/potential/${data.potentialRank + 1}.png`} width={40} height={40} alt="Potential" />
+                                            <Image
+                                                src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/potential/${data.potentialRank + 1}.png`}
+                                                width={40}
+                                                height={40}
+                                                alt="Potential"
+                                                style={{
+                                                    maxWidth: "100%",
+                                                    height: "auto",
+                                                    objectFit: "contain",
+                                                }}
+                                            />
                                         </div>
                                     </div>
                                     <div className="space-y-1">
@@ -62,7 +104,17 @@ function CharacterCard({ data }: { data: CharacterData }) {
                                         data.skills.map((skill, index) => (
                                             <div className="space-y-1" key={`skill-${index}`}>
                                                 <div className="flex w-full flex-row items-center gap-2">
-                                                    <Image src={`https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/skill/skill_icon_${skill.static?.iconId ?? skill.static?.skillId}.png`} width={35} height={35} alt="Skill" />
+                                                    <Image
+                                                        src={`https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/skill/skill_icon_${skill.static?.iconId ?? skill.static?.skillId}.png`}
+                                                        width={35}
+                                                        height={35}
+                                                        alt="Skill"
+                                                        style={{
+                                                            maxWidth: "100%",
+                                                            height: "auto",
+                                                            objectFit: "contain",
+                                                        }}
+                                                    />
                                                     <div className="text-md">
                                                         <b className={`${data.defaultSkillIndex === index ? "text-blue-200" : "text-inherit"}`}>{skill.static?.levels[data.mainSkillLvl - 1]?.name}</b>
                                                     </div>
@@ -70,7 +122,20 @@ function CharacterCard({ data }: { data: CharacterData }) {
                                                 <div className="flex flex-col">
                                                     <div className="flex flex-row items-center">
                                                         <span className="text-base">Level {data.mainSkillLvl}</span>
-                                                        {skill.specializeLevel > 0 ? <Image src={`https://ak.gamepress.gg/sites/default/files/2019-10/m-${skill.specializeLevel}_0.png`} className="h-8 w-8" width={50} height={50} alt="M1" /> : null}
+                                                        {skill.specializeLevel > 0 ? (
+                                                            <Image
+                                                                src={`https://ak.gamepress.gg/sites/default/files/2019-10/m-${skill.specializeLevel}_0.png`}
+                                                                className="h-8 w-8"
+                                                                width={50}
+                                                                height={50}
+                                                                alt="M1"
+                                                                style={{
+                                                                    maxWidth: "100%",
+                                                                    height: "auto",
+                                                                    objectFit: "contain",
+                                                                }}
+                                                            />
+                                                        ) : null}
                                                     </div>
                                                     <span className="mb-2 text-sm">
                                                         <b>{formatSkillType(skill.static?.levels[parseSkillStaticLevel(data.mainSkillLvl, skill.specializeLevel)]?.spData.spType ?? "")}</b> | <b>Initial: </b>

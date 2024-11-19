@@ -2,7 +2,7 @@ import type { User } from "~/types/impl/api";
 import { ItemsDataTable } from "./components/items-data-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Item } from "~/types/impl/api/static/material";
-import Image from "next/legacy/image";
+import Image from "next/image";
 import { Button } from "../ui/button";
 import { ArrowUpDown } from "lucide-react";
 
@@ -17,7 +17,18 @@ function Items({ data }: { data: User }) {
             accessorKey: "icon",
             header: () => "Icon",
             cell: ({ row }) => {
-                return <Image src={`https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/item/${String(row.getValue("icon"))}.png`} width={32} height={32} alt={"Item icon"} />;
+                return (
+                    <Image
+                        src={`https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/item/${String(row.getValue("icon"))}.png`}
+                        width={32}
+                        height={32}
+                        alt={"Item icon"}
+                        style={{
+                            maxWidth: "100%",
+                            height: "auto",
+                        }}
+                    />
+                );
             },
         },
         {

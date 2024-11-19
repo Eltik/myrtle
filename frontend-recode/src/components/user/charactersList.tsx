@@ -1,5 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import Image from "next/legacy/image";
+import Image from "next/image";
 import type { User } from "~/types/impl/api";
 import { Button } from "../ui/button";
 import { ArrowUpDown } from "lucide-react";
@@ -19,7 +19,18 @@ function CharactersList({ data }: { data: User }) {
             accessorKey: "icon",
             header: () => "Icon",
             cell: ({ row }) => {
-                return <Image src={row.getValue("icon")} width={32} height={32} alt={"Item icon"} />;
+                return (
+                    <Image
+                        src={row.getValue("icon")}
+                        width={32}
+                        height={32}
+                        alt={"Item icon"}
+                        style={{
+                            maxWidth: "100%",
+                            height: "auto",
+                        }}
+                    />
+                );
             },
         },
         {
@@ -44,7 +55,18 @@ function CharactersList({ data }: { data: User }) {
                 );
             },
             cell: ({ row }) => {
-                return <Image src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/elite/${row.getValue("promotion")}.png`} width={35} height={35} alt="Promotion" />;
+                return (
+                    <Image
+                        src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/elite/${row.getValue("promotion")}.png`}
+                        width={35}
+                        height={35}
+                        alt="Promotion"
+                        style={{
+                            maxWidth: "100%",
+                            height: "auto",
+                        }}
+                    />
+                );
             },
         },
         {
@@ -58,7 +80,18 @@ function CharactersList({ data }: { data: User }) {
                 );
             },
             cell: ({ row }) => {
-                return <Image src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/potential/${(row.getValue("potential") as number) + 1}.png`} width={40} height={40} alt="Potential" />;
+                return (
+                    <Image
+                        src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/potential/${(row.getValue("potential") as number) + 1}.png`}
+                        width={40}
+                        height={40}
+                        alt="Potential"
+                        style={{
+                            maxWidth: "100%",
+                            height: "auto",
+                        }}
+                    />
+                );
             },
         },
         {

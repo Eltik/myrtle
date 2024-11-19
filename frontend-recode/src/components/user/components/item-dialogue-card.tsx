@@ -11,7 +11,7 @@ import { Separator } from "../../ui/separator";
 import { ScrollArea } from "../../ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../ui/tooltip";
 import { Button } from "../../ui/button";
-import Image from "next/legacy/image";
+import Image from "next/image";
 
 const rarityColors = {
     [ItemRarity.TIER_1]: "bg-gray-200 text-gray-800",
@@ -36,7 +36,17 @@ export default function ItemDialogueCard({ item }: { item: Item }) {
         <Card className="w-full max-w-2xl border-none bg-background p-0 shadow-lg">
             <CardHeader className={`${rarityColors[item.rarity]} rounded-t-lg`}>
                 <div className="flex items-center space-x-4">
-                    <Image src={`https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/item/${item.iconId}.png`} alt={item.name} className="h-16 w-16 rounded-full bg-background p-1" width={100} height={100} />
+                    <Image
+                        src={`https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/item/${item.iconId}.png`}
+                        alt={item.name}
+                        className="h-16 w-16 rounded-full bg-background p-1"
+                        width={100}
+                        height={100}
+                        style={{
+                            maxWidth: "100%",
+                            height: "auto",
+                        }}
+                    />
                     <div>
                         <CardTitle className="text-2xl font-bold">{item.name}</CardTitle>
                         <CardDescription className="line-clamp-2 text-sm opacity-90 sm:line-clamp-none">{item.description}</CardDescription>
