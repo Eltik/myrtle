@@ -1,7 +1,7 @@
 import type { CharacterData } from "~/types/impl/api";
 import { Card, CardContent } from "../../ui/card";
 import { Progress } from "../../ui/progress";
-import Image from "next/image";
+import Image from "next/legacy/image";
 import { Dialog, DialogContent, DialogTrigger } from "../../ui/dialog";
 import CharacterDialogueCard from "../components/character-dialogue-card";
 import { formatProfession, formatSkillType, formatSubProfession, insertBlackboard, parseSkillStaticLevel } from "~/helper";
@@ -12,15 +12,15 @@ function CharacterCard({ data }: { data: CharacterData }) {
     return (
         <Dialog>
             <DialogTrigger>
-                <Card className="h-[620px] w-full max-w-sm overflow-hidden bg-card transition-all duration-150 hover:bg-secondary md:h-[400px]">
+                <Card className="h-[620px] w-full max-w-sm overflow-hidden bg-card transition-all duration-150 hover:bg-secondary/50 md:h-[400px]">
                     <CardContent className="text-left">
                         <ScrollArea className="h-[620px] pb-6 md:h-[400px]">
                             <div className="grid gap-3 md:grid-cols-2">
                                 <div className="relative h-full w-full">
-                                    <Image loading="lazy" className="hidden h-full w-full rounded-lg md:block" alt="Operator Image" layout="fill" objectFit="contain" src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/${data.skin ? encodeURIComponent(data.skin.includes("@") ? data.skin.replaceAll("@", "_") : data.skin.replaceAll("#", "_")) : encodeURIComponent((data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").includes("@") ? (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("@", "_") : (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("#", "_"))}.png`} />
-                                    <Image loading="lazy" className="block h-full w-full rounded-lg md:hidden" alt="Operator Image" width={500} height={500} objectFit="contain" src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/${data.skin ? encodeURIComponent(data.skin.includes("@") ? data.skin.replaceAll("@", "_") : data.skin.replaceAll("#", "_")) : encodeURIComponent((data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").includes("@") ? (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("@", "_") : (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("#", "_"))}.png`} />
+                                    <Image loading="lazy" className="invisible hidden h-full w-full rounded-lg md:visible md:block" alt="Operator Image" layout="fill" objectFit="contain" src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/${data.skin ? encodeURIComponent(data.skin.includes("@") ? data.skin.replaceAll("@", "_") : data.skin.replaceAll("#", "_")) : encodeURIComponent((data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").includes("@") ? (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("@", "_") : (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("#", "_"))}.png`} />
+                                    <Image loading="lazy" className="visible block h-full w-full rounded-lg md:invisible md:hidden" alt="Operator Image" width={500} height={500} objectFit="contain" src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/${data.skin ? encodeURIComponent(data.skin.includes("@") ? data.skin.replaceAll("@", "_") : data.skin.replaceAll("#", "_")) : encodeURIComponent((data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").includes("@") ? (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("@", "_") : (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("#", "_"))}.png`} />
                                 </div>
-                                <div className="space-y-4">
+                                <div className="space-y-4 py-3">
                                     <div className="space-y-1">
                                         <h2 className="text-2xl font-bold">{data.static?.name}</h2>
                                         <p className="text-sm text-gray-500 dark:text-gray-400">

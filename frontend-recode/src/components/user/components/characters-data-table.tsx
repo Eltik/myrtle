@@ -7,13 +7,13 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogTrigger } from "../../ui/dialog";
 import CharacterDialogueCard from "./character-dialogue-card";
 import type { CharacterData } from "~/types/impl/api";
-import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "~/components/ui/pagination";
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink } from "~/components/ui/pagination";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 
 const useWindowSize = () => {
     const [windowSize, setWindowSize] = useState({
-        width: typeof window !== 'undefined' ? window.innerWidth : 0,
-        height: typeof window !== 'undefined' ? window.innerHeight : 0,
+        width: typeof window !== "undefined" ? window.innerWidth : 0,
+        height: typeof window !== "undefined" ? window.innerHeight : 0,
     });
 
     useEffect(() => {
@@ -24,14 +24,14 @@ const useWindowSize = () => {
             });
         };
 
-        window.addEventListener('resize', handleResize);
+        window.addEventListener("resize", handleResize);
         handleResize();
 
-        return () => window.removeEventListener('resize', handleResize);
+        return () => window.removeEventListener("resize", handleResize);
     }, []);
 
     return windowSize;
-}
+};
 
 export function CharactersDataTable<TData, TValue>({ columns, data }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = useState<SortingState>([]);
@@ -59,15 +59,15 @@ export function CharactersDataTable<TData, TValue>({ columns, data }: DataTableP
     const getPageRange = () => {
         const maxButtons = width < 640 ? 3 : width < 768 ? 5 : 7;
         const halfButtons = Math.floor(maxButtons / 2);
-        
+
         let startPage = Math.max(0, currentPage - halfButtons);
-        let endPage = Math.min(totalPages - 1, startPage + maxButtons - 1);
-        
+        const endPage = Math.min(totalPages - 1, startPage + maxButtons - 1);
+
         if (endPage - startPage + 1 < maxButtons) {
             startPage = Math.max(0, endPage - maxButtons + 1);
         }
-        
-        return Array.from({length: endPage - startPage + 1}, (_, i) => startPage + i);
+
+        return Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
     };
 
     const pageRange = getPageRange();
@@ -118,12 +118,7 @@ export function CharactersDataTable<TData, TValue>({ columns, data }: DataTableP
                 <Pagination>
                     <PaginationContent>
                         <PaginationItem>
-                            <Button 
-                              variant="outline" 
-                              size="icon"
-                              onClick={() => table.previousPage()} 
-                              disabled={!table.getCanPreviousPage()}
-                            >
+                            <Button variant="outline" size="icon" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
                                 <span className="sr-only">Go to previous page</span>
                                 <ChevronLeftIcon className="h-4 w-4" />
                             </Button>
@@ -131,7 +126,9 @@ export function CharactersDataTable<TData, TValue>({ columns, data }: DataTableP
                         {(pageRange[0] ?? 0) > 0 && (
                             <>
                                 <PaginationItem>
-                                    <PaginationLink className="cursor-pointer" onClick={() => table.setPageIndex(0)}>1</PaginationLink>
+                                    <PaginationLink className="cursor-pointer" onClick={() => table.setPageIndex(0)}>
+                                        1
+                                    </PaginationLink>
                                 </PaginationItem>
                                 {(pageRange[0] ?? 0) > 1 && <PaginationEllipsis />}
                             </>
@@ -147,7 +144,9 @@ export function CharactersDataTable<TData, TValue>({ columns, data }: DataTableP
                             <>
                                 {(pageRange[pageRange.length - 1] ?? 0) < totalPages - 2 && <PaginationEllipsis />}
                                 <PaginationItem>
-                                    <PaginationLink className="cursor-pointer" onClick={() => table.setPageIndex(totalPages - 1)}>{totalPages}</PaginationLink>
+                                    <PaginationLink className="cursor-pointer" onClick={() => table.setPageIndex(totalPages - 1)}>
+                                        {totalPages}
+                                    </PaginationLink>
                                 </PaginationItem>
                             </>
                         )}

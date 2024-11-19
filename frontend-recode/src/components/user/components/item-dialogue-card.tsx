@@ -11,7 +11,7 @@ import { Separator } from "../../ui/separator";
 import { ScrollArea } from "../../ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../ui/tooltip";
 import { Button } from "../../ui/button";
-import Image from "next/image";
+import Image from "next/legacy/image";
 
 const rarityColors = {
     [ItemRarity.TIER_1]: "bg-gray-200 text-gray-800",

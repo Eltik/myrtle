@@ -155,6 +155,7 @@ class DatabaseHandler {
                 value: any; // Value to compare against
             }[]; // Array of JSON-based conditions
         },
+        fields?: string[]
     ): Promise<T[]> {
         const { conditions, jsonConditions = [] } = filters;
 
@@ -178,13 +179,26 @@ class DatabaseHandler {
 
         try {
             const result = await client.query(query, values);
-            return result.rows;
+            const data = result.rows;
+
+            for (const item of data) {
+                if (fields && fields.length > 0) {
+                    // Delete fields that don't exist in the fields array
+                    Object.keys(item).forEach((key) => {
+                        if (!fields.includes(key)) {
+                            delete (item as { [key: string]: any })[key];
+                        }
+                    });
+                }
+            }
+
+            return data;
         } finally {
             client.release();
         }
     }
 
-    async read<T>(tableName: string, conditions: Partial<T> = {}) {
+    async read<T>(tableName: string, conditions: Partial<T> = {}, fields?: string[]) {
         const keys = Object.keys(conditions);
         const values = Object.values(conditions);
 
@@ -194,7 +208,20 @@ class DatabaseHandler {
         const client = await this.getClient();
         try {
             const result = await client.query(query, values);
-            return result.rows;
+            const data = result.rows;
+            
+            for (const item of data) {
+                if (fields && fields.length > 0) {
+                    // Delete fields that don't exist in the fields array
+                    Object.keys(item).forEach((key) => {
+                        if (!fields.includes(key)) {
+                            delete (item as { [key: string]: any })[key];
+                        }
+                    });
+                }
+            }
+
+            return data;
         } finally {
             client.release();
         }

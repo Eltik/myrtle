@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Image from "next/legacy/image";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
 import type { CharacterData } from "~/types/impl/api";
 import { Progress } from "../../ui/progress";

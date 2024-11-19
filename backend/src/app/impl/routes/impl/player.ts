@@ -22,6 +22,17 @@ const handler = async (req: Request): Promise<Response> => {
             return middleware.createResponse(JSON.stringify({ error: "No UID provided." }), 400);
         }
 
+        let fields: string[] = body?.fields ?? [];
+        const fieldsParam = url.searchParams.get("fields");
+
+        if (fieldsParam && fieldsParam.startsWith("[") && fieldsParam.endsWith("]")) {
+            const fieldsArray = fieldsParam
+                .slice(1, -1)
+                .split(",")
+                .map((field) => field.trim());
+            fields = fieldsArray.filter(Boolean);
+        }
+
         const server = (body?.server ?? paths[2] ?? url.searchParams.get("server") ?? "en") as AKServer;
         if (!["en", "jp", "kr", "cn", "bili", "tw"].includes(server)) {
             return middleware.createResponse(JSON.stringify({ error: "Invalid server given." }), 400);
@@ -31,7 +42,8 @@ const handler = async (req: Request): Promise<Response> => {
             const data = await db.read<UserDB>(userTableName, {
                 uid,
                 server,
-            });
+            }, fields);
+
             return middleware.createResponse(JSON.stringify(data));
         } catch (e) {
             return middleware.createResponse((e as { message: string }).message, 500);
@@ -51,6 +63,8 @@ const route = {
 type Body = {
     uid: string;
     server: AKServer;
+
+    fields?: string[];
 };
 
 export default route;

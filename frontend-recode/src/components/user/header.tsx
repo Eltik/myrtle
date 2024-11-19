@@ -54,7 +54,7 @@ function UserHeader({ data }: { data: User }) {
                 </div>
             </CardContent>
         </Card>
-    )
+    );
 }
 
 export default UserHeader;

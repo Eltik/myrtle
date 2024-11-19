@@ -1,6 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import Image from "next/image";
-import type { CharacterData, User } from "~/types/impl/api";
+import Image from "next/legacy/image";
+import type { User } from "~/types/impl/api";
 import { Button } from "../ui/button";
 import { ArrowUpDown } from "lucide-react";
 import { CharactersDataTable } from "./components/characters-data-table";

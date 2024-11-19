@@ -38,32 +38,10 @@ const User: NextPage<Props> = ({ data }: { data: User }) => {
                 <link rel="icon" href="/favicon.ico" />
             </Head>
             <div className="container mx-auto p-4">
-                <motion.div
-                    initial="hidden"
-                    animate="visible"
-                    exit={"hidden"}
-                    variants={{
-                        hidden: { opacity: 0 },
-                        visible: {
-                            opacity: 1,
-                            transition: { staggerChildren: 0.2 },
-                        },
-                    }}
-                >
+                <motion.div initial="hidden" animate="visible" exit={"hidden"} variants={fadeIn}>
                     <UserHeader data={data} />
                 </motion.div>
-                <motion.div
-                    initial="hidden"
-                    animate="visible"
-                    exit={"hidden"}
-                    variants={{
-                        hidden: { opacity: 0 },
-                        visible: {
-                            opacity: 1,
-                            transition: { staggerChildren: 0.2 },
-                        },
-                    }}
-                >
+                <motion.div initial="hidden" animate="visible" exit={"hidden"} variants={fadeIn}>
                     <Tabs defaultValue="characters" className="space-y-4">
                         <TabsList>
                             <TabsTrigger value="characters">Characters</TabsTrigger>
@@ -114,9 +92,21 @@ export const getServerSideProps = async ({ query }: { query: { id: string } }) =
         | null;
     if (!data) return { props: { notFound: true } };
 
+    const user = data[0]?.data;
+
+    // Compress the data
+    const compressedData = {
+        status: user?.status,
+        troop: {
+            chars: user?.troop.chars,
+        },
+        inventory: user?.inventory,
+        building: user?.building,
+    };
+
     return {
         props: {
-            data: data[0]?.data,
+            data: user ? compressedData : null,
         },
     };
 };
