@@ -57,7 +57,7 @@ function CharactersList({ data }: { data: User }) {
             cell: ({ row }) => {
                 return (
                     <Image
-                        src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/elite/${row.getValue("promotion")}.png`}
+                        src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/elite/${String(row.getValue("promotion"))}.png`}
                         width={35}
                         height={35}
                         alt="Promotion"
@@ -82,7 +82,7 @@ function CharactersList({ data }: { data: User }) {
             cell: ({ row }) => {
                 return (
                     <Image
-                        src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/potential/${(row.getValue("potential") as number) + 1}.png`}
+                        src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/potential/${Number(row.getValue("potential")) + 1}.png`}
                         width={40}
                         height={40}
                         alt="Potential"
@@ -105,7 +105,7 @@ function CharactersList({ data }: { data: User }) {
                 );
             },
             cell: ({ row }) => {
-                return <p>{new Date((row.getValue("recruited") as number) * 1000).toLocaleString()}</p>;
+                return <p>{new Date(Number(row.getValue("recruited")) * 1000).toLocaleString()}</p>;
             },
         },
         {
@@ -114,7 +114,7 @@ function CharactersList({ data }: { data: User }) {
             cell: ({ row }) => {
                 return (
                     <div className="flex flex-row items-center gap-3">
-                        <Progress value={(row.getValue("trust") as number) / 2} className="w-[60%]" />
+                        <Progress value={Number(row.getValue("trust")) / 2} className="w-[60%]" />
                         {row.getValue("trust")}%
                     </div>
                 );

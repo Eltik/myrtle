@@ -39,10 +39,14 @@ const handler = async (req: Request): Promise<Response> => {
         }
 
         try {
-            const data = await db.read<UserDB>(userTableName, {
-                uid,
-                server,
-            }, fields);
+            const data = await db.read<UserDB>(
+                userTableName,
+                {
+                    uid,
+                    server,
+                },
+                fields,
+            );
 
             return middleware.createResponse(JSON.stringify(data));
         } catch (e) {

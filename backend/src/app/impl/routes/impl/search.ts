@@ -59,10 +59,14 @@ const handler = async (req: Request): Promise<Response> => {
                     value: nicknumber,
                 });
             }
-            const data = await db.search<UserDB>(usersTableName, {
-                conditions: {},
-                jsonConditions: jsonConditions,
-            }, fields);
+            const data = await db.search<UserDB>(
+                usersTableName,
+                {
+                    conditions: {},
+                    jsonConditions: jsonConditions,
+                },
+                fields,
+            );
             return middleware.createResponse(JSON.stringify(data));
         } catch (e) {
             return middleware.createResponse((e as { message: string }).message, 500);

@@ -155,7 +155,7 @@ class DatabaseHandler {
                 value: any; // Value to compare against
             }[]; // Array of JSON-based conditions
         },
-        fields?: string[]
+        fields?: string[],
     ): Promise<T[]> {
         const { conditions, jsonConditions = [] } = filters;
 
@@ -209,7 +209,7 @@ class DatabaseHandler {
         try {
             const result = await client.query(query, values);
             const data = result.rows;
-            
+
             for (const item of data) {
                 if (fields && fields.length > 0) {
                     // Delete fields that don't exist in the fields array
