@@ -13,7 +13,7 @@ function CharactersGrid({ data }: { data: User }) {
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
     const [filterRarity, setFilterRarity] = useState<OperatorRarity | "all">("all");
     const [searchTerm, setSearchTerm] = useState("");
-    const [displayCount, setDisplayCount] = useState(40);
+    const [displayCount, setDisplayCount] = useState(10);
 
     const sortedAndFilteredCharacters = useMemo(() => {
         return Object.values(data.troop.chars)

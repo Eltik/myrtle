@@ -7,7 +7,8 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogTrigger } from "../../ui/dialog";
 import CharacterDialogueCard from "./character-dialogue-card";
 import type { CharacterData } from "~/types/impl/api";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "~/components/ui/pagination";
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "~/components/ui/pagination";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 
 const useWindowSize = () => {
     const [windowSize, setWindowSize] = useState({
@@ -113,24 +114,51 @@ export function CharactersDataTable<TData, TValue>({ columns, data }: DataTableP
                     </TableBody>
                 </Table>
             </div>
-            <div className="flex items-center justify-end space-x-2">
-                <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-                    Previous
-                </Button>
+            <div className="flex items-center justify-between space-x-2 py-4">
                 <Pagination>
                     <PaginationContent>
-                        {table.getPageOptions().map((page) => (
-                            <PaginationItem>
-                                <Button key={page} variant="outline" size="sm" onClick={() => table.setPageIndex(page)}>
+                        <PaginationItem>
+                            <Button 
+                              variant="outline" 
+                              size="icon"
+                              onClick={() => table.previousPage()} 
+                              disabled={!table.getCanPreviousPage()}
+                            >
+                                <span className="sr-only">Go to previous page</span>
+                                <ChevronLeftIcon className="h-4 w-4" />
+                            </Button>
+                        </PaginationItem>
+                        {(pageRange[0] ?? 0) > 0 && (
+                            <>
+                                <PaginationItem>
+                                    <PaginationLink className="cursor-pointer" onClick={() => table.setPageIndex(0)}>1</PaginationLink>
+                                </PaginationItem>
+                                {(pageRange[0] ?? 0) > 1 && <PaginationEllipsis />}
+                            </>
+                        )}
+                        {pageRange.map((page) => (
+                            <PaginationItem key={page}>
+                                <PaginationLink className="cursor-pointer" isActive={page === currentPage} onClick={() => table.setPageIndex(page)}>
                                     {page + 1}
-                                </Button>
+                                </PaginationLink>
                             </PaginationItem>
                         ))}
+                        {(pageRange[pageRange.length - 1] ?? 0) < totalPages - 1 && (
+                            <>
+                                {(pageRange[pageRange.length - 1] ?? 0) < totalPages - 2 && <PaginationEllipsis />}
+                                <PaginationItem>
+                                    <PaginationLink className="cursor-pointer" onClick={() => table.setPageIndex(totalPages - 1)}>{totalPages}</PaginationLink>
+                                </PaginationItem>
+                            </>
+                        )}
+                        <PaginationItem>
+                            <Button variant="outline" size="icon" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+                                <span className="sr-only">Go to next page</span>
+                                <ChevronRightIcon className="h-4 w-4" />
+                            </Button>
+                        </PaginationItem>
                     </PaginationContent>
                 </Pagination>
-                <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-                    Next
-                </Button>
             </div>
         </>
     );
