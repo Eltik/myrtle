@@ -5,13 +5,13 @@ import { ChevronDown, ChevronUp, Hammer, MapPin, Package } from "lucide-react";
 
 // Import the types from the provided type definitions
 import { type Item, ItemRarity, ItemClass, ItemType, ItemOccPer, BuildingRoomType, VoucherItemType } from "~/types/impl/api/static/material";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../../ui/card";
-import { Badge } from "../../ui/badge";
-import { Separator } from "../../ui/separator";
-import { ScrollArea } from "../../ui/scroll-area";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../ui/tooltip";
-import { Button } from "../../ui/button";
 import Image from "next/image";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
+import { Badge } from "~/components/ui/badge";
+import { Separator } from "~/components/ui/separator";
+import { ScrollArea } from "~/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
+import { Button } from "~/components/ui/button";
 
 const rarityColors = {
     [ItemRarity.TIER_1]: "bg-gray-200 text-gray-800",
@@ -49,7 +49,10 @@ export default function ItemDialogueCard({ item }: { item: Item }) {
                     />
                     <div>
                         <CardTitle className="text-2xl font-bold">{item.name}</CardTitle>
-                        <CardDescription className="line-clamp-2 text-sm opacity-90 sm:line-clamp-none">{item.description}</CardDescription>
+                        <CardDescription>
+                            <span className="text-muted-foreground">Amount: {(item as unknown as { amount: number }).amount}</span>
+                            <span className="line-clamp-2 text-sm opacity-90 sm:line-clamp-none">{item.description}</span>
+                        </CardDescription>
                     </div>
                 </div>
             </CardHeader>

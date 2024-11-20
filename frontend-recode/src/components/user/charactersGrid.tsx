@@ -6,7 +6,7 @@ import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Button } from "../ui/button";
 import { ArrowDown, ArrowUp } from "lucide-react";
-import CharacterCard from "./components/character-card";
+import CharacterCard from "./components/characters/character-card";
 
 function CharactersGrid({ data }: { data: User }) {
     const [sortBy, setSortBy] = useState<"level" | "rarity" | "obtained">("level");
@@ -63,7 +63,7 @@ function CharactersGrid({ data }: { data: User }) {
 
     return (
         <>
-            <div className="flex flex-col space-y-4 md:flex-row md:space-x-4 md:space-y-0">
+            <div className="flex w-full flex-col space-y-4 md:flex-row md:space-x-4 md:space-y-0">
                 <Input placeholder="Search operators..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="md:w-1/3" />
                 <Select value={sortBy} onValueChange={(value: "level" | "rarity" | "obtained") => setSortBy(value)}>
                     <SelectTrigger className="transition-all duration-150 hover:bg-secondary md:w-1/4">

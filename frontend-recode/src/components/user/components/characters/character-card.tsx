@@ -1,12 +1,12 @@
-import type { CharacterData } from "~/types/impl/api";
-import { Card, CardContent } from "../../ui/card";
-import { Progress } from "../../ui/progress";
 import Image from "next/image";
-import { Dialog, DialogContent, DialogTrigger } from "../../ui/dialog";
-import CharacterDialogueCard from "../components/character-dialogue-card";
+import { Card, CardContent } from "~/components/ui/card";
+import { Dialog, DialogContent, DialogTrigger } from "~/components/ui/dialog";
+import { Progress } from "~/components/ui/progress";
+import { ScrollArea } from "~/components/ui/scroll-area";
+import { Separator } from "~/components/ui/separator";
 import { formatProfession, formatSkillType, formatSubProfession, insertBlackboard, parseSkillStaticLevel } from "~/helper";
-import { Separator } from "../../ui/separator";
-import { ScrollArea } from "../../ui/scroll-area";
+import type { CharacterData } from "~/types/impl/api";
+import CharacterDialogueCard from "./character-dialogue-card";
 
 function CharacterCard({ data }: { data: CharacterData }) {
     return (

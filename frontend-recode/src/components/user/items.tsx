@@ -1,5 +1,5 @@
 import type { User } from "~/types/impl/api";
-import { ItemsDataTable } from "./components/items-data-table";
+import { ItemsDataTable } from "./components/items/items-data-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Item } from "~/types/impl/api/static/material";
 import Image from "next/image";

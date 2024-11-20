@@ -1,14 +1,14 @@
 import { flexRender, type ColumnFiltersState, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable, type SortingState } from "@tanstack/react-table";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import type { DataTableProps } from "~/types/impl/frontend/impl/users";
-import { Button } from "../../ui/button";
-import { Input } from "../../ui/input";
 import { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogTrigger } from "../../ui/dialog";
 import CharacterDialogueCard from "./character-dialogue-card";
 import type { CharacterData } from "~/types/impl/api";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink } from "~/components/ui/pagination";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { Input } from "~/components/ui/input";
+import { Dialog, DialogContent, DialogTrigger } from "~/components/ui/dialog";
+import { Button } from "~/components/ui/button";
 
 const useWindowSize = () => {
     const [windowSize, setWindowSize] = useState({

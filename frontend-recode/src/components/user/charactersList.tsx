@@ -3,8 +3,9 @@ import Image from "next/image";
 import type { User } from "~/types/impl/api";
 import { Button } from "../ui/button";
 import { ArrowUpDown } from "lucide-react";
-import { CharactersDataTable } from "./components/characters-data-table";
+import { CharactersDataTable } from "./components/characters/characters-data-table";
 import { Progress } from "../ui/progress";
+import { getAvatar } from "~/helper";
 
 function CharactersList({ data }: { data: User }) {
     const columns: ColumnDef<{
@@ -127,34 +128,13 @@ function CharactersList({ data }: { data: User }) {
             <CharactersDataTable
                 columns={columns}
                 data={Object.values(data.troop.chars).map((char) => {
-                    let skinId = "";
-
-                    const normalizeSkinId = (skinId: string) => {
-                        if (skinId.includes("@")) {
-                            return encodeURIComponent(skinId.replaceAll("@", "_"));
-                        } else {
-                            return encodeURIComponent(skinId.replaceAll("#", "_"));
-                        }
-                    };
-
-                    if (!char.skin || char.skin.endsWith("#1")) {
-                        skinId = normalizeSkinId(char.charId);
-                    } else if (char.skin.endsWith("#2")) {
-                        skinId = normalizeSkinId(char.charId) + "_2";
-                    } else if (char.skin.includes("@")) {
-                        skinId = normalizeSkinId(char.skin);
-                    } else {
-                        skinId = normalizeSkinId(char.charId);
-                    }
-
-                    const icon = `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${skinId}.png`;
                     return {
                         name: char.static?.name ?? "",
                         promotion: char.evolvePhase,
                         potential: char.potentialRank,
                         recruited: char.gainTime,
                         trust: char.static?.trust ?? 0,
-                        icon: skinId.length === 0 ? `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${normalizeSkinId(char.charId)}.png` : icon,
+                        icon: getAvatar(char),
                         ...char,
                     };
                 })}

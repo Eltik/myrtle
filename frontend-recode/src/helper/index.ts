@@ -329,6 +329,43 @@ export function parseSkillStaticLevel(mainSkillLevel: number, skillSpecializatio
     }
 }
 
+export function getAvatar(char: CharacterData) {
+    let skinId = "";
+
+    const normalizeSkinId = (skinId: string) => {
+        if (skinId.includes("@")) {
+            return encodeURIComponent(skinId.replaceAll("@", "_"));
+        } else {
+            return encodeURIComponent(skinId.replaceAll("#", "_"));
+        }
+    };
+
+    if (!char.skin || char.skin.endsWith("#1")) {
+        skinId = normalizeSkinId(char.charId);
+    } else if (char.skin.endsWith("#2")) {
+        skinId = normalizeSkinId(char.charId) + "_2";
+    } else if (char.skin.includes("@")) {
+        skinId = normalizeSkinId(char.skin);
+    } else {
+        skinId = normalizeSkinId(char.charId);
+    }
+
+    const icon = `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${skinId}.png`;
+    return skinId.length === 0 ? `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${normalizeSkinId(char.charId)}.png` : icon;
+}
+
+export function getAvatarById(charId: string) {
+    const normalizeSkinId = (skinId: string) => {
+        if (skinId.includes("@")) {
+            return encodeURIComponent(skinId.replaceAll("@", "_"));
+        } else {
+            return encodeURIComponent(skinId.replaceAll("#", "_"));
+        }
+    };
+
+    return `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${normalizeSkinId(charId)}.png`;
+}
+
 export function getAvatarSkinId(user: User) {
     if (!user.status) return "https://static.wikia.nocookie.net/mrfz/images/4/46/Symbol_profile.png/revision/latest?cb=20220418145951";
 

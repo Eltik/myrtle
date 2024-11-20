@@ -1,11 +1,11 @@
 import { flexRender, type ColumnFiltersState, getCoreRowModel, getFilteredRowModel, getSortedRowModel, useReactTable, type SortingState } from "@tanstack/react-table";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import type { DataTableProps } from "~/types/impl/frontend/impl/users";
-import { Input } from "../../ui/input";
 import { useState } from "react";
-import { Dialog, DialogContent, DialogTrigger } from "../../ui/dialog";
 import ItemDialogueCard from "./item-dialogue-card";
 import { type Item } from "~/types/impl/api/static/material";
+import { Dialog, DialogContent, DialogTrigger } from "~/components/ui/dialog";
+import { Input } from "~/components/ui/input";
 
 export function ItemsDataTable<TData, TValue>({ columns, data }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = useState<SortingState>([]);
