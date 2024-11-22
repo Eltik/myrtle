@@ -29,7 +29,7 @@ const items = [
         items: [
             {
                 title: "Operators",
-                url: "#",
+                url: "/operators",
             },
             {
                 title: "Recruitment Calculator",

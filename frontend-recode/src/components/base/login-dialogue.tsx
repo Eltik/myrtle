@@ -122,16 +122,16 @@ export function LoginDialogue() {
                         }),
                     })
                 ).json()) as RefreshResponse;
-    
+
                 if (playerData.error || playerData.message) {
                     console.log(playerData);
                     throw new Error(playerData.message);
                 }
-    
+
                 usePlayer.setState({ playerData });
-    
+
                 setIsLoading(false);
-    
+
                 toast({
                     title: "Success: Fetched player data",
                     description: "You have successfully logged in.",
@@ -157,16 +157,16 @@ export function LoginDialogue() {
                         }),
                     })
                 ).json()) as PlayerResponse;
-    
+
                 if (playerData.error || playerData.message || playerData.length === 0) {
                     console.log(playerData);
                     throw new Error(playerData.message);
                 }
-    
+
                 usePlayer.setState({ playerData: playerData[0] });
-    
+
                 setIsLoading(false);
-    
+
                 toast({
                     title: "Success: Fetched player data",
                     description: "You have successfully logged in.",
