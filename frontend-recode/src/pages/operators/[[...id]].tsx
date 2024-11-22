@@ -1,6 +1,8 @@
 import type { IncomingMessage } from "http";
 import type { NextPage } from "next";
 import Head from "next/head";
+import { OperatorsGrid } from "~/components/operators/operators-grid";
+import { OperatorsHeader } from "~/components/operators/operators-header";
 import type { Operator } from "~/types/impl/api/static/operator";
 
 const Operators: NextPage<Props> = ({ data, id }) => {
@@ -11,8 +13,9 @@ const Operators: NextPage<Props> = ({ data, id }) => {
                 <meta name="description" content="Elevate your Arknights experience to the next level." />
                 <link rel="icon" href="/favicon.ico" />
             </Head>
-            <div className="container flex max-w-screen-xl auto-rows-auto flex-col gap-4 px-4 py-8 md:grid md:grid-cols-12 md:px-8 xl:px-4">
-                <h1>This is an ID lol</h1>
+            <div className="container">
+                <OperatorsHeader />
+                <OperatorsGrid operators={data} />
             </div>
         </>
     );

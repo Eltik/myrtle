@@ -332,14 +332,6 @@ export function parseSkillStaticLevel(mainSkillLevel: number, skillSpecializatio
 export function getAvatar(char: CharacterData) {
     let skinId = "";
 
-    const normalizeSkinId = (skinId: string) => {
-        if (skinId.includes("@")) {
-            return encodeURIComponent(skinId.replaceAll("@", "_"));
-        } else {
-            return encodeURIComponent(skinId.replaceAll("#", "_"));
-        }
-    };
-
     if (!char.skin || char.skin.endsWith("#1")) {
         skinId = normalizeSkinId(char.charId);
     } else if (char.skin.endsWith("#2")) {
@@ -354,15 +346,15 @@ export function getAvatar(char: CharacterData) {
     return skinId.length === 0 ? `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${normalizeSkinId(char.charId)}.png` : icon;
 }
 
-export function getAvatarById(charId: string) {
-    const normalizeSkinId = (skinId: string) => {
-        if (skinId.includes("@")) {
-            return encodeURIComponent(skinId.replaceAll("@", "_"));
-        } else {
-            return encodeURIComponent(skinId.replaceAll("#", "_"));
-        }
-    };
+export function normalizeSkinId(skinId: string) {
+    if (skinId.includes("@")) {
+        return encodeURIComponent(skinId.replaceAll("@", "_"));
+    } else {
+        return encodeURIComponent(skinId.replaceAll("#", "_"));
+    }
+}
 
+export function getAvatarById(charId: string) {
     return `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${normalizeSkinId(charId)}.png`;
 }
 
