@@ -4,6 +4,7 @@ import sendCode from "./impl/sendCode";
 import search from "./impl/search";
 import searchPlayers from "./impl/searchPlayers";
 import player from "./impl/player";
+import staticData from "./impl/static";
 
 export default {
     login,
@@ -12,4 +13,5 @@ export default {
     search,
     searchPlayers,
     player,
+    staticData
 };

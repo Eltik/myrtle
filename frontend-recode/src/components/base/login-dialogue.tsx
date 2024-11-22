@@ -11,6 +11,7 @@ import type { AKServer } from "~/types/impl/api";
 import type { SendCodeResponse } from "~/types/impl/api/impl/send-code";
 import type { LoginResponse } from "~/types/impl/api/impl/login";
 import type { RefreshResponse } from "~/types/impl/api/impl/refresh";
+import type { PlayerResponse } from "~/types/impl/api/impl/player";
 
 export function LoginDialogue() {
     const [email, setEmail] = useState("");
@@ -106,34 +107,71 @@ export function LoginDialogue() {
                 description: "You have successfully logged in. Fetching player data...",
             });
 
-            const playerData = (await (
-                await fetch("/api/refresh", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        uid: login.uid,
-                        secret: login.secret,
-                        seqnum: (login.seqnum ?? 0) + 1,
-                        server: "en" as AKServer,
-                    }),
-                })
-            ).json()) as RefreshResponse;
+            try {
+                const playerData = (await (
+                    await fetch("/api/refresh", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            uid: login.uid,
+                            secret: login.secret,
+                            seqnum: (login.seqnum ?? 0) + 1,
+                            server: "en" as AKServer,
+                        }),
+                    })
+                ).json()) as RefreshResponse;
+    
+                if (playerData.error || playerData.message) {
+                    console.log(playerData);
+                    throw new Error(playerData.message);
+                }
+    
+                usePlayer.setState({ playerData });
+    
+                setIsLoading(false);
+    
+                toast({
+                    title: "Success: Fetched player data",
+                    description: "You have successfully logged in.",
+                });
+            } catch (e) {
+                console.error(e);
+                toast({
+                    title: "Sorry! An error occurred. Please wait...",
+                    description: "Sorry, it takes a little while to fetch and format player data. Please wait a moment. If this message persists after 10 seconds, please try logging in again in 1 minute.",
+                });
 
-            if (playerData.error || playerData.message) {
-                console.log(playerData);
-                throw new Error(playerData.message);
+                await new Promise((resolve) => setTimeout(resolve, 10000));
+
+                const playerData = (await (
+                    await fetch("/api/refresh", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            uid: login.uid,
+                            server: "en" as AKServer,
+                        }),
+                    })
+                ).json()) as PlayerResponse;
+    
+                if (playerData.error || playerData.message || playerData.length === 0) {
+                    console.log(playerData);
+                    throw new Error(playerData.message);
+                }
+    
+                usePlayer.setState({ playerData: playerData[0] });
+    
+                setIsLoading(false);
+    
+                toast({
+                    title: "Success: Fetched player data",
+                    description: "You have successfully logged in.",
+                });
             }
-
-            usePlayer.setState({ playerData });
-
-            setIsLoading(false);
-
-            toast({
-                title: "Success: Fetched player data",
-                description: "You have successfully logged in.",
-            });
         } catch (err) {
             console.error(err);
             toast({
