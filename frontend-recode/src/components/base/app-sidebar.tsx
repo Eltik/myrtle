@@ -56,21 +56,21 @@ const items = [
 ];
 
 export function AppSidebar() {
-    const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
+    const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
     const { open, setOpen } = useSidebar();
 
     const toggleGroup = (index: number) => {
-        setOpenGroups(prev => ({ ...prev, [index]: !prev[index] }))
+        setOpenGroups((prev) => ({ ...prev, [index]: !prev[index] }));
         if (!open) {
-            setOpen(true)
+            setOpen(true);
         }
-    }
+    };
 
     useEffect(() => {
         if (!open) {
-            setOpenGroups({})
+            setOpenGroups({});
         }
-    }, [open])
+    }, [open]);
 
     return (
         <Sidebar variant="floating" collapsible="icon" className="z-40">
@@ -80,10 +80,10 @@ export function AppSidebar() {
                 </div>
             </div>
             <SidebarHeader className="border-b p-4">
-                <Link href="/" className="flex items-center space-x-2 group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:pointer-events-none">
-                    <span className="text-lg font-bold opacity-100 pointer-events-auto">myrtle.moe</span>
+                <Link href="/" className="flex items-center space-x-2 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:opacity-0">
+                    <span className="pointer-events-auto text-lg font-bold opacity-100">myrtle.moe</span>
                 </Link>
-                <Link href="/" className="hidden opacity-0 pointer-events-none items-center space-x-2 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:opacity-100 group-data-[collapsible=icon]:pointer-events-auto">
+                <Link href="/" className="pointer-events-none hidden items-center space-x-2 opacity-0 group-data-[collapsible=icon]:pointer-events-auto group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:opacity-100">
                     <span className="text-lg font-bold">M</span>
                 </Link>
             </SidebarHeader>
@@ -99,10 +99,10 @@ export function AppSidebar() {
                                                 <SidebarMenuButton className="border">
                                                     {item.icon && <item.icon className="mr-2 h-4 w-4" />}
                                                     {item.title}
-                                                    <ChevronDown className={`ml-auto transition-transform ${open && openGroups[index] ? 'rotate-180' : ''}`} />
+                                                    <ChevronDown className={`ml-auto transition-transform ${open && openGroups[index] ? "rotate-180" : ""}`} />
                                                 </SidebarMenuButton>
                                             </CollapsibleTrigger>
-                                            <Separator className="mt-2 mb-1" />
+                                            <Separator className="mb-1 mt-2" />
                                             <AnimatePresence initial={false}>
                                                 {openGroups[index] && (
                                                     <CollapsibleContent forceMount asChild>
@@ -114,7 +114,7 @@ export function AppSidebar() {
                                                                             <motion.div key={`${index}-${subIndex}`} initial={{ y: -10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: subIndex * 0.1 }}>
                                                                                 <SidebarMenuItem>
                                                                                     <SidebarMenuButton asChild>
-                                                                                        <Link href={subItem.url} className="pl-6 relative">
+                                                                                        <Link href={subItem.url} className="relative pl-6">
                                                                                             {subItem.title}
                                                                                         </Link>
                                                                                     </SidebarMenuButton>
@@ -124,7 +124,7 @@ export function AppSidebar() {
                                                                     </SidebarMenu>
                                                                 </SidebarGroupContent>
                                                             </SidebarGroup>
-                                                            <div className="absolute left-2 top-12 bottom-0 w-0.5 bg-border rounded-md" />
+                                                            <div className="absolute bottom-0 left-2 top-12 w-0.5 rounded-md bg-border" />
                                                         </motion.div>
                                                     </CollapsibleContent>
                                                 )}
