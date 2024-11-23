@@ -27,6 +27,7 @@ function CharacterCard({ data }: { data: CharacterData }) {
                                         style={{
                                             objectFit: "contain",
                                         }}
+                                        decoding="async"
                                     />
                                     <Image
                                         loading="lazy"
@@ -40,6 +41,7 @@ function CharacterCard({ data }: { data: CharacterData }) {
                                             height: "auto",
                                             objectFit: "contain",
                                         }}
+                                        decoding="async"
                                     />
                                 </div>
                                 <div className="space-y-4 py-3">
