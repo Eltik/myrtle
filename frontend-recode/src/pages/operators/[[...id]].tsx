@@ -1,8 +1,8 @@
-import type { IncomingMessage } from "http";
 import type { NextPage } from "next";
 import Head from "next/head";
 import OperatorsInfo from "~/components/operators/operators-info";
 import { OperatorsWrapper } from "~/components/operators/operators-wrapper";
+import { env } from "~/env";
 import type { Operator } from "~/types/impl/api/static/operator";
 
 const Operators: NextPage<Props> = ({ data, id }) => {
@@ -19,19 +19,16 @@ const Operators: NextPage<Props> = ({ data, id }) => {
 };
 
 export const getServerSideProps = async ({
-    req,
     query,
 }: {
-    req: IncomingMessage;
     query: {
         id?: string;
     };
 }) => {
-    const host = req.headers.host;
-    const protocol = req.headers.host?.startsWith("localhost") ? "http" : "https";
+    const backendURL = env.BACKEND_URL;
 
     // Construct the full URL for the API endpoint
-    const apiURL = `${protocol}://${host}/api/static`;
+    const apiURL = `${backendURL}/static`;
 
     if (!query.id) {
         const data = (await (
@@ -45,12 +42,12 @@ export const getServerSideProps = async ({
                 }),
             })
         ).json()) as {
-            data: Operator[];
+            operators: Operator[];
         };
 
         return {
             props: {
-                data: data.data,
+                data: data.operators,
             },
         };
     } else {
@@ -66,10 +63,10 @@ export const getServerSideProps = async ({
                 }),
             })
         ).json()) as {
-            data: Operator[];
+            operators: Operator[];
         };
 
-        if (data.data.length === 0) {
+        if (data.operators.length === 0) {
             return {
                 notFound: true,
             };
@@ -77,7 +74,7 @@ export const getServerSideProps = async ({
 
         return {
             props: {
-                data: data.data,
+                data: data.operators,
                 id: query.id,
             },
         };
