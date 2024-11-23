@@ -1,10 +1,10 @@
 import { OperatorRarity, type Operator } from "~/types/impl/api/static/operator";
 import Link from "next/link";
 import Image from "next/image";
-import { formatProfession } from "~/helper";
+import { formatProfession, rarityToNumber } from "~/helper";
 import { ArrowDownFromLine, ArrowUpFromLine, ChevronDown, Filter, List, Table2 } from "lucide-react";
 import { Button } from "../ui/button";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { NestedDropdown } from "../nested-dropdown";
@@ -22,11 +22,14 @@ import { motion, AnimatePresence } from "framer-motion";
 type Checked = DropdownMenuCheckboxItemProps["checked"];
 
 export function OperatorsGrid({ operators }: { operators: Operator[] }) {
+    const [searchTerm, setSearchTerm] = useState("");
     const [viewOption, setViewOption] = useState<"grid" | "portrait">("grid");
     const [showOptions, setShowOptions] = useState(false);
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
     const [sortBy, setSortBy] = useState<"name" | "rarity" | "stats">("name");
+    const [statsSortBy, setStatsSortBy] = useState<"maxHp" | "atk" | "def" | "magicResistance" | "cost" | "baseAttackTime">("maxHp");
     const [filterClasses, setFilterClasses] = useState<OperatorProfession[]>([]);
+    const [filterRarity, setFilterRarity] = useState<OperatorRarity | "all">("all");
 
     const options = [
         {
@@ -44,7 +47,7 @@ export function OperatorsGrid({ operators }: { operators: Operator[] }) {
             subOptions: [
                 {
                     label: "HP",
-                    value: "hp",
+                    value: "maxHp",
                 },
                 {
                     label: "ATK",
@@ -56,18 +59,30 @@ export function OperatorsGrid({ operators }: { operators: Operator[] }) {
                 },
                 {
                     label: "RES",
-                    value: "res",
+                    value: "magicResistance",
                 },
                 {
                     label: "Cost",
                     value: "cost",
+                },
+                {
+                    label: "Attack Speed",
+                    value: "baseAttackTime",
                 },
             ],
         },
     ];
 
     const handleSelect = (value: string) => {
-        setSortBy(value as "name" | "rarity" | "stats");
+        if (value === "stats") {
+            setSortBy("stats");
+        } else if (value === "name" || value === "rarity") {
+            setSortBy(value);
+            setStatsSortBy("maxHp"); // Reset stats sorting when switching to name or rarity
+        } else {
+            setSortBy("stats");
+            setStatsSortBy(value as "maxHp" | "atk" | "def" | "magicResistance" | "cost" | "baseAttackTime");
+        }
     };
 
     const isChecked = (value: OperatorProfession): Checked => filterClasses.includes(value);
@@ -79,8 +94,36 @@ export function OperatorsGrid({ operators }: { operators: Operator[] }) {
         }
     };
 
+    const sortedAndFilteredCharacters = useMemo(() => {
+        return Object.values(operators)
+            .filter((char) => char.name.toLowerCase().includes(searchTerm.toLowerCase()))
+            .filter((char) => filterClasses.length === 0 || filterClasses.includes(char.profession))
+            .filter((char) => filterRarity === "all" || char.rarity === filterRarity)
+            .sort((a, b) => {
+                let comparison = 0;
+                switch (sortBy) {
+                    case "name":
+                        comparison = a.name.localeCompare(b.name);
+                        break;
+                    case "rarity":
+                        comparison = rarityToNumber(b.rarity) - rarityToNumber(a.rarity);
+                        break;
+                    case "stats":
+                        const bEvolvePhase = b.phases[b.phases.length - 1]?.attributesKeyFrames[(b.phases[b.phases.length - 1]?.attributesKeyFrames.length ?? 0) - 1]?.data;
+                        const aEvolvePhase = a.phases[a.phases.length - 1]?.attributesKeyFrames[(a.phases[a.phases.length - 1]?.attributesKeyFrames.length ?? 0) - 1]?.data;
+
+                        comparison = (Number(bEvolvePhase?.[statsSortBy as keyof typeof bEvolvePhase]) ?? 0) - (Number(aEvolvePhase?.[statsSortBy as keyof typeof aEvolvePhase]) ?? 0);
+                        break;
+                    default:
+                        comparison = 0;
+                        break;
+                }
+                return sortOrder === "asc" ? -comparison : comparison;
+            });
+    }, [operators, searchTerm, filterClasses, filterRarity, sortBy, sortOrder, statsSortBy]);
+
     return (
-        <motion.div layout>
+        <>
             <div className="container flex max-w-screen-xl auto-rows-auto flex-col gap-8 gap-y-6 px-4 py-8 md:grid md:grid-cols-12 md:px-8 xl:px-4">
                 <div className="col-span-full">
                     <div className="flex flex-col gap-4 pb-8">
@@ -93,7 +136,7 @@ export function OperatorsGrid({ operators }: { operators: Operator[] }) {
                             </div>
                             <div className="flex flex-col gap-4">
                                 <div className="relative flex gap-2">
-                                    <Input className="flex w-full" placeholder="Search by name..." />
+                                    <Input className="flex w-full" placeholder="Search by name..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                                     <Button variant="secondary" className="absolute right-0 inline-flex items-center justify-center rounded-l-none p-2 px-3" onClick={() => setShowOptions(!showOptions)}>
                                         <Filter className="h-4 w-4" />
                                     </Button>
@@ -126,7 +169,7 @@ export function OperatorsGrid({ operators }: { operators: Operator[] }) {
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </div>
-                                    <Select>
+                                    <Select value={filterRarity} onValueChange={(value) => setFilterRarity(value as OperatorRarity | "all")}>
                                         <SelectTrigger className="transition-all duration-150 hover:bg-secondary md:w-1/4">
                                             <SelectValue placeholder="Filter by Rarity" />
                                         </SelectTrigger>
@@ -134,22 +177,22 @@ export function OperatorsGrid({ operators }: { operators: Operator[] }) {
                                             <SelectItem value="all" className="cursor-pointer">
                                                 All Rarities
                                             </SelectItem>
-                                            <SelectItem value="TIER_6" className="cursor-pointer">
+                                            <SelectItem value={OperatorRarity.sixStar} className="cursor-pointer">
                                                 6 Star
                                             </SelectItem>
-                                            <SelectItem value="TIER_5" className="cursor-pointer">
+                                            <SelectItem value={OperatorRarity.fiveStar} className="cursor-pointer">
                                                 5 Star
                                             </SelectItem>
-                                            <SelectItem value="TIER_4" className="cursor-pointer">
+                                            <SelectItem value={OperatorRarity.fourStar} className="cursor-pointer">
                                                 4 Star
                                             </SelectItem>
-                                            <SelectItem value="TIER_3" className="cursor-pointer">
+                                            <SelectItem value={OperatorRarity.threeStar} className="cursor-pointer">
                                                 3 Star
                                             </SelectItem>
-                                            <SelectItem value="TIER_2" className="cursor-pointer">
+                                            <SelectItem value={OperatorRarity.twoStar} className="cursor-pointer">
                                                 2 Star
                                             </SelectItem>
-                                            <SelectItem value="TIER_1" className="cursor-pointer">
+                                            <SelectItem value={OperatorRarity.oneStar} className="cursor-pointer">
                                                 1 Star
                                             </SelectItem>
                                         </SelectContent>
@@ -164,8 +207,8 @@ export function OperatorsGrid({ operators }: { operators: Operator[] }) {
                     </div>
                 </div>
             </div>
-            <motion.div layout className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-5 lg:gap-6 xl:grid-cols-6 xl:gap-8">
-                {operators.map((operator) => {
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-5 lg:gap-6 xl:grid-cols-6 xl:gap-8">
+                {sortedAndFilteredCharacters.map((operator) => {
                     if (!operator.id?.startsWith("char")) return null;
                     return (
                         <Link href={`/operators?id=${operator.id}`} key={operator.id} className="group relative flex aspect-[2/3] overflow-clip rounded-md border border-muted/30 bg-background transition hover:rounded-lg">
@@ -201,7 +244,7 @@ export function OperatorsGrid({ operators }: { operators: Operator[] }) {
                         </Link>
                     );
                 })}
-            </motion.div>
-        </motion.div>
+            </div>
+        </>
     );
 }
