@@ -66,7 +66,11 @@ export default {
                     ring: "hsl(var(--sidebar-ring))",
                 },
             },
+            gridTemplateAreas: {
+                operatorInfo: ["top-fold footer"],
+                operatorBanner: ["banner"],
+            },
         },
     },
-    plugins: [require("tailwindcss-animate")],
+    plugins: [require("tailwindcss-animate"), require("@savvywombat/tailwindcss-grid-areas")],
 } satisfies Config;

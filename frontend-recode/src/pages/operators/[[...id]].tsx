@@ -1,6 +1,7 @@
 import type { IncomingMessage } from "http";
 import type { NextPage } from "next";
 import Head from "next/head";
+import OperatorsInfo from "~/components/operators/operators-info";
 import { OperatorsWrapper } from "~/components/operators/operators-wrapper";
 import type { Operator } from "~/types/impl/api/static/operator";
 
@@ -8,11 +9,11 @@ const Operators: NextPage<Props> = ({ data, id }) => {
     return (
         <>
             <Head>
-                <title>myrtle.moe</title>
+                <title>{id ? `${(data as unknown as Operator).name}` : "Operators List"}</title>
                 <meta name="description" content="Elevate your Arknights experience to the next level." />
                 <link rel="icon" href="/favicon.ico" />
             </Head>
-            <div className="container">{id ? <></> : <OperatorsWrapper operators={data} />}</div>
+            <div className="container">{id ? <OperatorsInfo operator={data as unknown as Operator} /> : <OperatorsWrapper operators={data} />}</div>
         </>
     );
 };
