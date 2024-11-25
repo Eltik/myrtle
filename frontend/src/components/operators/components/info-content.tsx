@@ -1,19 +1,26 @@
-import { BadgeDollarSign, CircleGauge, Cross, Diamond, Hourglass, Shield, ShieldBan, Star, Swords } from "lucide-react";
+import { BadgeDollarSign, ChevronDown, CircleGauge, Cross, Diamond, Hourglass, Shield, ShieldBan, Star, Swords } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { LevelSlider } from "~/components/operators/components/level-slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { Separator } from "~/components/ui/separator";
+import { Slider } from "~/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { formatGroupId, formatNationId, formatProfession, formatSubProfession, getAvatarById, rarityToNumber } from "~/helper";
 import { getOperatorAttributeStats } from "~/helper/getAttributeStats";
 import type { Module, ModuleData } from "~/types/impl/api/static/modules";
 import { OperatorPosition, type Operator } from "~/types/impl/api/static/operator";
+import type { Range } from "~/types/impl/api/static/ranges";
+import OperatorRange from "./operator-range";
+import { Button } from "~/components/ui/button";
+import { AnimatePresence, motion } from "framer-motion";
 
 // https://aceship.github.io/AN-EN-Tags/akhrchars.html?opname=Projekt_Red
 // https://sanitygone.help/operators/gavial-the-invincible#page-content
 
 function InfoContent({ operator }: { operator: Operator }) {
+    const [showControls, setShowControls] = useState<boolean>(false); // Show controls for the operator
+
     const [attributeStats, setAttributeStats] = useState<Operator["phases"][number]["attributesKeyFrames"][number]["data"] | null>(null); // Attribute stats to display
 
     const [moduleData, setModuleData] = useState<(ModuleData & { id: string })[] | null>(null); // All modules of the operator
@@ -23,16 +30,64 @@ function InfoContent({ operator }: { operator: Operator }) {
 
     const [phaseIndex, setPhaseIndex] = useState<number>(operator.phases.length - 1); // Phase index of the operator
     const [level, setLevel] = useState<number>(1); // Level of the operator
-    const [favorPoint, setFavorPoint] = useState<number>(0); // Favor point of the operator
+    const [favorPoint, setFavorPoint] = useState<number>(100); // Favor point of the operator
     const [potentialRank, setPotentialRank] = useState<number>(0); // Potential rank of the operator
 
+    const [ranges, setRanges] = useState<Range[] | null>(null); // Range of the operator
+    const [currentRangeId, setCurrentRangeId] = useState<string>(""); // Current range selected to display
+
+    // Memoize the current range
+    const currentRange = useMemo(() => {
+        return ranges?.find((range) => range.id === currentRangeId) ?? null;
+    }, [ranges, currentRangeId]);
+
+    /**
+     * @description On first load, fetch modules & ranges.
+     */
     useEffect(() => {
         void fetchModules();
 
         setLevel(operator.phases[operator.phases.length - 1]?.maxLevel ?? 1);
     }, [operator]);
 
+    /**
+     * @description On changing the level, phase, module, trust, etc.
+     */
     useEffect(() => {
+        if (phaseIndex !== 2) {
+            setCurrentModule("");
+            setCurrentModuleLevel(0);
+        } else if (currentModule === "") {
+            setCurrentModule(modules[modules.length - 1]?.id ?? "");
+            setCurrentModuleLevel(moduleData?.find((module) => module.id === modules[modules.length - 1]?.id)?.phases[(moduleData?.find((module) => module.id === modules[modules.length - 1]?.id)?.phases ?? []).length - 1]?.equipLevel ?? 0);
+        }
+
+        const operatorPhase = operator.phases[phaseIndex];
+        if (operatorPhase) {
+            if ((ranges?.find((range) => range.id === operatorPhase.rangeId) ?? null) !== null) {
+                setCurrentRangeId(operatorPhase.rangeId);
+            } else {
+                console.log("Operator phase range not found:", operatorPhase.rangeId);
+            }
+        }
+
+        const operatorModule = moduleData?.find((module) => module.id === currentModule);
+        for (const phase of operatorModule?.phases ?? []) {
+            if (phase.equipLevel === currentModuleLevel) {
+                for (const part of phase.parts) {
+                    for (const candidate of part.addOrOverrideTalentDataBundle?.candidates ?? []) {
+                        if (candidate.rangeId && candidate.rangeId.length > 0) {
+                            if ((ranges?.find((range) => range.id === candidate.rangeId) ?? null) !== null) {
+                                setCurrentRangeId(candidate.rangeId);
+                            } else {
+                                console.log("Module range not found:", candidate.rangeId);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         fetchAttributeStats(
             {
                 phaseIndex: phaseIndex,
@@ -44,8 +99,11 @@ function InfoContent({ operator }: { operator: Operator }) {
             level,
             currentModule,
         );
-    }, [level, phaseIndex, favorPoint, potentialRank, currentModuleLevel, currentModule]);
+    }, [ranges, level, phaseIndex, favorPoint, potentialRank, currentModuleLevel, currentModule]);
 
+    /**
+     * @description Fetches all info on modules, module data, and ranges.
+     */
     async function fetchModules() {
         const data = (await (
             await fetch("/api/static", {
@@ -87,9 +145,78 @@ function InfoContent({ operator }: { operator: Operator }) {
 
         if (data.modules[data.modules.length - 1]?.id !== undefined) {
             setCurrentModule(data.modules[data.modules.length - 1]!.id!);
-            // moduleData?.find((module) => module.id === currentModule)?.phases[moduleData?.find((module) => module.id === currentModule)?.phases.length ?? 0]
             setCurrentModuleLevel(moduleData?.find((module) => module.id === data.modules[data.modules.length - 1]?.id)?.phases[(moduleData?.find((module) => module.id === data.modules[data.modules.length - 1]?.id)?.phases ?? []).length - 1]?.equipLevel ?? 0);
         }
+
+        for (const operatorModule of moduleData) {
+            if (operatorModule.phases !== undefined) {
+                for (const phase of operatorModule.phases) {
+                    for (const part of phase.parts) {
+                        for (const candidate of part.addOrOverrideTalentDataBundle?.candidates ?? []) {
+                            if (candidate.rangeId) {
+                                const range = await fetchRange(candidate.rangeId);
+                                if (!range) continue;
+
+                                setRanges([...(ranges ?? []), range]);
+
+                                // Since modules modify ranges, set the current range
+                                // to whatever the last module's range is
+                                if (ranges?.find((range) => range.id === candidate.rangeId) !== undefined) {
+                                    setCurrentRangeId(range.id);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        await fetchRanges();
+    }
+
+    async function fetchRanges() {
+        const promises = [];
+        const allRanges: (Range & { id: string })[] = ranges ? [...ranges] : [];
+
+        for (const phase of operator.phases) {
+            const exists = allRanges.find((range) => range.id === phase.rangeId);
+            if (exists || phase.rangeId.length === 0) {
+                continue;
+            }
+
+            const promise = new Promise<void>((resolve) => {
+                fetchRange(phase.rangeId)
+                    .then((data) => {
+                        allRanges.push({ ...data, id: phase.rangeId });
+                        resolve();
+                    })
+                    .catch((err) => {
+                        console.error("Error fetching module data:", err);
+                        resolve();
+                    });
+            });
+            promises.push(promise);
+        }
+
+        await Promise.all(promises);
+
+        setRanges(allRanges);
+    }
+
+    async function fetchRange(rangeId: string) {
+        const data = (await (
+            await fetch("/api/static", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    type: "ranges",
+                    id: rangeId,
+                }),
+            })
+        ).json()) as { data: Range };
+        return data.data;
     }
 
     const fetchAttributeStats = (
@@ -195,61 +322,101 @@ function InfoContent({ operator }: { operator: Operator }) {
                         <p>{operator.itemUsage}</p>
                         <p>{operator.itemDesc}</p>
                     </div>
-                    <div className="mt-3 flex flex-row gap-1">
-                        {moduleData && moduleData.length > 0 ? (
-                            <Select
-                                onValueChange={(value) => {
-                                    setCurrentModule(value);
-                                    setCurrentModuleLevel(moduleData?.find((module) => module.id === value)?.phases?.[(moduleData?.find((module) => module.id === value)?.phases?.length ?? 0) - 1]?.equipLevel ?? 0);
-                                }}
-                                defaultValue={modules[modules.length - 1]?.id ?? ""}
-                            >
-                                <SelectTrigger className="w-[180px]">
-                                    <SelectValue placeholder="Select a Module" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {modules.map((module, index) => (
-                                        <SelectItem value={module.id ?? ""} key={index}>
-                                            {module.typeName1 && module.typeName2 ? `${module.typeName1}-${module.typeName2}` : module.uniEquipName}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        ) : (
-                            <></>
-                        )}
-                        {currentModule.length && moduleData?.find((module) => module.id === currentModule)?.phases !== undefined ? (
-                            <Select
-                                onValueChange={(value) => {
-                                    if (!isNaN(parseInt(value.split("_")[1] ?? "0"))) {
-                                        setCurrentModuleLevel(parseInt(value.split("_")[1] ?? "0"));
-                                    }
-                                }}
-                                defaultValue={`${module.id}_${moduleData?.find((module) => module.id === currentModule)?.phases[(moduleData?.find((module) => module.id === currentModule)?.phases.length ?? 0) - 1]?.equipLevel}`}
-                            >
-                                <SelectTrigger className="w-[180px]">
-                                    <SelectValue placeholder="Select a Module Level" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {moduleData
-                                        ?.find((module) => module.id === currentModule)
-                                        ?.phases.map((phase, index) => (
-                                            <SelectItem value={`${module.id}_${phase.equipLevel}`} key={index}>
-                                                Level {phase.equipLevel}
-                                            </SelectItem>
-                                        ))}
-                                </SelectContent>
-                            </Select>
-                        ) : (
-                            <></>
-                        )}
+                    <div className="mt-2">
+                        <Button variant={"outline"} onClick={() => setShowControls(!showControls)} className="flex flex-row items-center">
+                            {showControls ? "Hide" : "Show"} Controls
+                            <ChevronDown className={`ml-auto transition-transform ${showControls ? "rotate-180" : ""}`} />
+                        </Button>
                     </div>
-                    <div className="mt-2 max-w-[80%]">
-                        <LevelSlider phaseIndex={phaseIndex} maxLevels={operator.phases.map((phase) => phase.maxLevel)} onLevelChange={handleLevelChange} />
-                    </div>
+                    <AnimatePresence>
+                        {showControls && (
+                            <motion.div initial={{ height: 0, opacity: 0, y: -5 }} animate={{ height: "auto", opacity: 1, y: 0 }} exit={{ height: 0, opacity: 0, y: 0 }} transition={{ duration: 0.3, ease: "easeInOut" }}>
+                                <div className="mt-3 flex w-full flex-col gap-4">
+                                    <div className={`${phaseIndex === 2 && moduleData && moduleData.length > 0 ? "flex flex-row justify-between" : ""}`}>
+                                        <div className="flex flex-row gap-1">
+                                            {phaseIndex === 2 && moduleData && moduleData.length > 0 ? (
+                                                <Select
+                                                    onValueChange={(value) => {
+                                                        setCurrentModule(value);
+                                                        setCurrentModuleLevel(moduleData?.find((module) => module.id === value)?.phases?.[(moduleData?.find((module) => module.id === value)?.phases?.length ?? 0) - 1]?.equipLevel ?? 0);
+                                                    }}
+                                                    defaultValue={currentModule !== "" ? currentModule : (modules[modules.length - 1]?.id ?? "")}
+                                                >
+                                                    <SelectTrigger className="w-[180px]">
+                                                        <SelectValue placeholder="Select a Module" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {modules.map((module, index) => (
+                                                            <SelectItem value={module.id ?? ""} key={index}>
+                                                                {module.typeName1 && module.typeName2 ? `${module.typeName1}-${module.typeName2}` : module.uniEquipName}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            ) : (
+                                                <></>
+                                            )}
+                                            {phaseIndex === 2 && currentModule.length && moduleData?.find((module) => module.id === currentModule)?.phases !== undefined ? (
+                                                <Select
+                                                    onValueChange={(value) => {
+                                                        if (!isNaN(parseInt(value.split("_")[1] ?? "0"))) {
+                                                            setCurrentModuleLevel(parseInt(value.split("_")[1] ?? "0"));
+                                                        }
+                                                    }}
+                                                    defaultValue={currentModuleLevel !== 0 ? `${module.id}_${currentModuleLevel}` : `${module.id}_${moduleData?.find((module) => module.id === currentModule)?.phases?.[(moduleData?.find((module) => module.id === currentModule)?.phases?.length ?? 0) - 1]?.equipLevel ?? 0}`}
+                                                >
+                                                    <SelectTrigger className="w-[180px]">
+                                                        <SelectValue placeholder="Select a Module Level" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {moduleData
+                                                            ?.find((module) => module.id === currentModule)
+                                                            ?.phases.map((phase, index) => (
+                                                                <SelectItem value={`${module.id}_${phase.equipLevel}`} key={index}>
+                                                                    Level {phase.equipLevel}
+                                                                </SelectItem>
+                                                            ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            ) : (
+                                                <></>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <Select
+                                                defaultValue={"potential_0"}
+                                                onValueChange={(value) => {
+                                                    setPotentialRank(parseInt(value.split("_")[1] ?? "0"));
+                                                }}
+                                            >
+                                                <SelectTrigger className="w-[180px]">
+                                                    <SelectValue placeholder="Potential Rank" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value={"potential_0"}>No Potential</SelectItem>
+                                                    {operator.potentialRanks.map((rank, index) => (
+                                                        <SelectItem value={`potential_${index + 1}`} key={index}>
+                                                            Potential {index + 1} - {rank.description}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </div>
+                                    <div className="max-w-md">
+                                        <Slider min={0} max={100} step={1} value={[favorPoint]} onValueChange={(value) => setFavorPoint(value[0] ?? 0)} />
+                                        <span className="text-sm text-muted-foreground">Trust: {favorPoint * 2}%</span>
+                                    </div>
+                                </div>
+                                <div className="mt-3 max-w-[80%]">
+                                    <LevelSlider phaseIndex={phaseIndex} maxLevels={operator.phases.map((phase) => phase.maxLevel)} onLevelChange={handleLevelChange} />
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                     <Tabs
                         defaultValue={`phase_${operator.phases.length - 1}`}
-                        className="mt-6 w-full"
+                        className="mt-4 w-full"
                         onValueChange={(value) => {
                             setPhaseIndex(parseInt(value.split("_")[1] ?? "0"));
                             setLevel(operator.phases[parseInt(value.split("_")[1] ?? "0")]?.maxLevel ?? 1);
@@ -278,35 +445,35 @@ function InfoContent({ operator }: { operator: Operator }) {
                             {operator.phases.map((_, index) => (
                                 <TabsContent key={index} value={`phase_${index}`}>
                                     <div className="grid grid-cols-[repeat(2,1fr)] grid-rows-[repeat(5,max-content)] gap-2">
-                                        <div className="flex flex-row items-center justify-between bg-muted p-[12px_16px]">
+                                        <div className="flex flex-row items-center justify-between rounded-md bg-muted p-[12px_16px]">
                                             <div className="flex items-center">
                                                 <Cross size={24} />
                                                 <span className="ml-2 text-muted-foreground">Health</span>
                                             </div>
                                             <span className="font-bold">{Math.round(attributeStats?.maxHp ?? 0)}</span>
                                         </div>
-                                        <div className="flex flex-row items-center justify-between bg-muted p-[12px_16px]">
+                                        <div className="flex flex-row items-center justify-between rounded-md bg-muted p-[12px_16px]">
                                             <div className="flex items-center">
                                                 <Swords size={24} />
                                                 <span className="ml-2 text-muted-foreground">ATK</span>
                                             </div>
                                             <span className="font-bold">{Math.round(attributeStats?.atk ?? 0)}</span>
                                         </div>
-                                        <div className="flex flex-row items-center justify-between bg-muted p-[12px_16px]">
+                                        <div className="flex flex-row items-center justify-between rounded-md bg-muted p-[12px_16px]">
                                             <div className="flex items-center">
                                                 <Shield size={24} />
                                                 <span className="ml-2 text-muted-foreground">DEF</span>
                                             </div>
                                             <span className="font-bold">{Math.round(attributeStats?.def ?? 0)}</span>
                                         </div>
-                                        <div className="flex flex-row items-center justify-between bg-muted p-[12px_16px]">
+                                        <div className="flex flex-row items-center justify-between rounded-md bg-muted p-[12px_16px]">
                                             <div className="flex items-center">
                                                 <CircleGauge size={24} />
-                                                <span className="ml-2 text-muted-foreground">ASPD</span>
+                                                <span className="ml-2 text-muted-foreground">ATK Interval</span>
                                             </div>
                                             <span className="font-bold">{attributeStats?.attackSpeed.toFixed(2) ?? 0}</span>
                                         </div>
-                                        <div className="flex flex-row items-center justify-between bg-muted p-[12px_16px]">
+                                        <div className="flex flex-row items-center justify-between rounded-md bg-muted p-[12px_16px]">
                                             <div className="flex items-center">
                                                 <Diamond size={24} />
                                                 <span className="ml-2 text-muted-foreground">RES</span>
@@ -320,14 +487,14 @@ function InfoContent({ operator }: { operator: Operator }) {
                                             </div>
                                             <span className="font-bold">{Math.round(attributeStats?.blockCnt ?? 0)}</span>
                                         </div>
-                                        <div className="flex flex-row items-center justify-between bg-muted p-[12px_16px]">
+                                        <div className="flex flex-row items-center justify-between rounded-md bg-muted p-[12px_16px]">
                                             <div className="flex items-center">
                                                 <Hourglass size={24} />
                                                 <span className="ml-2 text-muted-foreground">Redeploy</span>
                                             </div>
                                             <span className="font-bold">{Math.round(attributeStats?.respawnTime ?? 0)}</span>
                                         </div>
-                                        <div className="flex flex-row items-center justify-between bg-muted p-[12px_16px]">
+                                        <div className="flex flex-row items-center justify-between rounded-md bg-muted p-[12px_16px]">
                                             <div className="flex items-center">
                                                 <BadgeDollarSign size={24} />
                                                 <span className="ml-2 text-muted-foreground">DP Cost</span>
@@ -339,6 +506,30 @@ function InfoContent({ operator }: { operator: Operator }) {
                             ))}
                         </div>
                     </Tabs>
+                </div>
+                <div className="mt-2">
+                    <div>
+                        <h2 className="text-lg font-bold">Tags</h2>
+                        <div className="flex flex-wrap gap-2">
+                            {operator.tagList.map((tag, index) => (
+                                <span key={index} className="rounded-md bg-muted p-1 px-2">
+                                    {tag}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="mt-2">
+                        <h2 className="text-lg font-bold">Range</h2>
+                        {currentRange ? (
+                            <OperatorRange range={currentRange} key={currentRangeId} />
+                        ) : (
+                            <>
+                                <div className="flex flex-row items-center gap-2">
+                                    <span className="text-muted-foreground">No range data available.</span>
+                                </div>
+                            </>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
