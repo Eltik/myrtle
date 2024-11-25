@@ -17,7 +17,6 @@ type FactoryProps = {
 
 function Factory({ data, chars, roomSlot, roomId }: FactoryProps) {
     const assignedOperators = Object.values(chars).filter((char) => char.roomSlotId === roomId);
-
     return (
         <>
             <Card className="w-[360px] bg-card shadow-lg">
