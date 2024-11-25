@@ -66,7 +66,7 @@ export const getServerSideProps = async ({
             operators: Operator[];
         };
 
-        if (data.operators.length === 0) {
+        if (data.operators?.length === 0) {
             return {
                 notFound: true,
             };

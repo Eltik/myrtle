@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { getAttributeStats } from "~/helper";
+import { getAttributeStats } from "~/helper/getAttributeStats";
 import type { CharacterData } from "~/types/impl/api";
 import type { ModuleData } from "~/types/impl/api/static/modules";
 import type { Operator } from "~/types/impl/api/static/operator";

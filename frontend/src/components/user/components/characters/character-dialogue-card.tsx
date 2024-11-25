@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import type { CharacterData } from "~/types/impl/api";
-import { formatProfession, formatSkillType, formatSubProfession, getMaxAttributeStats, insertBlackboard, parseSkillStaticLevel, removeStyleTags } from "~/helper";
+import { formatProfession, formatSkillType, formatSubProfession, insertBlackboard, parseSkillStaticLevel, removeStyleTags } from "~/helper";
 import type { OperatorRarity } from "~/types/impl/api/static/operator";
 import { ChevronRight, Heart, Shield, Swords, Zap } from "lucide-react";
 import { Badge } from "~/components/ui/badge";
@@ -10,6 +10,7 @@ import { ScrollArea } from "~/components/ui/scroll-area";
 import { Progress } from "~/components/ui/progress";
 import { Skeleton } from "~/components/ui/skeleton";
 import { useAttributeStats } from "~/hooks/use-attribute-stats";
+import { getMaxAttributeStats } from "~/helper/getAttributeStats";
 
 function CharacterDialogueCard({ data }: { data: CharacterData }) {
     const { static: operatorData, skills } = data;
