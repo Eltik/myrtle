@@ -1,7 +1,8 @@
 import { type ServerResponse } from "http";
+import type Module from "module";
 import { env } from "~/env.js";
 import type { Item } from "~/types/impl/api/static/material";
-import type { Modules } from "~/types/impl/api/static/modules";
+import type { ModuleData, Modules } from "~/types/impl/api/static/modules";
 import type { Operator } from "~/types/impl/api/static/operator";
 import type { Ranges } from "~/types/impl/api/static/ranges";
 import type { Skill } from "~/types/impl/api/static/skills";
@@ -44,16 +45,22 @@ export default async function handler(request: Request, response: ServerResponse
                         method: request.body.method,
                     }),
                 })
-            ).json()) as {
-                modules: Modules;
-            };
+            ).json()) as
+                | {
+                      modules: Modules;
+                  }
+                | {
+                      details: ModuleData;
+                  }
+                | {
+                      modules: Module[];
+                  }
+                | {
+                      modules: Module;
+                  };
 
             response.writeHead(200, { "Content-Type": "application/json" });
-            response.write(
-                JSON.stringify({
-                    data: modules.modules,
-                }),
-            );
+            response.write(JSON.stringify(modules));
             return response.end();
         case "operators":
             const operators = (await (

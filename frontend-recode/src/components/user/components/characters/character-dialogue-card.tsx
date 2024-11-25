@@ -1,16 +1,19 @@
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import type { CharacterData } from "~/types/impl/api";
-import { formatProfession, formatSkillType, formatSubProfession, getAttributeStats, getMaxAttributeStats, insertBlackboard, parseSkillStaticLevel } from "~/helper";
+import { formatProfession, formatSkillType, formatSubProfession, getMaxAttributeStats, insertBlackboard, parseSkillStaticLevel, removeStyleTags } from "~/helper";
 import type { OperatorRarity } from "~/types/impl/api/static/operator";
 import { ChevronRight, Heart, Shield, Swords, Zap } from "lucide-react";
 import { Badge } from "~/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { Progress } from "~/components/ui/progress";
+import { Skeleton } from "~/components/ui/skeleton";
+import { useAttributeStats } from "~/hooks/use-attribute-stats";
 
 function CharacterDialogueCard({ data }: { data: CharacterData }) {
     const { static: operatorData, skills } = data;
+    const { attributeStats, fetchAttributeStats } = useAttributeStats(data);
 
     if (!operatorData) return null;
 
@@ -19,6 +22,12 @@ function CharacterDialogueCard({ data }: { data: CharacterData }) {
     const getRarityStars = (rarity: OperatorRarity) => {
         const starCount = parseInt(rarity.split("_")[1] ?? "0");
         return "★".repeat(starCount);
+    };
+
+    const handleTabChange = (value: string) => {
+        if (value === "stats" && !attributeStats) {
+            void fetchAttributeStats();
+        }
     };
 
     return (
@@ -50,7 +59,7 @@ function CharacterDialogueCard({ data }: { data: CharacterData }) {
                 </div>
             </CardHeader>
             <CardContent>
-                <Tabs defaultValue="info" className="w-full">
+                <Tabs defaultValue="info" className="w-full" onValueChange={handleTabChange}>
                     <TabsList className="grid w-full grid-cols-4">
                         <TabsTrigger value="info">Info</TabsTrigger>
                         <TabsTrigger value="stats">Stats</TabsTrigger>
@@ -81,21 +90,41 @@ function CharacterDialogueCard({ data }: { data: CharacterData }) {
                         </ScrollArea>
                     </TabsContent>
                     <TabsContent value="stats">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <h4 className="mb-2 font-semibold">Combat Stats</h4>
-                                <AttributeRow label="HP" value={Math.round(getAttributeStats(data, data.level)?.maxHp ?? 0)} max={getMaxAttributeStats(data)?.maxHp} icon={<Heart className="h-4 w-4" />} />
-                                <AttributeRow label="ATK" value={Math.round(getAttributeStats(data, data.level)?.atk ?? 0)} max={getMaxAttributeStats(data)?.atk} icon={<Swords className="h-4 w-4" />} />
-                                <AttributeRow label="DEF" value={Math.round(getAttributeStats(data, data.level)?.def ?? 0)} max={getMaxAttributeStats(data)?.def} icon={<Shield className="h-4 w-4" />} />
-                                <AttributeRow label="RES" value={getAttributeStats(data, data.level)?.magicResistance ?? 0} max={getMaxAttributeStats(data)?.magicResistance} icon={<Zap className="h-4 w-4" />} />
+                        {attributeStats ? (
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <h4 className="mb-2 font-semibold">Combat Stats</h4>
+                                    <AttributeRow label="HP" value={Math.round(attributeStats?.maxHp ?? 0)} max={getMaxAttributeStats(data)?.maxHp} icon={<Heart className="h-4 w-4" />} />
+                                    <AttributeRow label="ATK" value={Math.round(attributeStats?.atk ?? 0)} max={getMaxAttributeStats(data)?.atk} icon={<Swords className="h-4 w-4" />} />
+                                    <AttributeRow label="DEF" value={Math.round(attributeStats?.def ?? 0)} max={getMaxAttributeStats(data)?.def} icon={<Shield className="h-4 w-4" />} />
+                                    <AttributeRow label="RES" value={attributeStats?.magicResistance ?? 0} max={getMaxAttributeStats(data)?.magicResistance} icon={<Zap className="h-4 w-4" />} />
+                                </div>
+                                <div>
+                                    <h4 className="mb-2 font-semibold">Deployment</h4>
+                                    <AttributeRow label="Cost" value={attributeStats?.cost ?? 0} icon={<ChevronRight className="h-4 w-4" />} max={99} />
+                                    <AttributeRow label="Block" value={attributeStats?.blockCnt ?? 0} icon={<ChevronRight className="h-4 w-4" />} max={5} />
+                                    <AttributeRow label="Redeploy" value={attributeStats?.respawnTime ?? 0} icon={<ChevronRight className="h-4 w-4" />} max={100} />
+                                </div>
                             </div>
-                            <div>
-                                <h4 className="mb-2 font-semibold">Deployment</h4>
-                                <AttributeRow label="Cost" value={getMaxAttributeStats(data)?.cost ?? 0} icon={<ChevronRight className="h-4 w-4" />} max={99} />
-                                <AttributeRow label="Block" value={getMaxAttributeStats(data)?.blockCnt ?? 0} icon={<ChevronRight className="h-4 w-4" />} max={5} />
-                                <AttributeRow label="Redeploy" value={getMaxAttributeStats(data)?.respawnTime ?? 0} icon={<ChevronRight className="h-4 w-4" />} max={100} />
-                            </div>
-                        </div>
+                        ) : (
+                            <>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <h4 className="mb-2 font-semibold">Combat Stats</h4>
+                                        <AttributeRowSkeleton />
+                                        <AttributeRowSkeleton />
+                                        <AttributeRowSkeleton />
+                                        <AttributeRowSkeleton />
+                                    </div>
+                                    <div>
+                                        <h4 className="mb-2 font-semibold">Deployment</h4>
+                                        <AttributeRowSkeleton />
+                                        <AttributeRowSkeleton />
+                                        <AttributeRowSkeleton />
+                                    </div>
+                                </div>
+                            </>
+                        )}
                     </TabsContent>
                     <TabsContent value="skills">
                         <ScrollArea className="h-[200px] w-full rounded-md border p-4">
@@ -157,12 +186,31 @@ function CharacterDialogueCard({ data }: { data: CharacterData }) {
                     </TabsContent>
                     <TabsContent value="talents">
                         <ScrollArea className="h-[200px] w-full rounded-md border p-4">
-                            {operatorData.talents.map((talent, index) => (
-                                <div key={index} className="mb-4">
-                                    <h3 className="font-semibold">{talent.candidates[0]?.name}</h3>
-                                    <p className="text-sm text-muted-foreground">{talent.candidates[0]?.description}</p>
-                                </div>
-                            ))}
+                            {operatorData.talents.map((talent, index) => {
+                                const parseCandidatePhase = (phase: string) => {
+                                    if (phase === "PHASE_0") return 0;
+                                    if (phase === "PHASE_1") return 1;
+                                    if (phase === "PHASE_2") return 2;
+                                    return 0;
+                                };
+
+                                let talentIndex = 0;
+                                for (let i = 0; i < talent.candidates.length; i++) {
+                                    const candidate = talent.candidates[i];
+                                    if (data.evolvePhase >= parseCandidatePhase(candidate!.unlockCondition.phase) && data.level >= candidate!.unlockCondition.level && data.potentialRank >= candidate!.requiredPotentialRank) {
+                                        talentIndex = i;
+                                    }
+                                }
+
+                                const currentTalent = talent.candidates[talentIndex];
+
+                                return (
+                                    <div key={index} className="mb-4">
+                                        <h3 className="font-semibold">{currentTalent?.name}</h3>
+                                        <p className="text-sm text-muted-foreground">{removeStyleTags(currentTalent?.description ?? "N/A")}</p>
+                                    </div>
+                                );
+                            })}
                         </ScrollArea>
                     </TabsContent>
                 </Tabs>
@@ -184,6 +232,15 @@ const AttributeRow = ({ label, value, icon, max = 2000 }: { label: string; value
         <span className="w-24 text-sm">{label}</span>
         <Progress value={(value / max) * 100} className={`h-2 w-full ${getProgressColor(value, max)}`} />
         <span className="w-16 text-right text-sm">{value}</span>
+    </div>
+);
+
+const AttributeRowSkeleton = () => (
+    <div className="mb-2 flex items-center space-x-2">
+        <Skeleton className="h-4 w-4" />
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-2 w-full" />
+        <Skeleton className="h-4 w-16" />
     </div>
 );
 

@@ -1323,7 +1323,7 @@ export type CharacterData = {
         };
     }[];
     voiceLan: string;
-    currentEquip: Record<string, string>;
+    currentEquip: string;
     equip: Record<
         string,
         {
