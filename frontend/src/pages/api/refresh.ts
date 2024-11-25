@@ -1,6 +1,7 @@
 import { type ServerResponse } from "http";
-import { env } from "~/env.mjs";
-import { type PlayerData, type Server } from "~/types/types";
+import { env } from "~/env.js";
+import type { AKServer } from "~/types/impl/api";
+import type { RefreshResponse } from "~/types/impl/api/impl/refresh";
 
 export default async function handler(request: Request, response: ServerResponse) {
     const data = (await (
@@ -11,13 +12,12 @@ export default async function handler(request: Request, response: ServerResponse
             },
             body: JSON.stringify({
                 uid: request.body.uid,
-                email: request.body.email,
                 secret: request.body.secret,
                 seqnum: request.body.seqnum,
                 server: request.body.server,
             }),
         })
-    ).json()) as PlayerData;
+    ).json()) as RefreshResponse;
 
     response.writeHead(200, { "Content-Type": "application/json" });
     response.write(JSON.stringify(data));
@@ -27,9 +27,8 @@ export default async function handler(request: Request, response: ServerResponse
 interface Request {
     body: {
         uid: string;
-        email: string;
         secret: string;
         seqnum: number;
-        server: Server;
+        server: AKServer;
     };
 }
