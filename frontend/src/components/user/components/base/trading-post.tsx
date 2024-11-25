@@ -22,7 +22,7 @@ function TradingPost({ data, chars, roomSlot, roomId }: TradingPostProps) {
     const orderProgress = Math.round((data.next.processPoint / data.next.maxPoint) * 100);
 
     const assignedOperators = Object.values(chars).filter((char) => char.roomSlotId === roomId);
-  
+
     return (
         <>
             <Card className="w-[360px] bg-card shadow-lg">
