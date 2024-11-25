@@ -98,13 +98,13 @@ export default async function handler(request: Request, response: ServerResponse
                     }),
                 })
             ).json()) as {
-                ranges: Ranges;
+                range: Ranges;
             };
 
             response.writeHead(200, { "Content-Type": "application/json" });
             response.write(
                 JSON.stringify({
-                    data: ranges.ranges,
+                    data: ranges.range,
                 }),
             );
             return response.end();
