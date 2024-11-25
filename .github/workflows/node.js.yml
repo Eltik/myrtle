@@ -3,6 +3,9 @@
 
 name: Node.js CI
 
+env:
+  BACKEND_URL: https://api.example.com
+
 on:
   push:
     branches: [ "main" ]
