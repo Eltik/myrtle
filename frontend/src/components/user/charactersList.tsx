@@ -1,5 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import Image from "next/legacy/image";
+import Image from "next/image";
 import type { User } from "~/types/impl/api";
 import { Button } from "../ui/button";
 import { ArrowUpDown } from "lucide-react";
@@ -29,8 +29,9 @@ function CharactersList({ data }: { data: User }) {
                         style={{
                             maxWidth: "100%",
                             height: "auto",
-                        }}
-                    />
+                            maxWidth: "100%",
+                            height: "auto"
+                        }} />
                 );
             },
         },
@@ -65,8 +66,9 @@ function CharactersList({ data }: { data: User }) {
                         style={{
                             maxWidth: "100%",
                             height: "auto",
-                        }}
-                    />
+                            maxWidth: "100%",
+                            height: "auto"
+                        }} />
                 );
             },
         },
@@ -90,8 +92,9 @@ function CharactersList({ data }: { data: User }) {
                         style={{
                             maxWidth: "100%",
                             height: "auto",
-                        }}
-                    />
+                            maxWidth: "100%",
+                            height: "auto"
+                        }} />
                 );
             },
         },

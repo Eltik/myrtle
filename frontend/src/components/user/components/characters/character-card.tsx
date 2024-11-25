@@ -1,4 +1,4 @@
-import Image from "next/legacy/image";
+import Image from "next/image";
 import { Card, CardContent } from "~/components/ui/card";
 import { Dialog, DialogContent, DialogTrigger } from "~/components/ui/dialog";
 import { Progress } from "~/components/ui/progress";
@@ -10,7 +10,7 @@ import CharacterDialogueCard from "./character-dialogue-card";
 
 function CharacterCard({ data }: { data: CharacterData }) {
     return (
-        <Dialog>
+        (<Dialog>
             <DialogTrigger>
                 <Card className="h-[620px] w-full max-w-sm overflow-hidden bg-card transition-all duration-150 hover:bg-secondary/50 md:h-[400px]">
                     <CardContent className="text-left">
@@ -23,12 +23,13 @@ function CharacterCard({ data }: { data: CharacterData }) {
                                         alt="Operator Image"
                                         src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/${data.skin ? encodeURIComponent(data.skin.includes("@") ? data.skin.replaceAll("@", "_") : data.skin.replaceAll("#", "_")) : encodeURIComponent((data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").includes("@") ? (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("@", "_") : (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("#", "_"))}.png`}
                                         fill
+                                        decoding="async"
                                         sizes="100vw"
                                         style={{
                                             objectFit: "contain",
-                                        }}
-                                        decoding="async"
-                                    />
+                                            maxWidth: "100%",
+                                            height: "auto"
+                                        }} />
                                     <Image
                                         loading="lazy"
                                         className="visible block h-full w-full rounded-lg md:invisible md:hidden"
@@ -36,13 +37,14 @@ function CharacterCard({ data }: { data: CharacterData }) {
                                         width={500}
                                         height={500}
                                         src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/${data.skin ? encodeURIComponent(data.skin.includes("@") ? data.skin.replaceAll("@", "_") : data.skin.replaceAll("#", "_")) : encodeURIComponent((data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").includes("@") ? (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("@", "_") : (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("#", "_"))}.png`}
+                                        decoding="async"
                                         style={{
                                             maxWidth: "100%",
                                             height: "auto",
                                             objectFit: "contain",
-                                        }}
-                                        decoding="async"
-                                    />
+                                            maxWidth: "100%",
+                                            height: "auto"
+                                        }} />
                                 </div>
                                 <div className="space-y-4 py-3">
                                     <div className="space-y-1">
@@ -63,8 +65,9 @@ function CharacterCard({ data }: { data: CharacterData }) {
                                                     maxWidth: "100%",
                                                     height: "auto",
                                                     objectFit: "contain",
-                                                }}
-                                            />
+                                                    maxWidth: "100%",
+                                                    height: "auto"
+                                                }} />
                                         </div>
                                         <div className="space-y-1">
                                             <p className="text-xs text-gray-500 dark:text-gray-400">Potential</p>
@@ -77,8 +80,9 @@ function CharacterCard({ data }: { data: CharacterData }) {
                                                     maxWidth: "100%",
                                                     height: "auto",
                                                     objectFit: "contain",
-                                                }}
-                                            />
+                                                    maxWidth: "100%",
+                                                    height: "auto"
+                                                }} />
                                         </div>
                                     </div>
                                     <div className="space-y-1">
@@ -115,8 +119,9 @@ function CharacterCard({ data }: { data: CharacterData }) {
                                                             maxWidth: "100%",
                                                             height: "auto",
                                                             objectFit: "contain",
-                                                        }}
-                                                    />
+                                                            maxWidth: "100%",
+                                                            height: "auto"
+                                                        }} />
                                                     <div className="text-md">
                                                         <b className={`${data.defaultSkillIndex === index ? "text-blue-200" : "text-inherit"}`}>{skill.static?.levels[data.mainSkillLvl - 1]?.name}</b>
                                                     </div>
@@ -135,8 +140,9 @@ function CharacterCard({ data }: { data: CharacterData }) {
                                                                     maxWidth: "100%",
                                                                     height: "auto",
                                                                     objectFit: "contain",
-                                                                }}
-                                                            />
+                                                                    maxWidth: "100%",
+                                                                    height: "auto"
+                                                                }} />
                                                         ) : null}
                                                     </div>
                                                     <span className="mb-2 text-sm">
@@ -165,7 +171,7 @@ function CharacterCard({ data }: { data: CharacterData }) {
             <DialogContent className="sm:max-w-[425px]">
                 <CharacterDialogueCard data={data} />
             </DialogContent>
-        </Dialog>
+        </Dialog>)
     );
 }
 export default CharacterCard;

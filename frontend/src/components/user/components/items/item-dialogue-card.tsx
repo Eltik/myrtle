@@ -5,7 +5,7 @@ import { ChevronDown, ChevronUp, Hammer, MapPin, Package } from "lucide-react";
 
 // Import the types from the provided type definitions
 import { type Item, ItemRarity, ItemClass, ItemType, ItemOccPer, BuildingRoomType, VoucherItemType } from "~/types/impl/api/static/material";
-import Image from "next/legacy/image";
+import Image from "next/image";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { Separator } from "~/components/ui/separator";
@@ -33,7 +33,7 @@ export default function ItemDialogueCard({ item }: { item: Item }) {
     const [showDetails, setShowDetails] = useState(false);
 
     return (
-        <Card className="w-full max-w-2xl border-none bg-background p-0 shadow-lg">
+        (<Card className="w-full max-w-2xl border-none bg-background p-0 shadow-lg">
             <CardHeader className={`${rarityColors[item.rarity]} rounded-t-lg`}>
                 <div className="flex items-center space-x-4">
                     <Image
@@ -45,8 +45,9 @@ export default function ItemDialogueCard({ item }: { item: Item }) {
                         style={{
                             maxWidth: "100%",
                             height: "auto",
-                        }}
-                    />
+                            maxWidth: "100%",
+                            height: "auto"
+                        }} />
                     <div>
                         <CardTitle className="text-2xl font-bold">{item.name}</CardTitle>
                         <CardDescription>
@@ -160,6 +161,6 @@ export default function ItemDialogueCard({ item }: { item: Item }) {
                     </ScrollArea>
                 </CardContent>
             )}
-        </Card>
+        </Card>)
     );
 }
