@@ -2,7 +2,7 @@ import type { User } from "~/types/impl/api";
 import { ItemsDataTable } from "./components/items/items-data-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Item } from "~/types/impl/api/static/material";
-import Image from "next/image";
+import Image from "next/legacy/image";
 import { Button } from "../ui/button";
 import { ArrowUpDown } from "lucide-react";
 

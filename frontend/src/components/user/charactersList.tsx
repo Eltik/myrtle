@@ -1,5 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import Image from "next/image";
+import Image from "next/legacy/image";
 import type { User } from "~/types/impl/api";
 import { Button } from "../ui/button";
 import { ArrowUpDown } from "lucide-react";

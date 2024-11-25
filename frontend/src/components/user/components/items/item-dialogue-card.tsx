@@ -5,7 +5,7 @@ import { ChevronDown, ChevronUp, Hammer, MapPin, Package } from "lucide-react";
 
 // Import the types from the provided type definitions
 import { type Item, ItemRarity, ItemClass, ItemType, ItemOccPer, BuildingRoomType, VoucherItemType } from "~/types/impl/api/static/material";
-import Image from "next/image";
+import Image from "next/legacy/image";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { Separator } from "~/components/ui/separator";

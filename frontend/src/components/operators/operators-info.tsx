@@ -1,6 +1,6 @@
 import type { Operator } from "~/types/impl/api/static/operator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "../ui/breadcrumb";
-import Image from "next/image";
+import Image from "next/legacy/image";
 import { ScrollArea } from "../ui/scroll-area";
 import { useState } from "react";
 import { Button } from "../ui/button";

@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Image from "next/legacy/image";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import type { CharacterData } from "~/types/impl/api";
 import { formatProfession, formatSkillType, formatSubProfession, getMaxAttributeStats, insertBlackboard, parseSkillStaticLevel, removeStyleTags } from "~/helper";

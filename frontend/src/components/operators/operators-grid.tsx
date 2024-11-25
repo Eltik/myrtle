@@ -1,6 +1,6 @@
 import { OperatorRarity, type Operator } from "~/types/impl/api/static/operator";
 import Link from "next/link";
-import Image from "next/image";
+import Image from "next/legacy/image";
 import { formatProfession } from "~/helper";
 
 /**
