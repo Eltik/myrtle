@@ -29,9 +29,8 @@ function CharactersList({ data }: { data: User }) {
                         style={{
                             maxWidth: "100%",
                             height: "auto",
-                            maxWidth: "100%",
-                            height: "auto"
-                        }} />
+                        }}
+                    />
                 );
             },
         },
@@ -66,9 +65,8 @@ function CharactersList({ data }: { data: User }) {
                         style={{
                             maxWidth: "100%",
                             height: "auto",
-                            maxWidth: "100%",
-                            height: "auto"
-                        }} />
+                        }}
+                    />
                 );
             },
         },
@@ -92,9 +90,8 @@ function CharactersList({ data }: { data: User }) {
                         style={{
                             maxWidth: "100%",
                             height: "auto",
-                            maxWidth: "100%",
-                            height: "auto"
-                        }} />
+                        }}
+                    />
                 );
             },
         },

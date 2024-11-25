@@ -33,7 +33,7 @@ export default function ItemDialogueCard({ item }: { item: Item }) {
     const [showDetails, setShowDetails] = useState(false);
 
     return (
-        (<Card className="w-full max-w-2xl border-none bg-background p-0 shadow-lg">
+        <Card className="w-full max-w-2xl border-none bg-background p-0 shadow-lg">
             <CardHeader className={`${rarityColors[item.rarity]} rounded-t-lg`}>
                 <div className="flex items-center space-x-4">
                     <Image
@@ -45,9 +45,8 @@ export default function ItemDialogueCard({ item }: { item: Item }) {
                         style={{
                             maxWidth: "100%",
                             height: "auto",
-                            maxWidth: "100%",
-                            height: "auto"
-                        }} />
+                        }}
+                    />
                     <div>
                         <CardTitle className="text-2xl font-bold">{item.name}</CardTitle>
                         <CardDescription>
@@ -161,6 +160,6 @@ export default function ItemDialogueCard({ item }: { item: Item }) {
                     </ScrollArea>
                 </CardContent>
             )}
-        </Card>)
+        </Card>
     );
 }

@@ -31,7 +31,7 @@ function CharacterDialogueCard({ data }: { data: CharacterData }) {
     };
 
     return (
-        (<Card className="grid max-h-[calc(100vh-7rem)] w-full max-w-2xl gap-6 overflow-hidden rounded-lg border-0 shadow-lg md:py-6">
+        <Card className="grid max-h-[calc(100vh-7rem)] w-full max-w-2xl gap-6 overflow-hidden rounded-lg border-0 shadow-lg md:py-6">
             <CardHeader className="relative">
                 <div className="relative h-64 w-full">
                     <Image
@@ -43,9 +43,8 @@ function CharacterDialogueCard({ data }: { data: CharacterData }) {
                         sizes="100vw"
                         style={{
                             objectFit: "contain",
-                            maxWidth: "100%",
-                            height: "auto"
-                        }} />
+                        }}
+                    />
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 rounded-md bg-gradient-to-t from-gray-900 to-transparent p-4">
                     <CardTitle className="text-3xl font-bold">{name}</CardTitle>
@@ -142,9 +141,8 @@ function CharacterDialogueCard({ data }: { data: CharacterData }) {
                                                     style={{
                                                         maxWidth: "100%",
                                                         height: "auto",
-                                                        maxWidth: "100%",
-                                                        height: "auto"
-                                                    }} />
+                                                    }}
+                                                />
                                                 <div className="text-md">
                                                     <b className={`${data.defaultSkillIndex === index ? "text-blue-200" : "text-inherit"}`}>{skill.static?.levels[data.mainSkillLvl - 1]?.name}</b>
                                                 </div>
@@ -162,9 +160,8 @@ function CharacterDialogueCard({ data }: { data: CharacterData }) {
                                                             style={{
                                                                 maxWidth: "100%",
                                                                 height: "auto",
-                                                                maxWidth: "100%",
-                                                                height: "auto"
-                                                            }} />
+                                                            }}
+                                                        />
                                                     ) : null}
                                                 </div>
                                                 <span className="mb-2 text-sm">
@@ -218,7 +215,7 @@ function CharacterDialogueCard({ data }: { data: CharacterData }) {
                     </TabsContent>
                 </Tabs>
             </CardContent>
-        </Card>)
+        </Card>
     );
 }
 
