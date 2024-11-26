@@ -114,7 +114,7 @@ const handler = async (req: Request): Promise<Response> => {
 const route = {
     path: "/static",
     handler,
-    rateLimit: 20,
+    rateLimit: 50,
 };
 
 type Body = {
