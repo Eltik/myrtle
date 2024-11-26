@@ -14,7 +14,6 @@ import { OperatorPosition, type Operator } from "~/types/impl/api/static/operato
 import type { Range } from "~/types/impl/api/static/ranges";
 import OperatorRange from "./impl/operator-range";
 import { Button } from "~/components/ui/button";
-import { AnimatePresence, motion } from "framer-motion";
 import { Input } from "~/components/ui/input";
 
 // https://aceship.github.io/AN-EN-Tags/akhrchars.html?opname=Projekt_Red
@@ -336,95 +335,91 @@ function InfoContent({ operator }: { operator: Operator }) {
                             <ChevronDown className={`ml-auto transition-transform ${showControls ? "rotate-180" : ""}`} />
                         </Button>
                     </div>
-                    <AnimatePresence>
-                        {showControls && (
-                            <motion.div initial={{ height: 0, opacity: 0, y: -5 }} animate={{ height: "auto", opacity: 1, y: 0 }} exit={{ height: 0, opacity: 0, y: 0 }} transition={{ duration: 0.3, ease: "easeInOut" }}>
-                                <div className="mt-3 flex w-full flex-col gap-4">
-                                    <div className={`${phaseIndex === 2 && moduleData && moduleData.length > 0 ? "flex flex-col justify-between md:flex-row" : ""}`}>
-                                        <div className="flex flex-col gap-1 md:flex-row">
-                                            {phaseIndex === 2 && moduleData && moduleData.length > 0 ? (
-                                                <Select
-                                                    onValueChange={(value) => {
-                                                        setCurrentModule(value);
-                                                        setCurrentModuleLevel(moduleData?.find((module) => module.id === value)?.phases?.[(moduleData?.find((module) => module.id === value)?.phases?.length ?? 0) - 1]?.equipLevel ?? 0);
-                                                    }}
-                                                    defaultValue={currentModule !== "" ? currentModule : (modules[modules.length - 1]?.id ?? "")}
-                                                >
-                                                    <SelectTrigger className="md:w-[180px]">
-                                                        <SelectValue placeholder="Select a Module" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {modules.map((module, index) => (
-                                                            <SelectItem value={module.id ?? ""} key={index}>
-                                                                {module.typeName1 && module.typeName2 ? `${module.typeName1}-${module.typeName2}` : module.uniEquipName}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            ) : (
-                                                <></>
-                                            )}
-                                            {phaseIndex === 2 && currentModule.length && moduleData?.find((module) => module.id === currentModule)?.phases !== undefined ? (
-                                                <Select
-                                                    onValueChange={(value) => {
-                                                        if (!isNaN(parseInt(value.split("_")[1] ?? "0"))) {
-                                                            setCurrentModuleLevel(parseInt(value.split("_")[1] ?? "0"));
-                                                        }
-                                                    }}
-                                                    defaultValue={currentModuleLevel !== 0 ? `${module.id}_${currentModuleLevel}` : `${module.id}_${moduleData?.find((module) => module.id === currentModule)?.phases?.[(moduleData?.find((module) => module.id === currentModule)?.phases?.length ?? 0) - 1]?.equipLevel ?? 0}`}
-                                                >
-                                                    <SelectTrigger className="md:w-[180px]">
-                                                        <SelectValue placeholder="Select a Module Level" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {moduleData
-                                                            ?.find((module) => module.id === currentModule)
-                                                            ?.phases.map((phase, index) => (
-                                                                <SelectItem value={`${module.id}_${phase.equipLevel}`} key={index}>
-                                                                    Level {phase.equipLevel}
-                                                                </SelectItem>
-                                                            ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            ) : (
-                                                <></>
-                                            )}
-                                        </div>
-                                        <div>
-                                            <Select
-                                                defaultValue={"potential_0"}
-                                                onValueChange={(value) => {
-                                                    setPotentialRank(parseInt(value.split("_")[1] ?? "0"));
-                                                }}
-                                            >
-                                                <SelectTrigger className="md:w-[180px]">
-                                                    <SelectValue placeholder="Potential Rank" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value={"potential_0"}>No Potential</SelectItem>
-                                                    {operator.potentialRanks.map((rank, index) => (
-                                                        <SelectItem value={`potential_${index + 1}`} key={index}>
-                                                            Potential {index + 1} - {rank.description}
+                    <div className={`overflow-hidden transition-all duration-300 ${showControls ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"}`}>
+                        <div className="mt-3 flex w-full flex-col gap-4">
+                            <div className={`${phaseIndex === 2 && moduleData && moduleData.length > 0 ? "flex flex-col justify-between md:flex-row" : ""}`}>
+                                <div className="flex flex-col gap-1 md:flex-row">
+                                    {phaseIndex === 2 && moduleData && moduleData.length > 0 ? (
+                                        <Select
+                                            onValueChange={(value) => {
+                                                setCurrentModule(value);
+                                                setCurrentModuleLevel(moduleData?.find((module) => module.id === value)?.phases?.[(moduleData?.find((module) => module.id === value)?.phases?.length ?? 0) - 1]?.equipLevel ?? 0);
+                                            }}
+                                            defaultValue={currentModule !== "" ? currentModule : (modules[modules.length - 1]?.id ?? "")}
+                                        >
+                                            <SelectTrigger className="md:w-[180px]">
+                                                <SelectValue placeholder="Select a Module" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {modules.map((module, index) => (
+                                                    <SelectItem value={module.id ?? ""} key={index}>
+                                                        {module.typeName1 && module.typeName2 ? `${module.typeName1}-${module.typeName2}` : module.uniEquipName}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    ) : (
+                                        <></>
+                                    )}
+                                    {phaseIndex === 2 && currentModule.length && moduleData?.find((module) => module.id === currentModule)?.phases !== undefined ? (
+                                        <Select
+                                            onValueChange={(value) => {
+                                                if (!isNaN(parseInt(value.split("_")[1] ?? "0"))) {
+                                                    setCurrentModuleLevel(parseInt(value.split("_")[1] ?? "0"));
+                                                }
+                                            }}
+                                            defaultValue={currentModuleLevel !== 0 ? `${module.id}_${currentModuleLevel}` : `${module.id}_${moduleData?.find((module) => module.id === currentModule)?.phases?.[(moduleData?.find((module) => module.id === currentModule)?.phases?.length ?? 0) - 1]?.equipLevel ?? 0}`}
+                                        >
+                                            <SelectTrigger className="md:w-[180px]">
+                                                <SelectValue placeholder="Select a Module Level" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {moduleData
+                                                    ?.find((module) => module.id === currentModule)
+                                                    ?.phases.map((phase, index) => (
+                                                        <SelectItem value={`${module.id}_${phase.equipLevel}`} key={index}>
+                                                            Level {phase.equipLevel}
                                                         </SelectItem>
                                                     ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                    </div>
-                                    <div className="max-w-md">
-                                        <Slider min={0} max={100} step={1} value={[favorPoint]} onValueChange={(value) => setFavorPoint(value[0] ?? 0)} />
-                                        <div className="flex text-sm flex-row items-center gap-2 mt-2">
-                                            <Input type="number" min={0} max={200} value={favorPoint * 2} onChange={(e) => handleFavorPointChange(Number(e.target.value) / 2)} className="w-20" />
-                                            <span className="text-muted-foreground">Trust</span>
-                                        </div>
-                                    </div>
+                                            </SelectContent>
+                                        </Select>
+                                    ) : (
+                                        <></>
+                                    )}
                                 </div>
-                                <div className="mt-3 max-w-md">
-                                    <LevelSlider phaseIndex={phaseIndex} maxLevels={operator.phases.map((phase) => phase.maxLevel)} onLevelChange={handleLevelChange} />
+                                <div>
+                                    <Select
+                                        defaultValue={"potential_0"}
+                                        onValueChange={(value) => {
+                                            setPotentialRank(parseInt(value.split("_")[1] ?? "0"));
+                                        }}
+                                    >
+                                        <SelectTrigger className="md:w-[180px]">
+                                            <SelectValue placeholder="Potential Rank" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value={"potential_0"}>No Potential</SelectItem>
+                                            {operator.potentialRanks.map((rank, index) => (
+                                                <SelectItem value={`potential_${index + 1}`} key={index}>
+                                                    Potential {index + 1} - {rank.description}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                            </div>
+                            <div className="max-w-md">
+                                <Slider min={0} max={100} step={1} value={[favorPoint]} onValueChange={(value) => setFavorPoint(value[0] ?? 0)} />
+                                <div className="flex text-sm flex-row items-center gap-2 mt-2">
+                                    <Input type="number" min={0} max={200} value={favorPoint * 2} onChange={(e) => handleFavorPointChange(Number(e.target.value) / 2)} className="w-20" />
+                                    <span className="text-muted-foreground">Trust</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="mt-3 max-w-md">
+                            <LevelSlider phaseIndex={phaseIndex} maxLevels={operator.phases.map((phase) => phase.maxLevel)} onLevelChange={handleLevelChange} />
+                        </div>
+                    </div>
                     <Tabs
                         defaultValue={`phase_${operator.phases.length - 1}`}
                         className="mt-4 w-full"

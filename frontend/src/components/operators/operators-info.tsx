@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Button } from "../ui/button";
 import InfoContent from "./components/info-content";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
+import SkillsContent from "./components/skills-talents-content";
 
 type TabType = "info" | "skills" | "levelup" | "skins" | "audio";
 
@@ -65,7 +66,7 @@ function OperatorsInfo({ operator }: { operator: Operator }) {
                             <div className="w-full flex-1 md:hidden">
                                 <ScrollArea className="w-full whitespace-nowrap rounded-md">
                                     <Tabs defaultValue="info" className="w-full" onValueChange={(value) => setActiveTab(value as TabType)}>
-                                        <TabsList className="inline-flex h-10 w-auto items-center justify-center rounded-md bg-muted p-1 text-muted-foreground w-full">
+                                        <TabsList className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground w-full">
                                             {tabs.map((tab) => (
                                                 <TabsTrigger key={tab.type} value={tab.type} className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
                                                     {tab.label}
@@ -100,10 +101,6 @@ function OperatorsInfo({ operator }: { operator: Operator }) {
             </div>
         </>
     );
-}
-
-function SkillsContent({ operator }: { operator: Operator }) {
-    return <div>Skills & Talents content for {operator.name}</div>;
 }
 
 function LevelUpContent({ operator }: { operator: Operator }) {
