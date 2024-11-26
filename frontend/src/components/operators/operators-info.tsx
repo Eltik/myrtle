@@ -37,6 +37,7 @@ function OperatorsInfo({ operator }: { operator: Operator }) {
                                 background: "linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, hsl(var(--background)) 100%)",
                             }}
                         />
+                        <div className="absolute z-10 h-full w-full" />
                         <span className="relative m-0 box-border inline-block max-w-full overflow-hidden border-0 p-0 grid-in-banner">
                             <Image src={`https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/skin/${operator.id ?? ""}_${operator.phases.length > 1 ? "2b" : "1b"}.png`} alt={operator.name} layout="fill" objectFit="cover" className="absolute bottom-0 left-0 right-0 top-0 m-auto box-border block h-0 max-h-full min-h-full w-0 min-w-full max-w-full object-cover p-0" />
                         </span>
@@ -64,7 +65,7 @@ function OperatorsInfo({ operator }: { operator: Operator }) {
                             <div className="w-full flex-1 md:hidden">
                                 <ScrollArea className="w-full whitespace-nowrap rounded-md">
                                     <Tabs defaultValue="info" className="w-full" onValueChange={(value) => setActiveTab(value as TabType)}>
-                                        <TabsList className="inline-flex h-10 w-auto items-center justify-center rounded-md bg-muted p-1 text-muted-foreground">
+                                        <TabsList className="inline-flex h-10 w-auto items-center justify-center rounded-md bg-muted p-1 text-muted-foreground w-full">
                                             {tabs.map((tab) => (
                                                 <TabsTrigger key={tab.type} value={tab.type} className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
                                                     {tab.label}
@@ -75,7 +76,7 @@ function OperatorsInfo({ operator }: { operator: Operator }) {
                                     <ScrollBar orientation="horizontal" className="h-0" />
                                 </ScrollArea>
                             </div>
-                            <div className="mr-4 hidden w-48 flex-col space-y-2 md:flex">
+                            <div className="mt-2 mr-4 hidden w-48 flex-col space-y-1 md:flex">
                                 {tabs.map((tab) => (
                                     <Button key={tab.type} variant={activeTab === tab.type ? "default" : "outline"} className="justify-start" onClick={() => setActiveTab(tab.type)}>
                                         {tab.label}
