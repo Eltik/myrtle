@@ -16,7 +16,7 @@ export function LevelSlider({ phaseIndex, maxLevels, onLevelChange }: LevelSlide
 
     useEffect(() => {
         setLevel(maxLevel);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [phaseIndex]);
 
     const handleSliderChange = (value: number[]) => {
@@ -41,7 +41,7 @@ export function LevelSlider({ phaseIndex, maxLevels, onLevelChange }: LevelSlide
     return (
         <div className="w-full max-w-md">
             <Slider min={1} max={maxLevel} step={1} value={[level]} onValueChange={handleSliderChange} />
-            <div className="mt-2 text-sm flex flex-row gap-3 items-center">
+            <div className="mt-2 flex flex-row items-center gap-3 text-sm">
                 <Input type="number" min={1} max={maxLevel} value={level} onChange={handleInputChange} className="w-16" />
                 <span className="text-muted-foreground"> / {maxLevel}</span>
             </div>
