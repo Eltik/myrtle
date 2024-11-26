@@ -15,6 +15,7 @@ import type { Range } from "~/types/impl/api/static/ranges";
 import OperatorRange from "./impl/operator-range";
 import { Button } from "~/components/ui/button";
 import { AnimatePresence, motion } from "framer-motion";
+import { Input } from "~/components/ui/input";
 
 // https://aceship.github.io/AN-EN-Tags/akhrchars.html?opname=Projekt_Red
 // https://sanitygone.help/operators/gavial-the-invincible#page-content
@@ -265,6 +266,12 @@ function InfoContent({ operator }: { operator: Operator }) {
         setLevel(newLevel);
     };
 
+    const handleFavorPointChange = (value: number) => {
+        if (value >= 0 && value <= 100) {
+            setFavorPoint(value);
+        }
+    };
+
     return (
         <div>
             <div className="p-2 px-4 backdrop-blur-2xl">
@@ -406,10 +413,13 @@ function InfoContent({ operator }: { operator: Operator }) {
                                     </div>
                                     <div className="max-w-md">
                                         <Slider min={0} max={100} step={1} value={[favorPoint]} onValueChange={(value) => setFavorPoint(value[0] ?? 0)} />
-                                        <span className="text-sm text-muted-foreground">Trust: {favorPoint * 2}%</span>
+                                        <div className="flex text-sm flex-row items-center gap-2 mt-2">
+                                            <Input type="number" min={0} max={200} value={favorPoint * 2} onChange={(e) => handleFavorPointChange(Number(e.target.value) / 2)} className="w-20" />
+                                            <span className="text-muted-foreground">Trust</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="mt-3 max-w-[80%]">
+                                <div className="mt-3 max-w-md">
                                     <LevelSlider phaseIndex={phaseIndex} maxLevels={operator.phases.map((phase) => phase.maxLevel)} onLevelChange={handleLevelChange} />
                                 </div>
                             </motion.div>
