@@ -13,7 +13,7 @@ const Operators: NextPage<Props> = ({ data, id }) => {
                 <meta name="description" content="Elevate your Arknights experience to the next level." />
                 <link rel="icon" href="/favicon.ico" />
             </Head>
-            <div className="container">{id ? <OperatorsInfo operator={data as unknown as Operator} /> : <OperatorsWrapper operators={data} />}</div>
+            <div className="md:container">{id ? <OperatorsInfo operator={data as unknown as Operator} /> : <OperatorsWrapper operators={data} />}</div>
         </>
     );
 };

@@ -15,6 +15,7 @@ export function LevelSlider({ phaseIndex, maxLevels, onLevelChange }: LevelSlide
 
     useEffect(() => {
         setLevel(maxLevel);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [phaseIndex]);
 
     const handleSliderChange = (value: number[]) => {

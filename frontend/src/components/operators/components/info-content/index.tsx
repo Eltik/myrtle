@@ -1,7 +1,8 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { BadgeDollarSign, ChevronDown, CircleGauge, Cross, Diamond, Hourglass, Shield, ShieldBan, Star, Swords } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
-import { LevelSlider } from "~/components/operators/components/level-slider";
+import { LevelSlider } from "~/components/operators/components/info-content/impl/level-slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { Separator } from "~/components/ui/separator";
 import { Slider } from "~/components/ui/slider";
@@ -11,7 +12,7 @@ import { getOperatorAttributeStats } from "~/helper/getAttributeStats";
 import type { Module, ModuleData } from "~/types/impl/api/static/modules";
 import { OperatorPosition, type Operator } from "~/types/impl/api/static/operator";
 import type { Range } from "~/types/impl/api/static/ranges";
-import OperatorRange from "./operator-range";
+import OperatorRange from "./impl/operator-range";
 import { Button } from "~/components/ui/button";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -270,8 +271,8 @@ function InfoContent({ operator }: { operator: Operator }) {
                 <span className="text-3xl font-bold">Operator Info</span>
             </div>
             <Separator />
-            <div className="p-4">
-                <div className="grid w-full grid-cols-[max-content,1fr,max-content] items-center">
+            <div className="px-3 md:p-4">
+                <div className="w-full md:grid md:grid-cols-[max-content,1fr,max-content] md:items-center">
                     <div className="flex flex-row-reverse justify-end">
                         <div className="grid grid-cols-[max-content,1fr] grid-rows-[max-content,max-content] gap-2 px-5 align-baseline">
                             <div className="col-span-2">
@@ -302,7 +303,7 @@ function InfoContent({ operator }: { operator: Operator }) {
                             </div>
                         </div>
                     </div>
-                    <div className="grid h-[max-content] grid-cols-[repeat(3,max-content)] justify-end gap-x-6">
+                    <div className="grid h-[max-content] grid-cols-[repeat(3,max-content)] md:justify-end md:gap-x-6">
                         <div className="flex flex-col justify-between p-4">
                             <span className="text-sm text-muted-foreground">Nation</span>
                             <span className="text-lg font-normal">{operator.nationId && operator.nationId.length > 0 ? formatNationId(operator.nationId) : "N/A"}</span>
@@ -332,8 +333,8 @@ function InfoContent({ operator }: { operator: Operator }) {
                         {showControls && (
                             <motion.div initial={{ height: 0, opacity: 0, y: -5 }} animate={{ height: "auto", opacity: 1, y: 0 }} exit={{ height: 0, opacity: 0, y: 0 }} transition={{ duration: 0.3, ease: "easeInOut" }}>
                                 <div className="mt-3 flex w-full flex-col gap-4">
-                                    <div className={`${phaseIndex === 2 && moduleData && moduleData.length > 0 ? "flex flex-row justify-between" : ""}`}>
-                                        <div className="flex flex-row gap-1">
+                                    <div className={`${phaseIndex === 2 && moduleData && moduleData.length > 0 ? "flex flex-col justify-between md:flex-row" : ""}`}>
+                                        <div className="flex flex-col gap-1 md:flex-row">
                                             {phaseIndex === 2 && moduleData && moduleData.length > 0 ? (
                                                 <Select
                                                     onValueChange={(value) => {
@@ -342,7 +343,7 @@ function InfoContent({ operator }: { operator: Operator }) {
                                                     }}
                                                     defaultValue={currentModule !== "" ? currentModule : (modules[modules.length - 1]?.id ?? "")}
                                                 >
-                                                    <SelectTrigger className="w-[180px]">
+                                                    <SelectTrigger className="md:w-[180px]">
                                                         <SelectValue placeholder="Select a Module" />
                                                     </SelectTrigger>
                                                     <SelectContent>
@@ -365,7 +366,7 @@ function InfoContent({ operator }: { operator: Operator }) {
                                                     }}
                                                     defaultValue={currentModuleLevel !== 0 ? `${module.id}_${currentModuleLevel}` : `${module.id}_${moduleData?.find((module) => module.id === currentModule)?.phases?.[(moduleData?.find((module) => module.id === currentModule)?.phases?.length ?? 0) - 1]?.equipLevel ?? 0}`}
                                                 >
-                                                    <SelectTrigger className="w-[180px]">
+                                                    <SelectTrigger className="md:w-[180px]">
                                                         <SelectValue placeholder="Select a Module Level" />
                                                     </SelectTrigger>
                                                     <SelectContent>
@@ -389,7 +390,7 @@ function InfoContent({ operator }: { operator: Operator }) {
                                                     setPotentialRank(parseInt(value.split("_")[1] ?? "0"));
                                                 }}
                                             >
-                                                <SelectTrigger className="w-[180px]">
+                                                <SelectTrigger className="md:w-[180px]">
                                                     <SelectValue placeholder="Potential Rank" />
                                                 </SelectTrigger>
                                                 <SelectContent>
