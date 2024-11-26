@@ -72,5 +72,6 @@ export default {
             },
         },
     },
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     plugins: [require("tailwindcss-animate"), require("@savvywombat/tailwindcss-grid-areas")],
 } satisfies Config;
