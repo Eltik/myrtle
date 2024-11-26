@@ -5,6 +5,7 @@ import { SidebarProvider } from "~/components/ui/sidebar";
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
 import { Toaster } from "../ui/toaster";
+import Footer from "./footer";
 
 export default function Layout({ children }: { children: ReactNode }) {
     const variants = {
@@ -25,6 +26,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                     <Toaster />
                 </motion.main>
             </SidebarProvider>
+            <Footer />
         </>
     );
 }

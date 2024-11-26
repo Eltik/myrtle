@@ -410,7 +410,7 @@ function InfoContent({ operator }: { operator: Operator }) {
                             </div>
                             <div className="max-w-md">
                                 <Slider min={0} max={100} step={1} value={[favorPoint]} onValueChange={(value) => setFavorPoint(value[0] ?? 0)} />
-                                <div className="flex text-sm flex-row items-center gap-2 mt-2">
+                                <div className="mt-2 flex flex-row items-center gap-2 text-sm">
                                     <Input type="number" min={0} max={200} value={favorPoint * 2} onChange={(e) => handleFavorPointChange(Number(e.target.value) / 2)} className="w-20" />
                                     <span className="text-muted-foreground">Trust</span>
                                 </div>
