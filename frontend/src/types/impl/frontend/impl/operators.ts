@@ -9,3 +9,8 @@ export type NormalizedRange = {
     cols: number;
     grid: GridCell[][];
 };
+
+export type InterpolatedValue = {
+    key: string;
+    value: number;
+};

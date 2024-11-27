@@ -81,7 +81,7 @@ function Footer() {
                             </ul>
                         </div>
                     </div>
-                    <Separator className="my-8 bg-gray-700" />
+                    <Separator className="my-8" />
                     <div className="flex flex-col items-center justify-between sm:flex-row">
                         <p className="text-sm">&copy; {new Date().getFullYear()} myrtle.moe. All rights reserved.</p>
                         <div className="mt-4 flex space-x-4 sm:mt-0">
