@@ -51,6 +51,7 @@
     "recharts": "^2.13.3",
     "tailwind-merge": "^2.5.4",
     "tailwindcss-animate": "^1.0.7",
+    "xregexp": "^5.1.1",
     "zod": "^3.23.3",
     "zustand": "^5.0.1"
   },
@@ -72,5 +73,8 @@
   },
   "ct3aMetadata": {
     "initVersion": "7.38.1"
-  }
+  },
+  "trustedDependencies": [
+    "core-js-pure"
+  ]
 }

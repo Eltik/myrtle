@@ -277,7 +277,7 @@ function InfoContent({ operator }: { operator: Operator }) {
                 <span className="text-3xl font-bold">Operator Info</span>
             </div>
             <Separator />
-            <div className="px-3 md:p-4">
+            <div className="px-3 py-4 md:p-4">
                 <div className="w-full md:grid md:grid-cols-[max-content,1fr,max-content] md:items-center">
                     <div className="flex flex-row-reverse justify-end">
                         <div className="grid grid-cols-[max-content,1fr] grid-rows-[max-content,max-content] gap-2 px-5 align-baseline">
