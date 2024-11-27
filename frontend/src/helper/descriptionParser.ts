@@ -35,32 +35,32 @@ export const descriptionToHtml = (description: string, interpolation: Interpolat
                     resultingString += match.value;
                 } else if (match.name === "tagName") {
                     const tagName = match.value.slice(1, -1);
-                    let className = "";
+                    let color = "";
                     switch (tagName) {
                         case "@ba.vup":
-                            className = `text-[${DESCRIPTION_COLORS.valueUp}]`;
+                            color = `color: ${DESCRIPTION_COLORS.valueUp};`;
                             break;
                         case "@ba.vdown":
-                            className = `text-[${DESCRIPTION_COLORS.valueDown}]`;
+                            color = `color: ${DESCRIPTION_COLORS.valueDown};`;
                             break;
                         case "@ba.rem":
-                            className = `text-[${DESCRIPTION_COLORS.reminder}]`;
+                            color = `color: ${DESCRIPTION_COLORS.reminder};`;
                             break;
                         case "@ba.kw":
-                            className = `text-[${DESCRIPTION_COLORS.keyword}]`;
+                            color = `color: ${DESCRIPTION_COLORS.keyword};`;
                             break;
                         case "@ba.talpu":
-                            className = `text-[${DESCRIPTION_COLORS.potential}]`;
+                            color = `color: ${DESCRIPTION_COLORS.potential};`;
                             break;
                         default:
                             if (tagName?.startsWith("$")) {
-                                className = "skill-tooltip";
+                                color = "skill-tooltip";
                                 break;
                             }
                             console.warn(`Unrecognized tag: ${tagName}`);
                             break;
                     }
-                    resultingString += `<span class="${className}">`;
+                    resultingString += `<span style="${color}">`;
                 } else if (match.name === "tagContent") {
                     resultingString += match.value;
                 } else if (match.name === "closingTag") {

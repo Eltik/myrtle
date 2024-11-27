@@ -6,6 +6,7 @@ import SkillCard from "./impl/skill-card";
 import { useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 
 function SkillsContent({ operator }: { operator: Operator }) {
     const [skillLevel, setSkillLevel] = useState(7);
@@ -28,24 +29,40 @@ function SkillsContent({ operator }: { operator: Operator }) {
                                         <ChevronDown className={`ml-auto h-6 w-6 transition-transform ${isSkillsOpen ? "rotate-180" : ""}`} />
                                     </CardHeader>
                                 </CollapsibleTrigger>
-                                <CollapsibleContent>
-                                    <CardContent>
-                                        <Tabs defaultValue={operator.skills[operator.skills.length - 1]?.skillId} className="w-full">
-                                            <TabsList className={`grid w-full grid-cols-${operator.skills.length}`}>
-                                                {operator.skills.map((skill) => (
-                                                    <TabsTrigger value={skill.skillId} key={skill.skillId}>
-                                                        {skill.static?.levels[0]?.name}
-                                                    </TabsTrigger>
-                                                ))}
-                                            </TabsList>
-                                            {operator.skills.map((skill) => (
-                                                <TabsContent value={skill.skillId} key={skill.skillId}>
-                                                    <SkillCard skill={skill} level={skillLevel} />
-                                                </TabsContent>
-                                            ))}
-                                        </Tabs>
-                                    </CardContent>
-                                </CollapsibleContent>
+                                <AnimatePresence initial={false}>
+                                    {isSkillsOpen && (
+                                        <motion.div
+                                            key="content"
+                                            initial="collapsed"
+                                            animate="open"
+                                            exit="collapsed"
+                                            variants={{
+                                                open: { opacity: 1, height: "auto" },
+                                                collapsed: { opacity: 0, height: 0 },
+                                            }}
+                                            transition={{ duration: 0.3, ease: [0.04, 0.62, 0.23, 0.98] }}
+                                        >
+                                            <CollapsibleContent forceMount>
+                                                <CardContent>
+                                                    <Tabs defaultValue={operator.skills[operator.skills.length - 1]?.skillId} className="w-full">
+                                                        <TabsList className={`grid w-full grid-cols-${operator.skills.length}`}>
+                                                            {operator.skills.map((skill) => (
+                                                                <TabsTrigger value={skill.skillId} key={skill.skillId}>
+                                                                    {skill.static?.levels[0]?.name}
+                                                                </TabsTrigger>
+                                                            ))}
+                                                        </TabsList>
+                                                        {operator.skills.map((skill) => (
+                                                            <TabsContent value={skill.skillId} key={skill.skillId}>
+                                                                <SkillCard skill={skill} level={skillLevel} />
+                                                            </TabsContent>
+                                                        ))}
+                                                    </Tabs>
+                                                </CardContent>
+                                            </CollapsibleContent>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </Card>
                         </Collapsible>
                     </div>
