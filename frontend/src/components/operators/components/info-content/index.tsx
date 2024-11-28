@@ -12,7 +12,7 @@ import { getOperatorAttributeStats } from "~/helper/getAttributeStats";
 import type { Module, ModuleData } from "~/types/impl/api/static/modules";
 import { OperatorPosition, type Operator } from "~/types/impl/api/static/operator";
 import type { Range } from "~/types/impl/api/static/ranges";
-import OperatorRange from "./impl/operator-range";
+import OperatorRange from "../operator-range";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 

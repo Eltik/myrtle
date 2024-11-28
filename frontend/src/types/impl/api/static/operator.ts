@@ -104,7 +104,7 @@ export type Operator = {
                 name: string;
                 rangeId: string | null;
                 description: string;
-                skillType: number;
+                skillType: string;
                 duration: number;
                 spData: {
                     spType: string;
