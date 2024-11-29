@@ -13,5 +13,5 @@ export default {
     search,
     searchPlayers,
     player,
-    staticData
+    staticData,
 };

@@ -1,5 +1,5 @@
 import { OperatorRarity, OperatorSubProfession, type Operator } from "~/types/impl/api/static/operator";
-import { formatProfession, formatSubProfession, rarityToNumber } from "~/helper";
+import { capitalize, formatProfession, formatSubProfession, rarityToNumber } from "~/helper";
 import { ArrowDownFromLine, ArrowUpFromLine, ChevronDown, Filter, List, Table2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { useMemo, useState } from "react";
@@ -32,6 +32,9 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
 
     const [filterClasses, setFilterClasses] = useState<OperatorProfession[]>([]);
     const [filterSubClasses, setFilterSubClasses] = useState<OperatorSubProfession[]>([]);
+
+    const [filterSkillTypes, setFilterSkillTypes] = useState<("offensive" | "defensive" | "auto")[]>([]);
+
     const [filterRarity, setFilterRarity] = useState<OperatorRarity | "all">("all");
 
     const options = [
@@ -110,12 +113,32 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
         }
     };
 
+    const isSkillTypeChecked = (value: "offensive" | "defensive" | "auto"): Checked => filterSkillTypes.includes(value);
+    const handleSkillTypeCheck = (value: "offensive" | "defensive" | "auto") => {
+        if (filterSkillTypes.includes(value)) {
+            setFilterSkillTypes(filterSkillTypes.filter((v) => v !== value));
+        } else {
+            setFilterSkillTypes([...filterSkillTypes, value]);
+        }
+    };
+
     const sortedAndFilteredCharacters = useMemo(() => {
         return Object.values(operators)
             .filter((char) => char.name.toLowerCase().includes(searchTerm.toLowerCase()))
             .filter((char) => filterClasses.length === 0 || filterClasses.includes(char.profession))
             .filter((char) => filterSubClasses.length === 0 || filterSubClasses.includes(char.subProfessionId.toUpperCase() as OperatorSubProfession))
             .filter((char) => filterRarity === "all" || char.rarity === filterRarity)
+            .filter(
+                (char) =>
+                    filterSkillTypes.length === 0 ||
+                    char.skills.some((skill) =>
+                        skill.static?.levels
+                            .map((level) => (level.spData.spType === "INCREASE_WHEN_ATTACK" ? "offensive" : level.spData.spType === "INCREASE_WITH_TIME" ? "auto" : level.spData.spType === "INCREASE_WHEN_TAKEN_DAMAGE" ? "defensive" : ""))
+                            .filter((v) => v !== "")
+                            .filter(Boolean)
+                            .some((v) => filterSkillTypes.includes(v)),
+                    ),
+            )
             .sort((a, b) => {
                 let comparison = 0;
                 switch (sortBy) {
@@ -137,7 +160,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                 }
                 return sortOrder === "asc" ? -comparison : comparison;
             });
-    }, [operators, searchTerm, filterClasses, filterSubClasses, filterRarity, sortBy, sortOrder, statsSortBy]);
+    }, [operators, searchTerm, filterClasses, filterSubClasses, filterRarity, filterSkillTypes, sortBy, sortOrder, statsSortBy]);
 
     return (
         <>
@@ -234,6 +257,27 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                             </SelectItem>
                                         </SelectContent>
                                     </Select>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="outline" className="w-[200px] justify-between">
+                                                <span className="mr-2 truncate">{filterSkillTypes.length === 0 ? <span className="font-normal">Filter Skill Types</span> : filterSkillTypes.map((v) => capitalize(v)).join(", ")}</span>
+                                                <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent className="max-h-64 w-[200px] overflow-y-scroll">
+                                            <DropdownMenuLabel>Skill Types</DropdownMenuLabel>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuCheckboxItem checked={isSkillTypeChecked("offensive")} onCheckedChange={() => handleSkillTypeCheck("offensive")}>
+                                                Offensive
+                                            </DropdownMenuCheckboxItem>
+                                            <DropdownMenuCheckboxItem checked={isSkillTypeChecked("defensive")} onCheckedChange={() => handleSkillTypeCheck("defensive")}>
+                                                Defensive
+                                            </DropdownMenuCheckboxItem>
+                                            <DropdownMenuCheckboxItem checked={isSkillTypeChecked("auto")} onCheckedChange={() => handleSkillTypeCheck("auto")}>
+                                                Auto
+                                            </DropdownMenuCheckboxItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                     <Button variant="outline" className="flex flex-row" onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}>
                                         <span>{sortOrder.toUpperCase()}</span>
                                         {sortOrder === "asc" ? <ArrowUpFromLine className="h-4 w-4" /> : <ArrowDownFromLine className="h-4 w-4" />}

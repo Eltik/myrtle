@@ -106,42 +106,20 @@ function InfoContent({ operator }: { operator: Operator }) {
      * @description Fetches all info on modules, module data, and ranges.
      */
     async function fetchModules() {
-        const data = (await (
-            await fetch("/api/static", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    type: "modules",
-                    id: operator.id ?? "",
-                    method: "charid",
-                }),
-            })
-        ).json()) as {
-            modules: Module[];
+        const data = {
+            modules: operator.modules,
         };
 
         setModules(data.modules);
 
-        const promises = [];
         const moduleData: (ModuleData & { id: string })[] = [];
         for (const operatorModule of data.modules) {
-            const promise = new Promise<void>((resolve) => {
-                fetchModuleData(operatorModule.id ?? "")
-                    .then((details) => {
-                        moduleData.push({ ...details, id: operatorModule.id ?? "" });
-                        resolve();
-                    })
-                    .catch((err) => {
-                        console.error("Error fetching module data:", err);
-                        resolve();
-                    });
-            });
-            promises.push(promise);
+            const details = fetchModuleData(operatorModule.uniEquipId ?? "");
+            if (!details) continue;
+
+            moduleData.push({ ...details, id: operatorModule.uniEquipId ?? "" });
         }
 
-        await Promise.all(promises);
         setModuleData(moduleData);
 
         if (data.modules[data.modules.length - 1]?.id !== undefined) {
@@ -244,21 +222,9 @@ function InfoContent({ operator }: { operator: Operator }) {
         }
     };
 
-    const fetchModuleData = async (moduleId: string): Promise<ModuleData> => {
-        const moduleData = (await (
-            await fetch("/api/static", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    type: "modules",
-                    id: moduleId,
-                    method: "details",
-                }),
-            })
-        ).json()) as { details: ModuleData };
-        return moduleData.details;
+    const fetchModuleData = (moduleId: string): ModuleData | undefined => {
+        const moduleData = operator.modules.find((module) => module.uniEquipId === moduleId)?.data;
+        return moduleData;
     };
 
     const handleLevelChange = (newLevel: number) => {
