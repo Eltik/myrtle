@@ -1,5 +1,5 @@
-import { OperatorRarity, type Operator } from "~/types/impl/api/static/operator";
-import { formatProfession, rarityToNumber } from "~/helper";
+import { OperatorRarity, OperatorSubProfession, type Operator } from "~/types/impl/api/static/operator";
+import { formatProfession, formatSubProfession, rarityToNumber } from "~/helper";
 import { ArrowDownFromLine, ArrowUpFromLine, ChevronDown, Filter, List, Table2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { useMemo, useState } from "react";
@@ -24,10 +24,14 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
     const [searchTerm, setSearchTerm] = useState("");
     const [viewOption, setViewOption] = useState<"grid" | "portrait">("grid");
     const [showOptions, setShowOptions] = useState(false);
-    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
     const [sortBy, setSortBy] = useState<"name" | "rarity" | "stats">("name");
+
     const [statsSortBy, setStatsSortBy] = useState<"maxHp" | "atk" | "def" | "magicResistance" | "cost" | "baseAttackTime" | "blockCnt">("maxHp");
+
     const [filterClasses, setFilterClasses] = useState<OperatorProfession[]>([]);
+    const [filterSubClasses, setFilterSubClasses] = useState<OperatorSubProfession[]>([]);
     const [filterRarity, setFilterRarity] = useState<OperatorRarity | "all">("all");
 
     const options = [
@@ -88,8 +92,8 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
         }
     };
 
-    const isChecked = (value: OperatorProfession): Checked => filterClasses.includes(value);
-    const handleCheck = (value: OperatorProfession) => {
+    const isClassChecked = (value: OperatorProfession): Checked => filterClasses.includes(value);
+    const handleClassCheck = (value: OperatorProfession) => {
         if (filterClasses.includes(value)) {
             setFilterClasses(filterClasses.filter((v) => v !== value));
         } else {
@@ -97,10 +101,20 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
         }
     };
 
+    const isSubClassChecked = (value: OperatorSubProfession): Checked => filterSubClasses.includes(value);
+    const handleSubClassCheck = (value: OperatorSubProfession) => {
+        if (filterSubClasses.includes(value)) {
+            setFilterSubClasses(filterSubClasses.filter((v) => v !== value));
+        } else {
+            setFilterSubClasses([...filterSubClasses, value]);
+        }
+    };
+
     const sortedAndFilteredCharacters = useMemo(() => {
         return Object.values(operators)
             .filter((char) => char.name.toLowerCase().includes(searchTerm.toLowerCase()))
             .filter((char) => filterClasses.length === 0 || filterClasses.includes(char.profession))
+            .filter((char) => filterSubClasses.length === 0 || filterSubClasses.includes(char.subProfessionId.toUpperCase() as OperatorSubProfession))
             .filter((char) => filterRarity === "all" || char.rarity === filterRarity)
             .sort((a, b) => {
                 let comparison = 0;
@@ -123,7 +137,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                 }
                 return sortOrder === "asc" ? -comparison : comparison;
             });
-    }, [operators, searchTerm, filterClasses, filterRarity, sortBy, sortOrder, statsSortBy]);
+    }, [operators, searchTerm, filterClasses, filterSubClasses, filterRarity, sortBy, sortOrder, statsSortBy]);
 
     return (
         <>
@@ -149,23 +163,43 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                         <AnimatePresence>
                             {showOptions && (
                                 <motion.div initial={{ height: 0, opacity: 0, y: -5 }} animate={{ height: "auto", opacity: 1, y: 0 }} exit={{ height: 0, opacity: 0, y: 0 }} transition={{ duration: 0.3, ease: "easeInOut" }} className="flex flex-col gap-3 md:flex-row md:gap-4">
-                                    <div className="flex flex-row gap-4">
+                                    <div className="flex flex-row flex-wrap gap-4">
                                         <NestedDropdown options={options} onSelect={handleSelect} />
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button variant="outline" className="w-[200px] justify-between">
-                                                    <span className="font-normal">Filter Classes</span>
+                                                    <span className="mr-2 truncate">{filterClasses.length === 0 ? <span className="font-normal">Filter Classes</span> : filterClasses.map((v) => formatProfession(v)).join(", ")}</span>
                                                     <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                                                 </Button>
                                             </DropdownMenuTrigger>
-                                            <DropdownMenuContent className="w-[200px]">
+                                            <DropdownMenuContent className="max-h-64 w-[200px] overflow-y-scroll">
                                                 <DropdownMenuLabel>Classes</DropdownMenuLabel>
                                                 <DropdownMenuSeparator />
                                                 {Object.keys(OperatorProfession).map((key) => {
                                                     const value = OperatorProfession[key as keyof typeof OperatorProfession];
                                                     return (
-                                                        <DropdownMenuCheckboxItem key={value} checked={isChecked(value)} onCheckedChange={() => handleCheck(value)}>
+                                                        <DropdownMenuCheckboxItem key={value} checked={isClassChecked(value)} onCheckedChange={() => handleClassCheck(value)}>
                                                             {formatProfession(value)}
+                                                        </DropdownMenuCheckboxItem>
+                                                    );
+                                                })}
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="outline" className="w-[200px] justify-between">
+                                                    <span className="mr-2 truncate">{filterSubClasses.length === 0 ? <span className="font-normal">Filter Subclasses</span> : filterSubClasses.map((v) => formatSubProfession(v.toLowerCase())).join(", ")}</span>
+                                                    <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent className="max-h-64 w-[200px] overflow-y-scroll">
+                                                <DropdownMenuLabel>Subclasses</DropdownMenuLabel>
+                                                <DropdownMenuSeparator />
+                                                {Object.keys(OperatorSubProfession).map((key) => {
+                                                    const value = OperatorSubProfession[key as keyof typeof OperatorSubProfession];
+                                                    return (
+                                                        <DropdownMenuCheckboxItem key={value} checked={isSubClassChecked(value)} onCheckedChange={() => handleSubClassCheck(value)}>
+                                                            {formatSubProfession(value.toLowerCase())}
                                                         </DropdownMenuCheckboxItem>
                                                     );
                                                 })}
