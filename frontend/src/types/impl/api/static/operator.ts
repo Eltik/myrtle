@@ -1,4 +1,5 @@
 import type { Item, ItemType } from "./material";
+import type { Module, ModuleData } from "./modules";
 
 export type Operator = {
     id?: string;
@@ -204,6 +205,10 @@ export type Operator = {
             type: string;
         }[];
     }[];
+
+    modules: (Module & {
+        data: ModuleData;
+    })[];
 };
 
 export enum OperatorPosition {
