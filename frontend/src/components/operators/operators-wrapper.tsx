@@ -11,6 +11,8 @@ import type { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-men
 import { OperatorProfession } from "~/types/impl/api/static/operator";
 import { motion, AnimatePresence } from "framer-motion";
 import { OperatorsGrid } from "./operators-grid";
+import { Checkbox } from "../ui/checkbox";
+import { Label } from "../ui/label";
 
 /**
  * @author https://wuwatracker.com/resonator
@@ -28,12 +30,15 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
     const [sortBy, setSortBy] = useState<"name" | "rarity" | "stats">("name");
 
+    const [isModule, setIsModule] = useState(false);
+
     const [statsSortBy, setStatsSortBy] = useState<"maxHp" | "atk" | "def" | "magicResistance" | "cost" | "baseAttackTime" | "blockCnt">("maxHp");
 
     const [filterClasses, setFilterClasses] = useState<OperatorProfession[]>([]);
     const [filterSubClasses, setFilterSubClasses] = useState<OperatorSubProfession[]>([]);
 
-    const [filterSkillTypes, setFilterSkillTypes] = useState<("offensive" | "defensive" | "auto")[]>([]);
+    const [filterSkillChargeTypes, setFilterSkillChargeTypes] = useState<("offensive" | "defensive" | "auto")[]>([]);
+    const [filterSkillTypes, setFilterSkillTypes] = useState<("auto" | "manual" | "passive")[]>([]);
 
     const [filterRarity, setFilterRarity] = useState<OperatorRarity | "all">("all");
 
@@ -113,8 +118,8 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
         }
     };
 
-    const isSkillTypeChecked = (value: "offensive" | "defensive" | "auto"): Checked => filterSkillTypes.includes(value);
-    const handleSkillTypeCheck = (value: "offensive" | "defensive" | "auto") => {
+    const isSkillTypeChecked = (value: "auto" | "manual" | "passive"): Checked => filterSkillTypes.includes(value);
+    const handleSkillTypeCheck = (value: "auto" | "manual" | "passive") => {
         if (filterSkillTypes.includes(value)) {
             setFilterSkillTypes(filterSkillTypes.filter((v) => v !== value));
         } else {
@@ -122,8 +127,121 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
         }
     };
 
+    const isSkillChargeTypeChecked = (value: "offensive" | "defensive" | "auto"): Checked => filterSkillChargeTypes.includes(value);
+    const handleSkillChargeTypeCheck = (value: "offensive" | "defensive" | "auto") => {
+        if (filterSkillChargeTypes.includes(value)) {
+            setFilterSkillChargeTypes(filterSkillChargeTypes.filter((v) => v !== value));
+        } else {
+            setFilterSkillChargeTypes([...filterSkillChargeTypes, value]);
+        }
+    };
+
     const sortedAndFilteredCharacters = useMemo(() => {
         return Object.values(operators)
+            .map((char) => {
+                if (isModule) {
+                    // Add module stats to current stats
+                    if (char.modules.length > 0) {
+                        let avgAtk = 0;
+                        let avgHP = 0;
+                        let avgDEF = 0;
+                        let avgRES = 0;
+                        let avgCost = 0;
+                        let avgSpeed = 0;
+                        let avgATKSPD = 0;
+                        let avgBlockCount = 0;
+
+                        for (const opModule of char.modules) {
+                            if (opModule.data) {
+                                const phase = opModule.data.phases[opModule.data.phases.length - 1];
+                                const statChanges = {
+                                    atk: 0,
+                                    max_hp: 0,
+                                    def: 0,
+                                    attack_speed: 0,
+                                    magic_resistance: 0,
+                                    cost: 0,
+                                    respawn_time: 0,
+                                    block_cnt: 0,
+                                };
+
+                                phase?.attributeBlackboard.forEach((iv) => {
+                                    if (!(iv.key in statChanges)) {
+                                        throw new Error(`Unknown attribute modified: ${iv.key} with value of ${iv.value}`);
+                                    }
+                                    // @ts-expect-error - This is fine
+                                    statChanges[iv.key] += iv.value;
+                                });
+
+                                avgAtk += statChanges.atk;
+                                avgHP += statChanges.max_hp;
+                                avgDEF += statChanges.def;
+                                avgRES += statChanges.magic_resistance;
+                                avgCost += statChanges.cost;
+                                avgSpeed += statChanges.respawn_time;
+                                avgATKSPD += statChanges.attack_speed;
+                                avgBlockCount += statChanges.block_cnt;
+                            }
+                        }
+
+                        avgAtk /= char.modules.length;
+                        avgHP /= char.modules.length;
+                        avgDEF /= char.modules.length;
+                        avgRES /= char.modules.length;
+                        avgCost /= char.modules.length;
+                        avgSpeed /= char.modules.length;
+                        avgATKSPD /= char.modules.length;
+                        avgBlockCount /= char.modules.length;
+
+                        const lastPhase = char.phases[char.phases.length - 1];
+
+                        if (lastPhase) {
+                            const lastPhaseData = lastPhase.attributesKeyFrames[lastPhase.attributesKeyFrames.length - 1]?.data;
+                            if (lastPhaseData) {
+                                // Store original stats if not already stored
+                                if (!(lastPhaseData as unknown as { originalStats: unknown }).originalStats) {
+                                    Object.assign(lastPhaseData, {
+                                        originalStats: {
+                                            atk: lastPhaseData.atk,
+                                            maxHp: lastPhaseData.maxHp,
+                                            def: lastPhaseData.def,
+                                            magicResistance: lastPhaseData.magicResistance,
+                                            cost: lastPhaseData.cost,
+                                            baseAttackTime: lastPhaseData.baseAttackTime,
+                                            blockCnt: lastPhaseData.blockCnt,
+                                            attackSpeed: lastPhaseData.attackSpeed,
+                                        },
+                                    });
+                                }
+
+                                // Apply module stats
+                                Object.assign(lastPhaseData, {
+                                    atk: (lastPhaseData as unknown as { originalStats: { atk: number } }).originalStats.atk + avgAtk,
+                                    maxHp: (lastPhaseData as unknown as { originalStats: { maxHp: number } }).originalStats.maxHp + avgHP,
+                                    def: (lastPhaseData as unknown as { originalStats: { def: number } }).originalStats.def + avgDEF,
+                                    magicResistance: (lastPhaseData as unknown as { originalStats: { magicResistance: number } }).originalStats.magicResistance + avgRES,
+                                    cost: (lastPhaseData as unknown as { originalStats: { cost: number } }).originalStats.cost + avgCost,
+                                    baseAttackTime: (lastPhaseData as unknown as { originalStats: { baseAttackTime: number } }).originalStats.baseAttackTime + avgSpeed,
+                                    blockCnt: (lastPhaseData as unknown as { originalStats: { blockCnt: number } }).originalStats.blockCnt + avgBlockCount,
+                                    attackSpeed: (lastPhaseData as unknown as { originalStats: { attackSpeed: number } }).originalStats.attackSpeed + avgATKSPD,
+                                });
+                            }
+                        }
+                    }
+
+                    return char;
+                } else {
+                    const lastPhase = char.phases[char.phases.length - 1];
+                    if (lastPhase) {
+                        const lastPhaseData = lastPhase.attributesKeyFrames[lastPhase.attributesKeyFrames.length - 1]?.data;
+                        if ((lastPhaseData as unknown as { originalStats: unknown })?.originalStats) {
+                            Object.assign(lastPhaseData!, (lastPhaseData as unknown as { originalStats: unknown }).originalStats);
+                        }
+                    }
+
+                    return char;
+                }
+            })
             .filter((char) => char.name.toLowerCase().includes(searchTerm.toLowerCase()))
             .filter((char) => filterClasses.length === 0 || filterClasses.includes(char.profession))
             .filter((char) => filterSubClasses.length === 0 || filterSubClasses.includes(char.subProfessionId.toUpperCase() as OperatorSubProfession))
@@ -133,10 +251,21 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                     filterSkillTypes.length === 0 ||
                     char.skills.some((skill) =>
                         skill.static?.levels
-                            .map((level) => (level.spData.spType === "INCREASE_WHEN_ATTACK" ? "offensive" : level.spData.spType === "INCREASE_WITH_TIME" ? "auto" : level.spData.spType === "INCREASE_WHEN_TAKEN_DAMAGE" ? "defensive" : ""))
+                            .map((level) => (level.skillType === "AUTO" ? "auto" : level.skillType === "MANUAL" ? "manual" : level.skillType === "PASSIVE" ? "passive" : ""))
                             .filter((v) => v !== "")
                             .filter(Boolean)
                             .some((v) => filterSkillTypes.includes(v)),
+                    ),
+            )
+            .filter(
+                (char) =>
+                    filterSkillChargeTypes.length === 0 ||
+                    char.skills.some((skill) =>
+                        skill.static?.levels
+                            .map((level) => (level.spData.spType === "INCREASE_WHEN_ATTACK" ? "offensive" : level.spData.spType === "INCREASE_WITH_TIME" ? "auto" : level.spData.spType === "INCREASE_WHEN_TAKEN_DAMAGE" ? "defensive" : ""))
+                            .filter((v) => v !== "")
+                            .filter(Boolean)
+                            .some((v) => filterSkillChargeTypes.includes(v)),
                     ),
             )
             .sort((a, b) => {
@@ -160,7 +289,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                 }
                 return sortOrder === "asc" ? -comparison : comparison;
             });
-    }, [operators, searchTerm, filterClasses, filterSubClasses, filterRarity, filterSkillTypes, sortBy, sortOrder, statsSortBy]);
+    }, [operators, isModule, searchTerm, filterClasses, filterSubClasses, filterRarity, filterSkillTypes, filterSkillChargeTypes, sortBy, sortOrder, statsSortBy]);
 
     return (
         <>
@@ -185,7 +314,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                         </div>
                         <AnimatePresence>
                             {showOptions && (
-                                <motion.div initial={{ height: 0, opacity: 0, y: -5 }} animate={{ height: "auto", opacity: 1, y: 0 }} exit={{ height: 0, opacity: 0, y: 0 }} transition={{ duration: 0.3, ease: "easeInOut" }} className="flex flex-col gap-3 md:flex-row md:gap-4">
+                                <motion.div initial={{ height: 0, opacity: 0, y: -5 }} animate={{ height: "auto", opacity: 1, y: 0 }} exit={{ height: 0, opacity: 0, y: 0 }} transition={{ duration: 0.3, ease: "easeInOut" }} className="flex w-full flex-col flex-wrap gap-3 md:gap-4 lg:flex-nowrap xl:flex-row">
                                     <div className="flex flex-row flex-wrap gap-4">
                                         <NestedDropdown options={options} onSelect={handleSelect} />
                                         <DropdownMenu>
@@ -229,55 +358,86 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </div>
-                                    <Select value={filterRarity} onValueChange={(value) => setFilterRarity(value as OperatorRarity | "all")}>
-                                        <SelectTrigger className="transition-all duration-150 hover:bg-secondary md:w-1/4">
-                                            <SelectValue placeholder="Filter by Rarity" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all" className="cursor-pointer">
-                                                All Rarities
-                                            </SelectItem>
-                                            <SelectItem value={OperatorRarity.sixStar} className="cursor-pointer">
-                                                6 Star
-                                            </SelectItem>
-                                            <SelectItem value={OperatorRarity.fiveStar} className="cursor-pointer">
-                                                5 Star
-                                            </SelectItem>
-                                            <SelectItem value={OperatorRarity.fourStar} className="cursor-pointer">
-                                                4 Star
-                                            </SelectItem>
-                                            <SelectItem value={OperatorRarity.threeStar} className="cursor-pointer">
-                                                3 Star
-                                            </SelectItem>
-                                            <SelectItem value={OperatorRarity.twoStar} className="cursor-pointer">
-                                                2 Star
-                                            </SelectItem>
-                                            <SelectItem value={OperatorRarity.oneStar} className="cursor-pointer">
-                                                1 Star
-                                            </SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="outline" className="w-[200px] justify-between">
-                                                <span className="mr-2 truncate">{filterSkillTypes.length === 0 ? <span className="font-normal">Filter Skill Types</span> : filterSkillTypes.map((v) => capitalize(v)).join(", ")}</span>
-                                                <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent className="max-h-64 w-[200px] overflow-y-scroll">
-                                            <DropdownMenuLabel>Skill Types</DropdownMenuLabel>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuCheckboxItem checked={isSkillTypeChecked("offensive")} onCheckedChange={() => handleSkillTypeCheck("offensive")}>
-                                                Offensive
-                                            </DropdownMenuCheckboxItem>
-                                            <DropdownMenuCheckboxItem checked={isSkillTypeChecked("defensive")} onCheckedChange={() => handleSkillTypeCheck("defensive")}>
-                                                Defensive
-                                            </DropdownMenuCheckboxItem>
-                                            <DropdownMenuCheckboxItem checked={isSkillTypeChecked("auto")} onCheckedChange={() => handleSkillTypeCheck("auto")}>
-                                                Auto
-                                            </DropdownMenuCheckboxItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
+                                    <div className="flex flex-col gap-2">
+                                        <div className="flex flex-row flex-wrap gap-4 xl:flex-nowrap">
+                                            <Select value={filterRarity} onValueChange={(value) => setFilterRarity(value as OperatorRarity | "all")}>
+                                                <SelectTrigger className="w-[200px] transition-all duration-150 hover:bg-secondary">
+                                                    <SelectValue placeholder="Filter by Rarity" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="all" className="cursor-pointer">
+                                                        All Rarities
+                                                    </SelectItem>
+                                                    <SelectItem value={OperatorRarity.sixStar} className="cursor-pointer">
+                                                        6 Star
+                                                    </SelectItem>
+                                                    <SelectItem value={OperatorRarity.fiveStar} className="cursor-pointer">
+                                                        5 Star
+                                                    </SelectItem>
+                                                    <SelectItem value={OperatorRarity.fourStar} className="cursor-pointer">
+                                                        4 Star
+                                                    </SelectItem>
+                                                    <SelectItem value={OperatorRarity.threeStar} className="cursor-pointer">
+                                                        3 Star
+                                                    </SelectItem>
+                                                    <SelectItem value={OperatorRarity.twoStar} className="cursor-pointer">
+                                                        2 Star
+                                                    </SelectItem>
+                                                    <SelectItem value={OperatorRarity.oneStar} className="cursor-pointer">
+                                                        1 Star
+                                                    </SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="outline" className="w-[200px] justify-between">
+                                                        <span className="mr-2 truncate">{filterSkillTypes.length === 0 ? <span className="font-normal">Filter Skill Types</span> : filterSkillTypes.map((v) => capitalize(v)).join(", ")}</span>
+                                                        <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent className="max-h-64 w-[200px] overflow-y-scroll">
+                                                    <DropdownMenuLabel>Skill Types</DropdownMenuLabel>
+                                                    <DropdownMenuSeparator />
+                                                    <DropdownMenuCheckboxItem checked={isSkillTypeChecked("auto")} onCheckedChange={() => handleSkillTypeCheck("auto")}>
+                                                        Auto
+                                                    </DropdownMenuCheckboxItem>
+                                                    <DropdownMenuCheckboxItem checked={isSkillTypeChecked("manual")} onCheckedChange={() => handleSkillTypeCheck("manual")}>
+                                                        Manual
+                                                    </DropdownMenuCheckboxItem>
+                                                    <DropdownMenuCheckboxItem checked={isSkillTypeChecked("passive")} onCheckedChange={() => handleSkillTypeCheck("passive")}>
+                                                        Passive
+                                                    </DropdownMenuCheckboxItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="outline" className="w-[200px] justify-between">
+                                                        <span className="mr-2 truncate">{filterSkillChargeTypes.length === 0 ? <span className="font-normal">Filter Skill Charge Types</span> : filterSkillChargeTypes.map((v) => capitalize(v)).join(", ")}</span>
+                                                        <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent className="max-h-64 w-[200px] overflow-y-scroll">
+                                                    <DropdownMenuLabel>Skill Charge Types</DropdownMenuLabel>
+                                                    <DropdownMenuSeparator />
+                                                    <DropdownMenuCheckboxItem checked={isSkillChargeTypeChecked("offensive")} onCheckedChange={() => handleSkillChargeTypeCheck("offensive")}>
+                                                        Offensive
+                                                    </DropdownMenuCheckboxItem>
+                                                    <DropdownMenuCheckboxItem checked={isSkillChargeTypeChecked("defensive")} onCheckedChange={() => handleSkillChargeTypeCheck("defensive")}>
+                                                        Defensive
+                                                    </DropdownMenuCheckboxItem>
+                                                    <DropdownMenuCheckboxItem checked={isSkillChargeTypeChecked("auto")} onCheckedChange={() => handleSkillChargeTypeCheck("auto")}>
+                                                        Auto
+                                                    </DropdownMenuCheckboxItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+                                        <div className="flex flex-row">
+                                            <Checkbox checked={isModule} onCheckedChange={() => setIsModule(!isModule)} id="is-module" />
+                                            <Label htmlFor="is-module" className="ml-2">
+                                                Include Modules
+                                            </Label>
+                                        </div>
+                                    </div>
                                     <Button variant="outline" className="flex flex-row" onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}>
                                         <span>{sortOrder.toUpperCase()}</span>
                                         {sortOrder === "asc" ? <ArrowUpFromLine className="h-4 w-4" /> : <ArrowDownFromLine className="h-4 w-4" />}
