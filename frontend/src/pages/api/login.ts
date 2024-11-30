@@ -1,6 +1,7 @@
 import { type ServerResponse } from "http";
-import { env } from "~/env.mjs";
-import { type LoginResponse, type Server } from "~/types/types";
+import { env } from "~/env.js";
+import type { AKServer } from "~/types/impl/api";
+import type { LoginResponse } from "~/types/impl/api/impl/login";
 
 export default async function handler(request: Request, response: ServerResponse) {
     const data = (await (
@@ -26,6 +27,6 @@ interface Request {
     body: {
         email: string;
         code: number;
-        server: Server;
+        server: AKServer;
     };
 }
