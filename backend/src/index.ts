@@ -1,16 +1,15 @@
-import { clearDomains, clearVersions, loadNetworkConfig, loadVersionConfig } from "./lib/impl/authentication/auth";
-import { init } from "./lib/impl/database";
-import { start } from "./server";
+import dotenv from "dotenv";
+dotenv.config();
+
+import { listener } from "./events/impl/listener";
+import { init } from "./lib";
+import app from "./app";
+import { db } from "./database";
 
 (async () => {
-    await init();
-    console.log("Initialized database.");
-    clearDomains();
-    clearVersions();
+    await listener();
 
-    await loadNetworkConfig("all");
-    await loadVersionConfig("all");
-    await start();
-})()
-    .then(() => console.log("Started server."))
-    .catch((err) => console.error(err));
+    await db.init();
+    await init();
+    await app.start();
+})();
