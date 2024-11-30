@@ -1,34 +1,24 @@
-import { type AppType } from "next/dist/shared/lib/utils";
-import { ThemeProvider } from "~/components/theme-provider";
-import { Toaster } from "~/components/ui/toaster";
+import { GeistSans } from "geist/font/sans";
+import { type AppType } from "next/app";
+import Layout from "~/components/base/layout";
+import { ThemeProvider } from "~/components/base/theme-provider";
+import { CookiesProvider } from "react-cookie";
+import { PagesProgressBar as ProgressBar } from "next-nprogress-bar";
 
-import NProgress from "nprogress";
-import "~/styles/nprogress.css";
 import "~/styles/globals.css";
-import { useRouter } from "next/router";
-import { useEffect } from "react";
 
 const MyApp: AppType = ({ Component, pageProps }) => {
-    const router = useRouter();
-    useEffect(() => {
-        const handleRouteChange = () => {
-            NProgress.done();
-        };
-        router.events.on("routeChangeComplete", handleRouteChange);
-        router.events.on("routeChangeStart", () => NProgress.start());
-        router.events.on("routeChangeError", () => NProgress.done());
-        return () => {
-            router.events.off("routeChangeComplete", handleRouteChange);
-        };
-    }, [router.events]);
-
     return (
-        <>
-            <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-                <Component {...pageProps} />
-                <Toaster />
-            </ThemeProvider>
-        </>
+        <CookiesProvider>
+            <div className={GeistSans.className} suppressHydrationWarning={true}>
+                <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+                    <Layout>
+                        <Component {...pageProps} />
+                        <ProgressBar height="4px" color="#f59a9f" options={{ showSpinner: false }} shallowRouting />
+                    </Layout>
+                </ThemeProvider>
+            </div>
+        </CookiesProvider>
     );
 };
 

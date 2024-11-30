@@ -6,7 +6,7 @@ node_modules
 *.lock
 *.yml
 *.yaml
-*.sqlite
+*.png
 Dockerfile
 Dockerfile.*
 .eslintrc
@@ -15,3 +15,8 @@ Dockerfile.*
 .gitignore
 bun.lockb
 .prettierignore
+.DS_Store
+tsconfig.tsbuildinfo
+src/lib/impl/local/impl/data/*
+*.mp3
+*.ttf
