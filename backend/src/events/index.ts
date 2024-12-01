@@ -10,6 +10,7 @@ export enum Events {
     DATABASE_USERS_UPDATE = "database.users.update",
 
     LOCAL_TABLES_DOWNLOADED = "local.tables.downloaded",
+    LOCAL_TABLES_PARSED = "local.tables.parsed",
     LOCAL_TABLES_INITIATED = "local.tables.initiated",
 
     CONFIG_NETWORK_LOADED = "config.network.loaded",

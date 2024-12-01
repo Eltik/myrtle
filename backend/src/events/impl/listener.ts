@@ -30,6 +30,10 @@ export const listener = async () => {
         console.log(colors.green(`Initiated tables!`));
     });
 
+    emitter.on(Events.LOCAL_TABLES_PARSED, async (data) => {
+        console.log(colors.gray(`Parsed table ${data.name}.`));
+    });
+
     emitter.on(Events.CONFIG_NETWORK_LOADED, async (data) => {
         console.log(colors.gray(`Loaded network config for ${data}.`));
     });

@@ -36,7 +36,7 @@ const handler = async (req: Request): Promise<Response> => {
                         return middleware.createResponse(materialsCached);
                     }
 
-                    const materials = materialId ? await getMaterial(materialId) : await getAllMaterials();
+                    const materials = materialId ? getMaterial(materialId) : getAllMaterials();
 
                     await redis.set(
                         `static:materials:${materialId ?? "none"}`,
@@ -62,7 +62,7 @@ const handler = async (req: Request): Promise<Response> => {
                             return middleware.createResponse(modulesIdCached);
                         }
 
-                        const modulesData = id ? await modules.get(id) : await getAllModules();
+                        const modulesData = id ? modules.get(id) : await getAllModules();
 
                         await redis.set(
                             `static:modules:${id ?? "none"}`,
@@ -88,7 +88,7 @@ const handler = async (req: Request): Promise<Response> => {
                                     return middleware.createResponse(modulesCharIdCached);
                                 }
 
-                                const modulesData = await modules.getByCharId(charId);
+                                const modulesData = modules.getByCharId(charId);
 
                                 await redis.set(
                                     `static:modules:charid:${charId ?? "none"}`,
@@ -112,7 +112,7 @@ const handler = async (req: Request): Promise<Response> => {
                                     return middleware.createResponse(modulesDetailsCached);
                                 }
 
-                                const details = await modules.getModuleDetails(id);
+                                const details = modules.getModuleDetails(id);
 
                                 await redis.set(
                                     `static:modules:details:${id ?? "none"}`,
@@ -140,7 +140,7 @@ const handler = async (req: Request): Promise<Response> => {
                         return middleware.createResponse(operatorsCached);
                     }
 
-                    const operatorsData = operatorId ? await operators(operatorId) : await getAllOperators();
+                    const operatorsData = operatorId ? operators(operatorId) : getAllOperators();
 
                     await redis.set(
                         `static:operators:${operatorId ?? "none"}`,
@@ -164,7 +164,7 @@ const handler = async (req: Request): Promise<Response> => {
                         return middleware.createResponse(rangesCached);
                     }
 
-                    const range = rangeId ? await ranges(rangeId) : await getAllRanges();
+                    const range = rangeId ? ranges(rangeId) : getAllRanges();
 
                     await redis.set(
                         `static:ranges:${rangeId ?? "none"}`,
@@ -188,7 +188,7 @@ const handler = async (req: Request): Promise<Response> => {
                         return middleware.createResponse(skillsCached);
                     }
 
-                    const skillsData = skillId ? await skills(skillId) : await getAllSkills();
+                    const skillsData = skillId ? skills(skillId) : getAllSkills();
 
                     await redis.set(
                         `static:skills:${skillId ?? "none"}`,
@@ -212,7 +212,7 @@ const handler = async (req: Request): Promise<Response> => {
                         return middleware.createResponse(trustCached);
                     }
 
-                    const trustData = trust ? await calculateTrust(Number(trust)) : null;
+                    const trustData = trust ? calculateTrust(Number(trust)) : null;
 
                     await redis.set(
                         `static:trust:${trust ?? "none"}`,
