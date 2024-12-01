@@ -1,13 +1,12 @@
 import type { BattleEquip, ModuleData } from "../../../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/modules";
-import { get as getModules } from "../../../../handler/impl/get";
-import { ExcelTables } from "../../../../../../../../types/impl/lib/impl/local/impl/handler";
+import { STATIC_DATA } from "../../../../handler";
 
-export const getModuleDetails = async (id: string): Promise<ModuleData | null> => {
-    const modules = await getBattleEquip();
+export const getModuleDetails = (id: string): ModuleData | null => {
+    const modules = getBattleEquip();
     return modules[id] ?? null;
 };
 
-const getBattleEquip = async (): Promise<BattleEquip> => {
-    const data = (await getModules(ExcelTables.BATTLE_EQUIP_TABLE)) as BattleEquip;
+const getBattleEquip = (): BattleEquip => {
+    const data = STATIC_DATA?.BATTLE_EQUIP_TABLE as BattleEquip;
     return data;
 };

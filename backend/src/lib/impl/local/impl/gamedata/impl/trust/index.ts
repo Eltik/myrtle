@@ -1,14 +1,13 @@
 import type { Favor } from "../../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/trust";
-import { ExcelTables } from "../../../../../../../types/impl/lib/impl/local/impl/handler";
-import { get as getFavor } from "../../../handler/impl/get";
+import { STATIC_DATA } from "../../../handler";
 
-export const getAll = async (): Promise<Favor> => {
-    const data = (await getFavor(ExcelTables.FAVOR_TABLE)) as Favor;
+export const getAll = (): Favor => {
+    const data = STATIC_DATA?.FAVOR_TABLE as Favor;
     return data;
 };
 
-export default async (trust: number): Promise<number> => {
-    const favorTable = await getAll();
+export default (trust: number): number => {
+    const favorTable = getAll();
     const keyFrames = favorTable.favorFrames.map((frame) => frame.data.favorPoint);
     return keyFrames.findIndex((frame: number) => frame >= trust);
 };

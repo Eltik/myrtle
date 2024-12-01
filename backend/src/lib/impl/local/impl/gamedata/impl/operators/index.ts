@@ -1,17 +1,16 @@
 import { getSkill, modules } from "../..";
 import type { Operator } from "../../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/operators";
-import { ExcelTables } from "../../../../../../../types/impl/lib/impl/local/impl/handler";
-import { get as getOperators } from "../../../handler/impl/get";
+import { STATIC_DATA } from "../../../handler";
 
-export const getAll = async (promisify: boolean = true): Promise<Operator[]> => {
-    const data = (await getOperators(ExcelTables.CHARACTER_TABLE)) as Record<string, Operator>;
+export const getAll = (extraData: boolean = true): Operator[] => {
+    const data = STATIC_DATA?.CHARACTER_TABLE as Record<string, Operator>;
 
-    if (!promisify) return Object.entries(data).map(([id, operator]) => ({ id, ...operator }));
+    if (!extraData) return Object.entries(data).map(([id, operator]) => ({ id, ...operator }));
 
-    const operatorPromises = Object.entries(data).map(async ([id, operator]) => {
+    const operatorData = Object.entries(data).map(([id, operator]) => {
         // Handle skills
-        const skillPromises = operator.skills.map(async (skill) => {
-            const data = await getSkill(skill.skillId);
+        operator.skills.map((skill) => {
+            const data = getSkill(skill.skillId);
             if (data) {
                 Object.assign(skill, {
                     static: {
@@ -46,31 +45,24 @@ export const getAll = async (promisify: boolean = true): Promise<Operator[]> => 
         });
 
         // Handle modules
-        const modulePromises = new Promise<void>(async (resolve) => {
-            const operatorModule = await modules.getByCharId(id);
-            if (operatorModule) {
-                const moduleDetailsPromises = operatorModule.map(async (module) => {
-                    const data = await modules.getModuleDetails(module.uniEquipId);
-                    if (data) {
-                        Object.assign(module, {
-                            id: module.uniEquipId,
-                            data: {
-                                ...data,
-                            },
-                        });
-                    }
-                });
+        const operatorModule = modules.getByCharId(id);
+        if (operatorModule) {
+            operatorModule.map((module) => {
+                const data = modules.getModuleDetails(module.uniEquipId);
+                if (data) {
+                    Object.assign(module, {
+                        id: module.uniEquipId,
+                        data: {
+                            ...data,
+                        },
+                    });
+                }
+            });
 
-                await Promise.all(moduleDetailsPromises);
-                Object.assign(operator, {
-                    modules: operatorModule,
-                });
-            }
-            resolve();
-        });
-
-        // Wait for all skill and module promises
-        await Promise.all([...skillPromises, modulePromises]);
+            Object.assign(operator, {
+                modules: operatorModule,
+            });
+        }
 
         return {
             id,
@@ -79,20 +71,20 @@ export const getAll = async (promisify: boolean = true): Promise<Operator[]> => 
     });
 
     // Wait for all operators to be processed
-    const operators = await Promise.all(operatorPromises);
+    const operators = operatorData.map((operator) => operator);
     return operators;
 };
 
-export default async (id: string): Promise<Operator | null> => {
-    const operators = await getAll(false);
+export default (id: string): Operator | null => {
+    const operators = getAll(false);
     const operator = operators.find((operator) => operator.id === id) ?? null;
 
     if (!operator?.id?.startsWith("char")) return null;
 
     if (operator) {
         // Handle skills
-        const skillPromises = operator.skills.map(async (skill) => {
-            const data = await getSkill(skill.skillId);
+        operator.skills.map((skill) => {
+            const data = getSkill(skill.skillId);
             if (data) {
                 Object.assign(skill, {
                     static: {
@@ -127,31 +119,24 @@ export default async (id: string): Promise<Operator | null> => {
         });
 
         // Handle modules
-        const modulePromises = new Promise<void>(async (resolve) => {
-            const operatorModule = await modules.getByCharId(id);
-            if (operatorModule) {
-                const moduleDetailsPromises = operatorModule.map(async (module) => {
-                    const data = await modules.getModuleDetails(module.uniEquipId);
-                    if (data) {
-                        Object.assign(module, {
-                            id: module.uniEquipId,
-                            data: {
-                                ...data,
-                            },
-                        });
-                    }
-                });
+        const operatorModule = modules.getByCharId(id);
+        if (operatorModule) {
+            operatorModule.map((module) => {
+                const data = modules.getModuleDetails(module.uniEquipId);
+                if (data) {
+                    Object.assign(module, {
+                        id: module.uniEquipId,
+                        data: {
+                            ...data,
+                        },
+                    });
+                }
+            });
 
-                await Promise.all(moduleDetailsPromises);
-                Object.assign(operator, {
-                    modules: operatorModule,
-                });
-            }
-            resolve();
-        });
-
-        // Wait for all skill and module promises
-        await Promise.all([...skillPromises, modulePromises]);
+            Object.assign(operator, {
+                modules: operatorModule,
+            });
+        }
 
         return {
             id,

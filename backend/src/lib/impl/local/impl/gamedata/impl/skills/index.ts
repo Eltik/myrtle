@@ -1,10 +1,9 @@
 import { RESOURCE_REPOSITORY } from "../..";
 import type { Skill } from "../../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/skills";
-import { ExcelTables } from "../../../../../../../types/impl/lib/impl/local/impl/handler";
-import { get as getSkills } from "../../../handler/impl/get";
+import { STATIC_DATA } from "../../../handler";
 
-export const getAll = async (): Promise<Skill[]> => {
-    const data = (await getSkills(ExcelTables.SKILL_TABLE)) as Record<string, Skill>;
+export const getAll = (): Skill[] => {
+    const data = STATIC_DATA?.SKILL_TABLE as Record<string, Skill>;
     const skills = Object.entries(data).map(([id, data]) => ({
         id,
         ...data,
@@ -13,8 +12,8 @@ export const getAll = async (): Promise<Skill[]> => {
     return skills;
 };
 
-export default async (id: string): Promise<Skill | null> => {
-    const skills = await getAll();
+export default (id: string): Skill | null => {
+    const skills = getAll();
     const skill = skills.find((skill) => skill.id === id) ?? null;
     return skill;
 };
