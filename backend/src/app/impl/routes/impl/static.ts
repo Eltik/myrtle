@@ -1,6 +1,6 @@
 import { redis } from "../../..";
 import { env } from "../../../../env";
-import { calculateTrust, getMaterial, modules } from "../../../../lib/impl/local/impl/gamedata";
+import { calculateTrust, getHandbook, getMaterial, modules } from "../../../../lib/impl/local/impl/gamedata";
 import { getAll as getAllMaterials } from "../../../../lib/impl/local/impl/gamedata/impl/materials";
 import { getAll as getAllModules } from "../../../../lib/impl/local/impl/gamedata/impl/modules";
 import operators, { getAll as getAllOperators } from "../../../../lib/impl/local/impl/gamedata/impl/operators";
@@ -228,6 +228,30 @@ const handler = async (req: Request): Promise<Response> => {
                             trust: trustData,
                         }),
                     );
+                case "handbook":
+                    const charId = body?.id ?? paths[2] ?? url.searchParams.get("id") ?? null;
+
+                    const handbookCached = await redis.get(`static:handbook:${charId ?? "none"}`);
+                    if (handbookCached) {
+                        return middleware.createResponse(handbookCached);
+                    }
+
+                    const handbookData = charId ? getHandbook(charId) : null;
+
+                    await redis.set(
+                        `static:handbook:${charId ?? "none"}`,
+                        JSON.stringify({
+                            handbook: handbookData,
+                        }),
+                        "EX",
+                        env.REDIS_CACHE_TIME,
+                    );
+
+                    return middleware.createResponse(
+                        JSON.stringify({
+                            handbook: handbookData,
+                        }),
+                    );
                 default:
                     return middleware.createResponse(JSON.stringify({ error: "Invalid type." }), 400);
             }
@@ -248,7 +272,7 @@ const route = {
 };
 
 type Body = {
-    type: "materials" | "modules" | "operators" | "ranges" | "skills" | "trust";
+    type: "materials" | "modules" | "operators" | "ranges" | "skills" | "trust" | "handbook";
     id?: string;
     method?: string;
     trust?: number;

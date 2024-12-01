@@ -1,4 +1,4 @@
-import { getSkill, modules } from "../..";
+import { getHandbook, getSkill, modules } from "../..";
 import type { Operator } from "../../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/operators";
 import { STATIC_DATA } from "../../../handler";
 
@@ -61,6 +61,14 @@ export const getAll = (extraData: boolean = true): Operator[] => {
 
             Object.assign(operator, {
                 modules: operatorModule,
+            });
+        }
+
+        // Handle handbook items
+        const handbookData = getHandbook(id);
+        if (handbookData) {
+            Object.assign(operator, {
+                handbook: handbookData,
             });
         }
 
@@ -135,6 +143,14 @@ export default (id: string): Operator | null => {
 
             Object.assign(operator, {
                 modules: operatorModule,
+            });
+        }
+
+        // Handle handbook items
+        const handbookData = getHandbook(id);
+        if (handbookData) {
+            Object.assign(operator, {
+                handbook: handbookData,
             });
         }
 
