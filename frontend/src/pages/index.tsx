@@ -29,7 +29,7 @@ export default function Home() {
                         transition: { staggerChildren: 0.2 },
                     },
                 }}
-                className="container flex max-w-screen-xl auto-rows-auto flex-col gap-4 px-4 py-8 md:grid md:grid-cols-12 md:px-8 xl:px-4"
+                className="container mx-auto flex max-w-screen-xl auto-rows-auto flex-col gap-4 px-4 py-8 md:grid md:grid-cols-12 md:px-8 xl:px-4"
             >
                 <motion.div variants={fadeIn} className="col-span-full rounded-xl border bg-card text-card-foreground shadow">
                     <div className="flex flex-col space-y-1.5 p-6 pb-2">

@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { OperatorsGrid } from "./operators-grid";
 import { Checkbox } from "../ui/checkbox";
 import { Label } from "../ui/label";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 /**
  * @author https://wuwatracker.com/resonator
@@ -31,6 +32,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
     const [sortBy, setSortBy] = useState<"name" | "rarity" | "stats">("name");
 
     const [isModule, setIsModule] = useState(false);
+    const [canActivateSkill, setCanActivateSkill] = useState(false);
 
     const [statsSortBy, setStatsSortBy] = useState<"maxHp" | "atk" | "def" | "magicResistance" | "cost" | "baseAttackTime" | "blockCnt">("maxHp");
 
@@ -138,6 +140,24 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
 
     const sortedAndFilteredCharacters = useMemo(() => {
         return Object.values(operators)
+            .map((char) => {
+                if (canActivateSkill) {
+                    for (const skill of char.skills) {
+                        const hasSkill = skill.static?.levels.some((level) => level.spData.spCost > 0 && level.spData.initSp >= level.spData.spCost);
+                        if (hasSkill) {
+                            return char;
+                        } else {
+                            return null;
+                        }
+                    }
+                } else {
+                    return char;
+                }
+            })
+            .filter(Boolean)
+            .map((char) => {
+                return char!;
+            })
             .map((char) => {
                 if (isModule) {
                     // Add module stats to current stats
@@ -289,7 +309,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                 }
                 return sortOrder === "asc" ? -comparison : comparison;
             });
-    }, [operators, isModule, searchTerm, filterClasses, filterSubClasses, filterRarity, filterSkillTypes, filterSkillChargeTypes, sortBy, sortOrder, statsSortBy]);
+    }, [operators, canActivateSkill, isModule, searchTerm, filterClasses, filterSubClasses, filterRarity, filterSkillTypes, filterSkillChargeTypes, sortBy, sortOrder, statsSortBy]);
 
     return (
         <>
@@ -431,11 +451,29 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         </div>
-                                        <div className="flex flex-row">
-                                            <Checkbox checked={isModule} onCheckedChange={() => setIsModule(!isModule)} id="is-module" />
-                                            <Label htmlFor="is-module" className="ml-2">
-                                                Include Modules
-                                            </Label>
+                                        <div className="flex flex-row gap-4">
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <div className="flex flex-row">
+                                                        <Checkbox checked={isModule} onCheckedChange={() => setIsModule(!isModule)} id="is-module" />
+                                                        <Label htmlFor="is-module" className="ml-2">
+                                                            Include Modules
+                                                        </Label>
+                                                    </div>
+                                                </TooltipTrigger>
+                                                <TooltipContent>Include module stats in operator stats.</TooltipContent>
+                                            </Tooltip>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <div className="flex flex-row">
+                                                        <Checkbox checked={canActivateSkill} onCheckedChange={() => setCanActivateSkill(!canActivateSkill)} id="can-activate-skill" />
+                                                        <Label htmlFor="can-activate-skill" className="ml-2">
+                                                            100% Skill Activation
+                                                        </Label>
+                                                    </div>
+                                                </TooltipTrigger>
+                                                <TooltipContent>Show only operators who have full SP when deployed.</TooltipContent>
+                                            </Tooltip>
                                         </div>
                                     </div>
                                     <Button variant="outline" className="flex flex-row" onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}>
