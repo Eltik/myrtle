@@ -5,6 +5,11 @@ export type AKDistributor = "yostar" | "hypergryph" | "bilibili" | "longcheng";
 export type AKServer = "en" | "jp" | "kr" | "cn" | "bili" | "tw";
 export type AKDomain = "gs" | "as" | "u8" | "hu" | "hv" | "rc" | "an" | "prean" | "sl" | "of" | "pkgAd" | "pkgIOS";
 
+export type StoredUser = {
+    status: User["status"];
+    avatar: User["avatar"];
+};
+
 export type User = {
     dungeon: {
         stages: Record<

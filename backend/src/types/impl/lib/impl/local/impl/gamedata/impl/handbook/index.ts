@@ -3,11 +3,11 @@ import type { ItemType } from "../materials";
 export type OperatorProfile = {
     basicInfo: {
         codeName: string;
-        gender: string;
+        gender: "Unknown" | "Female" | "Male" | "Male]" | "Conviction"; // Arene is bugged and has ] at the end lol
         combatExperience: string;
-        placeOfBirth: string;
+        placeOfBirth: OperatorBirthPlace;
         dateOfBirth: string;
-        race: string;
+        race: OperatorRace;
         height: string;
         infectionStatus: string;
     };
@@ -20,6 +20,82 @@ export type OperatorProfile = {
         originiumArtsAssimilation: string;
     };
 };
+
+export enum OperatorBirthPlace {
+    Unknown,
+    Undisclosed,
+    Higashi,
+    Kazimierz,
+    Vouivre,
+    Laterano,
+    Victoria,
+    "Rim Billiton",
+    Leithanien,
+    Bolívar,
+    Sargon,
+    Kjerag,
+    Columbia,
+    Sami,
+    Iberia,
+    Kazdel,
+    Minos,
+    Lungmen,
+    Siracusa,
+    Yan,
+    Ursus,
+    Siesta,
+    "RIM Billiton",
+    Ægir,
+    Durin,
+    "Siesta (Independent City)",
+    "Ægir Region",
+    "Unknown as requested by management agency",
+    "Rhodes Island",
+    "Far East",
+}
+export enum OperatorRace {
+    Undisclosed,
+    Zalak,
+    Oni,
+    Savra,
+    Durin,
+    Kuranta,
+    Vouivre,
+    Liberi,
+    Feline,
+    Cautus,
+    Perro,
+    Reproba,
+    Sankta,
+    Sarkaz,
+    Vulpo,
+    Elafia,
+    Phidia,
+    Ægir,
+    Anaty,
+    Itra,
+    "Unknown (Suspected Liberi)",
+    Archosauria,
+    Unknown,
+    Lupo,
+    Forte,
+    Ursus,
+    Petram,
+    Cerato,
+    Caprinae,
+    Draco,
+    Anura,
+    Anasa,
+    "Cautus/Chimera",
+    Kylin,
+    Pilosa,
+    "Unknown as requested by management agency",
+    Manticore,
+    Lung,
+    Aslan,
+    Elf,
+    "Sa■&K?uSxw?",
+}
 
 export type Handbook = {
     handbookDict: Record<string, HandbookItem>;
