@@ -1,4 +1,4 @@
-import type { ItemType } from "../materials";
+import type { ItemType } from "./material";
 
 export type OperatorProfile = {
     basicInfo: {
