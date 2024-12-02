@@ -372,7 +372,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                 </div>
                             </div>
                         </div>
-                        <div className={`${showOptions ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none h-0 -translate-y-5 opacity-0"} flex w-full flex-col flex-wrap gap-3 transition-all duration-150 md:gap-4 lg:flex-nowrap xl:flex-row`}>
+                        <div className={`${showOptions ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none hidden h-0 -translate-y-5 opacity-0"} flex w-full flex-col flex-wrap gap-3 transition-all duration-150 md:gap-4 lg:flex-nowrap xl:flex-row`}>
                             <div className="flex flex-row flex-wrap gap-4">
                                 <NestedDropdown options={options} onSelect={handleSelect} />
                                 <DropdownMenu>
