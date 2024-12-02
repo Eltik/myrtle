@@ -1,4 +1,4 @@
-import type { HandbookItem, OperatorProfile } from "../../../../../types/impl/lib/impl/local/impl/gamedata/impl/handbook";
+import { OperatorBirthPlace, OperatorRace, type HandbookItem, type OperatorProfile } from "../../../../../types/impl/lib/impl/local/impl/gamedata/impl/handbook";
 
 /**
  * @author All credit to https://github.com/Awedtan/HellaBot/
@@ -16,11 +16,11 @@ export function parseOperatorProfile(storyTextAudio: HandbookItem["storyTextAudi
             codeName: "",
             combatExperience: "",
             dateOfBirth: "",
-            gender: "",
+            gender: "Unknown",
             height: "",
             infectionStatus: "",
-            placeOfBirth: "",
-            race: "",
+            placeOfBirth: OperatorBirthPlace.Unknown,
+            race: OperatorRace.Unknown,
         },
         physicalExam: {
             combatSkill: "",
@@ -48,19 +48,25 @@ export function parseOperatorProfile(storyTextAudio: HandbookItem["storyTextAudi
                 profile.basicInfo.codeName = value;
                 break;
             case "[Gender":
-                profile.basicInfo.gender = value;
+                Object.assign(profile.basicInfo, {
+                    gender: value,
+                });
                 break;
             case "[Combat Experience":
                 profile.basicInfo.combatExperience = value;
                 break;
             case "[Place of Birth":
-                profile.basicInfo.placeOfBirth = value;
+                Object.assign(profile.basicInfo, {
+                    placeOfBirth: value,
+                });
                 break;
             case "[Date of Birth":
                 profile.basicInfo.dateOfBirth = value;
                 break;
             case "[Race":
-                profile.basicInfo.race = value;
+                Object.assign(profile.basicInfo, {
+                    race: value,
+                });
                 break;
             case "[Height":
                 profile.basicInfo.height = value;
