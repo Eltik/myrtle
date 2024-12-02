@@ -94,6 +94,7 @@ function SkillsContent({ operator }: { operator: Operator }) {
                                                         {operator.skills.map((skill) => (
                                                             <TabsContent value={skill.skillId} key={skill.skillId}>
                                                                 <SkillCard skill={skill} level={skillLevel} />
+                                                                {/* Damage Calculation */}
                                                             </TabsContent>
                                                         ))}
                                                     </Tabs>
