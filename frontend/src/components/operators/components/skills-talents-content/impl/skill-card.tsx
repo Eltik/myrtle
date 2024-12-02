@@ -123,14 +123,14 @@ function SkillCard({ skill, level }: { skill: Operator["skills"][0]; level: numb
                 </div>
                 <div>
                     <h2 className="mb-1 mt-4 text-lg font-bold">Stats Change</h2>
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                         {blackboard.map((bb) => (
                             <TooltipProvider key={bb.key}>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <div className="cursor-pointer rounded-lg bg-secondary px-2 py-1 transition-all hover:bg-secondary/80">
                                             <div className="flex items-center justify-between">
-                                                <span className="text-sm font-medium">{bb.key}</span>
+                                                <span className="truncate text-sm font-medium">{bb.key}</span>
                                                 {(bb.value > 0 && bb.key !== "base_attack_time") || (bb.key === "base_attack_time" && bb.value < 0) ? <ArrowUpIcon className="h-4 w-4 text-green-500" /> : <ArrowDownIcon className="h-4 w-4 text-red-500" />}
                                             </div>
                                             <p className="mt-1 font-bold">{formatBlackboardValue(bb.key, bb.value)}</p>
