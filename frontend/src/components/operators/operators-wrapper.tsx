@@ -9,7 +9,6 @@ import { NestedDropdown } from "../nested-dropdown";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import type { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu";
 import { OperatorProfession } from "~/types/impl/api/static/operator";
-import { motion, AnimatePresence } from "framer-motion";
 import { OperatorsGrid } from "./operators-grid";
 import { Checkbox } from "../ui/checkbox";
 import { Label } from "../ui/label";
@@ -30,9 +29,10 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
     const [showOptions, setShowOptions] = useState(false);
 
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-    const [sortBy, setSortBy] = useState<"name" | "rarity" | "stats">("name");
+    const [sortBy, setSortBy] = useState<"name" | "rarity" | "limited" | "stats">("name");
 
     const [isModule, setIsModule] = useState(false);
+    const [showLimited, setShowLimited] = useState(true);
     const [canActivateSkill, setCanActivateSkill] = useState(false);
 
     const [statsSortBy, setStatsSortBy] = useState<"maxHp" | "atk" | "def" | "magicResistance" | "cost" | "baseAttackTime" | "blockCnt">("maxHp");
@@ -58,6 +58,10 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
         {
             label: "Rarity",
             value: "rarity",
+        },
+        {
+            label: "Limited",
+            value: "limited",
         },
         {
             label: "Stats",
@@ -98,7 +102,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
     const handleSelect = (value: string) => {
         if (value === "stats") {
             setSortBy("stats");
-        } else if (value === "name" || value === "rarity") {
+        } else if (value === "name" || value === "rarity" || value === "limited") {
             setSortBy(value);
             setStatsSortBy("maxHp"); // Reset stats sorting when switching to name or rarity
         } else {
@@ -173,6 +177,13 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                             return null;
                         }
                     }
+                } else {
+                    return char;
+                }
+            })
+            .map((char) => {
+                if (!showLimited) {
+                    return char?.handbook?.isLimited ? null : char;
                 } else {
                     return char;
                 }
@@ -323,6 +334,9 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                     case "rarity":
                         comparison = rarityToNumber(b.rarity) - rarityToNumber(a.rarity);
                         break;
+                    case "limited":
+                        comparison = (b.handbook?.isLimited ? 1 : 0) - (a.handbook?.isLimited ? 1 : 0);
+                        break;
                     case "stats":
                         const bEvolvePhase = b.phases[b.phases.length - 1]?.attributesKeyFrames[(b.phases[b.phases.length - 1]?.attributesKeyFrames.length ?? 0) - 1]?.data;
                         const aEvolvePhase = a.phases[a.phases.length - 1]?.attributesKeyFrames[(a.phases[a.phases.length - 1]?.attributesKeyFrames.length ?? 0) - 1]?.data;
@@ -335,7 +349,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                 }
                 return sortOrder === "asc" ? -comparison : comparison;
             });
-    }, [operators, canActivateSkill, isModule, searchTerm, filterClasses, filterSubClasses, filterRarity, filterNation, filterRace, filterGender, filterSkillTypes, filterSkillChargeTypes, sortBy, sortOrder, statsSortBy]);
+    }, [operators, canActivateSkill, showLimited, isModule, searchTerm, filterClasses, filterSubClasses, filterRarity, filterNation, filterRace, filterGender, filterSkillTypes, filterSkillChargeTypes, sortBy, sortOrder, statsSortBy]);
 
     return (
         <>
@@ -358,203 +372,212 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                 </div>
                             </div>
                         </div>
-                        <AnimatePresence>
-                            {showOptions && (
-                                <motion.div initial={{ height: 0, opacity: 0, y: -5 }} animate={{ height: "auto", opacity: 1, y: 0 }} exit={{ height: 0, opacity: 0, y: 0 }} transition={{ duration: 0.3, ease: "easeInOut" }} className="flex w-full flex-col flex-wrap gap-3 md:gap-4 lg:flex-nowrap xl:flex-row">
-                                    <div className="flex flex-row flex-wrap gap-4">
-                                        <NestedDropdown options={options} onSelect={handleSelect} />
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="outline" className="w-[200px] justify-between">
-                                                    <span className="mr-2 truncate">{filterClasses.length === 0 ? <span className="font-normal">Filter Classes</span> : filterClasses.map((v) => formatProfession(v)).join(", ")}</span>
-                                                    <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent className="max-h-64 w-[200px] overflow-y-scroll">
-                                                <DropdownMenuLabel>Classes</DropdownMenuLabel>
-                                                <DropdownMenuSeparator />
-                                                {Object.keys(OperatorProfession).map((key) => {
-                                                    const value = OperatorProfession[key as keyof typeof OperatorProfession];
-                                                    return (
-                                                        <DropdownMenuCheckboxItem key={value} checked={isClassChecked(value)} onCheckedChange={() => handleClassCheck(value)}>
-                                                            {formatProfession(value)}
-                                                        </DropdownMenuCheckboxItem>
-                                                    );
-                                                })}
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="outline" className="w-[200px] justify-between">
-                                                    <span className="mr-2 truncate">{filterSubClasses.length === 0 ? <span className="font-normal">Filter Subclasses</span> : filterSubClasses.map((v) => formatSubProfession(v.toLowerCase())).join(", ")}</span>
-                                                    <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent className="max-h-64 w-[200px] overflow-y-scroll">
-                                                <DropdownMenuLabel>Subclasses</DropdownMenuLabel>
-                                                <DropdownMenuSeparator />
-                                                {Object.keys(OperatorSubProfession).map((key) => {
-                                                    const value = OperatorSubProfession[key as keyof typeof OperatorSubProfession];
-                                                    return (
-                                                        <DropdownMenuCheckboxItem key={value} checked={isSubClassChecked(value)} onCheckedChange={() => handleSubClassCheck(value)}>
-                                                            {formatSubProfession(value.toLowerCase())}
-                                                        </DropdownMenuCheckboxItem>
-                                                    );
-                                                })}
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="outline" className="w-[200px] justify-between">
-                                                    <span className="mr-2 truncate">{filterNation.length === 0 ? <span className="font-normal">Filter Place of Birth</span> : filterNation.map((v) => v).join(", ")}</span>
-                                                    <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent className="max-h-64 w-[200px] overflow-y-scroll">
-                                                <DropdownMenuLabel>Nations</DropdownMenuLabel>
-                                                <DropdownMenuSeparator />
-                                                {Object.keys(OperatorBirthPlace)
-                                                    .filter((key) => !isNaN(key as unknown as number))
-                                                    .map((key) => OperatorBirthPlace[key as keyof typeof OperatorBirthPlace])
-                                                    .sort((a, b) => String(a).localeCompare(String(b)))
-                                                    .map((value) => (
-                                                        <DropdownMenuCheckboxItem key={value} checked={isNationChecked(value)} onCheckedChange={() => handleNationCheck(value)}>
-                                                            {value}
-                                                        </DropdownMenuCheckboxItem>
-                                                    ))}
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="outline" className="w-[200px] justify-between">
-                                                    <span className="mr-2 truncate">{filterRace.length === 0 ? <span className="font-normal">Filter by Race</span> : filterRace.map((v) => v).join(", ")}</span>
-                                                    <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent className="max-h-64 w-[200px] overflow-y-scroll">
-                                                <DropdownMenuLabel>Races</DropdownMenuLabel>
-                                                <DropdownMenuSeparator />
-                                                {Object.keys(OperatorRace)
-                                                    .filter((key) => !isNaN(key as unknown as number))
-                                                    .map((key) => OperatorRace[key as keyof typeof OperatorRace])
-                                                    .sort((a, b) => String(a).localeCompare(String(b)))
-                                                    .map((value) => (
-                                                        <DropdownMenuCheckboxItem key={value} checked={isRaceChecked(value)} onCheckedChange={() => handleRaceCheck(value)}>
-                                                            {value}
-                                                        </DropdownMenuCheckboxItem>
-                                                    ))}
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </div>
-                                    <div className="flex flex-col gap-2">
-                                        <div className="flex flex-row flex-wrap gap-4 xl:flex-nowrap">
-                                            <Select value={filterRarity} onValueChange={(value) => setFilterRarity(value as OperatorRarity | "all")}>
-                                                <SelectTrigger className="w-[200px] transition-all duration-150 hover:bg-secondary">
-                                                    <SelectValue placeholder="Filter by Rarity" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="all" className="cursor-pointer">
-                                                        All Rarities
-                                                    </SelectItem>
-                                                    <SelectItem value={OperatorRarity.sixStar} className="cursor-pointer">
-                                                        6 Star
-                                                    </SelectItem>
-                                                    <SelectItem value={OperatorRarity.fiveStar} className="cursor-pointer">
-                                                        5 Star
-                                                    </SelectItem>
-                                                    <SelectItem value={OperatorRarity.fourStar} className="cursor-pointer">
-                                                        4 Star
-                                                    </SelectItem>
-                                                    <SelectItem value={OperatorRarity.threeStar} className="cursor-pointer">
-                                                        3 Star
-                                                    </SelectItem>
-                                                    <SelectItem value={OperatorRarity.twoStar} className="cursor-pointer">
-                                                        2 Star
-                                                    </SelectItem>
-                                                    <SelectItem value={OperatorRarity.oneStar} className="cursor-pointer">
-                                                        1 Star
-                                                    </SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="outline" className="w-[200px] justify-between">
-                                                        <span className="mr-2 truncate">{filterSkillTypes.length === 0 ? <span className="font-normal">Filter Skill Types</span> : filterSkillTypes.map((v) => capitalize(v)).join(", ")}</span>
-                                                        <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent className="max-h-64 w-[200px] overflow-y-scroll">
-                                                    <DropdownMenuLabel>Skill Types</DropdownMenuLabel>
-                                                    <DropdownMenuSeparator />
-                                                    <DropdownMenuCheckboxItem checked={isSkillTypeChecked("auto")} onCheckedChange={() => handleSkillTypeCheck("auto")}>
-                                                        Auto
-                                                    </DropdownMenuCheckboxItem>
-                                                    <DropdownMenuCheckboxItem checked={isSkillTypeChecked("manual")} onCheckedChange={() => handleSkillTypeCheck("manual")}>
-                                                        Manual
-                                                    </DropdownMenuCheckboxItem>
-                                                    <DropdownMenuCheckboxItem checked={isSkillTypeChecked("passive")} onCheckedChange={() => handleSkillTypeCheck("passive")}>
-                                                        Passive
-                                                    </DropdownMenuCheckboxItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="outline" className="w-[200px] justify-between">
-                                                        <span className="mr-2 truncate">{filterSkillChargeTypes.length === 0 ? <span className="font-normal">Filter Skill Charge Types</span> : filterSkillChargeTypes.map((v) => capitalize(v)).join(", ")}</span>
-                                                        <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent className="max-h-64 w-[200px] overflow-y-scroll">
-                                                    <DropdownMenuLabel>Skill Charge Types</DropdownMenuLabel>
-                                                    <DropdownMenuSeparator />
-                                                    <DropdownMenuCheckboxItem checked={isSkillChargeTypeChecked("offensive")} onCheckedChange={() => handleSkillChargeTypeCheck("offensive")}>
-                                                        Offensive
-                                                    </DropdownMenuCheckboxItem>
-                                                    <DropdownMenuCheckboxItem checked={isSkillChargeTypeChecked("defensive")} onCheckedChange={() => handleSkillChargeTypeCheck("defensive")}>
-                                                        Defensive
-                                                    </DropdownMenuCheckboxItem>
-                                                    <DropdownMenuCheckboxItem checked={isSkillChargeTypeChecked("auto")} onCheckedChange={() => handleSkillChargeTypeCheck("auto")}>
-                                                        Auto
-                                                    </DropdownMenuCheckboxItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </div>
-                                        <div className="flex flex-row gap-4">
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <div className="flex flex-row">
-                                                        <Checkbox checked={isModule} onCheckedChange={() => setIsModule(!isModule)} id="is-module" />
-                                                        <Label htmlFor="is-module" className="ml-2">
-                                                            Include Modules
-                                                        </Label>
-                                                    </div>
-                                                </TooltipTrigger>
-                                                <TooltipContent>Include module stats in operator stats.</TooltipContent>
-                                            </Tooltip>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <div className="flex flex-row">
-                                                        <Checkbox checked={canActivateSkill} onCheckedChange={() => setCanActivateSkill(!canActivateSkill)} id="can-activate-skill" />
-                                                        <Label htmlFor="can-activate-skill" className="ml-2">
-                                                            100% Skill Activation
-                                                        </Label>
-                                                    </div>
-                                                </TooltipTrigger>
-                                                <TooltipContent>Show only operators who have full SP when deployed.</TooltipContent>
-                                            </Tooltip>
-                                        </div>
-                                    </div>
-                                    <Button variant="outline" className="flex flex-row" onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}>
-                                        <span>{sortOrder.toUpperCase()}</span>
-                                        {sortOrder === "asc" ? <ArrowUpFromLine className="h-4 w-4" /> : <ArrowDownFromLine className="h-4 w-4" />}
-                                    </Button>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                        <div className={`${showOptions ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none h-0 -translate-y-5 opacity-0"} flex w-full flex-col flex-wrap gap-3 transition-all duration-150 md:gap-4 lg:flex-nowrap xl:flex-row`}>
+                            <div className="flex flex-row flex-wrap gap-4">
+                                <NestedDropdown options={options} onSelect={handleSelect} />
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" className="w-[200px] justify-between">
+                                            <span className="mr-2 truncate">{filterClasses.length === 0 ? <span className="font-normal">Filter Classes</span> : filterClasses.map((v) => formatProfession(v)).join(", ")}</span>
+                                            <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="max-h-64 w-[200px] overflow-y-scroll">
+                                        <DropdownMenuLabel>Classes</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        {Object.keys(OperatorProfession).map((key) => {
+                                            const value = OperatorProfession[key as keyof typeof OperatorProfession];
+                                            return (
+                                                <DropdownMenuCheckboxItem key={value} checked={isClassChecked(value)} onCheckedChange={() => handleClassCheck(value)}>
+                                                    {formatProfession(value)}
+                                                </DropdownMenuCheckboxItem>
+                                            );
+                                        })}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" className="w-[200px] justify-between">
+                                            <span className="mr-2 truncate">{filterSubClasses.length === 0 ? <span className="font-normal">Filter Subclasses</span> : filterSubClasses.map((v) => formatSubProfession(v.toLowerCase())).join(", ")}</span>
+                                            <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="max-h-64 w-[200px] overflow-y-scroll">
+                                        <DropdownMenuLabel>Subclasses</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        {Object.keys(OperatorSubProfession).map((key) => {
+                                            const value = OperatorSubProfession[key as keyof typeof OperatorSubProfession];
+                                            return (
+                                                <DropdownMenuCheckboxItem key={value} checked={isSubClassChecked(value)} onCheckedChange={() => handleSubClassCheck(value)}>
+                                                    {formatSubProfession(value.toLowerCase())}
+                                                </DropdownMenuCheckboxItem>
+                                            );
+                                        })}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" className="w-[200px] justify-between">
+                                            <span className="mr-2 truncate">{filterNation.length === 0 ? <span className="font-normal">Filter Place of Birth</span> : filterNation.map((v) => v).join(", ")}</span>
+                                            <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="max-h-64 w-[200px] overflow-y-scroll">
+                                        <DropdownMenuLabel>Nations</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        {Object.keys(OperatorBirthPlace)
+                                            .filter((key) => !isNaN(key as unknown as number))
+                                            .map((key) => OperatorBirthPlace[key as keyof typeof OperatorBirthPlace])
+                                            .sort((a, b) => String(a).localeCompare(String(b)))
+                                            .map((value) => (
+                                                <DropdownMenuCheckboxItem key={value} checked={isNationChecked(value)} onCheckedChange={() => handleNationCheck(value)}>
+                                                    {value}
+                                                </DropdownMenuCheckboxItem>
+                                            ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" className="w-[200px] justify-between">
+                                            <span className="mr-2 truncate">{filterRace.length === 0 ? <span className="font-normal">Filter by Race</span> : filterRace.map((v) => v).join(", ")}</span>
+                                            <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="max-h-64 w-[200px] overflow-y-scroll">
+                                        <DropdownMenuLabel>Races</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        {Object.keys(OperatorRace)
+                                            .filter((key) => !isNaN(key as unknown as number))
+                                            .map((key) => OperatorRace[key as keyof typeof OperatorRace])
+                                            .sort((a, b) => String(a).localeCompare(String(b)))
+                                            .map((value) => (
+                                                <DropdownMenuCheckboxItem key={value} checked={isRaceChecked(value)} onCheckedChange={() => handleRaceCheck(value)}>
+                                                    {value}
+                                                </DropdownMenuCheckboxItem>
+                                            ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <div className="flex flex-row flex-wrap gap-4 xl:flex-nowrap">
+                                    <Select value={filterRarity} onValueChange={(value) => setFilterRarity(value as OperatorRarity | "all")}>
+                                        <SelectTrigger className="w-[200px] transition-all duration-150 hover:bg-secondary">
+                                            <SelectValue placeholder="Filter by Rarity" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all" className="cursor-pointer">
+                                                All Rarities
+                                            </SelectItem>
+                                            <SelectItem value={OperatorRarity.sixStar} className="cursor-pointer">
+                                                6 Star
+                                            </SelectItem>
+                                            <SelectItem value={OperatorRarity.fiveStar} className="cursor-pointer">
+                                                5 Star
+                                            </SelectItem>
+                                            <SelectItem value={OperatorRarity.fourStar} className="cursor-pointer">
+                                                4 Star
+                                            </SelectItem>
+                                            <SelectItem value={OperatorRarity.threeStar} className="cursor-pointer">
+                                                3 Star
+                                            </SelectItem>
+                                            <SelectItem value={OperatorRarity.twoStar} className="cursor-pointer">
+                                                2 Star
+                                            </SelectItem>
+                                            <SelectItem value={OperatorRarity.oneStar} className="cursor-pointer">
+                                                1 Star
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="outline" className="w-[200px] justify-between">
+                                                <span className="mr-2 truncate">{filterSkillTypes.length === 0 ? <span className="font-normal">Filter Skill Types</span> : filterSkillTypes.map((v) => capitalize(v)).join(", ")}</span>
+                                                <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent className="max-h-64 w-[200px] overflow-y-scroll">
+                                            <DropdownMenuLabel>Skill Types</DropdownMenuLabel>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuCheckboxItem checked={isSkillTypeChecked("auto")} onCheckedChange={() => handleSkillTypeCheck("auto")}>
+                                                Auto
+                                            </DropdownMenuCheckboxItem>
+                                            <DropdownMenuCheckboxItem checked={isSkillTypeChecked("manual")} onCheckedChange={() => handleSkillTypeCheck("manual")}>
+                                                Manual
+                                            </DropdownMenuCheckboxItem>
+                                            <DropdownMenuCheckboxItem checked={isSkillTypeChecked("passive")} onCheckedChange={() => handleSkillTypeCheck("passive")}>
+                                                Passive
+                                            </DropdownMenuCheckboxItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="outline" className="w-[200px] justify-between">
+                                                <span className="mr-2 truncate">{filterSkillChargeTypes.length === 0 ? <span className="font-normal">Filter Skill Charge Types</span> : filterSkillChargeTypes.map((v) => capitalize(v)).join(", ")}</span>
+                                                <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent className="max-h-64 w-[200px] overflow-y-scroll">
+                                            <DropdownMenuLabel>Skill Charge Types</DropdownMenuLabel>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuCheckboxItem checked={isSkillChargeTypeChecked("offensive")} onCheckedChange={() => handleSkillChargeTypeCheck("offensive")}>
+                                                Offensive
+                                            </DropdownMenuCheckboxItem>
+                                            <DropdownMenuCheckboxItem checked={isSkillChargeTypeChecked("defensive")} onCheckedChange={() => handleSkillChargeTypeCheck("defensive")}>
+                                                Defensive
+                                            </DropdownMenuCheckboxItem>
+                                            <DropdownMenuCheckboxItem checked={isSkillChargeTypeChecked("auto")} onCheckedChange={() => handleSkillChargeTypeCheck("auto")}>
+                                                Auto
+                                            </DropdownMenuCheckboxItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </div>
+                                <div className="flex flex-row gap-4">
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div className="flex flex-row">
+                                                <Checkbox checked={isModule} onCheckedChange={() => setIsModule(!isModule)} id="is-module" />
+                                                <Label htmlFor="is-module" className="ml-2">
+                                                    Include Modules
+                                                </Label>
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>Include module stats in operator stats.</TooltipContent>
+                                    </Tooltip>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div className="flex flex-row">
+                                                <Checkbox checked={canActivateSkill} onCheckedChange={() => setCanActivateSkill(!canActivateSkill)} id="can-activate-skill" />
+                                                <Label htmlFor="can-activate-skill" className="ml-2">
+                                                    100% Skill Activation
+                                                </Label>
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>Show only operators who have full SP when deployed.</TooltipContent>
+                                    </Tooltip>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div className="flex flex-row">
+                                                <Checkbox checked={showLimited} onCheckedChange={() => setShowLimited(!showLimited)} id="show-limited" />
+                                                <Label htmlFor="show-limited" className="ml-2">
+                                                    Show Limited
+                                                </Label>
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>Whether to show limited operators.</TooltipContent>
+                                    </Tooltip>
+                                </div>
+                            </div>
+                            <Button variant="outline" className="flex flex-row" onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}>
+                                <span>{sortOrder.toUpperCase()}</span>
+                                {sortOrder === "asc" ? <ArrowUpFromLine className="h-4 w-4" /> : <ArrowDownFromLine className="h-4 w-4" />}
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </div>
-            <OperatorsGrid operators={sortedAndFilteredCharacters} />
+            <div className={`transition-all duration-150 ${showOptions ? "" : "-mt-8"}`}>
+                <OperatorsGrid operators={sortedAndFilteredCharacters} />
+            </div>
         </>
     );
 }
