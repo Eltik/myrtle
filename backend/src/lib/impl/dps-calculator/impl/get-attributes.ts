@@ -58,10 +58,7 @@ export function getAttributes(
         applied: {},
     };
     const buffList = {};
-    if (char.id?.startsWith("token")) console.write("【召唤物属性】");
-    else console.write("【基础属性】");
 
-    console.write("----");
     if (operatorData.level === charData.phases[phaseIndex].maxLevel) {
         attributesKeyFrames = Object.assign(attributesKeyFrames, phaseData.attributesKeyFrames[1].data);
     } else {
@@ -132,14 +129,12 @@ export function getAttributes(
                                 Object.keys(tb).forEach((k) => {
                                     blackboard[k] = tb[k];
                                 });
-                                console.write(`[模组] 强化天赋 - ${cd.name}: ${JSON.stringify(blackboard)}`);
                             }
                             if (cd.prefabKey == "trait" && ebb.override_trait) {
                                 const tb = ebb.trait;
                                 Object.keys(tb).forEach((k) => {
                                     blackboard[k] = tb[k];
                                 });
-                                console.write(`[模组] 强化特性: ${JSON.stringify(blackboard)}`);
                             }
                         }
                         // bufflist处理

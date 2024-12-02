@@ -22,8 +22,5 @@ export function applyPotential(charData: Operator, rank: number, basic: { [key: 
         const value = y?.value ?? 0;
 
         basic[key] += value;
-        if (value > 0) {
-            console.write(`潜能 ${i + 2}: ${key} ${basic[key] - value} -> ${basic[key]} (+${value})`);
-        }
     }
 }
