@@ -45,7 +45,7 @@ function OperatorsInfo({ operator }: { operator: Operator }) {
                     </div>
                 </div>
                 <div className="container relative z-20 m-auto w-screen grid-in-top-fold">
-                    <header className="flex h-64 flex-col-reverse p-[24px_24px_0]">
+                    <header className="mb-2 flex h-64 flex-col-reverse p-[24px_24px_0]">
                         <div className="flex flex-col">
                             <Breadcrumb>
                                 <BreadcrumbList>

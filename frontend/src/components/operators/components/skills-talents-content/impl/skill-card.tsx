@@ -6,9 +6,14 @@ import { type Operator } from "~/types/impl/api/static/operator";
 import OperatorRange from "../../operator-range";
 import type { Range } from "~/types/impl/api/static/ranges";
 import { useEffect, useState } from "react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
+import { ArrowDownIcon, ArrowUpIcon } from "lucide-react";
 
 function SkillCard({ skill, level }: { skill: Operator["skills"][0]; level: number }) {
     const [currentRange, setCurrentRange] = useState<Range | null>(null);
+
+    const skillLevel = skill.static?.levels[level];
+    const blackboard = skillLevel?.blackboard ?? [];
 
     useEffect(() => {
         if (skill.static?.levels[level]?.rangeId) {
@@ -33,6 +38,24 @@ function SkillCard({ skill, level }: { skill: Operator["skills"][0]; level: numb
         ).json()) as { data: Range };
         return data.data;
     }
+
+    const formatBlackboardValue = (key: string, value: number) => {
+        const percentageKeys = ["atk", "def", "attack@atk_scale", "hp_recovery_per_sec", "attack@atk_scale_ol", "attack@prob"];
+        if (percentageKeys.includes(key)) {
+            const percentValue = Math.round(value * 100);
+            return `${value >= 0 ? "+" : ""}${percentValue}%`;
+        }
+        if (key === "base_attack_time") {
+            return `${value > 0 ? "+" : ""}${value.toFixed(1)}s`;
+        }
+        if (key === "shield_duration" || key === "stun_duration") {
+            return `${value}s`;
+        }
+        if (key === "shield_scale") {
+            return `${value}x`;
+        }
+        return value > 0 ? `+${value}` : value.toString();
+    };
 
     return (
         <Card>
@@ -96,6 +119,29 @@ function SkillCard({ skill, level }: { skill: Operator["skills"][0]; level: numb
                     <div className="rounded-br-md border p-2">
                         <p className="text-sm text-muted-foreground">Skill Type</p>
                         <p className="font-bold">{capitalize(skill.static?.levels[level]?.skillType ?? "")}</p>
+                    </div>
+                </div>
+                <div>
+                    <h2 className="mb-1 mt-4 text-lg font-bold">Stats Change</h2>
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+                        {blackboard.map((bb) => (
+                            <TooltipProvider key={bb.key}>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <div className="cursor-pointer rounded-lg bg-secondary px-2 py-1 transition-all hover:bg-secondary/80">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-sm font-medium">{bb.key}</span>
+                                                {(bb.value > 0 && bb.key !== "base_attack_time") || (bb.key === "base_attack_time" && bb.value < 0) ? <ArrowUpIcon className="h-4 w-4 text-green-500" /> : <ArrowDownIcon className="h-4 w-4 text-red-500" />}
+                                            </div>
+                                            <p className="mt-1 font-bold">{formatBlackboardValue(bb.key, bb.value)}</p>
+                                        </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Change in {bb.key}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        ))}
                     </div>
                 </div>
                 {currentRange && (
