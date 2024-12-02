@@ -74,7 +74,6 @@ export function applyBuff(
     buffFrm.applied[tag] = true;
     let done = false; // if !done, will call applyBuffDefault() in the end
 
-    // write log
     function writeBuff(text: string) {
         const line = [""];
         if (tag == skillId) line.push("[技能]");
@@ -91,7 +90,6 @@ export function applyBuff(
         if (text) line.push(text);
     }
 
-    // 一般计算
     function applyBuffDefault() {
         let prefix: string | number = 0;
         for (const key in blackboard) {
@@ -1170,11 +1168,9 @@ export function applyBuff(
                             ["thorns_s_3[b].attack_speed"]: number;
                         }
                     )["thorns_s_3[b].attack_speed"];
-                    if (isSkill) console.log("暖机完成");
-                } else console.log("首次启动时");
+                }
                 if (options.ranged_penalty) {
                     buffFrame.atk_scale = 1;
-                    if (isSkill) console.log(`技能不受距离惩罚`);
                 }
                 break;
             case "skchr_pinecn_2":
@@ -1188,7 +1184,6 @@ export function applyBuff(
                             ["pinecn_s_2[d].atk"]: number;
                         }
                     )["pinecn_s_2[d].atk"];
-                    if (isSkill) console.log("按攻击力叠满计算");
                 } else {
                     (
                         blackboard as unknown as {
@@ -1199,7 +1194,6 @@ export function applyBuff(
                             ["pinecn_s_2[a].atk"]: number;
                         }
                     )["pinecn_s_2[a].atk"];
-                    if (isSkill) console.log("首次启动时");
                 }
                 break;
             case "skchr_amgoat_2":
@@ -1355,7 +1349,6 @@ export function applyBuff(
                 break;
             case "skchr_otter_2":
                 if (options.token) {
-                    console.log("结果无意义，应去掉召唤物选项");
                     done = true;
                 }
                 break;
@@ -1425,7 +1418,6 @@ export function applyBuff(
                         max_hp: number;
                     }
                 ).max_hp = 0;
-                console.log("自身不受鼓舞影响");
                 break;
             case "skchr_swire_1":
                 (
@@ -1531,7 +1523,6 @@ export function applyBuff(
                             edef: number;
                         }
                     ).edef = -160;
-                    console.log("计算战术装置阻挡减防");
                 }
                 if (options.rosmon_double) {
                     (
@@ -1539,7 +1530,6 @@ export function applyBuff(
                             times: number;
                         }
                     ).times = 2;
-                    console.log(`按2次攻击都命中所有敌人计算`);
                 }
                 break;
             case "skchr_aglina_2": // 攻击间隔缩短，但是是乘算正数
@@ -1589,7 +1579,6 @@ export function applyBuff(
                 writeBuff(`最大目标数 = ${buffFrame.maxTarget}`);
                 if (options.ranged_penalty) {
                     buffFrame.atk_scale /= 0.8;
-                    if (isSkill) console.log(`技能不受距离惩罚`);
                 }
                 break;
             case "skchr_ayer_2":
@@ -1604,13 +1593,11 @@ export function applyBuff(
             case "skchr_frostl_1":
                 if (options.ranged_penalty) {
                     buffFrame.atk_scale = 1;
-                    if (isSkill) console.log(`技能不受距离惩罚`);
                 }
                 break;
             case "skchr_svrash_3":
                 if (options.ranged_penalty) {
                     buffFrame.atk_scale = 1;
-                    if (isSkill) console.log(`技能不受距离惩罚`);
                 }
                 (
                     blackboard as unknown as {
@@ -1632,7 +1619,6 @@ export function applyBuff(
             case "skchr_ceylon_1":
                 if (options.ranged_penalty) {
                     buffFrame.atk_scale /= 0.7;
-                    if (isSkill) console.log(`技能不受距离惩罚`);
                 }
                 break;
             case "skchr_nightm_1":
@@ -1867,15 +1853,6 @@ export function applyBuff(
                             ["attack@tomimi_s_2.atk_scale"]: number;
                         }
                     )["attack@tomimi_s_2.atk_scale"];
-                    console.log(
-                        `每种状态概率: ${(
-                            (
-                                blackboard as unknown as {
-                                    prob_override: number;
-                                }
-                            ).prob_override * 100
-                        ).toFixed(1)}%`,
-                    );
                 }
                 break;
             case "skchr_surtr_2":
@@ -1889,13 +1866,6 @@ export function applyBuff(
                             ["attack@surtr_s_2[critical].atk_scale"]: number;
                         }
                     )["attack@surtr_s_2[critical].atk_scale"];
-                    console.log(
-                        `对单目标倍率 ${(
-                            blackboard as unknown as {
-                                atk_scale: number;
-                            }
-                        ).atk_scale.toFixed(1)}x`,
-                    );
                 }
                 break;
             case "skchr_surtr_3":
@@ -2031,8 +2001,6 @@ export function applyBuff(
                                 ["amiya2_s_2[kill].max_stack_cnt"]: number;
                             }
                         )["amiya2_s_2[kill].max_stack_cnt"];
-                    console.log("斩击伤害全部以叠满计算");
-                    console.log("包括前三刀");
                 }
                 break;
             case "tachr_214_kafka_1":
@@ -2114,10 +2082,9 @@ export function applyBuff(
                 ).atk_scale;
                 if ("attack_speed" in blackboard) {
                     if (options.equip && !(skillId == "skchr_ebnhlz_3" && isSkill)) {
-                        console.log("触发-模组攻速增加");
+                        // Do nothing
                     } else {
                         done = true;
-                        console.log("不触发攻速增加");
                     }
                 } else done = true;
                 break;
@@ -2139,7 +2106,6 @@ export function applyBuff(
                 writeBuff(`最大目标数 = ${buffFrame.maxTarget}`);
                 if (options.cond) {
                     buffFrame.times = 2;
-                    console.log("半血2连击");
                 }
                 break;
             case "skchr_dusk_1":
@@ -2150,7 +2116,7 @@ export function applyBuff(
                 if (options.token) done = true;
                 else {
                     if (options.cond) {
-                        console.log("触发半血增伤");
+                        // Do nothing
                     } else
                         delete (
                             blackboard as unknown as {
@@ -2183,8 +2149,7 @@ export function applyBuff(
                             attack_speed: undefined;
                         }
                     ).attack_speed;
-                    console.log("蓝/紫Buff");
-                } else console.log("红Buff(攻速)");
+                }
                 break;
             case "skchr_ash_2":
                 if (options.cond)
@@ -2297,28 +2262,24 @@ export function applyBuff(
                     }
                 ).def_penetrate;
                 if (options.annie) {
-                    console.log("替身模式");
                     done = true;
                 }
                 break;
             case "skchr_bena_2":
             case "skchr_kazema_1":
                 if (options.annie) {
-                    console.log("替身模式");
                     done = true;
                 }
                 break;
             case "skchr_ghost2_1":
             case "skchr_ghost2_2":
                 if (options.annie) {
-                    console.log("替身模式");
                     buffFrame.maxTarget = 999;
                     done = true;
                 }
                 break;
             case "skchr_ghost2_3":
                 if (options.annie) {
-                    console.log("替身模式");
                     buffFrame.maxTarget = 999;
                     done = true;
                 } else {
@@ -2347,7 +2308,6 @@ export function applyBuff(
                 break;
             case "skchr_kazema_2":
                 if (options.annie) {
-                    console.log("替身模式");
                     done = true;
                 }
                 break;
@@ -2405,9 +2365,6 @@ export function applyBuff(
                             atk: number;
                         }
                     ).atk = 1;
-                    console.log("未蓄力-按100%攻击加成计算");
-                } else {
-                    console.log("蓄力-按蓄满40秒计算");
                 }
                 break;
             case "skchr_takila_2":
@@ -2548,7 +2505,6 @@ export function applyBuff(
                             magic_resistance: number;
                         }
                     ).magic_resistance = -15;
-                    if (options.freeze) console.log("维持冻结 -15法抗/脆弱加强");
                 } else
                     (
                         blackboard as unknown as {
@@ -2561,7 +2517,6 @@ export function applyBuff(
                     ).damage_scale_cold;
                 break;
             case "skchr_gnosis_3":
-                if (!options.freeze) console.log("攻击按非冻结计算\n终结伤害按冻结计算");
                 delete (
                     blackboard as unknown as {
                         atk_scale: undefined;
@@ -2646,7 +2601,6 @@ export function applyBuff(
                         ["attack@heal_continuously_scale"]: number;
                     }
                 )["attack@heal_continuously_scale"];
-                console.log("以连续治疗同一目标计算");
                 break;
             case "tachr_4045_heidi_1":
                 if (skillId == "skchr_heidi_1")
@@ -2720,18 +2674,8 @@ export function applyBuff(
                                 atk: number;
                             }
                         ).atk *= charAttr.buffList["skill"].talent_scale;
-                    console.log(
-                        `装备2个装置\n攻击力提升比例: ${(
-                            (
-                                blackboard as unknown as {
-                                    atk: number;
-                                }
-                            ).atk * 100
-                        ).toFixed(1)}%`,
-                    );
                 } else {
                     done = true;
-                    console.log("不装备装置");
                 }
                 break;
             case "tachr_4042_lumen_1":
@@ -2915,7 +2859,6 @@ export function applyBuff(
                         }
                     ).def += atk_add;
                     writeBuff(`阻挡数: ${ecount}, 额外加成 +${atk_add.toFixed(2)}`);
-                    console.log(`按阻挡${ecount}个敌人计算`);
                 }
                 break;
             case "skchr_gvial2_3":
@@ -2959,7 +2902,6 @@ export function applyBuff(
                             ["bgsnow_s_3[atk_up].atk_scale"]: number;
                         }
                     )["bgsnow_s_3[atk_up].atk_scale"];
-                    console.log("正前方敌人");
                 }
                 break;
             case "tachr_497_ctable_1":
@@ -2969,14 +2911,12 @@ export function applyBuff(
                             atk: undefined;
                         }
                     ).atk;
-                    console.log("未阻挡");
                 } else {
                     delete (
                         blackboard as unknown as {
                             attack_speed: undefined;
                         }
                     ).attack_speed;
-                    console.log("阻挡");
                 }
                 break;
             case "tachr_472_pasngr_2":
@@ -3009,15 +2949,6 @@ export function applyBuff(
                         atk: number;
                     }
                 ).atk *= atk_rate;
-                console.log(
-                    `以 ${Math.round(
-                        (
-                            blackboard as unknown as {
-                                atk: number;
-                            }
-                        ).atk * 100,
-                    )}% 计算特性`,
-                );
                 break;
             case "skchr_mlynar_3":
                 delete (
@@ -3030,9 +2961,6 @@ export function applyBuff(
                 if ("atk" in blackboard) {
                     if (!options.equip) {
                         delete blackboard.atk;
-                        console.log("不触发抵挡加攻");
-                    } else {
-                        console.log("触发抵挡加攻");
                     }
                 }
                 break;
@@ -3058,7 +2986,6 @@ export function applyBuff(
                 writeBuff(`最大目标数 = ${buffFrame.maxTarget}`);
                 if (options.ranged_penalty) {
                     buffFrame.atk_scale = 1;
-                    console.log(`技能不受距离惩罚`);
                 }
                 break;
             case "skchr_lolxh_2":
@@ -3066,7 +2993,6 @@ export function applyBuff(
                 writeBuff(`最大目标数 = ${buffFrame.maxTarget}`);
                 if (options.ranged_penalty) {
                     buffFrame.atk_scale = 1;
-                    console.log(`技能不受距离惩罚`);
                 }
                 break;
             case "skchr_qanik_2":
@@ -3100,15 +3026,6 @@ export function applyBuff(
                             ["attack@s2c.atk_scale"]: number;
                         }
                     )["attack@s2c.atk_scale"];
-                    console.log(
-                        `单体倍率 ${(
-                            (
-                                blackboard as unknown as {
-                                    atk_scale: number;
-                                }
-                            ).atk_scale * buffFrame.atk_scale
-                        ).toFixed(1)}x`,
-                    );
                 }
                 break;
             case "tachr_157_dagda_1":
@@ -3122,7 +3039,6 @@ export function applyBuff(
                             atk_up_max_value: number;
                         }
                     ).atk_up_max_value;
-                    console.log(`爆伤叠满`);
                 }
                 if (isSkill && skillId == "skchr_dagda_2")
                     (
@@ -3197,7 +3113,6 @@ export function applyBuff(
                             ["judge_s_1_enhance_checker.atk_scale"]: number;
                         }
                     )["judge_s_1_enhance_checker.atk_scale"];
-                    console.log("不考虑蓄力打断普攻的特殊情况");
                 }
                 break;
             case "skchr_judge_2":
@@ -3224,7 +3139,6 @@ export function applyBuff(
                             times: number;
                         }
                     ).times = 3;
-                    if (isSkill) console.log("以3连击计算");
                 } else
                     (
                         blackboard as unknown as {
@@ -3308,7 +3222,6 @@ export function applyBuff(
                 break;
             case "skchr_texas2_3":
                 done = true;
-                console.log("落地1s，不影响技能时间");
                 break;
             case "tachr_1020_reed2_1":
                 delete (
@@ -3316,7 +3229,6 @@ export function applyBuff(
                         atk: undefined;
                     }
                 ).atk;
-                console.log("假设法术脆弱一直生效");
                 break;
             case "skchr_reed2_2":
                 done = true;
@@ -3340,7 +3252,6 @@ export function applyBuff(
     // --- applyBuff switch ends here ---
 
     if (tag == "skchr_thorns_2") {
-        console.log("反击按最小间隔计算");
         (
             blackboard as unknown as {
                 base_attack_time: number;
@@ -3388,7 +3299,6 @@ export function applyBuff(
                             damage_scale: number;
                         }
                     ).damage_scale += 1;
-                console.log("距离>4.5");
             } else
                 (
                     blackboard as unknown as {
@@ -3421,7 +3331,6 @@ export function applyBuff(
                             };
                         }
                     ).talent.attack_speed;
-                    console.log("受到持续法术伤害");
                 }
             }
             break;
@@ -3624,7 +3533,6 @@ export function applyBuff(
                         };
                     }
                 ).trait.sp_recover_ratio;
-                console.write(`技力回复系数 ${buffFrame.spRecoverRatio.toFixed(2)}x`);
             }
             break;
         case "uniequip_002_doberm":
@@ -3634,7 +3542,6 @@ export function applyBuff(
                         talent: any;
                     }
                 ).talent;
-                console.log("有三星干员");
             }
             break;
         case "uniequip_002_plosis":
@@ -3669,7 +3576,6 @@ export function applyBuff(
                         trait: any;
                     }
                 ).trait;
-                console.log("周围4格没有队友");
             }
             break;
         case "uniequip_002_waaifu":
@@ -3679,7 +3585,6 @@ export function applyBuff(
                         talent: any;
                     }
                 ).talent;
-                console.log("对感染生物");
             }
             break;
         case "uniequip_002_pasngr":
@@ -3771,7 +3676,6 @@ export function applyBuff(
             break;
         case "uniequip_003_shwaz":
             if (options.equip || (skillId == "skchr_shwaz_3" && isSkill)) {
-                console.log("攻击正前方敌人");
                 (
                     blackboard as unknown as {
                         atk_scale: number;
@@ -3872,7 +3776,6 @@ export function applyBuff(
                             };
                         }
                     ).talent.max_stack_cnt;
-                console.log("按模组效果叠满计算");
             }
             break;
         case "uniequip_002_bison":
@@ -3913,7 +3816,6 @@ export function applyBuff(
                         trait: any;
                     }
                 ).trait;
-                console.log("治疗地面目标");
             }
             break;
         case "uniequip_002_silent":
@@ -3923,7 +3825,6 @@ export function applyBuff(
                         trait: any;
                     }
                 ).trait;
-                console.log("治疗地面目标");
             }
             break;
         case "uniequip_002_kalts":
@@ -3943,7 +3844,6 @@ export function applyBuff(
                         };
                     }
                 ).trait.heal_scale;
-                console.log("治疗半血目标");
             }
             break;
         case "uniequip_002_siege":

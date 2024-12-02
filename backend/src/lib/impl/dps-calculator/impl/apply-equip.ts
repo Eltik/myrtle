@@ -78,7 +78,6 @@ export function applyEquip(
                 remove_keys: checkSpecs(equipId, "remove_keys") || [],
             });
     }
-    //  console.log(attr, blackboard);
     const attrKeys = {
         max_hp: "maxHp",
         atk: "atk",
@@ -92,8 +91,6 @@ export function applyEquip(
         // Originally if (!char.options.token), need to fix this
         Object.keys(attr).forEach((x) => {
             basic[attrKeys[x as keyof typeof attrKeys]] += attr[x as keyof typeof attr];
-            if (attr[x as keyof typeof attr] !== 0)
-                console.write(`模组 Lv${operatorData.equipLevel}: ${attrKeys[x as keyof typeof attrKeys]} ${basic[attrKeys[x as keyof typeof attrKeys]] - attr[x as keyof typeof attr]} -> ${basic[attrKeys[x as keyof typeof attrKeys]]} (+${attr[x as keyof typeof attr]})`);
         });
     }
 

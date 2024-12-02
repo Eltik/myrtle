@@ -76,14 +76,10 @@ export const calculateDPS = (params: CalculateDPSParams) => {
 
     if (raidBlackboard.base_atk !== 0) {
         const delta = attr.basic.atk * raidBlackboard.base_atk;
-        const prefix = delta > 0 ? "+" : "";
         Object.assign(attr.basic, {
             atk: Math.round(attr.basic.atk + delta),
         });
-        console.write(`[团辅] 原本攻击力变为 ${attr.basic.atk} (${prefix}${delta.toFixed(1)})`);
     }
-    console.write("");
-    console.write("----");
 
     const _backup = {
         basic: { ...attr.basic },
@@ -93,24 +89,14 @@ export const calculateDPS = (params: CalculateDPSParams) => {
     let skillAttack = null;
 
     if (!checkSpecs(params.operatorData.skillId, "overdrive")) {
-        console.write(`【技能】`);
-        console.write("----------");
         skillAttack = calculateAttack(attr, params.options, params.operatorData, enemy, raidBlackboard, true, params.char, levelData!);
 
-        console.write("----");
         attr.basic = _backup.basic;
 
-        console.write(`【普攻】`);
-        console.write("----------");
         normalAttack = calculateAttack(attr, params.options, params.operatorData, enemy, raidBlackboard, false, params.char, levelData!);
     } else {
-        // 22.4.15 过载模式计算
-        console.write(`- **技能前半**\n`);
         const od_p1 = calculateAttack(attr, params.options, params.operatorData, enemy, raidBlackboard, true, params.char, levelData!);
-        //_note = `${log.note}`;
 
-        console.write("----");
-        console.write(`- **过载**\n`);
         attr.basic = Object.assign({}, _backup.basic);
         Object.assign(attr.char, {
             options: {
@@ -141,8 +127,6 @@ export const calculateDPS = (params: CalculateDPSParams) => {
         merged.hps = merged.totalHeal / tm;
         skillAttack = merged;
 
-        console.write("----");
-        console.write(`- **普攻**\n`);
         attr.basic = Object.assign({}, _backup.basic);
         Object.assign(attr.char, {
             options: {

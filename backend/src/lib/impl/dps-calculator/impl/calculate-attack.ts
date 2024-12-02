@@ -215,14 +215,6 @@ export function calculateAttack(
     if (corr != 0) {
         let real_frame = Math.ceil(frame); // 有误差时，不舍入而取上界，并增加补正值(一般为1)
         real_frame += Number(corr);
-        if (isSkill) {
-            console.log("帧数补正");
-            console.write("[补帧处理] 攻击间隔帧数 > 攻击动画帧数，实际攻击间隔需要补帧（参考动画帧数表）");
-            console.write(`[补帧处理] 技能理论 ${Math.round(frame)} 帧 / 实际 ${real_frame} 帧`);
-        } else {
-            console.write("[补帧处理] 攻击间隔帧数 > 攻击动画帧数，实际攻击间隔需要补帧");
-            console.write(`[补帧处理] 普攻理论 ${Math.round(frame)} 帧 / 实际 ${real_frame} 帧`);
-        }
         frame = real_frame;
     } else {
         frame = Math.round(frame); // 无误差时，舍入成帧数
@@ -230,9 +222,7 @@ export function calculateAttack(
     const frameAttackTime = frame / fps;
     const attackTime = frameAttackTime;
     calculateAnimation(charData, blackboard.id, isSkill, realAttackTime);
-    // 根据最终攻击间隔，重算攻击力
     if (isSkill && blackboard.id == "skchr_platnm_2") {
-        // 白金
         let rate = (attackTime - 1) / (buffList["tachr_204_platnm_1"]["attack@max_delta"] - 1);
         // 熔断
         rate = Math.min(Math.max(rate, 0), 1);

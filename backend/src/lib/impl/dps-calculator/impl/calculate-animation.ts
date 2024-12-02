@@ -46,7 +46,6 @@ export function calculateAnimation(charData: Operator, skillId: string, isSkill:
                 }
                 if (!animKey) animKey = attackKey;
             }
-            //console.log( { animKey, animData, candidates, count, skIndex } );
         }
     }
 
@@ -61,64 +60,40 @@ export function calculateAnimation(charData: Operator, skillId: string, isSkill:
     let preDelay = 0,
         postDelay = 0;
 
-    // console.log("**【动画计算测试，结果仅供参考，不用于后续计算】**");
-
     if (!animKey || !animData[animKey as keyof typeof animData]) {
-        //   console.log("暂无帧数数据，保持原结果不变");
     } else {
         const specKey = String(animKey).includes("Attack") ? charData.id : skillId;
         const isLoop = String(animKey).includes("Loop");
-        // 动画拉伸幅度默认为任意
         let max_scale: number | boolean = 99;
 
         if (typeof animData[animKey as keyof typeof animData] == "number") {
             // 没有OnAttack，一般是瞬发或者不攻击的技能
             animFrame = animData[animKey as keyof typeof animData];
         } else if (isLoop && !(animData[animKey as keyof typeof animData] as { OnAttack: string }).OnAttack) {
-            // 名字为xx_Loop的动画且没有OnAttack事件，则为引导型动画
-            // 有OnAttack事件的正常处理
-            console.write("Loop动画，判定帧数=理论攻击间隔");
             animFrame = attackFrame;
             eventFrame = attackFrame;
             scale = 1;
         } else {
             animFrame = (animData[animKey as keyof typeof animData] as { duration: number }).duration;
             eventFrame = (animData[animKey as keyof typeof animData] as { OnAttack: number }).OnAttack;
-            // 计算缩放比例
             if (checkSpecs(specKey ?? "", "anim_max_scale")) {
                 max_scale = checkSpecs(specKey ?? "", "anim_max_scale");
-                console.write(`动画最大缩放系数: ${max_scale}`);
             }
             scale = Math.max(Math.min(attackFrame / animFrame, Number(max_scale)), 0.1);
         }
-        //if (eventFrame < 0 || isLoop) {
-        //  scale = 1;
-        // }
 
         if (eventFrame >= 0) {
-            // 计算前后摇。后摇至少1帧
-            preDelay = Math.max(Math.round(eventFrame * scale), 1); // preDelay 即 scaled eventFrame
+            preDelay = Math.max(Math.round(eventFrame * scale), 1);
             postDelay = Math.max(Math.round(animFrame * scale - preDelay), 1);
             scaledAnimFrame = preDelay + postDelay;
         } else scaledAnimFrame = animFrame;
-        /*
-        console.log(`理论攻击间隔: ${attackTime.toFixed(3)}s, ${attackFrame.toFixed(1)} 帧. 攻速 ${Math.round(attackSpeed)}%`);
-        console.log(`原本动画时间: ${animKey} - ${animFrame} 帧, 抬手 ${eventFrame} 帧`);
-        console.log(`缩放系数: ${scale.toFixed(2)}`);
-        console.log(`缩放后动画时间: ${scaledAnimFrame} 帧, 抬手 ${preDelay} 帧`);
-    */
-        // 帧数补正
-        // checkSpecs(specKey, "reset_cd_strategy") == "ceil" ?
         if (attackFrame - scaledAnimFrame > 0.5) {
-            //console.log("[补正] 动画时间 < 攻击间隔-0.5帧: 理论攻击帧数向上取整且+1");
             realAttackFrame = Math.ceil(attackFrame) + 1;
         } else {
-            //console.log("[补正] 四舍五入");
             realAttackFrame = Math.max(scaledAnimFrame, Math.round(attackFrame));
         }
 
         realAttackTime = realAttackFrame / _fps;
-        //console.log(`实际攻击间隔: ${realAttackTime.toFixed(3)}s, ${realAttackFrame} 帧`);
     }
 
     return {
