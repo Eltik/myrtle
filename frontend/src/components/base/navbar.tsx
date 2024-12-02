@@ -7,14 +7,13 @@ import { useCookies } from "react-cookie";
 import { useStore } from "zustand";
 import { usePlayer } from "~/store";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import type { User } from "~/types/impl/api";
+import type { StoredUser } from "~/types/impl/api";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
-import { getAvatarSkinId } from "~/helper";
 
 export function Navbar() {
     const [cookies] = useCookies(["login"]);
-    const playerData = useStore(usePlayer, (state) => (state as { playerData: User })?.playerData);
+    const playerData = useStore(usePlayer, (state) => (state as { playerData: StoredUser })?.playerData);
 
     return (
         <>
@@ -34,7 +33,7 @@ export function Navbar() {
                                         <DropdownMenuTrigger>
                                             <div className="flex flex-row rounded-md border px-2 transition-all duration-150 hover:bg-secondary">
                                                 <Avatar className="h-12 w-12">
-                                                    <AvatarImage src={getAvatarSkinId(playerData)} alt="@shadcn" />
+                                                    <AvatarImage src={""} alt="@shadcn" />
                                                     <AvatarFallback>{playerData.status?.nickName?.slice(0, 1) ?? "E"}</AvatarFallback>
                                                 </Avatar>
                                                 <div className="flex flex-row items-center gap-2">

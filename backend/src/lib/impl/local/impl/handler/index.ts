@@ -3,6 +3,7 @@ import { ExcelTables } from "../../../../../types/impl/lib/impl/local/impl/handl
 import { download } from "./impl/download";
 import { exists } from "./impl/exists";
 import { get } from "./impl/get";
+import { join } from "path";
 
 export const GAME_DATA_REPOSITORY = "Kengxxiao/ArknightsGameData_YoStar";
 
@@ -13,6 +14,7 @@ export const init = async () => {
 
     const keys = Object.keys(ExcelTables);
     const values = Object.values(ExcelTables);
+
     for (const value of values) {
         promises.push(
             new Promise(async (resolve) => {
@@ -88,13 +90,17 @@ export const init = async () => {
     };
 
     const staticPromises = keys.map(async (key) => {
-        const data = await get(key as ExcelTables);
+        // @ts-expect-error This is fine
+        const value = ExcelTables[key] as ExcelTables;
+        const data = await get(value);
         if (data) {
             dataObject[key as keyof typeof ExcelTables] = data;
 
             await emitter.emit(Events.LOCAL_TABLES_PARSED, {
                 name: key,
             });
+        } else {
+            console.error(`Failed to parse ${value} from ${join(import.meta.dir, `./data/${value}.json`)}`);
         }
     });
 

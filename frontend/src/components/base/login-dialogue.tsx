@@ -7,7 +7,7 @@ import { Loader2 } from "lucide-react";
 import { useToast } from "~/hooks/use-toast";
 import { useCookies } from "react-cookie";
 import { usePlayer } from "~/store";
-import type { AKServer } from "~/types/impl/api";
+import type { AKServer, StoredUser, User } from "~/types/impl/api";
 import type { SendCodeResponse } from "~/types/impl/api/impl/send-code";
 import type { LoginResponse } from "~/types/impl/api/impl/login";
 import type { RefreshResponse } from "~/types/impl/api/impl/refresh";
@@ -128,7 +128,12 @@ export function LoginDialogue() {
                     throw new Error(playerData.message);
                 }
 
-                usePlayer.setState({ playerData });
+                const storedData: StoredUser = {
+                    avatar: playerData.avatar,
+                    status: playerData.status,
+                };
+
+                usePlayer.setState({ playerData: storedData });
 
                 setIsLoading(false);
 
@@ -163,7 +168,12 @@ export function LoginDialogue() {
                     throw new Error(playerData.message);
                 }
 
-                usePlayer.setState({ playerData: playerData[0] });
+                const storedData: StoredUser = {
+                    avatar: playerData[0]?.data.avatar ?? {},
+                    status: playerData[0]?.data.status as unknown as User["status"],
+                };
+
+                usePlayer.setState({ playerData: storedData });
 
                 setIsLoading(false);
 
