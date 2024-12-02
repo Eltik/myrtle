@@ -155,6 +155,29 @@ export default async function handler(request: Request, response: ServerResponse
                 }),
             );
             return response.end();
+        case "handbook":
+            const handbook = (await (
+                await fetch(`${env.BACKEND_URL}/static`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        type: request.body.type,
+                        id: request.body.id,
+                    }),
+                })
+            ).json()) as {
+                handbook: string;
+            };
+
+            response.writeHead(200, { "Content-Type": "application/json" });
+            response.write(
+                JSON.stringify({
+                    data: handbook.handbook,
+                }),
+            );
+            return response.end();
         default:
             response.writeHead(400, { "Content-Type": "application/json" });
             response.write(
@@ -168,7 +191,7 @@ export default async function handler(request: Request, response: ServerResponse
 
 interface Request {
     body: {
-        type: "materials" | "modules" | "operators" | "ranges" | "skills" | "trust";
+        type: "materials" | "modules" | "operators" | "ranges" | "skills" | "trust" | "handbook";
         id?: string;
         method?: string;
         trust?: number;

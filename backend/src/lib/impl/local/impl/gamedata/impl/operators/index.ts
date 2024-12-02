@@ -1,6 +1,7 @@
 import { getHandbook, getSkill, modules } from "../..";
 import type { Operator } from "../../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/operators";
 import { STATIC_DATA } from "../../../handler";
+import { parseOperatorProfile } from "../../../helper";
 
 export const getAll = (extraData: boolean = true): Operator[] => {
     const data = STATIC_DATA?.CHARACTER_TABLE as Record<string, Operator>;
@@ -67,9 +68,20 @@ export const getAll = (extraData: boolean = true): Operator[] => {
         // Handle handbook items
         const handbookData = getHandbook(id);
         if (handbookData) {
-            Object.assign(operator, {
-                handbook: handbookData,
-            });
+            try {
+                const operatorProfile = parseOperatorProfile(handbookData.storyTextAudio);
+                Object.assign(operator, {
+                    handbook: handbookData,
+                    profile: operatorProfile,
+                });
+            } catch (e) {
+                console.error(e);
+                console.error(`Failed to parse operator profile for ${id}`);
+                Object.assign(operator, {
+                    handbook: handbookData,
+                    profile: null,
+                });
+            }
         }
 
         return {
@@ -149,9 +161,20 @@ export default (id: string): Operator | null => {
         // Handle handbook items
         const handbookData = getHandbook(id);
         if (handbookData) {
-            Object.assign(operator, {
-                handbook: handbookData,
-            });
+            try {
+                const operatorProfile = parseOperatorProfile(handbookData.storyTextAudio);
+                Object.assign(operator, {
+                    handbook: handbookData,
+                    profile: operatorProfile,
+                });
+            } catch (e) {
+                console.error(e);
+                console.error(`Failed to parse operator profile for ${id}`);
+                Object.assign(operator, {
+                    handbook: handbookData,
+                    profile: null,
+                });
+            }
         }
 
         return {

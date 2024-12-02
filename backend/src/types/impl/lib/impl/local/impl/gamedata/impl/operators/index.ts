@@ -1,4 +1,4 @@
-import type { HandbookItem } from "../handbook";
+import type { HandbookItem, OperatorProfile } from "../handbook";
 import type { Item } from "../materials";
 import { ItemType } from "../materials";
 import type { Module, ModuleData } from "../modules";
@@ -212,6 +212,7 @@ export type Operator = {
         data: ModuleData;
     })[];
     handbook: HandbookItem;
+    profile: OperatorProfile | null;
 };
 
 export enum OperatorPosition {
