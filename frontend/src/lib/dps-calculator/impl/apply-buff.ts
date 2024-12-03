@@ -1,5 +1,7 @@
-import type { BuffFrame, CalculateDPSParams, CharAttr, Enemy } from "../../../../types/impl/lib/impl/dps-calculator";
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { checkSpecs } from "./check-specs";
+import type { BuffFrame, CalculateDPSParams, CharAttr, Enemy } from "~/types/impl/frontend/impl/dps-calculator";
 
 export function applyBuff(
     charAttr: CharAttr,

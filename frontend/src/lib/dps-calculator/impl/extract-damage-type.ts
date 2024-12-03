@@ -1,6 +1,6 @@
-import type { CalculateDPSParams, SkillBuff } from "../../../../types/impl/lib/impl/dps-calculator";
-import { OperatorProfession, type Operator } from "../../../../types/impl/lib/impl/local/impl/gamedata/impl/operators";
+import { OperatorProfession, type Operator } from "~/types/impl/api/static/operator";
 import { checkSpecs } from "./check-specs";
+import type { CalculateDPSParams, SkillBuff } from "~/types/impl/frontend/impl/dps-calculator";
 
 export function extractDamageType(charData: Operator, chr: Operator, isSkill: boolean, skillDesc: string, skillBlackboard: SkillBuff, options: CalculateDPSParams["options"]) {
     const charId = chr.id ?? "";

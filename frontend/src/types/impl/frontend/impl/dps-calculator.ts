@@ -1,4 +1,6 @@
-import type { Operator } from "../local/impl/gamedata/impl/operators";
+/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { Operator } from "../../api/static/operator";
 
 export type CalculateNormalATKParams = {
     operatorPhase: Operator["phases"][0]["attributesKeyFrames"][0];

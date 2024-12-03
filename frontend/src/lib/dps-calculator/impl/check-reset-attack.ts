@@ -1,4 +1,4 @@
-import type { CalculateDPSParams } from "../../../../types/impl/lib/impl/dps-calculator";
+import type { CalculateDPSParams } from "~/types/impl/frontend/impl/dps-calculator";
 import { checkSpecs } from "./check-specs";
 
 export function checkResetAttack(

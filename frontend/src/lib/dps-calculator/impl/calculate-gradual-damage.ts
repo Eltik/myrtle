@@ -1,6 +1,6 @@
-import { BuffFrame, BuffList, CalculateDPSParams } from "../../../../types/impl/lib/impl/dps-calculator";
-import type { Operator } from "../../../../types/impl/lib/impl/local/impl/gamedata/impl/operators";
+import type { BuffFrame, BuffList, CalculateDPSParams } from "~/types/impl/frontend/impl/dps-calculator";
 import { checkSpecs } from "./check-specs";
+import type { Operator } from "~/types/impl/api/static/operator";
 
 export function calculateGradDamage(_: {
     charId: string;
