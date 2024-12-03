@@ -1,9 +1,9 @@
-import { BuffFrame, BuffList, CalculateDPSParams } from "../../../../types/impl/lib/impl/dps-calculator";
-import type { Operator } from "../../../../types/impl/lib/impl/local/impl/gamedata/impl/operators";
-import type { Skill } from "../../../../types/impl/lib/impl/local/impl/gamedata/impl/skills";
+import type { Skill } from "~/types/impl/api/static/skills";
 import { checkResetAttack } from "./check-reset-attack";
 import { checkSpecs } from "./check-specs";
 import dpsAnim from "./dps-animation.json";
+import type { BuffFrame, BuffList, CalculateDPSParams } from "~/types/impl/frontend/impl/dps-calculator";
+import type { Operator } from "~/types/impl/api/static/operator";
 
 export function calcDurations(isSkill: boolean, attackTime: number, attackSpeed: number, levelData: Skill["levels"][0], buffList: BuffList, buffFrame: BuffFrame, enemyCount: number, options: CalculateDPSParams["options"], char: Operator) {
     const blackboard = buffList.skill;

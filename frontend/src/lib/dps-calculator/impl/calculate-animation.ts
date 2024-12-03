@@ -1,4 +1,4 @@
-import { Operator } from "../../../../types/impl/lib/impl/local/impl/gamedata/impl/operators";
+import type { Operator } from "~/types/impl/api/static/operator";
 import { checkSpecs } from "./check-specs";
 import dpsAnim from "./dps-animation.json";
 

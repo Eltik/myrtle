@@ -1,5 +1,5 @@
+import type { BuffFrame } from "~/types/impl/frontend/impl/dps-calculator";
 import { AttributeKeys } from "..";
-import { BuffFrame } from "../../../../types/impl/lib/impl/dps-calculator";
 
 export function getBuffedAttributes(basic: Record<string, number>, buffs: BuffFrame) {
     const { ...final } = basic;

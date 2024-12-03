@@ -1,5 +1,5 @@
+import { type Operator, OperatorPhase } from "~/types/impl/api/static/operator";
 import { AttributeKeys } from "..";
-import { Operator, OperatorPhase } from "../../../../types/impl/lib/impl/local/impl/gamedata/impl/operators";
 import { applyEquip } from "./apply-equip";
 import { applyPotential } from "./apply-potential";
 import { getAttribute } from "./get-attribute";

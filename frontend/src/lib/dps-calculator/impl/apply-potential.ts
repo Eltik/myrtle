@@ -1,4 +1,4 @@
-import type { Operator } from "../../../../types/impl/lib/impl/local/impl/gamedata/impl/operators";
+import type { Operator } from "~/types/impl/api/static/operator";
 
 export function applyPotential(charData: Operator, rank: number, basic: Record<string, number>) {
     const PotentialAttributeTypeList = {

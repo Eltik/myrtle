@@ -2,12 +2,12 @@
 // But holy crap this is WAYY too complicated. I'm not even sure if I can implement this in the backend.
 // Work on this later...
 
-import type { CalculateDPSParams, CalculateNormalATKParams, CharAttr } from "../../../types/impl/lib/impl/dps-calculator";
-import type { Skill } from "../../../types/impl/lib/impl/local/impl/gamedata/impl/skills";
+import type { CalculateDPSParams, CalculateNormalATKParams, CharAttr } from "~/types/impl/frontend/impl/dps-calculator";
 import { calculateAttack } from "./impl/calculate-attack";
 import { checkSpecs } from "./impl/check-specs";
 import { getAttributes } from "./impl/get-attributes";
 import { getBlackboard } from "./impl/get-blackboard";
+import type { Skill } from "~/types/impl/api/static/skills";
 
 export const AttributeKeys = ["atk", "attackSpeed", "baseAttackTime", "baseForceLevel", "blockCnt", "cost", "def", "hpRecoveryPerSec", "magicResistance", "massLevel", "maxDeckStackCnt", "maxDeployCount", "maxHp", "moveSpeed", "respawnTime", "spRecoveryPerSec", "tauntLevel"];
 
@@ -120,10 +120,7 @@ export const calculateDPS = (params: CalculateDPSParams) => {
         }
         ["attackCount", "hitCount", "duration", "stunDuration", "prepDuration"].forEach((key) => {
             Object.assign(merged.dur, {
-                [key]:
-                    typeof merged.dur[key as keyof typeof merged.dur] === "number" && typeof od_p1.dur[key as keyof typeof od_p1.dur] === "number"
-                        ? (merged.dur[key as keyof typeof merged.dur] as number) + (od_p1.dur[key as keyof typeof od_p1.dur] as number)
-                        : merged.dur[key as keyof typeof merged.dur],
+                [key]: typeof merged.dur[key as keyof typeof merged.dur] === "number" && typeof od_p1.dur[key as keyof typeof od_p1.dur] === "number" ? (merged.dur[key as keyof typeof merged.dur] as number) + (od_p1.dur[key as keyof typeof od_p1.dur] as number) : merged.dur[key as keyof typeof merged.dur],
             });
         });
         const tm = merged.dur.duration + merged.dur.stunDuration + merged.dur.prepDuration;

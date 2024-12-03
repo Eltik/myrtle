@@ -1,6 +1,5 @@
-import type { CalculateDPSParams, CharAttr, Enemy } from "../../../../types/impl/lib/impl/dps-calculator";
-import type { Operator } from "../../../../types/impl/lib/impl/local/impl/gamedata/impl/operators";
-import type { Skill } from "../../../../types/impl/lib/impl/local/impl/gamedata/impl/skills";
+import type { Operator } from "~/types/impl/api/static/operator";
+import type { CalculateDPSParams, CharAttr, Enemy } from "~/types/impl/frontend/impl/dps-calculator";
 import { applyBuff } from "./apply-buff";
 import { calculateAnimation } from "./calculate-animation";
 import { calcDurations } from "./calculate-durations";
@@ -11,6 +10,7 @@ import { checkSpecs } from "./check-specs";
 import { extractDamageType } from "./extract-damage-type";
 import { getAttributes } from "./get-attributes";
 import { getBuffedAttributes } from "./get-buffed-attributes";
+import type { Skill } from "~/types/impl/api/static/skills";
 
 export function calculateAttack(
     charAttr: CharAttr,
