@@ -65,4 +65,12 @@ export const listener = async () => {
     emitter.on(Events.AUTH_YOSTAR_LOGIN_ERROR, async (data) => {
         console.log(colors.red(`Error logging in as ${data.email}:`), data);
     });
+
+    emitter.on(Events.DPS_CALCULATOR_CLASS_FETCHED, async (data) => {
+        console.log(colors.gray(`Fetched class ${data.name}.`));
+    });
+
+    emitter.on(Events.DPS_CALCULATOR_INITIATED, async () => {
+        console.log(colors.green(`Initiated DPS calculator!`));
+    });
 };

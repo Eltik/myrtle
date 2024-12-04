@@ -23,6 +23,9 @@ export enum Events {
     AUTH_YOSTAR_CODE_ERROR = "auth.yostar.code.error",
     AUTH_YOSTAR_LOGIN_SUCCESS = "auth.yostar.login.success",
     AUTH_YOSTAR_LOGIN_ERROR = "auth.yostar.login.error",
+
+    DPS_CALCULATOR_CLASS_FETCHED = "dps.calculator.class.fetched",
+    DPS_CALCULATOR_INITIATED = "dps.calculator.initiated",
 }
 
 const emitter = new EventEmitter2({});
