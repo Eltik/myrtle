@@ -3,11 +3,11 @@
 // Work on this later...
 
 import { init as initOperators } from "./impl/operators";
-import { init as initEnemies } from "./impl/enemies";
+//import { init as initEnemies } from "./impl/enemies";
 
 export const AttributeKeys = ["atk", "attackSpeed", "baseAttackTime", "baseForceLevel", "blockCnt", "cost", "def", "hpRecoveryPerSec", "magicResistance", "massLevel", "maxDeckStackCnt", "maxDeployCount", "maxHp", "moveSpeed", "respawnTime", "spRecoveryPerSec", "tauntLevel"];
 
 export const init = async () => {
     await initOperators();
-    await initEnemies();
+    //await initEnemies(); // Disabled for now
 };
