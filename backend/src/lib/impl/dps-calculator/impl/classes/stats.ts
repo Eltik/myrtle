@@ -16,6 +16,11 @@ export default class Stats {
     public attackSpeed: number | null;
     public attackType: AttackType | null;
 
+    public attackCount: {
+        count: number;
+        probability: number;
+    };
+
     constructor(
         name: string,
         def: number,
@@ -29,6 +34,10 @@ export default class Stats {
         blockCnt: number | null,
         attackSpeed: number | null,
         attackType: AttackType | null,
+        attackCount: {
+            count: number;
+            probability: number;
+        } = { count: 1, probability: 1 },
     ) {
         this.name = name;
         this.def = def;
@@ -42,5 +51,6 @@ export default class Stats {
         this.blockCnt = blockCnt;
         this.attackSpeed = attackSpeed;
         this.attackType = attackType;
+        this.attackCount = attackCount;
     }
 }

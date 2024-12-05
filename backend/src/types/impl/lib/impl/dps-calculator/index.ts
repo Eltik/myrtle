@@ -52,4 +52,10 @@ export type Modifiers = {
 
     // True_Damage
     extraTrueDamageDone?: number[];
+
+    // Attack_Count
+    attackCountModifiers?: {
+        count: number;
+        probability: number;
+    };
 };

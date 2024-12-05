@@ -178,7 +178,7 @@ async function fetchEnemyData(enemyId: string) {
 
     if (!stats) throw new Error(`Stats not found for ${enemyId}`);
 
-    return new EnemyUnit(stats, []);
+    return new EnemyUnit(enemyData, stats, []);
 }
 
 export default async function fetchNormalEnemies() {
