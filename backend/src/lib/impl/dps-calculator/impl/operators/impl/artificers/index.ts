@@ -6,7 +6,7 @@ import OperatorUnit from "../../../classes/operator-unit";
 import Skills from "../../../classes/skills";
 import Stats from "../../../classes/stats";
 import { getOperatorAttributeStats } from "../../../helper/getAttributeStats";
-import { transformSkill } from "../../../helper/transformSkill";
+import { stainless } from "./impl/stainless";
 
 async function fetchOperatorData(operatorId: string) {
     const operatorData = await operators(operatorId);
@@ -56,33 +56,8 @@ async function fetchOperatorData(operatorId: string) {
     for (const skill of operatorData.skills) {
         switch (operatorData.id) {
             case "char_4072_ironmn":
-                if (skill.skillId === "skchr_ironmn_1") {
-                    const skillData = transformSkill(skill);
-
-                    skills.push(
-                        new Skills(skill.static?.levels[0].name ?? "", skillData, {
-                            baseAttackModifiers: [0.12],
-                            attackMultiplierModifiers: [0.12],
-                        }),
-                    );
-                } else if (skill.skillId === "skchr_ironmn_2") {
-                    const skillData = transformSkill(skill);
-
-                    skills.push(
-                        new Skills(skill.static?.levels[0].name ?? "", skillData, {
-                            baseAttackModifiers: [0.6],
-                        }),
-                    );
-                } else if (skill.skillId === "skchr_ironmn_3") {
-                    const skillData = transformSkill(skill);
-
-                    skills.push(
-                        new Skills(skill.static?.levels[0].name ?? "", skillData, {
-                            baseAttackModifiers: [0.55],
-                            attackSpeedModifiers: [55],
-                        }),
-                    );
-                }
+                const stainlessSkills = stainless(skill);
+                skills.push(...stainlessSkills);
         }
     }
 

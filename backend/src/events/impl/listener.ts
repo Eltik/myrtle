@@ -70,6 +70,10 @@ export const listener = async () => {
         console.log(colors.gray(`Fetched class ${data.name}.`));
     });
 
+    emitter.on(Events.DPS_ENEMY_CLASS_FETCHED, async (data) => {
+        console.log(colors.gray(`Fetched enemy class ${data.name}.`));
+    });
+
     emitter.on(Events.DPS_CALCULATOR_INITIATED, async () => {
         console.log(colors.green(`Initiated DPS calculator!`));
     });

@@ -27,9 +27,8 @@ export default class OperatorUnit {
         moduleData?: BattleEquip,
     ) {
         const stats = getOperatorAttributeStats(this.operator, metadata, level, moduleData);
-
         if (!stats) throw new Error("Failed to update attribute stats.");
 
-        this.stats = new Stats(this.operator.name, stats.def, stats.magicResistance, this.operator.profession, this.operator.subProfessionId, stats.maxHp, stats.atk, stats.cost, stats.respawnTime, stats.blockCnt, stats.attackSpeed, null);
+        this.stats = new Stats(this.operator.name, stats.def, stats.magicResistance, this.operator.profession, this.operator.subProfessionId, stats.maxHp, stats.atk, stats.cost, stats.respawnTime, stats.blockCnt, stats.attackSpeed, this.stats.attackType);
     }
 }

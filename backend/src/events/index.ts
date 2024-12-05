@@ -25,6 +25,7 @@ export enum Events {
     AUTH_YOSTAR_LOGIN_ERROR = "auth.yostar.login.error",
 
     DPS_CALCULATOR_CLASS_FETCHED = "dps.calculator.class.fetched",
+    DPS_ENEMY_CLASS_FETCHED = "dps.enemy.class.fetched",
     DPS_CALCULATOR_INITIATED = "dps.calculator.initiated",
 }
 
