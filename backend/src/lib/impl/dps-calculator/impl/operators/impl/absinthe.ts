@@ -9,6 +9,10 @@ export default class Absinthe extends OperatorUnit {
         if (this.skillIndex === 1 && this.operatorModule && this.operatorModuleLevel > 1) {
             this.talentDamage = true;
         }
+
+        if (this.talentDamage && this.elite > 0) {
+            this.talentDamageName += "lowHpTarget";
+        }
     }
 
     public skillDPS(enemy: { defense: number; res: number }): number {
