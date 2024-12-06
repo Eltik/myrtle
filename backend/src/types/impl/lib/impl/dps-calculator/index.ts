@@ -35,8 +35,28 @@ export type OperatorParams = {
     moduleIndex?: number;
     moduleLevel?: number;
 
-    buffs?: [number, number, number, number];
-    baseBuffs?: [number, number];
+    /**
+     * 0: ATK buff as a percentage decimal (eg. 0.4)
+     * 1: Flat ATK buff (eg. 102)
+     * 2: ASPD buff (eg. 52)
+     * 3: Fragile debuff as a percentage decimal (eg. 0.3)
+     */
+    buffs?: {
+        atk?: number;
+        atkFlat?: number;
+        aspd?: number;
+        fragile?: number;
+    };
+
+    /**
+     * 0: ATK buff as a percentage decimal (eg. 0.4)
+     * 1: Flat ATK buff (eg. 102)
+     */
+    baseBuffs?: {
+        atk?: number;
+        atkFlat?: number;
+    };
+
     spBoost?: number;
 
     targets?: number;
@@ -61,7 +81,19 @@ export type OperatorParams = {
     maxRes?: number;
     res?: [number];
     def?: [number];
-    shred?: [number, number, number, number];
+
+    /**
+     * 0: DEF shred as a percentage decimal (eg. 0.4)
+     * 1: Flat DEF shred (eg. 102)
+     * 2: RES shred as a percentage decimal (eg. 0.4)
+     * 3: Flat RES shred (eg. 102)
+     */
+    shred?: {
+        def?: number;
+        defFlat?: number;
+        res?: number;
+        resFlat?: number;
+    };
 
     normalDPS?: number;
 };
