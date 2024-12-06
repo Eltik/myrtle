@@ -1,6 +1,7 @@
 import { OperatorParams, OperatorTalentParameter } from "../../../../../../types/impl/lib/impl/dps-calculator";
 import { BattleEquip } from "../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/modules";
 import { Operator, OperatorPosition, OperatorProfession } from "../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/operators";
+import { getDrone } from "../../../../local/impl/gamedata/impl/operators";
 import { getOperatorAttributeStats } from "../../helper/getAttributeStats";
 import { operatorPhaseToNumber } from "../../helper/operatorPhaseToNumber";
 import { operatorRarityToNumber } from "../../helper/operatorRarityToNumber";
@@ -75,10 +76,37 @@ export default class OperatorUnit {
     private skillDamage: boolean;
     private moduleDamage: boolean;
 
+    /**
+     * @description Buffs
+     */
+    private buffName: string = "";
+    private buffATK: number;
+    private buffATKFlat: number;
+    private buffFragile: number;
+
+    /**
+     * @constructor OperatorUnit
+     *
+     * @param operatorData  Operator data.
+     * @param params      Operator parameters.
+     * @param defaultSkillIndex  Default skill index.
+     * @param defaultPotential  Default potential.
+     * @param defaultModIndex  Default module index.
+     */
     constructor(operatorData: Operator, params: OperatorParams, defaultSkillIndex: number = 2, defaultPotential: number = 1, defaultModIndex: number = -1) {
         if (!params.allCond) params.allCond = false;
-        if (!params.baseBuffs) params.baseBuffs = [1, 0];
-        if (!params.buffs) params.buffs = [0, 0, 0, 0];
+        if (!params.baseBuffs)
+            params.baseBuffs = {
+                atk: 1,
+                atkFlat: 0,
+            };
+        if (!params.buffs)
+            params.buffs = {
+                aspd: 0,
+                atk: 0,
+                atkFlat: 0,
+                fragile: 0,
+            };
         if (!params.conditionals)
             params.conditionals = {
                 moduleDamage: true,
@@ -101,7 +129,13 @@ export default class OperatorUnit {
         if (!params.potential) params.potential = -1;
         if (!params.promotion) params.promotion = -1;
         if (!params.res) params.res = [-1];
-        if (!params.shred) params.shred = [1, 0, 1, 0];
+        if (!params.shred)
+            params.shred = {
+                def: 1,
+                defFlat: 0,
+                res: 1,
+                resFlat: 0,
+            };
         if (!params.skillIndex) params.skillIndex = -1;
         if (!params.spBoost) params.spBoost = 0;
         if (!params.targets) params.targets = -1;
@@ -179,7 +213,7 @@ export default class OperatorUnit {
         if (operatorRarityAsNumber > 2) {
             let skillIndex = params.skillIndex;
 
-            if (skillIndex === -1 || operatorData.skills.length <= skillIndex || skillIndex !== -1) {
+            if (skillIndex === -1 || operatorData.skills.length <= skillIndex) {
                 if (operatorData.skills.length > defaultSkillIndex) {
                     skillIndex = defaultSkillIndex;
                 } else {
@@ -285,7 +319,7 @@ export default class OperatorUnit {
             /**
              * @description Update ATK and ASPD if modules add it.
              */
-            if (operatorModule) {
+            if (operatorModule && operatorModule.data) {
                 this.atk += operatorModule.data.phases[moduleLevel - 1].attributeBlackboard.find((data) => data.key === "atk")?.value ?? 0;
                 this.attackSpeed += operatorModule.data.phases[moduleLevel - 1].attributeBlackboard.find((data) => data.key === "attack_speed")?.value ?? 0;
             }
@@ -408,7 +442,7 @@ export default class OperatorUnit {
             }
         }
 
-        if (this.operatorModule && this.operatorModuleLevel > 0) {
+        if (this.operatorModule && this.operatorModule.data && this.operatorModuleLevel > 0) {
             const modulePhase = this.operatorModule.data.phases[this.operatorModuleLevel - 1];
             for (const part of modulePhase.parts) {
                 if (part.target === "TALENT" || part.target === "TALENT_DATA_ONLY") {
@@ -567,5 +601,148 @@ export default class OperatorUnit {
         /**
          * @description Mech-accord caster-specific damage.
          */
+        const x = operatorData.displayTokenDict;
+
+        const droneAtk: {
+            e0: number[][];
+            e1: number[][];
+            e2: number[][];
+        } = {
+            e0: [],
+            e1: [],
+            e2: [],
+        };
+        const droneAtkInterval = [];
+
+        if (x) {
+            const droneKeys = Object.keys(x);
+            for (const key of droneKeys) {
+                const data = getDrone(key);
+                if (!data) continue;
+
+                droneAtkInterval.push(data.phases[0].attributesKeyFrames[0].data.baseAttackTime);
+
+                const droneAtk0 = [data.phases[0].attributesKeyFrames[0].data.atk, data.phases[0].attributesKeyFrames[1].data.atk];
+                droneAtk.e0.push(droneAtk0);
+
+                if (operatorRarityAsNumber > 2) {
+                    const droneAtk1 = [data.phases[1].attributesKeyFrames[0].data.atk, data.phases[1].attributesKeyFrames[1].data.atk];
+                    droneAtk.e1.push(droneAtk1);
+                }
+                if (operatorRarityAsNumber > 3) {
+                    const droneAtk2 = [data.phases[2].attributesKeyFrames[0].data.atk, data.phases[2].attributesKeyFrames[1].data.atk];
+                    droneAtk.e2.push(droneAtk2);
+                }
+            }
+        }
+
+        if (droneAtk.e0.length > 0) {
+            let slot = this.skillIndex;
+            if (droneAtk.e0.length < 2) {
+                slot = 0;
+            }
+
+            this.droneAtkInterval = droneAtkInterval[slot];
+            this.droneAtk = droneAtk.e0[slot][0] + ((droneAtk.e0[slot][1] - droneAtk.e0[slot][0]) * (level - 1)) / (maxLevels[elite][operatorRarityAsNumber - 1] - 1);
+
+            if (elite === 1) {
+                this.droneAtk = droneAtk.e1[slot][0] + ((droneAtk.e1[slot][1] - droneAtk.e1[slot][0]) * (level - 1)) / (maxLevels[elite][operatorRarityAsNumber - 1] - 1);
+            }
+            if (elite === 2) {
+                this.droneAtk = droneAtk.e2[slot][0] + ((droneAtk.e2[slot][1] - droneAtk.e2[slot][0]) * (level - 1)) / (maxLevels[elite][operatorRarityAsNumber - 1] - 1);
+            }
+        }
+
+        /**
+         * @description Set buffs.
+         */
+        this.atk *= params.baseBuffs.atk! + params.buffs.atk!;
+
+        if (params.baseBuffs?.atk && params.baseBuffs.atk! > 1) {
+            this.buffName += ` bAtk+${Math.floor(100 * (params.baseBuffs.atk - 0.999999))}%`;
+        } else if (params.baseBuffs.atk && params.baseBuffs.atk < 1) {
+            this.buffName += ` bAtk${Math.floor(100 * (params.baseBuffs.atk - 1.000001))}%`;
+        }
+
+        if (params.baseBuffs.atkFlat && params.baseBuffs.atkFlat > 0) {
+            this.buffName += ` bAtk+${Math.floor(params.baseBuffs.atkFlat)}`;
+        } else if (params.baseBuffs.atkFlat && params.baseBuffs.atkFlat < 0) {
+            this.buffName += ` bAtk${Math.floor(params.baseBuffs.atkFlat)}`;
+        }
+
+        this.buffATK = params.buffs.atk ?? 0;
+        if (this.buffATK > 0) {
+            this.buffName += ` atk+${Math.floor(100 * this.buffATK)}%`;
+        } else if (this.buffATK < 0) {
+            this.buffName += ` atk${Math.floor(100 * this.buffATK)}%`;
+        }
+
+        this.attackSpeed += params.buffs.aspd ?? 0;
+        if (params.buffs.aspd && params.buffs.aspd > 0) {
+            this.buffName += ` aspd+${Math.floor(100 * params.buffs.aspd)}%`;
+        } else if (params.buffs.aspd && params.buffs.aspd < 0) {
+            this.buffName += ` aspd${Math.floor(100 * params.buffs.aspd)}%`;
+        }
+
+        this.buffATKFlat = params.buffs.atkFlat ?? 0;
+        if (this.buffATKFlat > 0) {
+            this.buffName += ` atk+${Math.floor(this.buffATKFlat)}`;
+        } else if (this.buffATKFlat < 0) {
+            this.buffName += ` atk${Math.floor(this.buffATKFlat)}`;
+        }
+
+        this.buffFragile = params.buffs.fragile ?? 0;
+        if (this.buffFragile > 0) {
+            this.buffName += ` fragile+${Math.floor(100 * this.buffFragile)}%`;
+        } else if (this.buffFragile < 0) {
+            this.buffName += ` fragile${Math.floor(100 * this.buffFragile)}%`;
+        }
+
+        if (this.spBoost > 0) {
+            this.buffName += ` +${this.spBoost}SP/s`;
+        }
+
+        if (params.shred.def && params.shred.def !== 1) {
+            this.buffName += ` -${Math.floor(100 * (1 - params.shred.def))}%`;
+        }
+        if (params.shred.defFlat && params.shred.defFlat !== 0) {
+            this.buffName += ` -${Math.floor(params.shred.defFlat)}`;
+        }
+        if (params.shred.res && params.shred.res !== 1) {
+            this.buffName += ` -${Math.floor(100 * (1 - params.shred.res))}%`;
+        }
+        if (params.shred.resFlat && params.shred.resFlat !== 0) {
+            this.buffName += ` -${Math.floor(params.shred.resFlat)}`;
+        }
+    }
+
+    public normalAttack(
+        enemy: {
+            defense: number;
+            res: number;
+        },
+        extraBuffs: {
+            atk: number;
+            flatATK: number;
+            aspd: number;
+        } = {
+            atk: 0,
+            flatATK: 0,
+            aspd: 0,
+        },
+        hits: number = 1,
+        aoe: number = 1,
+    ) {
+        const finalAtk = this.atk * (1 + extraBuffs.atk + this.buffATK) + extraBuffs.flatATK + this.buffATKFlat;
+        let hitDmg = 0;
+
+        if (!this.isPhysical) {
+            hitDmg = Math.max(finalAtk * (1 - enemy.res / 100), finalAtk * 0.05);
+        } else {
+            hitDmg = Math.max(finalAtk - enemy.defense, finalAtk * 0.05);
+        }
+
+        const dps = ((hits * hitDmg) / this.attackInterval) * ((this.attackSpeed + extraBuffs.aspd) / 100) * aoe;
+        return dps;
     }
 }

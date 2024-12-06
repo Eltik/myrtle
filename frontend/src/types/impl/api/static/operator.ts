@@ -125,7 +125,7 @@ export type Operator = {
             image: string | null;
         };
     }[];
-    displayTokenDict: null;
+    displayTokenDict: Record<string, boolean> | null;
     talents: {
         candidates: {
             unlockCondition: {

@@ -1,5 +1,5 @@
 import { getHandbook, getSkill, modules } from "../..";
-import type { Operator } from "../../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/operators";
+import type { Drone, Operator } from "../../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/operators";
 import { STATIC_DATA } from "../../../handler";
 import { parseOperatorProfile } from "../../../helper";
 
@@ -93,6 +93,12 @@ export const getAll = (extraData: boolean = true): Operator[] => {
     // Wait for all operators to be processed
     const operators = operatorData.map((operator) => operator);
     return operators;
+};
+
+export const getDrone = (id: string): Drone | null => {
+    const data = getAll(false);
+    const drone = (data.find((drone) => drone.id === id) as unknown as Drone | null) ?? null;
+    return drone;
 };
 
 export default (id: string): Operator | null => {
