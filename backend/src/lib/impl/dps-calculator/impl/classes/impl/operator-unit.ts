@@ -6,7 +6,7 @@ import { getOperatorAttributeStats } from "../../helper/getAttributeStats";
 import { operatorPhaseToNumber } from "../../helper/operatorPhaseToNumber";
 import { operatorRarityToNumber } from "../../helper/operatorRarityToNumber";
 
-export default class OperatorUnit {
+export class OperatorUnit {
     /**
      * @description Constructor data.
      */
@@ -16,35 +16,35 @@ export default class OperatorUnit {
     /**
      * @description Number of targets.
      */
-    private targets: number;
+    public targets: number;
 
     /**
      * @description Operator trait details.
      */
-    private atk: number;
+    public atk: number;
     private atkTrust: number;
     private atkPotential: [number, number] = [0, 0];
     private atkModule = [];
 
-    private attackInterval: number;
+    public attackInterval: number;
 
-    private attackSpeed: number;
+    public attackSpeed: number;
     private aspdTrust: number;
     private aspdPotential: [number, number] = [0, 0];
     private aspdModule = [];
 
-    private elite: number;
+    public elite: number;
     private level: number;
-    private potential: number;
+    public potential: number;
     private skillLevel: number;
     private trust: number;
-    private operatorModule: Operator["modules"][number] | null = null;
-    private operatorModuleLevel: number = -1;
+    public operatorModule: Operator["modules"][number] | null = null;
+    public operatorModuleLevel: number = -1;
 
-    private skillIndex: number;
-    private skillParameters: number[] = [];
+    public skillIndex: number;
+    public skillParameters: number[] = [];
     private skillDuration: number = -1;
-    private skillCost: number = -1;
+    public skillCost: number = -1;
 
     private spBoost: number;
     private isPhysical: boolean;
@@ -56,8 +56,8 @@ export default class OperatorUnit {
     private hasSecondTalent: boolean;
     private talent1Name: string = "";
     private talent2Name: string = "";
-    private talent1Parameters: number[] = [];
-    private talent2Parameters: number[] = [];
+    public talent1Parameters: number[] = [];
+    public talent2Parameters: number[] = [];
     private talent1Defaults: number[] = [];
     private talent2Defaults: number[] = [];
 
@@ -71,18 +71,18 @@ export default class OperatorUnit {
      * @description Whether the operator has conditional damage.
      */
     private traitDamage: boolean;
-    private talentDamage: boolean;
+    public talentDamage: boolean;
     private talent2Damage: boolean;
     private skillDamage: boolean;
-    private moduleDamage: boolean;
+    public moduleDamage: boolean;
 
     /**
      * @description Buffs
      */
     private buffName: string = "";
-    private buffATK: number;
-    private buffATKFlat: number;
-    private buffFragile: number;
+    public buffATK: number;
+    public buffATKFlat: number;
+    public buffFragile: number;
 
     /**
      * @constructor OperatorUnit
