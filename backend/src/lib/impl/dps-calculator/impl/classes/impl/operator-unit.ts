@@ -70,11 +70,16 @@ export class OperatorUnit {
     /**
      * @description Whether the operator has conditional damage.
      */
-    private traitDamage: boolean;
+    public traitDamage: boolean;
+    public traitDamageName: string | undefined;
     public talentDamage: boolean;
-    private talent2Damage: boolean;
-    private skillDamage: boolean;
+    public talentDamageName: string | undefined;
+    public talent2Damage: boolean;
+    public talent2DamageName: string | undefined;
+    public skillDamage: boolean;
+    public skillDamageName: string | undefined;
     public moduleDamage: boolean;
+    public moduleDamageName: string | undefined;
 
     /**
      * @description Buffs
