@@ -745,4 +745,36 @@ export default class OperatorUnit {
         const dps = ((hits * hitDmg) / this.attackInterval) * ((this.attackSpeed + extraBuffs.aspd) / 100) * aoe;
         return dps;
     }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public skillDPS(enemy: { defense: number; res: number }): number {
+        throw new Error("Not implemented");
+    }
+
+    public totalDMG(enemy: { defense: number; res: number }) {
+        if (this.skillDuration < 1 || this.skillIndex === -1) {
+            return this.skillDPS(enemy);
+        } else {
+            return this.skillDPS(enemy) * this.skillDuration;
+        }
+    }
+
+    public averageDPS(enemy: { defense: number; res: number }) {
+        if (this.skillDuration < 1 || this.skillIndex === -1) {
+            return this.skillDPS(enemy);
+        } else {
+            const tmp = this.skillIndex;
+            const skillDPS = this.skillDPS(enemy);
+
+            this.skillIndex = -1;
+
+            const offSkillDPS = this.skillDPS(enemy);
+
+            this.skillIndex = tmp;
+
+            const cycleDMG = skillDPS * this.skillDuration + (offSkillDPS * this.skillCost) / (1 + this.spBoost);
+            const dps = cycleDMG / (this.skillDuration + this.skillCost / (1 + this.spBoost));
+            return dps;
+        }
+    }
 }
