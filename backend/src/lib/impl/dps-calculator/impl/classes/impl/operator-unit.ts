@@ -275,7 +275,7 @@ export class OperatorUnit {
                     availableModules = [];
                     operatorModule = null;
                 } else {
-                    if (availableModules.length < params.moduleIndex) {
+                    if (availableModules.length > params.moduleIndex) {
                         operatorModule = availableModules[params.moduleIndex];
                     }
                     moduleLevel = params.moduleLevel <= 3 && params.moduleLevel > 1 ? params.moduleLevel : 3;
