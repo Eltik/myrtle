@@ -6,6 +6,7 @@ import Adnachiel from "./impl/adnachiel";
 import Amiya from "./impl/amiya";
 import AmiyaGuard from "./impl/amiya-guard";
 import Andreana from "./impl/andreana";
+import Angelina from "./impl/angelina";
 import Archetto from "./impl/archetto";
 
 export default {
@@ -18,4 +19,5 @@ export default {
     Amiya,
     AmiyaGuard,
     Andreana,
+    Angelina,
 };
