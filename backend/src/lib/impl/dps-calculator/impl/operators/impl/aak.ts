@@ -1,9 +1,9 @@
 import type { OperatorParams } from "../../../../../../types/impl/lib/impl/dps-calculator";
-import type { Operator } from "../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/operators";
 import OperatorUnit from "../../classes";
+import { OperatorData } from "../../classes/impl/operator-data";
 
 export default class Aak extends OperatorUnit {
-    constructor(operatorData: Operator, params: OperatorParams) {
+    constructor(operatorData: OperatorData, params: OperatorParams) {
         super(operatorData, params, 2, 1, 1);
     }
 

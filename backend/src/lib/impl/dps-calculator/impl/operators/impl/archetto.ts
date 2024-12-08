@@ -1,9 +1,9 @@
 import type { OperatorParams } from "../../../../../../types/impl/lib/impl/dps-calculator";
-import type { Operator } from "../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/operators";
 import OperatorUnit from "../../classes";
+import { OperatorData } from "../../classes/impl/operator-data";
 
 export default class Archetto extends OperatorUnit {
-    constructor(operatorData: Operator, params: OperatorParams) {
+    constructor(operatorData: OperatorData, params: OperatorParams) {
         super(operatorData, params, 2, 1, 1);
 
         if (this.operatorModule?.id === "uniequip_003_archet" && this.operatorModuleLevel > 1 && this.talentDamage && this.skillIndex !== 2) {
@@ -69,8 +69,8 @@ export default class Archetto extends OperatorUnit {
         }
 
         if (this.skillIndex === 0 || this.skillIndex === 2) {
-            const finalAtk = this.atk * (1 + this.buffATK + (this.skillParameters[0] * (this.skillIndex - 1)) / 3) + this.buffATKFlat;
-            const hitDmg = Math.max(finalAtk * atkScale - enemy.defense, finalAtk * atkScale * 0.05) * (1 + ((this.skillIndex - 1) * 2) / 3);
+            const finalAtk = this.atk * (1 + this.buffATK + (this.skillParameters[0] * (this.skillIndex + 1)) / 3) + this.buffATKFlat;
+            const hitDmg = Math.max(finalAtk * atkScale - enemy.defense, finalAtk * atkScale * 0.05) * (1 + ((this.skillIndex + 1) * 2) / 3);
 
             dps = ((hitDmg / this.attackInterval) * (this.attackSpeed + aspd)) / 100;
 
