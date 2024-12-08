@@ -1,17 +1,13 @@
-import { OperatorParams, OperatorTalentParameter } from "../../../../../../types/impl/lib/impl/dps-calculator";
-import { BattleEquip } from "../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/modules";
-import { Operator, OperatorPosition, OperatorProfession } from "../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/operators";
-import { getDrone } from "../../../../local/impl/gamedata/impl/operators";
-import { getOperatorAttributeStats } from "../../helper/getAttributeStats";
-import { operatorPhaseToNumber } from "../../helper/operatorPhaseToNumber";
-import { operatorRarityToNumber } from "../../helper/operatorRarityToNumber";
+import { OperatorParams } from "../../../../../../types/impl/lib/impl/dps-calculator";
+import { Operator } from "../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/operators";
+import { OperatorData } from "./operator-data";
 
 export class OperatorUnit {
     /**
      * @description Constructor data.
      */
-    public operatorData: Operator;
-    private params: OperatorParams;
+    public operatorData: OperatorData;
+    public params: OperatorParams;
 
     /**
      * @description Number of targets.
@@ -21,51 +17,42 @@ export class OperatorUnit {
     /**
      * @description Operator trait details.
      */
+    public rarity: number;
+
     public atk: number;
-    private atkTrust: number;
-    private atkPotential: [number, number] = [0, 0];
-    private atkModule = [];
 
     public attackInterval: number;
 
     public attackSpeed: number;
-    private aspdTrust: number;
-    private aspdPotential: [number, number] = [0, 0];
-    private aspdModule = [];
 
     public elite: number;
     private level: number;
     public potential: number;
     private skillLevel: number;
-    private trust: number;
+    public trust: number;
     public operatorModule: Operator["modules"][number] | null = null;
     public operatorModuleLevel: number = -1;
 
     public skillIndex: number;
     public skillParameters: number[] = [];
-    private skillDuration: number = -1;
+    public skillDuration: number = -1;
     public skillCost: number = -1;
 
-    private spBoost: number;
-    private isPhysical: boolean;
-    private isRanged: boolean;
+    public spBoost: number;
+    public isPhysical: boolean;
+    public isRanged: boolean;
 
     /**
      * @description Talent information
      */
-    private hasSecondTalent: boolean;
-    private talent1Name: string = "";
-    private talent2Name: string = "";
     public talent1Parameters: number[] = [];
     public talent2Parameters: number[] = [];
-    private talent1Defaults: number[] = [];
-    private talent2Defaults: number[] = [];
 
     /**
      * @description Mech-accord caster-specific damage.
      */
-    private droneAtk: number = 0;
-    private droneAtkInterval: number = 0;
+    public droneAtk: number = 0;
+    public droneAtkInterval: number = 0;
 
     /**
      * @description Whether the operator has conditional damage.
@@ -89,16 +76,7 @@ export class OperatorUnit {
     public buffATKFlat: number;
     public buffFragile: number;
 
-    /**
-     * @constructor OperatorUnit
-     *
-     * @param operatorData  Operator data.
-     * @param params      Operator parameters.
-     * @param defaultSkillIndex  Default skill index.
-     * @param defaultPotential  Default potential.
-     * @param defaultModIndex  Default module index.
-     */
-    constructor(operatorData: Operator, params: OperatorParams, defaultSkillIndex: number = 2, defaultPotential: number = 1, defaultModIndex: number = -1) {
+    constructor(operatorData: OperatorData, params: OperatorParams, defaultSkillIndex: number = 2, defaultPotential: number = 1, defaultModIndex: number = -1) {
         if (!params.allCond) params.allCond = false;
         if (!params.baseBuffs)
             params.baseBuffs = {
@@ -141,14 +119,25 @@ export class OperatorUnit {
                 res: 1,
                 resFlat: 0,
             };
-        if (!params.skillIndex) params.skillIndex = -1;
+        if (isNaN(params.skillIndex ?? -1) || params.skillIndex === undefined) params.skillIndex = -1;
         if (!params.spBoost) params.spBoost = 0;
         if (!params.targets) params.targets = -1;
         if (!params.trust) params.trust = 100;
 
+        /**
+         * @description Set default operator data and params.
+         */
         this.operatorData = operatorData;
         this.params = params;
 
+        /**
+         * @description Set operator rarity.
+         */
+        this.rarity = operatorData.rarity;
+
+        /**
+         * @description Constants.
+         */
         const maxLevels = [
             [30, 30, 40, 45, 50, 50],
             [0, 0, 55, 60, 70, 80],
@@ -157,52 +146,60 @@ export class OperatorUnit {
         const maxPromotions = [0, 0, 1, 2, 2, 2]; // Rarity
         const maxSkillLevels = [4, 7, 10]; // Promotion level
 
-        this.spBoost = this.params.spBoost!;
+        /**
+         * @description Set base attack interval.
+         */
+        this.attackInterval = operatorData.attackInterval;
 
         /**
-         * @description Filter out damage type.
+         * @description Set conditionals.
          */
-        this.isPhysical = true;
-        if (operatorData.profession === OperatorProfession.SUPPORTER || operatorData.profession === OperatorProfession.CASTER || operatorData.profession === OperatorProfession.MEDIC) {
-            this.isPhysical = false;
-        }
-        if (operatorData.subProfessionId === "craftsman") {
-            this.isPhysical = true;
-        }
-        if (operatorData.subProfessionId === "artsfghter") {
-            this.isPhysical = false;
-        }
+        this.traitDamage = params.conditionals.traitDamage ?? true;
+        this.talentDamage = params.conditionals.talentDamage ?? true;
+        this.talent2Damage = params.conditionals.talent2Damage ?? true;
+        this.skillDamage = params.conditionals.skillDamage ?? true;
+        this.moduleDamage = params.conditionals.moduleDamage ?? true;
+
+        /**
+         * @description Set targets.
+         */
+        this.targets = Math.max(1, params.targets);
+
+        /**
+         * @description Set SP boost.
+         */
+        this.spBoost = params.spBoost;
 
         /**
          * @description Filter out ranged type.
          */
-        this.isRanged = true;
-        if (operatorData.position === OperatorPosition.MELEE) {
-            this.isRanged = false;
-        }
-
-        const operatorRarity = operatorData.rarity;
-        const operatorRarityAsNumber = operatorRarityToNumber(operatorRarity);
+        this.isRanged = operatorData.isRanged;
 
         /**
-         * @description Operator elite level.
+         * @description Filter out damage type.
+         */
+        this.isPhysical = operatorData.isRanged;
+
+        /**
+         * @description Set operator elite level.
          */
         let elite = params.promotion < 0 ? 2 : params.promotion;
-        elite = Math.max(0, Math.min(maxPromotions[operatorRarityAsNumber - 1] ?? 0, elite));
+        elite = Math.max(0, Math.min(maxPromotions[this.rarity - 1], elite));
+
         this.elite = elite;
 
         /**
-         * @description Operator level.
+         * @description Set operator level.
          */
-        const level = params.level > 0 && maxLevels[elite][operatorRarityAsNumber - 1] ? params.level : maxLevels[elite][operatorRarityAsNumber - 1];
+        const level = params.level > 0 && params.level < maxLevels[this.elite][this.rarity - 1] ? params.level : maxLevels[this.elite][this.rarity - 1];
         this.level = level;
 
         /**
-         * @description Operator potential.
+         * @description Set operator potential.
          */
         let potential = params.potential;
-        if (potential < 1 || potential > 7) {
-            if (defaultPotential >= 1 && defaultPotential <= 7) {
+        if (!(potential >= 1 && potential <= 6)) {
+            if (defaultPotential >= 1 && defaultPotential <= 6) {
                 potential = defaultPotential;
             } else {
                 potential = 1;
@@ -211,33 +208,33 @@ export class OperatorUnit {
         this.potential = potential;
 
         /**
-         * @description Operator skill index.
+         * @description Set operator skillIndex.
          */
         this.skillIndex = -1;
-
-        if (operatorRarityAsNumber > 2) {
+        if (this.rarity > 2) {
             let skillIndex = params.skillIndex;
 
-            if (skillIndex === -1 || operatorData.skills.length <= skillIndex) {
-                if (operatorData.skills.length > defaultSkillIndex) {
+            if (!(operatorData.data.skills.length > skillIndex || skillIndex === -1)) {
+                if (operatorData.data.skills.length > defaultSkillIndex) {
                     skillIndex = defaultSkillIndex;
                 } else {
-                    skillIndex = operatorData.skills.length - 1;
+                    skillIndex = operatorData.data.skills.length - 1;
                 }
             }
 
-            if ((elite === 1 || operatorRarityAsNumber < 6) && skillIndex === 2) {
-                if (operatorData.skills.length > 1) {
+            // Amiya is a special child
+            if (operatorData.data.id !== "char_002_amiya" && (this.elite === 1 || (this.rarity < 6 && skillIndex === 2))) {
+                if (operatorData.data.skills.length >= 2) {
                     skillIndex = 1;
-                } else if (operatorData.skills.length > 0) {
+                } else if (operatorData.data.skills.length >= 1) {
                     skillIndex = 0;
                 } else {
                     skillIndex = -1;
                 }
             }
 
-            if (elite === 0 && skillIndex > 0) {
-                if (operatorData.skills.length > 0) {
+            if (this.elite === 0 && skillIndex >= 0) {
+                if (operatorData.data.skills.length >= 1) {
                     skillIndex = 0;
                 } else {
                     skillIndex = -1;
@@ -248,302 +245,154 @@ export class OperatorUnit {
         }
 
         /**
-         * @description Skill level
+         * @description Set operator skill level.
          */
-        const skillLevel = params.masteryLevel > 0 && params.masteryLevel < maxSkillLevels[elite] ? params.masteryLevel : maxSkillLevels[elite];
+        const skillLevel = params.masteryLevel > 0 && params.masteryLevel + 6 < maxSkillLevels[this.elite] ? (params.masteryLevel === 3 ? 9 : params.masteryLevel === 2 ? 8 : params.masteryLevel === 1 ? 7 : 9) : maxSkillLevels[elite];
         this.skillLevel = skillLevel;
 
         /**
-         * @description Trust
+         * @description Set operator trust.
          */
         const trust = params.trust >= 0 && params.trust < 100 ? params.trust : 100;
         this.trust = trust;
 
         /**
-         * @description Set the conditional damage flags.
+         * @description Set module level.
          */
-        this.traitDamage = this.params.conditionals!.traitDamage ?? false;
-        this.talentDamage = this.params.conditionals!.talentDamage ?? false;
-        this.talent2Damage = this.params.conditionals!.talent2Damage ?? false;
-        this.skillDamage = this.params.conditionals!.skillDamage ?? false;
-        this.moduleDamage = this.params.conditionals!.moduleDamage ?? false;
+        let moduleLevel = 0;
+        if (this.elite === 2 && this.level >= maxLevels[2][this.rarity - 1] - 30) {
+            let availableModules = operatorData.availableModules;
+            let operatorModule: Operator["modules"][number] | null = availableModules[defaultModIndex];
+            if (!operatorModule && defaultModIndex !== -1) throw new Error(`Could not find operator module for ${operatorData.data.name}.`);
 
-        this.targets = this.params.targets! > 1 ? this.params.targets! : 1;
+            if (operatorData.atkModule.length === 0) {
+                availableModules = [];
+                moduleLevel = 0;
+            }
+
+            if (availableModules.length > 0) {
+                if (params.moduleIndex === -1) {
+                    availableModules = [];
+                    operatorModule = null;
+                } else {
+                    if (availableModules.length < params.moduleIndex) {
+                        operatorModule = availableModules[params.moduleIndex];
+                    }
+                    moduleLevel = params.moduleLevel <= 3 && params.moduleLevel > 1 ? params.moduleLevel : 3;
+                    if (trust < 50) {
+                        moduleLevel = 1;
+                    }
+                    if (trust < 100) {
+                        moduleLevel = Math.min(2, moduleLevel);
+                    }
+                }
+            }
+
+            this.operatorModule = operatorModule;
+            this.operatorModuleLevel = moduleLevel;
+        }
 
         /**
-         * @description Set ATKSPD.
+         * @description Read parameters from JSON.
+         */
+
+        /**
+         * @description Set default attack speed.
          */
         this.attackSpeed = 100;
 
         /**
-         * @description Set base ATK.
+         * @description Set ATK.
          */
-        const e0Phase = {
-            min: operatorData.phases[0].attributesKeyFrames[0].data,
-            max: operatorData.phases[0].attributesKeyFrames[1].data,
-        };
-
-        this.atk = e0Phase.min.atk + ((e0Phase.max.atk - e0Phase.min.atk) * (level - 1)) / (maxLevels[elite][operatorRarityAsNumber - 1] - 1);
-
-        if (elite === 1) {
-            const e1Phase = {
-                min: operatorData.phases[1].attributesKeyFrames[0].data,
-                max: operatorData.phases[1].attributesKeyFrames[1].data,
-            };
-
-            this.atk = e1Phase.min.atk + ((e1Phase.max.atk - e1Phase.min.atk) * (level - 1)) / (maxLevels[elite][operatorRarityAsNumber - 1] - 1);
+        this.atk = operatorData.atk.e0.min + ((operatorData.atk.e0.max - operatorData.atk.e0.min) * (level - 1)) / (maxLevels[this.elite][this.rarity - 1] - 1);
+        if (this.elite === 1) {
+            this.atk = operatorData.atk.e1.min + ((operatorData.atk.e1.max - operatorData.atk.e1.min) * (level - 1)) / (maxLevels[this.elite][this.rarity - 1] - 1);
         }
-
-        if (elite === 2) {
-            const e2Phase = {
-                min: operatorData.phases[2].attributesKeyFrames[0].data,
-                max: operatorData.phases[2].attributesKeyFrames[1].data,
-            };
-
-            this.atk = e2Phase.min.atk + ((e2Phase.max.atk - e2Phase.min.atk) * (level - 1)) / (maxLevels[elite][operatorRarityAsNumber - 1] - 1);
+        if (this.elite === 2) {
+            this.atk = operatorData.atk.e2.min + ((operatorData.atk.e2.max - operatorData.atk.e2.min) * (level - 1)) / (maxLevels[this.elite][this.rarity - 1] - 1);
         }
 
         /**
-         * @description Set ATK and ASPD trust values.
+         * @description Set potential stats.
          */
-        this.atkTrust = operatorData.favorKeyFrames[1].data.atk;
-        this.aspdTrust = operatorData.favorKeyFrames[1].data.attackSpeed;
-
-        /**
-         * @description Module & module level
-         */
-        if (elite === 2 && level >= maxLevels[2][operatorRarityAsNumber - 1] - 30) {
-            const availableModules = operatorData.modules;
-            const operatorModule = availableModules[defaultModIndex];
-            if (defaultModIndex !== -1 && !operatorModule) throw new Error(`Module not found for operator ${operatorData.name}`);
-            const moduleLevel = [1, 2, 3].includes(params.moduleLevel) ? params.moduleLevel : 3;
-
-            this.operatorModule = operatorModule;
-            this.operatorModuleLevel = moduleLevel;
-
-            /**
-             * @description Update ATK and ASPD if modules add it.
-             */
-            if (operatorModule && operatorModule.data) {
-                this.atk += operatorModule.data.phases[moduleLevel - 1].attributeBlackboard.find((data) => data.key === "atk")?.value ?? 0;
-                this.attackSpeed += operatorModule.data.phases[moduleLevel - 1].attributeBlackboard.find((data) => data.key === "attack_speed")?.value ?? 0;
-            }
+        if (this.potential >= operatorData.atkPotential.requiredPotential) {
+            this.atk += operatorData.atkPotential.value;
         }
+        this.atk += (operatorData.atkTrust * trust) / 100;
 
-        /**
-         * @description Set attack interval
-         */
-        const battleEquip: BattleEquip | undefined =
-            this.operatorModule?.id && this.operatorModule.data
-                ? {
-                      [this.operatorModule?.id ?? ""]: this.operatorModule?.data,
-                  }
-                : undefined;
-
-        const attributes = getOperatorAttributeStats(
-            operatorData,
-            {
-                moduleId: this.operatorModule?.id ?? "",
-                favorPoint: this.trust,
-                moduleLevel: this.operatorModuleLevel ?? -1,
-                phaseIndex: params.promotion,
-                potentialRank: this.potential,
-            },
-            level,
-            battleEquip,
-        );
-        this.attackInterval = attributes?.baseAttackTime ?? 1;
-
-        /**
-         * @description Account for potential buffs.
-         */
-        for (let i = 0; i < operatorData.potentialRanks.length; i++) {
-            const potential = operatorData.potentialRanks[i];
-            if (potential.type !== "BUFF") continue;
-
-            /**
-             * @description Set ATK potential.
-             */
-            if (potential.buff.attributes.attributeModifiers?.[0].attributeType === "ATK") {
-                this.atkPotential = [i + 2, potential.buff.attributes.attributeModifiers?.[0].value];
-            }
-
-            /**
-             * @description Set ASPD potential.
-             */
-            if (potential.buff.attributes.attributeModifiers?.[0].attributeType === "ATTACK_SPEED") {
-                this.aspdPotential = [i + 2, potential.buff.attributes.attributeModifiers?.[0].value];
-            }
+        if (this.potential >= operatorData.aspdPotential.requiredPotential) {
+            this.attackSpeed += operatorData.aspdPotential.value;
         }
+        this.attackSpeed += (operatorData.aspdTrust * trust) / 100;
 
-        /**
-         * @description Set skill parameters.
-         */
-        const skillParams = [];
-        const skillDurs = [];
-        const skillSPCosts = [];
-        for (const skill of operatorData.skills) {
-            const currentSkillParams = [];
-            const currentSkillDurations = [];
-            const currentSkillSPCosts = [];
+        if (this.elite === 2 && this.level >= maxLevels[2][this.rarity - 1] - 30) {
+            let highestATKValue = 0;
+            let highestASPDValue = 0;
 
-            for (const skillLevel of skill.static?.levels ?? []) {
-                currentSkillDurations.push(skillLevel.duration);
-                currentSkillSPCosts.push(skillLevel.spData.spCost);
-
-                const currentInput = [];
-                for (const entry of skillLevel.blackboard) {
-                    currentInput.push(entry.value);
-                }
-                currentSkillParams.push(currentInput);
-            }
-
-            skillParams.push(currentSkillParams);
-            skillDurs.push(currentSkillDurations);
-            skillSPCosts.push(currentSkillSPCosts);
-        }
-
-        if (operatorRarityAsNumber > 2) {
-            this.skillParameters = skillParams[this.skillIndex][this.skillLevel - 1];
-            this.skillCost = skillSPCosts[this.skillIndex][this.skillLevel - 1];
-            this.skillDuration = skillDurs[this.skillIndex][this.skillLevel - 1];
-        }
-
-        /**
-         * @description Set talent parameters.
-         */
-        this.talent1Name = operatorData.talents[0]?.candidates[0].name;
-
-        this.hasSecondTalent = operatorData.talents.length > 1;
-
-        const talent1Parameters: OperatorTalentParameter[] = [];
-        const talent2Parameters: OperatorTalentParameter[] = [];
-
-        for (const candidate of operatorData.talents[0].candidates) {
-            const params: OperatorTalentParameter = {
-                requiredPromotion: operatorPhaseToNumber(candidate.unlockCondition.phase) - 1,
-                requiredLevel: candidate.unlockCondition.level,
-                requiredModuleId: "",
-                requiredModuleLevel: -1,
-                requiredPotential: candidate.requiredPotentialRank,
-                talentData: candidate.blackboard.map((data) => data.value),
-            };
-            talent1Parameters.push(params);
-        }
-
-        if (this.hasSecondTalent) {
-            this.talent2Name = operatorData.talents[1].candidates[0].name;
-
-            for (const candidate of operatorData.talents[1].candidates) {
-                const params: OperatorTalentParameter = {
-                    requiredPromotion: operatorPhaseToNumber(candidate.unlockCondition.phase) - 1,
-                    requiredLevel: candidate.unlockCondition.level,
-                    requiredModuleId: "",
-                    requiredModuleLevel: -1,
-                    requiredPotential: candidate.requiredPotentialRank,
-                    talentData: candidate.blackboard.map((data) => data.value),
-                };
-                talent2Parameters.push(params);
-            }
-        }
-
-        if (this.operatorModule && this.operatorModule.data && this.operatorModuleLevel > 0) {
-            const modulePhase = this.operatorModule.data.phases[this.operatorModuleLevel - 1];
-            for (const part of modulePhase.parts) {
-                if (part.target === "TALENT" || part.target === "TALENT_DATA_ONLY") {
-                    for (const candidate of part.addOrOverrideTalentDataBundle.candidates ?? []) {
-                        const requiredPromotion = 2;
-                        const requiredLevel = candidate.unlockCondition.level;
-                        const requiredPotential = candidate.requiredPotentialRank;
-                        const requiredModuleId = this.operatorModule.id ?? "";
-                        const talentData = candidate.blackboard.map((data) => data.value);
-
-                        if (["1, 2"].includes(candidate.prefabKey ?? "")) {
-                            if (candidate.name === this.talent1Name) {
-                                talent1Parameters.push({
-                                    requiredPromotion,
-                                    requiredLevel,
-                                    requiredModuleId,
-                                    requiredModuleLevel: requiredLevel,
-                                    requiredPotential,
-                                    talentData,
-                                });
-                            }
-                        } else if (candidate.name === this.talent2Name) {
-                            talent2Parameters.push({
-                                requiredPromotion,
-                                requiredLevel,
-                                requiredModuleId,
-                                requiredModuleLevel: requiredLevel,
-                                requiredPotential,
-                                talentData,
-                            });
-                        }
-                    }
+            for (const opModule of operatorData.atkModule) {
+                if (opModule.moduleId === this.operatorModule?.id) {
+                    highestATKValue = Math.max(highestATKValue, opModule.value);
                 }
             }
-        }
-
-        /**
-         * @description Set defaults for E0/E1.
-         */
-        for (const data of operatorData.talents[0].candidates.slice(-1)[0].blackboard) {
-            if (["atk", "prob", "duration", "attack_speed", "attack@prob", "magic_resistance", "sp_recovery_per_sec", "base_attack_time", "magic_resist_penetrate_fixed"].includes(data.key)) {
-                this.talent1Defaults.push(0);
-            } else {
-                this.talent1Defaults.push(1);
-            }
-        }
-
-        if (this.hasSecondTalent) {
-            for (const data of operatorData.talents[1].candidates.slice(-1)[0].blackboard) {
-                if (["atk", "prob", "duration", "attack_speed", "attack@prob", "magic_resistance", "sp_recovery_per_sec", "base_attack_time", "magic_resist_penetrate_fixed"].includes(data.key)) {
-                    this.talent2Defaults.push(0);
-                } else {
-                    this.talent2Defaults.push(1);
+            for (const opModule of operatorData.aspdModule) {
+                if (opModule.moduleId === this.operatorModule?.id) {
+                    highestASPDValue = Math.max(highestASPDValue, opModule.value);
                 }
             }
+
+            this.atk += highestATKValue;
+            this.attackSpeed += highestASPDValue;
         }
 
         /**
-         * @description Update talent 1 parameters
+         * @description Set skill parameters
          */
-        this.talent1Parameters = this.talent1Defaults;
+        if (this.rarity > 2) {
+            this.skillParameters = operatorData.skillParameters[this.skillIndex][this.skillLevel - 1];
+            this.skillCost = operatorData.skillCosts[this.skillIndex][this.skillLevel - 1];
+            this.skillDuration = operatorData.skillDurations[this.skillIndex][this.skillLevel - 1];
+        }
 
-        if (this.talent1Defaults.length > 0) {
+        /**
+         * @description Set talent parameters
+         */
+        this.talent1Parameters = operatorData.talent1Defaults;
+        if (operatorData.talent1Parameters.length > 0) {
             let currentPromo = 0;
             let currentReqLevel = 0;
-            let currentReqPot = 0;
+            let currentReqPotential = 0;
             let currentReqModuleLvl = 0;
 
-            for (const talentData of talent1Parameters) {
-                if (elite >= talentData.requiredPromotion && talentData.requiredPromotion >= currentPromo) {
-                    if (level >= talentData.requiredLevel && talentData.requiredLevel >= currentReqLevel) {
+            for (const talentData of operatorData.talent1Parameters) {
+                if (this.elite >= talentData.requiredPromotion && talentData.requiredPromotion >= currentPromo) {
+                    if (this.level >= talentData.requiredLevel && talentData.requiredLevel >= currentReqLevel) {
                         if (!this.operatorModule) {
-                            if (talentData.requiredModuleId.length === 0) {
-                                if (potential > talentData.requiredPotential && potential > currentReqPot) {
+                            if (!talentData.requiredModuleId || talentData.requiredModuleId.length === 0) {
+                                if (this.potential > talentData.requiredPotential && this.potential > currentReqPotential) {
+                                    this.talent1Parameters = talentData.talentData;
+
                                     currentPromo = talentData.requiredPromotion;
                                     currentReqLevel = talentData.requiredLevel;
-                                    currentReqPot = talentData.requiredPotential;
+                                    currentReqPotential = talentData.requiredPotential;
                                     currentReqModuleLvl = talentData.requiredModuleLevel;
                                 }
                             }
                         } else {
-                            let requiredModuleId;
-
+                            let requiredModuleId = "";
                             if (talentData.requiredModuleId.length === 0) {
                                 requiredModuleId = "";
                             } else {
-                                requiredModuleId = operatorData.modules.find((module) => module.id === talentData.requiredModuleId)?.id ?? operatorData.modules[0].id ?? "";
+                                requiredModuleId = talentData.requiredModuleId.length > 0 ? talentData.requiredModuleId : "";
                             }
 
                             if (this.operatorModule.id === requiredModuleId || talentData.requiredModuleId.length === 0) {
-                                if (0 >= talentData.requiredModuleLevel && 0 >= currentReqModuleLvl) {
-                                    if (potential > talentData.requiredPotential && potential > currentReqPot) {
+                                if (this.operatorModuleLevel >= talentData.requiredModuleLevel && this.operatorModuleLevel >= currentReqModuleLvl) {
+                                    if (this.potential > talentData.requiredPotential && this.potential > currentReqPotential) {
                                         this.talent1Parameters = talentData.talentData;
+
                                         currentPromo = talentData.requiredPromotion;
                                         currentReqLevel = talentData.requiredLevel;
-                                        currentReqPot = talentData.requiredPotential;
+                                        currentReqPotential = talentData.requiredPotential;
                                         currentReqModuleLvl = talentData.requiredModuleLevel;
                                     }
                                 }
@@ -555,44 +404,45 @@ export class OperatorUnit {
         }
 
         /**
-         * @description Update talent 2 parameters
+         * @description Set talent 2 parameters.
          */
-        this.talent2Parameters = this.talent2Defaults;
-
-        if (this.talent2Defaults.length > 0) {
+        this.talent2Parameters = operatorData.talent2Defaults;
+        if (operatorData.talent2Parameters.length > 0) {
             let currentPromo = 0;
             let currentReqLevel = 0;
-            let currentReqPot = 0;
+            let currentReqPotential = 0;
             let currentReqModuleLvl = 0;
 
-            for (const talentData of talent2Parameters) {
-                if (elite >= talentData.requiredPromotion && talentData.requiredPromotion >= currentPromo) {
-                    if (level >= talentData.requiredLevel && talentData.requiredLevel >= currentReqLevel) {
+            for (const talentData of operatorData.talent2Parameters) {
+                if (this.elite >= talentData.requiredPromotion && talentData.requiredPromotion >= currentPromo) {
+                    if (this.level >= talentData.requiredLevel && talentData.requiredLevel >= currentReqLevel) {
                         if (!this.operatorModule) {
-                            if (talentData.requiredModuleId.length === 0) {
-                                if (potential > talentData.requiredPotential && potential > currentReqPot) {
+                            if (!talentData.requiredModuleId || talentData.requiredModuleId.length === 0) {
+                                if (this.potential > talentData.requiredPotential && this.potential > currentReqPotential) {
+                                    this.talent2Parameters = talentData.talentData;
+
                                     currentPromo = talentData.requiredPromotion;
                                     currentReqLevel = talentData.requiredLevel;
-                                    currentReqPot = talentData.requiredPotential;
+                                    currentReqPotential = talentData.requiredPotential;
                                     currentReqModuleLvl = talentData.requiredModuleLevel;
                                 }
                             }
                         } else {
-                            let requiredModuleId;
-
+                            let requiredModuleId = "";
                             if (talentData.requiredModuleId.length === 0) {
                                 requiredModuleId = "";
                             } else {
-                                requiredModuleId = operatorData.modules.find((module) => module.id === talentData.requiredModuleId)?.id ?? operatorData.modules[0].id ?? "";
+                                requiredModuleId = talentData.requiredModuleId.length > 0 ? talentData.requiredModuleId : "";
                             }
 
                             if (this.operatorModule.id === requiredModuleId || talentData.requiredModuleId.length === 0) {
-                                if (0 >= talentData.requiredModuleLevel && 0 >= currentReqModuleLvl) {
-                                    if (potential > talentData.requiredPotential && potential > currentReqPot) {
+                                if (this.operatorModuleLevel >= talentData.requiredModuleLevel && this.operatorModuleLevel >= currentReqModuleLvl) {
+                                    if (this.potential > talentData.requiredPotential && this.potential > currentReqPotential) {
                                         this.talent2Parameters = talentData.talentData;
+
                                         currentPromo = talentData.requiredPromotion;
                                         currentReqLevel = talentData.requiredLevel;
-                                        currentReqPot = talentData.requiredPotential;
+                                        currentReqPotential = talentData.requiredPotential;
                                         currentReqModuleLvl = talentData.requiredModuleLevel;
                                     }
                                 }
@@ -604,120 +454,75 @@ export class OperatorUnit {
         }
 
         /**
-         * @description Mech-accord caster-specific damage.
+         * @description Set summon parameters.
          */
-        const x = operatorData.displayTokenDict;
+        this.droneAtk = 0;
+        this.droneAtkInterval = 0;
+        if (operatorData.droneAtk.e0.max !== 0 && operatorData.droneAtk.e0.min !== 0) {
+            const slot = this.skillIndex;
 
-        const droneAtk: {
-            e0: number[][];
-            e1: number[][];
-            e2: number[][];
-        } = {
-            e0: [],
-            e1: [],
-            e2: [],
-        };
-        const droneAtkInterval = [];
+            this.droneAtkInterval = operatorData.droneAtkInterval[slot];
+            this.droneAtk = operatorData.droneAtk.e0.min + ((operatorData.droneAtk.e0.max - operatorData.droneAtk.e0.min) * (level - 1)) / (maxLevels[this.elite][this.rarity - 1] - 1);
 
-        if (x) {
-            const droneKeys = Object.keys(x);
-            for (const key of droneKeys) {
-                const data = getDrone(key);
-                if (!data) continue;
-
-                droneAtkInterval.push(data.phases[0].attributesKeyFrames[0].data.baseAttackTime);
-
-                const droneAtk0 = [data.phases[0].attributesKeyFrames[0].data.atk, data.phases[0].attributesKeyFrames[1].data.atk];
-                droneAtk.e0.push(droneAtk0);
-
-                if (operatorRarityAsNumber > 2) {
-                    const droneAtk1 = [data.phases[1].attributesKeyFrames[0].data.atk, data.phases[1].attributesKeyFrames[1].data.atk];
-                    droneAtk.e1.push(droneAtk1);
-                }
-                if (operatorRarityAsNumber > 3) {
-                    const droneAtk2 = [data.phases[2].attributesKeyFrames[0].data.atk, data.phases[2].attributesKeyFrames[1].data.atk];
-                    droneAtk.e2.push(droneAtk2);
-                }
+            if (this.elite === 1) {
+                this.droneAtk = operatorData.droneAtk.e1.min + ((operatorData.droneAtk.e1.max - operatorData.droneAtk.e1.min) * (level - 1)) / (maxLevels[this.elite][this.rarity - 1] - 1);
             }
-        }
-
-        if (droneAtk.e0.length > 0) {
-            let slot = this.skillIndex;
-            if (droneAtk.e0.length < 2) {
-                slot = 0;
-            }
-
-            this.droneAtkInterval = droneAtkInterval[slot];
-            this.droneAtk = droneAtk.e0[slot][0] + ((droneAtk.e0[slot][1] - droneAtk.e0[slot][0]) * (level - 1)) / (maxLevels[elite][operatorRarityAsNumber - 1] - 1);
-
-            if (elite === 1) {
-                this.droneAtk = droneAtk.e1[slot][0] + ((droneAtk.e1[slot][1] - droneAtk.e1[slot][0]) * (level - 1)) / (maxLevels[elite][operatorRarityAsNumber - 1] - 1);
-            }
-            if (elite === 2) {
-                this.droneAtk = droneAtk.e2[slot][0] + ((droneAtk.e2[slot][1] - droneAtk.e2[slot][0]) * (level - 1)) / (maxLevels[elite][operatorRarityAsNumber - 1] - 1);
+            if (this.elite === 2) {
+                this.droneAtk = operatorData.droneAtk.e2.min + ((operatorData.droneAtk.e2.max - operatorData.droneAtk.e2.min) * (level - 1)) / (maxLevels[this.elite][this.rarity - 1] - 1);
             }
         }
 
         /**
-         * @description Set buffs.
+         * @description Buffs
          */
-        this.atk *= params.baseBuffs.atk! + params.buffs.atk!;
-
-        if (params.baseBuffs?.atk && params.baseBuffs.atk! > 1) {
-            this.buffName += ` bAtk+${Math.floor(100 * (params.baseBuffs.atk - 0.999999))}%`;
-        } else if (params.baseBuffs.atk && params.baseBuffs.atk < 1) {
-            this.buffName += ` bAtk${Math.floor(100 * (params.baseBuffs.atk - 1.000001))}%`;
+        this.atk = this.atk * (params.baseBuffs?.atk ?? 0) + (params.baseBuffs.atkFlat ?? 0);
+        if ((params.baseBuffs?.atk ?? 0) > 1) {
+            this.buffName += ` bAtk+${(100 * (params.baseBuffs?.atk ?? 0)).toFixed(0)}%`;
+        } else if ((params.baseBuffs?.atk ?? 0) < 1) {
+            this.buffName += ` bAtk${(100 * (params.baseBuffs?.atk ?? 0)).toFixed(0)}%`;
         }
 
-        if (params.baseBuffs.atkFlat && params.baseBuffs.atkFlat > 0) {
-            this.buffName += ` bAtk+${Math.floor(params.baseBuffs.atkFlat)}`;
-        } else if (params.baseBuffs.atkFlat && params.baseBuffs.atkFlat < 0) {
-            this.buffName += ` bAtk${Math.floor(params.baseBuffs.atkFlat)}`;
+        this.buffATK = params.buffs?.atk ?? 0;
+        if ((params.buffs?.atk ?? 0) > 1) {
+            this.buffName += ` atk+${(100 * (params.buffs?.atk ?? 0)).toFixed(0)}%`;
+        } else if ((params.buffs?.atk ?? 0) < 1) {
+            this.buffName += ` atk${(100 * (params.buffs?.atk ?? 0)).toFixed(0)}%`;
         }
 
-        this.buffATK = params.buffs.atk ?? 0;
-        if (this.buffATK > 0) {
-            this.buffName += ` atk+${Math.floor(100 * this.buffATK)}%`;
-        } else if (this.buffATK < 0) {
-            this.buffName += ` atk${Math.floor(100 * this.buffATK)}%`;
+        this.attackSpeed += params.buffs?.aspd ?? 0;
+        if ((params.buffs?.aspd ?? 0) > 1) {
+            this.buffName += ` aspd+${(100 * (params.buffs?.aspd ?? 0)).toFixed(0)}%`;
+        } else if ((params.buffs?.aspd ?? 0) < 1) {
+            this.buffName += ` aspd${(100 * (params.buffs?.aspd ?? 0)).toFixed(0)}%`;
         }
 
-        this.attackSpeed += params.buffs.aspd ?? 0;
-        if (params.buffs.aspd && params.buffs.aspd > 0) {
-            this.buffName += ` aspd+${Math.floor(100 * params.buffs.aspd)}%`;
-        } else if (params.buffs.aspd && params.buffs.aspd < 0) {
-            this.buffName += ` aspd${Math.floor(100 * params.buffs.aspd)}%`;
+        this.buffATKFlat = params.buffs?.atkFlat ?? 0;
+        if ((params.buffs?.atkFlat ?? 0) > 0) {
+            this.buffName += ` atk+${(params.buffs?.atkFlat ?? 0).toFixed(0)}`;
+        } else if ((params.buffs?.atkFlat ?? 0) < 0) {
+            this.buffName += ` atk${(params.buffs?.atkFlat ?? 0).toFixed(0)}`;
         }
 
-        this.buffATKFlat = params.buffs.atkFlat ?? 0;
-        if (this.buffATKFlat > 0) {
-            this.buffName += ` atk+${Math.floor(this.buffATKFlat)}`;
-        } else if (this.buffATKFlat < 0) {
-            this.buffName += ` atk${Math.floor(this.buffATKFlat)}`;
+        this.buffFragile = params.buffs?.fragile ?? 0;
+        if ((params.buffs?.fragile ?? 0) > 1) {
+            this.buffName += ` dmg+${(100 * (params.buffs?.fragile ?? 0)).toFixed(0)}%`;
+        } else if ((params.buffs?.fragile ?? 0) < 1) {
+            this.buffName += ` dmg${(100 * (params.buffs?.fragile ?? 0)).toFixed(0)}%`;
         }
 
-        this.buffFragile = params.buffs.fragile ?? 0;
-        if (this.buffFragile > 0) {
-            this.buffName += ` fragile+${Math.floor(100 * this.buffFragile)}%`;
-        } else if (this.buffFragile < 0) {
-            this.buffName += ` fragile${Math.floor(100 * this.buffFragile)}%`;
-        }
+        if (this.spBoost > 0) this.buffName += ` +${this.spBoost}SP/s`;
 
-        if (this.spBoost > 0) {
-            this.buffName += ` +${this.spBoost}SP/s`;
+        if (params.shred.def !== 1) {
+            this.buffName += ` -shredDef${(100 * (1 - (params.shred?.def ?? 0))).toFixed(0)}%def`;
         }
-
-        if (params.shred.def && params.shred.def !== 1) {
-            this.buffName += ` -${Math.floor(100 * (1 - params.shred.def))}%`;
+        if (params.shred.defFlat !== 0) {
+            this.buffName += ` -shredDef${(params.shred?.defFlat ?? 0).toFixed(0)}def`;
         }
-        if (params.shred.defFlat && params.shred.defFlat !== 0) {
-            this.buffName += ` -${Math.floor(params.shred.defFlat)}`;
+        if (params.shred.res !== 1) {
+            this.buffName += ` -shredRes${(100 * (1 - (params.shred?.res ?? 0))).toFixed(0)}%res`;
         }
-        if (params.shred.res && params.shred.res !== 1) {
-            this.buffName += ` -${Math.floor(100 * (1 - params.shred.res))}%`;
-        }
-        if (params.shred.resFlat && params.shred.resFlat !== 0) {
-            this.buffName += ` -${Math.floor(params.shred.resFlat)}`;
+        if (params.shred.resFlat !== 0) {
+            this.buffName += ` -shredRes${(params.shred?.resFlat ?? 0).toFixed(0)}res`;
         }
     }
 
