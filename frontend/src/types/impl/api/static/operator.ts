@@ -11,7 +11,7 @@ export type Operator = {
     potentialItemId: string;
     activityPotentialItemId: string | null;
     classicPotentialItemId: string | null;
-    nationId: string;
+    nationId: keyof OperatorNation;
     groupId: string | null;
     teamId: string | null;
     displayNumber: string;
@@ -308,6 +308,28 @@ export enum OperatorSubProfession {
     UNDERMINER = "UNDERMINER",
     BLESSING = "BLESSING",
     TRAPER = "TRAPER",
+}
+
+export enum OperatorNation {
+    rhodes = "Rhodes Island",
+    kazimierz = "Kazimierz",
+    columbia = "Columbia",
+    laterano = "Laterano",
+    victoria = "Victoria",
+    sami = "Sami",
+    bolivar = "Bolivar",
+    iberia = "Iberia",
+    siracusa = "Siracusa",
+    higashi = "Higashi",
+    sargon = "Sargon",
+    kjerag = "Kjerag",
+    minos = "Minos",
+    yan = "Yan",
+    lungmen = "Lungmen",
+    ursus = "Ursus",
+    egir = "Egir",
+    leithanien = "Leithanien",
+    rim = "Rim Billiton",
 }
 
 export type LevelCost = {
