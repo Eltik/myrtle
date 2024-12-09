@@ -40,7 +40,6 @@ export default class Archetto extends OperatorUnit {
         }
 
         let dps = 0;
-
         if (this.skillIndex === 0) {
             const skillScale = this.skillParameters[0];
             const skillScale2 = this.skillParameters[1];
