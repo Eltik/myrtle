@@ -8,7 +8,10 @@ import AmiyaGuard from "./impl/amiya-guard";
 import Andreana from "./impl/andreana";
 import Angelina from "./impl/angelina";
 import Aosta from "./impl/aosta";
+import April from "./impl/april";
 import Archetto from "./impl/archetto";
+import Arene from "./impl/arene";
+import Asbestos from "./impl/asbestos";
 
 const operators = [
     {
@@ -52,8 +55,20 @@ const operators = [
         object: Aosta,
     },
     {
+        id: "char_365_aprl",
+        object: April,
+    },
+    {
         id: "char_332_archet",
         object: Archetto,
+    },
+    {
+        id: "char_271_spikes",
+        object: Arene,
+    },
+    {
+        id: "char_378_asbest",
+        object: Asbestos,
     },
 ];
 
