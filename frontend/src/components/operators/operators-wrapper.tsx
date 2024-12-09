@@ -1,4 +1,4 @@
-import { OperatorRarity, OperatorSubProfession, type Operator } from "~/types/impl/api/static/operator";
+import { OperatorNation, OperatorRarity, OperatorSubProfession, type Operator } from "~/types/impl/api/static/operator";
 import { capitalize, formatProfession, formatSubProfession, rarityToNumber } from "~/helper";
 import { ArrowDownFromLine, ArrowUpFromLine, ChevronDown, Filter, List, Table2 } from "lucide-react";
 import { Button } from "../ui/button";
@@ -45,8 +45,9 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
 
     const [filterRarity, setFilterRarity] = useState<OperatorRarity | "all">("all");
 
-    const [filterNation, setFilterNation] = useState<OperatorBirthPlace[]>([]);
+    const [filterBirthPlace, setFilterBirthPlace] = useState<OperatorBirthPlace[]>([]);
     const [filterRace, setFilterRace] = useState<OperatorRace[]>([]);
+    const [filterNation, setFilterNation] = useState<(keyof OperatorNation)[]>([]);
     const [filterGender, setFilterGender] = useState<("Unknown" | "Female" | "Male" | "Conviction")[]>([]);
 
     const options = [
@@ -147,12 +148,12 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
         }
     };
 
-    const isNationChecked = (value: OperatorBirthPlace): Checked => filterNation.includes(value);
-    const handleNationCheck = (value: OperatorBirthPlace) => {
-        if (filterNation.includes(value)) {
-            setFilterNation(filterNation.filter((v) => v !== value));
+    const isBirthPlaceChecked = (value: OperatorBirthPlace): Checked => filterBirthPlace.includes(value);
+    const handleBirthPlaceCheck = (value: OperatorBirthPlace) => {
+        if (filterBirthPlace.includes(value)) {
+            setFilterBirthPlace(filterBirthPlace.filter((v) => v !== value));
         } else {
-            setFilterNation([...filterNation, value]);
+            setFilterBirthPlace([...filterBirthPlace, value]);
         }
     };
 
@@ -162,6 +163,15 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
             setFilterRace(filterRace.filter((v) => v !== value));
         } else {
             setFilterRace([...filterRace, value]);
+        }
+    };
+
+    const isNationChecked = (value: keyof OperatorNation): Checked => filterNation.includes(value);
+    const handleNationChecked = (value: keyof OperatorNation) => {
+        if (filterNation.includes(value)) {
+            setFilterNation(filterNation.filter((v) => v !== value));
+        } else {
+            setFilterNation([...filterNation, value]);
         }
     };
 
@@ -300,8 +310,9 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
             .filter((char) => filterClasses.length === 0 || filterClasses.includes(char.profession))
             .filter((char) => filterSubClasses.length === 0 || filterSubClasses.includes(char.subProfessionId.toUpperCase() as OperatorSubProfession))
             .filter((char) => filterRarity === "all" || char.rarity === filterRarity)
-            .filter((char) => filterNation.length === 0 || (char.profile?.basicInfo.placeOfBirth && String(char.profile?.basicInfo.placeOfBirth) !== "" && filterNation.includes(char.profile?.basicInfo.placeOfBirth)))
+            .filter((char) => filterBirthPlace.length === 0 || (char.profile?.basicInfo.placeOfBirth && String(char.profile?.basicInfo.placeOfBirth) !== "" && filterBirthPlace.includes(char.profile?.basicInfo.placeOfBirth)))
             .filter((char) => filterRace.length === 0 || (char.profile?.basicInfo.race && String(char.profile?.basicInfo.race) !== "" && filterRace.includes(char.profile?.basicInfo.race)))
+            .filter((char) => filterNation.length === 0 || (char.nationId && String(char.nationId) !== "" && filterNation.includes(char.nationId)))
             .filter((char) => (filterGender.includes("Male") ? (char.profile?.basicInfo.gender === "Male]" ? true : false) : filterGender.length === 0 || (char.profile?.basicInfo.gender && String(char.profile?.basicInfo.gender) !== "" && filterGender.includes(char.profile?.basicInfo.gender as "Unknown" | "Female" | "Male" | "Conviction"))))
             .filter(
                 (char) =>
@@ -349,7 +360,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                 }
                 return sortOrder === "asc" ? -comparison : comparison;
             });
-    }, [operators, canActivateSkill, showLimited, isModule, searchTerm, filterClasses, filterSubClasses, filterRarity, filterNation, filterRace, filterGender, filterSkillTypes, filterSkillChargeTypes, sortBy, sortOrder, statsSortBy]);
+    }, [operators, canActivateSkill, showLimited, isModule, searchTerm, filterClasses, filterSubClasses, filterRarity, filterBirthPlace, filterRace, filterNation, filterGender, filterSkillTypes, filterSkillChargeTypes, sortBy, sortOrder, statsSortBy]);
 
     return (
         <>
@@ -418,7 +429,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="outline" className="w-[200px] justify-between">
-                                            <span className="mr-2 truncate">{filterNation.length === 0 ? <span className="font-normal">Filter Place of Birth</span> : filterNation.map((v) => v).join(", ")}</span>
+                                            <span className="mr-2 truncate">{filterBirthPlace.length === 0 ? <span className="font-normal">Filter Place of Birth</span> : filterBirthPlace.map((v) => v).join(", ")}</span>
                                             <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                                         </Button>
                                     </DropdownMenuTrigger>
@@ -430,7 +441,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                             .map((key) => OperatorBirthPlace[key as keyof typeof OperatorBirthPlace])
                                             .sort((a, b) => String(a).localeCompare(String(b)))
                                             .map((value) => (
-                                                <DropdownMenuCheckboxItem key={value} checked={isNationChecked(value)} onCheckedChange={() => handleNationCheck(value)}>
+                                                <DropdownMenuCheckboxItem key={value} checked={isBirthPlaceChecked(value)} onCheckedChange={() => handleBirthPlaceCheck(value)}>
                                                     {value}
                                                 </DropdownMenuCheckboxItem>
                                             ))}
@@ -455,6 +466,28 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                                     {value}
                                                 </DropdownMenuCheckboxItem>
                                             ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" className="w-[200px] justify-between">
+                                            <span className="mr-2 truncate">{filterNation.length === 0 ? <span className="font-normal">Filter by Nation</span> : filterNation.map((v) => OperatorNation[v as keyof typeof OperatorNation]).join(", ")}</span>
+                                            <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="max-h-64 w-[200px] overflow-y-scroll">
+                                        <DropdownMenuLabel>Nations</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        {Object.keys(OperatorNation)
+                                            .sort((a, b) => String(a).localeCompare(String(b)))
+                                            .map((key) => {
+                                                const value = OperatorNation[key as keyof typeof OperatorNation];
+                                                return (
+                                                    <DropdownMenuCheckboxItem key={key} checked={isNationChecked(key as keyof OperatorNation)} onCheckedChange={() => handleNationChecked(key as keyof OperatorNation)}>
+                                                        {value}
+                                                    </DropdownMenuCheckboxItem>
+                                                );
+                                            })}
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </div>
