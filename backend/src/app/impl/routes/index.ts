@@ -5,6 +5,7 @@ import search from "./impl/search";
 import searchPlayers from "./impl/searchPlayers";
 import player from "./impl/player";
 import staticData from "./impl/static";
+import dpsCalculator from "./impl/dpsCalculator";
 
 export default {
     login,
@@ -14,4 +15,5 @@ export default {
     searchPlayers,
     player,
     staticData,
+    dpsCalculator,
 };
