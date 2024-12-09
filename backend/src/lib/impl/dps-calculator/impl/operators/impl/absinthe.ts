@@ -11,7 +11,11 @@ export default class Absinthe extends OperatorUnit {
         }
 
         if (this.talentDamage && this.elite > 0) {
-            this.talentDamageName += "lowHpTarget";
+            if (this.talentDamageName) {
+                this.talentDamageName += " lowHpTarget";
+            } else {
+                this.talentDamageName = "lowHpTarget";
+            }
         }
     }
 

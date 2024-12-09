@@ -7,7 +7,11 @@ export default class Aciddrop extends OperatorUnit {
         super(operatorData, params, 1, 6, 1);
 
         if (this.talentDamage && this.elite > 0) {
-            this.talentDamageName += "directFront";
+            if (this.talentDamageName) {
+                this.talentDamageName += " directFront";
+            } else {
+                this.talentDamageName = "directFront";
+            }
         }
     }
 

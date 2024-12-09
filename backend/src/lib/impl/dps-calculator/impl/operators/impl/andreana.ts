@@ -7,7 +7,11 @@ export default class Andreana extends OperatorUnit {
         super(operatorData, params, 0, 1, 1);
 
         if (this.operatorModule?.id === "uniequip_002_cuttle" && this.moduleDamage) {
-            this.talentDamageName += "atMaxRange";
+            if (this.talentDamageName) {
+                this.talentDamageName += " atMaxRange";
+            } else {
+                this.talentDamageName = "atMaxRange";
+            }
         }
     }
 

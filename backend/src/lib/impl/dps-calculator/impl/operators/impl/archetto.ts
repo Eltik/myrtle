@@ -7,15 +7,27 @@ export default class Archetto extends OperatorUnit {
         super(operatorData, params, 2, 1, 1);
 
         if (this.operatorModule?.id === "uniequip_003_archet" && this.operatorModuleLevel > 1 && this.talentDamage && this.skillIndex !== 2) {
-            this.talentDamageName += " +2ndSniper";
+            if (this.talentDamageName) {
+                this.talentDamageName += " +2ndSniper";
+            } else {
+                this.talentDamageName = "+2ndSniper";
+            }
         }
 
         if (this.moduleDamage && this.operatorModule?.id === "uniequip_003_archet") {
-            this.moduleDamageName += " aerialTarget";
+            if (this.moduleDamageName) {
+                this.moduleDamageName += " aerialTarget";
+            } else {
+                this.moduleDamageName = "aerialTarget";
+            }
         }
 
         if (this.moduleDamage && this.operatorModule?.id === "uniequip_002_archet") {
-            this.moduleDamageName += " GroundEnemy";
+            if (this.moduleDamageName) {
+                this.moduleDamageName += " GroundEnemy";
+            } else {
+                this.moduleDamageName = "GroundEnemy";
+            }
         }
     }
 

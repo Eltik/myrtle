@@ -28,7 +28,7 @@ export class OperatorUnit {
     public elite: number;
     private level: number;
     public potential: number;
-    private skillLevel: number;
+    public skillLevel: number;
     public trust: number;
     public operatorModule: Operator["modules"][number] | null = null;
     public operatorModuleLevel: number = -1;
@@ -265,6 +265,8 @@ export class OperatorUnit {
             let operatorModule: Operator["modules"][number] | null = availableModules[defaultModIndex];
             if (!operatorModule && defaultModIndex !== -1) throw new Error(`Could not find operator module for ${operatorData.data.name}.`);
 
+            this.operatorModule = operatorModule;
+
             if (operatorData.atkModule.length === 0) {
                 availableModules = [];
                 moduleLevel = 0;
@@ -348,9 +350,9 @@ export class OperatorUnit {
          * @description Set skill parameters
          */
         if (this.rarity > 2) {
-            this.skillParameters = operatorData.skillParameters[this.skillIndex][this.skillLevel - 1];
-            this.skillCost = operatorData.skillCosts[this.skillIndex][this.skillLevel - 1];
-            this.skillDuration = operatorData.skillDurations[this.skillIndex][this.skillLevel - 1];
+            this.skillParameters = operatorData.skillParameters[this.skillIndex]?.[this.skillLevel - 1] ?? [];
+            this.skillCost = operatorData.skillCosts[this.skillIndex]?.[this.skillLevel - 1] ?? -1;
+            this.skillDuration = operatorData.skillDurations[this.skillIndex]?.[this.skillLevel - 1] ?? -1;
         }
 
         /**
