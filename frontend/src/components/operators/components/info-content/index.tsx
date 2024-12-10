@@ -17,6 +17,8 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Badge } from "~/components/ui/badge";
 import { AnimatePresence, motion } from "framer-motion";
+import { ModuleDetails } from "./impl/module-details";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/collapsible";
 
 // https://aceship.github.io/AN-EN-Tags/akhrchars.html?opname=Projekt_Red
 // https://sanitygone.help/operators/gavial-the-invincible#page-content
@@ -24,6 +26,7 @@ import { AnimatePresence, motion } from "framer-motion";
 function InfoContent({ operator }: { operator: Operator }) {
     const [showControls, setShowControls] = useState<boolean>(false); // Show controls for the operator
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+    const [isModuleDetailsExpanded, setIsModuleDetailsExpanded] = useState(true);
 
     const [attributeStats, setAttributeStats] = useState<Operator["phases"][number]["attributesKeyFrames"][number]["data"] | null>(null); // Attribute stats to display
 
@@ -379,8 +382,9 @@ function InfoContent({ operator }: { operator: Operator }) {
                             </AnimatePresence>
                             {!isDescriptionExpanded && <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent" />}
                         </div>
-                        <span onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)} className="cursor-pointer self-start text-sm transition-all duration-150 hover:text-muted-foreground">
+                        <span onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)} className="flex cursor-pointer flex-row items-center self-start text-sm transition-all duration-150 hover:text-muted-foreground">
                             {isDescriptionExpanded ? "Show Less" : "Show More"}
+                            <ChevronDown className={`ml-auto h-5 w-5 transition-transform ${isDescriptionExpanded ? "rotate-180" : ""}`} />
                         </span>
                     </div>
                     <div className="mt-4">
@@ -568,7 +572,7 @@ function InfoContent({ operator }: { operator: Operator }) {
                     </Tabs>
                 </div>
                 <div className="mt-2">
-                    <div>
+                    <div className="mt-2">
                         <h2 className="text-lg font-bold">Tags</h2>
                         <div className="flex flex-wrap gap-2">
                             {operator.tagList.map((tag, index) => (
@@ -590,6 +594,23 @@ function InfoContent({ operator }: { operator: Operator }) {
                             </>
                         )}
                     </div>
+                    {currentModule.length > 0 && (
+                        <div className="mt-4">
+                            <Collapsible defaultOpen={isModuleDetailsExpanded} onOpenChange={() => setIsModuleDetailsExpanded(!isModuleDetailsExpanded)}>
+                                <CollapsibleTrigger asChild>
+                                    <div className="flex cursor-pointer flex-row items-center rounded-md transition-all duration-150 hover:bg-primary-foreground">
+                                        <h2 className="text-lg font-bold">Module Details</h2>
+                                        <ChevronDown className={`ml-auto h-5 w-5 transition-transform ${isModuleDetailsExpanded ? "rotate-180" : ""}`} />
+                                    </div>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent>
+                                    <div className="mt-2 rounded-md border">
+                                        <ModuleDetails currentModule={currentModule} modules={modules} moduleData={moduleData} />
+                                    </div>
+                                </CollapsibleContent>
+                            </Collapsible>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
