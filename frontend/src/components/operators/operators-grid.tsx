@@ -18,7 +18,7 @@ export function OperatorsGrid({ operators }: { operators: Operator[] }) {
                     return (
                         <Link href={`/operators?id=${operator.id}`} key={operator.id} className="group relative flex aspect-[2/3] overflow-clip rounded-md border border-muted/30 bg-background transition hover:rounded-lg">
                             <div className="absolute -translate-x-8 -translate-y-4">
-                                <Image src={operator.nationId ? `https://raw.githubusercontent.com/Aceship/Arknight-Images/main/factions/logo_${operator.nationId}.png` : operator.teamId ? `https://raw.githubusercontent.com/Aceship/Arknight-Images/main/factions/logo_${operator.teamId}.png` : `https://raw.githubusercontent.com/Aceship/Arknight-Images/main/factions/none.png`} alt={operator.nationId} loading="lazy" width={360} height={360} decoding="async" className="opacity-5 transition-opacity group-hover:opacity-10" />
+                                <Image src={operator.nationId ? `https://raw.githubusercontent.com/Aceship/Arknight-Images/main/factions/logo_${String(operator.nationId)}.png` : operator.teamId ? `https://raw.githubusercontent.com/Aceship/Arknight-Images/main/factions/logo_${operator.teamId}.png` : `https://raw.githubusercontent.com/Aceship/Arknight-Images/main/factions/none.png`} alt={String(operator.nationId)} loading="lazy" width={360} height={360} decoding="async" className="opacity-5 transition-opacity group-hover:opacity-10" />
                             </div>
                             <div className="relative z-10 h-full w-full scale-100 transition-all duration-150 group-hover:scale-105">
                                 <Image
