@@ -1,4 +1,5 @@
 import type { OperatorTalentParameter } from "../../../../../../types/impl/lib/impl/dps-calculator";
+import { ModuleTarget } from "../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/modules";
 import { OperatorPosition, OperatorProfession, type Operator } from "../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/operators";
 import { getDrone } from "../../../../local/impl/gamedata/impl/operators";
 import { operatorPhaseToNumber } from "../../helper/operatorPhaseToNumber";
@@ -7,8 +8,8 @@ import { operatorRarityToNumber } from "../../helper/operatorRarityToNumber";
 export class OperatorData {
     public data: Operator;
 
-    public rarity: number = 6;
-    public attackInterval: number = 1.6;
+    public rarity = 6;
+    public attackInterval = 1.6;
     public availableModules: Operator["modules"] = [];
 
     public isPhysical = true;
@@ -57,7 +58,7 @@ export class OperatorData {
         value: number;
     }[] = [];
 
-    public aspdTrust: number = 0;
+    public aspdTrust = 0;
 
     /**
      * @description Skill data.
@@ -130,45 +131,45 @@ export class OperatorData {
          * @description Set operator default values.
          */
         this.rarity = operatorRarityToNumber(operatorData.rarity);
-        this.attackInterval = operatorData.phases[0].attributesKeyFrames[0].data.baseAttackTime;
+        this.attackInterval = operatorData.phases[0]?.attributesKeyFrames[0]?.data.baseAttackTime ?? this.attackInterval;
 
         /**
          * @description Read ATK values.
          */
         this.atk.e0 = {
-            min: operatorData.phases[0].attributesKeyFrames[0].data.atk,
-            max: operatorData.phases[0].attributesKeyFrames[1].data.atk,
+            min: operatorData.phases[0]?.attributesKeyFrames[0]?.data.atk ?? 0,
+            max: operatorData.phases[0]?.attributesKeyFrames[1]?.data.atk ?? 0,
         };
         if (this.rarity > 2) {
             this.atk.e1 = {
-                min: operatorData.phases[1].attributesKeyFrames[0].data.atk,
-                max: operatorData.phases[1].attributesKeyFrames[1].data.atk,
+                min: operatorData.phases[1]?.attributesKeyFrames[0]?.data.atk ?? 0,
+                max: operatorData.phases[1]?.attributesKeyFrames[1]?.data.atk ?? 0,
             };
         }
         if (this.rarity > 3) {
             this.atk.e2 = {
-                min: operatorData.phases[2].attributesKeyFrames[0].data.atk,
-                max: operatorData.phases[2].attributesKeyFrames[1].data.atk,
+                min: operatorData.phases[2]?.attributesKeyFrames[0]?.data.atk ?? 0,
+                max: operatorData.phases[2]?.attributesKeyFrames[1]?.data.atk ?? 0,
             };
         }
 
-        this.atkTrust = operatorData.favorKeyFrames[1].data.atk;
+        this.atkTrust = operatorData.favorKeyFrames[1]?.data.atk ?? 0;
 
         /**
          * @description Set ATK and ASPD potential-related stats.
          */
         for (let i = 0; i < operatorData.potentialRanks.length; i++) {
             const potential = operatorData.potentialRanks[i];
-            if (potential.type !== "BUFF") continue;
+            if (potential?.type !== "BUFF") continue;
 
-            if (potential.buff.attributes.attributeModifiers?.[0].attributeType === "ATK") {
+            if (potential.buff.attributes.attributeModifiers?.[0]?.attributeType === "ATK") {
                 this.atkPotential = {
                     requiredPotential: i + 2,
                     value: potential.buff.attributes.attributeModifiers[0].value,
                 };
             }
 
-            if (potential.buff.attributes.attributeModifiers?.[0].attributeType === "ATTACK_SPEED") {
+            if (potential.buff.attributes.attributeModifiers?.[0]?.attributeType === "ATTACK_SPEED") {
                 this.aspdPotential = {
                     requiredPotential: i + 2,
                     value: potential.buff.attributes.attributeModifiers[0].value,
@@ -179,7 +180,7 @@ export class OperatorData {
         /**
          * @description Set ASPD trust value.
          */
-        this.aspdTrust = operatorData.favorKeyFrames[1].data.attackSpeed;
+        this.aspdTrust = operatorData.favorKeyFrames[1]?.data.attackSpeed ?? 0;
 
         /**
          * @description Figure out damage type.
@@ -230,10 +231,10 @@ export class OperatorData {
          */
         this.hasSecondTalent = operatorData.talents.length > 1;
 
-        const talent1Name = operatorData.talents[0].candidates[0].name;
-        const talent2Name = this.hasSecondTalent ? operatorData.talents[1].candidates[0].name : null;
+        const talent1Name = operatorData.talents[0]?.candidates[0]?.name;
+        const talent2Name = this.hasSecondTalent ? operatorData.talents[1]?.candidates[0]?.name : null;
 
-        for (const candidate of operatorData.talents[0].candidates) {
+        for (const candidate of (operatorData.talents[0]?.candidates ?? [])) {
             const params: OperatorTalentParameter = {
                 requiredPromotion: operatorPhaseToNumber(candidate.unlockCondition.phase),
                 requiredLevel: candidate.unlockCondition.level,
@@ -247,7 +248,7 @@ export class OperatorData {
         }
 
         if (this.hasSecondTalent) {
-            for (const candidate of operatorData.talents[1].candidates) {
+            for (const candidate of (operatorData.talents[1]?.candidates ?? [])) {
                 const params: OperatorTalentParameter = {
                     requiredPromotion: operatorPhaseToNumber(candidate.unlockCondition.phase),
                     requiredLevel: candidate.unlockCondition.level,
@@ -264,7 +265,7 @@ export class OperatorData {
         /**
          * @description Set defaults for E0/E1
          */
-        for (const data of operatorData.talents[0].candidates.at(-1)?.blackboard ?? []) {
+        for (const data of operatorData.talents[0]?.candidates.at(-1)?.blackboard ?? []) {
             if (["atk", "prob", "duration", "attack_speed", "attack@prob", "magic_resistance", "sp_recovery_per_sec", "base_attack_time", "magic_resist_penetrate_fixed"].includes(data.key)) {
                 this.talent1Defaults.push(0);
             } else {
@@ -273,7 +274,7 @@ export class OperatorData {
         }
 
         if (this.hasSecondTalent) {
-            for (const data of operatorData.talents[1].candidates.at(-1)?.blackboard ?? []) {
+            for (const data of operatorData.talents[1]?.candidates.at(-1)?.blackboard ?? []) {
                 if (["atk", "prob", "duration", "attack_speed", "attack@prob", "magic_resistance", "sp_recovery_per_sec", "base_attack_time", "magic_resist_penetrate_fixed"].includes(data.key)) {
                     this.talent2Defaults.push(0);
                 } else {
@@ -331,7 +332,7 @@ export class OperatorData {
                 const equipLevel = moduleLevel.equipLevel;
 
                 for (const part of moduleLevel.parts) {
-                    if (part.target === "TALENT" || part.target === "TALENT_DATA_ONLY") {
+                    if (part.target === ModuleTarget.TALENT || part.target === ModuleTarget.TALENT_DATA_ONLY) {
                         for (const candidate of part.addOrOverrideTalentDataBundle.candidates ?? []) {
                             if (candidate.prefabKey === "1" || candidate.prefabKey === "2") {
                                 if (candidate.name === talent1Name) {
@@ -369,7 +370,7 @@ export class OperatorData {
                 const equipLevel = moduleLevel.equipLevel;
 
                 for (const part of moduleLevel.parts) {
-                    if (part.target === "TALENT" || part.target === "TALENT_DATA_ONLY") {
+                    if (part.target === ModuleTarget.TALENT || part.target === ModuleTarget.TALENT_DATA_ONLY) {
                         for (const candidate of part.addOrOverrideTalentDataBundle.candidates ?? []) {
                             if (candidate.prefabKey === "1" || candidate.prefabKey === "2") {
                                 if (candidate.name === talent1Name) {
@@ -407,7 +408,7 @@ export class OperatorData {
                 const equipLevel = moduleLevel.equipLevel;
 
                 for (const part of moduleLevel.parts) {
-                    if (part.target === "TALENT" || part.target === "TALENT_DATA_ONLY") {
+                    if (part.target === ModuleTarget.TALENT || part.target === ModuleTarget.TALENT_DATA_ONLY) {
                         for (const candidate of part.addOrOverrideTalentDataBundle.candidates ?? []) {
                             if (candidate.prefabKey === "1" || candidate.prefabKey === "2") {
                                 if (candidate.name === talent1Name) {
