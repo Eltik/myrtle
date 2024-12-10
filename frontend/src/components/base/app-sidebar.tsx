@@ -36,6 +36,10 @@ const items = [
                 url: "#",
             },
             {
+                title: "DPS Calculator",
+                url: "/dps-calculator",
+            },
+            {
                 title: "Squad Randomizer",
                 url: "#",
             },
