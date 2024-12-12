@@ -10,6 +10,7 @@ export default class Arene extends OperatorUnit {
             this.traitDamage = false;
         }
 
+        this.traitDamageNames = ["rangedAtk"];
         if (!this.traitDamage && this.skillIndex === 0) {
             if (this.traitDamageName) {
                 this.traitDamageName += " rangedAtk";
@@ -18,6 +19,7 @@ export default class Arene extends OperatorUnit {
             }
         }
 
+        this.talentDamageNames = ["vsDrones"];
         if (this.talentDamage && this.elite > 0) {
             if (this.talentDamageName) {
                 this.talentDamageName += " vsDrones";
@@ -26,6 +28,7 @@ export default class Arene extends OperatorUnit {
             }
         }
 
+        this.moduleDamageNames = ["+12aspd(mod)"];
         if (this.operatorModule?.id === "uniequip_002_spikes" && this.targets === 1 && this.moduleDamage) {
             if (this.moduleDamageName) {
                 this.moduleDamageName += " +12aspd(mod)";

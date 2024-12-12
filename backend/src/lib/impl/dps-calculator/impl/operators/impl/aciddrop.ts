@@ -6,6 +6,7 @@ export default class Aciddrop extends OperatorUnit {
     constructor(operatorData: OperatorData, params: OperatorParams) {
         super(operatorData, params, 1, 6, 1);
 
+        this.talentDamageNames = ["directFront"];
         if (this.talentDamage && this.elite > 0) {
             if (this.talentDamageName) {
                 this.talentDamageName += " directFront";

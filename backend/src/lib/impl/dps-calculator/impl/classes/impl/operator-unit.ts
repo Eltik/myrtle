@@ -9,6 +9,10 @@ export class OperatorUnit {
     public operatorData: OperatorData;
     public params: OperatorParams;
 
+    public defaultSkillIndex = -1;
+    public defaultPotential = 1;
+    public defaultModuleIndex = -1;
+
     /**
      * @description Number of targets.
      */
@@ -59,14 +63,23 @@ export class OperatorUnit {
      */
     public traitDamage: boolean;
     public traitDamageName: string | undefined;
+    public traitDamageNames: string[] = [];
+
     public talentDamage: boolean;
     public talentDamageName: string | undefined;
+    public talentDamageNames: string[] = [];
+
     public talent2Damage: boolean;
     public talent2DamageName: string | undefined;
+    public talent2DamageNames: string[] = [];
+
     public skillDamage: boolean;
     public skillDamageName: string | undefined;
+    public skillDamageNames: string[] = [];
+
     public moduleDamage: boolean;
     public moduleDamageName: string | undefined;
+    public moduleDamageNames: string[] = [];
 
     /**
      * @description Buffs
@@ -77,6 +90,10 @@ export class OperatorUnit {
     public buffFragile: number;
 
     constructor(operatorData: OperatorData, params: OperatorParams, defaultSkillIndex: number = 2, defaultPotential: number = 1, defaultModIndex: number = -1) {
+        this.defaultSkillIndex = defaultSkillIndex;
+        this.defaultPotential = defaultPotential;
+        this.defaultModuleIndex = defaultModIndex;
+
         if (!params.allCond) params.allCond = false;
         if (!params.baseBuffs)
             params.baseBuffs = {

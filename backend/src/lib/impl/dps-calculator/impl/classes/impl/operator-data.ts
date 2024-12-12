@@ -234,7 +234,7 @@ export class OperatorData {
         const talent1Name = operatorData.talents[0]?.candidates[0]?.name;
         const talent2Name = this.hasSecondTalent ? operatorData.talents[1]?.candidates[0]?.name : null;
 
-        for (const candidate of (operatorData.talents[0]?.candidates ?? [])) {
+        for (const candidate of operatorData.talents[0]?.candidates ?? []) {
             const params: OperatorTalentParameter = {
                 requiredPromotion: operatorPhaseToNumber(candidate.unlockCondition.phase),
                 requiredLevel: candidate.unlockCondition.level,
@@ -248,7 +248,7 @@ export class OperatorData {
         }
 
         if (this.hasSecondTalent) {
-            for (const candidate of (operatorData.talents[1]?.candidates ?? [])) {
+            for (const candidate of operatorData.talents[1]?.candidates ?? []) {
                 const params: OperatorTalentParameter = {
                     requiredPromotion: operatorPhaseToNumber(candidate.unlockCondition.phase),
                     requiredLevel: candidate.unlockCondition.level,
