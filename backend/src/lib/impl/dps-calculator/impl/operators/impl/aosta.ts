@@ -6,6 +6,7 @@ export default class Aosta extends OperatorUnit {
     constructor(operatorData: OperatorData, params: OperatorParams) {
         super(operatorData, params, 1, 1, -1);
 
+        this.traitDamageNames = ["distant"];
         if (!this.traitDamage) {
             if (this.traitDamageName) {
                 this.traitDamageName += " distant";
@@ -14,6 +15,7 @@ export default class Aosta extends OperatorUnit {
             }
         }
 
+        this.talentDamageNames = ["blockTarget"];
         if (this.elite > 0 && !this.talentDamage) {
             if (this.talentDamageName) {
                 this.talentDamageName += " blockedTarget";

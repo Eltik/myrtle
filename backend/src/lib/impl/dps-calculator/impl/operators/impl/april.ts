@@ -6,6 +6,7 @@ export default class April extends OperatorUnit {
     constructor(operatorData: OperatorData, params: OperatorParams) {
         super(operatorData, params, 1, 1, 1);
 
+        this.moduleDamageNames = ["groundEnemies"];
         if (this.moduleDamage && this.operatorModule?.id === "uniequip_002_aprl") {
             if (this.moduleDamageName) {
                 this.moduleDamageName += " groundEnemies";

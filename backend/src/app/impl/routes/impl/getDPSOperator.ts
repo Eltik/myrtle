@@ -1,8 +1,8 @@
 import { OperatorData } from "../../../../lib/impl/dps-calculator/impl/classes/impl/operator-data";
 import operators from "../../../../lib/impl/local/impl/gamedata/impl/operators";
-import { OperatorParams } from "../../../../types/impl/lib/impl/dps-calculator";
 import middleware from "../../middleware";
 import operatorsList from "../../../../lib/impl/dps-calculator/impl/operators";
+import type { OperatorParams } from "../../../../types/impl/lib/impl/dps-calculator";
 
 const handler = async (req: Request): Promise<Response> => {
     try {
@@ -21,8 +21,8 @@ const handler = async (req: Request): Promise<Response> => {
         if (!id) {
             return middleware.createResponse(JSON.stringify({ error: "No character ID provided." }), 400);
         }
+
         const params = body?.params ?? {};
-        const enemy = body?.enemy ?? {};
 
         const operator = operators(id);
         if (!operator) {
@@ -35,13 +35,8 @@ const handler = async (req: Request): Promise<Response> => {
                 return middleware.createResponse(JSON.stringify({ error: "Operator not found. Their DPS calculations might not be added yet." }), 404);
             }
             const operatorData = new operatorsUnit.object(new OperatorData(operator), params);
-            const data = operatorData.skillDPS({
-                defense: enemy.defense ?? 0,
-                res: enemy.res ?? 0,
-            });
             return middleware.createResponse(
                 JSON.stringify({
-                    dps: data,
                     operator: operatorData,
                 }),
             );
@@ -56,7 +51,7 @@ const handler = async (req: Request): Promise<Response> => {
 };
 
 const route = {
-    path: "/dps-calculator",
+    path: "/dps-operator",
     handler,
     rateLimit: 500,
 };
@@ -64,10 +59,6 @@ const route = {
 type Body = {
     id: string;
     params?: OperatorParams;
-    enemy?: {
-        defense?: number;
-        res?: number;
-    };
 };
 
 export default route;

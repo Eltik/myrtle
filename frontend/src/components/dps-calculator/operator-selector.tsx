@@ -136,7 +136,6 @@ function OperatorSelector({ operators, selectedOperators, isOpen, onClose, onSel
                         {hasOperators && (
                             <Accordion type="multiple" className="w-full">
                                 {Object.entries(filteredOperators).map(([className, subclasses]) => {
-                                    // Check if ops are empty
                                     const hasOperators = Object.values(subclasses).some((ops) => ops.length > 0);
                                     return hasOperators ? (
                                         <AccordionItem value={className} key={className}>

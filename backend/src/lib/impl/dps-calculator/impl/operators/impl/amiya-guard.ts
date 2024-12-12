@@ -6,10 +6,8 @@ export default class AmiyaGuard extends OperatorUnit {
     constructor(operatorData: OperatorData, params: OperatorParams) {
         super(operatorData, params, 0, 6, 1); // TODO: Fix
 
+        this.skillDamageNames = ["3kills"];
         if (this.skillIndex === 1) {
-            if (this.skillDamage) {
-                this.skillDamageName += "3kills";
-            }
             if (this.skillDamage) {
                 this.skillDamageName += " 3kills";
             } else {
