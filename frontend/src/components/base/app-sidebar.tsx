@@ -47,7 +47,7 @@ const items = [
     },
     {
         title: "Leaderboard",
-        url: "#",
+        url: "/leaderboard",
         pathNames: ["/leaderboard"],
         icon: ShieldHalf,
     },

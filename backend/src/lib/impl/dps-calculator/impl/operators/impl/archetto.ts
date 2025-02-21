@@ -4,7 +4,7 @@ import { OperatorData } from "../../classes/impl/operator-data";
 
 export default class Archetto extends OperatorUnit {
     constructor(operatorData: OperatorData, params: OperatorParams) {
-        super(operatorData, params, 2, 1, 1);
+        super(operatorData, params, 2, 1, 2);
 
         this.talentDamageNames = ["+2ndSniper"];
         if (this.operatorModule?.id === "uniequip_003_archet" && this.operatorModuleLevel > 1 && this.talentDamage && this.skillIndex !== 2) {
@@ -82,7 +82,7 @@ export default class Archetto extends OperatorUnit {
             dps = hitDmg / (this.attackInterval / ((this.attackSpeed + aspd) / 100)) + (spRecovery / this.skillCost) * skillDmg * totalHits[targets - 1];
         }
 
-        if (this.skillIndex === 0 || this.skillIndex === 2) {
+        if (this.skillIndex === -1 || this.skillIndex === 2) {
             const finalAtk = this.atk * (1 + this.buffATK + (this.skillParameters[0] * (this.skillIndex + 1)) / 3) + this.buffATKFlat;
             const hitDmg = Math.max(finalAtk * atkScale - enemy.defense, finalAtk * atkScale * 0.05) * (1 + ((this.skillIndex + 1) * 2) / 3);
 
