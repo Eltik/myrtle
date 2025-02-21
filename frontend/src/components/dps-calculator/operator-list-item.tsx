@@ -139,11 +139,43 @@ export default function OperatorListItem({ operator, onParamsChange }: OperatorL
                                 <div className="mt-4">
                                     <h4 className="mb-2 text-sm font-semibold">Conditionals</h4>
                                     <div className="space-y-2">
-                                        {["traitDamage", "talentDamage", "talent2Damage", "skillDamage", "moduleDamage"].map((cond) => (
-                                            <div key={cond} className="flex items-center">
-                                                <Switch id={`${operator.operatorData.data.id}-${cond}`} onCheckedChange={(checked) => handleParamChange("conditionals", { ...params.conditionals, [cond]: checked })} />
-                                                <Label htmlFor={`${operator.operatorData.data.id}-${cond}`} className="ml-2">
-                                                    {cond.charAt(0).toUpperCase() + cond.slice(1)}
+                                        {operator.talentDamageNames.map((talent) => (
+                                            <div key={talent} className="flex items-center">
+                                                <Switch id={`${operator.operatorData.data.id}-${talent}`} onCheckedChange={(checked) => handleParamChange("conditionals", { ...params.conditionals, [talent]: checked })} defaultChecked={operator.talentDamage} />
+                                                <Label htmlFor={`${operator.operatorData.data.id}-${talent}`} className="ml-2">
+                                                    {talent.charAt(0).toUpperCase() + talent.slice(1)}
+                                                </Label>
+                                            </div>
+                                        ))}
+                                        {operator.talent2DamageNames.map((talent) => (
+                                            <div key={talent} className="flex items-center">
+                                                <Switch id={`${operator.operatorData.data.id}-${talent}`} onCheckedChange={(checked) => handleParamChange("conditionals", { ...params.conditionals, [talent]: checked })} defaultChecked={operator.talent2Damage} />
+                                                <Label htmlFor={`${operator.operatorData.data.id}-${talent}`} className="ml-2">
+                                                    {talent.charAt(0).toUpperCase() + talent.slice(1)}
+                                                </Label>
+                                            </div>
+                                        ))}
+                                        {operator.traitDamageNames.map((trait) => (
+                                            <div key={trait} className="flex items-center">
+                                                <Switch id={`${operator.operatorData.data.id}-${trait}`} onCheckedChange={(checked) => handleParamChange("conditionals", { ...params.conditionals, [trait]: checked })} defaultChecked={operator.traitDamage} />
+                                                <Label htmlFor={`${operator.operatorData.data.id}-${trait}`} className="ml-2">
+                                                    {trait.charAt(0).toUpperCase() + trait.slice(1)}
+                                                </Label>
+                                            </div>
+                                        ))}
+                                        {operator.skillDamageNames.map((skill) => (
+                                            <div key={skill} className="flex items-center">
+                                                <Switch id={`${operator.operatorData.data.id}-${skill}`} onCheckedChange={(checked) => handleParamChange("conditionals", { ...params.conditionals, [skill]: checked })} defaultChecked={operator.skillDamage} />
+                                                <Label htmlFor={`${operator.operatorData.data.id}-${skill}`} className="ml-2">
+                                                    {skill.charAt(0).toUpperCase() + skill.slice(1)}
+                                                </Label>
+                                            </div>
+                                        ))}
+                                        {operator.moduleDamageNames.map((operatorModule) => (
+                                            <div key={operatorModule} className="flex items-center">
+                                                <Switch id={`${operator.operatorData.data.id}-${operatorModule}`} onCheckedChange={(checked) => handleParamChange("conditionals", { ...params.conditionals, [operatorModule]: checked })} defaultChecked={operator.moduleDamage} />
+                                                <Label htmlFor={`${operator.operatorData.data.id}-${operatorModule}`} className="ml-2">
+                                                    {operatorModule.charAt(0).toUpperCase() + operatorModule.slice(1)}
                                                 </Label>
                                             </div>
                                         ))}

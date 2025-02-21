@@ -12,6 +12,7 @@ import April from "./impl/april";
 import Archetto from "./impl/archetto";
 import Arene from "./impl/arene";
 import Asbestos from "./impl/asbestos";
+import Ascalon from "./impl/ascalon";
 
 const operators = [
     {
@@ -69,6 +70,10 @@ const operators = [
     {
         id: "char_378_asbest",
         object: Asbestos,
+    },
+    {
+        id: "char_4132_ascln",
+        object: Ascalon,
     },
 ];
 
