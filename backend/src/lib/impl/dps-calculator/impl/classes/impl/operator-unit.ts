@@ -94,7 +94,7 @@ export class OperatorUnit {
         this.defaultPotential = defaultPotential;
         this.defaultModuleIndex = defaultModIndex;
 
-        if (!params.allCond) params.allCond = false;
+        if (params.allCond === undefined) params.allCond = true;
         if (!params.baseBuffs)
             params.baseBuffs = {
                 atk: 1,
@@ -107,7 +107,7 @@ export class OperatorUnit {
                 atkFlat: 0,
                 fragile: 0,
             };
-        if (!params.conditionals)
+        if (!params.conditionals) {
             params.conditionals = {
                 moduleDamage: true,
                 skillDamage: true,
@@ -115,6 +115,13 @@ export class OperatorUnit {
                 talentDamage: true,
                 traitDamage: true,
             };
+        } else {
+            if (params.conditionals.moduleDamage === undefined) params.conditionals.moduleDamage = true;
+            if (params.conditionals.skillDamage === undefined) params.conditionals.skillDamage = true;
+            if (params.conditionals.talent2Damage === undefined) params.conditionals.talent2Damage = true;
+            if (params.conditionals.talentDamage === undefined) params.conditionals.talentDamage = true;
+            if (params.conditionals.traitDamage === undefined) params.conditionals.traitDamage = true;
+        }
         if (!params.def) params.def = [-1];
         if (!params.enemies) params.enemies = [];
         if (!params.fixValue) params.fixValue = 40;
@@ -171,11 +178,11 @@ export class OperatorUnit {
         /**
          * @description Set conditionals.
          */
-        this.traitDamage = params.conditionals.traitDamage ?? true;
-        this.talentDamage = params.conditionals.talentDamage ?? true;
-        this.talent2Damage = params.conditionals.talent2Damage ?? true;
-        this.skillDamage = params.conditionals.skillDamage ?? true;
-        this.moduleDamage = params.conditionals.moduleDamage ?? true;
+        this.traitDamage = params.allCond === true || (params.conditionals.traitDamage === true && params.allCond !== false) ? true : false;
+        this.talentDamage = params.allCond === true || (params.conditionals.talentDamage === true && params.allCond !== false) ? true : false;
+        this.talent2Damage = params.allCond === true || (params.conditionals.talent2Damage === true && params.allCond !== false) ? true : false;
+        this.skillDamage = params.allCond === true || (params.conditionals.skillDamage === true && params.allCond !== false) ? true : false;
+        this.moduleDamage = params.allCond === true || (params.conditionals.moduleDamage === true && params.allCond !== false) ? true : false;
 
         /**
          * @description Set targets.
