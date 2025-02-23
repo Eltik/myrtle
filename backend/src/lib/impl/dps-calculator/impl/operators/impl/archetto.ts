@@ -15,7 +15,8 @@ export default class Archetto extends OperatorUnit {
             }
         }
 
-        this.talent2DamageNames = ["aerialTarget"];
+        this.moduleDamageNames = ["aerialTarget", "GroundEnemy"];
+
         if (this.moduleDamage && this.operatorModule?.id === "uniequip_003_archet") {
             if (this.moduleDamageName) {
                 this.moduleDamageName += " aerialTarget";
@@ -24,7 +25,6 @@ export default class Archetto extends OperatorUnit {
             }
         }
 
-        this.moduleDamageNames = ["GroundEnemy"];
         if (this.moduleDamage && this.operatorModule?.id === "uniequip_002_archet") {
             if (this.moduleDamageName) {
                 this.moduleDamageName += " GroundEnemy";
