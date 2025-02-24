@@ -4,7 +4,7 @@ import { OperatorData } from "../../classes/impl/operator-data";
 
 export default class Aosta extends OperatorUnit {
     constructor(operatorData: OperatorData, params: OperatorParams) {
-        super(operatorData, params, 1, 1, -1);
+        super(operatorData, params, 1, 1, 1);
 
         this.traitDamageNames = ["distant"];
         if (!this.traitDamage) {
@@ -15,7 +15,7 @@ export default class Aosta extends OperatorUnit {
             }
         }
 
-        this.talentDamageNames = ["blockTarget"];
+        this.talentDamageNames = ["blockedTarget"];
         if (this.elite > 0 && !this.talentDamage) {
             if (this.talentDamageName) {
                 this.talentDamageName += " blockedTarget";
@@ -26,7 +26,7 @@ export default class Aosta extends OperatorUnit {
     }
 
     public skillDPS(enemy: { defense: number; res: number }): number {
-        const atkScale = this.traitDamage ? 1.5 : 1;
+        const atkScale = this.traitDamage && this.operatorModule?.id === "uniequip_002_aosta" ? 1.6 : this.traitDamage ? 1.5 : 1;
         let talentScale = this.elite > 0 && this.talentDamage ? this.talent1Parameters[0] : 0;
         const talentDuration = this.talent1Parameters[1];
         const aspd = this.skillIndex === 0 ? this.skillParameters[1] : 0;
