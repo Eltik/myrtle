@@ -1113,7 +1113,7 @@ describe("Operator DPS Calculations", () => {
 
     describe("Ash", () => {
         const baseParams = {
-            moduleIndex: 1,
+            moduleIndex: 2,
         };
         const operatorId = "char_456_ash";
 

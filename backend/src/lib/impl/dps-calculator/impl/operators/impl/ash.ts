@@ -4,7 +4,7 @@ import { OperatorData } from "../../classes/impl/operator-data";
 
 export default class Ash extends OperatorUnit {
     constructor(operatorData: OperatorData, params: OperatorParams) {
-        super(operatorData, params, 1, 1, 1);
+        super(operatorData, params, 1, 1, 2);
 
         this.skillDamageNames = ["vsStunned"];
         if (this.skillDamage && this.skillIndex === 1) {
@@ -26,8 +26,8 @@ export default class Ash extends OperatorUnit {
     public skillDPS(enemy: { defense: number; res: number }): number {
         let dps = 0;
 
-        let atkScale = this.operatorModule?.id === "uniequip_002_ash" && this.moduleDamage ? 1.1 : 1;
-        const aspd = this.operatorModule?.id === "uniequip_003_ash" && this.moduleDamage ? 8 : 0;
+        let atkScale = this.operatorModule?.id === "uniequip_003_ash" && this.moduleDamage ? 1.1 : 1;
+        const aspd = this.operatorModule?.id === "uniequip_002_ash" && this.moduleDamage ? 8 : 0;
 
         if (this.skillIndex < 1) {
             const finalAtk = this.atk * (1 + this.buffATK + this.skillParameters[0] * (this.skillIndex + 1)) + this.buffATKFlat;
@@ -46,7 +46,7 @@ export default class Ash extends OperatorUnit {
             }
 
             const hitDmg = Math.max(finalAtk * atkScale - enemy.defense, finalAtk * atkScale * 0.05);
-            const dmgBonus = this.operatorModule?.id === "uniequip_002_ash" && this.operatorModuleLevel > 1 && this.skillDamage ? this.talent1Parameters[2] : 1;
+            const dmgBonus = this.operatorModule?.id === "uniequip_003_ash" && this.operatorModuleLevel > 1 && this.skillDamage ? this.talent1Parameters[2] : 1;
 
             dps = (((hitDmg / attackInterval) * (this.attackSpeed + aspd)) / 100) * dmgBonus;
         }

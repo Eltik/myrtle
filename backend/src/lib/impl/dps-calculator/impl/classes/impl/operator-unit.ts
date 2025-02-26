@@ -291,11 +291,6 @@ export class OperatorUnit {
 
             this.operatorModule = operatorModule;
 
-            if (operatorData.atkModule.length === 0) {
-                availableModules = [];
-                moduleLevel = 0;
-            }
-
             if (availableModules.length > 0) {
                 if (params.moduleIndex === -1) {
                     availableModules = [];
@@ -352,22 +347,14 @@ export class OperatorUnit {
         this.attackSpeed += (operatorData.aspdTrust * trust) / 100;
 
         if (this.elite === 2 && this.level >= maxLevels[2][this.rarity - 1] - 30) {
-            let highestATKValue = 0;
-            let highestASPDValue = 0;
+            const hasAvailableModule = operatorData.availableModules.find((opModule) => opModule.id === this.operatorModule?.id);
+            if (hasAvailableModule) {
+                const moduleAtk = operatorData.atkModule.find((opModule) => opModule.moduleId === hasAvailableModule.id && opModule.level === this.operatorModuleLevel)?.value ?? 0;
+                const moduleAspd = operatorData.aspdModule.find((opModule) => opModule.moduleId === hasAvailableModule.id && opModule.level === this.operatorModuleLevel)?.value ?? 0;
 
-            for (const opModule of operatorData.atkModule) {
-                if (opModule.moduleId === this.operatorModule?.id) {
-                    highestATKValue = opModule.value;
-                }
+                this.atk += moduleAtk;
+                this.attackSpeed += moduleAspd;
             }
-            for (const opModule of operatorData.aspdModule) {
-                if (opModule.moduleId === this.operatorModule?.id) {
-                    highestASPDValue = opModule.value;
-                }
-            }
-
-            this.atk += highestATKValue;
-            this.attackSpeed += highestASPDValue;
         }
 
         /**
@@ -503,7 +490,7 @@ export class OperatorUnit {
         /**
          * @description Buffs
          */
-        this.atk = this.atk * (params.baseBuffs?.atk ?? 0) + (params.baseBuffs.atkFlat ?? 0);
+        this.atk = this.atk * (params.baseBuffs?.atk ?? 1) + (params.baseBuffs.atkFlat ?? 0);
         if ((params.baseBuffs?.atk ?? 0) > 1) {
             this.buffName += ` bAtk+${(100 * (params.baseBuffs?.atk ?? 0)).toFixed(0)}%`;
         } else if ((params.baseBuffs?.atk ?? 0) < 1) {
