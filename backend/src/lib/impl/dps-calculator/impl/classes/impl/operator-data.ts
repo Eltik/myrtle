@@ -41,6 +41,7 @@ export class OperatorData {
     public atkModule: {
         moduleId: string;
         value: number;
+        level: number;
     }[] = [];
 
     public atkTrust = 0; // Max value only
@@ -56,6 +57,7 @@ export class OperatorData {
     public aspdModule: {
         moduleId: string;
         value: number;
+        level: number;
     }[] = [];
 
     public aspdTrust = 0;
@@ -296,10 +298,12 @@ export class OperatorData {
             const atkData: {
                 moduleId: string;
                 value: number;
+                level: number;
             }[] = [];
             const aspdData: {
                 moduleId: string;
                 value: number;
+                level: number;
             }[] = [];
 
             if (!opModule.data) continue;
@@ -310,12 +314,14 @@ export class OperatorData {
                         atkData.push({
                             moduleId: opModule.id ?? "",
                             value: data.value,
+                            level: modLevel.equipLevel,
                         });
                     }
                     if (data.key === "attack_speed") {
                         aspdData.push({
                             moduleId: opModule.id ?? "",
                             value: data.value,
+                            level: modLevel.equipLevel,
                         });
                     }
                 }
@@ -328,34 +334,36 @@ export class OperatorData {
         if (hasModule) {
             const moduleKey = `uniequip_002_${operatorData.id?.split("_")[2]}`;
             const operatorModule = operatorData.modules.find((opModule) => opModule.id === moduleKey);
-            for (const moduleLevel of operatorModule?.data.phases ?? []) {
-                const equipLevel = moduleLevel.equipLevel;
+            if (operatorModule) {
+                for (const moduleLevel of operatorModule.data.phases ?? []) {
+                    const equipLevel = moduleLevel.equipLevel;
 
-                for (const part of moduleLevel.parts) {
-                    if (part.target === ModuleTarget.TALENT || part.target === ModuleTarget.TALENT_DATA_ONLY) {
-                        for (const candidate of part.addOrOverrideTalentDataBundle.candidates ?? []) {
-                            if (candidate.prefabKey === "1" || candidate.prefabKey === "2") {
-                                if (candidate.name === talent1Name) {
-                                    this.talent1Parameters.push({
-                                        requiredPromotion: 2,
-                                        requiredLevel: candidate.unlockCondition.level,
-                                        requiredModuleId: operatorModule?.id ?? "",
-                                        requiredModuleLevel: equipLevel,
-                                        requiredPotential: candidate.requiredPotentialRank,
-                                        talentData: candidate.blackboard.map((data) => data.value),
-                                    });
-                                }
-                            } else {
-                                if (candidate.name === talent1Name) {
-                                    this.talent1ModuleExtra.push({
-                                        requiredModuleLevel: equipLevel,
-                                        talentData: candidate.blackboard.map((data) => data.value),
-                                    });
-                                } else if (candidate.name === talent2Name) {
-                                    this.talent2ModuleExtra.push({
-                                        requiredModuleLevel: equipLevel,
-                                        talentData: candidate.blackboard.map((data) => data.value),
-                                    });
+                    for (const part of moduleLevel.parts) {
+                        if (part.target === ModuleTarget.TALENT || part.target === ModuleTarget.TALENT_DATA_ONLY) {
+                            for (const candidate of part.addOrOverrideTalentDataBundle.candidates ?? []) {
+                                if (candidate.prefabKey === "1" || candidate.prefabKey === "2") {
+                                    if (candidate.name === talent1Name) {
+                                        this.talent1Parameters.push({
+                                            requiredPromotion: 2,
+                                            requiredLevel: candidate.unlockCondition.level,
+                                            requiredModuleId: operatorModule.id ?? "",
+                                            requiredModuleLevel: equipLevel,
+                                            requiredPotential: candidate.requiredPotentialRank,
+                                            talentData: candidate.blackboard.map((data) => data.value),
+                                        });
+                                    }
+                                } else {
+                                    if (candidate.name === talent1Name) {
+                                        this.talent1ModuleExtra.push({
+                                            requiredModuleLevel: equipLevel,
+                                            talentData: candidate.blackboard.map((data) => data.value),
+                                        });
+                                    } else if (candidate.name === talent2Name) {
+                                        this.talent2ModuleExtra.push({
+                                            requiredModuleLevel: equipLevel,
+                                            talentData: candidate.blackboard.map((data) => data.value),
+                                        });
+                                    }
                                 }
                             }
                         }
@@ -363,37 +371,40 @@ export class OperatorData {
                 }
             }
         }
+
         if (hasSecondModule) {
             const moduleKey = `uniequip_003_${operatorData.id?.split("_")[2]}`;
             const operatorModule = operatorData.modules.find((opModule) => opModule.id === moduleKey);
-            for (const moduleLevel of operatorModule?.data.phases ?? []) {
-                const equipLevel = moduleLevel.equipLevel;
+            if (operatorModule) {
+                for (const moduleLevel of operatorModule.data.phases ?? []) {
+                    const equipLevel = moduleLevel.equipLevel;
 
-                for (const part of moduleLevel.parts) {
-                    if (part.target === ModuleTarget.TALENT || part.target === ModuleTarget.TALENT_DATA_ONLY) {
-                        for (const candidate of part.addOrOverrideTalentDataBundle.candidates ?? []) {
-                            if (candidate.prefabKey === "1" || candidate.prefabKey === "2") {
-                                if (candidate.name === talent1Name) {
-                                    this.talent1Parameters.push({
-                                        requiredPromotion: 2,
-                                        requiredLevel: candidate.unlockCondition.level,
-                                        requiredModuleId: operatorModule?.id ?? "",
-                                        requiredModuleLevel: equipLevel,
-                                        requiredPotential: candidate.requiredPotentialRank,
-                                        talentData: candidate.blackboard.map((data) => data.value),
-                                    });
-                                }
-                            } else {
-                                if (candidate.name === talent1Name) {
-                                    this.talent1ModuleExtra.push({
-                                        requiredModuleLevel: equipLevel,
-                                        talentData: candidate.blackboard.map((data) => data.value),
-                                    });
-                                } else if (candidate.name === talent2Name) {
-                                    this.talent2ModuleExtra.push({
-                                        requiredModuleLevel: equipLevel,
-                                        talentData: candidate.blackboard.map((data) => data.value),
-                                    });
+                    for (const part of moduleLevel.parts) {
+                        if (part.target === ModuleTarget.TALENT || part.target === ModuleTarget.TALENT_DATA_ONLY) {
+                            for (const candidate of part.addOrOverrideTalentDataBundle.candidates ?? []) {
+                                if (candidate.prefabKey === "1" || candidate.prefabKey === "2") {
+                                    if (candidate.name === talent1Name) {
+                                        this.talent1Parameters.push({
+                                            requiredPromotion: 2,
+                                            requiredLevel: candidate.unlockCondition.level,
+                                            requiredModuleId: operatorModule.id ?? "",
+                                            requiredModuleLevel: equipLevel,
+                                            requiredPotential: candidate.requiredPotentialRank,
+                                            talentData: candidate.blackboard.map((data) => data.value),
+                                        });
+                                    }
+                                } else {
+                                    if (candidate.name === talent1Name) {
+                                        this.talent1ModuleExtra.push({
+                                            requiredModuleLevel: equipLevel,
+                                            talentData: candidate.blackboard.map((data) => data.value),
+                                        });
+                                    } else if (candidate.name === talent2Name) {
+                                        this.talent2ModuleExtra.push({
+                                            requiredModuleLevel: equipLevel,
+                                            talentData: candidate.blackboard.map((data) => data.value),
+                                        });
+                                    }
                                 }
                             }
                         }
@@ -401,37 +412,40 @@ export class OperatorData {
                 }
             }
         }
+
         if (hasThirdModule) {
             const moduleKey = `uniequip_004_${operatorData.id?.split("_")[2]}`;
             const operatorModule = operatorData.modules.find((opModule) => opModule.id === moduleKey);
-            for (const moduleLevel of operatorModule?.data.phases ?? []) {
-                const equipLevel = moduleLevel.equipLevel;
+            if (operatorModule) {
+                for (const moduleLevel of operatorModule.data.phases ?? []) {
+                    const equipLevel = moduleLevel.equipLevel;
 
-                for (const part of moduleLevel.parts) {
-                    if (part.target === ModuleTarget.TALENT || part.target === ModuleTarget.TALENT_DATA_ONLY) {
-                        for (const candidate of part.addOrOverrideTalentDataBundle.candidates ?? []) {
-                            if (candidate.prefabKey === "1" || candidate.prefabKey === "2") {
-                                if (candidate.name === talent1Name) {
-                                    this.talent1Parameters.push({
-                                        requiredPromotion: 2,
-                                        requiredLevel: candidate.unlockCondition.level,
-                                        requiredModuleId: operatorModule?.id ?? "",
-                                        requiredModuleLevel: equipLevel,
-                                        requiredPotential: candidate.requiredPotentialRank,
-                                        talentData: candidate.blackboard.map((data) => data.value),
-                                    });
-                                }
-                            } else {
-                                if (candidate.name === talent1Name) {
-                                    this.talent1ModuleExtra.push({
-                                        requiredModuleLevel: equipLevel,
-                                        talentData: candidate.blackboard.map((data) => data.value),
-                                    });
-                                } else if (candidate.name === talent2Name) {
-                                    this.talent2ModuleExtra.push({
-                                        requiredModuleLevel: equipLevel,
-                                        talentData: candidate.blackboard.map((data) => data.value),
-                                    });
+                    for (const part of moduleLevel.parts) {
+                        if (part.target === ModuleTarget.TALENT || part.target === ModuleTarget.TALENT_DATA_ONLY) {
+                            for (const candidate of part.addOrOverrideTalentDataBundle.candidates ?? []) {
+                                if (candidate.prefabKey === "1" || candidate.prefabKey === "2") {
+                                    if (candidate.name === talent1Name) {
+                                        this.talent1Parameters.push({
+                                            requiredPromotion: 2,
+                                            requiredLevel: candidate.unlockCondition.level,
+                                            requiredModuleId: operatorModule.id ?? "",
+                                            requiredModuleLevel: equipLevel,
+                                            requiredPotential: candidate.requiredPotentialRank,
+                                            talentData: candidate.blackboard.map((data) => data.value),
+                                        });
+                                    }
+                                } else {
+                                    if (candidate.name === talent1Name) {
+                                        this.talent1ModuleExtra.push({
+                                            requiredModuleLevel: equipLevel,
+                                            talentData: candidate.blackboard.map((data) => data.value),
+                                        });
+                                    } else if (candidate.name === talent2Name) {
+                                        this.talent2ModuleExtra.push({
+                                            requiredModuleLevel: equipLevel,
+                                            talentData: candidate.blackboard.map((data) => data.value),
+                                        });
+                                    }
                                 }
                             }
                         }

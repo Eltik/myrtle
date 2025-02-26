@@ -11,6 +11,12 @@ import Adnachiel from "../lib/impl/dps-calculator/impl/operators/impl/adnachiel"
 import Andreana from "../lib/impl/dps-calculator/impl/operators/impl/andreana";
 import Angelina from "../lib/impl/dps-calculator/impl/operators/impl/angelina";
 import Aosta from "../lib/impl/dps-calculator/impl/operators/impl/aosta";
+import April from "../lib/impl/dps-calculator/impl/operators/impl/april";
+import Archetto from "../lib/impl/dps-calculator/impl/operators/impl/archetto";
+import Arene from "../lib/impl/dps-calculator/impl/operators/impl/arene";
+import Asbestos from "../lib/impl/dps-calculator/impl/operators/impl/asbestos";
+import Ascalon from "../lib/impl/dps-calculator/impl/operators/impl/ascalon";
+import Ash from "../lib/impl/dps-calculator/impl/operators/impl/ash";
 
 // Initialize data before running tests
 beforeAll(async () => {
@@ -562,6 +568,621 @@ describe("Operator DPS Calculations", () => {
             const dps = unit.skillDPS({ defense: 0, res: 20 });
             expect(dps).toBeGreaterThan(1182);
             expect(dps).toBeLessThan(1184);
+        });
+    });
+
+    describe("April", () => {
+        const baseParams = {
+            moduleIndex: 1,
+        };
+        const operatorId = "char_365_aprl";
+
+        test("should calculate s1 DPS correctly", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new April(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(907);
+            expect(dps).toBeLessThan(909);
+        });
+        test("should calculate s1 DPS correctly with def", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new April(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(583);
+            expect(dps).toBeLessThan(585);
+        });
+        test("should calculate s1 DPS correctly with res", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new April(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(907);
+            expect(dps).toBeLessThan(909);
+        });
+
+        test("should calculate s2 DPS correctly", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new April(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(1370);
+            expect(dps).toBeLessThan(1372);
+        });
+        test("should calculate s2 DPS correctly with def", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new April(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(1046);
+            expect(dps).toBeLessThan(1048);
+        });
+        test("should calculate s2 DPS correctly with res", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new April(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(1370);
+            expect(dps).toBeLessThan(1372);
+        });
+    });
+
+    describe("Archetto", () => {
+        const operatorId = "char_332_archet";
+
+        test("should calculate s1 DPS correctly mody", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Archetto(new OperatorData(operator), {
+                moduleIndex: 1,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(1140);
+            expect(dps).toBeLessThan(1142);
+        });
+        test("should calculate s1 DPS correctly with def mody", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Archetto(new OperatorData(operator), {
+                moduleIndex: 1,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(804);
+            expect(dps).toBeLessThan(806);
+        });
+        test("should calculate s1 DPS correctly with res mody", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Archetto(new OperatorData(operator), {
+                moduleIndex: 1,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(1140);
+            expect(dps).toBeLessThan(1142);
+        });
+
+        test("should calculate s2 DPS correctly mody", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Archetto(new OperatorData(operator), {
+                moduleIndex: 1,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(1477);
+            expect(dps).toBeLessThan(1479);
+        });
+        test("should calculate s2 DPS correctly with def mody", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Archetto(new OperatorData(operator), {
+                moduleIndex: 1,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(887);
+            expect(dps).toBeLessThan(889);
+        });
+        test("should calculate s2 DPS correctly with res mody", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Archetto(new OperatorData(operator), {
+                moduleIndex: 1,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(1477);
+            expect(dps).toBeLessThan(1479);
+        });
+
+        test("should calculate s3 DPS correctly mody", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Archetto(new OperatorData(operator), {
+                moduleIndex: 1,
+                skillIndex: 2,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(2803);
+            expect(dps).toBeLessThan(2805);
+        });
+        test("should calculate s3 DPS correctly with def mody", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Archetto(new OperatorData(operator), {
+                moduleIndex: 1,
+                skillIndex: 2,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(1795);
+            expect(dps).toBeLessThan(1797);
+        });
+        test("should calculate s3 DPS correctly with res mody", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Archetto(new OperatorData(operator), {
+                moduleIndex: 1,
+                skillIndex: 2,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(2803);
+            expect(dps).toBeLessThan(2805);
+        });
+
+        test("should calculate s1 DPS correctly modx", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Archetto(new OperatorData(operator), {
+                moduleIndex: 2,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(1267);
+            expect(dps).toBeLessThan(1269);
+        });
+        test("should calculate s1 DPS correctly with def modx", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Archetto(new OperatorData(operator), {
+                moduleIndex: 2,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(967);
+            expect(dps).toBeLessThan(969);
+        });
+        test("should calculate s1 DPS correctly with res modx", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Archetto(new OperatorData(operator), {
+                moduleIndex: 2,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(1267);
+            expect(dps).toBeLessThan(1269);
+        });
+
+        test("should calculate s2 DPS correctly modx", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Archetto(new OperatorData(operator), {
+                moduleIndex: 2,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(1617);
+            expect(dps).toBeLessThan(1619);
+        });
+        test("should calculate s2 DPS correctly with def modx", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Archetto(new OperatorData(operator), {
+                moduleIndex: 2,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(1058);
+            expect(dps).toBeLessThan(1060);
+        });
+        test("should calculate s2 DPS correctly with res modx", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Archetto(new OperatorData(operator), {
+                moduleIndex: 2,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(1617);
+            expect(dps).toBeLessThan(1619);
+        });
+
+        test("should calculate s3 DPS correctly modx", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Archetto(new OperatorData(operator), {
+                moduleIndex: 2,
+                skillIndex: 2,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(2856);
+            expect(dps).toBeLessThan(2858);
+        });
+        test("should calculate s3 DPS correctly with def modx", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Archetto(new OperatorData(operator), {
+                moduleIndex: 2,
+                skillIndex: 2,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(1956);
+            expect(dps).toBeLessThan(1958);
+        });
+        test("should calculate s3 DPS correctly with res modx", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Archetto(new OperatorData(operator), {
+                moduleIndex: 2,
+                skillIndex: 2,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(2856);
+            expect(dps).toBeLessThan(2858);
+        });
+    });
+
+    describe("Arene", () => {
+        const baseParams = {
+            moduleIndex: 1,
+        };
+        const operatorId = "char_271_spikes";
+
+        test("should calculate s1 DPS correctly", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Arene(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(2475);
+            expect(dps).toBeLessThan(2477);
+        });
+        test("should calculate s1 DPS correctly with def", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Arene(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(1958);
+            expect(dps).toBeLessThan(1960);
+        });
+        test("should calculate s1 DPS correctly with res", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Arene(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(2475);
+            expect(dps).toBeLessThan(2477);
+        });
+
+        test("should calculate s2 DPS correctly", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Arene(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(1649);
+            expect(dps).toBeLessThan(1651);
+        });
+        test("should calculate s2 DPS correctly with def", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Arene(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(1649);
+            expect(dps).toBeLessThan(1651);
+        });
+        test("should calculate s2 DPS correctly with res", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Arene(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(1319);
+            expect(dps).toBeLessThan(1321);
+        });
+    });
+
+    describe("Asbestos", () => {
+        const baseParams = {};
+        const operatorId = "char_378_asbest";
+
+        test("should calculate s1 DPS correctly", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Asbestos(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(419);
+            expect(dps).toBeLessThan(421);
+        });
+        test("should calculate s1 DPS correctly with def", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Asbestos(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(419);
+            expect(dps).toBeLessThan(421);
+        });
+        test("should calculate s1 DPS correctly with res", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Asbestos(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(335);
+            expect(dps).toBeLessThan(337);
+        });
+
+        test("should calculate s2 DPS correctly", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Asbestos(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(638);
+            expect(dps).toBeLessThan(640);
+        });
+        test("should calculate s2 DPS correctly with def", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Asbestos(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(638);
+            expect(dps).toBeLessThan(640);
+        });
+        test("should calculate s2 DPS correctly with res", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Asbestos(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(510);
+            expect(dps).toBeLessThan(512);
+        });
+    });
+
+    describe("Ascalon", () => {
+        const baseParams = {
+            moduleIndex: 1,
+        };
+        const operatorId = "char_4132_ascln";
+
+        test("should calculate s1 DPS correctly", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Ascalon(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(1052);
+            expect(dps).toBeLessThan(1054);
+        });
+        test("should calculate s1 DPS correctly with def", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Ascalon(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(917);
+            expect(dps).toBeLessThan(919);
+        });
+        test("should calculate s1 DPS correctly with res", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Ascalon(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(985);
+            expect(dps).toBeLessThan(987);
+        });
+
+        test("should calculate s2 DPS correctly", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Ascalon(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(1517);
+            expect(dps).toBeLessThan(1519);
+        });
+        test("should calculate s2 DPS correctly with def", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Ascalon(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(1419);
+            expect(dps).toBeLessThan(1421);
+        });
+        test("should calculate s2 DPS correctly with res", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Ascalon(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(1364);
+            expect(dps).toBeLessThan(1366);
+        });
+
+        test("should calculate s3 DPS correctly", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Ascalon(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 2,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(1358);
+            expect(dps).toBeLessThan(1360);
+        });
+        test("should calculate s3 DPS correctly with def", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Ascalon(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 2,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(1187);
+            expect(dps).toBeLessThan(1189);
+        });
+        test("should calculate s3 DPS correctly with res", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Ascalon(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 2,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(1258);
+            expect(dps).toBeLessThan(1260);
+        });
+    });
+
+    describe("Ash", () => {
+        const baseParams = {
+            moduleIndex: 1,
+        };
+        const operatorId = "char_456_ash";
+
+        test("should calculate s1 DPS correctly", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Ash(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(1633);
+            expect(dps).toBeLessThan(1635);
+        });
+        test("should calculate s1 DPS correctly with def", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Ash(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(1033);
+            expect(dps).toBeLessThan(1035);
+        });
+        test("should calculate s1 DPS correctly with res", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Ash(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(1633);
+            expect(dps).toBeLessThan(1635);
+        });
+
+        test("should calculate s2 DPS correctly", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Ash(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(9769);
+            expect(dps).toBeLessThan(9771);
+        });
+        test("should calculate s2 DPS correctly with def", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Ash(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(8119);
+            expect(dps).toBeLessThan(8121);
+        });
+        test("should calculate s2 DPS correctly with res", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Ash(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(9769);
+            expect(dps).toBeLessThan(9771);
         });
     });
 });

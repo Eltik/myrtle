@@ -202,7 +202,7 @@ export class OperatorUnit {
         /**
          * @description Filter out damage type.
          */
-        this.isPhysical = operatorData.isPhysical;
+        this.isPhysical = operatorData.isRanged;
 
         /**
          * @description Set operator elite level.
@@ -357,12 +357,12 @@ export class OperatorUnit {
 
             for (const opModule of operatorData.atkModule) {
                 if (opModule.moduleId === this.operatorModule?.id) {
-                    highestATKValue = opModule.value;
+                    highestATKValue = Math.max(highestATKValue, opModule.value);
                 }
             }
             for (const opModule of operatorData.aspdModule) {
                 if (opModule.moduleId === this.operatorModule?.id) {
-                    highestASPDValue = opModule.value;
+                    highestASPDValue = Math.max(highestASPDValue, opModule.value);
                 }
             }
 
@@ -404,11 +404,12 @@ export class OperatorUnit {
                                 }
                             }
                         } else {
+                            const moduleIndex = operatorData.availableModules.findIndex((opModule) => opModule.id === this.operatorModule?.id);
+
                             let requiredModuleId = "";
-                            if (talentData.requiredModuleId.length > 0) {
-                                requiredModuleId = talentData.requiredModuleId;
+                            if (!talentData.requiredModuleId || talentData.requiredModuleId.length === 0) {
+                                requiredModuleId = "";
                             } else {
-                                const moduleIndex = operatorData.availableModules.findIndex((opModule) => opModule.id === this.operatorModule?.id);
                                 requiredModuleId = (moduleIndex === 1 ? operatorData.availableModules[1].id : operatorData.availableModules[2].id) ?? "";
                             }
 
@@ -455,11 +456,12 @@ export class OperatorUnit {
                                 }
                             }
                         } else {
+                            const moduleIndex = operatorData.availableModules.findIndex((opModule) => opModule.id === this.operatorModule?.id);
+
                             let requiredModuleId = "";
-                            if (talentData.requiredModuleId.length > 0) {
-                                requiredModuleId = talentData.requiredModuleId;
+                            if (!talentData.requiredModuleId || talentData.requiredModuleId.length === 0) {
+                                requiredModuleId = "";
                             } else {
-                                const moduleIndex = operatorData.availableModules.findIndex((opModule) => opModule.id === this.operatorModule?.id);
                                 requiredModuleId = (moduleIndex === 1 ? operatorData.availableModules[1].id : operatorData.availableModules[2].id) ?? "";
                             }
 
