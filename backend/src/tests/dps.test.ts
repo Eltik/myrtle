@@ -17,6 +17,7 @@ import Arene from "../lib/impl/dps-calculator/impl/operators/impl/arene";
 import Asbestos from "../lib/impl/dps-calculator/impl/operators/impl/asbestos";
 import Ascalon from "../lib/impl/dps-calculator/impl/operators/impl/ascalon";
 import Ash from "../lib/impl/dps-calculator/impl/operators/impl/ash";
+import Ashlock from "../lib/impl/dps-calculator/impl/operators/impl/ashlock";
 
 // Initialize data before running tests
 beforeAll(async () => {
@@ -1112,38 +1113,35 @@ describe("Operator DPS Calculations", () => {
     });
 
     describe("Ash", () => {
-        const baseParams = {
-            moduleIndex: 2,
-        };
         const operatorId = "char_456_ash";
 
-        test("should calculate s1 DPS correctly", () => {
+        test("should calculate s1 DPS correctly modx", () => {
             const operator = operators(operatorId);
             if (!operator) throw new Error("Operator not found");
             const unit = new Ash(new OperatorData(operator), {
-                ...baseParams,
+                moduleIndex: 2,
                 skillIndex: 0,
             });
             const dps = unit.skillDPS({ defense: 0, res: 0 });
             expect(dps).toBeGreaterThan(1633);
             expect(dps).toBeLessThan(1635);
         });
-        test("should calculate s1 DPS correctly with def", () => {
+        test("should calculate s1 DPS correctly with def modx", () => {
             const operator = operators(operatorId);
             if (!operator) throw new Error("Operator not found");
             const unit = new Ash(new OperatorData(operator), {
-                ...baseParams,
+                moduleIndex: 2,
                 skillIndex: 0,
             });
             const dps = unit.skillDPS({ defense: 300, res: 0 });
             expect(dps).toBeGreaterThan(1033);
             expect(dps).toBeLessThan(1035);
         });
-        test("should calculate s1 DPS correctly with res", () => {
+        test("should calculate s1 DPS correctly with res modx", () => {
             const operator = operators(operatorId);
             if (!operator) throw new Error("Operator not found");
             const unit = new Ash(new OperatorData(operator), {
-                ...baseParams,
+                moduleIndex: 2,
                 skillIndex: 0,
             });
             const dps = unit.skillDPS({ defense: 0, res: 20 });
@@ -1151,38 +1149,181 @@ describe("Operator DPS Calculations", () => {
             expect(dps).toBeLessThan(1635);
         });
 
-        test("should calculate s2 DPS correctly", () => {
+        test("should calculate s2 DPS correctly modx", () => {
             const operator = operators(operatorId);
             if (!operator) throw new Error("Operator not found");
             const unit = new Ash(new OperatorData(operator), {
-                ...baseParams,
+                moduleIndex: 2,
                 skillIndex: 1,
             });
             const dps = unit.skillDPS({ defense: 0, res: 0 });
             expect(dps).toBeGreaterThan(9769);
             expect(dps).toBeLessThan(9771);
         });
-        test("should calculate s2 DPS correctly with def", () => {
+        test("should calculate s2 DPS correctly with def modx", () => {
             const operator = operators(operatorId);
             if (!operator) throw new Error("Operator not found");
             const unit = new Ash(new OperatorData(operator), {
-                ...baseParams,
+                moduleIndex: 2,
                 skillIndex: 1,
             });
             const dps = unit.skillDPS({ defense: 300, res: 0 });
             expect(dps).toBeGreaterThan(8119);
             expect(dps).toBeLessThan(8121);
         });
-        test("should calculate s2 DPS correctly with res", () => {
+        test("should calculate s2 DPS correctly with res modx", () => {
             const operator = operators(operatorId);
             if (!operator) throw new Error("Operator not found");
             const unit = new Ash(new OperatorData(operator), {
-                ...baseParams,
+                moduleIndex: 2,
                 skillIndex: 1,
             });
             const dps = unit.skillDPS({ defense: 0, res: 20 });
             expect(dps).toBeGreaterThan(9769);
             expect(dps).toBeLessThan(9771);
+        });
+
+        test("should calculate s1 DPS correctly mody", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Ash(new OperatorData(operator), {
+                moduleIndex: 1,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(1648);
+            expect(dps).toBeLessThan(1650);
+        });
+        test("should calculate s1 DPS correctly with def mody", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Ash(new OperatorData(operator), {
+                moduleIndex: 1,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(1000);
+            expect(dps).toBeLessThan(10002);
+        });
+        test("should calculate s1 DPS correctly with res mody", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Ash(new OperatorData(operator), {
+                moduleIndex: 1,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(1648);
+            expect(dps).toBeLessThan(1650);
+        });
+
+        test("should calculate s2 DPS correctly mody", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Ash(new OperatorData(operator), {
+                moduleIndex: 1,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(8963);
+            expect(dps).toBeLessThan(8965);
+        });
+        test("should calculate s2 DPS correctly with def mody", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Ash(new OperatorData(operator), {
+                moduleIndex: 1,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(7343);
+            expect(dps).toBeLessThan(7345);
+        });
+        test("should calculate s2 DPS correctly with res mody", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Ash(new OperatorData(operator), {
+                moduleIndex: 1,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(8963);
+            expect(dps).toBeLessThan(8965);
+        });
+    });
+
+    describe("Ashlock", () => {
+        const baseParams = {
+            moduleIndex: 1,
+        };
+        const operatorId = "char_431_ashlok";
+
+        test("should calculate s1 DPS correctly", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Ashlock(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(1159);
+            expect(dps).toBeLessThan(1161);
+        });
+        test("should calculate s1 DPS correctly with def", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Ashlock(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(1052);
+            expect(dps).toBeLessThan(1054);
+        });
+        test("should calculate s1 DPS correctly with res", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Ashlock(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(1159);
+            expect(dps).toBeLessThan(1161);
+        });
+
+        test("should calculate s2 DPS correctly", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Ashlock(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(2320);
+            expect(dps).toBeLessThan(2322);
+        });
+        test("should calculate s2 DPS correctly with def", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Ashlock(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(2014);
+            expect(dps).toBeLessThan(2016);
+        });
+        test("should calculate s2 DPS correctly with res", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Ashlock(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(2320);
+            expect(dps).toBeLessThan(2322);
         });
     });
 });
