@@ -37,7 +37,7 @@ export default class Ash extends OperatorUnit {
         }
 
         if (this.skillIndex === 1) {
-            this.attackInterval = 0.2;
+            const attackInterval = 0.2;
 
             const finalAtk = this.atk * (1 + this.buffATK) + this.buffATKFlat;
 
@@ -48,7 +48,7 @@ export default class Ash extends OperatorUnit {
             const hitDmg = Math.max(finalAtk * atkScale - enemy.defense, finalAtk * atkScale * 0.05);
             const dmgBonus = this.operatorModule?.id === "uniequip_002_ash" && this.operatorModuleLevel > 1 && this.skillDamage ? this.talent1Parameters[2] : 1;
 
-            dps = (((hitDmg / this.attackInterval) * (this.attackSpeed + aspd)) / 100) * dmgBonus;
+            dps = (((hitDmg / attackInterval) * (this.attackSpeed + aspd)) / 100) * dmgBonus;
         }
 
         return dps;
