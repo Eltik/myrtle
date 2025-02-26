@@ -8,17 +8,29 @@ export default class Ash extends OperatorUnit {
 
         this.skillDamageNames = ["vsStunned"];
         if (this.skillDamage && this.skillIndex === 1) {
-            this.skillDamageName = "vsStunned";
+            if (this.skillDamageName) {
+                this.skillDamageName += " vsStunned";
+            } else {
+                this.skillDamageName = "vsStunned";
+            }
         }
 
         this.moduleDamageNames = ["aerialTarget", "groundEnemy"];
         if (this.moduleDamage) {
             if (this.operatorModule?.id === "uniequip_002_ash") {
-                this.moduleDamageName = "aerialTarget";
+                if (this.moduleDamageName) {
+                    this.moduleDamageName += " aerialTarget";
+                } else {
+                    this.moduleDamageName = "aerialTarget";
+                }
             }
 
             if (this.operatorModule?.id === "uniequip_003_ash") {
-                this.moduleDamageName = "groundEnemy";
+                if (this.moduleDamageName) {
+                    this.moduleDamageName += " groundEnemy";
+                } else {
+                    this.moduleDamageName = "groundEnemy";
+                }
             }
         }
     }

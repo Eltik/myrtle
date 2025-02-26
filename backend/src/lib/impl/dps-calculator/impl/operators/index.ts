@@ -15,6 +15,7 @@ import Asbestos from "./impl/asbestos";
 import Ascalon from "./impl/ascalon";
 import Ash from "./impl/ash";
 import Ashlock from "./impl/ashlock";
+import Astesia from "./impl/astesia";
 
 const operators = [
     {
@@ -84,6 +85,10 @@ const operators = [
     {
         id: "char_431_ashlok",
         object: Ashlock,
+    },
+    {
+        id: "char_274_astesi",
+        object: Astesia,
     },
 ];
 

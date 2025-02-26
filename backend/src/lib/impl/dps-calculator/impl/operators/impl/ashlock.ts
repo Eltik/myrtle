@@ -8,12 +8,20 @@ export default class Ashlock extends OperatorUnit {
 
         this.talentDamageNames = ["LowTalent"];
         if (!this.talentDamage) {
-            this.talentDamageName = "LowTalent";
+            if (this.talentDamageName) {
+                this.talentDamageName += " LowTalent";
+            } else {
+                this.talentDamageName = "LowTalent";
+            }
         }
 
         this.moduleDamageNames = ["blockedTarget"];
         if (this.moduleDamage && this.operatorModule?.id === "uniequip_002_ashlok") {
-            this.moduleDamageName = "blockedTarget";
+            if (this.moduleDamageName) {
+                this.moduleDamageName += " blockedTarget";
+            } else {
+                this.moduleDamageName = "blockedTarget";
+            }
         }
     }
 
