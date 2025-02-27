@@ -13,6 +13,8 @@ export class OperatorUnit {
     public defaultPotential = 1;
     public defaultModuleIndex = -1;
 
+    public availableSkills: number[];
+
     /**
      * @description Number of targets.
      */
@@ -89,10 +91,11 @@ export class OperatorUnit {
     public buffATKFlat: number;
     public buffFragile: number;
 
-    constructor(operatorData: OperatorData, params: OperatorParams, defaultSkillIndex: number = 2, defaultPotential: number = 1, defaultModIndex: number = -1) {
+    constructor(operatorData: OperatorData, params: OperatorParams, defaultSkillIndex: number = 2, defaultPotential: number = 1, defaultModIndex: number = -1, availableSkills: number[] = []) {
         this.defaultSkillIndex = defaultSkillIndex;
         this.defaultPotential = defaultPotential;
         this.defaultModuleIndex = defaultModIndex;
+        this.availableSkills = availableSkills;
 
         if (params.allCond === undefined) params.allCond = true;
         if (!params.baseBuffs)

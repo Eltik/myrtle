@@ -4,7 +4,7 @@ import { OperatorData } from "../../classes/impl/operator-data";
 
 export default class Ascalon extends OperatorUnit {
     constructor(operatorData: OperatorData, params: OperatorParams) {
-        super(operatorData, params, 1, 1, 1);
+        super(operatorData, params, 1, 1, 1, [0, 1, 2]);
 
         this.talentDamageNames = ["1Stack", "3Stacks"];
         if (!this.talentDamage) {

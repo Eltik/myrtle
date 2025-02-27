@@ -6,7 +6,7 @@ export default class Amiya extends OperatorUnit {
     private s3: number;
 
     constructor(operatorData: OperatorData, params: OperatorParams) {
-        super(operatorData, params, 2, 6, 1);
+        super(operatorData, params, 2, 6, 1, [0, 1, 2]);
 
         if (this.elite === 2 && (this.skillIndex === 2 || this.skillIndex === -1)) {
             this.skillIndex = 2;

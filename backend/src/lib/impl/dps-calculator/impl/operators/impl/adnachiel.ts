@@ -4,7 +4,7 @@ import { OperatorData } from "../../classes/impl/operator-data";
 
 export default class Adnachiel extends OperatorUnit {
     constructor(operatorData: OperatorData, params: OperatorParams) {
-        super(operatorData, params, 0, 6, 0);
+        super(operatorData, params, 0, 6, 0, [0]);
     }
 
     public skillDPS(enemy: { defense: number; res: number }): number {

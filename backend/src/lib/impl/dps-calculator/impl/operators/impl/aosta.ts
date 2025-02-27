@@ -4,7 +4,7 @@ import { OperatorData } from "../../classes/impl/operator-data";
 
 export default class Aosta extends OperatorUnit {
     constructor(operatorData: OperatorData, params: OperatorParams) {
-        super(operatorData, params, 1, 1, 1);
+        super(operatorData, params, 1, 1, 1, [0, 1]);
 
         this.traitDamageNames = ["distant"];
         if (!this.traitDamage) {

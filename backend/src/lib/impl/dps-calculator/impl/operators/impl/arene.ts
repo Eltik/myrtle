@@ -4,7 +4,7 @@ import { OperatorData } from "../../classes/impl/operator-data";
 
 export default class Arene extends OperatorUnit {
     constructor(operatorData: OperatorData, params: OperatorParams) {
-        super(operatorData, params, 1, 6, 1);
+        super(operatorData, params, 1, 6, 1, [0, 1]);
 
         if (this.skillIndex === 0 && this.talentDamage) {
             this.traitDamage = false;
