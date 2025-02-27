@@ -4,7 +4,7 @@ import { OperatorData } from "../../classes/impl/operator-data";
 
 export default class Archetto extends OperatorUnit {
     constructor(operatorData: OperatorData, params: OperatorParams) {
-        super(operatorData, params, 2, 1, 2);
+        super(operatorData, params, 2, 1, 2, [0, 1, 2]);
 
         this.talentDamageNames = ["+2ndSniper"];
         if (this.operatorModule?.id === "uniequip_003_archet" && this.operatorModuleLevel > 1 && this.talentDamage && this.skillIndex !== 2) {

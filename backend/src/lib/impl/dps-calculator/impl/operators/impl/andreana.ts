@@ -4,7 +4,7 @@ import { OperatorData } from "../../classes/impl/operator-data";
 
 export default class Andreana extends OperatorUnit {
     constructor(operatorData: OperatorData, params: OperatorParams) {
-        super(operatorData, params, 0, 1, 1);
+        super(operatorData, params, 0, 1, 1, [0, 1]);
 
         this.talentDamageNames = ["atMaxRange"];
         if (this.operatorModule?.id === "uniequip_002_cuttle" && this.moduleDamage) {

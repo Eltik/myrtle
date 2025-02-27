@@ -4,7 +4,7 @@ import { OperatorData } from "../../classes/impl/operator-data";
 
 export default class Aak extends OperatorUnit {
     constructor(operatorData: OperatorData, params: OperatorParams) {
-        super(operatorData, params, 2, 1, 1);
+        super(operatorData, params, 2, 1, 1, [0, 2]);
     }
 
     public skillDPS(enemy: { defense: number; res: number }): number {

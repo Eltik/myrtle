@@ -19,6 +19,7 @@ import Ascalon from "../lib/impl/dps-calculator/impl/operators/impl/ascalon";
 import Ash from "../lib/impl/dps-calculator/impl/operators/impl/ash";
 import Ashlock from "../lib/impl/dps-calculator/impl/operators/impl/ashlock";
 import Astesia from "../lib/impl/dps-calculator/impl/operators/impl/astesia";
+import Astgenne from "../lib/impl/dps-calculator/impl/operators/impl/astgenne";
 
 // Initialize data before running tests
 beforeAll(async () => {
@@ -1398,6 +1399,81 @@ describe("Operator DPS Calculations", () => {
             const dps = unit.skillDPS({ defense: 0, res: 20 });
             expect(dps).toBeGreaterThan(992);
             expect(dps).toBeLessThan(994);
+        });
+    });
+
+    describe("Astgenne", () => {
+        const baseParams = {
+            moduleIndex: 1,
+        };
+        const operatorId = "char_135_halo";
+
+        test("should calculate s1 DPS correctly", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Astgenne(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(472);
+            expect(dps).toBeLessThan(474);
+        });
+        test("should calculate s1 DPS correctly with def", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Astgenne(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(472);
+            expect(dps).toBeLessThan(474);
+        });
+        test("should calculate s1 DPS correctly with res", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Astgenne(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(377);
+            expect(dps).toBeLessThan(379);
+        });
+
+        test("should calculate s2 DPS correctly", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Astgenne(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(627);
+            expect(dps).toBeLessThan(629);
+        });
+        test("should calculate s2 DPS correctly with def", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Astgenne(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(627);
+            expect(dps).toBeLessThan(629);
+        });
+        test("should calculate s2 DPS correctly with res", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Astgenne(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(502);
+            expect(dps).toBeLessThan(504);
         });
     });
 });

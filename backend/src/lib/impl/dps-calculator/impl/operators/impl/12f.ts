@@ -4,7 +4,7 @@ import { OperatorData } from "../../classes/impl/operator-data";
 
 export default class TwelveF extends OperatorUnit {
     constructor(operatorData: OperatorData, params: OperatorParams) {
-        super(operatorData, params, -1, 6, -1);
+        super(operatorData, params, -1, 6, -1, []);
 
         if (this.potential > 2) this.atk += 12;
     }

@@ -4,7 +4,7 @@ import { OperatorData } from "../../classes/impl/operator-data";
 
 export default class Angelina extends OperatorUnit {
     constructor(operatorData: OperatorData, params: OperatorParams) {
-        super(operatorData, params, 2, 1, 2);
+        super(operatorData, params, 2, 1, 2, [0, 1, 2]);
     }
 
     public skillDPS(enemy: { defense: number; res: number }): number {

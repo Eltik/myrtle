@@ -4,7 +4,7 @@ import { OperatorData } from "../../classes/impl/operator-data";
 
 export default class Ash extends OperatorUnit {
     constructor(operatorData: OperatorData, params: OperatorParams) {
-        super(operatorData, params, 1, 1, 2);
+        super(operatorData, params, 1, 1, 2, [0, 1]);
 
         this.skillDamageNames = ["vsStunned"];
         if (this.skillDamage && this.skillIndex === 1) {
