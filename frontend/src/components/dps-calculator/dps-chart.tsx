@@ -5,11 +5,11 @@ import { Button } from "~/components/ui/button";
 
 interface DPSChartProps {
     operators: Operator[];
-    generateChartData: () => Promise<any[]>;
+    generateChartData: () => Promise<unknown[]>;
 }
 
 export const DPSChart: React.FC<DPSChartProps> = ({ operators, generateChartData }) => {
-    const [chartData, setChartData] = useState<any[]>([]);
+    const [chartData, setChartData] = useState<unknown[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
     const handleGenerateChart = async () => {

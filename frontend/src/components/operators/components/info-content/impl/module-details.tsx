@@ -5,7 +5,12 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/component
 import { Badge } from "~/components/ui/badge";
 import { Separator } from "~/components/ui/separator";
 import type { Module, ModuleData } from "~/types/impl/api/static/modules";
+import { ModuleTarget } from "~/types/impl/api/static/modules";
 import { AnimatePresence, motion } from "framer-motion";
+import Image from "next/image";
+import { descriptionToHtml } from "~/helper/descriptionParser";
+import { parsePhase } from "~/helper";
+import { OperatorPhase } from "~/types/impl/api/static/operator";
 
 interface ModuleDetailsProps {
     currentModule: string;
@@ -30,72 +35,196 @@ export function ModuleDetails({ currentModule, modules, moduleData }: ModuleDeta
 
     return (
         <div className="mt-2 rounded-md px-4 py-2">
-            <div className="flex flex-col gap-3">
-                <h2 className="text-lg font-bold">{currentModuleInfo.uniEquipName}</h2>
-                <Separator />
-            </div>
-            <div className="mt-4 space-y-4">
-                <div className="flex flex-col gap-2">
-                    <h3 className="text-lg font-semibold">Description</h3>
-                    <div className="relative rounded-md border p-2">
-                        <AnimatePresence initial={false}>
-                            <motion.div initial={{ height: "80px" }} animate={{ height: isDescriptionExpanded ? "auto" : "80px" }} exit={{ height: "80px" }} transition={{ duration: 0.3 }} className="overflow-hidden">
-                                <p className="text-sm">{currentModuleInfo.uniEquipDesc}</p>
-                            </motion.div>
-                        </AnimatePresence>
-                        {!isDescriptionExpanded && <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent" />}
+            <div className="space-y-4">
+                {/* Module Header */}
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <Image
+                            src={currentModuleInfo.image ?? ""}
+                            alt={currentModuleInfo.uniEquipName}
+                            className="h-24 w-24 rounded-md"
+                            width={96}
+                            height={96}
+                        />
+                        <div>
+                            <h3 className="text-lg font-semibold">{currentModuleInfo.uniEquipName}</h3>
+                            <div className="flex gap-2">
+                                <Badge variant="outline">{currentModuleInfo.typeName1}</Badge>
+                                {currentModuleInfo.typeName2 && (
+                                    <Badge variant="outline">{currentModuleInfo.typeName2}</Badge>
+                                )}
+                            </div>
+                        </div>
                     </div>
-                    <span onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)} className="flex cursor-pointer flex-row items-center self-start text-sm transition-all duration-150 hover:text-muted-foreground">
-                        {isDescriptionExpanded ? "Show Less" : "Show More"}
-                        <ChevronDown className={`ml-auto h-5 w-5 transition-transform ${isDescriptionExpanded ? "rotate-180" : ""}`} />
-                    </span>
+                    <Badge
+                        variant="secondary"
+                        className="capitalize"
+                        style={{ backgroundColor: currentModuleInfo.equipShiningColor }}
+                    >
+                        {currentModuleInfo.type.toLowerCase()}
+                    </Badge>
                 </div>
+
+                {/* Module Description */}
+                <Collapsible open={isDescriptionExpanded} onOpenChange={setIsDescriptionExpanded}>
+                    <div className="flex items-center gap-2">
+                        <CollapsibleTrigger asChild>
+                            <Button variant="ghost" size="sm" className="p-2 flex items-center gap-2">
+                                {isDescriptionExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                                <h4 className="text-sm font-medium">Description</h4>
+                            </Button>
+                        </CollapsibleTrigger>
+                    </div>
+                    <CollapsibleContent>
+                        <p className="mt-2 text-sm text-muted-foreground">{currentModuleInfo.uniEquipDesc}</p>
+                    </CollapsibleContent>
+                </Collapsible>
+
                 <Separator />
-                <div>
-                    <h3 className="mb-2 text-lg font-semibold">Details</h3>
-                    <div className="grid grid-cols-2 gap-2">
-                        <Badge variant="outline">Type: {currentModuleInfo.typeName1}</Badge>
-                        {currentModuleInfo.typeName2 && <Badge variant="outline">Subtype: {currentModuleInfo.typeName2}</Badge>}
-                        <Badge variant="outline">Unlock Level: {currentModuleInfo.unlockLevel}</Badge>
-                        <Badge variant="outline">Trust Requirement: {currentModuleInfo.unlockFavorPoint}</Badge>
+
+                {/* Module Requirements */}
+                <div className="space-y-2">
+                    <h4 className="font-medium">Requirements</h4>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span className="text-muted-foreground">Show Level:</span>{" "}
+                            <span>{currentModuleInfo.showLevel}</span>
+                        </div>
+                        <div>
+                            <span className="text-muted-foreground">Unlock Level:</span>{" "}
+                            <span>{currentModuleInfo.unlockLevel}</span>
+                        </div>
+                        <div>
+                            <span className="text-muted-foreground">Show Phase:</span>{" "}
+                            <span>{parsePhase(currentModuleInfo.showEvolvePhase) === OperatorPhase.ELITE_0 ? "E0" : parsePhase(currentModuleInfo.showEvolvePhase) === OperatorPhase.ELITE_1 ? "E1" : "E2"}</span>
+                        </div>
+                        <div>
+                            <span className="text-muted-foreground">Unlock Phase:</span>{" "}
+                            <span>{parsePhase(currentModuleInfo.unlockEvolvePhase) === OperatorPhase.ELITE_0 ? "E0" : parsePhase(currentModuleInfo.unlockEvolvePhase) === OperatorPhase.ELITE_1 ? "E1" : "E2"}</span>
+                        </div>
+                        <div>
+                            <span className="text-muted-foreground">Trust Required:</span>{" "}
+                            <span>{currentModuleInfo.unlockFavorPoint ?? "N/A"}</span>
+                        </div>
                     </div>
                 </div>
+
                 <Separator />
-                <div>
-                    <h3 className="mb-2 text-lg font-semibold">Module Levels</h3>
-                    {currentModuleData.phases.map((phase, index) => (
-                        <Collapsible key={index} open={openSections[`phase_${index}`]} onOpenChange={() => toggleSection(`phase_${index}`)}>
+
+                {/* Module Phases */}
+                <div className="space-y-4">
+                    <h4 className="font-medium">Module Phases</h4>
+                    {currentModuleData.phases.map((phase, phaseIndex) => (
+                        <Collapsible
+                            key={phaseIndex}
+                            open={openSections[`phase-${phaseIndex}`]}
+                            onOpenChange={() => toggleSection(`phase-${phaseIndex}`)}
+                        >
                             <CollapsibleTrigger asChild>
-                                <Button variant="ghost" className={`w-full justify-between ${openSections[`phase_${index}`] ? "border bg-primary-foreground" : ""}`}>
-                                    <span>Level {phase.equipLevel}</span>
-                                    {openSections[`phase_${index}`] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                                <Button variant="outline" className="w-full justify-between">
+                                    <span>Phase {phaseIndex + 1} (Level {phase.equipLevel})</span>
+                                    {openSections[`phase-${phaseIndex}`] ? (
+                                        <ChevronDown className="h-4 w-4" />
+                                    ) : (
+                                        <ChevronRight className="h-4 w-4" />
+                                    )}
                                 </Button>
                             </CollapsibleTrigger>
-                            <CollapsibleContent className="space-y-2">
-                                {phase.parts.map((part, partIndex) => (
-                                    <div key={partIndex} className="ml-8">
-                                        <h4 className="text-base font-semibold">Part {partIndex + 1}</h4>
-                                        <p className="text-sm">Target: {part.target}</p>
-                                        {part.addOrOverrideTalentDataBundle?.candidates?.map((candidate, candIndex) => (
-                                            <div key={candIndex} className="ml-4 mt-2">
-                                                <p className="text-sm font-medium">{candidate.name}</p>
-                                                <p className="text-sm text-muted-foreground">{candidate.description}</p>
+                            <CollapsibleContent>
+                                <AnimatePresence>
+                                    <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: "auto", opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        transition={{ duration: 0.2 }}
+                                        className="space-y-4 p-4"
+                                    >
+                                        {/* Attributes */}
+                                        {phase.attributeBlackboard.length > 0 && (
+                                            <div>
+                                                <h5 className="mb-2 font-medium">Attributes</h5>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    {phase.attributeBlackboard.map((attr, i) => (
+                                                        <div key={i} className="text-sm">
+                                                            <span className="text-muted-foreground">{attr.key}:</span>{" "}
+                                                            <span>+{attr.value}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        ))}
-                                    </div>
-                                ))}
-                                {phase.attributeBlackboard.length > 0 && (
-                                    <div className="ml-8">
-                                        <h4 className="font-semibold">Attribute Changes</h4>
-                                        <div className="mt-2 grid grid-cols-2 gap-2">
-                                            {phase.attributeBlackboard.map((attr, attrIndex) => (
-                                                <Badge key={attrIndex} variant="secondary">
-                                                    {attr.key}: {attr.value}
-                                                </Badge>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
+                                        )}
+
+                                        {/* Parts */}
+                                        {phase.parts.map((part, partIndex) => {
+                                            // Check if we have any valid candidates to display
+                                            const hasTalentCandidates = part.addOrOverrideTalentDataBundle.candidates?.some(
+                                                candidate => candidate.upgradeDescription || candidate.description
+                                            );
+                                            
+                                            const hasTraitCandidates = part.overrideTraitDataBundle.candidates?.some(
+                                                candidate => candidate.additionalDescription
+                                            );
+                                            
+                                            // Only render if we have content to show
+                                            if (!hasTalentCandidates && !hasTraitCandidates) {
+                                                return null;
+                                            }
+                                            
+                                            return (
+                                                <div key={partIndex} className="space-y-2">
+                                                    <h5 className="font-medium">
+                                                        {part.target === ModuleTarget.TRAIT ? "Trait Changes" : "Talent Changes"}
+                                                    </h5>
+                                                    
+                                                    {hasTalentCandidates && part.addOrOverrideTalentDataBundle.candidates?.map((candidate, i) => {
+                                                        // Skip candidates without description
+                                                        if (!candidate.upgradeDescription && !candidate.description) {
+                                                            return null;
+                                                        }
+                                                        
+                                                        return (
+                                                            <div key={i} className="rounded-md bg-muted p-2">
+                                                                {candidate.name && (
+                                                                    <div className="font-medium">{candidate.name}</div>
+                                                                )}
+                                                                <p 
+                                                                    className="text-sm text-muted-foreground"
+                                                                    dangerouslySetInnerHTML={{ 
+                                                                        __html: descriptionToHtml(
+                                                                            candidate.upgradeDescription ?? candidate.description ?? '', 
+                                                                            candidate.blackboard ?? []
+                                                                        ) 
+                                                                    }}
+                                                                ></p>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                    
+                                                    {hasTraitCandidates && part.overrideTraitDataBundle.candidates?.map((candidate, i) => {
+                                                        // Skip candidates without additionalDescription
+                                                        if (!candidate.additionalDescription) {
+                                                            return null;
+                                                        }
+                                                        
+                                                        return (
+                                                            <div key={i} className="rounded-md bg-muted p-2">
+                                                                <p 
+                                                                    className="text-sm text-muted-foreground"
+                                                                    dangerouslySetInnerHTML={{ 
+                                                                        __html: descriptionToHtml(
+                                                                            candidate.additionalDescription ?? '', 
+                                                                            candidate.blackboard ?? []
+                                                                        ) 
+                                                                    }}
+                                                                ></p>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            );
+                                        })}
+                                    </motion.div>
+                                </AnimatePresence>
                             </CollapsibleContent>
                         </Collapsible>
                     ))}
