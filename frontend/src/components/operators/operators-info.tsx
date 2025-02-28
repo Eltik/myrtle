@@ -7,6 +7,7 @@ import { Button } from "../ui/button";
 import InfoContent from "./components/info-content";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import SkillsTalentsContent from "./components/skills-talents-content";
+import LevelUpContent from "./components/level-cost-content";
 
 type TabType = "info" | "skills" | "levelup" | "skins" | "audio";
 
@@ -101,10 +102,6 @@ function OperatorsInfo({ operator }: { operator: Operator }) {
             </div>
         </>
     );
-}
-
-function LevelUpContent({ operator }: { operator: Operator }) {
-    return <div>Level-Up Cost content for {operator.name}</div>;
 }
 
 function SkinsContent({ operator }: { operator: Operator }) {
