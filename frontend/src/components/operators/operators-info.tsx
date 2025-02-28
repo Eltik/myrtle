@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Button } from "../ui/button";
 import InfoContent from "./components/info-content";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
-import SkillsContent from "./components/skills-talents-content";
+import SkillsTalentsContent from "./components/skills-talents-content";
 
 type TabType = "info" | "skills" | "levelup" | "skins" | "audio";
 
@@ -88,7 +88,7 @@ function OperatorsInfo({ operator }: { operator: Operator }) {
                                 <ScrollArea className="w-full rounded-md">
                                     <div>
                                         {activeTab === "info" && <InfoContent operator={operator} />}
-                                        {activeTab === "skills" && <SkillsContent operator={operator} />}
+                                        {activeTab === "skills" && <SkillsTalentsContent operator={operator} />}
                                         {activeTab === "levelup" && <LevelUpContent operator={operator} />}
                                         {activeTab === "skins" && <SkinsContent operator={operator} />}
                                         {activeTab === "audio" && <AudioContent operator={operator} />}
