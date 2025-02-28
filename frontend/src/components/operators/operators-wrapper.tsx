@@ -38,6 +38,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(24);
+    const [pageInput, setPageInput] = useState<string>("1");
 
     const [statsSortBy, setStatsSortBy] = useState<"maxHp" | "atk" | "def" | "magicResistance" | "cost" | "baseAttackTime" | "blockCnt">("maxHp");
 
@@ -400,13 +401,39 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
     const goToNextPage = () => {
         if (currentPage < totalPages) {
             setCurrentPage(currentPage + 1);
+            setPageInput((currentPage + 1).toString());
         }
     };
 
     const goToPreviousPage = () => {
         if (currentPage > 1) {
             setCurrentPage(currentPage - 1);
+            setPageInput((currentPage - 1).toString());
         }
+    };
+
+    // Handle direct page input
+    const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setPageInput(e.target.value.replace(/[^0-9]/g, ''));
+    };
+
+    const handlePageInputSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        navigateToInputPage();
+    };
+    
+    const navigateToInputPage = () => {
+        const pageNumber = parseInt(pageInput);
+        if (!isNaN(pageNumber) && pageNumber >= 1 && pageNumber <= totalPages) {
+            setCurrentPage(pageNumber);
+        } else {
+            // Reset to current page if invalid
+            setPageInput(currentPage.toString());
+        }
+    };
+
+    const handlePageInputBlur = () => {
+        navigateToInputPage();
     };
 
     // Handle page size change
@@ -666,7 +693,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                 
                 {/* Pagination Controls */}
                 <div className="mt-8 flex items-center justify-center gap-2">
-                    <div className="flex items-center space-x-6">
+                    <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
                         <div className="flex items-center space-x-2">
                             <span className="text-sm font-medium">Rows per page:</span>
                             <Select value={String(pageSize)} onValueChange={handlePageSizeChange}>
@@ -683,8 +710,21 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                             </Select>
                         </div>
                         
-                        <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-                            Page {currentPage} of {totalPages}
+                        <div className="flex w-[140px] sm:w-[170px] items-center justify-center text-sm font-medium">
+                            <form onSubmit={handlePageInputSubmit} className="flex items-center">
+                                <span className="mr-1">Page</span>
+                                <Input
+                                    type="tel"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    value={pageInput}
+                                    onChange={handlePageInputChange}
+                                    onBlur={handlePageInputBlur}
+                                    className="h-8 w-12 sm:w-14 px-1 text-center"
+                                    aria-label="Go to page"
+                                />
+                                <span className="ml-1">of {totalPages}</span>
+                            </form>
                         </div>
                         
                         <div className="flex items-center space-x-2">
