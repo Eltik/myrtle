@@ -4,15 +4,15 @@ import { OperatorPhase, OperatorRarity } from "~/types/impl/api/static/operator"
 export const parsePhase = (phase: string) => {
     switch (phase) {
         case "PHASE_2":
-            return OperatorPhase.ELITE_2
+            return OperatorPhase.ELITE_2;
         case "PHASE_1":
-            return OperatorPhase.ELITE_1
+            return OperatorPhase.ELITE_1;
         case "PHASE_0":
-            return OperatorPhase.ELITE_0
+            return OperatorPhase.ELITE_0;
         default:
-            return OperatorPhase.ELITE_0
+            return OperatorPhase.ELITE_0;
     }
-}
+};
 
 export const rarityToNumber = (rarity: OperatorRarity): number => {
     switch (rarity) {

@@ -394,7 +394,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
     }, [operators, canActivateSkill, showLimited, isModule, searchTerm, filterClasses, filterSubClasses, filterRarity, filterBirthPlace, filterRace, filterNation, filterGender, filterSkillTypes, filterSkillChargeTypes, sortBy, sortOrder, statsSortBy]);
 
     // Calculate total number of pages
-    const validOperators = sortedAndFilteredCharacters.filter(operator => operator.id?.startsWith("char"));
+    const validOperators = sortedAndFilteredCharacters.filter((operator) => operator.id?.startsWith("char"));
     const totalPages = Math.ceil(validOperators.length / pageSize);
 
     // Handle page navigation
@@ -414,14 +414,14 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
 
     // Handle direct page input
     const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setPageInput(e.target.value.replace(/[^0-9]/g, ''));
+        setPageInput(e.target.value.replace(/[^0-9]/g, ""));
     };
 
     const handlePageInputSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         navigateToInputPage();
     };
-    
+
     const navigateToInputPage = () => {
         const pageNumber = parseInt(pageInput);
         if (!isNaN(pageNumber) && pageNumber >= 1 && pageNumber <= totalPages) {
@@ -690,10 +690,10 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
             </div>
             <div className={`transition-all duration-150 ${showOptions ? "" : "-mt-8"}`}>
                 <OperatorsGrid operators={validOperators} currentPage={currentPage} pageSize={pageSize} />
-                
+
                 {/* Pagination Controls */}
                 <div className="mt-8 flex items-center justify-center gap-2">
-                    <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
+                    <div className="flex flex-col items-center space-y-4 sm:flex-row sm:space-x-6 sm:space-y-0">
                         <div className="flex items-center space-x-2">
                             <span className="text-sm font-medium">Rows per page:</span>
                             <Select value={String(pageSize)} onValueChange={handlePageSizeChange}>
@@ -709,47 +709,28 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                 </SelectContent>
                             </Select>
                         </div>
-                        
-                        <div className="flex w-[140px] sm:w-[170px] items-center justify-center text-sm font-medium">
+
+                        <div className="flex w-[140px] items-center justify-center text-sm font-medium sm:w-[170px]">
                             <form onSubmit={handlePageInputSubmit} className="flex items-center">
                                 <span className="mr-1">Page</span>
-                                <Input
-                                    type="tel"
-                                    inputMode="numeric"
-                                    pattern="[0-9]*"
-                                    value={pageInput}
-                                    onChange={handlePageInputChange}
-                                    onBlur={handlePageInputBlur}
-                                    className="h-8 w-12 sm:w-14 px-1 text-center"
-                                    aria-label="Go to page"
-                                />
+                                <Input type="tel" inputMode="numeric" pattern="[0-9]*" value={pageInput} onChange={handlePageInputChange} onBlur={handlePageInputBlur} className="h-8 w-12 px-1 text-center sm:w-14" aria-label="Go to page" />
                                 <span className="ml-1">of {totalPages}</span>
                             </form>
                         </div>
-                        
+
                         <div className="flex items-center space-x-2">
-                            <Button
-                                variant="outline"
-                                className="h-8 w-8 p-0"
-                                onClick={goToPreviousPage}
-                                disabled={currentPage === 1}
-                            >
+                            <Button variant="outline" className="h-8 w-8 p-0" onClick={goToPreviousPage} disabled={currentPage === 1}>
                                 <span className="sr-only">Go to previous page</span>
                                 <ChevronLeft className="h-4 w-4" />
                             </Button>
-                            <Button
-                                variant="outline"
-                                className="h-8 w-8 p-0"
-                                onClick={goToNextPage}
-                                disabled={currentPage === totalPages}
-                            >
+                            <Button variant="outline" className="h-8 w-8 p-0" onClick={goToNextPage} disabled={currentPage === totalPages}>
                                 <span className="sr-only">Go to next page</span>
                                 <ChevronRight className="h-4 w-4" />
                             </Button>
                         </div>
                     </div>
                 </div>
-                
+
                 {/* Display total results count */}
                 <div className="mt-4 text-center text-sm text-muted-foreground">
                     Showing {Math.min((currentPage - 1) * pageSize + 1, validOperators.length)} to {Math.min(currentPage * pageSize, validOperators.length)} of {validOperators.length} operators

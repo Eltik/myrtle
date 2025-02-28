@@ -10,20 +10,16 @@ import { useState } from "react";
  * I will be changing it in the future but for now, it's a good placeholder.
  */
 
-export function OperatorsGrid({ operators, currentPage, pageSize }: { 
-    operators: Operator[]; 
-    currentPage: number;
-    pageSize: number;
-}) {
+export function OperatorsGrid({ operators, currentPage, pageSize }: { operators: Operator[]; currentPage: number; pageSize: number }) {
     const [hoveredOperator, setHoveredOperator] = useState<string | null>(null);
-    
+
     // Pre-filter operators to only include those with valid IDs
-    const validOperators = operators.filter(operator => operator.id?.startsWith("char"));
-    
+    const validOperators = operators.filter((operator) => operator.id?.startsWith("char"));
+
     // Calculate start and end index for current page
     const startIndex = (currentPage - 1) * pageSize;
     const endIndex = Math.min(startIndex + pageSize, validOperators.length);
-    
+
     // Get only the operators for the current page
     const paginatedOperators = validOperators.slice(startIndex, endIndex);
 
@@ -34,34 +30,21 @@ export function OperatorsGrid({ operators, currentPage, pageSize }: {
                     const operatorId = operator.id!; // We know it's non-null from our filter
                     const isHovered = hoveredOperator === operatorId;
                     const shouldGrayscale = hoveredOperator !== null && !isHovered;
-                    
+
                     return (
-                        <Link 
-                            href={`/operators?id=${operatorId}`} 
-                            key={operatorId} 
-                            className="group relative flex aspect-[2/3] overflow-clip rounded-md border border-muted/50 bg-card transition hover:rounded-lg"
-                            onMouseEnter={() => setHoveredOperator(operatorId)}
-                            onMouseLeave={() => setHoveredOperator(null)}
-                        >
+                        <Link href={`/operators?id=${operatorId}`} key={operatorId} className="group relative flex aspect-[2/3] overflow-clip rounded-md border border-muted/50 bg-card transition hover:rounded-lg" onMouseEnter={() => setHoveredOperator(operatorId)} onMouseLeave={() => setHoveredOperator(null)}>
                             <div className="absolute -translate-x-8 -translate-y-4">
                                 <Image src={operator.nationId ? `https://raw.githubusercontent.com/Aceship/Arknight-Images/main/factions/logo_${String(operator.nationId)}.png` : operator.teamId ? `https://raw.githubusercontent.com/Aceship/Arknight-Images/main/factions/logo_${operator.teamId}.png` : `https://raw.githubusercontent.com/Aceship/Arknight-Images/main/factions/none.png`} alt={String(operator.nationId)} loading="lazy" width={360} height={360} decoding="async" className="opacity-5 transition-opacity group-hover:opacity-10" />
                             </div>
                             <div className="absolute inset-0">
                                 <div className={`relative h-full w-full scale-100 transition-all duration-150 group-hover:scale-105 ${shouldGrayscale ? "grayscale" : ""} ${isHovered ? "grayscale-0" : ""}`}>
-                                    <Image
-                                        loading="lazy"
-                                        className="h-full w-full rounded-lg object-contain"
-                                        alt="Operator Image"
-                                        src={`https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/portrait/${operatorId}_1.png`}
-                                        fill
-                                        decoding="async"
-                                    />
+                                    <Image loading="lazy" className="h-full w-full rounded-lg object-contain" alt="Operator Image" src={`https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/portrait/${operatorId}_1.png`} fill decoding="async" />
                                 </div>
                             </div>
                             <div className="absolute inset-x-0 bottom-0 z-10">
                                 <div className="relative">
                                     <div className="h-16 w-full bg-background/80 backdrop-blur-sm" />
-                                    <h2 className="absolute bottom-2 left-1 line-clamp-2 text-xl font-bold uppercase opacity-60 transition-opacity group-hover:opacity-100 pr-12 max-w-[85%]">{operator.name}</h2>
+                                    <h2 className="absolute bottom-2 left-1 line-clamp-2 max-w-[85%] pr-12 text-xl font-bold uppercase opacity-60 transition-opacity group-hover:opacity-100">{operator.name}</h2>
                                     <div className="absolute bottom-2 right-1 flex scale-75 items-center opacity-0 transition-all duration-200 group-hover:scale-100 group-hover:opacity-100">
                                         <div className="h-6 w-6 md:h-10 md:w-10">
                                             <Image src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/classes/class_${formatProfession(operator.profession).toLowerCase()}.png`} alt={formatProfession(operator.profession)} loading="lazy" width={160} height={160} decoding="async" />
