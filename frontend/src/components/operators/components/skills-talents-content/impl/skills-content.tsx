@@ -22,6 +22,17 @@ function SkillsContent({ operator }: { operator: Operator }) {
         collapsed: { opacity: 0, height: 0 },
     };
 
+    // Calculate the grid template columns based on the number of skills
+    const getGridColumns = (skillCount: number) => {
+        switch (skillCount) {
+            case 1: return "grid-cols-1";
+            case 2: return "grid-cols-2";
+            case 3: return "grid-cols-3";
+            case 4: return "grid-cols-4";
+            default: return "grid-cols-3"; // Fallback to 3 columns
+        }
+    };
+
     return (
         <>
             <Collapsible defaultOpen={true} open={isSkillsOpen} onOpenChange={setIsSkillsOpen}>
@@ -41,10 +52,12 @@ function SkillsContent({ operator }: { operator: Operator }) {
                                 <CollapsibleContent forceMount>
                                     <CardContent>
                                         <Tabs defaultValue={operator.skills[operator.skills.length - 1]?.skillId} className="w-full">
-                                            <TabsList className={`grid w-full grid-cols-${operator.skills.length}`}>
+                                            <TabsList className={`grid w-full ${getGridColumns(operator.skills.length)}`}>
                                                 {operator.skills.map((skill) => (
-                                                    <TabsTrigger value={skill.skillId} key={skill.skillId}>
-                                                        {skill.static?.levels[0]?.name}
+                                                    <TabsTrigger value={skill.skillId} key={skill.skillId} className="truncate px-2 text-sm">
+                                                        <span className="truncate" title={skill.static?.levels[0]?.name}>
+                                                            {skill.static?.levels[0]?.name}
+                                                        </span>
                                                     </TabsTrigger>
                                                 ))}
                                             </TabsList>
