@@ -11,8 +11,8 @@ function SkillsTalentsContent({ operator }: { operator: Operator }) {
                     <span className="text-3xl font-bold">Skills & Talents</span>
                 </div>
                 <Separator />
-                <div className="grid px-3 md:p-4">
-                    <div className="space-y-8 md:col-span-2">
+                <div className="grid px-3 py-4 md:p-4">
+                    <div className="space-y-2 md:col-span-2 md:space-y-8">
                         <SkillsContent operator={operator} />
                         <TalentsContent operator={operator} />
                     </div>

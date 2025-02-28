@@ -58,7 +58,7 @@ function OperatorsInfo({ operator }: { operator: Operator }) {
                                     </BreadcrumbItem>
                                 </BreadcrumbList>
                             </Breadcrumb>
-                            <h1 className="text-6xl font-bold">{operator.name}</h1>
+                            <h1 className="text-4xl font-bold md:text-6xl">{operator.name}</h1>
                         </div>
                     </header>
                     <div className="px-1 md:container md:px-0">

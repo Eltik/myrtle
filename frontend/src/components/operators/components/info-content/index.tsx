@@ -598,7 +598,7 @@ function InfoContent({ operator }: { operator: Operator }) {
                         <div className="mt-4">
                             <Collapsible defaultOpen={isModuleDetailsExpanded} onOpenChange={() => setIsModuleDetailsExpanded(!isModuleDetailsExpanded)}>
                                 <CollapsibleTrigger asChild>
-                                    <div className="flex cursor-pointer flex-row items-center rounded-md transition-all duration-150 hover:bg-primary-foreground">
+                                    <div className="flex cursor-pointer flex-row items-center rounded-md px-2 py-1 transition-all duration-150 hover:bg-primary-foreground">
                                         <h2 className="text-lg font-bold">Module Details</h2>
                                         <ChevronDown className={`ml-auto h-5 w-5 transition-transform ${isModuleDetailsExpanded ? "rotate-180" : ""}`} />
                                     </div>

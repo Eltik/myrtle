@@ -25,11 +25,16 @@ function SkillsContent({ operator }: { operator: Operator }) {
     // Calculate the grid template columns based on the number of skills
     const getGridColumns = (skillCount: number) => {
         switch (skillCount) {
-            case 1: return "grid-cols-1";
-            case 2: return "grid-cols-2";
-            case 3: return "grid-cols-3";
-            case 4: return "grid-cols-4";
-            default: return "grid-cols-3"; // Fallback to 3 columns
+            case 1:
+                return "grid-cols-1";
+            case 2:
+                return "grid-cols-2";
+            case 3:
+                return "grid-cols-3";
+            case 4:
+                return "grid-cols-4";
+            default:
+                return "grid-cols-3"; // Fallback to 3 columns
         }
     };
 
@@ -83,7 +88,7 @@ function SkillsContent({ operator }: { operator: Operator }) {
                                                         </Select>
                                                         {skillLevel >= 7 && (
                                                             <Image
-                                                                src={`https://ak.gamepress.gg/sites/default/files/2019-10/m-${skillLevel === 7 ? "1" : skillLevel === 8 ? "2" : "3"}_0.png`}
+                                                                src={`/m-${skillLevel === 7 ? "1" : skillLevel === 8 ? "2" : "3"}_0.webp`}
                                                                 className="h-8 w-9"
                                                                 width={50}
                                                                 height={50}
