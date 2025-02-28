@@ -8,7 +8,7 @@ function SkillsTalentsContent({ operator }: { operator: Operator }) {
         <>
             <div>
                 <div className="p-2 px-4 backdrop-blur-2xl">
-                    <span className="text-3xl font-bold">Skills & Talents</span>
+                    <span className="text-xl font-bold md:text-3xl">Skills & Talents</span>
                 </div>
                 <Separator />
                 <div className="grid px-3 py-4 md:p-4">
