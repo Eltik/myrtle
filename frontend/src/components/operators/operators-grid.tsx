@@ -10,15 +10,28 @@ import { useState } from "react";
  * I will be changing it in the future but for now, it's a good placeholder.
  */
 
-export function OperatorsGrid({ operators }: { operators: Operator[] }) {
+export function OperatorsGrid({ operators, currentPage, pageSize }: { 
+    operators: Operator[]; 
+    currentPage: number;
+    pageSize: number;
+}) {
     const [hoveredOperator, setHoveredOperator] = useState<string | null>(null);
+    
+    // Pre-filter operators to only include those with valid IDs
+    const validOperators = operators.filter(operator => operator.id?.startsWith("char"));
+    
+    // Calculate start and end index for current page
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = Math.min(startIndex + pageSize, validOperators.length);
+    
+    // Get only the operators for the current page
+    const paginatedOperators = validOperators.slice(startIndex, endIndex);
 
     return (
         <>
             <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-5 lg:gap-6 xl:grid-cols-6 xl:gap-8">
-                {operators.map((operator) => {
-                    if (!operator.id?.startsWith("char")) return null;
-                    const operatorId = operator.id; // Safely capture the non-null ID
+                {paginatedOperators.map((operator) => {
+                    const operatorId = operator.id!; // We know it's non-null from our filter
                     const isHovered = hoveredOperator === operatorId;
                     const shouldGrayscale = hoveredOperator !== null && !isHovered;
                     

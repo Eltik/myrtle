@@ -1,6 +1,6 @@
 import { OperatorNation, OperatorRarity, OperatorSubProfession, type Operator } from "~/types/impl/api/static/operator";
 import { capitalize, formatProfession, formatSubProfession, rarityToNumber } from "~/helper";
-import { ArrowDownFromLine, ArrowUpFromLine, ChevronDown, Filter, List, Table2 } from "lucide-react";
+import { ArrowDownFromLine, ArrowUpFromLine, ChevronDown, ChevronLeft, ChevronRight, Filter, List, Table2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { useMemo, useState } from "react";
 import { Input } from "../ui/input";
@@ -35,6 +35,10 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
     const [showLimited, setShowLimited] = useState(true);
     const [canActivateSkill, setCanActivateSkill] = useState(false);
 
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(24);
+
     const [statsSortBy, setStatsSortBy] = useState<"maxHp" | "atk" | "def" | "magicResistance" | "cost" | "baseAttackTime" | "blockCnt">("maxHp");
 
     const [filterClasses, setFilterClasses] = useState<OperatorProfession[]>([]);
@@ -49,6 +53,31 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
     const [filterRace, setFilterRace] = useState<OperatorRace[]>([]);
     const [filterNation, setFilterNation] = useState<(keyof OperatorNation)[]>([]);
     const [filterGender, setFilterGender] = useState<("Unknown" | "Female" | "Male" | "Conviction")[]>([]);
+
+    // Reset to first page when filters change
+    const resetToFirstPage = () => {
+        setCurrentPage(1);
+    };
+
+    // Add effect to reset page when filters change
+    const handleFilterChange = <T extends unknown[]>(callback: (...args: T) => void) => {
+        return (...args: T) => {
+            callback(...args);
+            resetToFirstPage();
+        };
+    };
+
+    // Override filter setters with versions that reset pagination
+    const setFilterClassesWithReset = handleFilterChange(setFilterClasses);
+    const setFilterSubClassesWithReset = handleFilterChange(setFilterSubClasses);
+    const setFilterRarityWithReset = handleFilterChange(setFilterRarity);
+    const setFilterBirthPlaceWithReset = handleFilterChange(setFilterBirthPlace);
+    const setFilterRaceWithReset = handleFilterChange(setFilterRace);
+    const setFilterNationWithReset = handleFilterChange(setFilterNation);
+    const setFilterGenderWithReset = handleFilterChange(setFilterGender);
+    const setFilterSkillTypesWithReset = handleFilterChange(setFilterSkillTypes);
+    const setFilterSkillChargeTypesWithReset = handleFilterChange(setFilterSkillChargeTypes);
+    const setSearchTermWithReset = handleFilterChange(setSearchTerm);
 
     const options = [
         {
@@ -110,68 +139,69 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
             setSortBy("stats");
             setStatsSortBy(value as "maxHp" | "atk" | "def" | "magicResistance" | "cost" | "baseAttackTime" | "blockCnt");
         }
+        resetToFirstPage();
     };
 
     const isClassChecked = (value: OperatorProfession): Checked => filterClasses.includes(value);
     const handleClassCheck = (value: OperatorProfession) => {
         if (filterClasses.includes(value)) {
-            setFilterClasses(filterClasses.filter((v) => v !== value));
+            setFilterClassesWithReset(filterClasses.filter((v) => v !== value));
         } else {
-            setFilterClasses([...filterClasses, value]);
+            setFilterClassesWithReset([...filterClasses, value]);
         }
     };
 
     const isSubClassChecked = (value: OperatorSubProfession): Checked => filterSubClasses.includes(value);
     const handleSubClassCheck = (value: OperatorSubProfession) => {
         if (filterSubClasses.includes(value)) {
-            setFilterSubClasses(filterSubClasses.filter((v) => v !== value));
+            setFilterSubClassesWithReset(filterSubClasses.filter((v) => v !== value));
         } else {
-            setFilterSubClasses([...filterSubClasses, value]);
+            setFilterSubClassesWithReset([...filterSubClasses, value]);
         }
     };
 
     const isSkillTypeChecked = (value: "auto" | "manual" | "passive"): Checked => filterSkillTypes.includes(value);
     const handleSkillTypeCheck = (value: "auto" | "manual" | "passive") => {
         if (filterSkillTypes.includes(value)) {
-            setFilterSkillTypes(filterSkillTypes.filter((v) => v !== value));
+            setFilterSkillTypesWithReset(filterSkillTypes.filter((v) => v !== value));
         } else {
-            setFilterSkillTypes([...filterSkillTypes, value]);
+            setFilterSkillTypesWithReset([...filterSkillTypes, value]);
         }
     };
 
     const isSkillChargeTypeChecked = (value: "offensive" | "defensive" | "auto"): Checked => filterSkillChargeTypes.includes(value);
     const handleSkillChargeTypeCheck = (value: "offensive" | "defensive" | "auto") => {
         if (filterSkillChargeTypes.includes(value)) {
-            setFilterSkillChargeTypes(filterSkillChargeTypes.filter((v) => v !== value));
+            setFilterSkillChargeTypesWithReset(filterSkillChargeTypes.filter((v) => v !== value));
         } else {
-            setFilterSkillChargeTypes([...filterSkillChargeTypes, value]);
+            setFilterSkillChargeTypesWithReset([...filterSkillChargeTypes, value]);
         }
     };
 
     const isBirthPlaceChecked = (value: OperatorBirthPlace): Checked => filterBirthPlace.includes(value);
     const handleBirthPlaceCheck = (value: OperatorBirthPlace) => {
         if (filterBirthPlace.includes(value)) {
-            setFilterBirthPlace(filterBirthPlace.filter((v) => v !== value));
+            setFilterBirthPlaceWithReset(filterBirthPlace.filter((v) => v !== value));
         } else {
-            setFilterBirthPlace([...filterBirthPlace, value]);
+            setFilterBirthPlaceWithReset([...filterBirthPlace, value]);
         }
     };
 
     const isRaceChecked = (value: OperatorRace): Checked => filterRace.includes(value);
     const handleRaceCheck = (value: OperatorRace) => {
         if (filterRace.includes(value)) {
-            setFilterRace(filterRace.filter((v) => v !== value));
+            setFilterRaceWithReset(filterRace.filter((v) => v !== value));
         } else {
-            setFilterRace([...filterRace, value]);
+            setFilterRaceWithReset([...filterRace, value]);
         }
     };
 
     const isNationChecked = (value: keyof OperatorNation): Checked => filterNation.includes(value);
     const handleNationChecked = (value: keyof OperatorNation) => {
         if (filterNation.includes(value)) {
-            setFilterNation(filterNation.filter((v) => v !== value));
+            setFilterNationWithReset(filterNation.filter((v) => v !== value));
         } else {
-            setFilterNation([...filterNation, value]);
+            setFilterNationWithReset([...filterNation, value]);
         }
     };
 
@@ -362,6 +392,29 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
             });
     }, [operators, canActivateSkill, showLimited, isModule, searchTerm, filterClasses, filterSubClasses, filterRarity, filterBirthPlace, filterRace, filterNation, filterGender, filterSkillTypes, filterSkillChargeTypes, sortBy, sortOrder, statsSortBy]);
 
+    // Calculate total number of pages
+    const validOperators = sortedAndFilteredCharacters.filter(operator => operator.id?.startsWith("char"));
+    const totalPages = Math.ceil(validOperators.length / pageSize);
+
+    // Handle page navigation
+    const goToNextPage = () => {
+        if (currentPage < totalPages) {
+            setCurrentPage(currentPage + 1);
+        }
+    };
+
+    const goToPreviousPage = () => {
+        if (currentPage > 1) {
+            setCurrentPage(currentPage - 1);
+        }
+    };
+
+    // Handle page size change
+    const handlePageSizeChange = (value: string) => {
+        setPageSize(Number(value));
+        setCurrentPage(1); // Reset to first page when changing page size
+    };
+
     return (
         <>
             <div className="container flex max-w-screen-xl auto-rows-auto flex-col gap-8 gap-y-6 px-4 py-8 md:grid md:grid-cols-12 md:px-8 xl:px-4">
@@ -376,7 +429,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                             </div>
                             <div className="flex flex-col gap-4">
                                 <div className="relative flex gap-2">
-                                    <Input className="flex w-full" placeholder="Search by name..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                                    <Input className="flex w-full" placeholder="Search by name..." value={searchTerm} onChange={(e) => setSearchTermWithReset(e.target.value)} />
                                     <Button variant="secondary" className="absolute right-0 inline-flex items-center justify-center rounded-l-none p-2 px-3" onClick={() => setShowOptions(!showOptions)}>
                                         <Filter className="h-4 w-4" />
                                     </Button>
@@ -493,7 +546,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                             </div>
                             <div className="flex flex-col gap-2">
                                 <div className="flex flex-row flex-wrap gap-4 xl:flex-nowrap">
-                                    <Select value={filterRarity} onValueChange={(value) => setFilterRarity(value as OperatorRarity | "all")}>
+                                    <Select value={filterRarity} onValueChange={(value) => setFilterRarityWithReset(value as OperatorRarity | "all")}>
                                         <SelectTrigger className="w-[200px] transition-all duration-150 hover:bg-secondary">
                                             <SelectValue placeholder="Filter by Rarity" />
                                         </SelectTrigger>
@@ -609,7 +662,58 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                 </div>
             </div>
             <div className={`transition-all duration-150 ${showOptions ? "" : "-mt-8"}`}>
-                <OperatorsGrid operators={sortedAndFilteredCharacters} />
+                <OperatorsGrid operators={validOperators} currentPage={currentPage} pageSize={pageSize} />
+                
+                {/* Pagination Controls */}
+                <div className="mt-8 flex items-center justify-center gap-2">
+                    <div className="flex items-center space-x-6">
+                        <div className="flex items-center space-x-2">
+                            <span className="text-sm font-medium">Rows per page:</span>
+                            <Select value={String(pageSize)} onValueChange={handlePageSizeChange}>
+                                <SelectTrigger className="h-8 w-[70px]">
+                                    <SelectValue placeholder={pageSize} />
+                                </SelectTrigger>
+                                <SelectContent side="top">
+                                    {[12, 24, 48, 96].map((size) => (
+                                        <SelectItem key={size} value={String(size)}>
+                                            {size}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        
+                        <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+                            Page {currentPage} of {totalPages}
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                            <Button
+                                variant="outline"
+                                className="h-8 w-8 p-0"
+                                onClick={goToPreviousPage}
+                                disabled={currentPage === 1}
+                            >
+                                <span className="sr-only">Go to previous page</span>
+                                <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                            <Button
+                                variant="outline"
+                                className="h-8 w-8 p-0"
+                                onClick={goToNextPage}
+                                disabled={currentPage === totalPages}
+                            >
+                                <span className="sr-only">Go to next page</span>
+                                <ChevronRight className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+                
+                {/* Display total results count */}
+                <div className="mt-4 text-center text-sm text-muted-foreground">
+                    Showing {Math.min((currentPage - 1) * pageSize + 1, validOperators.length)} to {Math.min(currentPage * pageSize, validOperators.length)} of {validOperators.length} operators
+                </div>
             </div>
         </>
     );
