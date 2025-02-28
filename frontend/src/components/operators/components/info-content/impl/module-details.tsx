@@ -42,7 +42,7 @@ export function ModuleDetails({ currentModule, modules, moduleData }: ModuleDeta
                         <Image src={currentModuleInfo.image ?? ""} alt={currentModuleInfo.uniEquipName} className="h-24 w-24 rounded-md" width={96} height={96} />
                         <div>
                             <h3 className="text-lg font-semibold">{currentModuleInfo.uniEquipName}</h3>
-                            <div className="flex gap-2">
+                            <div className="flex gap-1">
                                 <Badge variant="outline">{currentModuleInfo.typeName1}</Badge>
                                 {currentModuleInfo.typeName2 && <Badge variant="outline">{currentModuleInfo.typeName2}</Badge>}
                             </div>
@@ -80,11 +80,33 @@ export function ModuleDetails({ currentModule, modules, moduleData }: ModuleDeta
                         <div>
                             <span className="text-muted-foreground">Unlock Level:</span> <span>{currentModuleInfo.unlockLevel}</span>
                         </div>
-                        <div>
-                            <span className="text-muted-foreground">Show Phase:</span> <span>{parsePhase(currentModuleInfo.showEvolvePhase) === OperatorPhase.ELITE_0 ? "E0" : parsePhase(currentModuleInfo.showEvolvePhase) === OperatorPhase.ELITE_1 ? "E1" : "E2"}</span>
+                        <div className="flex flex-row items-center gap-1">
+                            <span className="text-muted-foreground">Show Phase:</span>
+                            <Image
+                                src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/elite/${parsePhase(currentModuleInfo.showEvolvePhase) === OperatorPhase.ELITE_0 ? 0 : parsePhase(currentModuleInfo.showEvolvePhase) === OperatorPhase.ELITE_1 ? 1 : 2}.png`}
+                                width={25}
+                                height={25}
+                                alt="Promotion"
+                                style={{
+                                    maxWidth: "100%",
+                                    height: "auto",
+                                    objectFit: "contain",
+                                }}
+                            />
                         </div>
-                        <div>
-                            <span className="text-muted-foreground">Unlock Phase:</span> <span>{parsePhase(currentModuleInfo.unlockEvolvePhase) === OperatorPhase.ELITE_0 ? "E0" : parsePhase(currentModuleInfo.unlockEvolvePhase) === OperatorPhase.ELITE_1 ? "E1" : "E2"}</span>
+                        <div className="flex flex-row items-center gap-1">
+                            <span className="text-muted-foreground">Unlock Phase:</span>
+                            <Image
+                                src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/elite/${parsePhase(currentModuleInfo.unlockEvolvePhase) === OperatorPhase.ELITE_0 ? 0 : parsePhase(currentModuleInfo.unlockEvolvePhase) === OperatorPhase.ELITE_1 ? 1 : 2}.png`}
+                                width={25}
+                                height={25}
+                                alt="Promotion"
+                                style={{
+                                    maxWidth: "100%",
+                                    height: "auto",
+                                    objectFit: "contain",
+                                }}
+                            />
                         </div>
                         <div>
                             <span className="text-muted-foreground">Trust Required:</span> <span>{currentModuleInfo.unlockFavorPoint ?? "N/A"}</span>

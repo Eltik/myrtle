@@ -44,7 +44,7 @@ export function OperatorsGrid({ operators, currentPage, pageSize }: { operators:
                             <div className="absolute inset-x-0 bottom-0 z-10">
                                 <div className="relative">
                                     <div className="h-16 w-full bg-background/80 backdrop-blur-sm" />
-                                    <h2 className="absolute bottom-2 left-1 line-clamp-2 max-w-[85%] pr-12 text-xl font-bold uppercase opacity-60 transition-opacity group-hover:opacity-100">{operator.name}</h2>
+                                    <h2 className="sm:text-md absolute bottom-2 left-1 line-clamp-2 max-w-[85%] pr-12 text-base font-bold uppercase opacity-60 transition-opacity group-hover:opacity-100 md:text-xl">{operator.name}</h2>
                                     <div className="absolute bottom-2 right-1 flex scale-75 items-center opacity-0 transition-all duration-200 group-hover:scale-100 group-hover:opacity-100">
                                         <div className="h-6 w-6 md:h-10 md:w-10">
                                             <Image src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/classes/class_${formatProfession(operator.profession).toLowerCase()}.png`} alt={formatProfession(operator.profession)} loading="lazy" width={160} height={160} decoding="async" />

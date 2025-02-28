@@ -2,11 +2,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { OperatorPhase, type Operator } from "~/types/impl/api/static/operator";
 import { useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/collapsible";
-import { ChevronDown, Star, Award, ChevronRight } from "lucide-react";
+import { ChevronDown, Award, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Badge } from "~/components/ui/badge";
 import { descriptionToHtml } from "~/helper/descriptionParser";
 import { parsePhase } from "~/helper";
+import Image from "next/image";
 
 function TalentsContent({ operator }: { operator: Operator }) {
     const [isTalentsOpen, setIsTalentsOpen] = useState(true);
@@ -55,8 +56,18 @@ function TalentsContent({ operator }: { operator: Operator }) {
                                                                         </Badge>
                                                                     )}
                                                                     {candidate.requiredPotentialRank > 0 && (
-                                                                        <Badge variant="outline" className="flex items-center gap-1 border-border text-xs">
-                                                                            <Star className="h-3 w-3 text-foreground" /> P{candidate.requiredPotentialRank + 1}
+                                                                        <Badge variant="outline" className="flex cursor-pointer items-center gap-1 border-border text-xs hover:bg-background">
+                                                                            <Image
+                                                                                src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/potential/${candidate.requiredPotentialRank + 1}.png`}
+                                                                                width={25}
+                                                                                height={25}
+                                                                                alt="Potential"
+                                                                                style={{
+                                                                                    maxWidth: "100%",
+                                                                                    height: "auto",
+                                                                                    objectFit: "contain",
+                                                                                }}
+                                                                            />
                                                                         </Badge>
                                                                     )}
                                                                 </div>

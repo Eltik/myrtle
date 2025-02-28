@@ -153,7 +153,7 @@ function CharacterDialogueCard({ data }: { data: CharacterData }) {
                                                     <span className="text-base">Level {data.mainSkillLvl}</span>
                                                     {skill.specializeLevel > 0 ? (
                                                         <Image
-                                                            src={`https://ak.gamepress.gg/sites/default/files/2019-10/m-${skill.specializeLevel}_0.png`}
+                                                            src={`/m-${skill.specializeLevel}_0.webp`}
                                                             className="h-8 w-8"
                                                             width={50}
                                                             height={50}
