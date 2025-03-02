@@ -6,32 +6,39 @@ import Image from "next/image";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
 import type { Operator, OperatorPhase } from "~/types/impl/api/static/operator";
 import type { Item } from "~/types/impl/api/static/material";
+import { Slider } from "~/components/ui/slider";
+import { Checkbox } from "~/components/ui/checkbox";
+import { Label } from "~/components/ui/label";
+
+type MaterialCost = {
+    quantity: number;
+    material: {
+        itemId: string;
+        name: string;
+    };
+};
+
+type SkillLevelCost = {
+    level: string;
+    phase: OperatorPhase;
+    materials: MaterialCost[];
+};
 
 function LevelUpContent({ operator }: { operator: Operator }) {
     const [materials, setMaterials] = useState<Item[]>([]);
     const [activeTab, setActiveTab] = useState<"elite" | "skill">("elite");
     const [elitePromotionCosts, setElitePromotionCosts] = useState<{
         elite: string;
-        materials: {
-            quantity: number;
-            material: {
-                itemId: string;
-                name: string;
-            };
-        }[];
+        materials: MaterialCost[];
     }[]>([]);
 
-    const [skillLevelUpCosts, setSkillLevelUpCosts] = useState<{
-        level: string;
-        phase: OperatorPhase,
-        materials: {
-            quantity: number;
-            material: {
-                itemId: string;
-                name: string;
-            };
-        }[];
-    }[]>([]);
+    // New state for skill slider and total cost checkbox
+    const [skillLevel, setSkillLevel] = useState(0);
+    const [showTotalCost, setShowTotalCost] = useState(false);
+    const [activeSkillTab, setActiveSkillTab] = useState<string>("");
+    
+    // Store skill level costs per skill
+    const [skillLevelCosts, setSkillLevelCosts] = useState<Record<string, SkillLevelCost[]>>({});
 
     // Separate useEffect for setting up costs based on operator
     useEffect(() => {
@@ -52,21 +59,34 @@ function LevelUpContent({ operator }: { operator: Operator }) {
 
         setElitePromotionCosts(elitePromCosts);
 
-        const skillLevelCosts = Array.isArray(operator.allSkillLvlup) ? operator.allSkillLvlup.map((levelUp) => {
-            return {
-                level: `Level ${levelUp.unlockCond.level}`,
-                phase: levelUp.unlockCond.phase,
-                materials: levelUp.lvlUpCost.map((cost) => ({
-                    quantity: cost.count,
-                    material: {
-                        itemId: cost.id,
-                        name: cost.id
-                    },
-                })) ?? [],
-            };
-        }) : [];
+        // Process skill level costs for each skill
+        const skillCosts: Record<string, SkillLevelCost[]> = {};
+        
+        operator.skills?.forEach(skill => {
+            if (skill.skillId && skill.levelUpCostCond) {
+                skillCosts[skill.skillId] = skill.levelUpCostCond.map(costCond => ({
+                    level: `Level ${costCond.unlockCond.level}`,
+                    phase: costCond.unlockCond.phase,
+                    materials: costCond.levelUpCost?.map(cost => ({
+                        quantity: cost.count,
+                        material: {
+                            itemId: cost.id,
+                            name: cost.id
+                        }
+                    })) ?? []
+                }));
+            }
+        });
+        
+        setSkillLevelCosts(skillCosts);
 
-        setSkillLevelUpCosts(skillLevelCosts);
+        // Set default active skill tab if operator has skills
+        if (operator.skills?.length > 0) {
+            const firstSkillId = operator.skills[0]?.skillId;
+            if (firstSkillId) {
+                setActiveSkillTab(firstSkillId);
+            }
+        }
     }, [operator]);
 
     // Separate useEffect for fetching materials
@@ -103,7 +123,7 @@ function LevelUpContent({ operator }: { operator: Operator }) {
     }
 
     // Helper function to render material items with quantity
-    const renderMaterialItem = (material: { quantity: number; material: { itemId: string; name: string; } }) => {
+    const renderMaterialItem = (material: MaterialCost) => {
         const materialData = fetchMaterial(material.material.itemId);
         
         return (
@@ -138,6 +158,62 @@ function LevelUpContent({ operator }: { operator: Operator }) {
                 </Tooltip>
             </TooltipProvider>
         );
+    };
+
+    // Helper function to calculate total materials needed up to a specific level for a specific skill
+    const calculateTotalMaterials = (skillId: string, upToIndex: number) => {
+        const costs = skillLevelCosts[skillId];
+        if (!costs || upToIndex < 0 || costs.length === 0) {
+            return [];
+        }
+
+        const totalMaterials: Record<string, MaterialCost> = {};
+
+        // Combine materials from level 1 up to the selected level
+        for (let i = 0; i <= upToIndex && i < costs.length; i++) {
+            const levelCost = costs[i];
+            if (levelCost?.materials) {
+                levelCost.materials.forEach(material => {
+                    const itemId = material.material.itemId;
+                    if (totalMaterials[itemId]) {
+                        totalMaterials[itemId].quantity += material.quantity;
+                    } else {
+                        totalMaterials[itemId] = { ...material };
+                    }
+                });
+            }
+        }
+
+        return Object.values(totalMaterials);
+    };
+
+    // Get the current skill's costs
+    const currentSkillCosts = activeSkillTab ? skillLevelCosts[activeSkillTab] ?? [] : [];
+    
+    // Get the maximum skill level for the slider
+    const maxSkillLevel = currentSkillCosts.length - 1;
+    
+    // Ensure skill level is within bounds for the current skill
+    useEffect(() => {
+        if (maxSkillLevel >= 0 && skillLevel > maxSkillLevel) {
+            setSkillLevel(maxSkillLevel);
+        }
+    }, [activeSkillTab, maxSkillLevel, skillLevel]);
+
+    // Get the current level cost to display
+    const currentLevelCost = currentSkillCosts[skillLevel];
+    
+    // Get total materials if checkbox is checked
+    const totalMaterials = showTotalCost && activeSkillTab 
+        ? calculateTotalMaterials(activeSkillTab, skillLevel) 
+        : null;
+
+    // Helper function to get the grid columns based on the number of materials
+    const getGridColumns = (materialCount: number) => {
+        if (materialCount <= 3) return "grid-cols-3";
+        if (materialCount <= 4) return "grid-cols-4";
+        if (materialCount <= 6) return "grid-cols-6";
+        return "grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6";
     };
 
     return (
@@ -186,31 +262,113 @@ function LevelUpContent({ operator }: { operator: Operator }) {
                     <div className="space-y-4">
                         <h2 className="text-xl font-bold">Skill Level Up Costs</h2>
                         
-                        {skillLevelUpCosts.length === 0 ? (
-                            <p className="text-muted-foreground">No skill level up costs available for this operator.</p>
+                        {!operator.skills || operator.skills.length === 0 ? (
+                            <p className="text-muted-foreground">No skills available for this operator.</p>
                         ) : (
                             <div className="space-y-4">
-                                {skillLevelUpCosts.map((levelUp, index) => (
-                                    <Card key={index}>
-                                        <CardHeader className="pb-2">
-                                            <CardTitle className="text-lg">
-                                                <Badge variant="outline" className="mr-2">
-                                                    {levelUp.phase.replace("PHASE_", "E")}
+                                {/* Skill Tabs */}
+                                <Tabs 
+                                    defaultValue={operator.skills[0]?.skillId} 
+                                    value={activeSkillTab}
+                                    onValueChange={setActiveSkillTab}
+                                    className="w-full"
+                                >
+                                    <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${operator.skills.length || 1}, minmax(0, 1fr))` }}>
+                                        {operator.skills.map((skill) => (
+                                            <TabsTrigger 
+                                                value={skill.skillId} 
+                                                key={skill.skillId} 
+                                                className="truncate px-2 text-sm"
+                                            >
+                                                <span className="truncate" title={skill.static?.levels[0]?.name}>
+                                                    {skill.static?.levels[0]?.name}
+                                                </span>
+                                            </TabsTrigger>
+                                        ))}
+                                    </TabsList>
+
+                                    {/* Skill Level Slider */}
+                                    <div className="mb-6 mt-4 flex flex-col">
+                                        <div className="flex flex-col">
+                                            <span className="text-lg font-bold">Skill Level</span>
+                                            <span className="text-sm text-muted-foreground">
+                                                Drag the slider to view costs for different skill levels
+                                            </span>
+                                        </div>
+                                        <div className="flex max-w-[80%] flex-col items-center gap-2 md:flex-row">
+                                            <Slider 
+                                                className="w-full" 
+                                                defaultValue={[0]} 
+                                                value={[skillLevel]} 
+                                                onValueChange={(value) => setSkillLevel(value[0] ?? 0)} 
+                                                min={0} 
+                                                max={maxSkillLevel >= 0 ? maxSkillLevel : 0} 
+                                                step={1} 
+                                                disabled={maxSkillLevel < 0}
+                                            />
+                                            <div className="flex items-center gap-2">
+                                                <Badge variant="outline" className="min-w-16 text-center">
+                                                    {currentLevelCost?.level ?? "Level 1"}
                                                 </Badge>
-                                                {levelUp.level}
-                                            </CardTitle>
-                                        </CardHeader>
-                                        <CardContent>
-                                            {levelUp.materials && levelUp.materials.length > 0 ? (
-                                                <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
-                                                    {levelUp.materials.map((material) => renderMaterialItem(material))}
-                                                </div>
-                                            ) : (
-                                                <p className="text-muted-foreground">No materials required.</p>
-                                            )}
-                                        </CardContent>
-                                    </Card>
-                                ))}
+                                                {currentLevelCost?.phase && (
+                                                    <Badge variant="outline" className="min-w-12 text-center">
+                                                        {currentLevelCost.phase.replace("PHASE_", "E")}
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Total Cost Checkbox */}
+                                        <div className="mt-4 flex items-center space-x-2">
+                                            <Checkbox 
+                                                id="showTotalCost" 
+                                                checked={showTotalCost}
+                                                onCheckedChange={(checked) => setShowTotalCost(checked === true)}
+                                                disabled={maxSkillLevel < 0}
+                                            />
+                                            <Label htmlFor="showTotalCost" className={maxSkillLevel < 0 ? "text-muted-foreground" : ""}>
+                                                Show total cost from Level 1 to {currentLevelCost?.level ?? "Level 1"}
+                                            </Label>
+                                        </div>
+                                    </div>
+
+                                    {/* Skill Cost Content */}
+                                    {operator.skills.map((skill) => (
+                                        <TabsContent value={skill.skillId} key={skill.skillId}>
+                                            <Card>
+                                                <CardHeader className="pb-2">
+                                                    <CardTitle className="text-lg">
+                                                        <Badge variant="outline" className="mr-2">
+                                                            {skill.static?.levels[0]?.name}
+                                                        </Badge>
+                                                        {showTotalCost ? "Total Cost" : "Level Up Cost"}
+                                                    </CardTitle>
+                                                </CardHeader>
+                                                <CardContent>
+                                                    {currentSkillCosts.length === 0 ? (
+                                                        <p className="text-muted-foreground">No level-up costs available for this skill.</p>
+                                                    ) : showTotalCost ? (
+                                                        totalMaterials && totalMaterials.length > 0 ? (
+                                                            <div className={`grid gap-4 ${getGridColumns(totalMaterials.length)}`}>
+                                                                {totalMaterials.map((material) => renderMaterialItem(material))}
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-muted-foreground">No materials required.</p>
+                                                        )
+                                                    ) : (
+                                                        currentLevelCost?.materials && currentLevelCost.materials.length > 0 ? (
+                                                            <div className={`grid gap-4 ${getGridColumns(currentLevelCost.materials.length)}`}>
+                                                                {currentLevelCost.materials.map((material) => renderMaterialItem(material))}
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-muted-foreground">No materials required for this level.</p>
+                                                        )
+                                                    )}
+                                                </CardContent>
+                                            </Card>
+                                        </TabsContent>
+                                    ))}
+                                </Tabs>
                             </div>
                         )}
                     </div>

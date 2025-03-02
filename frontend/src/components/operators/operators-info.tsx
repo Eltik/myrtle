@@ -41,7 +41,7 @@ function OperatorsInfo({ operator }: { operator: Operator }) {
                         />
                         <div className="absolute z-10 h-full w-full" />
                         <span className="relative m-0 box-border inline-block max-w-full overflow-hidden border-0 p-0 grid-in-banner">
-                            <Image src={`https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/skin/${operator.id ?? ""}_${operator.phases.length > 1 ? "2b" : "1b"}.png`} alt={operator.name} layout="fill" objectFit="cover" className="absolute bottom-0 left-0 right-0 top-0 m-auto box-border block h-0 max-h-full min-h-full w-0 min-w-full max-w-full object-cover p-0" />
+                            <Image src={`https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/skin/${operator.id ?? ""}_${operator.phases.length > 2 ? "2b" : "1b"}.png`} alt={operator.name} layout="fill" objectFit="cover" className="absolute bottom-0 left-0 right-0 top-0 m-auto box-border block h-0 max-h-full min-h-full w-0 min-w-full max-w-full object-cover p-0" />
                         </span>
                     </div>
                 </div>
