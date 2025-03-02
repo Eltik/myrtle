@@ -195,7 +195,7 @@ export type Operator = {
             disarmedCombatImmune: boolean;
         };
     }[];
-    allSkillLevelUp: {
+    allSkillLvlup: {
         unlockCond: {
             phase: OperatorPhase;
             level: number;
