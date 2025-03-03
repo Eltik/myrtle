@@ -13,8 +13,14 @@ import Image from "next/image";
 import SkillCard from "./skill-card";
 
 function SkillsContent({ operator }: { operator: Operator }) {
-    const [skillLevel, setSkillLevel] = useState((operator.skills[0]?.static?.levels ?? []).length - 1);
+    const initialSkillLevel = operator.skills?.[0]?.static?.levels?.length ? operator.skills[0].static.levels.length - 1 : 0;
+    const [skillLevel, setSkillLevel] = useState(initialSkillLevel);
     const [isSkillsOpen, setIsSkillsOpen] = useState(true);
+
+    // If there are no skills, don't render anything
+    if (!operator.skills || operator.skills.length === 0) {
+        return null;
+    }
 
     // Animation variants
     const motionVariants = {
