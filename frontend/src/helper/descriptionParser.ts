@@ -28,9 +28,9 @@ const preprocessDescription = (description: string): string => {
     // Count opening and closing tags
     const openingTagsMatch = description.match(new RegExp(descriptionTagLeftDelim, "g")) ?? [];
     const closingTagsMatch = description.match(new RegExp(descriptionTagRightDelim, "g")) ?? [];
-    
+
     let processedDescription = description;
-    
+
     // If there are more opening tags than closing tags, add closing tags at the end
     if (openingTagsMatch.length > closingTagsMatch.length) {
         const missingClosingTags = openingTagsMatch.length - closingTagsMatch.length;
@@ -38,17 +38,15 @@ const preprocessDescription = (description: string): string => {
             processedDescription += "</>";
         }
     }
-    
+
     // Handle the case where there might be a closing tag without an opening tag
     // by simply removing those closing tags
     if (closingTagsMatch.length > openingTagsMatch.length) {
         // This is a more complex case. For simplicity, we'll escape all tags
         // to prevent parsing errors
-        processedDescription = description
-            .replace(/<(?:@ba.|\\$)[^>]+>/g, (match) => `&lt;${match.slice(1, -1)}&gt;`)
-            .replace(/<\/>/g, "&lt;/&gt;");
+        processedDescription = description.replace(/<(?:@ba.|\\$)[^>]+>/g, (match) => `&lt;${match.slice(1, -1)}&gt;`).replace(/<\/>/g, "&lt;/&gt;");
     }
-    
+
     return processedDescription;
 };
 
@@ -57,7 +55,7 @@ export const descriptionToHtml = (description: string, interpolation: Interpolat
     let htmlDescription = preprocessDescription(description.slice());
     let recursiveMatch: MatchRecursiveValueNameMatch[] | null = null;
     let match: RegExpMatchArray | null = null;
-    
+
     try {
         do {
             recursiveMatch = XRegExp.matchRecursive(htmlDescription, descriptionTagLeftDelim, descriptionTagRightDelim, "g", {
@@ -111,10 +109,7 @@ export const descriptionToHtml = (description: string, interpolation: Interpolat
         // Handle unbalanced delimiters by escaping all tags
         console.warn("Error parsing description tags:", error);
         // Escape all tags to prevent HTML injection and return the original text
-        return description
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/\n/g, "<br>");
+        return description.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
     }
 
     // replace any newlines with <br> tags to get past HTML whitespace collapsing
