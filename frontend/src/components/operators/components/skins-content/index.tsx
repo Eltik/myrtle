@@ -4,6 +4,8 @@ import { ScrollArea, ScrollBar } from "~/components/ui/scroll-area";
 import { Separator } from "~/components/ui/separator";
 import type { Operator } from "~/types/impl/api/static/operator";
 import type { Skin } from "~/types/impl/api/static/skins";
+import { Dialog, DialogContent } from "~/components/ui/dialog";
+import { Maximize2 } from "lucide-react";
 
 interface UISkin {
     id: string;
@@ -22,9 +24,10 @@ interface UISkin {
 
 function SkinsContent({ operator }: { operator: Operator }) {
     // State for the currently selected skin
-    const [selectedSkin, setSelectedSkin] = useState<string>("default");
+    const [selectedSkin, setSelectedSkin] = useState<string>(operator.id ? operator.id : "");
     const [isImageLoading, setIsImageLoading] = useState(true);
     const [imageSrc, setImageSrc] = useState<string>("");
+    const [fullscreenOpen, setFullscreenOpen] = useState(false);
 
     const [skins, setSkins] = useState<UISkin[]>([]);
 
@@ -79,10 +82,19 @@ function SkinsContent({ operator }: { operator: Operator }) {
     };
 
     const handleImageError = () => {
-        // Instead of trying to modify the src directly, update the imageSrc state
-        const skin = skins.find((skin) => skin.id === selectedSkin) ?? skins[0] ?? fallbackSkin;
-        setImageSrc(skin.fallbackImage ?? getFallbackImageUrl(operator.id ?? ""));
-        setIsImageLoading(false);
+        // Use fallback image if available
+        if (selectedSkinData?.fallbackImage) {
+            setImageSrc(selectedSkinData.fallbackImage);
+        } else {
+            // Fallback to original error handling if needed
+            const skin = skins.find((skin) => skin.id === selectedSkin) ?? skins[0] ?? fallbackSkin;
+            setImageSrc(skin.fallbackImage ?? getFallbackImageUrl(operator.id ?? ""));
+            setIsImageLoading(false);
+        }
+    };
+
+    const openFullscreen = () => {
+        setFullscreenOpen(true);
     };
 
     // Define a fallback skin in case none are found
@@ -118,7 +130,7 @@ function SkinsContent({ operator }: { operator: Operator }) {
                 {/* Main skin viewer */}
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                     {/* Left side - Skin image */}
-                    <div className="relative h-[500px] overflow-hidden rounded-lg border bg-black/10 backdrop-blur-sm md:col-span-2">
+                    <div className="relative h-[500px] overflow-hidden rounded-lg border bg-black/10 backdrop-blur-sm md:col-span-2 group">
                         {isImageLoading && (
                             <div className="absolute inset-0 flex items-center justify-center bg-card/20">
                                 <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
@@ -126,10 +138,19 @@ function SkinsContent({ operator }: { operator: Operator }) {
                         )}
                         <Image src={imageSrc} alt={`${operator.name} - ${selectedSkinData.name}`} layout="fill" objectFit="contain" className="transition-opacity duration-300" style={{ opacity: isImageLoading ? 0 : 1 }} onLoad={handleImageLoad} onError={handleImageError} unoptimized />
 
+                        {/* Fullscreen button */}
+                        <button 
+                            onClick={openFullscreen}
+                            className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 p-2 rounded-full text-white opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-300 ease-out"
+                            aria-label="View fullscreen"
+                        >
+                            <Maximize2 size={20} />
+                        </button>
+
                         {/* Info overlay */}
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 text-white">
-                            <h3 className="text-xl font-bold">{selectedSkinData.name}</h3>
-                            <p className="opacity-90">{selectedSkinData.description}</p>
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent backdrop-blur-sm py-2 px-4 text-white shadow-lg transition-transform duration-300 ease-in-out group-hover:translate-y-full">
+                            <h3 className="text-xl font-bold text-shadow-sm">{selectedSkinData.name}</h3>
+                            <p className="opacity-95 drop-shadow-md text-sm">{selectedSkinData.description}</p>
                         </div>
                     </div>
 
@@ -171,29 +192,31 @@ function SkinsContent({ operator }: { operator: Operator }) {
                 {/* Skin selector */}
                 <div className="pt-4">
                     <h3 className="mb-4 text-lg font-semibold">Available Skins</h3>
-                    <ScrollArea className="w-full">
-                        <div className="flex space-x-4 pb-4">
-                            {skins.map((skin) => (
-                                <div
-                                    key={skin.id}
-                                    className={`relative h-32 w-32 flex-shrink-0 cursor-pointer overflow-hidden rounded-lg border-2 transition-all hover:scale-105 ${selectedSkin === skin.id ? "border-primary shadow-lg" : "border-transparent hover:border-primary/50"}`}
-                                    onClick={() => {
-                                        setIsImageLoading(true);
-                                        setSelectedSkin(skin.id);
-                                    }}
-                                >
-                                    <Image src={skin.image} alt={skin.name} layout="fill" objectFit="cover" className="transition-opacity hover:opacity-90" onError={(e) => handleThumbnailError(skin, e)} unoptimized />
-                                    <div className="absolute bottom-0 left-0 right-0 line-clamp-1 bg-black/50 p-1 text-xs text-white">{skin.name}</div>
-                                    {!skin.available && !skin.isDefault && (
-                                        <div className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-yellow-500">
-                                            <span className="text-xs">!</span>
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                        <ScrollBar orientation="horizontal" />
-                    </ScrollArea>
+                    <div className="relative w-full">
+                        <ScrollArea className="w-full">
+                            <div className="flex flex-nowrap space-x-4 pb-4 w-max">
+                                {skins.map((skin) => (
+                                    <div
+                                        key={skin.id}
+                                        className={`relative h-32 w-32 flex-shrink-0 cursor-pointer overflow-hidden rounded-lg border-2 transition-all hover:scale-105 ${selectedSkin === skin.id ? "border-primary shadow-lg" : "border-transparent hover:border-primary/50"}`}
+                                        onClick={() => {
+                                            setIsImageLoading(true);
+                                            setSelectedSkin(skin.id);
+                                        }}
+                                    >
+                                        <Image src={skin.image} alt={skin.name} layout="fill" objectFit="cover" className="transition-opacity hover:opacity-90" onError={(e) => handleThumbnailError(skin, e)} unoptimized />
+                                        <div className="absolute bottom-0 left-0 right-0 line-clamp-1 bg-black/50 p-1 text-xs text-white">{skin.name}</div>
+                                        {!skin.available && !skin.isDefault && (
+                                            <div className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-yellow-500">
+                                                <span className="text-xs">!</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                            <ScrollBar orientation="horizontal" />
+                        </ScrollArea>
+                    </div>
                 </div>
 
                 {/* Additional information about how to obtain skins */}
@@ -202,6 +225,21 @@ function SkinsContent({ operator }: { operator: Operator }) {
                     <p className="text-sm text-muted-foreground">Operator skins can be purchased from the in-game Outfit Store using Originium Prime or special outfit vouchers. Some skins are available permanently, while others are limited to special events or seasonal availability. Elite 2 skins are unlocked by promoting the operator to Elite 2.</p>
                 </div>
             </div>
+
+            {/* Fullscreen popup */}
+            <Dialog open={fullscreenOpen} onOpenChange={setFullscreenOpen}>
+                <DialogContent className="max-w-6xl h-[90vh] flex items-center justify-center p-0 bg-black/90">
+                    <div className="relative w-full h-full flex items-center justify-center">
+                        <Image 
+                            src={imageSrc} 
+                            alt={`${operator.name} - ${selectedSkinData.name} (Fullscreen)`} 
+                            layout="fill" 
+                            objectFit="contain" 
+                            unoptimized 
+                        />
+                    </div>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }
