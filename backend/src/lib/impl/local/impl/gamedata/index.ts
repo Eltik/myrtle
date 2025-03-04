@@ -6,8 +6,10 @@ import getOperator from "./impl/operators";
 import getHandbook from "./impl/handbook";
 import calculateTrust from "./impl/trust";
 import enemies from "./impl/enemies";
+import getSkins from "./impl/skins";
 
 export const RESOURCE_REPOSITORY = "yuanyan3060/ArknightsGameResource";
 export const ACESHIP_REPOSITORY = "Aceship/Arknight-Images";
+export const FEXLI_REPOSITORY = "fexli/ArknightsResource";
 
-export { getMaterial, modules, getSkill, getRanges, getOperator, getHandbook, calculateTrust, enemies };
+export { getMaterial, modules, getSkill, getRanges, getOperator, getHandbook, calculateTrust, enemies, getSkins };

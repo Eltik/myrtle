@@ -7,6 +7,7 @@ import type { ModuleData, Modules } from "~/types/impl/api/static/modules";
 import type { Operator } from "~/types/impl/api/static/operator";
 import type { Ranges } from "~/types/impl/api/static/ranges";
 import type { Skill } from "~/types/impl/api/static/skills";
+import type { Skin, SkinData } from "~/types/impl/api/static/skins";
 
 // Cache configuration
 const CACHE_TAG = "static-api";
@@ -168,6 +169,18 @@ export default async function handler(request: Request, response: ServerResponse
                 );
                 return response.end();
             }
+            case "skins": {
+                const requestBody = {
+                    type: request.body.type,
+                    id: request.body.id,
+                };
+
+                const skins = await fetchWithCache<{ skins: Skin[] | SkinData }>("/static", requestBody, [`${CACHE_TAG}-skins-${request.body.id ?? "all"}`]);
+
+                response.writeHead(200, { "Content-Type": "application/json" });
+                response.write(JSON.stringify(skins));
+                return response.end();
+            }
             default:
                 response.writeHead(400, { "Content-Type": "application/json" });
                 response.write(
@@ -191,7 +204,7 @@ export default async function handler(request: Request, response: ServerResponse
 
 interface Request {
     body: {
-        type: "materials" | "modules" | "operators" | "ranges" | "skills" | "trust" | "handbook";
+        type: "materials" | "modules" | "operators" | "ranges" | "skills" | "trust" | "handbook" | "skins";
         id?: string;
         method?: string;
         trust?: number;
