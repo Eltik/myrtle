@@ -10,6 +10,7 @@ import { Slider } from "~/components/ui/slider";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Label } from "~/components/ui/label";
 import type { MaterialCost, SkillLevelCost } from "~/types/impl/frontend/impl/operators";
+import { Separator } from "~/components/ui/separator";
 
 function LevelUpContent({ operator }: { operator: Operator }) {
     const [materials, setMaterials] = useState<Item[]>([]);
@@ -224,130 +225,136 @@ function LevelUpContent({ operator }: { operator: Operator }) {
     };
 
     return (
-        <div className="p-4">
-            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "elite" | "skill")}>
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="elite">Elite Promotion</TabsTrigger>
-                    <TabsTrigger value="skill">Skill Level Up</TabsTrigger>
-                </TabsList>
+        <>
+            <div className="p-2 px-4 backdrop-blur-2xl">
+                <span className="text-xl font-bold md:text-3xl">Level-Up Cost</span>
+            </div>
+            <Separator />
+            <div className="p-4">
+                <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "elite" | "skill")}>
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="elite">Elite Promotion</TabsTrigger>
+                        <TabsTrigger value="skill">Skill Level Up</TabsTrigger>
+                    </TabsList>
 
-                <TabsContent value="elite" className="mt-4">
-                    <div className="space-y-4">
-                        <h2 className="text-xl font-bold">Elite Promotion Costs</h2>
+                    <TabsContent value="elite" className="mt-4">
+                        <div className="space-y-4">
+                            <h2 className="text-xl font-bold">Elite Promotion Costs</h2>
 
-                        {elitePromotionCosts.length === 0 ? (
-                            <p className="text-muted-foreground">No promotion costs available for this operator.</p>
-                        ) : (
-                            <div className="grid gap-4 md:grid-cols-2">
-                                {elitePromotionCosts.map((promotion) => (
-                                    <Card key={promotion.elite}>
-                                        <CardHeader className="pb-2">
-                                            <CardTitle className="text-lg">
-                                                <Badge variant="outline" className="mr-2">
-                                                    {promotion.elite}
-                                                </Badge>
-                                                Promotion
-                                            </CardTitle>
-                                        </CardHeader>
-                                        <CardContent>{promotion.materials && promotion.materials.length > 0 ? <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-3 lg:grid-cols-4">{promotion.materials.map((material) => renderMaterialItem(material))}</div> : <p className="text-muted-foreground">No materials required.</p>}</CardContent>
-                                    </Card>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </TabsContent>
-
-                <TabsContent value="skill" className="mt-4">
-                    <div className="space-y-4">
-                        <h2 className="text-xl font-bold">Skill Level Up Costs</h2>
-
-                        {!operator.skills || operator.skills.length === 0 ? (
-                            <p className="text-muted-foreground">No skills available for this operator.</p>
-                        ) : (
-                            <div className="space-y-4">
-                                {/* Skill Tabs */}
-                                <Tabs defaultValue={operator.skills[0]?.skillId} value={activeSkillTab} onValueChange={setActiveSkillTab} className="w-full">
-                                    <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${operator.skills.length || 1}, minmax(0, 1fr))` }}>
-                                        {operator.skills.map((skill) => (
-                                            <TabsTrigger value={skill.skillId} key={skill.skillId} className="truncate px-2 text-sm">
-                                                <span className="truncate" title={skill.static?.levels[0]?.name}>
-                                                    {skill.static?.levels[0]?.name}
-                                                </span>
-                                            </TabsTrigger>
-                                        ))}
-                                    </TabsList>
-
-                                    {/* Skill Level Slider */}
-                                    <div className="mb-6 mt-4 flex flex-col">
-                                        <div className="flex flex-col">
-                                            <span className="text-lg font-bold">Skill Level</span>
-                                            <span className="text-sm text-muted-foreground">Drag the slider to view costs for different skill levels</span>
-                                        </div>
-                                        <div className="flex max-w-[80%] flex-col items-center gap-2 md:flex-row">
-                                            <Slider className="w-full" defaultValue={[0]} value={[skillLevel]} onValueChange={(value) => setSkillLevel(value[0] ?? 0)} min={0} max={maxSkillLevel >= 0 ? maxSkillLevel : 0} step={1} disabled={maxSkillLevel < 0} />
-                                            <div className="flex items-center gap-2">
-                                                <Badge variant="outline" className="flex h-8 min-w-16 items-center justify-center text-center">
-                                                    {currentLevelCost && currentLevelCost?.level <= 7 ? (
-                                                        <span>Level {currentLevelCost?.level}</span>
-                                                    ) : (
-                                                        <Image
-                                                            src={`/m-${currentLevelCost?.level === 8 ? "1" : currentLevelCost?.level === 9 ? "2" : "3"}_0.webp`}
-                                                            className="h-8 w-9"
-                                                            width={40}
-                                                            height={40}
-                                                            alt="M1"
-                                                            style={{
-                                                                maxWidth: "100%",
-                                                                height: "auto",
-                                                            }}
-                                                        />
-                                                    )}
-                                                </Badge>
-                                                {currentLevelCost?.phase && (
-                                                    <Badge variant="outline" className="flex min-w-12 items-center justify-center text-center">
-                                                        <Image
-                                                            src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/elite/${currentLevelCost.phase.replace("PHASE_", "")}.png`}
-                                                            width={35}
-                                                            height={35}
-                                                            alt="Promotion"
-                                                            style={{
-                                                                maxWidth: "100%",
-                                                                height: "auto",
-                                                                objectFit: "contain",
-                                                            }}
-                                                        />
+                            {elitePromotionCosts.length === 0 ? (
+                                <p className="text-muted-foreground">No promotion costs available for this operator.</p>
+                            ) : (
+                                <div className="grid gap-4 md:grid-cols-2">
+                                    {elitePromotionCosts.map((promotion) => (
+                                        <Card key={promotion.elite}>
+                                            <CardHeader className="pb-2">
+                                                <CardTitle className="text-lg">
+                                                    <Badge variant="outline" className="mr-2">
+                                                        {promotion.elite}
                                                     </Badge>
-                                                )}
+                                                    Promotion
+                                                </CardTitle>
+                                            </CardHeader>
+                                            <CardContent>{promotion.materials && promotion.materials.length > 0 ? <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-3 lg:grid-cols-4">{promotion.materials.map((material) => renderMaterialItem(material))}</div> : <p className="text-muted-foreground">No materials required.</p>}</CardContent>
+                                        </Card>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </TabsContent>
+
+                    <TabsContent value="skill" className="mt-4">
+                        <div className="space-y-4">
+                            <h2 className="text-xl font-bold">Skill Level Up Costs</h2>
+
+                            {!operator.skills || operator.skills.length === 0 ? (
+                                <p className="text-muted-foreground">No skills available for this operator.</p>
+                            ) : (
+                                <div className="space-y-4">
+                                    {/* Skill Tabs */}
+                                    <Tabs defaultValue={operator.skills[0]?.skillId} value={activeSkillTab} onValueChange={setActiveSkillTab} className="w-full">
+                                        <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${operator.skills.length || 1}, minmax(0, 1fr))` }}>
+                                            {operator.skills.map((skill) => (
+                                                <TabsTrigger value={skill.skillId} key={skill.skillId} className="truncate px-2 text-sm">
+                                                    <span className="truncate" title={skill.static?.levels[0]?.name}>
+                                                        {skill.static?.levels[0]?.name}
+                                                    </span>
+                                                </TabsTrigger>
+                                            ))}
+                                        </TabsList>
+
+                                        {/* Skill Level Slider */}
+                                        <div className="mb-6 mt-4 flex flex-col">
+                                            <div className="flex flex-col">
+                                                <span className="text-lg font-bold">Skill Level</span>
+                                                <span className="text-sm text-muted-foreground">Drag the slider to view costs for different skill levels</span>
+                                            </div>
+                                            <div className="flex max-w-[80%] flex-col items-center gap-2 md:flex-row">
+                                                <Slider className="w-full" defaultValue={[0]} value={[skillLevel]} onValueChange={(value) => setSkillLevel(value[0] ?? 0)} min={0} max={maxSkillLevel >= 0 ? maxSkillLevel : 0} step={1} disabled={maxSkillLevel < 0} />
+                                                <div className="flex items-center gap-2">
+                                                    <Badge variant="outline" className="flex h-8 min-w-16 items-center justify-center text-center">
+                                                        {currentLevelCost && currentLevelCost?.level <= 7 ? (
+                                                            <span>Level {currentLevelCost?.level}</span>
+                                                        ) : (
+                                                            <Image
+                                                                src={`/m-${currentLevelCost?.level === 8 ? "1" : currentLevelCost?.level === 9 ? "2" : "3"}_0.webp`}
+                                                                className="h-8 w-9"
+                                                                width={40}
+                                                                height={40}
+                                                                alt="M1"
+                                                                style={{
+                                                                    maxWidth: "100%",
+                                                                    height: "auto",
+                                                                }}
+                                                            />
+                                                        )}
+                                                    </Badge>
+                                                    {currentLevelCost?.phase && (
+                                                        <Badge variant="outline" className="flex min-w-12 items-center justify-center text-center">
+                                                            <Image
+                                                                src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/elite/${currentLevelCost.phase.replace("PHASE_", "")}.png`}
+                                                                width={35}
+                                                                height={35}
+                                                                alt="Promotion"
+                                                                style={{
+                                                                    maxWidth: "100%",
+                                                                    height: "auto",
+                                                                    objectFit: "contain",
+                                                                }}
+                                                            />
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Total Cost Checkbox */}
+                                            <div className="mt-4 flex items-center space-x-2">
+                                                <Checkbox id="showTotalCost" checked={showTotalCost} onCheckedChange={(checked) => setShowTotalCost(checked === true)} disabled={maxSkillLevel < 0} />
+                                                <Label htmlFor="showTotalCost" className={maxSkillLevel < 0 ? "text-muted-foreground" : ""}>
+                                                    Show total cost from Level 2 to {currentLevelCost && currentLevelCost?.level > 7 ? `M${currentLevelCost.level - 7}` : `Level ${currentLevelCost?.level}`}
+                                                </Label>
                                             </div>
                                         </div>
 
-                                        {/* Total Cost Checkbox */}
-                                        <div className="mt-4 flex items-center space-x-2">
-                                            <Checkbox id="showTotalCost" checked={showTotalCost} onCheckedChange={(checked) => setShowTotalCost(checked === true)} disabled={maxSkillLevel < 0} />
-                                            <Label htmlFor="showTotalCost" className={maxSkillLevel < 0 ? "text-muted-foreground" : ""}>
-                                                Show total cost from Level 2 to {currentLevelCost && currentLevelCost?.level > 7 ? `M${currentLevelCost.level - 7}` : `Level ${currentLevelCost?.level}`}
-                                            </Label>
-                                        </div>
-                                    </div>
-
-                                    {/* Skill Cost Content */}
-                                    {operator.skills.map((skill) => (
-                                        <TabsContent value={skill.skillId} key={skill.skillId}>
-                                            <Card>
-                                                <CardHeader>
-                                                    <CardTitle>{showTotalCost ? "Total Cost" : "Level Up Cost"}</CardTitle>
-                                                </CardHeader>
-                                                <CardContent>{currentSkillCosts.length === 0 ? <p className="text-muted-foreground">No level-up costs available for this skill.</p> : showTotalCost ? totalMaterials && totalMaterials.length > 0 ? <div className={`grid gap-4 ${getGridColumns(totalMaterials.length)}`}>{totalMaterials.map((material) => renderMaterialItem(material))}</div> : <p className="text-muted-foreground">No materials required.</p> : currentLevelCost?.materials && currentLevelCost.materials.length > 0 ? <div className={`grid gap-4 ${getGridColumns(currentLevelCost.materials.length)}`}>{currentLevelCost.materials.map((material) => renderMaterialItem(material))}</div> : <p className="text-muted-foreground">No materials required for this level.</p>}</CardContent>
-                                            </Card>
-                                        </TabsContent>
-                                    ))}
-                                </Tabs>
-                            </div>
-                        )}
-                    </div>
-                </TabsContent>
-            </Tabs>
-        </div>
+                                        {/* Skill Cost Content */}
+                                        {operator.skills.map((skill) => (
+                                            <TabsContent value={skill.skillId} key={skill.skillId}>
+                                                <Card>
+                                                    <CardHeader>
+                                                        <CardTitle>{showTotalCost ? "Total Cost" : "Level Up Cost"}</CardTitle>
+                                                    </CardHeader>
+                                                    <CardContent>{currentSkillCosts.length === 0 ? <p className="text-muted-foreground">No level-up costs available for this skill.</p> : showTotalCost ? totalMaterials && totalMaterials.length > 0 ? <div className={`grid gap-4 ${getGridColumns(totalMaterials.length)}`}>{totalMaterials.map((material) => renderMaterialItem(material))}</div> : <p className="text-muted-foreground">No materials required.</p> : currentLevelCost?.materials && currentLevelCost.materials.length > 0 ? <div className={`grid gap-4 ${getGridColumns(currentLevelCost.materials.length)}`}>{currentLevelCost.materials.map((material) => renderMaterialItem(material))}</div> : <p className="text-muted-foreground">No materials required for this level.</p>}</CardContent>
+                                                </Card>
+                                            </TabsContent>
+                                        ))}
+                                    </Tabs>
+                                </div>
+                            )}
+                        </div>
+                    </TabsContent>
+                </Tabs>
+            </div>
+        </>
     );
 }
 

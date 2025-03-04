@@ -6,6 +6,7 @@ import { getAll as getAllModules } from "../../../../lib/impl/local/impl/gamedat
 import operators, { getAll as getAllOperators } from "../../../../lib/impl/local/impl/gamedata/impl/operators";
 import ranges, { getAll as getAllRanges } from "../../../../lib/impl/local/impl/gamedata/impl/ranges";
 import skills, { getAll as getAllSkills } from "../../../../lib/impl/local/impl/gamedata/impl/skills";
+import skins, { getAll as getAllSkins } from "../../../../lib/impl/local/impl/gamedata/impl/skins";
 import middleware from "../../middleware";
 
 const handler = async (req: Request): Promise<Response> => {
@@ -252,6 +253,30 @@ const handler = async (req: Request): Promise<Response> => {
                             handbook: handbookData,
                         }),
                     );
+                case "skins":
+                    const skinId = body?.id ?? paths[2] ?? url.searchParams.get("id") ?? null;
+
+                    const skinsCached = await redis.get(`static:skins:${skinId ?? "none"}`);
+                    if (skinsCached) {
+                        return middleware.createResponse(skinsCached);
+                    }
+
+                    const skinsData = skinId ? skins(skinId) : getAllSkins();
+
+                    await redis.set(
+                        `static:skins:${skinId ?? "none"}`,
+                        JSON.stringify({
+                            skins: skinsData,
+                        }),
+                        "EX",
+                        env.REDIS_CACHE_TIME,
+                    );
+
+                    return middleware.createResponse(
+                        JSON.stringify({
+                            skins: skinsData,
+                        }),
+                    );
                 default:
                     return middleware.createResponse(JSON.stringify({ error: "Invalid type." }), 400);
             }
@@ -272,7 +297,7 @@ const route = {
 };
 
 type Body = {
-    type: "materials" | "modules" | "operators" | "ranges" | "skills" | "trust" | "handbook";
+    type: "materials" | "modules" | "operators" | "ranges" | "skills" | "trust" | "handbook" | "skins";
     id?: string;
     method?: string;
     trust?: number;
