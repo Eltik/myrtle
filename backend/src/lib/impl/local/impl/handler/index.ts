@@ -4,6 +4,7 @@ import { download } from "./impl/download";
 import { exists } from "./impl/exists";
 import { get } from "./impl/get";
 import { join } from "path";
+import { init as initChibis } from "../gamedata/impl/chibi";
 
 export const GAME_DATA_REPOSITORY = "Kengxxiao/ArknightsGameData_YoStar";
 
@@ -11,6 +12,9 @@ export let STATIC_DATA: Record<keyof typeof ExcelTables, any> | null = null;
 
 export const init = async () => {
     const promises: Promise<void>[] = [];
+
+    // Edge case with chibis
+    await initChibis();
 
     const keys = Object.keys(ExcelTables);
     const values = Object.values(ExcelTables);
