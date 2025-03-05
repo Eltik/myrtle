@@ -7,6 +7,7 @@ import player from "./impl/player";
 import staticData from "./impl/static";
 import dpsCalculator from "./impl/dpsCalculator";
 import getDPSOperator from "./impl/getDPSOperator";
+import chibis from "./impl/chibis";
 
 export default {
     login,
@@ -18,4 +19,5 @@ export default {
     staticData,
     dpsCalculator,
     getDPSOperator,
+    chibis,
 };

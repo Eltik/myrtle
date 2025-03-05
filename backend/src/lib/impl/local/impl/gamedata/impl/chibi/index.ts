@@ -3,6 +3,7 @@
 import type { RepoItem } from "../../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/chibis";
 import { isCacheValid, loadFromCache, saveToCache } from "./impl/caching";
 import { crawlDirectory } from "./impl/crawl";
+export { processCharsForFrontend, extractOperatorList } from "./impl/process";
 
 export const CHIBIS: RepoItem[] = [];
 
