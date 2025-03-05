@@ -193,7 +193,7 @@ function SkinsContent({ operator }: { operator: Operator }) {
                 <div className="pt-4">
                     <h3 className="mb-4 text-lg font-semibold">Available Skins</h3>
                     <div className="relative w-full">
-                        <ScrollArea className="w-full">
+                        <ScrollArea>
                             <div className="flex flex-nowrap space-x-4 pb-4 w-max">
                                 {skins.map((skin) => (
                                     <div

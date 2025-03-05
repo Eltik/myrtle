@@ -176,3 +176,4 @@ test.ts
 src/lib/impl/local/impl/handler/impl/data/*
 yarn.lock
 test.json
+data/cache
