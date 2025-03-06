@@ -130,7 +130,7 @@ function SkinsContent({ operator }: { operator: Operator }) {
                 {/* Main skin viewer */}
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                     {/* Left side - Skin image */}
-                    <div className="relative h-[500px] overflow-hidden rounded-lg border bg-black/10 backdrop-blur-sm md:col-span-2 group">
+                    <div className="group relative h-[500px] overflow-hidden rounded-lg border bg-black/10 backdrop-blur-sm md:col-span-2">
                         {isImageLoading && (
                             <div className="absolute inset-0 flex items-center justify-center bg-card/20">
                                 <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
@@ -139,18 +139,14 @@ function SkinsContent({ operator }: { operator: Operator }) {
                         <Image src={imageSrc} alt={`${operator.name} - ${selectedSkinData.name}`} layout="fill" objectFit="contain" className="transition-opacity duration-300" style={{ opacity: isImageLoading ? 0 : 1 }} onLoad={handleImageLoad} onError={handleImageError} unoptimized />
 
                         {/* Fullscreen button */}
-                        <button 
-                            onClick={openFullscreen}
-                            className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 p-2 rounded-full text-white opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-300 ease-out"
-                            aria-label="View fullscreen"
-                        >
+                        <button onClick={openFullscreen} className="absolute right-2 top-2 translate-x-4 rounded-full bg-black/50 p-2 text-white opacity-0 transition-all duration-300 ease-out hover:bg-black/70 group-hover:translate-x-0 group-hover:opacity-100" aria-label="View fullscreen">
                             <Maximize2 size={20} />
                         </button>
 
                         {/* Info overlay */}
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent backdrop-blur-sm py-2 px-4 text-white shadow-lg transition-transform duration-300 ease-in-out group-hover:translate-y-full">
-                            <h3 className="text-xl font-bold text-shadow-sm">{selectedSkinData.name}</h3>
-                            <p className="opacity-95 drop-shadow-md text-sm">{selectedSkinData.description}</p>
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent px-4 py-2 text-white shadow-lg backdrop-blur-sm transition-transform duration-300 ease-in-out group-hover:translate-y-full">
+                            <h3 className="text-shadow-sm text-xl font-bold">{selectedSkinData.name}</h3>
+                            <p className="text-sm opacity-95 drop-shadow-md">{selectedSkinData.description}</p>
                         </div>
                     </div>
 
@@ -194,7 +190,7 @@ function SkinsContent({ operator }: { operator: Operator }) {
                     <h3 className="mb-4 text-lg font-semibold">Available Skins</h3>
                     <div className="relative w-full">
                         <ScrollArea>
-                            <div className="flex flex-nowrap space-x-4 pb-4 w-max">
+                            <div className="flex w-max flex-nowrap space-x-4 pb-4">
                                 {skins.map((skin) => (
                                     <div
                                         key={skin.id}
@@ -228,15 +224,9 @@ function SkinsContent({ operator }: { operator: Operator }) {
 
             {/* Fullscreen popup */}
             <Dialog open={fullscreenOpen} onOpenChange={setFullscreenOpen}>
-                <DialogContent className="max-w-6xl h-[90vh] flex items-center justify-center p-0 bg-black/90">
-                    <div className="relative w-full h-full flex items-center justify-center">
-                        <Image 
-                            src={imageSrc} 
-                            alt={`${operator.name} - ${selectedSkinData.name} (Fullscreen)`} 
-                            layout="fill" 
-                            objectFit="contain" 
-                            unoptimized 
-                        />
+                <DialogContent className="flex h-[90vh] max-w-6xl items-center justify-center bg-black/90 p-0">
+                    <div className="relative flex h-full w-full items-center justify-center">
+                        <Image src={imageSrc} alt={`${operator.name} - ${selectedSkinData.name} (Fullscreen)`} layout="fill" objectFit="contain" unoptimized />
                     </div>
                 </DialogContent>
             </Dialog>
