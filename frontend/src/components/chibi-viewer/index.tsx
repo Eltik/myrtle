@@ -174,14 +174,7 @@ export function ChibiViewer() {
                                                 ) : (
                                                     (() => {
                                                         const selectedSkinData = selectedOperator.skins.find((skin) => skin.path === selectedSkin);
-                                                        return (
-                                                            <PixiRenderer 
-                                                                atlasUrl={getAssetUrl(selectedSkinData?.spineFiles?.atlas ?? "")} 
-                                                                skelUrl={getAssetUrl(selectedSkinData?.spineFiles?.skel ?? "")} 
-                                                                imageUrl={getAssetUrl(selectedSkinData?.spineFiles?.png ?? "")} 
-                                                                operatorName={selectedOperator.name} 
-                                                            />
-                                                        );
+                                                        return <PixiRenderer atlasUrl={getAssetUrl(selectedSkinData?.spineFiles?.atlas ?? "")} skelUrl={getAssetUrl(selectedSkinData?.spineFiles?.skel ?? "")} imageUrl={getAssetUrl(selectedSkinData?.spineFiles?.png ?? "")} operatorName={selectedOperator.name} />;
                                                     })()
                                                 )
                                             ) : (

@@ -15,7 +15,7 @@ const CACHE_TTL = 3600; // Cache lifetime in seconds (1 hour)
 
 // Function to fetch data from backend with caching
 const fetchWithCache = unstable_cache(
-    async <T>(endpoint: string, body: object, tags: string[] = []): Promise<T> => {
+    async <T>(endpoint: string, body: object, _: string[] = []): Promise<T> => {
         const response = await fetch(`${env.BACKEND_URL}${endpoint}`, {
             method: "POST",
             headers: {
