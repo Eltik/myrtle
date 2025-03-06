@@ -14,12 +14,32 @@ interface SpineAnimation {
     name: string;
 }
 
+// Define types for PIXI loader to fix type issues
+interface PixiLoader {
+    reset: () => void;
+    add: (name: string, url: string) => void;
+    load: (callback: (loader: unknown, resources: PixiResources) => void) => void;
+    onError: { add: (callback: () => void) => void };
+}
+
+type PixiResources = Record<string, {
+    spineData?: unknown;
+}>;
+
+// Combat animation keywords to help identify and prioritize them
+const COMBAT_ANIMATION_KEYWORDS = ["attack", "skill", "combat", "battle", "fight", "ability", "start", "end", "hit"];
+
 export function PixiRenderer({ atlasUrl, skelUrl, imageUrl, operatorName }: PixiRendererProps) {
     const canvasRef = useRef<HTMLDivElement>(null);
     const appRef = useRef<PIXI.Application | null>(null); // Use ref instead of state
     const spineRef = useRef<Spine | null>(null); // Use ref instead of state for spine
     const [currentAnimation, setCurrentAnimation] = useState<string>("Idle");
     const [availableAnimations, setAvailableAnimations] = useState<string[]>([]);
+    const [animationCategories, setAnimationCategories] = useState<{
+        combat: string[];
+        idle: string[];
+        other: string[];
+    }>({ combat: [], idle: [], other: [] });
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -56,6 +76,34 @@ export function PixiRenderer({ atlasUrl, skelUrl, imageUrl, operatorName }: Pixi
         };
     }, []);
 
+    // Categorize animations into combat, idle, and other
+    const categorizeAnimations = (animations: string[]) => {
+        const categories = {
+            combat: [] as string[],
+            idle: [] as string[],
+            other: [] as string[],
+        };
+
+        animations.forEach((anim) => {
+            const lowerAnim = anim.toLowerCase();
+            
+            // Check if it's a combat animation with expanded keywords
+            if (COMBAT_ANIMATION_KEYWORDS.some(keyword => lowerAnim.includes(keyword))) {
+                categories.combat.push(anim);
+            }
+            // Check if it's an idle animation
+            else if (lowerAnim.includes("idle") || lowerAnim.includes("wait") || lowerAnim.includes("stand")) {
+                categories.idle.push(anim);
+            }
+            // Otherwise it's another type
+            else {
+                categories.other.push(anim);
+            }
+        });
+
+        return categories;
+    };
+
     // Load spine data when the app and URLs change
     useEffect(() => {
         if (!appRef.current || !atlasUrl || !skelUrl || !imageUrl) return;
@@ -64,7 +112,8 @@ export function PixiRenderer({ atlasUrl, skelUrl, imageUrl, operatorName }: Pixi
         setError(null);
 
         const app = appRef.current;
-        const loader = app.loader;
+        // Cast to our defined interface to fix type issues
+        const loader = app.loader as unknown as PixiLoader;
 
         // Clear any existing resources
         loader.reset();
@@ -74,6 +123,8 @@ export function PixiRenderer({ atlasUrl, skelUrl, imageUrl, operatorName }: Pixi
             loader.add("chibi_atlas", atlasUrl);
             loader.add("chibi_skel", skelUrl);
             loader.add("chibi_image", imageUrl);
+
+            console.log(`Loading spine assets for ${operatorName}:`, { atlasUrl, skelUrl, imageUrl });
 
             // Load everything
             loader.load((_, resources) => {
@@ -108,16 +159,31 @@ export function PixiRenderer({ atlasUrl, skelUrl, imageUrl, operatorName }: Pixi
                         // Get available animations - casting to our minimal interface
                         const animations = spineData.spineData.animations.map((anim: SpineAnimation) => anim.name);
                         setAvailableAnimations(animations);
+                        
+                        // Categorize animations
+                        const categories = categorizeAnimations(animations);
+                        setAnimationCategories(categories);
+                        
+                        console.log(`Available animations for ${operatorName}:`, animations);
+                        console.log(`Categorized animations for ${operatorName}:`, categories);
 
                         // Store spine in ref
                         spineRef.current = spineData;
 
-                        // Set default animation if available - after storing spine in ref
+                        // Choose a default animation with priority
+                        let defaultAnim: string | null = null;
+                        
                         if (animations.includes("Idle")) {
-                            spineData.state.setAnimation(0, "Idle", true);
-                            setCurrentAnimation("Idle");
-                        } else if (animations.length > 0) {
-                            const defaultAnim = animations[0] ?? "Idle";
+                            defaultAnim = "Idle";
+                        } else if (categories.idle.length > 0 && categories.idle[0]) {
+                            defaultAnim = categories.idle[0];
+                        } else if (categories.combat.length > 0 && categories.combat[0]) {
+                            defaultAnim = categories.combat[0];
+                        } else if (animations.length > 0 && animations[0]) {
+                            defaultAnim = animations[0];
+                        }
+                        
+                        if (defaultAnim) {
                             spineData.state.setAnimation(0, defaultAnim, true);
                             setCurrentAnimation(defaultAnim);
                         }
@@ -144,7 +210,7 @@ export function PixiRenderer({ atlasUrl, skelUrl, imageUrl, operatorName }: Pixi
             setError("Error loading spine data");
             setIsLoading(false);
         }
-    }, [atlasUrl, skelUrl, imageUrl]);
+    }, [atlasUrl, skelUrl, imageUrl, operatorName]);
 
     // Change animation when selected animation changes
     useEffect(() => {
@@ -181,13 +247,74 @@ export function PixiRenderer({ atlasUrl, skelUrl, imageUrl, operatorName }: Pixi
                 )}
             </div>
 
+            {/* Grouped animation buttons by category */}
             {availableAnimations.length > 0 && (
-                <div className="flex flex-wrap justify-center gap-2">
-                    {availableAnimations.map((animation) => (
-                        <button key={animation} onClick={() => handleAnimationChange(animation)} className={`rounded-full px-3 py-1 text-sm ${currentAnimation === animation ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
-                            {animation}
-                        </button>
-                    ))}
+                <div className="flex flex-col gap-3 w-full">
+                    {/* Combat animations section */}
+                    {animationCategories.combat.length > 0 && (
+                        <div className="animation-group">
+                            <h4 className="text-sm font-medium mb-1">Combat Animations</h4>
+                            <div className="flex flex-wrap gap-2">
+                                {animationCategories.combat.map((animation) => (
+                                    <button 
+                                        key={animation} 
+                                        onClick={() => handleAnimationChange(animation)} 
+                                        className={`rounded-full px-3 py-1 text-sm ${
+                                            currentAnimation === animation 
+                                                ? "bg-primary text-primary-foreground" 
+                                                : "bg-red-100 text-red-800 hover:bg-red-200"
+                                        }`}
+                                    >
+                                        {animation}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    
+                    {/* Idle animations section */}
+                    {animationCategories.idle.length > 0 && (
+                        <div className="animation-group">
+                            <h4 className="text-sm font-medium mb-1">Idle Animations</h4>
+                            <div className="flex flex-wrap gap-2">
+                                {animationCategories.idle.map((animation) => (
+                                    <button 
+                                        key={animation} 
+                                        onClick={() => handleAnimationChange(animation)} 
+                                        className={`rounded-full px-3 py-1 text-sm ${
+                                            currentAnimation === animation 
+                                                ? "bg-primary text-primary-foreground" 
+                                                : "bg-blue-100 text-blue-800 hover:bg-blue-200"
+                                        }`}
+                                    >
+                                        {animation}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    
+                    {/* Other animations section */}
+                    {animationCategories.other.length > 0 && (
+                        <div className="animation-group">
+                            <h4 className="text-sm font-medium mb-1">Other Animations</h4>
+                            <div className="flex flex-wrap gap-2">
+                                {animationCategories.other.map((animation) => (
+                                    <button 
+                                        key={animation} 
+                                        onClick={() => handleAnimationChange(animation)} 
+                                        className={`rounded-full px-3 py-1 text-sm ${
+                                            currentAnimation === animation 
+                                                ? "bg-primary text-primary-foreground" 
+                                                : "bg-secondary text-secondary-foreground"
+                                        }`}
+                                    >
+                                        {animation}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
         </div>
