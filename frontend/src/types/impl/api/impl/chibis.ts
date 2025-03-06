@@ -17,7 +17,7 @@ export type ChibisSimplified = {
             atlas: string | null;
             skel: string | null;
             png: string | null;
-        }
+        };
     }[];
 };
 
@@ -33,5 +33,5 @@ type ChibiChildren = {
     path: string;
     contentType: "file" | "directory";
     children: ChibiChildren[];
-}
+};
 export type ChibiOperatorList = string[];
