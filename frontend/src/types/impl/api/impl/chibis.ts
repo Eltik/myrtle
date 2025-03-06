@@ -13,10 +13,20 @@ export type ChibisSimplified = {
         name: string;
         path: string;
         hasSpineData: boolean;
+        hasCombatAnimations?: boolean;
         spineFiles: {
             atlas: string | null;
             skel: string | null;
             png: string | null;
+            combat?: Array<{
+                name: string;
+                path: string;
+                files?: {
+                    atlas: string;
+                    skel: string;
+                    png: string;
+                };
+            }> | null;
         };
     }[];
 };

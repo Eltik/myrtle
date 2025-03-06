@@ -152,29 +152,27 @@ export function ChibiViewer() {
                                                         {(() => {
                                                             const selectedSkinData = selectedOperator.skins.find((skin) => skin.path === selectedSkin);
                                                             const imageUrl = getAssetUrl(selectedSkinData?.spineFiles?.png ?? "");
-                                                            return (
-                                                                <>
-                                                                    <Image
-                                                                        src={imageUrl}
-                                                                        alt={`${selectedOperator.name} chibi`}
-                                                                        className="mx-auto object-contain"
-                                                                        width={400}
-                                                                        height={400}
-                                                                        onError={(e) => {
-                                                                            // Next Image doesn't support onError the same way, use this pattern instead
-                                                                            const target = e.target as HTMLImageElement;
-                                                                            target.src = "/placeholder-chibi.png";
-                                                                        }}
-                                                                    />
-                                                                    <p className="mt-2 text-muted-foreground">Chibi sprite sheet</p>
-                                                                </>
-                                                            );
+                                                            return <Image src={imageUrl} width={200} height={200} alt={`${selectedOperator.name} - ${selectedSkinData?.name}`} className="max-h-[300px] w-auto" unoptimized />;
                                                         })()}
                                                     </div>
                                                 ) : (
                                                     (() => {
                                                         const selectedSkinData = selectedOperator.skins.find((skin) => skin.path === selectedSkin);
-                                                        return <PixiRenderer atlasUrl={getAssetUrl(selectedSkinData?.spineFiles?.atlas ?? "")} skelUrl={getAssetUrl(selectedSkinData?.spineFiles?.skel ?? "")} imageUrl={getAssetUrl(selectedSkinData?.spineFiles?.png ?? "")} operatorName={selectedOperator.name} />;
+                                                        const atlasUrl = getAssetUrl(selectedSkinData?.spineFiles?.atlas ?? "");
+                                                        const skelUrl = getAssetUrl(selectedSkinData?.spineFiles?.skel ?? "");
+                                                        const imageUrl = getAssetUrl(selectedSkinData?.spineFiles?.png ?? "");
+                                                        
+                                                        // Log if this skin has combat animations
+                                                        if (selectedSkinData?.hasCombatAnimations) {
+                                                            console.log("This skin has combat animations:", selectedSkinData?.spineFiles?.combat);
+                                                        }
+                                                        
+                                                        return <PixiRenderer 
+                                                            atlasUrl={atlasUrl} 
+                                                            skelUrl={skelUrl} 
+                                                            imageUrl={imageUrl} 
+                                                            operatorName={selectedOperator.name} 
+                                                        />;
                                                     })()
                                                 )
                                             ) : (
