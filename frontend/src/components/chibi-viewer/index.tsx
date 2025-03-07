@@ -5,6 +5,8 @@ import { Button } from "~/components/ui/button";
 import { Skeleton } from "~/components/ui/skeleton";
 import type { ChibisSimplified } from "~/types/impl/api/impl/chibis";
 import type { FormattedChibis } from "~/types/impl/frontend/impl/chibis";
+import { ChibiRenderer } from "./impl/renderer";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 
 export function ChibiViewer() {
     const [chibis, setChibis] = useState<FormattedChibis[]>([]);
@@ -12,6 +14,7 @@ export function ChibiViewer() {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedOperator, setSelectedOperator] = useState<FormattedChibis | null>(null);
     const [selectedSkin, setSelectedSkin] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<"info" | "canvas">("canvas");
 
     useEffect(() => {
         const fetchChibis = async () => {
@@ -262,25 +265,39 @@ export function ChibiViewer() {
                                             )}
                                         </div>
                                     </div>
-                                    {selectedSkin && selectedOperator.skins?.find((skin) => skin.dorm.path === selectedSkin) && (
-                                        <div className="space-y-2 text-sm">
-                                            <div className="font-medium">Spine Data Files:</div>
-                                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                                                <div className="rounded-lg border p-3">
-                                                    <div className="font-medium">Atlas:</div>
-                                                    <div className="truncate text-xs text-muted-foreground">N/A</div>
+
+                                    <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "info" | "canvas")}>
+                                        <TabsList className="mb-4">
+                                            <TabsTrigger value="canvas">Canvas Renderer</TabsTrigger>
+                                            <TabsTrigger value="info">Spine Info</TabsTrigger>
+                                        </TabsList>
+
+                                        <TabsContent value="canvas" className="mt-0">
+                                            <ChibiRenderer selectedOperator={selectedOperator} selectedSkin={selectedSkin} repoBaseUrl={repoBaseUrl} />
+                                        </TabsContent>
+
+                                        <TabsContent value="info" className="mt-0">
+                                            {selectedSkin && selectedOperator.skins?.find((skin) => skin.dorm.path === selectedSkin) && (
+                                                <div className="space-y-2 text-sm">
+                                                    <div className="font-medium">Spine Data Files:</div>
+                                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                                        <div className="rounded-lg border p-3">
+                                                            <div className="font-medium">Atlas:</div>
+                                                            <div className="truncate text-xs text-muted-foreground">{selectedOperator.skins.find((skin) => skin.dorm.path === selectedSkin)?.dorm.atlas ?? "N/A"}</div>
+                                                        </div>
+                                                        <div className="rounded-lg border p-3">
+                                                            <div className="font-medium">Skeleton:</div>
+                                                            <div className="truncate text-xs text-muted-foreground">{selectedOperator.skins.find((skin) => skin.dorm.path === selectedSkin)?.dorm.skel ?? "N/A"}</div>
+                                                        </div>
+                                                        <div className="rounded-lg border p-3">
+                                                            <div className="font-medium">Image:</div>
+                                                            <div className="truncate text-xs text-muted-foreground">{selectedOperator.skins.find((skin) => skin.dorm.path === selectedSkin)?.dorm.png ?? "N/A"}</div>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div className="rounded-lg border p-3">
-                                                    <div className="font-medium">Skeleton:</div>
-                                                    <div className="truncate text-xs text-muted-foreground">N/A</div>
-                                                </div>
-                                                <div className="rounded-lg border p-3">
-                                                    <div className="font-medium">Image:</div>
-                                                    <div className="truncate text-xs text-muted-foreground">N/A</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
+                                            )}
+                                        </TabsContent>
+                                    </Tabs>
                                 </div>
                             ) : (
                                 <div className="p-8 text-center text-muted-foreground">{loading ? "Loading..." : "Select an operator to view their chibi"}</div>
