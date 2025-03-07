@@ -2,8 +2,11 @@ import { resolve, join } from "node:path";
 import { mkdir, stat } from "node:fs/promises";
 import type { CachedData, RepoItem } from "../../../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/chibis";
 
+// Cache version - increment when structure changes
+const CACHE_VERSION = 2; // Updated for combat animations support
+
 const CACHE_DIR = resolve(process.cwd(), "data/cache");
-const CACHE_FILE = join(CACHE_DIR, "chibi-data.json");
+const CACHE_FILE = join(CACHE_DIR, `chibi-data-v${CACHE_VERSION}.json`);
 const CACHE_DURATION = 7 * 24 * 60 * 60 * 1000; // 1 week in milliseconds
 
 // Ensure cache directory exists
@@ -43,6 +46,13 @@ export const loadFromCache = async (): Promise<RepoItem[]> => {
         const file = Bun.file(CACHE_FILE);
         const text = await file.text();
         const parsed = JSON.parse(text) as CachedData;
+
+        // Verify cache version (if we add this to the cached data in the future)
+        if (parsed.version && parsed.version !== CACHE_VERSION) {
+            console.log(`Cache version mismatch: expected ${CACHE_VERSION}, got ${parsed.version}`);
+            return [];
+        }
+
         console.log(`Loaded chibi data from cache (created ${new Date(parsed.timestamp).toLocaleString()})`);
         return parsed.data;
     } catch (error) {
@@ -58,6 +68,7 @@ export const saveToCache = async (data: RepoItem[]): Promise<void> => {
         const cacheData: CachedData = {
             timestamp: Date.now(),
             data,
+            version: CACHE_VERSION,
         };
         const jsonString = JSON.stringify(cacheData, null, 2);
         await Bun.write(CACHE_FILE, jsonString);
