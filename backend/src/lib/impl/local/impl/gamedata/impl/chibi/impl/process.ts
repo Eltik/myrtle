@@ -1,9 +1,9 @@
-import type { RepoItem } from "../../../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/chibis";
+import type { RepoItem, SpineFiles, CharacterSkin, CharacterData } from "../../../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/chibis";
 
 /**
  * Process characters into a more frontend-friendly format
  */
-export function processCharsForFrontend(items: RepoItem[]) {
+export function processCharsForFrontend(items: RepoItem[]): CharacterData[] {
     // Filter for character directories (they start with "char_")
     const charDirectories = items.filter((item) => item.contentType === "directory" && item.name.startsWith("char_"));
 
@@ -16,13 +16,38 @@ export function processCharsForFrontend(items: RepoItem[]) {
         const skins =
             charDir.children
                 ?.filter((child) => child.contentType === "directory")
-                .map((skin) => ({
-                    name: skin.name,
-                    path: skin.path,
-                    // Check if it has spine files (atlas, skel, png)
-                    hasSpineData: hasRequiredSpineFiles(skin),
-                    spineFiles: extractSpineFiles(skin),
-                })) || [];
+                .map((skin) => {
+                    // Detect animation types available for this skin
+                    const animationTypes: CharacterSkin["animationTypes"] = {};
+
+                    // Check for dorm/base animations
+                    if (hasRequiredSpineFiles(skin)) {
+                        animationTypes.dorm = extractSpineFiles(skin);
+                    }
+
+                    // Check for combat animations (front, back)
+                    // The combat animations would be in subdirectories named 'front' and 'back'
+                    const frontDir = skin.children?.find((child) => child.contentType === "directory" && child.name.toLowerCase() === "front");
+
+                    const backDir = skin.children?.find((child) => child.contentType === "directory" && child.name.toLowerCase() === "back");
+
+                    if (frontDir && hasRequiredSpineFiles(frontDir)) {
+                        animationTypes.front = extractSpineFiles(frontDir);
+                    }
+
+                    if (backDir && hasRequiredSpineFiles(backDir)) {
+                        animationTypes.back = extractSpineFiles(backDir);
+                    }
+
+                    const hasAnySpineData = Boolean(animationTypes.dorm || animationTypes.front || animationTypes.back);
+
+                    return {
+                        name: skin.name,
+                        path: skin.path,
+                        hasSpineData: hasAnySpineData,
+                        animationTypes,
+                    };
+                }) || [];
 
         return {
             operatorCode,
@@ -56,8 +81,8 @@ function hasRequiredSpineFiles(dir: RepoItem) {
 /**
  * Extract spine files information
  */
-function extractSpineFiles(dir: RepoItem) {
-    if (!dir.children) return {};
+function extractSpineFiles(dir: RepoItem): SpineFiles {
+    if (!dir.children) return { atlas: null, skel: null, png: null };
 
     const atlas = dir.children.find((file) => file.name.endsWith(".atlas"));
     const skel = dir.children.find((file) => file.name.endsWith(".skel"));

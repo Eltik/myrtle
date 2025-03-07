@@ -4,16 +4,14 @@ import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { Skeleton } from "~/components/ui/skeleton";
 import type { ChibisSimplified } from "~/types/impl/api/impl/chibis";
-import { PixiRenderer } from "./impl/PixiRenderer";
-import Image from "next/image";
+import type { FormattedChibis } from "~/types/impl/frontend/impl/chibis";
 
 export function ChibiViewer() {
-    const [chibis, setChibis] = useState<ChibisSimplified[]>([]);
+    const [chibis, setChibis] = useState<FormattedChibis[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
-    const [selectedOperator, setSelectedOperator] = useState<ChibisSimplified | null>(null);
+    const [selectedOperator, setSelectedOperator] = useState<FormattedChibis | null>(null);
     const [selectedSkin, setSelectedSkin] = useState<string | null>(null);
-    const [renderMode, setRenderMode] = useState<"static" | "animated">("animated");
 
     useEffect(() => {
         const fetchChibis = async () => {
@@ -29,7 +27,7 @@ export function ChibiViewer() {
                     }),
                 });
 
-                const data = (await response.json()) as ChibisSimplified[];
+                const data = formatData((await response.json()) as ChibisSimplified[]);
                 setChibis(data);
 
                 // Select the first operator by default
@@ -37,8 +35,8 @@ export function ChibiViewer() {
                     const firstOperator = data[0];
                     if (firstOperator) {
                         setSelectedOperator(firstOperator);
-                        if (firstOperator.skins && firstOperator.skins.length > 0 && firstOperator.skins[0]?.path) {
-                            setSelectedSkin(firstOperator.skins[0].path);
+                        if (firstOperator.skins && firstOperator.skins.length > 0 && firstOperator.skins[0]?.dorm.path) {
+                            setSelectedSkin(firstOperator.skins[0].dorm.path);
                         }
                     }
                 }
@@ -52,12 +50,145 @@ export function ChibiViewer() {
         void fetchChibis();
     }, []);
 
+    const formatData = (data: ChibisSimplified[]): FormattedChibis[] => {
+        const formattedData: Record<string, ChibisSimplified[]> = {};
+
+        for (const chibi of data) {
+            const chibiData: ChibisSimplified = {
+                name: chibi.name,
+                operatorCode: chibi.operatorCode,
+                path: chibi.path,
+                skins: [],
+            };
+
+            for (const skin of chibi.skins) {
+                if (skin.name.startsWith("build_")) {
+                    const characterName = skin.name.split("build_")[1]?.split("/")[0];
+                    if (skin.animationTypes?.dorm) {
+                        chibiData.skins.push({
+                            name: characterName ?? chibi.name,
+                            path: skin.path,
+                            hasSpineData: true,
+                            animationTypes: skin.animationTypes,
+                        });
+                    }
+                } else {
+                    if (skin.animationTypes?.front || skin.animationTypes?.back) {
+                        chibiData.skins.push({
+                            name: skin.name,
+                            path: skin.path,
+                            hasSpineData: true,
+                            animationTypes: skin.animationTypes,
+                        });
+                    }
+                }
+            }
+
+            formattedData[chibi.operatorCode] = [chibiData];
+        }
+
+        const formattedChibis = [];
+        for (const chibi of Object.values(formattedData).flat()) {
+            const data: FormattedChibis = {
+                name: chibi.name,
+                operatorCode: chibi.operatorCode,
+                path: chibi.path,
+                skins: [],
+            };
+
+            for (const skin of chibi.skins) {
+                if (skin.animationTypes?.dorm) {
+                    // Find current skin
+                    const currentSkin = data.skins.find((s) => s.name === skin.name);
+                    if (currentSkin) {
+                        currentSkin.dorm = {
+                            atlas: skin.animationTypes.dorm.atlas ?? "",
+                            png: skin.animationTypes.dorm.png ?? "",
+                            skel: skin.animationTypes.dorm.skel ?? "",
+                            path: skin.path,
+                        };
+                    } else {
+                        data.skins.push({
+                            name: skin.name,
+                            dorm: {
+                                atlas: skin.animationTypes.dorm.atlas ?? "",
+                                png: skin.animationTypes.dorm.png ?? "",
+                                skel: skin.animationTypes.dorm.skel ?? "",
+                                path: skin.path,
+                            },
+                            front: {
+                                atlas: "",
+                                png: "",
+                                skel: "",
+                                path: "",
+                            },
+                            back: {
+                                atlas: "",
+                                png: "",
+                                skel: "",
+                                path: "",
+                            },
+                        });
+                    }
+                }
+                if (skin.animationTypes?.front) {
+                    // Find current skin
+                    const currentSkin = data.skins.find((s) => s.name === skin.name);
+                    if (currentSkin) {
+                        currentSkin.front = {
+                            atlas: skin.animationTypes.front.atlas ?? "",
+                            png: skin.animationTypes.front.png ?? "",
+                            skel: skin.animationTypes.front.skel ?? "",
+                            path: skin.path,
+                        };
+                    } else {
+                        data.skins.push({
+                            name: skin.name,
+                            front: {
+                                atlas: skin.animationTypes.front.atlas ?? "",
+                                png: skin.animationTypes.front.png ?? "",
+                                skel: skin.animationTypes.front.skel ?? "",
+                                path: skin.path,
+                            },
+                            back: {
+                                atlas: "",
+                                png: "",
+                                skel: "",
+                                path: "",
+                            },
+                            dorm: {
+                                atlas: "",
+                                png: "",
+                                skel: "",
+                                path: "",
+                            },
+                        });
+                    }
+                }
+                if (skin.animationTypes?.back) {
+                    // Find current skin
+                    const currentSkin = data.skins.find((s) => s.name === skin.name);
+                    if (currentSkin) {
+                        currentSkin.back = {
+                            atlas: skin.animationTypes.back.atlas ?? "",
+                            png: skin.animationTypes.back.png ?? "",
+                            skel: skin.animationTypes.back.skel ?? "",
+                            path: skin.path,
+                        };
+                    }
+                }
+            }
+            formattedChibis.push(data);
+        }
+        return formattedChibis;
+    };
+
     const filteredChibis = chibis.filter((chibi) => chibi.name.toLowerCase().includes(searchTerm.toLowerCase()) || chibi.operatorCode.toLowerCase().includes(searchTerm.toLowerCase()));
 
-    const handleOperatorSelect = (operator: ChibisSimplified) => {
+    const handleOperatorSelect = (operator: FormattedChibis) => {
         setSelectedOperator(operator);
-        if (operator.skins && operator.skins.length > 0 && operator.skins[0]?.path) {
-            setSelectedSkin(operator.skins[0].path);
+        if (operator.skins && operator.skins.length > 0 && operator.skins[0]?.dorm.path) {
+            setSelectedSkin(operator.skins[0].dorm.path);
         } else {
             setSelectedSkin(null);
         }
@@ -123,81 +254,29 @@ export function ChibiViewer() {
                                             {selectedOperator.skins && selectedOperator.skins.length > 0 && (
                                                 <div className="flex flex-wrap gap-2">
                                                     {selectedOperator.skins.map((skin, index) => (
-                                                        <Button key={index} variant={selectedSkin === skin.path ? "default" : "outline"} onClick={() => setSelectedSkin(skin.path)} size="sm">
+                                                        <Button key={index} variant={selectedSkin === skin.dorm.path ? "default" : "outline"} onClick={() => setSelectedSkin(skin.dorm.path)} size="sm">
                                                             Skin {index + 1}
                                                         </Button>
                                                     ))}
                                                 </div>
                                             )}
-
-                                            {/* Render mode toggle */}
-                                            {selectedSkin && selectedOperator.skins?.find((skin) => skin.path === selectedSkin)?.hasSpineData && (
-                                                <div className="ml-2 flex gap-2">
-                                                    <Button variant={renderMode === "static" ? "default" : "outline"} onClick={() => setRenderMode("static")} size="sm">
-                                                        Static
-                                                    </Button>
-                                                    <Button variant={renderMode === "animated" ? "default" : "outline"} onClick={() => setRenderMode("animated")} size="sm">
-                                                        Animated
-                                                    </Button>
-                                                </div>
-                                            )}
                                         </div>
                                     </div>
-
-                                    {selectedSkin ? (
-                                        <div className="flex justify-center rounded-lg bg-black/5 p-8">
-                                            {selectedOperator.skins?.find((skin) => skin.path === selectedSkin)?.hasSpineData ? (
-                                                renderMode === "static" ? (
-                                                    <div className="text-center">
-                                                        {(() => {
-                                                            const selectedSkinData = selectedOperator.skins.find((skin) => skin.path === selectedSkin);
-                                                            const imageUrl = getAssetUrl(selectedSkinData?.spineFiles?.png ?? "");
-                                                            return <Image src={imageUrl} width={200} height={200} alt={`${selectedOperator.name} - ${selectedSkinData?.name}`} className="max-h-[300px] w-auto" unoptimized />;
-                                                        })()}
-                                                    </div>
-                                                ) : (
-                                                    (() => {
-                                                        const selectedSkinData = selectedOperator.skins.find((skin) => skin.path === selectedSkin);
-                                                        const atlasUrl = getAssetUrl(selectedSkinData?.spineFiles?.atlas ?? "");
-                                                        const skelUrl = getAssetUrl(selectedSkinData?.spineFiles?.skel ?? "");
-                                                        const imageUrl = getAssetUrl(selectedSkinData?.spineFiles?.png ?? "");
-                                                        
-                                                        // Log if this skin has combat animations
-                                                        if (selectedSkinData?.hasCombatAnimations) {
-                                                            console.log("This skin has combat animations:", selectedSkinData?.spineFiles?.combat);
-                                                        }
-                                                        
-                                                        return <PixiRenderer 
-                                                            atlasUrl={atlasUrl} 
-                                                            skelUrl={skelUrl} 
-                                                            imageUrl={imageUrl} 
-                                                            operatorName={selectedOperator.name} 
-                                                        />;
-                                                    })()
-                                                )
-                                            ) : (
-                                                <div className="p-8 text-center text-muted-foreground">No spine data available for this skin</div>
-                                            )}
-                                        </div>
-                                    ) : (
-                                        <div className="p-8 text-center text-muted-foreground">No skins available</div>
-                                    )}
-
-                                    {selectedSkin && selectedOperator.skins?.find((skin) => skin.path === selectedSkin)?.hasSpineData && (
+                                    {selectedSkin && selectedOperator.skins?.find((skin) => skin.dorm.path === selectedSkin) && (
                                         <div className="space-y-2 text-sm">
                                             <div className="font-medium">Spine Data Files:</div>
                                             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                                                 <div className="rounded-lg border p-3">
                                                     <div className="font-medium">Atlas:</div>
-                                                    <div className="truncate text-xs text-muted-foreground">{selectedOperator.skins.find((skin) => skin.path === selectedSkin)?.spineFiles?.atlas ?? "N/A"}</div>
+                                                    <div className="truncate text-xs text-muted-foreground">N/A</div>
                                                 </div>
                                                 <div className="rounded-lg border p-3">
                                                     <div className="font-medium">Skeleton:</div>
-                                                    <div className="truncate text-xs text-muted-foreground">{selectedOperator.skins.find((skin) => skin.path === selectedSkin)?.spineFiles?.skel ?? "N/A"}</div>
+                                                    <div className="truncate text-xs text-muted-foreground">N/A</div>
                                                 </div>
                                                 <div className="rounded-lg border p-3">
                                                     <div className="font-medium">Image:</div>
-                                                    <div className="truncate text-xs text-muted-foreground">{selectedOperator.skins.find((skin) => skin.path === selectedSkin)?.spineFiles?.png ?? "N/A"}</div>
+                                                    <div className="truncate text-xs text-muted-foreground">N/A</div>
                                                 </div>
                                             </div>
                                         </div>

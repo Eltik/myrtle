@@ -9,26 +9,28 @@ export type ChibisSimplified = {
     operatorCode: string;
     name: string;
     path: string;
-    skins: {
+    skins: Array<{
         name: string;
         path: string;
         hasSpineData: boolean;
-        hasCombatAnimations?: boolean;
-        spineFiles: {
-            atlas: string | null;
-            skel: string | null;
-            png: string | null;
-            combat?: Array<{
-                name: string;
-                path: string;
-                files?: {
-                    atlas: string;
-                    skel: string;
-                    png: string;
-                };
-            }> | null;
+        animationTypes?: {
+            front?: {
+                atlas: string;
+                skel: string;
+                png: string;
+            };
+            back?: {
+                atlas: string;
+                skel: string;
+                png: string;
+            };
+            dorm?: {
+                atlas: string;
+                skel: string;
+                png: string;
+            };
         };
-    }[];
+    }>;
 };
 
 export type Chibi = {
@@ -44,4 +46,5 @@ type ChibiChildren = {
     contentType: "file" | "directory";
     children: ChibiChildren[];
 };
+
 export type ChibiOperatorList = string[];

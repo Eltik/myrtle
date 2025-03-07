@@ -1,5 +1,6 @@
 // https://github.com/fexli/ArknightsResource/tree/main/spine/char_002_amiya/char_002_amiya
 // https://flashmercurymcfly.github.io/Arknights-SD-Viewer/
+// This implementation supports multiple animation types: dorm (base), front and back combat animations
 import type { RepoItem } from "../../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/chibis";
 import { isCacheValid, loadFromCache, saveToCache } from "./impl/caching";
 import { crawlDirectory } from "./impl/crawl";
@@ -29,7 +30,7 @@ export const init = async () => {
 
         // If cache is invalid or empty, crawl the repository
         console.log("Cache invalid or expired, recrawling GitHub repository...");
-        const items = await crawlDirectory("spine", 1000);
+        const items = await crawlDirectory("spine");
 
         // Store the results
         CHIBIS.length = 0; // Clear current data
