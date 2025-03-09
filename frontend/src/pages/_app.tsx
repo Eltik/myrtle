@@ -6,6 +6,7 @@ import { CookiesProvider } from "react-cookie";
 import { PagesProgressBar as ProgressBar } from "next-nprogress-bar";
 
 import "~/styles/globals.css";
+import "@esotericsoftware/spine-player/dist/spine-player.css";
 
 const MyApp: AppType = ({ Component, pageProps }) => {
     return (
