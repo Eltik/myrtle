@@ -200,13 +200,6 @@ export function ChibiViewer() {
     // GitHub raw content URL base for the repository
     const repoBaseUrl = "https://raw.githubusercontent.com/fexli/ArknightsResource/main/";
 
-    // Function to get asset URL from the path
-    const getAssetUrl = (path: string) => {
-        // Remove the initial "./" if present
-        const normalizedPath = path.startsWith("./") ? path.substring(2) : path;
-        return `${repoBaseUrl}${normalizedPath}`;
-    };
-
     return (
         <div className="container mx-auto py-8">
             <div className="flex flex-col gap-8 md:flex-row">
