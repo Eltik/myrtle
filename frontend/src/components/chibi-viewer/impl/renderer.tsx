@@ -1,3 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { FormattedChibis } from "~/types/impl/frontend/impl/chibis";
 import { Card, CardContent } from "~/components/ui/card";
@@ -12,6 +17,15 @@ import { Spine } from "pixi-spine";
 interface SpineAnimation {
     name: string;
 }
+
+// Define resource interface to help with type safety
+type ResourceMap = Record<
+    string,
+    {
+        spineData?: unknown;
+        data?: unknown;
+    }
+>;
 
 type ChibiRendererProps = {
     selectedOperator: FormattedChibis | null;
@@ -29,8 +43,6 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
     const [error, setError] = useState<string | null>(null);
     const [isPlaying, setIsPlaying] = useState(true);
     const [speed, setSpeed] = useState(1);
-    const [useStaticFallback, setUseStaticFallback] = useState(false);
-    const staticImageContainerRef = useRef<HTMLDivElement>(null);
     const canvasContainerRef = useRef<HTMLDivElement>(null);
 
     const animationActiveRef = useRef<boolean>(true);
@@ -163,7 +175,7 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
             loader.add(`chibi_skel_${loadId}`, skelURL);
             loader.add(`chibi_image_${loadId}`, imageURL);
 
-            loader.load((_, resources) => {
+            loader.load((_: unknown, resources: ResourceMap) => {
                 try {
                     if (spineRef.current?.parent) {
                         spineRef.current.parent.removeChild(spineRef.current);
@@ -214,9 +226,10 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
                     } else {
                         setError("Invalid spine data format");
                     }
-                } catch (e) {
-                    console.error("Error setting up spine animation:", e);
-                    setError("Error setting up animation");
+                } catch (e: unknown) {
+                    // Handle error properly with type checking
+                    const errorMessage = e instanceof Error ? e.message : "Unknown error occurred";
+                    setError(errorMessage);
                 } finally {
                     setIsLoading(false);
                 }
@@ -226,8 +239,10 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
                 setError("Failed to load spine resources");
                 setIsLoading(false);
             });
-        } catch (e) {
-            setError(e.message);
+        } catch (e: unknown) {
+            // Handle error properly with type checking
+            const errorMessage = e instanceof Error ? e.message : "Unknown error occurred";
+            setError(errorMessage);
         }
     }, [selectedOperator, selectedSkin, repoBaseUrl, getAssetUrl]);
 
@@ -287,46 +302,6 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
         }
     };
 
-    // Function to show static image
-    const renderStaticImage = useCallback(() => {
-        if (!selectedOperator || !selectedSkin) {
-            return (
-                <div className="flex h-full items-center justify-center">
-                    <p className="text-muted-foreground">Select an operator and skin to view animations</p>
-                </div>
-            );
-        }
-
-        const skinData = getSkinData();
-        if (!skinData) {
-            return (
-                <div className="flex h-full items-center justify-center">
-                    <p className="text-muted-foreground">No skin data available</p>
-                </div>
-            );
-        }
-
-        return (
-            <div className="flex h-full flex-col items-center justify-center">
-                <img
-                    src={skinData.png}
-                    alt={`${selectedOperator.name} - static image`}
-                    className="max-h-full max-w-full object-contain"
-                    onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                        if (staticImageContainerRef.current) {
-                            const fallbackText = document.createElement("p");
-                            fallbackText.className = "text-muted-foreground";
-                            fallbackText.innerText = "Character image not available";
-                            staticImageContainerRef.current.appendChild(fallbackText);
-                        }
-                    }}
-                />
-                <p className="mt-2 text-sm text-muted-foreground">Static image shown - animation type: {selectedAnimation}</p>
-            </div>
-        );
-    }, [selectedOperator, selectedSkin, selectedAnimation, getSkinData]);
-
     // Get current skin data for UI display
     const spineData = getSkinData();
     const hasAnimation = Boolean(canvasContainerRef.current?.firstChild && animationActiveRef.current);
@@ -383,30 +358,8 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
                     )}
 
                     {/* Animation container */}
-                    <div ref={canvasContainerRef} className="h-full w-full" style={{ display: !isLoading && !error && !useStaticFallback ? "block" : "none" }}></div>
-
-                    {/* Static image fallback */}
-                    <div ref={staticImageContainerRef} className="h-full w-full" style={{ display: (useStaticFallback || !spineData) && !isLoading && !error ? "block" : "none" }}>
-                        {renderStaticImage()}
-                    </div>
+                    <div ref={canvasContainerRef} className="h-full w-full" style={{ display: !isLoading && !error ? "block" : "none" }}></div>
                 </div>
-
-                {hasAnimation && !useStaticFallback && !isLoading && !error && (
-                    <div className="mt-2">
-                        <p className="text-xs text-muted-foreground">Note: This is a simplified animation using CSS transforms. For full Spine animations:</p>
-                        <ul className="mt-1 list-disc pl-5 text-xs text-muted-foreground">
-                            <li>Add pixi-spine integration to load .skel and .atlas files</li>
-                            <li>Use Spine-specific animation controls for rich animations</li>
-                            <li>Handle bone animations and skeletal deformations</li>
-                        </ul>
-                    </div>
-                )}
-
-                {useStaticFallback && !isLoading && !error && (
-                    <div className="mt-2">
-                        <p className="text-xs text-muted-foreground">Note: Static image is shown as a fallback.</p>
-                    </div>
-                )}
             </CardContent>
         </Card>
     );
