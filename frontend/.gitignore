@@ -46,3 +46,4 @@ yarn-error.log*
 .idea
 
 bun.lockb
+package-lock.json
