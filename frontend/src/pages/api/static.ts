@@ -13,6 +13,23 @@ import type { Skin, SkinData } from "~/types/impl/api/static/skins";
 const CACHE_TAG = "static-api";
 const CACHE_TTL = 3600; // Cache lifetime in seconds (1 hour)
 
+// Function to fetch data from backend without caching
+const fetchWithoutCache = async <T>(endpoint: string, body: object): Promise<T> => {
+    const response = await fetch(`${env.BACKEND_URL}${endpoint}`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+        throw new Error(`Backend request failed with status ${response.status}`);
+    }
+
+    return response.json() as Promise<T>;
+};
+
 // Function to fetch data from backend with caching
 const fetchWithCache = unstable_cache(
     async <T>(endpoint: string, body: object, _: string[] = []): Promise<T> => {
@@ -77,7 +94,7 @@ export default async function handler(request: Request, response: ServerResponse
                     id: request.body.id,
                 };
 
-                const operators = await fetchWithCache<{ operators: Operator[] }>("/static", requestBody, [`${CACHE_TAG}-operators-${request.body.id ?? "all"}`]);
+                const operators = await fetchWithoutCache<{ operators: Operator[] }>("/static", requestBody);
 
                 response.writeHead(200, { "Content-Type": "application/json" });
                 response.write(

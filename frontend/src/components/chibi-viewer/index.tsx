@@ -1,14 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { Skeleton } from "~/components/ui/skeleton";
 import type { ChibisSimplified } from "~/types/impl/api/impl/chibis";
 import type { FormattedChibis } from "~/types/impl/frontend/impl/chibis";
+import { type Operator } from "~/types/impl/api/static/operator";
 import { ChibiRenderer } from "./impl/renderer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 
 export function ChibiViewer() {
+    const [operators, setOperators] = useState<Operator[]>([]);
+
     const [chibis, setChibis] = useState<FormattedChibis[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
@@ -16,10 +19,137 @@ export function ChibiViewer() {
     const [selectedSkin, setSelectedSkin] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<"info" | "canvas">("canvas");
 
+    const formatData = useCallback((data: ChibisSimplified[]): FormattedChibis[] => {
+        // Deduplicate operators by their ID, keeping the first occurrence
+        const uniqueData = data.reduce((acc, curr) => {
+            const operatorCode = curr.operatorCode.includes("/") ? (curr.operatorCode.split("/").pop() ?? curr.operatorCode) : curr.operatorCode;
+
+            if (
+                !acc.some((item) => {
+                    const itemCode = item.operatorCode.includes("/") ? (item.operatorCode.split("/").pop() ?? item.operatorCode) : item.operatorCode;
+                    return itemCode === operatorCode;
+                })
+            ) {
+                acc.push(curr);
+            }
+            return acc;
+        }, [] as ChibisSimplified[]);
+
+        return uniqueData.map((chibi) => {
+            // Get the last part of the operator code if it contains a slash
+            const operatorCode = chibi.operatorCode.includes("/") ? (chibi.operatorCode.split("/").pop() ?? chibi.operatorCode) : chibi.operatorCode;
+
+            const formattedChibi: FormattedChibis = {
+                name: chibi.name,
+                operatorCode: operatorCode,
+                path: chibi.path,
+                skins: [],
+                data: operators.find((data) => data.id === operatorCode),
+            };
+
+            // Group skins by name to combine their animation types
+            const skinsByName = new Map<
+                string,
+                {
+                    name: string;
+                    dorm?: { atlas: string; png: string; skel: string; path: string };
+                    front?: { atlas: string; png: string; skel: string; path: string };
+                    back?: { atlas: string; png: string; skel: string; path: string };
+                }
+            >();
+
+            for (const skin of chibi.skins) {
+                const skinName = skin.name.startsWith("build_") ? (skin.name.split("build_")[1]?.split("/")[0] ?? chibi.name) : skin.name;
+
+                const skinData = skinsByName.get(skinName) ?? {
+                    name: skinName,
+                };
+
+                if (skin.animationTypes?.dorm) {
+                    skinData.dorm = {
+                        atlas: skin.animationTypes.dorm.atlas ?? "",
+                        png: skin.animationTypes.dorm.png ?? "",
+                        skel: skin.animationTypes.dorm.skel ?? "",
+                        path: skin.path,
+                    };
+                }
+
+                if (skin.animationTypes?.front) {
+                    skinData.front = {
+                        atlas: skin.animationTypes.front.atlas ?? "",
+                        png: skin.animationTypes.front.png ?? "",
+                        skel: skin.animationTypes.front.skel ?? "",
+                        path: skin.path,
+                    };
+                }
+
+                if (skin.animationTypes?.back) {
+                    skinData.back = {
+                        atlas: skin.animationTypes.back.atlas ?? "",
+                        png: skin.animationTypes.back.png ?? "",
+                        skel: skin.animationTypes.back.skel ?? "",
+                        path: skin.path,
+                    };
+                }
+
+                skinsByName.set(skinName, skinData);
+            }
+
+            // Convert grouped skins to final format
+            formattedChibi.skins = Array.from(skinsByName.values()).map((skin) => ({
+                name: skin.name,
+                dorm: skin.dorm ?? {
+                    atlas: "",
+                    png: "",
+                    skel: "",
+                    path: "",
+                },
+                front: skin.front ?? {
+                    atlas: "",
+                    png: "",
+                    skel: "",
+                    path: "",
+                },
+                back: skin.back ?? {
+                    atlas: "",
+                    png: "",
+                    skel: "",
+                    path: "",
+                },
+            }));
+
+            return formattedChibi;
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     useEffect(() => {
         const fetchChibis = async () => {
             try {
                 setLoading(true);
+
+                const fetchOperators = async () => {
+                    const data = (await (
+                        await fetch("/api/static", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                                type: "operators",
+                            }),
+                        })
+                    ).json()) as {
+                        data: Operator[];
+                    };
+
+                    console.log(data);
+
+                    setOperators(data.data);
+                };
+
+                await fetchOperators();
+
                 const response = await fetch("/api/chibis", {
                     method: "POST",
                     headers: {
@@ -51,140 +181,7 @@ export function ChibiViewer() {
         };
 
         void fetchChibis();
-    }, []);
-
-    const formatData = (data: ChibisSimplified[]): FormattedChibis[] => {
-        const formattedData: Record<string, ChibisSimplified[]> = {};
-
-        for (const chibi of data) {
-            const chibiData: ChibisSimplified = {
-                name: chibi.name,
-                operatorCode: chibi.operatorCode,
-                path: chibi.path,
-                skins: [],
-            };
-
-            for (const skin of chibi.skins) {
-                if (skin.name.startsWith("build_")) {
-                    const characterName = skin.name.split("build_")[1]?.split("/")[0];
-                    if (skin.animationTypes?.dorm) {
-                        chibiData.skins.push({
-                            name: characterName ?? chibi.name,
-                            path: skin.path,
-                            hasSpineData: true,
-                            animationTypes: skin.animationTypes,
-                        });
-                    }
-                } else {
-                    if (skin.animationTypes?.front || skin.animationTypes?.back) {
-                        chibiData.skins.push({
-                            name: skin.name,
-                            path: skin.path,
-                            hasSpineData: true,
-                            animationTypes: skin.animationTypes,
-                        });
-                    }
-                }
-            }
-
-            formattedData[chibi.operatorCode] = [chibiData];
-        }
-
-        const formattedChibis = [];
-        for (const chibi of Object.values(formattedData).flat()) {
-            const data: FormattedChibis = {
-                name: chibi.name,
-                operatorCode: chibi.operatorCode,
-                path: chibi.path,
-                skins: [],
-            };
-
-            for (const skin of chibi.skins) {
-                if (skin.animationTypes?.dorm) {
-                    // Find current skin
-                    const currentSkin = data.skins.find((s) => s.name === skin.name);
-                    if (currentSkin) {
-                        currentSkin.dorm = {
-                            atlas: skin.animationTypes.dorm.atlas ?? "",
-                            png: skin.animationTypes.dorm.png ?? "",
-                            skel: skin.animationTypes.dorm.skel ?? "",
-                            path: skin.path,
-                        };
-                    } else {
-                        data.skins.push({
-                            name: skin.name,
-                            dorm: {
-                                atlas: skin.animationTypes.dorm.atlas ?? "",
-                                png: skin.animationTypes.dorm.png ?? "",
-                                skel: skin.animationTypes.dorm.skel ?? "",
-                                path: skin.path,
-                            },
-                            front: {
-                                atlas: "",
-                                png: "",
-                                skel: "",
-                                path: "",
-                            },
-                            back: {
-                                atlas: "",
-                                png: "",
-                                skel: "",
-                                path: "",
-                            },
-                        });
-                    }
-                }
-                if (skin.animationTypes?.front) {
-                    // Find current skin
-                    const currentSkin = data.skins.find((s) => s.name === skin.name);
-                    if (currentSkin) {
-                        currentSkin.front = {
-                            atlas: skin.animationTypes.front.atlas ?? "",
-                            png: skin.animationTypes.front.png ?? "",
-                            skel: skin.animationTypes.front.skel ?? "",
-                            path: skin.path,
-                        };
-                    } else {
-                        data.skins.push({
-                            name: skin.name,
-                            front: {
-                                atlas: skin.animationTypes.front.atlas ?? "",
-                                png: skin.animationTypes.front.png ?? "",
-                                skel: skin.animationTypes.front.skel ?? "",
-                                path: skin.path,
-                            },
-                            back: {
-                                atlas: "",
-                                png: "",
-                                skel: "",
-                                path: "",
-                            },
-                            dorm: {
-                                atlas: "",
-                                png: "",
-                                skel: "",
-                                path: "",
-                            },
-                        });
-                    }
-                }
-                if (skin.animationTypes?.back) {
-                    // Find current skin
-                    const currentSkin = data.skins.find((s) => s.name === skin.name);
-                    if (currentSkin) {
-                        currentSkin.back = {
-                            atlas: skin.animationTypes.back.atlas ?? "",
-                            png: skin.animationTypes.back.png ?? "",
-                            skel: skin.animationTypes.back.skel ?? "",
-                            path: skin.path,
-                        };
-                    }
-                }
-            }
-            formattedChibis.push(data);
-        }
-        return formattedChibis;
-    };
+    }, [formatData]);
 
     const filteredChibis = chibis.filter((chibi) => chibi.name.toLowerCase().includes(searchTerm.toLowerCase()) || chibi.operatorCode.toLowerCase().includes(searchTerm.toLowerCase()));
 
@@ -220,8 +217,8 @@ export function ChibiViewer() {
                                     {filteredChibis.map((chibi) => (
                                         <Button key={chibi.operatorCode} variant={selectedOperator?.operatorCode === chibi.operatorCode ? "default" : "ghost"} className="h-auto w-full justify-start p-3" onClick={() => handleOperatorSelect(chibi)}>
                                             <div className="text-left">
-                                                <div className="font-medium">{chibi.name}</div>
-                                                <div className="text-sm text-muted-foreground">{chibi.operatorCode}</div>
+                                                <div className="font-medium">{chibi.data?.name ?? chibi.name}</div>
+                                                <div className="line-clamp-1 truncate text-sm text-muted-foreground">{chibi.operatorCode}</div>
                                             </div>
                                         </Button>
                                     ))}
@@ -241,7 +238,7 @@ export function ChibiViewer() {
                                 <div className="space-y-6">
                                     <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
                                         <div>
-                                            <h2 className="text-2xl font-bold">{selectedOperator.name}</h2>
+                                            <h2 className="text-2xl font-bold">{selectedOperator.data?.name ?? selectedOperator.name}</h2>
                                             <p className="text-muted-foreground">{selectedOperator.operatorCode}</p>
                                         </div>
 
