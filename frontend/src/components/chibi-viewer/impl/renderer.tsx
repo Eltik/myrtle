@@ -375,11 +375,11 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
 
                         // Store spine in ref
                         spineRef.current = spineData;
-                        
+
                         // Get available animations - casting to our minimal interface
                         const animations = spineData.spineData.animations.map((anim: SpineAnimation) => anim.name);
                         setAvailableAnimations(animations);
-                        
+
                         // Set default animation if available - after storing spine in ref
                         let initialAnimation = "Idle";
                         if (animations.includes("Idle")) {
@@ -392,16 +392,15 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
                             setSelectedAnimation(defaultAnim);
                             initialAnimation = defaultAnim;
                         }
-                        
+
                         // Adjust position based on the animation type
                         if (appRef.current) {
                             // First center the spine
                             spineData.x = appRef.current.screen.width / 2;
                             spineData.y = appRef.current.screen.height / 2;
-                            
+
                             // Then adjust for specific animations
-                            if (initialAnimation.toLowerCase().includes("sit") || 
-                                initialAnimation.toLowerCase() === "sitting") {
+                            if (initialAnimation.toLowerCase().includes("sit") || initialAnimation.toLowerCase() === "sitting") {
                                 // Move up by only 10% of screen height to match the adjustment function
                                 spineData.y = spineData.y * 1.5;
                                 console.log("Adjusting initial position for sitting animation");
@@ -435,11 +434,11 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
     // Function to adjust position based on animation type
     const adjustPositionForAnimation = useCallback(() => {
         if (!spineRef.current || !appRef.current) return;
-        
+
         // Base position is center of screen
         const baseX = appRef.current.screen.width / 2;
         const baseY = (appRef.current.screen.height / 2) * 1.75;
-        
+
         // Apply the position
         spineRef.current.x = baseX;
         spineRef.current.y = baseY;
@@ -448,51 +447,54 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
     // Mouse event handlers for dragging
     const handleMouseDown = useCallback((event: MouseEvent) => {
         if (!spineRef.current || !appRef.current) return;
-        
+
         // Start dragging when mouse is pressed on the canvas
         setIsDragging(true);
-        
+
         // Store the initial mouse position and chibi position
         const rect = (event.target as HTMLElement).getBoundingClientRect();
         const mouseX = event.clientX - rect.left;
         const mouseY = event.clientY - rect.top;
-        
+
         // Store the offset between mouse position and chibi position
         const dragOffsetX = spineRef.current.x - mouseX;
         const dragOffsetY = spineRef.current.y - mouseY;
-        
+
         // Store the offsets as data attributes on the canvas
         const canvas = canvasContainerRef.current;
         if (canvas) {
             canvas.dataset.dragOffsetX = dragOffsetX.toString();
             canvas.dataset.dragOffsetY = dragOffsetY.toString();
-            canvas.style.cursor = 'grabbing';
+            canvas.style.cursor = "grabbing";
         }
     }, []);
-    
-    const handleMouseMove = useCallback((event: MouseEvent) => {
-        if (!isDragging || !spineRef.current || !canvasContainerRef.current) return;
-        
-        // Get the current mouse position relative to the canvas
-        const rect = canvasContainerRef.current.getBoundingClientRect();
-        const mouseX = event.clientX - rect.left;
-        const mouseY = event.clientY - rect.top;
-        
-        // Get the stored offsets
-        const dragOffsetX = parseFloat(canvasContainerRef.current.dataset.dragOffsetX ?? '0');
-        const dragOffsetY = parseFloat(canvasContainerRef.current.dataset.dragOffsetY ?? '0');
-        
-        // Update the chibi position
-        spineRef.current.x = mouseX + dragOffsetX;
-        spineRef.current.y = mouseY + dragOffsetY;
-    }, [isDragging]);
-    
+
+    const handleMouseMove = useCallback(
+        (event: MouseEvent) => {
+            if (!isDragging || !spineRef.current || !canvasContainerRef.current) return;
+
+            // Get the current mouse position relative to the canvas
+            const rect = canvasContainerRef.current.getBoundingClientRect();
+            const mouseX = event.clientX - rect.left;
+            const mouseY = event.clientY - rect.top;
+
+            // Get the stored offsets
+            const dragOffsetX = parseFloat(canvasContainerRef.current.dataset.dragOffsetX ?? "0");
+            const dragOffsetY = parseFloat(canvasContainerRef.current.dataset.dragOffsetY ?? "0");
+
+            // Update the chibi position
+            spineRef.current.x = mouseX + dragOffsetX;
+            spineRef.current.y = mouseY + dragOffsetY;
+        },
+        [isDragging],
+    );
+
     const handleMouseUp = useCallback(() => {
         setIsDragging(false);
-        
+
         // Reset cursor
         if (canvasContainerRef.current) {
-            canvasContainerRef.current.style.cursor = 'default';
+            canvasContainerRef.current.style.cursor = "default";
         }
     }, []);
 
@@ -500,17 +502,17 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
     useEffect(() => {
         const canvas = canvasContainerRef.current;
         if (!canvas) return;
-        
+
         // Add event listeners
-        canvas.addEventListener('mousedown', handleMouseDown);
-        window.addEventListener('mousemove', handleMouseMove);
-        window.addEventListener('mouseup', handleMouseUp);
-        
+        canvas.addEventListener("mousedown", handleMouseDown);
+        window.addEventListener("mousemove", handleMouseMove);
+        window.addEventListener("mouseup", handleMouseUp);
+
         // Clean up
         return () => {
-            canvas.removeEventListener('mousedown', handleMouseDown);
-            window.removeEventListener('mousemove', handleMouseMove);
-            window.removeEventListener('mouseup', handleMouseUp);
+            canvas.removeEventListener("mousedown", handleMouseDown);
+            window.removeEventListener("mousemove", handleMouseMove);
+            window.removeEventListener("mouseup", handleMouseUp);
         };
     }, [handleMouseDown, handleMouseMove, handleMouseUp]);
 
@@ -519,7 +521,7 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
         if (spineRef.current?.state && selectedAnimation && availableAnimations.includes(selectedAnimation)) {
             try {
                 spineRef.current.state.setAnimation(0, selectedAnimation, true);
-                
+
                 // Adjust position based on the animation type
                 adjustPositionForAnimation();
             } catch (error) {
@@ -536,7 +538,7 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
         if (spineRef.current && value) {
             // Set the animation
             spineRef.current.state.setAnimation(0, value, true);
-            
+
             // Adjust position based on the animation type
             adjustPositionForAnimation();
         }
@@ -553,10 +555,10 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
         if (spineRef.current && appRef.current) {
             // Reset scale if needed
             spineRef.current.scale.set(0.5);
-            
+
             // Reset rotation
             spineRef.current.rotation = 0;
-            
+
             // Adjust position based on current animation
             if (selectedAnimation) {
                 adjustPositionForAnimation();
@@ -623,7 +625,7 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
                         <Button variant="outline" size="icon" onClick={handleReset} disabled={!hasAnimation || isLoading}>
                             <RepeatIcon className="h-4 w-4" />
                         </Button>
-                        
+
                         <Button variant="outline" size="sm" onClick={handlePositionReset} disabled={!hasAnimation || isLoading}>
                             Center
                         </Button>
@@ -653,11 +655,7 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
 
                 {/* Display area */}
                 <div className="relative h-[400px] w-full">
-                    <div
-                        ref={canvasContainerRef}
-                        className="h-full w-full"
-                        style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
-                    />
+                    <div ref={canvasContainerRef} className="h-full w-full" style={{ cursor: isDragging ? "grabbing" : "grab" }} />
                     {isLoading && (
                         <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                             <div className="text-lg font-semibold text-white">Loading...</div>
@@ -671,9 +669,7 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
                             </div>
                         </div>
                     )}
-                    <div className="absolute bottom-2 right-2 text-xs text-gray-500">
-                        Drag to reposition • Click "Center" to reset
-                    </div>
+                    <div className="absolute bottom-2 right-2 text-xs text-gray-500">Drag to reposition • Click &quot;Center&quot; to reset</div>
                 </div>
             </CardContent>
         </Card>
