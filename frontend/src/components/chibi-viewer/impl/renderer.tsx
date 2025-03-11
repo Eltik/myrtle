@@ -373,25 +373,37 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
 
                         // Store spine in ref
                         spineRef.current = spineData;
-
-                        // Center the spine after adding it to stage
-                        if (app) {
-                            spineData.x = app.screen.width / 2;
-                            spineData.y = app.screen.height / 2;
-                        }
-
+                        
                         // Get available animations - casting to our minimal interface
                         const animations = spineData.spineData.animations.map((anim: SpineAnimation) => anim.name);
                         setAvailableAnimations(animations);
-
+                        
                         // Set default animation if available - after storing spine in ref
+                        let initialAnimation = "Idle";
                         if (animations.includes("Idle")) {
                             spineData.state.setAnimation(0, "Idle", true);
                             setSelectedAnimation("Idle");
+                            initialAnimation = "Idle";
                         } else if (animations.length > 0) {
                             const defaultAnim = animations[0] ?? "Idle";
                             spineData.state.setAnimation(0, defaultAnim, true);
                             setSelectedAnimation(defaultAnim);
+                            initialAnimation = defaultAnim;
+                        }
+                        
+                        // Adjust position based on the animation type
+                        if (appRef.current) {
+                            // First center the spine
+                            spineData.x = appRef.current.screen.width / 2;
+                            spineData.y = appRef.current.screen.height / 2;
+                            
+                            // Then adjust for specific animations
+                            if (initialAnimation.toLowerCase().includes("sit") || 
+                                initialAnimation.toLowerCase() === "sitting") {
+                                // Move up by only 10% of screen height to match the adjustment function
+                                spineData.y = spineData.y * 1.5;
+                                console.log("Adjusting initial position for sitting animation");
+                            }
                         }
 
                         setError(null);
@@ -418,22 +430,41 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
         }
     }, [selectedOperator, selectedSkin, repoBaseUrl, getAssetUrl, getSkinData, viewType]);
 
+    // Function to adjust position based on animation type
+    const adjustPositionForAnimation = useCallback((animationName: string) => {
+        if (!spineRef.current || !appRef.current) return;
+        
+        // Base position is center of screen
+        const baseX = appRef.current.screen.width / 2;
+        let baseY = appRef.current.screen.height / 2;
+        
+        // For sitting animations, adjust the vertical position
+        if (animationName.toLowerCase().includes("sit") || 
+            animationName.toLowerCase() === "sitting") {
+            // Move up by only 10% of screen height instead of 20%
+            // This will position the chibi lower than before
+            baseY = baseY * 1.5;
+            console.log("Adjusting position for sitting animation");
+        }
+        
+        // Apply the position
+        spineRef.current.x = baseX;
+        spineRef.current.y = baseY;
+    }, []);
+
     useEffect(() => {
         // Only try to change animation if spine exists and animation name is valid
         if (spineRef.current?.state && selectedAnimation && availableAnimations.includes(selectedAnimation)) {
             try {
                 spineRef.current.state.setAnimation(0, selectedAnimation, true);
-
-                // Ensure the spine stays centered after animation change
-                if (appRef.current) {
-                    spineRef.current.x = appRef.current.screen.width / 2;
-                    spineRef.current.y = (appRef.current.screen.height / 2) * 2;
-                }
+                
+                // Adjust position based on the animation type
+                adjustPositionForAnimation(selectedAnimation);
             } catch (error) {
                 console.error("Failed to set animation:", error);
             }
         }
-    }, [selectedAnimation, availableAnimations]);
+    }, [selectedAnimation, availableAnimations, adjustPositionForAnimation]);
 
     // Handle animation change
     const handleAnimationChange = (value: string) => {
@@ -443,12 +474,9 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
         if (spineRef.current && value) {
             // Set the animation
             spineRef.current.state.setAnimation(0, value, true);
-
-            // Ensure the spine stays centered
-            if (appRef.current) {
-                spineRef.current.x = appRef.current.screen.width / 2;
-                spineRef.current.y = appRef.current.screen.height / 2;
-            }
+            
+            // Adjust position based on the animation type
+            adjustPositionForAnimation(value);
         }
     };
 
@@ -463,13 +491,18 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
         if (spineRef.current && appRef.current) {
             // Reset scale if needed
             spineRef.current.scale.set(0.5);
-
-            // Center the sprite
-            spineRef.current.x = appRef.current.screen.width / 2;
-            spineRef.current.y = (appRef.current.screen.height / 2) * 2;
-
-            // Reset any other transformations
+            
+            // Reset rotation
             spineRef.current.rotation = 0;
+            
+            // Adjust position based on current animation
+            if (selectedAnimation) {
+                adjustPositionForAnimation(selectedAnimation);
+            } else {
+                // Default center position if no animation is selected
+                spineRef.current.x = appRef.current.screen.width / 2;
+                spineRef.current.y = appRef.current.screen.height / 2;
+            }
         }
 
         // Ensure it's playing
