@@ -22,14 +22,16 @@ export function ChibiViewer() {
     const formatData = useCallback((data: ChibisSimplified[]): FormattedChibis[] => {
         // Deduplicate operators by their ID, keeping the first occurrence
         const uniqueData = data.reduce((acc, curr) => {
-            const operatorCode = curr.operatorCode.includes("/") ? (curr.operatorCode.split("/").pop() ?? curr.operatorCode) : curr.operatorCode;
-
-            if (
-                !acc.some((item) => {
-                    const itemCode = item.operatorCode.includes("/") ? (item.operatorCode.split("/").pop() ?? item.operatorCode) : item.operatorCode;
-                    return itemCode === operatorCode;
-                })
-            ) {
+            const operatorCode = curr.operatorCode.includes("/")
+                ? curr.operatorCode.split("/").pop() ?? curr.operatorCode
+                : curr.operatorCode;
+            
+            if (!acc.some(item => {
+                const itemCode = item.operatorCode.includes("/")
+                    ? item.operatorCode.split("/").pop() ?? item.operatorCode
+                    : item.operatorCode;
+                return itemCode === operatorCode;
+            })) {
                 acc.push(curr);
             }
             return acc;
@@ -37,29 +39,30 @@ export function ChibiViewer() {
 
         return uniqueData.map((chibi) => {
             // Get the last part of the operator code if it contains a slash
-            const operatorCode = chibi.operatorCode.includes("/") ? (chibi.operatorCode.split("/").pop() ?? chibi.operatorCode) : chibi.operatorCode;
+            const operatorCode = chibi.operatorCode.includes("/") 
+                ? chibi.operatorCode.split("/").pop() ?? chibi.operatorCode
+                : chibi.operatorCode;
 
             const formattedChibi: FormattedChibis = {
                 name: chibi.name,
                 operatorCode: operatorCode,
                 path: chibi.path,
                 skins: [],
-                data: operators.find((data) => data.id === operatorCode),
+                data: operators.find((data) => data.id === operatorCode)
             };
 
             // Group skins by name to combine their animation types
-            const skinsByName = new Map<
-                string,
-                {
-                    name: string;
-                    dorm?: { atlas: string; png: string; skel: string; path: string };
-                    front?: { atlas: string; png: string; skel: string; path: string };
-                    back?: { atlas: string; png: string; skel: string; path: string };
-                }
-            >();
+            const skinsByName = new Map<string, {
+                name: string;
+                dorm?: { atlas: string; png: string; skel: string; path: string };
+                front?: { atlas: string; png: string; skel: string; path: string };
+                back?: { atlas: string; png: string; skel: string; path: string };
+            }>();
 
             for (const skin of chibi.skins) {
-                const skinName = skin.name.startsWith("build_") ? (skin.name.split("build_")[1]?.split("/")[0] ?? chibi.name) : skin.name;
+                const skinName = skin.name.startsWith("build_") 
+                    ? skin.name.split("build_")[1]?.split("/")[0] ?? chibi.name
+                    : skin.name;
 
                 const skinData = skinsByName.get(skinName) ?? {
                     name: skinName,
@@ -96,7 +99,7 @@ export function ChibiViewer() {
             }
 
             // Convert grouped skins to final format
-            formattedChibi.skins = Array.from(skinsByName.values()).map((skin) => ({
+            formattedChibi.skins = Array.from(skinsByName.values()).map(skin => ({
                 name: skin.name,
                 dorm: skin.dorm ?? {
                     atlas: "",
@@ -120,7 +123,7 @@ export function ChibiViewer() {
 
             return formattedChibi;
         });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -128,7 +131,7 @@ export function ChibiViewer() {
             try {
                 setLoading(true);
 
-                const fetchOperators = async () => {
+                const fetchOperators = async() => {
                     const data = (await (
                         await fetch("/api/static", {
                             method: "POST",
@@ -218,7 +221,9 @@ export function ChibiViewer() {
                                         <Button key={chibi.operatorCode} variant={selectedOperator?.operatorCode === chibi.operatorCode ? "default" : "ghost"} className="h-auto w-full justify-start p-3" onClick={() => handleOperatorSelect(chibi)}>
                                             <div className="text-left">
                                                 <div className="font-medium">{chibi.data?.name ?? chibi.name}</div>
-                                                <div className="line-clamp-1 truncate text-sm text-muted-foreground">{chibi.operatorCode}</div>
+                                                <div className="text-sm text-muted-foreground truncate line-clamp-1">
+                                                    {chibi.operatorCode}
+                                                </div>
                                             </div>
                                         </Button>
                                     ))}
