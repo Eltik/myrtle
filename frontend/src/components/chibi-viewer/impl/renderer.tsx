@@ -44,6 +44,7 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
     const [error, setError] = useState<string | null>(null);
     const [isPlaying, setIsPlaying] = useState(true);
     const [speed, setSpeed] = useState(1);
+    const [viewType, setViewType] = useState<"dorm" | "front" | "back">("dorm");
     const canvasContainerRef = useRef<HTMLDivElement>(null);
 
     const animationActiveRef = useRef<boolean>(true);
@@ -68,7 +69,7 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
         canvasContainerRef.current.innerHTML = "";
         canvasContainerRef.current.appendChild(pixiApp.view);
         appRef.current = pixiApp; // Store in ref instead of state
-        
+
         // Function to center the spine object if it exists
         const centerSpine = () => {
             if (spineRef.current && appRef.current) {
@@ -77,42 +78,42 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
                 spineRef.current.y = (appRef.current.screen.height / 2) * 2;
             }
         };
-        
+
         // Function to resize the canvas and recenter the spine
         const handleResize = () => {
             if (!canvasContainerRef.current || !appRef.current) return;
-            
+
             // Get the parent element dimensions
             const parentWidth = canvasContainerRef.current.clientWidth || 400;
             const parentHeight = canvasContainerRef.current.clientHeight || 400;
-            
+
             // Resize the canvas
             appRef.current.renderer.resize(parentWidth, parentHeight);
-            
+
             // Recenter the spine
             centerSpine();
         };
-        
+
         // Initial resize
         handleResize();
-        
+
         // Set up resize listener
-        window.addEventListener('resize', handleResize);
-        
+        window.addEventListener("resize", handleResize);
+
         // Also monitor container size changes
         const resizeObserver = new ResizeObserver(() => {
             handleResize();
         });
-        
+
         if (canvasContainerRef.current) {
             resizeObserver.observe(canvasContainerRef.current);
         }
-        
+
         // Clean up on unmount
         return () => {
-            window.removeEventListener('resize', handleResize);
+            window.removeEventListener("resize", handleResize);
             resizeObserver.disconnect();
-            
+
             // Safer destroy to avoid the "cancelResize is not a function" error
             try {
                 if (appRef.current) {
@@ -120,9 +121,9 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
                     appRef.current.destroy(false, { children: true, texture: true, baseTexture: true });
                 }
             } catch (err) {
-                console.error('Error cleaning up Pixi application:', err);
+                console.error("Error cleaning up Pixi application:", err);
             }
-            
+
             // Clear references
             appRef.current = null;
             spineRef.current = null;
@@ -139,9 +140,10 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
         [repoBaseUrl],
     );
 
-    // Get skin data
+    // Get skin data with fallback
     const getSkinData = useCallback(() => {
         if (!selectedOperator || !selectedSkin) {
+            console.log("No operator or skin selected", { selectedOperator, selectedSkin });
             return null;
         }
 
@@ -149,25 +151,93 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
         const skin = selectedOperator.skins.find((s) => s.dorm.path === selectedSkin || s.front.path === selectedSkin || s.back.path === selectedSkin);
 
         if (!skin) {
+            console.log("Could not find matching skin", {
+                selectedSkin,
+                availableSkins: selectedOperator.skins.map((s) => ({
+                    dorm: s.dorm.path,
+                    front: s.front.path,
+                    back: s.back.path,
+                })),
+            });
+
+            // Fallback: Try to use the first skin if available
+            if (selectedOperator.skins.length > 0) {
+                const fallbackSkin = selectedOperator.skins[0];
+                if (fallbackSkin) {
+                    console.log("Using fallback skin", { fallbackSkin: fallbackSkin.name });
+
+                    // Try the selected view type first, then fall back to others
+                    if (viewType === "dorm" && fallbackSkin.dorm?.atlas && fallbackSkin.dorm?.png && fallbackSkin.dorm?.skel) {
+                        return {
+                            atlas: getAssetUrl(fallbackSkin.dorm.atlas),
+                            png: getAssetUrl(fallbackSkin.dorm.png),
+                            skel: getAssetUrl(fallbackSkin.dorm.skel),
+                            type: "dorm",
+                        };
+                    } else if (viewType === "front" && fallbackSkin.front?.atlas && fallbackSkin.front?.png && fallbackSkin.front?.skel) {
+                        return {
+                            atlas: getAssetUrl(fallbackSkin.front.atlas),
+                            png: getAssetUrl(fallbackSkin.front.png),
+                            skel: getAssetUrl(fallbackSkin.front.skel),
+                            type: "front",
+                        };
+                    } else if (viewType === "back" && fallbackSkin.back?.atlas && fallbackSkin.back?.png && fallbackSkin.back?.skel) {
+                        return {
+                            atlas: getAssetUrl(fallbackSkin.back.atlas),
+                            png: getAssetUrl(fallbackSkin.back.png),
+                            skel: getAssetUrl(fallbackSkin.back.skel),
+                            type: "back",
+                        };
+                    }
+
+                    // If the selected view type isn't available, try any available view
+                    if (fallbackSkin.dorm?.atlas && fallbackSkin.dorm?.png && fallbackSkin.dorm?.skel) {
+                        return {
+                            atlas: getAssetUrl(fallbackSkin.dorm.atlas),
+                            png: getAssetUrl(fallbackSkin.dorm.png),
+                            skel: getAssetUrl(fallbackSkin.dorm.skel),
+                            type: "dorm",
+                        };
+                    } else if (fallbackSkin.front?.atlas && fallbackSkin.front?.png && fallbackSkin.front?.skel) {
+                        return {
+                            atlas: getAssetUrl(fallbackSkin.front.atlas),
+                            png: getAssetUrl(fallbackSkin.front.png),
+                            skel: getAssetUrl(fallbackSkin.front.skel),
+                            type: "front",
+                        };
+                    } else if (fallbackSkin.back?.atlas && fallbackSkin.back?.png && fallbackSkin.back?.skel) {
+                        return {
+                            atlas: getAssetUrl(fallbackSkin.back.atlas),
+                            png: getAssetUrl(fallbackSkin.back.png),
+                            skel: getAssetUrl(fallbackSkin.back.skel),
+                            type: "back",
+                        };
+                    }
+                }
+            }
+
             return null;
         }
 
-        // Determine which view to use (dorm, front, or back)
-        if (selectedSkin === skin.dorm.path && skin.dorm.atlas && skin.dorm.png && skin.dorm.skel) {
+        // First, try to use the selected view type if it has all required assets
+        if (viewType === "dorm" && skin.dorm.atlas && skin.dorm.png && skin.dorm.skel) {
+            console.log("Using dorm view (selected)", { path: skin.dorm.path });
             return {
                 atlas: getAssetUrl(skin.dorm.atlas),
                 png: getAssetUrl(skin.dorm.png),
                 skel: getAssetUrl(skin.dorm.skel),
                 type: "dorm",
             };
-        } else if (selectedSkin === skin.front.path && skin.front.atlas && skin.front.png && skin.front.skel) {
+        } else if (viewType === "front" && skin.front.atlas && skin.front.png && skin.front.skel) {
+            console.log("Using front view (selected)", { path: skin.front.path });
             return {
                 atlas: getAssetUrl(skin.front.atlas),
                 png: getAssetUrl(skin.front.png),
                 skel: getAssetUrl(skin.front.skel),
                 type: "front",
             };
-        } else if (selectedSkin === skin.back.path && skin.back.atlas && skin.back.png && skin.back.skel) {
+        } else if (viewType === "back" && skin.back.atlas && skin.back.png && skin.back.skel) {
+            console.log("Using back view (selected)", { path: skin.back.path });
             return {
                 atlas: getAssetUrl(skin.back.atlas),
                 png: getAssetUrl(skin.back.png),
@@ -176,41 +246,86 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
             };
         }
 
+        // If the selected view type doesn't have all required assets, check if the path matches a specific view
+        if (selectedSkin === skin.dorm.path && skin.dorm.atlas && skin.dorm.png && skin.dorm.skel) {
+            console.log("Using dorm view (path match)", { path: skin.dorm.path });
+            return {
+                atlas: getAssetUrl(skin.dorm.atlas),
+                png: getAssetUrl(skin.dorm.png),
+                skel: getAssetUrl(skin.dorm.skel),
+                type: "dorm",
+            };
+        } else if (selectedSkin === skin.front.path && skin.front.atlas && skin.front.png && skin.front.skel) {
+            console.log("Using front view (path match)", { path: skin.front.path });
+            return {
+                atlas: getAssetUrl(skin.front.atlas),
+                png: getAssetUrl(skin.front.png),
+                skel: getAssetUrl(skin.front.skel),
+                type: "front",
+            };
+        } else if (selectedSkin === skin.back.path && skin.back.atlas && skin.back.png && skin.back.skel) {
+            console.log("Using back view (path match)", { path: skin.back.path });
+            return {
+                atlas: getAssetUrl(skin.back.atlas),
+                png: getAssetUrl(skin.back.png),
+                skel: getAssetUrl(skin.back.skel),
+                type: "back",
+            };
+        }
+
+        // If we get here, we found a skin but the selected view doesn't have all required assets
+        // Try to use any available view as a fallback
+        console.log("Selected view missing assets, trying fallbacks");
+
+        if (skin.dorm.atlas && skin.dorm.png && skin.dorm.skel) {
+            console.log("Falling back to dorm view");
+            return {
+                atlas: getAssetUrl(skin.dorm.atlas),
+                png: getAssetUrl(skin.dorm.png),
+                skel: getAssetUrl(skin.dorm.skel),
+                type: "dorm",
+            };
+        } else if (skin.front.atlas && skin.front.png && skin.front.skel) {
+            console.log("Falling back to front view");
+            return {
+                atlas: getAssetUrl(skin.front.atlas),
+                png: getAssetUrl(skin.front.png),
+                skel: getAssetUrl(skin.front.skel),
+                type: "front",
+            };
+        } else if (skin.back.atlas && skin.back.png && skin.back.skel) {
+            console.log("Falling back to back view");
+            return {
+                atlas: getAssetUrl(skin.back.atlas),
+                png: getAssetUrl(skin.back.png),
+                skel: getAssetUrl(skin.back.skel),
+                type: "back",
+            };
+        }
+
+        console.log("No valid view found for skin", {
+            selectedSkin,
+            dorm: { path: skin.dorm.path, hasAssets: !!(skin.dorm.atlas && skin.dorm.png && skin.dorm.skel) },
+            front: { path: skin.front.path, hasAssets: !!(skin.front.atlas && skin.front.png && skin.front.skel) },
+            back: { path: skin.back.path, hasAssets: !!(skin.back.atlas && skin.back.png && skin.back.skel) },
+        });
         return null;
-    }, [selectedOperator, selectedSkin, getAssetUrl]);
+    }, [selectedOperator, selectedSkin, getAssetUrl, viewType]);
 
     useEffect(() => {
-        const skin = selectedOperator?.skins.find((data) => {
-            const isBack = Object.values(data.back).map((data) => data === selectedSkin);
-            const isDorm = Object.values(data.dorm).map((data) => data === selectedSkin);
-            const isFront = Object.values(data.front).map((data) => data === selectedSkin);
+        // Get the skin data using our helper function
+        const skinData = getSkinData();
+        if (!skinData || !appRef.current) {
+            // Set error if we have an operator and skin selected but couldn't get skin data
+            if (selectedOperator && selectedSkin) {
+                setError(`Could not load skin data for ${selectedSkin}`);
+            }
+            return;
+        }
 
-            if (!isBack && !isDorm && !isFront) return false;
-            return true;
-        });
-
-        const isBack = Object.values(skin?.back ?? {}).map((data) => data === selectedSkin);
-        const isDorm = Object.values(skin?.dorm ?? {}).map((data) => data === selectedSkin);
-        const isFront = Object.values(skin?.front ?? {}).map((data) => data === selectedSkin);
-
-        const skinData = isBack
-            ? skin?.back
-            : isDorm
-              ? skin?.dorm
-              : isFront
-                ? skin?.front
-                : {
-                      path: null,
-                      atlas: null,
-                      png: null,
-                      skel: null,
-                  };
-
-        if (!appRef.current || !skinData?.atlas || !skinData.skel || !skinData.png) return;
-
-        const atlasURL = getAssetUrl(skinData.atlas);
-        const skelURL = getAssetUrl(skinData.skel);
-        const imageURL = getAssetUrl(skinData.png);
+        const atlasURL = skinData.atlas;
+        const skelURL = skinData.skel;
+        const imageURL = skinData.png;
 
         setIsLoading(true);
         setError(null);
@@ -249,7 +364,7 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
 
                         // Scale it appropriately
                         spineData.scale.set(0.5);
-                        
+
                         // Add to stage
                         const app = appRef.current;
                         if (app) {
@@ -258,7 +373,7 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
 
                         // Store spine in ref
                         spineRef.current = spineData;
-                        
+
                         // Center the spine after adding it to stage
                         if (app) {
                             spineData.x = app.screen.width / 2;
@@ -301,14 +416,14 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
             const errorMessage = e instanceof Error ? e.message : "Unknown error occurred";
             setError(errorMessage);
         }
-    }, [selectedOperator, selectedSkin, repoBaseUrl, getAssetUrl]);
+    }, [selectedOperator, selectedSkin, repoBaseUrl, getAssetUrl, getSkinData, viewType]);
 
     useEffect(() => {
         // Only try to change animation if spine exists and animation name is valid
         if (spineRef.current?.state && selectedAnimation && availableAnimations.includes(selectedAnimation)) {
             try {
                 spineRef.current.state.setAnimation(0, selectedAnimation, true);
-                
+
                 // Ensure the spine stays centered after animation change
                 if (appRef.current) {
                     spineRef.current.x = appRef.current.screen.width / 2;
@@ -328,7 +443,7 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
         if (spineRef.current && value) {
             // Set the animation
             spineRef.current.state.setAnimation(0, value, true);
-            
+
             // Ensure the spine stays centered
             if (appRef.current) {
                 spineRef.current.x = appRef.current.screen.width / 2;
@@ -348,11 +463,11 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
         if (spineRef.current && appRef.current) {
             // Reset scale if needed
             spineRef.current.scale.set(0.5);
-            
+
             // Center the sprite
             spineRef.current.x = appRef.current.screen.width / 2;
             spineRef.current.y = (appRef.current.screen.height / 2) * 2;
-            
+
             // Reset any other transformations
             spineRef.current.rotation = 0;
         }
@@ -368,6 +483,11 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
         if (value.length > 0 && typeof value[0] === "number") {
             setSpeed(value[0]);
         }
+    };
+
+    // Handle view type change
+    const handleViewTypeChange = (value: string) => {
+        setViewType(value as "dorm" | "front" | "back");
     };
 
     // Get current skin data for UI display
@@ -400,6 +520,21 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
                         <Button variant="outline" size="icon" onClick={handleReset} disabled={!hasAnimation || isLoading}>
                             <RepeatIcon className="h-4 w-4" />
                         </Button>
+                    </div>
+
+                    {/* View Type Selector */}
+                    <div className="flex items-center gap-2">
+                        <span className="w-10 text-sm">View:</span>
+                        <Select value={viewType} onValueChange={handleViewTypeChange} disabled={isLoading}>
+                            <SelectTrigger className="w-[120px]">
+                                <SelectValue placeholder="View Type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="dorm">Dorm</SelectItem>
+                                <SelectItem value="front">Front</SelectItem>
+                                <SelectItem value="back">Back</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     <div className="flex items-center gap-2">
