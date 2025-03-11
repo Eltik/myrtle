@@ -11,9 +11,10 @@ import { Card, CardContent } from "~/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { Slider } from "~/components/ui/slider";
 import { Button } from "~/components/ui/button";
-import { PauseIcon, PlayIcon, RepeatIcon } from "lucide-react";
+import { PauseIcon, PlayIcon } from "lucide-react";
 import * as PIXI from "pixi.js";
 import { Spine } from "pixi-spine";
+import { Input } from "~/components/ui/input";
 
 // Add this interface for spine animations
 interface SpineAnimation {
@@ -551,32 +552,6 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
         setIsPlaying(!isPlaying);
     };
 
-    // Handle reset
-    const handleReset = () => {
-        // Reset animation and ensure chibi stays centered
-        if (spineRef.current && appRef.current) {
-            // Reset scale if needed
-            spineRef.current.scale.set(0.5);
-
-            // Reset rotation
-            spineRef.current.rotation = 0;
-
-            // Adjust position based on current animation
-            if (selectedAnimation) {
-                adjustPositionForAnimation();
-            } else {
-                // Default center position if no animation is selected
-                spineRef.current.x = appRef.current.screen.width / 2;
-                spineRef.current.y = (appRef.current.screen.height / 2) * 1.75;
-            }
-        }
-
-        // Ensure it's playing
-        if (!isPlaying) {
-            setIsPlaying(true);
-        }
-    };
-
     // Handle position reset (separate from animation reset)
     const handlePositionReset = () => {
         if (spineRef.current && appRef.current && selectedAnimation) {
@@ -589,8 +564,19 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
     const handleSpeedChange = (value: number[]) => {
         if (value.length > 0 && typeof value[0] === "number") {
             setSpeed(value[0]);
+            // Apply speed change to spine animation
+            if (spineRef.current?.state) {
+                spineRef.current.state.timeScale = value[0];
+            }
         }
     };
+
+    // Effect to handle play/pause
+    useEffect(() => {
+        if (spineRef.current?.state) {
+            spineRef.current.state.timeScale = isPlaying ? speed : 0;
+        }
+    }, [isPlaying, speed]);
 
     // Handle view type change
     const handleViewTypeChange = (value: string) => {
@@ -624,10 +610,6 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
                             {isPlaying ? <PauseIcon className="h-4 w-4" /> : <PlayIcon className="h-4 w-4" />}
                         </Button>
 
-                        <Button variant="outline" size="icon" onClick={handleReset} disabled={!hasAnimation || isLoading}>
-                            <RepeatIcon className="h-4 w-4" />
-                        </Button>
-
                         <Button variant="outline" size="sm" onClick={handlePositionReset} disabled={!hasAnimation || isLoading}>
                             Center
                         </Button>
@@ -651,7 +633,37 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
                     <div className="flex items-center gap-2">
                         <span className="w-10 text-sm">Speed:</span>
                         <Slider defaultValue={[1]} min={0.1} max={2} step={0.1} value={[speed]} onValueChange={handleSpeedChange} disabled={!hasAnimation || isLoading} className="w-full max-w-56" />
-                        <span className="w-8 text-sm">{speed}x</span>
+                        <Input
+                            type="number"
+                            min={0.1}
+                            max={2}
+                            step={0.1}
+                            value={speed}
+                            onChange={(e) => {
+                                const newValue = parseFloat(e.target.value);
+                                if (!isNaN(newValue) && newValue >= 0.1 && newValue <= 2) {
+                                    setSpeed(newValue);
+                                    if (spineRef.current?.state) {
+                                        spineRef.current.state.timeScale = newValue;
+                                    }
+                                }
+                            }}
+                            onBlur={(e) => {
+                                const newValue = parseFloat(e.target.value);
+                                if (isNaN(newValue) || newValue < 0.1) {
+                                    setSpeed(0.1);
+                                    if (spineRef.current?.state) {
+                                        spineRef.current.state.timeScale = 0.1;
+                                    }
+                                } else if (newValue > 2) {
+                                    setSpeed(2);
+                                    if (spineRef.current?.state) {
+                                        spineRef.current.state.timeScale = 2;
+                                    }
+                                }
+                            }}
+                            className="w-16"
+                        />
                     </div>
                 </div>
 

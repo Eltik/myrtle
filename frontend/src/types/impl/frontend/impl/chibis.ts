@@ -1,3 +1,5 @@
+import type { Operator } from "../../api/static/operator";
+
 export type FormattedChibis = {
     name: string;
     operatorCode: string;
@@ -23,4 +25,5 @@ export type FormattedChibis = {
             skel: string;
         };
     }[];
+    data?: Operator;
 };
