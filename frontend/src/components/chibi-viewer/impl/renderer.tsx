@@ -34,6 +34,7 @@ type ChibiRendererProps = {
 };
 
 export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: ChibiRendererProps) {
+    // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
     const appRef = useRef<PIXI.Application | null>(null);
     const spineRef = useRef<Spine | null>(null);
 
@@ -60,19 +61,70 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
             backgroundColor: 0x000000,
             antialias: true,
             transparent: true,
-            autoDensity: false, // Disable automatic resizing
+            autoDensity: true, // Enable automatic resizing
             resolution: window.devicePixelRatio || 1,
         });
 
         canvasContainerRef.current.innerHTML = "";
         canvasContainerRef.current.appendChild(pixiApp.view);
         appRef.current = pixiApp; // Store in ref instead of state
-
-        return () => {
-            if (appRef.current) {
-                appRef.current.destroy(true, true);
-                appRef.current = null;
+        
+        // Function to center the spine object if it exists
+        const centerSpine = () => {
+            if (spineRef.current && appRef.current) {
+                // Center the spine
+                spineRef.current.x = appRef.current.screen.width / 2;
+                spineRef.current.y = (appRef.current.screen.height / 2) * 2;
             }
+        };
+        
+        // Function to resize the canvas and recenter the spine
+        const handleResize = () => {
+            if (!canvasContainerRef.current || !appRef.current) return;
+            
+            // Get the parent element dimensions
+            const parentWidth = canvasContainerRef.current.clientWidth || 400;
+            const parentHeight = canvasContainerRef.current.clientHeight || 400;
+            
+            // Resize the canvas
+            appRef.current.renderer.resize(parentWidth, parentHeight);
+            
+            // Recenter the spine
+            centerSpine();
+        };
+        
+        // Initial resize
+        handleResize();
+        
+        // Set up resize listener
+        window.addEventListener('resize', handleResize);
+        
+        // Also monitor container size changes
+        const resizeObserver = new ResizeObserver(() => {
+            handleResize();
+        });
+        
+        if (canvasContainerRef.current) {
+            resizeObserver.observe(canvasContainerRef.current);
+        }
+        
+        // Clean up on unmount
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            resizeObserver.disconnect();
+            
+            // Safer destroy to avoid the "cancelResize is not a function" error
+            try {
+                if (appRef.current) {
+                    // Clean up PIXI application
+                    appRef.current.destroy(false, { children: true, texture: true, baseTexture: true });
+                }
+            } catch (err) {
+                console.error('Error cleaning up Pixi application:', err);
+            }
+            
+            // Clear references
+            appRef.current = null;
             spineRef.current = null;
         };
     }, []);
@@ -193,24 +245,29 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
                     }
 
                     if (skelResource.spineData) {
-                        const spineData = new Spine(skelResource.spineData);
-
-                        // Center the sprite
-                        spineData.x = app.screen.width / 2;
-                        spineData.y = app.screen.height / 2;
+                        const spineData = new Spine(skelResource.spineData as any);
 
                         // Scale it appropriately
                         spineData.scale.set(0.5);
-
+                        
                         // Add to stage
-                        app.stage.addChild(spineData);
+                        const app = appRef.current;
+                        if (app) {
+                            app.stage.addChild(spineData);
+                        }
+
+                        // Store spine in ref
+                        spineRef.current = spineData;
+                        
+                        // Center the spine after adding it to stage
+                        if (app) {
+                            spineData.x = app.screen.width / 2;
+                            spineData.y = app.screen.height / 2;
+                        }
 
                         // Get available animations - casting to our minimal interface
                         const animations = spineData.spineData.animations.map((anim: SpineAnimation) => anim.name);
                         setAvailableAnimations(animations);
-
-                        // Store spine in ref
-                        spineRef.current = spineData;
 
                         // Set default animation if available - after storing spine in ref
                         if (animations.includes("Idle")) {
@@ -251,6 +308,12 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
         if (spineRef.current?.state && selectedAnimation && availableAnimations.includes(selectedAnimation)) {
             try {
                 spineRef.current.state.setAnimation(0, selectedAnimation, true);
+                
+                // Ensure the spine stays centered after animation change
+                if (appRef.current) {
+                    spineRef.current.x = appRef.current.screen.width / 2;
+                    spineRef.current.y = (appRef.current.screen.height / 2) * 2;
+                }
             } catch (error) {
                 console.error("Failed to set animation:", error);
             }
@@ -261,14 +324,16 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
     const handleAnimationChange = (value: string) => {
         setSelectedAnimation(value);
 
-        // Reset the image position and transform
-        if (canvasContainerRef.current?.firstChild) {
-            const imageElement = canvasContainerRef.current.firstChild as HTMLImageElement;
-            imageElement.style.left = "50%";
-            imageElement.style.top = "50%";
-            imageElement.style.transform = "translate(-50%, -50%)";
-            imageElement.style.opacity = "1";
-            imageElement.dataset.rotation = "0";
+        // Apply the animation to the spine object
+        if (spineRef.current && value) {
+            // Set the animation
+            spineRef.current.state.setAnimation(0, value, true);
+            
+            // Ensure the spine stays centered
+            if (appRef.current) {
+                spineRef.current.x = appRef.current.screen.width / 2;
+                spineRef.current.y = appRef.current.screen.height / 2;
+            }
         }
     };
 
@@ -279,14 +344,17 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
 
     // Handle reset
     const handleReset = () => {
-        // Reset the image position and transform
-        if (canvasContainerRef.current?.firstChild) {
-            const imageElement = canvasContainerRef.current.firstChild as HTMLImageElement;
-            imageElement.style.left = "50%";
-            imageElement.style.top = "50%";
-            imageElement.style.transform = "translate(-50%, -50%)";
-            imageElement.style.opacity = "1";
-            imageElement.dataset.rotation = "0";
+        // Reset animation and ensure chibi stays centered
+        if (spineRef.current && appRef.current) {
+            // Reset scale if needed
+            spineRef.current.scale.set(0.5);
+            
+            // Center the sprite
+            spineRef.current.x = appRef.current.screen.width / 2;
+            spineRef.current.y = (appRef.current.screen.height / 2) * 2;
+            
+            // Reset any other transformations
+            spineRef.current.rotation = 0;
         }
 
         // Ensure it's playing
