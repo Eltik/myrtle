@@ -3,6 +3,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* @typescript-eslint/no-redundant-type-constituents */
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { FormattedChibis } from "~/types/impl/frontend/impl/chibis";
 import { Card, CardContent } from "~/components/ui/card";
