@@ -8,6 +8,8 @@ import type { FormattedChibis } from "~/types/impl/frontend/impl/chibis";
 import { type Operator } from "~/types/impl/api/static/operator";
 import { ChibiRenderer } from "./impl/renderer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { cn } from "~/lib/utils";
 
 export function ChibiViewer() {
     const [chibis, setChibis] = useState<FormattedChibis[]>([]);
@@ -16,6 +18,7 @@ export function ChibiViewer() {
     const [selectedOperator, setSelectedOperator] = useState<FormattedChibis | null>(null);
     const [selectedSkin, setSelectedSkin] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<"info" | "canvas">("canvas");
+    const [isListCollapsed, setIsListCollapsed] = useState(false);
 
     const formatData = useCallback((data: ChibisSimplified[], operatorsList: Operator[]): FormattedChibis[] => {
         // Deduplicate operators by their ID, keeping the first occurrence
@@ -178,34 +181,48 @@ export function ChibiViewer() {
 
     return (
         <div className="container mx-auto py-8">
-            <div className="flex flex-col gap-8 md:flex-row">
+            <div className="flex flex-col md:flex-row">
                 {/* Operator List */}
-                <div className="w-full space-y-4 md:w-1/3">
-                    <div className="sticky top-4">
-                        <Input placeholder="Search operators..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="mb-4" />
-
-                        <div className="h-[70vh] overflow-y-auto rounded-lg border bg-card">
-                            {loading ? (
-                                Array.from({ length: 10 }).map((_, i) => (
-                                    <div key={i} className="border-b p-3">
-                                        <Skeleton className="h-12 w-full" />
-                                    </div>
-                                ))
-                            ) : filteredChibis.length > 0 ? (
-                                <div className="divide-y">
-                                    {filteredChibis.map((chibi) => (
-                                        <Button key={chibi.operatorCode} variant={selectedOperator?.operatorCode === chibi.operatorCode ? "default" : "ghost"} className="h-auto w-full justify-start p-3" onClick={() => handleOperatorSelect(chibi)}>
-                                            <div className="text-left">
-                                                <div className="font-medium">{chibi.data?.name ?? chibi.name}</div>
-                                                <div className="line-clamp-1 truncate text-sm text-muted-foreground">{chibi.operatorCode}</div>
-                                            </div>
-                                        </Button>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="p-8 text-center text-muted-foreground">No operators found</div>
-                            )}
+                <div className={cn("transition-all duration-300 ease-in-out", isListCollapsed ? "w-[60px]" : "w-full md:w-1/3")}>
+                    <div className="sticky top-4 flex">
+                        <div className={cn("flex flex-col gap-4 transition-all duration-300 ease-in-out", isListCollapsed ? "w-0 overflow-hidden opacity-0" : "w-full opacity-100")}>
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                <Input placeholder="Search operators..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-9" />
+                            </div>
+                            <div className="h-[70vh] overflow-y-auto rounded-lg border bg-card">
+                                {loading ? (
+                                    Array.from({ length: 10 }).map((_, i) => (
+                                        <div key={i} className="border-b p-3">
+                                            <Skeleton className="h-12 w-full" />
+                                        </div>
+                                    ))
+                                ) : filteredChibis.length > 0 ? (
+                                    <>
+                                        <div className="sticky top-0 border-b bg-card/95 p-2 backdrop-blur supports-[backdrop-filter]:bg-card/75">
+                                            <p className="text-sm text-muted-foreground">
+                                                {filteredChibis.length} operator{filteredChibis.length !== 1 ? "s" : ""} found
+                                            </p>
+                                        </div>
+                                        <div className="divide-y">
+                                            {filteredChibis.map((chibi) => (
+                                                <Button key={chibi.operatorCode} variant={selectedOperator?.operatorCode === chibi.operatorCode ? "default" : "ghost"} className={cn("h-auto w-full justify-start p-3 transition-colors", selectedOperator?.operatorCode === chibi.operatorCode ? "bg-primary/10 hover:bg-primary/20" : "hover:bg-accent")} onClick={() => handleOperatorSelect(chibi)}>
+                                                    <div className="text-left">
+                                                        <div className="font-medium text-primary">{chibi.data?.name ?? chibi.name}</div>
+                                                        <div className="line-clamp-1 truncate text-sm text-muted-foreground">{chibi.operatorCode}</div>
+                                                    </div>
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="flex h-full items-center justify-center p-8 text-center text-muted-foreground">No operators found</div>
+                                )}
+                            </div>
                         </div>
+                        <Button variant="ghost" size="icon" className={`h-auto shrink-0 ${isListCollapsed ? "rounded-r-none" : "rounded-l-none"}`} onClick={() => setIsListCollapsed(!isListCollapsed)}>
+                            {isListCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+                        </Button>
                     </div>
                 </div>
 
