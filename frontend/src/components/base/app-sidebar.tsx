@@ -36,6 +36,10 @@ const items = [
                 url: "#",
             },
             {
+                title: "Chibi Viewer",
+                url: "/chibis",
+            },
+            {
                 title: "DPS Calculator",
                 url: "/dps-calculator",
             },
