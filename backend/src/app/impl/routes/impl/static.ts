@@ -7,6 +7,7 @@ import operators, { getAll as getAllOperators } from "../../../../lib/impl/local
 import ranges, { getAll as getAllRanges } from "../../../../lib/impl/local/impl/gamedata/impl/ranges";
 import skills, { getAll as getAllSkills } from "../../../../lib/impl/local/impl/gamedata/impl/skills";
 import skins, { getAll as getAllSkins } from "../../../../lib/impl/local/impl/gamedata/impl/skins";
+import voices, { getAll as getAllVoices } from "../../../../lib/impl/local/impl/gamedata/impl/voices";
 import middleware from "../../middleware";
 
 const handler = async (req: Request): Promise<Response> => {
@@ -277,6 +278,26 @@ const handler = async (req: Request): Promise<Response> => {
                             skins: skinsData,
                         }),
                     );
+                case "voices":
+                    const voiceId = body?.id ?? paths[2] ?? url.searchParams.get("id") ?? null;
+
+                    const voicesCached = await redis.get(`static:voices:${voiceId ?? "none"}`);
+                    if (voicesCached) {
+                        return middleware.createResponse(voicesCached);
+                    }
+
+                    const voicesData = voiceId ? voices(voiceId) : getAllVoices();
+
+                    await redis.set(
+                        `static:voices:${voiceId ?? "none"}`,
+                        JSON.stringify({
+                            voices: voicesData,
+                        }),
+                        "EX",
+                        env.REDIS_CACHE_TIME,
+                    );
+
+                    return middleware.createResponse(JSON.stringify({ voices: voicesData }));
                 default:
                     return middleware.createResponse(JSON.stringify({ error: "Invalid type." }), 400);
             }
@@ -297,7 +318,7 @@ const route = {
 };
 
 type Body = {
-    type: "materials" | "modules" | "operators" | "ranges" | "skills" | "trust" | "handbook" | "skins";
+    type: "materials" | "modules" | "operators" | "ranges" | "skills" | "trust" | "handbook" | "skins" | "voices";
     id?: string;
     method?: string;
     trust?: number;
