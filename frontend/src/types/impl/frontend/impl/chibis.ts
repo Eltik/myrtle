@@ -27,3 +27,17 @@ export type FormattedChibis = {
     }[];
     data?: Operator;
 };
+
+// Add this interface for spine animations
+export interface SpineAnimation {
+    name: string;
+}
+
+// Define resource interface to help with type safety
+export type ResourceMap = Record<
+    string,
+    {
+        spineData?: unknown;
+        data?: unknown;
+    }
+>;

@@ -1,11 +1,13 @@
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { ScrollArea, ScrollBar } from "~/components/ui/scroll-area";
 import { Separator } from "~/components/ui/separator";
 import type { Operator } from "~/types/impl/api/static/operator";
 import type { Skin } from "~/types/impl/api/static/skins";
 import { Dialog, DialogContent } from "~/components/ui/dialog";
 import { Maximize2 } from "lucide-react";
+import type { ChibisSimplified } from "~/types/impl/api/impl/chibis";
+import { ChibiViewer } from "./impl/chibi-viewer";
 
 interface UISkin {
     id: string;
@@ -30,12 +32,49 @@ function SkinsContent({ operator }: { operator: Operator }) {
     const [fullscreenOpen, setFullscreenOpen] = useState(false);
 
     const [skins, setSkins] = useState<UISkin[]>([]);
+    const [chibi, setChibi] = useState<ChibisSimplified | null>(null);
+
+    const repoBaseUrl = "https://raw.githubusercontent.com/fexli/ArknightsResource/main/";
 
     // Define the fallback image URL generator
-    const getFallbackImageUrl = (id: string) => `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/skin/${id}_1b.png`;
+    const getFallbackImageUrl = (id: string) => `${repoBaseUrl}skin/${id}_1b.png`;
+
+    const fetchChibi = async (id: string) => {
+        const response = await fetch("/api/chibis", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                format: "simplified",
+                id,
+            }),
+        });
+
+        return (await response.json()) as ChibisSimplified[];
+    };
+
+    // Define fallbackSkin with useMemo to avoid recalculation on every render
+    const fallbackSkin = useMemo(
+        () => ({
+            id: "default",
+            name: "Default",
+            description: "Default appearance",
+            image: getFallbackImageUrl(operator.id ?? ""),
+            fallbackImage: getFallbackImageUrl(operator.id ?? ""),
+            obtainMethod: "Default skin",
+            releaseDate: "Release",
+            artists: ["Original Artist"],
+            voiceLines: false,
+            animations: false,
+            available: true,
+            isDefault: true,
+        }),
+        [operator.id],
+    );
 
     useEffect(() => {
-        void fetchSkins(operator.id ?? "").then((skins) => {
+        void fetchSkins(operator.id ?? "").then(async (skins) => {
             const uiSkins: UISkin[] = skins.map((skin) => ({
                 id: skin.skinId,
                 name: skin.displaySkin.skinName ?? skin.displaySkin.skinGroupName ?? "Default",
@@ -51,6 +90,9 @@ function SkinsContent({ operator }: { operator: Operator }) {
                 isDefault: skin.displaySkin.skinGroupName === "Default Outfit",
             }));
             setSkins(uiSkins);
+
+            const chibi = await fetchChibi(operator.id ?? "");
+            setChibi(chibi[0] ?? null);
         });
     }, [operator.id]);
 
@@ -59,7 +101,7 @@ function SkinsContent({ operator }: { operator: Operator }) {
         const skin = skins.find((skin) => skin.id === selectedSkin) ?? skins[0] ?? fallbackSkin;
         setImageSrc(skin.image);
         setIsImageLoading(true);
-    }, [selectedSkin, skins]);
+    }, [fallbackSkin, selectedSkin, skins]);
 
     async function fetchSkins(id: string) {
         const data = (await (
@@ -97,22 +139,6 @@ function SkinsContent({ operator }: { operator: Operator }) {
         setFullscreenOpen(true);
     };
 
-    // Define a fallback skin in case none are found
-    const fallbackSkin = {
-        id: "default",
-        name: "Default",
-        description: "Default appearance",
-        image: getFallbackImageUrl(operator.id ?? ""),
-        fallbackImage: getFallbackImageUrl(operator.id ?? ""),
-        obtainMethod: "Default skin",
-        releaseDate: "Release",
-        artists: ["Original Artist"],
-        voiceLines: false,
-        animations: false,
-        available: true,
-        isDefault: true,
-    };
-
     const selectedSkinData = skins.find((skin) => skin.id === selectedSkin) ?? skins[0] ?? fallbackSkin;
 
     // Function to handle thumbnail image errors
@@ -128,9 +154,9 @@ function SkinsContent({ operator }: { operator: Operator }) {
             <Separator />
             <div className="flex flex-col space-y-6 p-6">
                 {/* Main skin viewer */}
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                     {/* Left side - Skin image */}
-                    <div className="group relative h-[500px] overflow-hidden rounded-lg border bg-black/10 backdrop-blur-sm md:col-span-2">
+                    <div className="group relative h-[500px] overflow-hidden rounded-lg border bg-black/10 backdrop-blur-sm md:col-span-2 lg:h-full">
                         {isImageLoading && (
                             <div className="absolute inset-0 flex items-center justify-center bg-card/20">
                                 <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
@@ -181,12 +207,19 @@ function SkinsContent({ operator }: { operator: Operator }) {
                             </div>
                         </div>
 
+                        {/* Chibi viewer */}
+                        {chibi && (
+                            <div className="mt-auto pt-4">
+                                <ChibiViewer chibi={chibi} skinId={selectedSkinData.id} repoBaseUrl={repoBaseUrl} />
+                            </div>
+                        )}
+
                         <div className="mt-auto pt-4">{!selectedSkinData.isDefault && !selectedSkinData.available && <div className="rounded-md border border-yellow-500/50 bg-yellow-500/10 p-2 text-sm">This skin is currently unavailable or not yet released.</div>}</div>
                     </div>
                 </div>
 
                 {/* Skin selector */}
-                <div className="pt-4">
+                <div className="">
                     <h3 className="mb-4 text-lg font-semibold">Available Skins</h3>
                     <div className="relative w-full">
                         <ScrollArea>

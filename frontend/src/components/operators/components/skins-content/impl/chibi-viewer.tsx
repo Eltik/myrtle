@@ -1,44 +1,110 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
-
-import { useCallback, useEffect, useRef, useState } from "react";
-import type { FormattedChibis, ResourceMap, SpineAnimation } from "~/types/impl/frontend/impl/chibis";
-import { Card, CardContent } from "~/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
-import { Slider } from "~/components/ui/slider";
-import { Button } from "~/components/ui/button";
-import { PauseIcon, PlayIcon } from "lucide-react";
+import { type ISkeletonData, Spine } from "pixi-spine";
 import * as PIXI from "pixi.js";
-import { Spine } from "pixi-spine";
-import { Input } from "~/components/ui/input";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Card, CardContent } from "~/components/ui/card";
+import type { ChibisSimplified } from "~/types/impl/api/impl/chibis";
+import type { FormattedChibis, ResourceMap, SpineAnimation } from "~/types/impl/frontend/impl/chibis";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 
-type ChibiRendererProps = {
-    selectedOperator: FormattedChibis | null;
-    selectedSkin: string | null;
-    repoBaseUrl: string;
-};
+export function ChibiViewer({ chibi, skinId, repoBaseUrl }: { chibi: ChibisSimplified; skinId: string; repoBaseUrl: string }) {
+    const [formattedChibi, setFormattedChibi] = useState<FormattedChibis | null>(null);
 
-export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: ChibiRendererProps) {
     // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
     const appRef = useRef<PIXI.Application | null>(null);
     const spineRef = useRef<Spine | null>(null);
 
     const [selectedAnimation, setSelectedAnimation] = useState<string>("Idle");
     const [availableAnimations, setAvailableAnimations] = useState<string[]>([]);
+    const [viewType, setViewType] = useState<"dorm" | "front" | "back">("dorm");
+
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [isPlaying, setIsPlaying] = useState(true);
-    const [speed, setSpeed] = useState(1);
-    const [viewType, setViewType] = useState<"dorm" | "front" | "back">("dorm");
-    // Add state for dragging
-    const [isDragging, setIsDragging] = useState(false);
+
     const canvasContainerRef = useRef<HTMLDivElement>(null);
 
-    const animationActiveRef = useRef<boolean>(true);
+    const skinIdToChibiId = (skinId: string) => {
+        // Ex.
+        // char_332_archet@shining#1
+        // Should be:
+        // char_332_archet_shining_1
+
+        return skinId.replace("@", "_").replace("#", "_");
+    };
+
+    const formatData = useCallback((): FormattedChibis => {
+        const operatorCode = chibi.operatorCode.includes("/") ? (chibi.operatorCode.split("/").pop() ?? chibi.operatorCode) : chibi.operatorCode;
+
+        const formattedChibi: FormattedChibis = {
+            name: chibi.name,
+            operatorCode,
+            path: chibi.path,
+            skins: [],
+        };
+
+        type AnimationType = {
+            atlas?: string;
+            png?: string;
+            skel?: string;
+        };
+
+        type SkinData = {
+            name: string;
+            dorm?: { atlas: string; png: string; skel: string; path: string };
+            front?: { atlas: string; png: string; skel: string; path: string };
+            back?: { atlas: string; png: string; skel: string; path: string };
+        };
+
+        const skinsByName = new Map<string, SkinData>();
+
+        for (const skin of chibi.skins) {
+            const skinName = skin.name.startsWith("build_") ? (skin.name.split("build_")[1]?.split("/")[0] ?? chibi.name) : skin.name;
+
+            const existingSkin = skinsByName.get(skinName) ?? { name: skinName };
+
+            const createAnimationData = (animationType: AnimationType | undefined) => ({
+                atlas: animationType?.atlas ?? "",
+                png: animationType?.png ?? "",
+                skel: animationType?.skel ?? "",
+                path: skin.path,
+            });
+
+            if (skin.animationTypes?.dorm) {
+                existingSkin.dorm = createAnimationData(skin.animationTypes.dorm);
+            }
+
+            if (skin.animationTypes?.front) {
+                existingSkin.front = createAnimationData(skin.animationTypes.front);
+            }
+
+            if (skin.animationTypes?.back) {
+                existingSkin.back = createAnimationData(skin.animationTypes.back);
+            }
+
+            skinsByName.set(skinName, existingSkin);
+        }
+
+        const emptyAnimationData = {
+            atlas: "",
+            png: "",
+            skel: "",
+            path: "",
+        };
+
+        formattedChibi.skins = Array.from(skinsByName.values()).map((skin) => ({
+            name: skin.name,
+            dorm: skin.dorm ?? emptyAnimationData,
+            front: skin.front ?? emptyAnimationData,
+            back: skin.back ?? emptyAnimationData,
+        }));
+
+        return formattedChibi;
+    }, [chibi]);
+
+    useEffect(() => {
+        const formattedChibi = formatData();
+
+        setFormattedChibi(formattedChibi);
+    }, [formatData]);
 
     useEffect(() => {
         if (!canvasContainerRef.current) return;
@@ -121,7 +187,6 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
         };
     }, []);
 
-    // Function to get asset URL from the path
     const getAssetUrl = useCallback(
         (path: string) => {
             // Remove the initial "./" if present
@@ -131,29 +196,22 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
         [repoBaseUrl],
     );
 
-    // Get skin data with fallback
     const getSkinData = useCallback(() => {
-        if (!selectedOperator || !selectedSkin) {
-            console.log("No operator or skin selected", { selectedOperator, selectedSkin });
-            return null;
-        }
+        const chibiId = skinIdToChibiId(skinId);
 
-        // Find the selected skin
-        const skin = selectedOperator.skins.find((s) => s.dorm.path === selectedSkin || s.front.path === selectedSkin || s.back.path === selectedSkin);
-
+        const skin = formattedChibi?.skins.find((s) => s.dorm.path.includes(chibiId) || s.front.path.includes(chibiId) || s.back.path.includes(chibiId));
         if (!skin) {
             console.log("Could not find matching skin", {
-                selectedSkin,
-                availableSkins: selectedOperator.skins.map((s) => ({
+                selectedSkin: skinId,
+                availableSkins: formattedChibi?.skins.map((s) => ({
                     dorm: s.dorm.path,
                     front: s.front.path,
                     back: s.back.path,
                 })),
             });
 
-            // Fallback: Try to use the first skin if available
-            if (selectedOperator.skins.length > 0) {
-                const fallbackSkin = selectedOperator.skins[0];
+            if (formattedChibi && formattedChibi.skins.length > 0) {
+                const fallbackSkin = formattedChibi.skins[0];
                 if (fallbackSkin) {
                     console.log("Using fallback skin", { fallbackSkin: fallbackSkin.name });
 
@@ -210,7 +268,6 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
             return null;
         }
 
-        // First, try to use the selected view type if it has all required assets
         if (viewType === "dorm" && skin.dorm.atlas && skin.dorm.png && skin.dorm.skel) {
             console.log("Using dorm view (selected)", { path: skin.dorm.path });
             return {
@@ -237,8 +294,7 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
             };
         }
 
-        // If the selected view type doesn't have all required assets, check if the path matches a specific view
-        if (selectedSkin === skin.dorm.path && skin.dorm.atlas && skin.dorm.png && skin.dorm.skel) {
+        if (skin.dorm.path.includes(chibiId) && skin.dorm.atlas && skin.dorm.png && skin.dorm.skel) {
             console.log("Using dorm view (path match)", { path: skin.dorm.path });
             return {
                 atlas: getAssetUrl(skin.dorm.atlas),
@@ -246,7 +302,7 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
                 skel: getAssetUrl(skin.dorm.skel),
                 type: "dorm",
             };
-        } else if (selectedSkin === skin.front.path && skin.front.atlas && skin.front.png && skin.front.skel) {
+        } else if (skin.front.path.includes(chibiId) && skin.front.atlas && skin.front.png && skin.front.skel) {
             console.log("Using front view (path match)", { path: skin.front.path });
             return {
                 atlas: getAssetUrl(skin.front.atlas),
@@ -254,7 +310,7 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
                 skel: getAssetUrl(skin.front.skel),
                 type: "front",
             };
-        } else if (selectedSkin === skin.back.path && skin.back.atlas && skin.back.png && skin.back.skel) {
+        } else if (skin.back.path.includes(chibiId) && skin.back.atlas && skin.back.png && skin.back.skel) {
             console.log("Using back view (path match)", { path: skin.back.path });
             return {
                 atlas: getAssetUrl(skin.back.atlas),
@@ -295,21 +351,22 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
         }
 
         console.log("No valid view found for skin", {
-            selectedSkin,
+            selectedSkin: skinId,
             dorm: { path: skin.dorm.path, hasAssets: !!(skin.dorm.atlas && skin.dorm.png && skin.dorm.skel) },
             front: { path: skin.front.path, hasAssets: !!(skin.front.atlas && skin.front.png && skin.front.skel) },
             back: { path: skin.back.path, hasAssets: !!(skin.back.atlas && skin.back.png && skin.back.skel) },
         });
+
         return null;
-    }, [selectedOperator, selectedSkin, getAssetUrl, viewType]);
+    }, [formattedChibi, getAssetUrl, skinId, viewType]);
 
     useEffect(() => {
         // Get the skin data using our helper function
         const skinData = getSkinData();
         if (!skinData || !appRef.current) {
             // Set error if we have an operator and skin selected but couldn't get skin data
-            if (selectedOperator && selectedSkin) {
-                setError(`Could not load skin data for ${selectedSkin}`);
+            if (formattedChibi && skinId) {
+                setError(`Could not load skin data for ${skinId}`);
             }
             return;
         }
@@ -351,7 +408,7 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
                     }
 
                     if (skelResource.spineData) {
-                        const spineData = new Spine(skelResource.spineData as any);
+                        const spineData = new Spine(skelResource.spineData as ISkeletonData);
 
                         // Scale it appropriately
                         spineData.scale.set(0.5);
@@ -386,7 +443,7 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
                         if (appRef.current) {
                             // First center the spine
                             spineData.x = appRef.current.screen.width / 2;
-                            spineData.y = appRef.current.screen.height / 2;
+                            spineData.y = (appRef.current.screen.height / 2) * 2;
 
                             // Then adjust for specific animations
                             if (initialAnimation.toLowerCase().includes("sit") || initialAnimation.toLowerCase() === "sitting") {
@@ -418,7 +475,7 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
             const errorMessage = e instanceof Error ? e.message : "Unknown error occurred";
             setError(errorMessage);
         }
-    }, [selectedOperator, selectedSkin, repoBaseUrl, getAssetUrl, getSkinData, viewType]);
+    }, [formattedChibi, skinId, repoBaseUrl, getAssetUrl, getSkinData, viewType]);
 
     // Function to adjust position based on animation type
     const adjustPositionForAnimation = useCallback(() => {
@@ -432,78 +489,6 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
         spineRef.current.x = baseX;
         spineRef.current.y = baseY;
     }, []);
-
-    // Mouse event handlers for dragging
-    const handleMouseDown = useCallback((event: MouseEvent) => {
-        if (!spineRef.current || !appRef.current) return;
-
-        // Start dragging when mouse is pressed on the canvas
-        setIsDragging(true);
-
-        // Store the initial mouse position and chibi position
-        const rect = (event.target as HTMLElement).getBoundingClientRect();
-        const mouseX = event.clientX - rect.left;
-        const mouseY = event.clientY - rect.top;
-
-        // Store the offset between mouse position and chibi position
-        const dragOffsetX = spineRef.current.x - mouseX;
-        const dragOffsetY = spineRef.current.y - mouseY;
-
-        // Store the offsets as data attributes on the canvas
-        const canvas = canvasContainerRef.current;
-        if (canvas) {
-            canvas.dataset.dragOffsetX = dragOffsetX.toString();
-            canvas.dataset.dragOffsetY = dragOffsetY.toString();
-            canvas.style.cursor = "grabbing";
-        }
-    }, []);
-
-    const handleMouseMove = useCallback(
-        (event: MouseEvent) => {
-            if (!isDragging || !spineRef.current || !canvasContainerRef.current) return;
-
-            // Get the current mouse position relative to the canvas
-            const rect = canvasContainerRef.current.getBoundingClientRect();
-            const mouseX = event.clientX - rect.left;
-            const mouseY = event.clientY - rect.top;
-
-            // Get the stored offsets
-            const dragOffsetX = parseFloat(canvasContainerRef.current.dataset.dragOffsetX ?? "0");
-            const dragOffsetY = parseFloat(canvasContainerRef.current.dataset.dragOffsetY ?? "0");
-
-            // Update the chibi position
-            spineRef.current.x = mouseX + dragOffsetX;
-            spineRef.current.y = mouseY + dragOffsetY;
-        },
-        [isDragging],
-    );
-
-    const handleMouseUp = useCallback(() => {
-        setIsDragging(false);
-
-        // Reset cursor
-        if (canvasContainerRef.current) {
-            canvasContainerRef.current.style.cursor = "default";
-        }
-    }, []);
-
-    // Set up mouse event listeners
-    useEffect(() => {
-        const canvas = canvasContainerRef.current;
-        if (!canvas) return;
-
-        // Add event listeners
-        canvas.addEventListener("mousedown", handleMouseDown);
-        window.addEventListener("mousemove", handleMouseMove);
-        window.addEventListener("mouseup", handleMouseUp);
-
-        // Clean up
-        return () => {
-            canvas.removeEventListener("mousedown", handleMouseDown);
-            window.removeEventListener("mousemove", handleMouseMove);
-            window.removeEventListener("mouseup", handleMouseUp);
-        };
-    }, [handleMouseDown, handleMouseMove, handleMouseUp]);
 
     useEffect(() => {
         // Only try to change animation if spine exists and animation name is valid
@@ -533,37 +518,6 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
         }
     };
 
-    // Handle play/pause
-    const handlePlayPause = () => {
-        setIsPlaying(!isPlaying);
-    };
-
-    // Handle position reset (separate from animation reset)
-    const handlePositionReset = () => {
-        if (spineRef.current && appRef.current && selectedAnimation) {
-            // Reset position to default for current animation
-            adjustPositionForAnimation();
-        }
-    };
-
-    // Handle speed change
-    const handleSpeedChange = (value: number[]) => {
-        if (value.length > 0 && typeof value[0] === "number") {
-            setSpeed(value[0]);
-            // Apply speed change to spine animation
-            if (spineRef.current?.state) {
-                spineRef.current.state.timeScale = value[0];
-            }
-        }
-    };
-
-    // Effect to handle play/pause
-    useEffect(() => {
-        if (spineRef.current?.state) {
-            spineRef.current.state.timeScale = isPlaying ? speed : 0;
-        }
-    }, [isPlaying, speed]);
-
     // Handle view type change
     const handleViewTypeChange = (value: string) => {
         setViewType(value as "dorm" | "front" | "back");
@@ -571,12 +525,10 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
 
     // Get current skin data for UI display
     const spineData = getSkinData();
-    const hasAnimation = Boolean(canvasContainerRef.current?.firstChild && animationActiveRef.current);
 
     return (
         <Card className="w-full">
             <CardContent className="pb-4 pt-6">
-                {/* Animation controls */}
                 <div className="mb-4 flex flex-col gap-4">
                     <div className="flex items-center gap-2">
                         <Select value={selectedAnimation} onValueChange={handleAnimationChange} disabled={!spineData || availableAnimations.length === 0 || isLoading}>
@@ -592,70 +544,24 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
                             </SelectContent>
                         </Select>
 
-                        <Button variant="outline" size="icon" onClick={handlePlayPause} disabled={!hasAnimation || isLoading}>
-                            {isPlaying ? <PauseIcon className="h-4 w-4" /> : <PlayIcon className="h-4 w-4" />}
-                        </Button>
-
-                        <Button variant="outline" size="sm" onClick={handlePositionReset} disabled={!hasAnimation || isLoading}>
-                            Center
-                        </Button>
-                    </div>
-
-                    {/* View Type Selector */}
-                    <div className="flex items-center gap-2">
-                        <span className="w-10 text-sm">View:</span>
-                        <Select value={viewType} onValueChange={handleViewTypeChange} disabled={isLoading}>
-                            <SelectTrigger className="w-[120px]">
-                                <SelectValue placeholder="View Type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="dorm">Dorm</SelectItem>
-                                <SelectItem value="front">Front</SelectItem>
-                                <SelectItem value="back">Back</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        <span className="w-10 text-sm">Speed:</span>
-                        <Slider defaultValue={[1]} min={0.1} max={2} step={0.1} value={[speed]} onValueChange={handleSpeedChange} disabled={!hasAnimation || isLoading} className="w-full max-w-56" />
-                        <Input
-                            type="number"
-                            min={0.1}
-                            max={2}
-                            step={0.1}
-                            value={speed}
-                            onChange={(e) => {
-                                const newValue = parseFloat(e.target.value);
-                                if (!isNaN(newValue) && newValue >= 0.1 && newValue <= 2) {
-                                    setSpeed(newValue);
-                                    if (spineRef.current?.state) {
-                                        spineRef.current.state.timeScale = newValue;
-                                    }
-                                }
-                            }}
-                            onBlur={(e) => {
-                                const newValue = parseFloat(e.target.value);
-                                if (isNaN(newValue) || newValue < 0.1) {
-                                    setSpeed(0.1);
-                                    if (spineRef.current?.state) {
-                                        spineRef.current.state.timeScale = 0.1;
-                                    }
-                                } else if (newValue > 2) {
-                                    setSpeed(2);
-                                    if (spineRef.current?.state) {
-                                        spineRef.current.state.timeScale = 2;
-                                    }
-                                }
-                            }}
-                            className="w-16"
-                        />
+                        {/* View Type Selector */}
+                        <div className="flex items-center gap-2">
+                            <Select value={viewType} onValueChange={handleViewTypeChange} disabled={isLoading}>
+                                <SelectTrigger className="w-[120px]">
+                                    <SelectValue placeholder="View Type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="dorm">Dorm</SelectItem>
+                                    <SelectItem value="front">Front</SelectItem>
+                                    <SelectItem value="back">Back</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
                 </div>
 
-                {/* Display area */}
-                <div className="relative h-[400px] w-full">
-                    <div ref={canvasContainerRef} className="h-full w-full" style={{ cursor: isDragging ? "grabbing" : "grab" }} />
+                <div className="relative h-[300px] w-full">
+                    <div ref={canvasContainerRef} className="h-full w-full" />
                     {isLoading && (
                         <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                             <div className="text-lg font-semibold text-white">Loading...</div>
@@ -669,7 +575,6 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseUrl }: C
                             </div>
                         </div>
                     )}
-                    <div className="absolute bottom-2 right-2 text-xs text-gray-500">Drag to reposition • Click &quot;Center&quot; to reset</div>
                 </div>
             </CardContent>
         </Card>
