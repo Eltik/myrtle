@@ -152,7 +152,7 @@ function SkinsContent({ operator }: { operator: Operator }) {
                 <span className="text-xl font-bold md:text-3xl">{operator.name} Skins</span>
             </div>
             <Separator />
-            <div className="mx-auto max-w-xl lg:max-w-5xl px-3 py-4 md:p-4">
+            <div className="mx-auto max-w-xl px-3 py-4 md:p-4 lg:max-w-5xl">
                 {/* Main skin viewer with improved responsive design */}
                 <div className="grid grid-cols-1 gap-4 md:gap-6 lg:grid-cols-[2fr,1fr]">
                     {/* Left side - Skin image - more responsive heights and widths */}

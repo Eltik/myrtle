@@ -9,6 +9,7 @@ import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import SkillsTalentsContent from "./components/skills-talents-content";
 import LevelUpContent from "./components/level-cost-content";
 import SkinsContent from "./components/skins-content";
+import AudioContent from "./components/audio-content";
 
 type TabType = "info" | "skills" | "levelup" | "skins" | "audio";
 
@@ -103,10 +104,6 @@ function OperatorsInfo({ operator }: { operator: Operator }) {
             </div>
         </>
     );
-}
-
-function AudioContent({ operator }: { operator: Operator }) {
-    return <div>Audio/SFX content for {operator.name}</div>;
 }
 
 export default OperatorsInfo;
