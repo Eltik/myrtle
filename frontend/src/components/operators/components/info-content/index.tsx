@@ -244,15 +244,15 @@ function InfoContent({ operator }: { operator: Operator }) {
     };
 
     return (
-        <div>
+        <div className="w-full overflow-x-hidden">
             <div className="p-2 px-4 backdrop-blur-2xl">
                 <span className="text-xl font-bold md:text-3xl">Operator Info</span>
             </div>
             <Separator />
-            <div className="px-3 py-4 md:p-4">
-                <div className="w-full md:grid md:grid-cols-[max-content,1fr,max-content] md:items-center">
+            <div className="mx-auto max-w-4xl px-3 py-4 md:p-4">
+                <div className="flex w-full flex-col md:grid md:items-center md:gap-4 lg:grid-cols-[auto,1fr,auto]">
                     <div className="flex flex-row-reverse justify-end">
-                        <div className="grid grid-cols-[max-content,1fr] grid-rows-[max-content,max-content] gap-2 px-5 align-baseline">
+                        <div className="grid grid-cols-[max-content,minmax(0,1fr)] grid-rows-[max-content,max-content] gap-2 px-3 align-baseline sm:px-5">
                             <div className="col-span-2">
                                 <span className="text-2xl font-bold md:text-4xl">{operator.name}</span>
                             </div>
@@ -266,12 +266,12 @@ function InfoContent({ operator }: { operator: Operator }) {
                                     <div className="max-full box-border inline-block h-8 max-h-8 w-8">
                                         <Image src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/subclass/sub_${operator.subProfessionId}_icon.png`} alt={formatSubProfession(operator.subProfessionId)} loading="lazy" width={160} height={160} decoding="async" />
                                     </div>
-                                    <span className="text-sm font-medium">{formatSubProfession(operator.subProfessionId)}</span>
+                                    <span className="truncate text-sm font-medium">{formatSubProfession(operator.subProfessionId)}</span>
                                 </div>
                             </div>
                         </div>
                         <div className="m-0 p-0">
-                            <div className="relative mb-3 flex h-[calc(104px)] w-[calc(104px)] items-center justify-center rounded-md border bg-muted/50 backdrop-blur-lg transition-all duration-150 hover:bg-secondary">
+                            <div className="relative mb-3 flex h-[104px] w-[104px] items-center justify-center rounded-md border bg-muted/50 backdrop-blur-lg transition-all duration-150 hover:bg-secondary">
                                 <div>
                                     <Image src={getAvatarById(operator.id ?? "")} alt={operator.name} width={160} height={160} loading="lazy" decoding="async" />
                                 </div>
@@ -281,22 +281,22 @@ function InfoContent({ operator }: { operator: Operator }) {
                             </div>
                         </div>
                     </div>
-                    <div className="grid h-[max-content] grid-cols-[repeat(3,max-content)] md:justify-end md:gap-x-6">
-                        <div className="flex flex-col justify-between p-4">
+                    <div className="mt-4 grid h-[max-content] grid-cols-3 gap-2 md:mt-0 md:justify-end">
+                        <div className="flex flex-col justify-between p-2 md:p-4">
                             <span className="text-sm text-muted-foreground">Nation</span>
-                            <span className="text-md font-normal md:text-lg">{operator.nationId && String(operator.nationId).length > 0 ? formatNationId(String(operator.nationId)) : "N/A"}</span>
+                            <span className="truncate text-sm font-normal md:text-lg">{operator.nationId && String(operator.nationId).length > 0 ? formatNationId(String(operator.nationId)) : "N/A"}</span>
                         </div>
-                        <div className="flex flex-col justify-between p-4">
+                        <div className="flex flex-col justify-between p-2 md:p-4">
                             <span className="text-sm text-muted-foreground">Faction</span>
-                            <span className="text-md font-normal md:text-lg">{operator.groupId && operator.groupId.length > 0 ? formatGroupId(operator.groupId) : "N/A"}</span>
+                            <span className="truncate text-sm font-normal md:text-lg">{operator.groupId && operator.groupId.length > 0 ? formatGroupId(operator.groupId) : "N/A"}</span>
                         </div>
-                        <div className="flex flex-col justify-between p-4">
+                        <div className="flex flex-col justify-between p-2 md:p-4">
                             <span className="text-sm text-muted-foreground">Position</span>
-                            <span className="text-md font-normal md:text-lg">{operator.position === OperatorPosition.MELEE ? "Melee" : "Ranged"}</span>
+                            <span className="text-sm font-normal md:text-lg">{operator.position === OperatorPosition.MELEE ? "Melee" : "Ranged"}</span>
                         </div>
                     </div>
                 </div>
-                <div className="mt-3 block">
+                <div className="mt-3 block w-full">
                     {/**
                      * @description Operator's description
                      */}
@@ -314,52 +314,52 @@ function InfoContent({ operator }: { operator: Operator }) {
                                             <div className="mt-2 flex w-full flex-col gap-3">
                                                 <div className="grid gap-2 md:grid-cols-2">
                                                     <div className="space-y-2">
-                                                        <div className="flex items-center space-x-2">
-                                                            <FolderPen className="h-4 w-4" />
-                                                            <span className="text-xs text-muted-foreground md:text-sm">Code Name:</span>
-                                                            <span className="text-sm font-medium md:text-base">{operator.profile?.basicInfo.codeName}</span>
+                                                        <div className="flex items-center space-x-2 overflow-hidden">
+                                                            <FolderPen className="h-4 w-4 flex-shrink-0" />
+                                                            <span className="flex-shrink-0 text-xs text-muted-foreground md:text-sm">Code Name:</span>
+                                                            <span className="truncate text-sm font-medium md:text-base">{operator.profile?.basicInfo.codeName}</span>
                                                         </div>
                                                     </div>
                                                     <div className="space-y-2">
-                                                        <div className="flex items-center space-x-2">
-                                                            <Cake className="h-4 w-4" />
-                                                            <span className="text-xs text-muted-foreground md:text-sm">Date of Birth:</span>
-                                                            <span className="text-sm font-medium md:text-base">{operator.profile?.basicInfo.dateOfBirth}</span>
+                                                        <div className="flex items-center space-x-2 overflow-hidden">
+                                                            <Cake className="h-4 w-4 flex-shrink-0" />
+                                                            <span className="flex-shrink-0 text-xs text-muted-foreground md:text-sm">Date of Birth:</span>
+                                                            <span className="truncate text-sm font-medium md:text-base">{operator.profile?.basicInfo.dateOfBirth}</span>
                                                         </div>
                                                     </div>
                                                     <div className="space-y-2">
-                                                        <div className="flex items-center space-x-2">
-                                                            <MapPinHouse className="h-4 w-4" />
-                                                            <span className="text-xs text-muted-foreground md:text-sm">Place of Birth:</span>
-                                                            <span className="text-sm font-medium md:text-base">{operator.profile?.basicInfo.placeOfBirth}</span>
+                                                        <div className="flex items-center space-x-2 overflow-hidden">
+                                                            <MapPinHouse className="h-4 w-4 flex-shrink-0" />
+                                                            <span className="flex-shrink-0 text-xs text-muted-foreground md:text-sm">Place of Birth:</span>
+                                                            <span className="truncate text-sm font-medium md:text-base">{operator.profile?.basicInfo.placeOfBirth}</span>
                                                         </div>
                                                     </div>
                                                     <div className="space-y-2">
-                                                        <div className="flex items-center space-x-2">
-                                                            <User className="h-4 w-4" />
-                                                            <span className="text-xs text-muted-foreground md:text-sm">Gender:</span>
-                                                            <span className="text-sm font-medium md:text-base">{operator.profile?.basicInfo.gender}</span>
+                                                        <div className="flex items-center space-x-2 overflow-hidden">
+                                                            <User className="h-4 w-4 flex-shrink-0" />
+                                                            <span className="flex-shrink-0 text-xs text-muted-foreground md:text-sm">Gender:</span>
+                                                            <span className="truncate text-sm font-medium md:text-base">{operator.profile?.basicInfo.gender}</span>
                                                         </div>
                                                     </div>
                                                     <div className="space-y-2">
-                                                        <div className="flex items-center space-x-2">
-                                                            <Ruler className="h-4 w-4" />
-                                                            <span className="text-xs text-muted-foreground md:text-sm">Height:</span>
-                                                            <span className="text-sm font-medium md:text-base">{operator.profile?.basicInfo.height}</span>
+                                                        <div className="flex items-center space-x-2 overflow-hidden">
+                                                            <Ruler className="h-4 w-4 flex-shrink-0" />
+                                                            <span className="flex-shrink-0 text-xs text-muted-foreground md:text-sm">Height:</span>
+                                                            <span className="truncate text-sm font-medium md:text-base">{operator.profile?.basicInfo.height}</span>
                                                         </div>
                                                     </div>
                                                     <div className="space-y-2">
-                                                        <div className="flex items-center space-x-2">
-                                                            <Users className="h-4 w-4" />
-                                                            <span className="text-xs text-muted-foreground md:text-sm">Race:</span>
-                                                            <span className="text-sm font-medium md:text-base">{operator.profile?.basicInfo.race}</span>
+                                                        <div className="flex items-center space-x-2 overflow-hidden">
+                                                            <Users className="h-4 w-4 flex-shrink-0" />
+                                                            <span className="flex-shrink-0 text-xs text-muted-foreground md:text-sm">Race:</span>
+                                                            <span className="truncate text-sm font-medium md:text-base">{operator.profile?.basicInfo.race}</span>
                                                         </div>
                                                     </div>
                                                     <div className="space-y-2">
-                                                        <div className="flex items-center space-x-2">
-                                                            <Activity className="h-4 w-4" />
-                                                            <span className="text-xs text-muted-foreground md:text-sm">Combat Exp:</span>
-                                                            <span className="text-sm font-medium md:text-base">{operator.profile?.basicInfo.combatExperience}</span>
+                                                        <div className="flex items-center space-x-2 overflow-hidden">
+                                                            <Activity className="h-4 w-4 flex-shrink-0" />
+                                                            <span className="flex-shrink-0 text-xs text-muted-foreground md:text-sm">Combat Exp:</span>
+                                                            <span className="truncate text-sm font-medium md:text-base">{operator.profile?.basicInfo.combatExperience}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -368,9 +368,9 @@ function InfoContent({ operator }: { operator: Operator }) {
                                                     <h3 className="mb-2 text-lg font-semibold">Physical Examination</h3>
                                                     <div className="grid gap-2 md:grid-cols-2">
                                                         {Object.entries(operator.profile?.physicalExam ?? {}).map(([key, value]) => (
-                                                            <Badge key={key} variant="secondary" className="justify-between text-sm">
-                                                                <span className="font-semibold capitalize">{key.replace(/([A-Z])/g, " $1").trim()}</span>
-                                                                <span className="font-normal">{value}</span>
+                                                            <Badge key={key} variant="secondary" className="justify-between overflow-hidden text-sm">
+                                                                <span className="truncate font-semibold capitalize">{key.replace(/([A-Z])/g, " $1").trim()}</span>
+                                                                <span className="ml-1 truncate font-normal">{value}</span>
                                                             </Badge>
                                                         ))}
                                                     </div>
@@ -395,7 +395,7 @@ function InfoContent({ operator }: { operator: Operator }) {
                     </div>
                     <div className={`overflow-hidden transition-all duration-300 ${showControls ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"}`}>
                         <div className="mt-3 flex w-full flex-col gap-4">
-                            <div className={`${phaseIndex === 2 && moduleData && moduleData.length > 0 ? "flex flex-col justify-between md:flex-row" : ""}`}>
+                            <div className={`flex flex-col justify-between gap-2 md:flex-row ${phaseIndex === 2 && moduleData && moduleData.length > 0 ? "" : "md:justify-end"}`}>
                                 <div className="flex flex-col gap-1 md:flex-row">
                                     {phaseIndex === 2 && moduleData && moduleData.length > 0 ? (
                                         <Select
@@ -508,7 +508,7 @@ function InfoContent({ operator }: { operator: Operator }) {
                         <div>
                             {operator.phases.map((_, index) => (
                                 <TabsContent key={index} value={`phase_${index}`}>
-                                    <div className="grid grid-cols-[repeat(2,1fr)] grid-rows-[repeat(5,max-content)] gap-2 text-sm md:text-base">
+                                    <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2 md:text-base">
                                         <div className="flex flex-row items-center justify-between rounded-md bg-muted p-[12px_16px]">
                                             <div className="flex items-center">
                                                 <Cross size={24} />
@@ -544,7 +544,7 @@ function InfoContent({ operator }: { operator: Operator }) {
                                             </div>
                                             <span className="font-bold">{Math.round(attributeStats?.magicResistance ?? 0)}</span>
                                         </div>
-                                        <div className="flex flex-row items-center justify-between bg-muted p-[12px_16px]">
+                                        <div className="flex flex-row items-center justify-between rounded-md bg-muted p-[12px_16px]">
                                             <div className="flex items-center">
                                                 <ShieldBan size={24} />
                                                 <span className="ml-2 text-muted-foreground">Block</span>
@@ -571,7 +571,7 @@ function InfoContent({ operator }: { operator: Operator }) {
                         </div>
                     </Tabs>
                 </div>
-                <div className="mt-2">
+                <div className="mt-2 w-full">
                     <div className="mt-2">
                         <h2 className="text-md font-bold md:text-lg">Tags</h2>
                         <div className="flex flex-wrap gap-2 text-sm md:text-base">
