@@ -29,11 +29,30 @@ const handler = async (req: Request): Promise<Response> => {
                     },
                 });
             }
-            return new Response(JSON.stringify(chibisData), {
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            });
+
+            // Apply formatting for single chibi
+            if (format === "simplified") {
+                const simplifiedChibi = processCharsForFrontend([chibisData]);
+                return new Response(JSON.stringify(simplifiedChibi), {
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                });
+            } else if (format === "operatorList") {
+                const operatorList = extractOperatorList([chibisData]);
+                return new Response(JSON.stringify(operatorList), {
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                });
+            } else {
+                // Return full data
+                return new Response(JSON.stringify(chibisData), {
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                });
+            }
         }
 
         // Return all chibis with optional formatting
