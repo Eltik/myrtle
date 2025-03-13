@@ -8,6 +8,7 @@ import type { Operator } from "~/types/impl/api/static/operator";
 import type { Ranges } from "~/types/impl/api/static/ranges";
 import type { Skill } from "~/types/impl/api/static/skills";
 import type { Skin, SkinData } from "~/types/impl/api/static/skins";
+import type { Voice, Voices } from "~/types/impl/api/static/voices";
 
 // Cache configuration
 const CACHE_TAG = "static-api";
@@ -198,6 +199,18 @@ export default async function handler(request: Request, response: ServerResponse
                 response.write(JSON.stringify(skins));
                 return response.end();
             }
+            case "voices": {
+                const requestBody = {
+                    type: request.body.type,
+                    id: request.body.id,
+                };
+
+                const voices = await fetchWithCache<{ voices: Voice[] | Voices }>("/static", requestBody, [`${CACHE_TAG}-voices-${request.body.id ?? "all"}`]);
+
+                response.writeHead(200, { "Content-Type": "application/json" });
+                response.write(JSON.stringify(voices));
+                return response.end();
+            }
             default:
                 response.writeHead(400, { "Content-Type": "application/json" });
                 response.write(
@@ -221,7 +234,7 @@ export default async function handler(request: Request, response: ServerResponse
 
 interface Request {
     body: {
-        type: "materials" | "modules" | "operators" | "ranges" | "skills" | "trust" | "handbook" | "skins";
+        type: "materials" | "modules" | "operators" | "ranges" | "skills" | "trust" | "handbook" | "skins" | "voices";
         id?: string;
         method?: string;
         trust?: number;
