@@ -116,6 +116,10 @@ function AudioContent({ operator }: { operator: Operator }) {
         language: "Unknown",
     });
 
+    const [availableLanguages, setAvailableLanguages] = useState<Array<{ langType: LangType; label: string }>>([]);
+    const [selectedLanguageIndex, setSelectedLanguageIndex] = useState<number>(0);
+    const [voicesByLanguage, setVoicesByLanguage] = useState<Map<LangType, Voice[]>>(new Map());
+
     const fetchVoices = useCallback(async () => {
         try {
             const data = (await (
@@ -341,13 +345,15 @@ function AudioContent({ operator }: { operator: Operator }) {
             setIsPlaying(false);
         };
 
-        if (audioRef.current) {
-            audioRef.current.addEventListener("ended", handleAudioEnd);
+        const audioElement = audioRef.current;
+        
+        if (audioElement) {
+            audioElement.addEventListener("ended", handleAudioEnd);
         }
 
         return () => {
-            if (audioRef.current) {
-                audioRef.current.removeEventListener("ended", handleAudioEnd);
+            if (audioElement) {
+                audioElement.removeEventListener("ended", handleAudioEnd);
             }
         };
     }, [activeLine]);
@@ -435,7 +441,7 @@ function AudioContent({ operator }: { operator: Operator }) {
                                                                 <Download className="h-4 w-4" />
                                                             </Button>
                                                         </div>
-                                                        <div className={`mt-3 rounded-md bg-secondary/30 p-3 ${activeLine === line.id ? "block" : "hidden"}`}>
+                                                        <div className={`mt-3 rounded-md bg-secondary/30 p-3 ${activeLine === line.id ? "block" : "block"}`}>
                                                             <p className="text-sm italic">{line.transcript}</p>
                                                         </div>
                                                     </div>
