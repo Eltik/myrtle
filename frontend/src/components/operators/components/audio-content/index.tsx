@@ -4,7 +4,7 @@ import { ScrollArea } from "~/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
-import { PlayCircle, PauseCircle, Download, Volume2, VolumeX } from "lucide-react";
+import { PlayCircle, PauseCircle, Download, Volume2, VolumeX, Volume1 } from "lucide-react";
 import type { Operator } from "~/types/impl/api/static/operator";
 import { type Voice, PlaceType, LangType } from "~/types/impl/api/static/voices";
 
@@ -353,12 +353,14 @@ function AudioContent({ operator }: { operator: Operator }) {
     }, [activeLine]);
 
     return (
-        <div className="flex flex-col gap-4 p-4">
-            {/* Voice actor information */}
+        <div className="flex flex-col gap-4 p-4 pb-20">
+            {/* Voice actor information with language selector */}
             <Card className="bg-card/50 backdrop-blur-sm">
                 <CardContent className="pt-6">
-                    <div className="mb-4">
-                        <h2 className="text-xl font-semibold">Voice Information</h2>
+                    <div>
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-xl font-semibold">Voice Information</h2>
+                        </div>
                         <Separator className="my-2" />
                         <div className="grid grid-cols-[120px_1fr] gap-2">
                             <span className="text-muted-foreground">Voice Actor:</span>
@@ -387,7 +389,7 @@ function AudioContent({ operator }: { operator: Operator }) {
                                 <ScrollArea className="pb-2">
                                     <TabsList className="bg-transparent">
                                         {voiceCategories.map((category) => (
-                                            <TabsTrigger key={category.id} value={category.id} className="data-[state=active]:bg-secondary">
+                                            <TabsTrigger key={category.id} value={category.id} className="hover:bg-accent/50 data-[state=active]:bg-secondary">
                                                 {category.name}
                                             </TabsTrigger>
                                         ))}
@@ -400,47 +402,46 @@ function AudioContent({ operator }: { operator: Operator }) {
                                     <div className="p-4">
                                         <h3 className="mb-4 text-lg font-medium">{category.name} Voice Lines</h3>
 
-                                        <div className="space-y-3">
-                                            {category.lines.map((line) => (
-                                                <div key={line.id} className={`rounded-lg border p-3 transition-colors ${activeLine === line.id ? "border-primary bg-secondary/20" : "hover:bg-accent/50"}`}>
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex flex-1 items-center gap-2">
-                                                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => handleLineSelect(line.id)}>
-                                                                {isPlaying && activeLine === line.id ? <PauseCircle className="h-6 w-6" /> : <PlayCircle className="h-6 w-6" />}
-                                                            </Button>
-                                                            <div>
-                                                                <div className="font-medium">{line.name}</div>
-                                                                <div className="text-xs text-muted-foreground">{line.description}</div>
+                                        <ScrollArea className="h-[60vh] pr-4">
+                                            <div className="space-y-3">
+                                                {category.lines.map((line) => (
+                                                    <div key={line.id} className={`cursor-pointer rounded-lg border p-3 transition-colors ${activeLine === line.id ? "bg-secondary/20" : "hover:bg-accent/50"}`} onClick={() => handleLineSelect(line.id)}>
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="flex flex-1 items-center gap-2">
+                                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                                                                    {isPlaying && activeLine === line.id ? <PauseCircle className="h-6 w-6" /> : <PlayCircle className="h-6 w-6" />}
+                                                                </Button>
+                                                                <div>
+                                                                    <div className="font-medium">{line.name}</div>
+                                                                    <div className="text-xs text-muted-foreground">{line.description}</div>
+                                                                </div>
                                                             </div>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8"
+                                                                disabled={line.url === "#"}
+                                                                onClick={() => {
+                                                                    if (line.url !== "#") {
+                                                                        const a = document.createElement("a");
+                                                                        a.href = line.url;
+                                                                        a.download = `${operator.name}-${line.name}.mp3`;
+                                                                        document.body.appendChild(a);
+                                                                        a.click();
+                                                                        document.body.removeChild(a);
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <Download className="h-4 w-4" />
+                                                            </Button>
                                                         </div>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-8 w-8"
-                                                            disabled={line.url === "#"}
-                                                            onClick={() => {
-                                                                if (line.url !== "#") {
-                                                                    const a = document.createElement("a");
-                                                                    a.href = line.url;
-                                                                    a.download = `${operator.name}-${line.name}.mp3`;
-                                                                    document.body.appendChild(a);
-                                                                    a.click();
-                                                                    document.body.removeChild(a);
-                                                                }
-                                                            }}
-                                                        >
-                                                            <Download className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
-
-                                                    {activeLine === line.id && (
-                                                        <div className="mt-3 rounded-md bg-secondary/30 p-3">
+                                                        <div className={`mt-3 rounded-md bg-secondary/30 p-3 ${activeLine === line.id ? "block" : "hidden"}`}>
                                                             <p className="text-sm italic">{line.transcript}</p>
                                                         </div>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </ScrollArea>
                                     </div>
                                 </TabsContent>
                             ))}
@@ -470,7 +471,7 @@ function AudioContent({ operator }: { operator: Operator }) {
 
                         <div className="flex items-center gap-2">
                             <Button variant="ghost" size="icon" onClick={toggleMute}>
-                                {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+                                {isMuted || volume === 0 ? <VolumeX className="h-5 w-5" /> : volume > 0.5 ? <Volume2 className="h-5 w-5" /> : <Volume1 className="h-5 w-5" />}
                             </Button>
 
                             <input
