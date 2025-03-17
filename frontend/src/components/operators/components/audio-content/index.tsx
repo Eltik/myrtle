@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Card, CardContent } from "~/components/ui/card";
 import { ScrollArea, ScrollBar } from "~/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
 import { PlayCircle, PauseCircle, Download, Volume2, VolumeX, Volume1, ChevronDown } from "lucide-react";
@@ -447,9 +447,9 @@ function AudioContent({ operator }: { operator: Operator }) {
                             </div>
                         </div>
                     ) : voiceCategories.length > 0 ? (
-                        <div className="flex w-full flex-col flex-wrap md:flex-nowrap md:p-[0_24px]">
+                        <div className="flex w-full flex-col flex-wrap lg:flex-nowrap lg:p-[0_24px]">
                             {/* Desktop tabs */}
-                            <div className="hidden w-full flex-1 md:block">
+                            <div className="hidden w-full flex-1 lg:block">
                                 <div className="w-full flex-1 border-b px-4 pt-2">
                                     <ScrollArea className="w-full whitespace-nowrap rounded-md pb-2">
                                         <Tabs defaultValue={activeCategory} onValueChange={setActiveCategory} className="w-full">
@@ -467,7 +467,7 @@ function AudioContent({ operator }: { operator: Operator }) {
                             </div>
 
                             {/* Mobile dropdown category selector */}
-                            <div className="px-4 py-3 md:hidden">
+                            <div className="px-4 py-3 lg:hidden">
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="outline" className="w-full justify-between">
