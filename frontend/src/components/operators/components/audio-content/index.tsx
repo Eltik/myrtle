@@ -103,6 +103,168 @@ const getVoiceDescription = (placeType: PlaceType): string => {
     }
 };
 
+// Waveform component for audio visualization
+const Waveform = ({ audioUrl, isPlaying, onSeek, audioRef }: { audioUrl: string; isPlaying: boolean; onSeek: (time: number) => void; audioRef: React.RefObject<HTMLAudioElement> }) => {
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    const [audioBuffer, setAudioBuffer] = useState<AudioBuffer | null>(null);
+    const [duration, setDuration] = useState<number>(0);
+    const [currentTime, setCurrentTime] = useState<number>(0);
+    const audioContextRef = useRef<AudioContext | null>(null);
+    const animationRef = useRef<number>(0);
+
+    // Initialize audio context and load audio data
+    useEffect(() => {
+        if (audioUrl === "#") return;
+
+        const initAudio = async () => {
+            try {
+                // Create audio context if it doesn't exist
+                if (!audioContextRef.current) {
+                    // Properly type the AudioContext
+                    const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext?: AudioContext["constructor"] }).webkitAudioContext;
+
+                    if (AudioContextClass) {
+                        audioContextRef.current = new AudioContextClass();
+                    } else {
+                        console.error("AudioContext not supported in this browser");
+                        return;
+                    }
+                }
+
+                const response = await fetch(audioUrl);
+                const arrayBuffer = await response.arrayBuffer();
+                if (audioContextRef.current) {
+                    const buffer = await audioContextRef.current.decodeAudioData(arrayBuffer);
+                    setAudioBuffer(buffer);
+                    setDuration(buffer.duration);
+                }
+            } catch (error) {
+                console.error("Error loading audio for waveform:", error);
+            }
+        };
+
+        void initAudio();
+        
+        // Store animation frame ID for cleanup
+        const animationFrameId = animationRef.current;
+
+        return () => {
+            cancelAnimationFrame(animationFrameId);
+        };
+    }, [audioUrl]);
+
+    // Draw waveform on canvas
+    useEffect(() => {
+        if (!canvasRef.current || !audioBuffer) return;
+
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        // Get the canvas dimensions
+        const width = canvas.width;
+        const height = canvas.height;
+
+        // Clear the canvas
+        ctx.clearRect(0, 0, width, height);
+
+        // Get audio data
+        const channelData = audioBuffer.getChannelData(0);
+        const step = Math.ceil(channelData.length / width);
+
+        // Draw background
+        ctx.fillStyle = "#1a1a1a";
+        ctx.fillRect(0, 0, width, height);
+
+        // Draw waveform
+        ctx.beginPath();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = "#4a4a4a";
+
+        for (let i = 0; i < width; i++) {
+            const startIdx = i * step;
+            let min = 1.0;
+            let max = -1.0;
+
+            for (let j = 0; j < step; j++) {
+                if (startIdx + j < channelData.length) {
+                    const datum = channelData[startIdx + j];
+                    if (typeof datum === "number") {
+                        if (datum < min) min = datum;
+                        if (datum > max) max = datum;
+                    }
+                }
+            }
+
+            const y = height / 2;
+            const lineHeight = Math.max(1, (max - min) * height * 0.8);
+
+            ctx.moveTo(i, y - lineHeight / 2);
+            ctx.lineTo(i, y + lineHeight / 2);
+        }
+        ctx.stroke();
+
+        // Draw playback position
+        if (duration > 0) {
+            const position = (currentTime / duration) * width;
+            ctx.beginPath();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = "#a885ff";
+            ctx.moveTo(position, 0);
+            ctx.lineTo(position, height);
+            ctx.stroke();
+        }
+    }, [audioBuffer, currentTime, duration]);
+
+    // Update playback position
+    useEffect(() => {
+        let frameId = 0;
+
+        const updatePlaybackPosition = () => {
+            if (isPlaying) {
+                const audioElement = audioRef.current;
+                if (audioElement instanceof HTMLAudioElement) {
+                    setCurrentTime(audioElement.currentTime);
+                    frameId = requestAnimationFrame(updatePlaybackPosition);
+                }
+            }
+        };
+
+        if (isPlaying) {
+            frameId = requestAnimationFrame(updatePlaybackPosition);
+        }
+
+        return () => {
+            cancelAnimationFrame(frameId);
+        };
+    }, [isPlaying, audioRef]);
+
+    // Handle click for seeking
+    const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+        if (!canvasRef.current || !duration) return;
+
+        const rect = canvasRef.current.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const canvasWidth = canvasRef.current.width;
+        const clickPercent = clickX / canvasWidth;
+        const seekTime = duration * clickPercent;
+
+        setCurrentTime(seekTime);
+        onSeek(seekTime);
+    };
+
+    return (
+        <div className="relative my-2 h-20 w-full">
+            <canvas ref={canvasRef} width={800} height={80} className="h-full w-full cursor-pointer rounded-sm" onClick={handleCanvasClick} />
+            {!audioBuffer && audioUrl !== "#" && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+                </div>
+            )}
+        </div>
+    );
+};
+
 function AudioContent({ operator }: { operator: Operator }) {
     const [activeCategory, setActiveCategory] = useState<string>("Greetings");
     const [activeLine, setActiveLine] = useState<string | null>(null);
@@ -383,215 +545,244 @@ function AudioContent({ operator }: { operator: Operator }) {
         setIsPlaying(false);
     };
 
+    // Add new seek function
+    const handleSeek = useCallback(
+        (time: number) => {
+            if (!audioRef.current) return;
+            audioRef.current.currentTime = time;
+            if (!isPlaying) {
+                void audioRef.current.play();
+                setIsPlaying(true);
+            }
+        },
+        [isPlaying],
+    );
+
+    // Handle download without triggering playback
+    const handleDownload = useCallback(
+        (e: React.MouseEvent, line: VoiceLine) => {
+            e.stopPropagation();
+            e.preventDefault();
+
+            if (line.url !== "#") {
+                const a = document.createElement("a");
+                a.href = line.url;
+                a.download = `${operator.name}-${line.name}.mp3`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+        },
+        [operator.name],
+    );
+
     return (
-        <div className="flex flex-col gap-4 p-2 pb-20 sm:p-4">
-            {/* Voice actor information with language selector */}
-            <Card className="bg-card/50 backdrop-blur-sm">
-                <CardContent className="pt-6">
-                    <div>
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-lg font-semibold sm:text-xl">Voice Information</h2>
+        <>
+            <div className="p-2 px-4 backdrop-blur-2xl">
+                <span className="text-lg font-bold sm:text-xl md:text-3xl">Voice Lines</span>
+            </div>
+
+            <Separator />
+            <div className="flex flex-col gap-4 p-2 pb-40">
+                {/* Voice actor information with language selector */}
+                <Card className="bg-card/50 backdrop-blur-sm">
+                    <CardContent className="pt-6">
+                        <div>
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-lg font-semibold sm:text-xl">Voice Information</h2>
+                            </div>
+                            <Separator className="my-2" />
+                            <div className="grid grid-cols-[100px_1fr] gap-2 pb-2 sm:grid-cols-[120px_1fr]">
+                                <span className="text-sm text-muted-foreground sm:text-base">Voice Actor:</span>
+                                <span className="text-sm sm:text-base">{voiceActor.name}</span>
+
+                                <span className="text-sm text-muted-foreground sm:text-base">Language:</span>
+                                <span className="text-sm sm:text-base">{voiceActor.language}</span>
+                            </div>
+
+                            {/* Language selector - responsive version */}
+                            {availableLanguages.length > 1 && (
+                                <div className="mt-2 flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0">
+                                    <span className="text-sm text-muted-foreground">Language:</span>
+
+                                    {/* Mobile dropdown selector */}
+                                    <div className="w-full sm:hidden">
+                                        <Select value={selectedLanguageIndex.toString()} onValueChange={(value) => handleLanguageChange(parseInt(value))}>
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue placeholder="Select Language" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {availableLanguages.map((lang, index) => (
+                                                    <SelectItem key={lang.langType} value={index.toString()}>
+                                                        {lang.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    {/* Desktop button group */}
+                                    <div className="hidden space-x-1 sm:flex">
+                                        {availableLanguages.map((lang, index) => (
+                                            <Button key={lang.langType} variant={index === selectedLanguageIndex ? "secondary" : "outline"} size="sm" onClick={() => handleLanguageChange(index)} className="h-8 text-xs">
+                                                {lang.label}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                        <Separator className="my-2" />
-                        <div className="grid grid-cols-[100px_1fr] gap-2 pb-2 sm:grid-cols-[120px_1fr]">
-                            <span className="text-sm text-muted-foreground sm:text-base">Voice Actor:</span>
-                            <span className="text-sm sm:text-base">{voiceActor.name}</span>
+                    </CardContent>
+                </Card>
 
-                            <span className="text-sm text-muted-foreground sm:text-base">Language:</span>
-                            <span className="text-sm sm:text-base">{voiceActor.language}</span>
-                        </div>
-
-                        {/* Language selector - responsive version */}
-                        {availableLanguages.length > 1 && (
-                            <div className="mt-2 flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0">
-                                <span className="text-sm text-muted-foreground">Language:</span>
-
-                                {/* Mobile dropdown selector */}
-                                <div className="w-full sm:hidden">
-                                    <Select value={selectedLanguageIndex.toString()} onValueChange={(value) => handleLanguageChange(parseInt(value))}>
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Select Language" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {availableLanguages.map((lang, index) => (
-                                                <SelectItem key={lang.langType} value={index.toString()}>
-                                                    {lang.label}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                {/* Voice line player */}
+                <Card className="bg-card/50 backdrop-blur-sm">
+                    <CardContent className="p-0">
+                        {isLoading ? (
+                            <div className="flex h-40 items-center justify-center">
+                                <div className="text-center">
+                                    <div className="mb-2 h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+                                    <p>Loading voice lines...</p>
+                                </div>
+                            </div>
+                        ) : voiceCategories.length > 0 ? (
+                            <div className="flex w-full flex-col flex-wrap lg:flex-nowrap lg:p-[0_24px]">
+                                {/* Desktop tabs */}
+                                <div className="hidden w-full flex-1 lg:block">
+                                    <div className="w-full flex-1 border-b px-4 pt-2">
+                                        <ScrollArea className="w-full whitespace-nowrap rounded-md pb-2">
+                                            <Tabs defaultValue={activeCategory} onValueChange={setActiveCategory} className="w-full">
+                                                <TabsList className="inline-flex h-10 w-full items-center justify-center rounded-md bg-transparent p-1 text-muted-foreground">
+                                                    {voiceCategories.map((category) => (
+                                                        <TabsTrigger key={category.id} value={category.id} className="hover:bg-accent/50 data-[state=active]:bg-secondary">
+                                                            {category.name}
+                                                        </TabsTrigger>
+                                                    ))}
+                                                </TabsList>
+                                            </Tabs>
+                                            <ScrollBar orientation="horizontal" className="h-0" />
+                                        </ScrollArea>
+                                    </div>
                                 </div>
 
-                                {/* Desktop button group */}
-                                <div className="hidden space-x-1 sm:flex">
-                                    {availableLanguages.map((lang, index) => (
-                                        <Button key={lang.langType} variant={index === selectedLanguageIndex ? "secondary" : "outline"} size="sm" onClick={() => handleLanguageChange(index)} className="h-8 text-xs">
-                                            {lang.label}
-                                        </Button>
+                                {/* Mobile dropdown category selector */}
+                                <div className="px-4 py-3 lg:hidden">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="outline" className="w-full justify-between">
+                                                {currentCategory?.name ?? "Select Category"}
+                                                <ChevronDown className="ml-2 h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent className="w-full" align="start">
+                                            {voiceCategories.map((category) => (
+                                                <DropdownMenuItem key={category.id} onClick={() => setActiveCategory(category.id)} className={category.id === activeCategory ? "bg-secondary/20" : ""}>
+                                                    {category.name}
+                                                </DropdownMenuItem>
+                                            ))}
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </div>
+
+                                <div className="flex-1">
+                                    {voiceCategories.map((category) => (
+                                        <div key={category.id} className={`mt-0 ${category.id === activeCategory ? "block" : "hidden"}`}>
+                                            <div className="p-2 sm:p-4">
+                                                <h3 className="mb-2 text-base font-medium sm:mb-4 sm:text-lg">{category.name} Voice Lines</h3>
+                                                <ScrollArea className="h-[40vh] pr-2 sm:h-[50vh] sm:pr-4 md:h-[60vh]">
+                                                    <div className="space-y-2 sm:space-y-3">
+                                                        {category.lines.map((line) => {
+                                                            if (line.id.includes("CN_TOPOLECT") || line.id.includes("ITA") || line.id.includes("GER") || line.id.includes("RUS")) {
+                                                                return null;
+                                                            }
+                                                            return (
+                                                                <div key={line.id} className={`cursor-pointer rounded-lg border p-2 transition-colors sm:p-3 ${activeLine === line.id ? "bg-secondary/20" : "hover:bg-accent/50"}`} onClick={() => handleLineSelect(line.id)}>
+                                                                    <div className="flex items-center justify-between">
+                                                                        <div className="flex flex-1 items-center gap-1 sm:gap-2">
+                                                                            <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full sm:h-8 sm:w-8">
+                                                                                {isPlaying && activeLine === line.id ? <PauseCircle className="h-4 w-4 sm:h-6 sm:w-6" /> : <PlayCircle className="h-4 w-4 sm:h-6 sm:w-6" />}
+                                                                            </Button>
+                                                                            <div>
+                                                                                <div className="text-sm font-medium sm:text-base">{line.name}</div>
+                                                                                <div className="text-xs text-muted-foreground">{line.description}</div>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div onClick={(e) => e.stopPropagation()} className="pointer-events-auto">
+                                                                            <Button variant="ghost" size="icon" className="h-6 w-6 sm:h-8 sm:w-8" disabled={line.url === "#"} onClick={(e) => handleDownload(e, line)}>
+                                                                                <Download className="h-3 w-3 sm:h-4 sm:w-4" />
+                                                                            </Button>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className={`mt-2 rounded-md bg-secondary/30 p-2 sm:mt-3 sm:p-3 ${activeLine === line.id ? "block" : "block"}`}>
+                                                                        <p className="text-xs italic sm:text-sm">{line.transcript}</p>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </ScrollArea>
+                                            </div>
+                                        </div>
                                     ))}
                                 </div>
                             </div>
-                        )}
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* Voice line player */}
-            <Card className="bg-card/50 backdrop-blur-sm">
-                <CardContent className="p-0">
-                    {isLoading ? (
-                        <div className="flex h-40 items-center justify-center">
-                            <div className="text-center">
-                                <div className="mb-2 h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
-                                <p>Loading voice lines...</p>
+                        ) : (
+                            <div className="flex h-40 items-center justify-center">
+                                <p className="text-muted-foreground">No voice lines available for this operator.</p>
                             </div>
-                        </div>
-                    ) : voiceCategories.length > 0 ? (
-                        <div className="flex w-full flex-col flex-wrap lg:flex-nowrap lg:p-[0_24px]">
-                            {/* Desktop tabs */}
-                            <div className="hidden w-full flex-1 lg:block">
-                                <div className="w-full flex-1 border-b px-4 pt-2">
-                                    <ScrollArea className="w-full whitespace-nowrap rounded-md pb-2">
-                                        <Tabs defaultValue={activeCategory} onValueChange={setActiveCategory} className="w-full">
-                                            <TabsList className="inline-flex h-10 w-full items-center justify-center rounded-md bg-transparent p-1 text-muted-foreground">
-                                                {voiceCategories.map((category) => (
-                                                    <TabsTrigger key={category.id} value={category.id} className="hover:bg-accent/50 data-[state=active]:bg-secondary">
-                                                        {category.name}
-                                                    </TabsTrigger>
-                                                ))}
-                                            </TabsList>
-                                        </Tabs>
-                                        <ScrollBar orientation="horizontal" className="h-0" />
-                                    </ScrollArea>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* Audio playback controls - fixed at bottom */}
+                {activeLine && (
+                    <div className="fixed bottom-0 left-0 right-0 z-10 border-t bg-background/80 p-2 backdrop-blur-md">
+                        <div className="container mx-auto flex max-w-full flex-col px-2 sm:px-4">
+                            {/* Waveform visualization */}
+                            <Waveform audioUrl={currentLine?.url ?? "#"} isPlaying={isPlaying} onSeek={handleSeek} audioRef={audioRef} />
+
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10" onClick={togglePlayPause}>
+                                        {isPlaying ? <PauseCircle className="h-5 w-5 sm:h-6 sm:w-6" /> : <PlayCircle className="h-5 w-5 sm:h-6 sm:w-6" />}
+                                    </Button>
+
+                                    <div className="flex max-w-[120px] flex-col sm:max-w-none">
+                                        <span className="truncate text-xs font-medium sm:text-sm">{currentLine?.name}</span>
+                                        <span className="truncate text-xs text-muted-foreground">{currentCategory?.name}</span>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-1 sm:gap-2">
+                                    <Button variant="ghost" size="icon" onClick={toggleMute} className="h-8 w-8 sm:h-auto sm:w-auto">
+                                        {isMuted || volume === 0 ? <VolumeX className="h-4 w-4 sm:h-5 sm:w-5" /> : volume > 0.5 ? <Volume2 className="h-4 w-4 sm:h-5 sm:w-5" /> : <Volume1 className="h-4 w-4 sm:h-5 sm:w-5" />}
+                                    </Button>
+
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="1"
+                                        step="0.01"
+                                        value={volume}
+                                        onChange={(e) => {
+                                            const newVolume = parseFloat(e.target.value);
+                                            setVolume(newVolume);
+                                            if (audioRef.current) {
+                                                audioRef.current.volume = newVolume;
+                                            }
+                                        }}
+                                        className="h-1.5 w-16 appearance-none rounded-full bg-secondary sm:h-2 sm:w-24"
+                                    />
                                 </div>
                             </div>
-
-                            {/* Mobile dropdown category selector */}
-                            <div className="px-4 py-3 lg:hidden">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="outline" className="w-full justify-between">
-                                            {currentCategory?.name ?? "Select Category"}
-                                            <ChevronDown className="ml-2 h-4 w-4" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent className="w-full" align="start">
-                                        {voiceCategories.map((category) => (
-                                            <DropdownMenuItem key={category.id} onClick={() => setActiveCategory(category.id)} className={category.id === activeCategory ? "bg-secondary/20" : ""}>
-                                                {category.name}
-                                            </DropdownMenuItem>
-                                        ))}
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </div>
-
-                            <div className="flex-1">
-                                {voiceCategories.map((category) => (
-                                    <div key={category.id} className={`mt-0 ${category.id === activeCategory ? "block" : "hidden"}`}>
-                                        <div className="p-2 sm:p-4">
-                                            <h3 className="mb-2 text-base font-medium sm:mb-4 sm:text-lg">{category.name} Voice Lines</h3>
-                                            <ScrollArea className="h-[40vh] pr-2 sm:h-[50vh] sm:pr-4 md:h-[60vh]">
-                                                <div className="space-y-2 sm:space-y-3">
-                                                    {category.lines.map((line) => {
-                                                        if (line.id.includes("CN_TOPOLECT") || line.id.includes("ITA") || line.id.includes("GER") || line.id.includes("RUS")) {
-                                                            return null;
-                                                        }
-                                                        return (
-                                                            <div key={line.id} className={`cursor-pointer rounded-lg border p-2 transition-colors sm:p-3 ${activeLine === line.id ? "bg-secondary/20" : "hover:bg-accent/50"}`} onClick={() => handleLineSelect(line.id)}>
-                                                                <div className="flex items-center justify-between">
-                                                                    <div className="flex flex-1 items-center gap-1 sm:gap-2">
-                                                                        <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full sm:h-8 sm:w-8">
-                                                                            {isPlaying && activeLine === line.id ? <PauseCircle className="h-4 w-4 sm:h-6 sm:w-6" /> : <PlayCircle className="h-4 w-4 sm:h-6 sm:w-6" />}
-                                                                        </Button>
-                                                                        <div>
-                                                                            <div className="text-sm font-medium sm:text-base">{line.name}</div>
-                                                                            <div className="text-xs text-muted-foreground">{line.description}</div>
-                                                                        </div>
-                                                                    </div>
-                                                                    <Button
-                                                                        variant="ghost"
-                                                                        size="icon"
-                                                                        className="h-6 w-6 sm:h-8 sm:w-8"
-                                                                        disabled={line.url === "#"}
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            if (line.url !== "#") {
-                                                                                const a = document.createElement("a");
-                                                                                a.href = line.url;
-                                                                                a.download = `${operator.name}-${line.name}.mp3`;
-                                                                                document.body.appendChild(a);
-                                                                                a.click();
-                                                                                document.body.removeChild(a);
-                                                                            }
-                                                                        }}
-                                                                    >
-                                                                        <Download className="h-3 w-3 sm:h-4 sm:w-4" />
-                                                                    </Button>
-                                                                </div>
-                                                                <div className={`mt-2 rounded-md bg-secondary/30 p-2 sm:mt-3 sm:p-3 ${activeLine === line.id ? "block" : "block"}`}>
-                                                                    <p className="text-xs italic sm:text-sm">{line.transcript}</p>
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </ScrollArea>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="flex h-40 items-center justify-center">
-                            <p className="text-muted-foreground">No voice lines available for this operator.</p>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
-
-            {/* Audio playback controls - fixed at bottom */}
-            {activeLine && (
-                <div className="fixed bottom-0 left-0 right-0 z-10 border-t bg-background/80 p-2 backdrop-blur-md">
-                    <div className="container mx-auto flex max-w-full items-center justify-between px-2 sm:px-4">
-                        <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10" onClick={togglePlayPause}>
-                                {isPlaying ? <PauseCircle className="h-5 w-5 sm:h-6 sm:w-6" /> : <PlayCircle className="h-5 w-5 sm:h-6 sm:w-6" />}
-                            </Button>
-
-                            <div className="flex max-w-[120px] flex-col sm:max-w-none">
-                                <span className="truncate text-xs font-medium sm:text-sm">{currentLine?.name}</span>
-                                <span className="truncate text-xs text-muted-foreground">{currentCategory?.name}</span>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-1 sm:gap-2">
-                            <Button variant="ghost" size="icon" onClick={toggleMute} className="h-8 w-8 sm:h-auto sm:w-auto">
-                                {isMuted || volume === 0 ? <VolumeX className="h-4 w-4 sm:h-5 sm:w-5" /> : volume > 0.5 ? <Volume2 className="h-4 w-4 sm:h-5 sm:w-5" /> : <Volume1 className="h-4 w-4 sm:h-5 sm:w-5" />}
-                            </Button>
-
-                            <input
-                                type="range"
-                                min="0"
-                                max="1"
-                                step="0.01"
-                                value={volume}
-                                onChange={(e) => {
-                                    const newVolume = parseFloat(e.target.value);
-                                    setVolume(newVolume);
-                                    if (audioRef.current) {
-                                        audioRef.current.volume = newVolume;
-                                    }
-                                }}
-                                className="h-1.5 w-16 appearance-none rounded-full bg-secondary sm:h-2 sm:w-24"
-                            />
                         </div>
                     </div>
-                </div>
-            )}
+                )}
 
-            {/* Hidden audio element */}
-            <audio ref={audioRef} src={currentLine?.url} style={{ display: "none" }} controls />
-        </div>
+                {/* Hidden audio element */}
+                <audio ref={audioRef} src={currentLine?.url} style={{ display: "none" }} controls />
+            </div>
+        </>
     );
 }
 
