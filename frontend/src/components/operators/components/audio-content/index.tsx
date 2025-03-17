@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Card, CardContent } from "~/components/ui/card";
-import { ScrollArea } from "~/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "~/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
-import { PlayCircle, PauseCircle, Download, Volume2, VolumeX, Volume1 } from "lucide-react";
+import { PlayCircle, PauseCircle, Download, Volume2, VolumeX, Volume1, ChevronDown } from "lucide-react";
 import type { Operator } from "~/types/impl/api/static/operator";
 import { type Voice, PlaceType, LangType } from "~/types/impl/api/static/voices";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
 
 // Voice line types
 type VoiceLine = {
@@ -382,28 +384,46 @@ function AudioContent({ operator }: { operator: Operator }) {
     };
 
     return (
-        <div className="flex flex-col gap-4 p-4 pb-20">
+        <div className="flex flex-col gap-4 p-2 pb-20 sm:p-4">
             {/* Voice actor information with language selector */}
             <Card className="bg-card/50 backdrop-blur-sm">
                 <CardContent className="pt-6">
                     <div>
                         <div className="flex items-center justify-between">
-                            <h2 className="text-xl font-semibold">Voice Information</h2>
+                            <h2 className="text-lg font-semibold sm:text-xl">Voice Information</h2>
                         </div>
                         <Separator className="my-2" />
-                        <div className="grid grid-cols-[120px_1fr] gap-2">
-                            <span className="text-muted-foreground">Voice Actor:</span>
-                            <span>{voiceActor.name}</span>
+                        <div className="grid grid-cols-[100px_1fr] gap-2 pb-2 sm:grid-cols-[120px_1fr]">
+                            <span className="text-sm text-muted-foreground sm:text-base">Voice Actor:</span>
+                            <span className="text-sm sm:text-base">{voiceActor.name}</span>
 
-                            <span className="text-muted-foreground">Language:</span>
-                            <span>{voiceActor.language}</span>
+                            <span className="text-sm text-muted-foreground sm:text-base">Language:</span>
+                            <span className="text-sm sm:text-base">{voiceActor.language}</span>
                         </div>
 
-                        {/* Language selector */}
+                        {/* Language selector - responsive version */}
                         {availableLanguages.length > 1 && (
-                            <div className="flex items-center space-x-2">
+                            <div className="mt-2 flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0">
                                 <span className="text-sm text-muted-foreground">Language:</span>
-                                <div className="flex space-x-1">
+
+                                {/* Mobile dropdown selector */}
+                                <div className="w-full sm:hidden">
+                                    <Select value={selectedLanguageIndex.toString()} onValueChange={(value) => handleLanguageChange(parseInt(value))}>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select Language" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {availableLanguages.map((lang, index) => (
+                                                <SelectItem key={lang.langType} value={index.toString()}>
+                                                    {lang.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                {/* Desktop button group */}
+                                <div className="hidden space-x-1 sm:flex">
                                     {availableLanguages.map((lang, index) => (
                                         <Button key={lang.langType} variant={index === selectedLanguageIndex ? "secondary" : "outline"} size="sm" onClick={() => handleLanguageChange(index)} className="h-8 text-xs">
                                             {lang.label}
@@ -427,73 +447,100 @@ function AudioContent({ operator }: { operator: Operator }) {
                             </div>
                         </div>
                     ) : voiceCategories.length > 0 ? (
-                        <Tabs defaultValue={activeCategory} onValueChange={setActiveCategory} className="w-full">
-                            <div className="border-b px-4 pt-2">
-                                <ScrollArea className="pb-2">
-                                    <TabsList className="bg-transparent">
-                                        {voiceCategories.map((category) => (
-                                            <TabsTrigger key={category.id} value={category.id} className="hover:bg-accent/50 data-[state=active]:bg-secondary">
-                                                {category.name}
-                                            </TabsTrigger>
-                                        ))}
-                                    </TabsList>
-                                </ScrollArea>
+                        <div className="flex w-full flex-col flex-wrap md:flex-nowrap md:p-[0_24px]">
+                            {/* Desktop tabs */}
+                            <div className="hidden w-full flex-1 md:block">
+                                <div className="w-full flex-1 border-b px-4 pt-2">
+                                    <ScrollArea className="w-full whitespace-nowrap rounded-md pb-2">
+                                        <Tabs defaultValue={activeCategory} onValueChange={setActiveCategory} className="w-full">
+                                            <TabsList className="inline-flex h-10 w-full items-center justify-center rounded-md bg-transparent p-1 text-muted-foreground">
+                                                {voiceCategories.map((category) => (
+                                                    <TabsTrigger key={category.id} value={category.id} className="hover:bg-accent/50 data-[state=active]:bg-secondary">
+                                                        {category.name}
+                                                    </TabsTrigger>
+                                                ))}
+                                            </TabsList>
+                                        </Tabs>
+                                        <ScrollBar orientation="horizontal" className="h-0" />
+                                    </ScrollArea>
+                                </div>
                             </div>
 
-                            {voiceCategories.map((category) => (
-                                <TabsContent key={category.id} value={category.id} className="mt-0">
-                                    <div className="p-4">
-                                        <h3 className="mb-4 text-lg font-medium">{category.name} Voice Lines</h3>
+                            {/* Mobile dropdown category selector */}
+                            <div className="px-4 py-3 md:hidden">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" className="w-full justify-between">
+                                            {currentCategory?.name ?? "Select Category"}
+                                            <ChevronDown className="ml-2 h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="w-full" align="start">
+                                        {voiceCategories.map((category) => (
+                                            <DropdownMenuItem key={category.id} onClick={() => setActiveCategory(category.id)} className={category.id === activeCategory ? "bg-secondary/20" : ""}>
+                                                {category.name}
+                                            </DropdownMenuItem>
+                                        ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
 
-                                        <ScrollArea className="h-[60vh] pr-4">
-                                            <div className="space-y-3">
-                                                {category.lines.map((line) => {
-                                                    if (line.id.includes("CN_TOPOLECT") || line.id.includes("ITA") || line.id.includes("GER") || line.id.includes("RUS")) {
-                                                        return null;
-                                                    }
-                                                    return (
-                                                        <div key={line.id} className={`cursor-pointer rounded-lg border p-3 transition-colors ${activeLine === line.id ? "bg-secondary/20" : "hover:bg-accent/50"}`} onClick={() => handleLineSelect(line.id)}>
-                                                            <div className="flex items-center justify-between">
-                                                                <div className="flex flex-1 items-center gap-2">
-                                                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
-                                                                        {isPlaying && activeLine === line.id ? <PauseCircle className="h-6 w-6" /> : <PlayCircle className="h-6 w-6" />}
-                                                                    </Button>
-                                                                    <div>
-                                                                        <div className="font-medium">{line.name}</div>
-                                                                        <div className="text-xs text-muted-foreground">{line.description}</div>
+                            <div className="flex-1">
+                                {voiceCategories.map((category) => (
+                                    <div key={category.id} className={`mt-0 ${category.id === activeCategory ? "block" : "hidden"}`}>
+                                        <div className="p-2 sm:p-4">
+                                            <h3 className="mb-2 text-base font-medium sm:mb-4 sm:text-lg">{category.name} Voice Lines</h3>
+                                            <ScrollArea className="h-[40vh] pr-2 sm:h-[50vh] sm:pr-4 md:h-[60vh]">
+                                                <div className="space-y-2 sm:space-y-3">
+                                                    {category.lines.map((line) => {
+                                                        if (line.id.includes("CN_TOPOLECT") || line.id.includes("ITA") || line.id.includes("GER") || line.id.includes("RUS")) {
+                                                            return null;
+                                                        }
+                                                        return (
+                                                            <div key={line.id} className={`cursor-pointer rounded-lg border p-2 transition-colors sm:p-3 ${activeLine === line.id ? "bg-secondary/20" : "hover:bg-accent/50"}`} onClick={() => handleLineSelect(line.id)}>
+                                                                <div className="flex items-center justify-between">
+                                                                    <div className="flex flex-1 items-center gap-1 sm:gap-2">
+                                                                        <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full sm:h-8 sm:w-8">
+                                                                            {isPlaying && activeLine === line.id ? <PauseCircle className="h-4 w-4 sm:h-6 sm:w-6" /> : <PlayCircle className="h-4 w-4 sm:h-6 sm:w-6" />}
+                                                                        </Button>
+                                                                        <div>
+                                                                            <div className="text-sm font-medium sm:text-base">{line.name}</div>
+                                                                            <div className="text-xs text-muted-foreground">{line.description}</div>
+                                                                        </div>
                                                                     </div>
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        className="h-6 w-6 sm:h-8 sm:w-8"
+                                                                        disabled={line.url === "#"}
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            if (line.url !== "#") {
+                                                                                const a = document.createElement("a");
+                                                                                a.href = line.url;
+                                                                                a.download = `${operator.name}-${line.name}.mp3`;
+                                                                                document.body.appendChild(a);
+                                                                                a.click();
+                                                                                document.body.removeChild(a);
+                                                                            }
+                                                                        }}
+                                                                    >
+                                                                        <Download className="h-3 w-3 sm:h-4 sm:w-4" />
+                                                                    </Button>
                                                                 </div>
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="icon"
-                                                                    className="h-8 w-8"
-                                                                    disabled={line.url === "#"}
-                                                                    onClick={() => {
-                                                                        if (line.url !== "#") {
-                                                                            const a = document.createElement("a");
-                                                                            a.href = line.url;
-                                                                            a.download = `${operator.name}-${line.name}.mp3`;
-                                                                            document.body.appendChild(a);
-                                                                            a.click();
-                                                                            document.body.removeChild(a);
-                                                                        }
-                                                                    }}
-                                                                >
-                                                                    <Download className="h-4 w-4" />
-                                                                </Button>
+                                                                <div className={`mt-2 rounded-md bg-secondary/30 p-2 sm:mt-3 sm:p-3 ${activeLine === line.id ? "block" : "block"}`}>
+                                                                    <p className="text-xs italic sm:text-sm">{line.transcript}</p>
+                                                                </div>
                                                             </div>
-                                                            <div className={`mt-3 rounded-md bg-secondary/30 p-3 ${activeLine === line.id ? "block" : "block"}`}>
-                                                                <p className="text-sm italic">{line.transcript}</p>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </ScrollArea>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </ScrollArea>
+                                        </div>
                                     </div>
-                                </TabsContent>
-                            ))}
-                        </Tabs>
+                                ))}
+                            </div>
+                        </div>
                     ) : (
                         <div className="flex h-40 items-center justify-center">
                             <p className="text-muted-foreground">No voice lines available for this operator.</p>
@@ -505,21 +552,21 @@ function AudioContent({ operator }: { operator: Operator }) {
             {/* Audio playback controls - fixed at bottom */}
             {activeLine && (
                 <div className="fixed bottom-0 left-0 right-0 z-10 border-t bg-background/80 p-2 backdrop-blur-md">
-                    <div className="container mx-auto flex items-center justify-between">
+                    <div className="container mx-auto flex max-w-full items-center justify-between px-2 sm:px-4">
                         <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="icon" className="h-10 w-10" onClick={togglePlayPause}>
-                                {isPlaying ? <PauseCircle className="h-6 w-6" /> : <PlayCircle className="h-6 w-6" />}
+                            <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10" onClick={togglePlayPause}>
+                                {isPlaying ? <PauseCircle className="h-5 w-5 sm:h-6 sm:w-6" /> : <PlayCircle className="h-5 w-5 sm:h-6 sm:w-6" />}
                             </Button>
 
-                            <div className="flex flex-col">
-                                <span className="text-sm font-medium">{currentLine?.name}</span>
-                                <span className="text-xs text-muted-foreground">{currentCategory?.name}</span>
+                            <div className="flex max-w-[120px] flex-col sm:max-w-none">
+                                <span className="truncate text-xs font-medium sm:text-sm">{currentLine?.name}</span>
+                                <span className="truncate text-xs text-muted-foreground">{currentCategory?.name}</span>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="icon" onClick={toggleMute}>
-                                {isMuted || volume === 0 ? <VolumeX className="h-5 w-5" /> : volume > 0.5 ? <Volume2 className="h-5 w-5" /> : <Volume1 className="h-5 w-5" />}
+                        <div className="flex items-center gap-1 sm:gap-2">
+                            <Button variant="ghost" size="icon" onClick={toggleMute} className="h-8 w-8 sm:h-auto sm:w-auto">
+                                {isMuted || volume === 0 ? <VolumeX className="h-4 w-4 sm:h-5 sm:w-5" /> : volume > 0.5 ? <Volume2 className="h-4 w-4 sm:h-5 sm:w-5" /> : <Volume1 className="h-4 w-4 sm:h-5 sm:w-5" />}
                             </Button>
 
                             <input
@@ -535,7 +582,7 @@ function AudioContent({ operator }: { operator: Operator }) {
                                         audioRef.current.volume = newVolume;
                                     }
                                 }}
-                                className="h-2 w-24 appearance-none rounded-full bg-secondary"
+                                className="h-1.5 w-16 appearance-none rounded-full bg-secondary sm:h-2 sm:w-24"
                             />
                         </div>
                     </div>
