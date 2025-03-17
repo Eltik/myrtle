@@ -205,8 +205,8 @@ export default async function handler(request: Request, response: ServerResponse
                     id: request.body.id,
                 };
 
-                const voices = await fetchWithCache<{ voices: Voice[] | Voices }>("/static", requestBody, [`${CACHE_TAG}-voices-${request.body.id ?? "all"}`]);
-
+                //const voices = await fetchWithCache<{ voices: Voice[] | Voices }>("/static", requestBody, [`${CACHE_TAG}-voices-${request.body.id ?? "all"}`]);
+                const voices = await fetchWithoutCache<{ voices: Voice[] | Voices }>("/static", requestBody);
                 response.writeHead(200, { "Content-Type": "application/json" });
                 response.write(JSON.stringify(voices));
                 return response.end();

@@ -118,7 +118,6 @@ function AudioContent({ operator }: { operator: Operator }) {
 
     const [availableLanguages, setAvailableLanguages] = useState<Array<{ langType: LangType; label: string }>>([]);
     const [selectedLanguageIndex, setSelectedLanguageIndex] = useState<number>(0);
-    const [voicesByLanguage, setVoicesByLanguage] = useState<Map<LangType, Voice[]>>(new Map());
 
     const fetchVoices = useCallback(async () => {
         try {
@@ -202,9 +201,26 @@ function AudioContent({ operator }: { operator: Operator }) {
                 return;
             }
 
+            const availableLanguages: Array<{ langType: LangType; label: string }> = [];
+            for (const voice of fetchedVoices) {
+                for (const data of voice.data ?? []) {
+                    if (data.language !== undefined) {
+                        const language = getLangTypeName(data.language);
+                        if (!availableLanguages.some((lang) => lang.langType === data.language)) {
+                            availableLanguages.push({ langType: data.language, label: language });
+                        }
+                    }
+                }
+            }
+
+            setAvailableLanguages(availableLanguages);
+
+            const langIndex = availableLanguages.findIndex((lang) => lang.langType === fetchedVoices[0]?.data?.[selectedLanguageIndex]?.language);
+            setSelectedLanguageIndex(langIndex);
+
             // Get voice actor info from the first voice if available
-            if (fetchedVoices[0]?.data?.[0]?.language !== undefined) {
-                const language = getLangTypeName(fetchedVoices[0].data[0].language);
+            if (fetchedVoices[0]?.data?.[langIndex]?.language !== undefined) {
+                const language = getLangTypeName(fetchedVoices[0].data[langIndex]?.language ?? LangType.JP);
                 const cvName = "Unknown"; // We don't have access to cvName in the current data structure
                 setVoiceActor({
                     name: cvName,
@@ -225,7 +241,7 @@ function AudioContent({ operator }: { operator: Operator }) {
                     name: voice.voiceTitle ?? getVoiceDescription(voice.placeType),
                     description: voice.lockDescription ?? getVoiceDescription(voice.placeType),
                     transcript: voice.voiceText ?? "No transcript available",
-                    url: voice.data?.[0]?.voiceURL ?? "#",
+                    url: voice.data?.[langIndex]?.voiceURL ?? "#",
                 };
 
                 // Add to category map
@@ -267,7 +283,7 @@ function AudioContent({ operator }: { operator: Operator }) {
 
             setIsLoading(false);
         });
-    }, [fetchVoices, setupFallbackData]);
+    }, [fetchVoices, selectedLanguageIndex, setupFallbackData]);
 
     // Helper function to get language name from LangType
     const getLangTypeName = (langType: LangType): string => {
@@ -275,8 +291,9 @@ function AudioContent({ operator }: { operator: Operator }) {
             case LangType.JP:
                 return "Japanese";
             case LangType.CN_MANDARIN:
-            case LangType.CN_TOPOLECT:
                 return "Chinese";
+            case LangType.CN_TOPOLECT:
+                return "Chinese (Regional)";
             case LangType.KR:
                 return "Korean";
             case LangType.EN:
@@ -346,7 +363,7 @@ function AudioContent({ operator }: { operator: Operator }) {
         };
 
         const audioElement = audioRef.current;
-        
+
         if (audioElement) {
             audioElement.addEventListener("ended", handleAudioEnd);
         }
@@ -357,6 +374,12 @@ function AudioContent({ operator }: { operator: Operator }) {
             }
         };
     }, [activeLine]);
+
+    const handleLanguageChange = (index: number) => {
+        setSelectedLanguageIndex(index);
+        setActiveLine(null);
+        setIsPlaying(false);
+    };
 
     return (
         <div className="flex flex-col gap-4 p-4 pb-20">
@@ -375,6 +398,20 @@ function AudioContent({ operator }: { operator: Operator }) {
                             <span className="text-muted-foreground">Language:</span>
                             <span>{voiceActor.language}</span>
                         </div>
+
+                        {/* Language selector */}
+                        {availableLanguages.length > 1 && (
+                            <div className="flex items-center space-x-2">
+                                <span className="text-sm text-muted-foreground">Language:</span>
+                                <div className="flex space-x-1">
+                                    {availableLanguages.map((lang, index) => (
+                                        <Button key={lang.langType} variant={index === selectedLanguageIndex ? "secondary" : "outline"} size="sm" onClick={() => handleLanguageChange(index)} className="h-8 text-xs">
+                                            {lang.label}
+                                        </Button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </CardContent>
             </Card>
@@ -410,42 +447,47 @@ function AudioContent({ operator }: { operator: Operator }) {
 
                                         <ScrollArea className="h-[60vh] pr-4">
                                             <div className="space-y-3">
-                                                {category.lines.map((line) => (
-                                                    <div key={line.id} className={`cursor-pointer rounded-lg border p-3 transition-colors ${activeLine === line.id ? "bg-secondary/20" : "hover:bg-accent/50"}`} onClick={() => handleLineSelect(line.id)}>
-                                                        <div className="flex items-center justify-between">
-                                                            <div className="flex flex-1 items-center gap-2">
-                                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
-                                                                    {isPlaying && activeLine === line.id ? <PauseCircle className="h-6 w-6" /> : <PlayCircle className="h-6 w-6" />}
-                                                                </Button>
-                                                                <div>
-                                                                    <div className="font-medium">{line.name}</div>
-                                                                    <div className="text-xs text-muted-foreground">{line.description}</div>
+                                                {category.lines.map((line) => {
+                                                    if (line.id.includes("CN_TOPOLECT") || line.id.includes("ITA") || line.id.includes("GER") || line.id.includes("RUS")) {
+                                                        return null;
+                                                    }
+                                                    return (
+                                                        <div key={line.id} className={`cursor-pointer rounded-lg border p-3 transition-colors ${activeLine === line.id ? "bg-secondary/20" : "hover:bg-accent/50"}`} onClick={() => handleLineSelect(line.id)}>
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="flex flex-1 items-center gap-2">
+                                                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                                                                        {isPlaying && activeLine === line.id ? <PauseCircle className="h-6 w-6" /> : <PlayCircle className="h-6 w-6" />}
+                                                                    </Button>
+                                                                    <div>
+                                                                        <div className="font-medium">{line.name}</div>
+                                                                        <div className="text-xs text-muted-foreground">{line.description}</div>
+                                                                    </div>
                                                                 </div>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-8 w-8"
+                                                                    disabled={line.url === "#"}
+                                                                    onClick={() => {
+                                                                        if (line.url !== "#") {
+                                                                            const a = document.createElement("a");
+                                                                            a.href = line.url;
+                                                                            a.download = `${operator.name}-${line.name}.mp3`;
+                                                                            document.body.appendChild(a);
+                                                                            a.click();
+                                                                            document.body.removeChild(a);
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    <Download className="h-4 w-4" />
+                                                                </Button>
                                                             </div>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className="h-8 w-8"
-                                                                disabled={line.url === "#"}
-                                                                onClick={() => {
-                                                                    if (line.url !== "#") {
-                                                                        const a = document.createElement("a");
-                                                                        a.href = line.url;
-                                                                        a.download = `${operator.name}-${line.name}.mp3`;
-                                                                        document.body.appendChild(a);
-                                                                        a.click();
-                                                                        document.body.removeChild(a);
-                                                                    }
-                                                                }}
-                                                            >
-                                                                <Download className="h-4 w-4" />
-                                                            </Button>
+                                                            <div className={`mt-3 rounded-md bg-secondary/30 p-3 ${activeLine === line.id ? "block" : "block"}`}>
+                                                                <p className="text-sm italic">{line.transcript}</p>
+                                                            </div>
                                                         </div>
-                                                        <div className={`mt-3 rounded-md bg-secondary/30 p-3 ${activeLine === line.id ? "block" : "block"}`}>
-                                                            <p className="text-sm italic">{line.transcript}</p>
-                                                        </div>
-                                                    </div>
-                                                ))}
+                                                    );
+                                                })}
                                             </div>
                                         </ScrollArea>
                                     </div>

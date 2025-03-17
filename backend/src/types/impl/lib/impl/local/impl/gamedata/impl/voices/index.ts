@@ -137,13 +137,13 @@ export type VoiceLang = {
 };
 
 export enum LangType {
-    CN_MANDARIN,
-    JP,
-    KR,
-    EN,
-    RUS,
-    ITA,
-    CN_TOPOLECT,
-    LINKAGE,
-    GER,
+    CN_MANDARIN = "CN_MANDARIN",
+    JP = "JP",
+    KR = "KR",
+    EN = "EN",
+    RUS = "RUS",
+    ITA = "ITA",
+    CN_TOPOLECT = "CN_TOPOLECT",
+    LINKAGE = "LINKAGE",
+    GER = "GER",
 }
