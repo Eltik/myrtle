@@ -489,10 +489,10 @@ function LevelUpContent({ operator }: { operator: Operator }) {
                                                 <span className="text-lg font-bold">Module Level</span>
                                                 <span className="text-sm text-muted-foreground">Drag the slider to view costs for different module levels</span>
                                             </div>
-                                            <div className="flex max-w-[80%] flex-col items-center gap-2 md:flex-row">
+                                            <div className="flex max-w-[80%] flex-row items-center gap-2">
                                                 <Slider className="w-full" defaultValue={[0]} value={[moduleLevel]} onValueChange={(value) => setModuleLevel(value[0] ?? 0)} min={0} max={maxModuleLevel >= 0 ? maxModuleLevel : 0} step={1} disabled={maxModuleLevel < 0} />
                                                 <div className="flex items-center gap-2">
-                                                    <Badge variant="outline" className="flex h-8 min-w-16 items-center justify-center text-center">
+                                                    <Badge variant="outline" className="flex h-8 min-w-20 items-center justify-center text-center">
                                                         <span>Stage {moduleLevel + 1}</span>
                                                     </Badge>
                                                 </div>
