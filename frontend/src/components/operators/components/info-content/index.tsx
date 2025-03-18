@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { Activity, BadgeDollarSign, Cake, ChevronDown, CircleGauge, Cross, Diamond, FolderPen, Hourglass, MapPinHouse, Ruler, Shield, ShieldBan, Star, Swords, User, Users } from "lucide-react";
+import { Activity, BadgeDollarSign, Cake, ChevronDown, CircleGauge, Cross, Diamond, FolderPen, Hourglass, MapPinHouse, Ruler, Shield, ShieldBan, Star, Swords, User, Users, FileText } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { LevelSlider } from "~/components/operators/components/info-content/impl/level-slider";
@@ -27,6 +27,7 @@ function InfoContent({ operator }: { operator: Operator }) {
     const [showControls, setShowControls] = useState<boolean>(false); // Show controls for the operator
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
     const [isModuleDetailsExpanded, setIsModuleDetailsExpanded] = useState(true);
+    const [isHandbookExpanded, setIsHandbookExpanded] = useState(true);
 
     const [attributeStats, setAttributeStats] = useState<Operator["phases"][number]["attributesKeyFrames"][number]["data"] | null>(null); // Attribute stats to display
 
@@ -606,6 +607,107 @@ function InfoContent({ operator }: { operator: Operator }) {
                                 <CollapsibleContent>
                                     <div className="mt-2 rounded-md border">
                                         <ModuleDetails currentModule={currentModule} modules={modules} moduleData={moduleData} />
+                                    </div>
+                                </CollapsibleContent>
+                            </Collapsible>
+                        </div>
+                    )}
+
+                    {operator.handbook && (
+                        <div className="mt-4">
+                            <Collapsible defaultOpen={isHandbookExpanded} onOpenChange={() => setIsHandbookExpanded(!isHandbookExpanded)}>
+                                <CollapsibleTrigger asChild>
+                                    <div className="flex cursor-pointer flex-row items-center rounded-md px-2 py-1 transition-all duration-150 hover:bg-primary-foreground">
+                                        <h2 className="text-lg font-bold">Operator Files</h2>
+                                        <ChevronDown className={`ml-auto h-5 w-5 transition-transform ${isHandbookExpanded ? "rotate-180" : ""}`} />
+                                    </div>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent>
+                                    <div className="mt-2 space-y-4">
+                                        {operator.handbook.storyTextAudio.map((storySection, sectionIndex) => (
+                                            <Collapsible key={sectionIndex} defaultOpen={true}>
+                                                <div className="rounded-md border">
+                                                    <CollapsibleTrigger asChild>
+                                                        <div className="flex cursor-pointer flex-row items-center border-b p-3 transition-all hover:bg-muted/50">
+                                                            <h3 className="text-base font-semibold">{storySection.storyTitle}</h3>
+                                                            <ChevronDown className="ml-auto h-4 w-4" />
+                                                        </div>
+                                                    </CollapsibleTrigger>
+                                                    <CollapsibleContent>
+                                                        <div className="p-4">
+                                                            {storySection.stories.map((story, storyIndex) => (
+                                                                <div key={storyIndex} className="mt-3 first:mt-0">
+                                                                    <div className="mb-2 flex items-center text-xs text-muted-foreground">
+                                                                        <FileText className="mr-1.5 h-3.5 w-3.5" />
+                                                                        <span>Entry {sectionIndex + 1}</span>
+                                                                    </div>
+                                                                    <div className="prose prose-xs dark:prose-invert max-w-none text-sm">
+                                                                        {story.storyText.split("\n").map((paragraph, pIndex) => {
+                                                                            // Skip empty paragraphs
+                                                                            if (!paragraph.trim()) return null;
+
+                                                                            // Handle section headers with [HeaderName] format
+                                                                            if (paragraph.startsWith("[") && paragraph.includes("]")) {
+                                                                                const parts = paragraph.split("]");
+                                                                                const headerText = parts[0]?.substring(1).trim() ?? "";
+                                                                                const contentText = parts.slice(1).join("]").trim();
+
+                                                                                return (
+                                                                                    <div key={pIndex} className="mb-2 flex text-xs md:text-sm">
+                                                                                        <span className="mr-2 min-w-[140px] font-bold text-primary">{headerText}:</span>
+                                                                                        <span className="flex-1">{contentText}</span>
+                                                                                    </div>
+                                                                                );
+                                                                            }
+
+                                                                            // Handle lists (lines starting with "-" or "•")
+                                                                            if (paragraph.trim().startsWith("-") || paragraph.trim().startsWith("•")) {
+                                                                                return (
+                                                                                    <div key={pIndex} className="mb-1 ml-4 flex text-xs md:text-sm">
+                                                                                        <span className="mr-2">{paragraph.trim().charAt(0)}</span>
+                                                                                        <span>{paragraph.trim().substring(1).trim()}</span>
+                                                                                    </div>
+                                                                                );
+                                                                            }
+
+                                                                            // Handle quotes (wrapped in quotes or starting with >)
+                                                                            if ((paragraph.trim().startsWith('"') && paragraph.trim().endsWith('"')) || (paragraph.trim().startsWith("'") && paragraph.trim().endsWith("'")) || paragraph.trim().startsWith(">")) {
+                                                                                return (
+                                                                                    <blockquote key={pIndex} className="mb-2 border-l-4 border-primary/30 pl-4 text-xs italic md:text-sm">
+                                                                                        {paragraph.trim().startsWith(">")
+                                                                                            ? paragraph.trim().substring(1).trim()
+                                                                                            : paragraph
+                                                                                                  .trim()
+                                                                                                  .substring(1, paragraph.trim().length - 1)
+                                                                                                  .trim()}
+                                                                                    </blockquote>
+                                                                                );
+                                                                            }
+
+                                                                            // Handle emphasized paragraphs (all caps sections or exclamation marks)
+                                                                            if (paragraph.toUpperCase() === paragraph && paragraph.length > 10) {
+                                                                                return (
+                                                                                    <p key={pIndex} className="mb-2 text-xs font-semibold md:text-sm">
+                                                                                        {paragraph}
+                                                                                    </p>
+                                                                                );
+                                                                            }
+
+                                                                            // Regular paragraph with better spacing
+                                                                            return (
+                                                                                <p key={pIndex} className="mb-2 text-xs md:text-sm">
+                                                                                    {paragraph}
+                                                                                </p>
+                                                                            );
+                                                                        })}
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </CollapsibleContent>
+                                                </div>
+                                            </Collapsible>
+                                        ))}
                                     </div>
                                 </CollapsibleContent>
                             </Collapsible>
