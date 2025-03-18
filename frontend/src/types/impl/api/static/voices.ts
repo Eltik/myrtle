@@ -89,6 +89,7 @@ export type Voice = {
     data?: {
         voiceURL?: string;
         language?: LangType;
+        cvName?: string[];
     }[];
     languages?: LangType[];
 };

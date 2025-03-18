@@ -17,6 +17,7 @@ type VoiceLine = {
     description: string;
     transcript: string;
     url: string;
+    cvName: string[];
 };
 
 type VoiceCategory = {
@@ -144,7 +145,7 @@ const Waveform = ({ audioUrl, isPlaying, onSeek, audioRef }: { audioUrl: string;
         };
 
         void initAudio();
-        
+
         // Store animation frame ID for cleanup
         const animationFrameId = animationRef.current;
 
@@ -275,8 +276,8 @@ function AudioContent({ operator }: { operator: Operator }) {
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
     const [voiceCategories, setVoiceCategories] = useState<VoiceCategory[]>([]);
-    const [voiceActor, setVoiceActor] = useState<{ name: string; language: string }>({
-        name: "Unknown",
+    const [voiceActor, setVoiceActor] = useState<{ name: string[]; language: string }>({
+        name: ["Unknown"],
         language: "Unknown",
     });
 
@@ -318,6 +319,7 @@ function AudioContent({ operator }: { operator: Operator }) {
                         description: "Operator's self introduction",
                         transcript: `Hello, Doctor. I am ${operator.name}. It's a pleasure to meet you.`,
                         url: "#", // This would be a real URL in production
+                        cvName: ["Unknown"],
                     },
                     {
                         id: "greeting-2",
@@ -325,6 +327,7 @@ function AudioContent({ operator }: { operator: Operator }) {
                         description: "When appointed as secretary",
                         transcript: `You need me, Doctor? I'll do my best to assist you.`,
                         url: "#",
+                        cvName: ["Unknown"],
                     },
                 ],
             },
@@ -338,6 +341,7 @@ function AudioContent({ operator }: { operator: Operator }) {
                         description: "When starting a battle",
                         transcript: `Let's begin the operation!`,
                         url: "#",
+                        cvName: ["Unknown"],
                     },
                     {
                         id: "battle-2",
@@ -345,6 +349,7 @@ function AudioContent({ operator }: { operator: Operator }) {
                         description: "When activating skill",
                         transcript: `Skill activated! Stand back!`,
                         url: "#",
+                        cvName: ["Unknown"],
                     },
                 ],
             },
@@ -385,7 +390,7 @@ function AudioContent({ operator }: { operator: Operator }) {
             // Get voice actor info from the first voice if available
             if (fetchedVoices[0]?.data?.[langIndex]?.language !== undefined) {
                 const language = getLangTypeName(fetchedVoices[0].data[langIndex]?.language ?? LangType.JP);
-                const cvName = "Unknown"; // We don't have access to cvName in the current data structure
+                const cvName = fetchedVoices[0].data[langIndex]?.cvName ?? ["Unknown"];
                 setVoiceActor({
                     name: cvName,
                     language,
@@ -406,6 +411,7 @@ function AudioContent({ operator }: { operator: Operator }) {
                     description: voice.lockDescription ?? getVoiceDescription(voice.placeType),
                     transcript: voice.voiceText ?? "No transcript available",
                     url: voice.data?.[langIndex]?.voiceURL ?? "#",
+                    cvName: voice.data?.[langIndex]?.cvName ?? ["Unknown"],
                 };
 
                 // Add to category map
@@ -594,8 +600,7 @@ function AudioContent({ operator }: { operator: Operator }) {
                             <Separator className="my-2" />
                             <div className="grid grid-cols-[100px_1fr] gap-2 pb-2 sm:grid-cols-[120px_1fr]">
                                 <span className="text-sm text-muted-foreground sm:text-base">Voice Actor:</span>
-                                <span className="text-sm sm:text-base">{voiceActor.name}</span>
-
+                                <span className="text-sm sm:text-base">{voiceActor.name.join(", ")}</span>
                                 <span className="text-sm text-muted-foreground sm:text-base">Language:</span>
                                 <span className="text-sm sm:text-base">{voiceActor.language}</span>
                             </div>
