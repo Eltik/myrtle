@@ -75,6 +75,7 @@ export default (id: string): Voice[] | null => {
                 return {
                     voiceURL: `https://raw.githubusercontent.com/${VOICE_REPOSITORY}/global-server-voices/${language === LangType.CN_MANDARIN ? "voice_cn" : language === LangType.CN_TOPOLECT || language === LangType.GER || language === LangType.ITA || language === LangType.RUS ? "voice_custom" : language === LangType.EN ? "voice_en" : language === LangType.JP ? "voice" : language === LangType.KR ? "voice_kr" : "voice"}/${dir.toLowerCase()}/${file}.mp3`,
                     language,
+                    cvName: voiceLang.dict[language].cvName,
                 };
             }),
             languages,
