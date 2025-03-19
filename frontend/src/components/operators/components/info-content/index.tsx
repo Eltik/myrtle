@@ -1,31 +1,28 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { Activity, BadgeDollarSign, Cake, ChevronDown, CircleGauge, Cross, Diamond, FolderPen, Hourglass, MapPinHouse, Ruler, Shield, ShieldBan, Star, Swords, User, Users, FileText } from "lucide-react";
-import Image from "next/image";
+import { ChevronDown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { LevelSlider } from "~/components/operators/components/info-content/impl/level-slider";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { Separator } from "~/components/ui/separator";
-import { Slider } from "~/components/ui/slider";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { formatGroupId, formatNationId, formatProfession, formatSubProfession, getAvatarById, rarityToNumber } from "~/helper";
 import { getOperatorAttributeStats } from "~/helper/getAttributeStats";
 import type { Module, ModuleData } from "~/types/impl/api/static/modules";
-import { OperatorPosition, type Operator } from "~/types/impl/api/static/operator";
+import { type Operator } from "~/types/impl/api/static/operator";
 import type { Range } from "~/types/impl/api/static/ranges";
 import OperatorRange from "../operator-range";
 import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Badge } from "~/components/ui/badge";
-import { AnimatePresence, motion } from "framer-motion";
 import { ModuleDetails } from "./impl/module-details";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/collapsible";
+import { TopInfoContent } from "./impl/top-info";
+import { TopDescription } from "./impl/top-description";
+import { ModuleInfo } from "./impl/module-info";
+import { Stats } from "./impl/stats";
+import { Handbook } from "./impl/handbook";
 
+// Credit to:
 // https://aceship.github.io/AN-EN-Tags/akhrchars.html?opname=Projekt_Red
 // https://sanitygone.help/operators/gavial-the-invincible#page-content
 
 function InfoContent({ operator }: { operator: Operator }) {
     const [showControls, setShowControls] = useState<boolean>(false); // Show controls for the operator
-    const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
     const [isModuleDetailsExpanded, setIsModuleDetailsExpanded] = useState(true);
     const [isHandbookExpanded, setIsHandbookExpanded] = useState(true);
 
@@ -251,142 +248,13 @@ function InfoContent({ operator }: { operator: Operator }) {
             </div>
             <Separator />
             <div className="mx-auto max-w-4xl px-3 py-4 md:p-4">
-                <div className="flex w-full flex-col md:grid md:items-center md:gap-4 lg:grid-cols-[auto,1fr,auto]">
-                    <div className="flex flex-row-reverse justify-end">
-                        <div className="grid grid-cols-[max-content,minmax(0,1fr)] grid-rows-[max-content,max-content] gap-2 px-3 align-baseline sm:px-5">
-                            <div className="col-span-2">
-                                <span className="text-2xl font-bold md:text-4xl">{operator.name}</span>
-                            </div>
-                            <div className="flex items-center border">
-                                <div className="bg-card p-2">
-                                    <div className="max-full box-border inline-block h-8 w-8">
-                                        <Image src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/classes/class_${formatProfession(operator.profession).toLowerCase()}.png`} alt={formatProfession(operator.profession)} loading="lazy" width={160} height={160} decoding="async" />
-                                    </div>
-                                </div>
-                                <div className="box-border grid h-full grid-flow-col items-center gap-2 bg-muted p-[8px_12px]">
-                                    <div className="max-full box-border inline-block h-8 max-h-8 w-8">
-                                        <Image src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/subclass/sub_${operator.subProfessionId}_icon.png`} alt={formatSubProfession(operator.subProfessionId)} loading="lazy" width={160} height={160} decoding="async" />
-                                    </div>
-                                    <span className="truncate text-sm font-medium">{formatSubProfession(operator.subProfessionId)}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="m-0 p-0">
-                            <div className="relative mb-3 flex h-[104px] w-[104px] items-center justify-center rounded-md border bg-muted/50 backdrop-blur-lg transition-all duration-150 hover:bg-secondary">
-                                <div>
-                                    <Image src={getAvatarById(operator.id ?? "")} alt={operator.name} width={160} height={160} loading="lazy" decoding="async" />
-                                </div>
-                                <div className="absolute -bottom-5 left-0 mb-3 flex w-full justify-center">
-                                    <div className="flex flex-row items-center justify-center">{operator.rarity && Array.from({ length: rarityToNumber(operator.rarity) }).map((_, index) => <Star key={index} size={16} fill="#ed9634" strokeWidth={2} stroke="#000000" />)}</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="mt-4 grid h-[max-content] grid-cols-3 gap-2 md:mt-0 md:justify-end">
-                        <div className="flex flex-col justify-between p-2 md:p-4">
-                            <span className="text-sm text-muted-foreground">Nation</span>
-                            <span className="truncate text-sm font-normal md:text-lg">{operator.nationId && String(operator.nationId).length > 0 ? formatNationId(String(operator.nationId)) : "N/A"}</span>
-                        </div>
-                        <div className="flex flex-col justify-between p-2 md:p-4">
-                            <span className="text-sm text-muted-foreground">Faction</span>
-                            <span className="truncate text-sm font-normal md:text-lg">{operator.groupId && operator.groupId.length > 0 ? formatGroupId(operator.groupId) : "N/A"}</span>
-                        </div>
-                        <div className="flex flex-col justify-between p-2 md:p-4">
-                            <span className="text-sm text-muted-foreground">Position</span>
-                            <span className="text-sm font-normal md:text-lg">{operator.position === OperatorPosition.MELEE ? "Melee" : "Ranged"}</span>
-                        </div>
-                    </div>
-                </div>
+                <TopInfoContent operator={operator} />
                 <div className="mt-3 block w-full">
                     {/**
                      * @description Operator's description
                      */}
                     <div className="flex flex-col gap-2">
-                        <div className="relative">
-                            <AnimatePresence initial={false}>
-                                <motion.div initial={{ height: "80px" }} animate={{ height: isDescriptionExpanded ? "auto" : "180px" }} exit={{ height: "180px" }} transition={{ duration: 0.3 }} className="overflow-hidden">
-                                    <div className="text-sm md:text-base">
-                                        <p>{operator.itemUsage}</p>
-                                        <p>{operator.itemDesc}</p>
-                                    </div>
-                                    {operator.profile && (
-                                        <>
-                                            <Separator className="mt-2" />
-                                            <div className="mt-2 flex w-full flex-col gap-3">
-                                                <div className="grid gap-2 md:grid-cols-2">
-                                                    <div className="space-y-2">
-                                                        <div className="flex items-center space-x-2 overflow-hidden">
-                                                            <FolderPen className="h-4 w-4 flex-shrink-0" />
-                                                            <span className="flex-shrink-0 text-xs text-muted-foreground md:text-sm">Code Name:</span>
-                                                            <span className="truncate text-sm font-medium md:text-base">{operator.profile?.basicInfo.codeName}</span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <div className="flex items-center space-x-2 overflow-hidden">
-                                                            <Cake className="h-4 w-4 flex-shrink-0" />
-                                                            <span className="flex-shrink-0 text-xs text-muted-foreground md:text-sm">Date of Birth:</span>
-                                                            <span className="truncate text-sm font-medium md:text-base">{operator.profile?.basicInfo.dateOfBirth}</span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <div className="flex items-center space-x-2 overflow-hidden">
-                                                            <MapPinHouse className="h-4 w-4 flex-shrink-0" />
-                                                            <span className="flex-shrink-0 text-xs text-muted-foreground md:text-sm">Place of Birth:</span>
-                                                            <span className="truncate text-sm font-medium md:text-base">{operator.profile?.basicInfo.placeOfBirth}</span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <div className="flex items-center space-x-2 overflow-hidden">
-                                                            <User className="h-4 w-4 flex-shrink-0" />
-                                                            <span className="flex-shrink-0 text-xs text-muted-foreground md:text-sm">Gender:</span>
-                                                            <span className="truncate text-sm font-medium md:text-base">{operator.profile?.basicInfo.gender}</span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <div className="flex items-center space-x-2 overflow-hidden">
-                                                            <Ruler className="h-4 w-4 flex-shrink-0" />
-                                                            <span className="flex-shrink-0 text-xs text-muted-foreground md:text-sm">Height:</span>
-                                                            <span className="truncate text-sm font-medium md:text-base">{operator.profile?.basicInfo.height}</span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <div className="flex items-center space-x-2 overflow-hidden">
-                                                            <Users className="h-4 w-4 flex-shrink-0" />
-                                                            <span className="flex-shrink-0 text-xs text-muted-foreground md:text-sm">Race:</span>
-                                                            <span className="truncate text-sm font-medium md:text-base">{operator.profile?.basicInfo.race}</span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <div className="flex items-center space-x-2 overflow-hidden">
-                                                            <Activity className="h-4 w-4 flex-shrink-0" />
-                                                            <span className="flex-shrink-0 text-xs text-muted-foreground md:text-sm">Combat Exp:</span>
-                                                            <span className="truncate text-sm font-medium md:text-base">{operator.profile?.basicInfo.combatExperience}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <Separator />
-                                                <div>
-                                                    <h3 className="mb-2 text-lg font-semibold">Physical Examination</h3>
-                                                    <div className="grid gap-2 md:grid-cols-2">
-                                                        {Object.entries(operator.profile?.physicalExam ?? {}).map(([key, value]) => (
-                                                            <Badge key={key} variant="secondary" className="justify-between overflow-hidden text-sm">
-                                                                <span className="truncate font-semibold capitalize">{key.replace(/([A-Z])/g, " $1").trim()}</span>
-                                                                <span className="ml-1 truncate font-normal">{value}</span>
-                                                            </Badge>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </>
-                                    )}
-                                </motion.div>
-                            </AnimatePresence>
-                            {!isDescriptionExpanded && <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent" />}
-                        </div>
-                        <span onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)} className="flex cursor-pointer flex-row items-center self-start text-sm transition-all duration-150 hover:text-muted-foreground">
-                            {isDescriptionExpanded ? "Show Less" : "Show More"}
-                            <ChevronDown className={`ml-auto h-5 w-5 transition-transform ${isDescriptionExpanded ? "rotate-180" : ""}`} />
-                        </span>
+                        <TopDescription operator={operator} />
                     </div>
                     <div className="mt-4">
                         <Button variant={"outline"} onClick={() => setShowControls(!showControls)} className="flex flex-row items-center">
@@ -395,182 +263,12 @@ function InfoContent({ operator }: { operator: Operator }) {
                         </Button>
                     </div>
                     <div className={`overflow-hidden transition-all duration-300 ${showControls ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"}`}>
-                        <div className="mt-3 flex w-full flex-col gap-4">
-                            <div className={`flex flex-col justify-between gap-2 md:flex-row ${phaseIndex === 2 && moduleData && moduleData.length > 0 ? "" : "md:justify-end"}`}>
-                                <div className="flex flex-col gap-1 md:flex-row">
-                                    {phaseIndex === 2 && moduleData && moduleData.length > 0 ? (
-                                        <Select
-                                            onValueChange={(value) => {
-                                                setCurrentModule(value);
-                                                setCurrentModuleLevel(moduleData?.find((module) => module.id === value)?.phases?.[(moduleData?.find((module) => module.id === value)?.phases?.length ?? 0) - 1]?.equipLevel ?? 0);
-                                            }}
-                                            defaultValue={currentModule !== "" ? currentModule : (modules[modules.length - 1]?.id ?? "")}
-                                        >
-                                            <SelectTrigger className="md:w-[180px]">
-                                                <SelectValue placeholder="Select a Module" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {modules.map((module, index) => (
-                                                    <SelectItem value={module.id ?? ""} key={index}>
-                                                        {module.typeName1 && module.typeName2 ? `${module.typeName1}-${module.typeName2}` : module.uniEquipName}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    ) : (
-                                        <></>
-                                    )}
-                                    {phaseIndex === 2 && currentModule.length && moduleData?.find((module) => module.id === currentModule)?.phases !== undefined ? (
-                                        <Select
-                                            onValueChange={(value) => {
-                                                if (!isNaN(parseInt(value.split("_")[1] ?? "0"))) {
-                                                    setCurrentModuleLevel(parseInt(value.split("_")[1] ?? "0"));
-                                                }
-                                            }}
-                                            defaultValue={currentModuleLevel !== 0 ? `${module.id}_${currentModuleLevel}` : `${module.id}_${moduleData?.find((module) => module.id === currentModule)?.phases?.[(moduleData?.find((module) => module.id === currentModule)?.phases?.length ?? 0) - 1]?.equipLevel ?? 0}`}
-                                        >
-                                            <SelectTrigger className="md:w-[180px]">
-                                                <SelectValue placeholder="Select a Module Level" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {moduleData
-                                                    ?.find((module) => module.id === currentModule)
-                                                    ?.phases.map((phase, index) => (
-                                                        <SelectItem value={`${module.id}_${phase.equipLevel}`} key={index}>
-                                                            Level {phase.equipLevel}
-                                                        </SelectItem>
-                                                    ))}
-                                            </SelectContent>
-                                        </Select>
-                                    ) : (
-                                        <></>
-                                    )}
-                                </div>
-                                <div>
-                                    <Select
-                                        defaultValue={"potential_0"}
-                                        onValueChange={(value) => {
-                                            setPotentialRank(parseInt(value.split("_")[1] ?? "0"));
-                                        }}
-                                    >
-                                        <SelectTrigger className="md:w-[180px]">
-                                            <SelectValue placeholder="Potential Rank" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value={"potential_0"}>No Potential</SelectItem>
-                                            {operator.potentialRanks.map((rank, index) => (
-                                                <SelectItem value={`potential_${index + 1}`} key={index}>
-                                                    Potential {index + 1} - {rank.description}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-                            <div className="max-w-md">
-                                <Slider min={0} max={100} step={1} value={[favorPoint]} onValueChange={(value) => setFavorPoint(value[0] ?? 0)} />
-                                <div className="mt-2 flex flex-row items-center gap-2 text-sm">
-                                    <Input type="number" min={0} max={200} value={favorPoint * 2} onChange={(e) => handleFavorPointChange(Number(e.target.value) / 2)} className="w-20" />
-                                    <span className="text-muted-foreground">Trust</span>
-                                </div>
-                            </div>
-                        </div>
+                        <ModuleInfo phaseIndex={phaseIndex} moduleData={moduleData} modules={modules} currentModule={currentModule} setCurrentModule={setCurrentModule} currentModuleLevel={currentModuleLevel} setCurrentModuleLevel={setCurrentModuleLevel} favorPoint={favorPoint} setFavorPoint={setFavorPoint} operator={operator} setPotentialRank={setPotentialRank} handleFavorPointChange={handleFavorPointChange} />
                         <div className="mt-3 max-w-md">
                             <LevelSlider phaseIndex={phaseIndex} maxLevels={operator.phases.map((phase) => phase.maxLevel)} onLevelChange={handleLevelChange} />
                         </div>
                     </div>
-                    <Tabs
-                        defaultValue={`phase_${operator.phases.length - 1}`}
-                        className="mt-4 w-full"
-                        onValueChange={(value) => {
-                            setPhaseIndex(parseInt(value.split("_")[1] ?? "0"));
-                            setLevel(operator.phases[parseInt(value.split("_")[1] ?? "0")]?.maxLevel ?? 1);
-                        }}
-                    >
-                        <div className="rounded-sm bg-muted pt-1">
-                            <TabsList>
-                                {operator.phases.map((_, index) => (
-                                    <TabsTrigger key={index} value={`phase_${index}`} className="data-[state=active]:bg-card/70">
-                                        <Image
-                                            src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/elite/${index}.png`}
-                                            width={35}
-                                            height={35}
-                                            alt="Promotion"
-                                            style={{
-                                                maxWidth: "100%",
-                                                height: "auto",
-                                                objectFit: "contain",
-                                            }}
-                                        />
-                                    </TabsTrigger>
-                                ))}
-                            </TabsList>
-                        </div>
-                        <div>
-                            {operator.phases.map((_, index) => (
-                                <TabsContent key={index} value={`phase_${index}`}>
-                                    <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2 md:text-base">
-                                        <div className="flex flex-row items-center justify-between rounded-md bg-muted p-[12px_16px]">
-                                            <div className="flex items-center">
-                                                <Cross size={24} />
-                                                <span className="ml-2 text-muted-foreground">Health</span>
-                                            </div>
-                                            <span className="font-bold">{Math.round(attributeStats?.maxHp ?? 0)}</span>
-                                        </div>
-                                        <div className="flex flex-row items-center justify-between rounded-md bg-muted p-[12px_16px]">
-                                            <div className="flex items-center">
-                                                <Swords size={24} />
-                                                <span className="ml-2 text-muted-foreground">ATK</span>
-                                            </div>
-                                            <span className="font-bold">{Math.round(attributeStats?.atk ?? 0)}</span>
-                                        </div>
-                                        <div className="flex flex-row items-center justify-between rounded-md bg-muted p-[12px_16px]">
-                                            <div className="flex items-center">
-                                                <Shield size={24} />
-                                                <span className="ml-2 text-muted-foreground">DEF</span>
-                                            </div>
-                                            <span className="font-bold">{Math.round(attributeStats?.def ?? 0)}</span>
-                                        </div>
-                                        <div className="flex flex-row items-center justify-between rounded-md bg-muted p-[12px_16px]">
-                                            <div className="flex items-center">
-                                                <CircleGauge size={24} />
-                                                <span className="ml-2 text-muted-foreground">ATK Interval</span>
-                                            </div>
-                                            <span className="font-bold">{attributeStats?.attackSpeed.toFixed(2) ?? 0}</span>
-                                        </div>
-                                        <div className="flex flex-row items-center justify-between rounded-md bg-muted p-[12px_16px]">
-                                            <div className="flex items-center">
-                                                <Diamond size={24} />
-                                                <span className="ml-2 text-muted-foreground">RES</span>
-                                            </div>
-                                            <span className="font-bold">{Math.round(attributeStats?.magicResistance ?? 0)}</span>
-                                        </div>
-                                        <div className="flex flex-row items-center justify-between rounded-md bg-muted p-[12px_16px]">
-                                            <div className="flex items-center">
-                                                <ShieldBan size={24} />
-                                                <span className="ml-2 text-muted-foreground">Block</span>
-                                            </div>
-                                            <span className="font-bold">{Math.round(attributeStats?.blockCnt ?? 0)}</span>
-                                        </div>
-                                        <div className="flex flex-row items-center justify-between rounded-md bg-muted p-[12px_16px]">
-                                            <div className="flex items-center">
-                                                <Hourglass size={24} />
-                                                <span className="ml-2 text-muted-foreground">Redeploy</span>
-                                            </div>
-                                            <span className="font-bold">{Math.round(attributeStats?.respawnTime ?? 0)}</span>
-                                        </div>
-                                        <div className="flex flex-row items-center justify-between rounded-md bg-muted p-[12px_16px]">
-                                            <div className="flex items-center">
-                                                <BadgeDollarSign size={24} />
-                                                <span className="ml-2 text-muted-foreground">DP Cost</span>
-                                            </div>
-                                            <span className="font-bold">{Math.round(attributeStats?.cost ?? 0)}</span>
-                                        </div>
-                                    </div>
-                                </TabsContent>
-                            ))}
-                        </div>
-                    </Tabs>
+                    <Stats operator={operator} attributeStats={attributeStats} setPhaseIndex={setPhaseIndex} setLevel={setLevel} />
                 </div>
                 <div className="mt-2 w-full">
                     <div className="mt-2">
@@ -613,148 +311,7 @@ function InfoContent({ operator }: { operator: Operator }) {
                         </div>
                     )}
 
-                    {operator.handbook && (
-                        <div className="mt-4">
-                            <Collapsible defaultOpen={isHandbookExpanded} onOpenChange={() => setIsHandbookExpanded(!isHandbookExpanded)}>
-                                <CollapsibleTrigger asChild>
-                                    <div className="flex cursor-pointer flex-row items-center rounded-md px-2 py-1 transition-all duration-150 hover:bg-primary-foreground">
-                                        <h2 className="text-lg font-bold">Operator Files</h2>
-                                        <ChevronDown className={`ml-auto h-5 w-5 transition-transform ${isHandbookExpanded ? "rotate-180" : ""}`} />
-                                    </div>
-                                </CollapsibleTrigger>
-                                <CollapsibleContent>
-                                    <div className="mt-2 space-y-4">
-                                        {operator.handbook.storyTextAudio.map((storySection, sectionIndex) => (
-                                            <Collapsible key={sectionIndex} defaultOpen={true}>
-                                                <div className="rounded-md border">
-                                                    <CollapsibleTrigger asChild>
-                                                        <div className="flex cursor-pointer flex-row items-center border-b p-3 transition-all hover:bg-muted/50">
-                                                            <h3 className="text-base font-semibold">{storySection.storyTitle}</h3>
-                                                            <ChevronDown className="ml-auto h-4 w-4" />
-                                                        </div>
-                                                    </CollapsibleTrigger>
-                                                    <CollapsibleContent>
-                                                        <div className="p-4">
-                                                            {storySection.stories.map((story, storyIndex) => (
-                                                                <div key={storyIndex} className="mt-3 first:mt-0">
-                                                                    <div className="mb-2 flex items-center text-xs text-muted-foreground">
-                                                                        <FileText className="mr-1.5 h-3.5 w-3.5" />
-                                                                        <span>Entry {sectionIndex + 1}</span>
-                                                                    </div>
-                                                                    <div className="prose prose-xs dark:prose-invert max-w-none text-sm">
-                                                                        {story.storyText.split("\n").map((paragraph, pIndex) => {
-                                                                            // Skip empty paragraphs
-                                                                            if (!paragraph.trim()) return null;
-
-                                                                            // Handle section headers with [HeaderName] format
-                                                                            if (paragraph.startsWith("[") && paragraph.includes("]")) {
-                                                                                const parts = paragraph.split("]");
-                                                                                const headerText = parts[0]?.substring(1).trim() ?? "";
-                                                                                const contentText = parts.slice(1).join("]").trim();
-
-                                                                                // Style content text based on header type
-                                                                                const formattedContent = (() => {
-                                                                                    // For headers related to stats or measurements, use monospace
-                                                                                    if (["Race", "Place of Birth", "Date of Birth", "Physical Strength", "Mobility", "Physical Resilience", "Tactical Acumen", "Combat Skill", "Originium Arts Assimilation", "Height", "Weight", "Code Name", "Gender", "Combat Experience", "Cell-Originium Assimilation", "Blood Originium-Crystal Density"].includes(headerText)) {
-                                                                                        return <span className="rounded bg-muted/50 px-1.5 py-0.5 font-mono">{contentText}</span>;
-                                                                                    }
-
-                                                                                    // Default to regular formatting
-                                                                                    return <span className="flex-1">{contentText}</span>;
-                                                                                })();
-
-                                                                                return (
-                                                                                    <div key={pIndex} className="mb-2 flex text-xs md:text-sm">
-                                                                                        <span className="mr-2 min-w-[140px] font-bold text-primary">{headerText}:</span>
-                                                                                        {formattedContent}
-                                                                                    </div>
-                                                                                );
-                                                                            }
-
-                                                                            // Handle technical or code-like content (contains technical terms or specific patterns)
-                                                                            if (/\b(Originium|Arts|Cell|Oripathy|Protocol|System|Algorithm|Version|Module|Device|Catalyst)\b/i.test(paragraph) && paragraph.length < 100) {
-                                                                                return (
-                                                                                    <div key={pIndex} className="mb-2 rounded-sm border-l-2 border-primary/50 bg-muted/30 px-3 py-2">
-                                                                                        <code className="font-mono text-xs text-primary-foreground md:text-sm">{paragraph}</code>
-                                                                                    </div>
-                                                                                );
-                                                                            }
-
-                                                                            // Handle lists (lines starting with "-" or "•")
-                                                                            if (paragraph.trim().startsWith("-") || paragraph.trim().startsWith("•")) {
-                                                                                return (
-                                                                                    <div key={pIndex} className="mb-1 ml-4 flex text-xs md:text-sm">
-                                                                                        <span className="mr-2 text-primary">{paragraph.trim().charAt(0)}</span>
-                                                                                        <span>{paragraph.trim().substring(1).trim()}</span>
-                                                                                    </div>
-                                                                                );
-                                                                            }
-
-                                                                            // Handle quotes (wrapped in quotes or starting with >)
-                                                                            if ((paragraph.trim().startsWith('"') && paragraph.trim().endsWith('"')) || (paragraph.trim().startsWith("'") && paragraph.trim().endsWith("'")) || paragraph.trim().startsWith(">")) {
-                                                                                const quoteContent = paragraph.trim().startsWith(">")
-                                                                                    ? paragraph.trim().substring(1).trim()
-                                                                                    : paragraph
-                                                                                          .trim()
-                                                                                          .substring(1, paragraph.trim().length - 1)
-                                                                                          .trim();
-
-                                                                                return (
-                                                                                    <blockquote key={pIndex} className="mb-2 rounded-r border-l-4 border-primary/30 bg-muted/20 py-1.5 pl-4 text-xs italic md:text-sm">
-                                                                                        {quoteContent}
-                                                                                    </blockquote>
-                                                                                );
-                                                                            }
-
-                                                                            // Handle emphasized paragraphs (all caps sections or exclamation marks)
-                                                                            if (paragraph.toUpperCase() === paragraph && paragraph.length > 10) {
-                                                                                return (
-                                                                                    <p key={pIndex} className="mb-2 text-xs font-semibold text-orange-600 dark:text-orange-400 md:text-sm">
-                                                                                        {paragraph}
-                                                                                    </p>
-                                                                                );
-                                                                            }
-
-                                                                            // Handle paragraphs with numeric data or statistics
-                                                                            if (/\b([0-9]+\.?[0-9]*%|[0-9]+[\.,][0-9]+)\b/.test(paragraph) && paragraph.length < 120) {
-                                                                                // Replace numeric values with styled spans
-                                                                                const parts = paragraph.split(/(\b[0-9]+\.?[0-9]*%|\b[0-9]+[\.,][0-9]+\b)/g);
-
-                                                                                return (
-                                                                                    <p key={pIndex} className="mb-2 text-xs md:text-sm">
-                                                                                        {parts.map((part, partIndex) =>
-                                                                                            /\b([0-9]+\.?[0-9]*%|[0-9]+[\.,][0-9]+)\b/.test(part) ? (
-                                                                                                <span key={partIndex} className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">
-                                                                                                    {part}
-                                                                                                </span>
-                                                                                            ) : (
-                                                                                                part
-                                                                                            ),
-                                                                                        )}
-                                                                                    </p>
-                                                                                );
-                                                                            }
-
-                                                                            // Regular paragraph with better spacing
-                                                                            return (
-                                                                                <p key={pIndex} className="mb-2 text-xs md:text-sm">
-                                                                                    {paragraph}
-                                                                                </p>
-                                                                            );
-                                                                        })}
-                                                                    </div>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </CollapsibleContent>
-                                                </div>
-                                            </Collapsible>
-                                        ))}
-                                    </div>
-                                </CollapsibleContent>
-                            </Collapsible>
-                        </div>
-                    )}
+                    <Handbook operator={operator} isHandbookExpanded={isHandbookExpanded} setIsHandbookExpanded={setIsHandbookExpanded} />
                 </div>
             </div>
         </div>

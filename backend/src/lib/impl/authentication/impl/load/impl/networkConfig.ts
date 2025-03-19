@@ -11,18 +11,22 @@ export const loadNetworkConfig = async (server: AKServer | "all"): Promise<void>
         return;
     }
 
-    const data = JSON.parse(
-        (
-            (await (await request(NETWORK_ROUTES[server] as AKDomain)).json()) as {
-                content: string;
-                configs: Record<string, Record<string, Record<string, string>>>;
-                funcVer: string;
-            }
-        ).content,
-    );
-    Object.assign(DOMAINS[server], data.configs[data["funcVer"]]["network"]);
+    try {
+        const data = JSON.parse(
+            (
+                (await (await request(NETWORK_ROUTES[server] as AKDomain)).json()) as {
+                    content: string;
+                    configs: Record<string, Record<string, Record<string, string>>>;
+                    funcVer: string;
+                }
+            ).content,
+        );
+        Object.assign(DOMAINS[server], data.configs[data["funcVer"]]["network"]);
 
-    await emitter.emit(Events.CONFIG_NETWORK_LOADED, server);
+        await emitter.emit(Events.CONFIG_NETWORK_LOADED, server);
+    } catch (error) {
+        console.error(`Error loading network config for server ${server}:`, error);
+    }
 };
 
 export const resetNetworkconfig = () => {
