@@ -30,3 +30,19 @@ export type SkillLevelCost = {
     phase: OperatorPhase;
     materials: MaterialCost[];
 };
+
+// Voice line types
+export type VoiceLine = {
+    id: string;
+    name: string;
+    description: string;
+    transcript: string;
+    url: string;
+    cvName: string[];
+};
+
+export type VoiceCategory = {
+    id: string;
+    name: string;
+    lines: VoiceLine[];
+};

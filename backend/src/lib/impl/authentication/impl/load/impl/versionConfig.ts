@@ -11,10 +11,14 @@ export const loadVersionConfig = async (server: AKServer | "all") => {
         return;
     }
 
-    const data = await (await request("hv", null, undefined, server)).json();
-    Object.assign(VERSIONS[server], data);
+    try {
+        const data = await (await request("hv", null, undefined, server)).json();
+        Object.assign(VERSIONS[server], data);
 
-    await emitter.emit(Events.CONFIG_VERSION_LOADED, server);
+        await emitter.emit(Events.CONFIG_VERSION_LOADED, server);
+    } catch (error) {
+        console.error(`Error loading version config for server ${server}:`, error);
+    }
 };
 
 export const resetVersionConfig = () => {
