@@ -3,7 +3,7 @@ import { Separator } from "~/components/ui/separator";
 import type { Operator } from "~/types/impl/api/static/operator";
 import type { ChibisSimplified } from "~/types/impl/api/impl/chibis";
 import type { UISkin } from "~/types/impl/frontend/impl/operators";
-import { fetchSkins, fetchChibi, convertToUISkins, getFallbackSkin, getFallbackImageUrl } from "./helper";
+import { fetchSkins, fetchChibi, convertToUISkins, getFallbackSkin, getFallbackImageUrl } from "./impl/helper";
 import { SkinImageViewer } from "./impl/skin-image-viewer";
 import { SkinDetailsPanel } from "./impl/skin-details-panel";
 import { SkinSelector } from "./impl/skin-selector";
