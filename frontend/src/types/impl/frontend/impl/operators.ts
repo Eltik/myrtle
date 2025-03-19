@@ -46,3 +46,18 @@ export type VoiceCategory = {
     name: string;
     lines: VoiceLine[];
 };
+
+export interface UISkin {
+    id: string;
+    name: string;
+    description: string;
+    image: string;
+    fallbackImage?: string;
+    obtainMethod: string;
+    releaseDate: string;
+    artists: string[];
+    voiceLines: boolean;
+    animations: boolean;
+    available: boolean;
+    isDefault: boolean;
+}
