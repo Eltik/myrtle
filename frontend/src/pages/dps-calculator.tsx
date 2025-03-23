@@ -18,22 +18,31 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
 
     const getDPSOperators = useCallback(async () => {
         for (const operator of selectedOperators) {
+            // Check if this operator is already in dpsOperators
             const isInDPSOperators = dpsOperators.find((op) => operator.id === op.operatorData.data.id);
-            if (!isInDPSOperators) {
-                const data = (await (
-                    await fetch("/api/getDPSOperator", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({
-                            id: operator.id,
-                            params: operatorParams[operator.id ?? ""],
-                        }),
-                    })
-                ).json()) as DPSOperatorResponse;
 
-                setDPSOperators((prevDPSOperators) => [...prevDPSOperators, data.operator]);
+            if (!isInDPSOperators) {
+                try {
+                    const data = (await (
+                        await fetch("/api/dpsCalculator", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                                method: "operator",
+                                id: operator.id,
+                                params: operatorParams[operator.id ?? ""],
+                            }),
+                        })
+                    ).json()) as DPSOperatorResponse;
+
+                    if (data.operator) {
+                        setDPSOperators((prevDPSOperators) => [...prevDPSOperators, data.operator]);
+                    }
+                } catch (error) {
+                    console.error("Error fetching DPS operator:", error);
+                }
             }
         }
     }, [selectedOperators, dpsOperators, operatorParams]);
@@ -49,7 +58,7 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
         }));
     };
 
-    const calculateDPS = async (operator: Operator, defense: number, res: number) => {
+    const calculateDPS = async (operator: Operator, minDef: number, maxDef: number, minRes: number, maxRes: number) => {
         const params = operatorParams[operator.id ?? ""];
 
         const data = (await (
@@ -59,11 +68,14 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
+                    method: "dps",
                     id: operator.id,
                     params,
-                    enemy: {
-                        defense,
-                        res,
+                    range: {
+                        minDef,
+                        maxDef,
+                        minRes,
+                        maxRes,
                     },
                 }),
             })
@@ -73,18 +85,38 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
     };
 
     const generateChartData = async () => {
-        const data = [];
-        for (let defense = 0; defense <= 2000; defense += 100) {
-            const point = { defense };
-            for (const operator of selectedOperators) {
-                const dps = await calculateDPS(operator, defense, 0);
-                Object.assign(point, {
-                    [operator.name]: dps,
-                });
-            }
-            data.push(point);
+        interface ChartPoint {
+            defense: number;
+            [operatorName: string]: number;
         }
-        return data;
+
+        const chartData: ChartPoint[] = [];
+        const maxDefense = 2000;
+        const defenseStep = 100;
+
+        // Create all defense data points
+        for (let defense = 0; defense <= maxDefense; defense += defenseStep) {
+            chartData.push({ defense });
+        }
+
+        // Fetch DPS data for all operators with a single request per operator
+        for (const operator of selectedOperators) {
+            const dpsResult = await calculateDPS(operator, 0, maxDefense, 0, 0);
+
+            // Map the results to the appropriate data points
+            dpsResult.def.forEach((point) => {
+                const index = Math.floor(point.def / defenseStep);
+                if (index >= 0 && index < chartData.length && chartData[index]) {
+                    const currentPoint = chartData[index];
+                    chartData[index] = {
+                        ...currentPoint,
+                        [operator.name]: point.dps,
+                    };
+                }
+            });
+        }
+
+        return chartData;
     };
 
     return (
@@ -136,24 +168,25 @@ export const getServerSideProps = async () => {
     const backendURL = env.BACKEND_URL;
 
     // Construct the full URL for the API endpoint
-    const apiURL = `${backendURL}/static`;
-    const data = (await (
+    const apiURL = `${backendURL}/dps-calculator`;
+    const response = (await (
         await fetch(apiURL, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                type: "operators",
+                method: "operator",
             }),
         })
-    ).json()) as {
-        operators: Operator[];
-    };
+    ).json()) as { operators: DPSOperator[] };
+
+    // The new API returns operators directly
+    const operators = response.operators || [];
 
     return {
         props: {
-            data: data.operators,
+            data: operators,
         },
     };
 };

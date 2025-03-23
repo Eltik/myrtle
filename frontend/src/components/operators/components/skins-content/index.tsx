@@ -31,7 +31,7 @@ function SkinsContent({ operator }: { operator: Operator }) {
             const uiSkins = convertToUISkins(skinsData, operator, repoBaseUrl);
             setSkins(uiSkins);
 
-            const chibiData = (await fetchChibi(operator.id ?? ""));
+            const chibiData = await fetchChibi(operator.id ?? "");
             setChibi(chibiData[0] ?? null);
         };
 

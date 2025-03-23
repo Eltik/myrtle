@@ -12,6 +12,9 @@ import { Checkbox } from "../ui/checkbox";
 import { Label } from "../ui/label";
 import { Badge } from "../ui/badge";
 import { capitalize, formatProfession, formatSubProfession } from "~/helper";
+import type { DPSOperator } from "~/types/impl/api/impl/dps-calculator";
+
+type OperatorOrDPSOperator = Operator | DPSOperator;
 
 function OperatorSelector({ operators, selectedOperators, isOpen, onClose, onSelect }: OperatorSelectorProps) {
     const [search, setSearch] = useState("");
@@ -24,20 +27,35 @@ function OperatorSelector({ operators, selectedOperators, isOpen, onClose, onSel
     );
     const [selectedSubclasses, setSelectedSubclasses] = useState<string[]>([]);
 
+    // Helper function to safely access operator properties
+    const getOperatorProperty = (operator: OperatorOrDPSOperator, property: string): string | null => {
+        // If the operator is a DPSOperator (has operatorData.data structure)
+        if ("operatorData" in operator && operator.operatorData?.data) {
+            return (operator.operatorData.data[property as keyof Operator] as string) || null;
+        }
+        // If the operator is a regular Operator
+        return ((operator as Operator)[property as keyof Operator] as string) || null;
+    };
+
     const groupedOperators = useMemo(() => {
         return operators.reduce(
             (acc, operator) => {
-                if (!acc[operator.profession]) {
-                    acc[operator.profession] = {};
+                const profession = getOperatorProperty(operator, "profession") as OperatorProfession;
+                const subProfessionId = getOperatorProperty(operator, "subProfessionId");
+
+                if (!profession || !subProfessionId) return acc;
+
+                if (!acc[profession]) {
+                    acc[profession] = {};
                 }
-                if (!acc[operator.profession][operator.subProfessionId]) {
-                    acc[operator.profession][operator.subProfessionId] = [];
+                if (!acc[profession][subProfessionId]) {
+                    acc[profession][subProfessionId] = [];
                 }
 
-                acc[operator.profession][operator.subProfessionId]?.push(operator);
+                acc[profession][subProfessionId]?.push(operator);
                 return acc;
             },
-            {} as Record<OperatorProfession, Record<string, Operator[]>>,
+            {} as Record<OperatorProfession, Record<string, OperatorOrDPSOperator[]>>,
         );
     }, [operators]);
 
@@ -48,23 +66,41 @@ function OperatorSelector({ operators, selectedOperators, isOpen, onClose, onSel
                     acc[className] = Object.entries(subclasses).reduce(
                         (subAcc, [subclassName, ops]) => {
                             if (selectedSubclasses.length === 0 || selectedSubclasses.includes(subclassName)) {
-                                subAcc[subclassName] = ops.filter((op) => op.name.toLowerCase().includes(search.toLowerCase()));
+                                subAcc[subclassName] = ops.filter((op) => {
+                                    const name = getOperatorProperty(op, "name");
+                                    return name?.toLowerCase().includes(search.toLowerCase());
+                                });
                             }
                             return subAcc;
                         },
-                        {} as Record<string, Operator[]>,
+                        {} as Record<string, OperatorOrDPSOperator[]>,
                     );
                 }
                 return acc;
             },
-            {} as Record<string, Record<string, Operator[]>>,
+            {} as Record<string, Record<string, OperatorOrDPSOperator[]>>,
         );
     }, [groupedOperators, selectedClasses, selectedSubclasses, search]);
 
-    const handleToggleOperator = (operator: Operator) => {
-        const newSelectedOperators = selectedOperators.some((op) => op.id === operator.id) ? selectedOperators.filter((op) => op.id !== operator.id) : [...selectedOperators, operator];
+    const handleToggleOperator = (operator: OperatorOrDPSOperator) => {
+        const operatorId = getOperatorProperty(operator, "id");
 
-        onSelect(newSelectedOperators);
+        // Check if the operator is already selected
+        const isSelected = selectedOperators.some((op) => getOperatorProperty(op, "id") === operatorId);
+
+        if (isSelected) {
+            // Remove the operator from selection
+            onSelect(selectedOperators.filter((op) => getOperatorProperty(op, "id") !== operatorId));
+        } else {
+            // Add the operator to selection, ensuring it's the correct type
+            // If it's a DPSOperator, use the underlying operator data
+            if ("operatorData" in operator && operator.operatorData?.data) {
+                onSelect([...selectedOperators, operator.operatorData.data]);
+            } else {
+                // It's already an Operator
+                onSelect([...selectedOperators, operator as Operator]);
+            }
+        }
     };
 
     const handleClassToggle = (className: OperatorProfession) => {
@@ -147,14 +183,18 @@ function OperatorSelector({ operators, selectedOperators, isOpen, onClose, onSel
                                                             <div key={subclassName} className="mb-4">
                                                                 <h4 className="mb-2 font-semibold">{formatSubProfession(subclassName)}</h4>
                                                                 <div className="grid grid-cols-2 gap-2">
-                                                                    {ops.map((operator) => (
-                                                                        <div key={operator.id} className="flex items-center space-x-2">
-                                                                            <Checkbox id={operator.id} checked={selectedOperators.some((op) => op.id === operator.id)} onCheckedChange={() => handleToggleOperator(operator)} />
-                                                                            <Label htmlFor={operator.id} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                                                                {operator.name}
-                                                                            </Label>
-                                                                        </div>
-                                                                    ))}
+                                                                    {ops.map((operator) => {
+                                                                        const id = getOperatorProperty(operator, "id");
+                                                                        const name = getOperatorProperty(operator, "name");
+                                                                        return (
+                                                                            <div key={id} className="flex items-center space-x-2">
+                                                                                <Checkbox id={id ?? ""} checked={selectedOperators.some((op) => getOperatorProperty(op, "id") === id)} onCheckedChange={() => handleToggleOperator(operator)} />
+                                                                                <Label htmlFor={id ?? ""} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                                                                    {name}
+                                                                                </Label>
+                                                                            </div>
+                                                                        );
+                                                                    })}
                                                                 </div>
                                                             </div>
                                                         ),
@@ -167,14 +207,18 @@ function OperatorSelector({ operators, selectedOperators, isOpen, onClose, onSel
                         )}
                     </ScrollArea>
                     <div className="mt-4 flex flex-wrap gap-2">
-                        {selectedOperators.map((operator) => (
-                            <Badge key={operator.id} variant="secondary">
-                                {operator.name}
-                                <Button variant="ghost" size="sm" className="ml-2 h-4 w-4 p-0" onClick={() => handleToggleOperator(operator)}>
-                                    <X className="h-3 w-3" />
-                                </Button>
-                            </Badge>
-                        ))}
+                        {selectedOperators.map((operator) => {
+                            const id = getOperatorProperty(operator, "id");
+                            const name = getOperatorProperty(operator, "name");
+                            return (
+                                <Badge key={id} variant="secondary">
+                                    {name}
+                                    <Button variant="ghost" size="sm" className="ml-2 h-4 w-4 p-0" onClick={() => handleToggleOperator(operator)}>
+                                        <X className="h-3 w-3" />
+                                    </Button>
+                                </Badge>
+                            );
+                        })}
                     </div>
                     <div className="mt-4 flex justify-end">
                         <Button onClick={onClose}>Done</Button>
