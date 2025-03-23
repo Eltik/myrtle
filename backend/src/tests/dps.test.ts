@@ -22,6 +22,7 @@ import Astesia from "../lib/impl/dps-calculator/impl/operators/impl/astesia";
 import Astgenne from "../lib/impl/dps-calculator/impl/operators/impl/astgenne";
 import Aurora from "../lib/impl/dps-calculator/impl/operators/impl/aurora";
 import Ayerscarpe from "../lib/impl/dps-calculator/impl/operators/impl/ayerscarpe";
+import Bagpipe from "../lib/impl/dps-calculator/impl/operators/impl/bagpipe";
 
 // Initialize data before running tests
 beforeAll(async () => {
@@ -1626,6 +1627,214 @@ describe("Operator DPS Calculations", () => {
             const dps = unit.skillDPS({ defense: 0, res: 20 });
             expect(dps).toBeGreaterThan(1529);
             expect(dps).toBeLessThan(1531);
+        });
+    });
+
+    describe("Bagpipe", () => {
+        const operatorId = "char_222_bpipe";
+
+        test("should calculate s1 DPS correctly modx", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Bagpipe(new OperatorData(operator), {
+                moduleIndex: 1,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(1680);
+            expect(dps).toBeLessThan(1682);
+        });
+        test("should calculate s1 DPS correctly with def modx", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Bagpipe(new OperatorData(operator), {
+                moduleIndex: 1,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(1245);
+            expect(dps).toBeLessThan(1247);
+        });
+        test("should calculate s1 DPS correctly with res modx", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Bagpipe(new OperatorData(operator), {
+                moduleIndex: 1,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(1680);
+            expect(dps).toBeLessThan(1682);
+        });
+
+        test("should calculate s2 DPS correctly modx", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Bagpipe(new OperatorData(operator), {
+                moduleIndex: 1,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(1260);
+            expect(dps).toBeLessThan(1262);
+        });
+        test("should calculate s2 DPS correctly with def modx", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Bagpipe(new OperatorData(operator), {
+                moduleIndex: 1,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(902);
+            expect(dps).toBeLessThan(904);
+        });
+        test("should calculate s2 DPS correctly with res modx", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Bagpipe(new OperatorData(operator), {
+                moduleIndex: 1,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(1260);
+            expect(dps).toBeLessThan(1262);
+        });
+
+        test("should calculate s3 DPS correctly modx", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Bagpipe(new OperatorData(operator), {
+                moduleIndex: 1,
+                skillIndex: 2,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(3104);
+            expect(dps).toBeLessThan(3106);
+        });
+        test("should calculate s3 DPS correctly with def modx", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Bagpipe(new OperatorData(operator), {
+                moduleIndex: 1,
+                skillIndex: 2,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(2574);
+            expect(dps).toBeLessThan(2576);
+        });
+        test("should calculate s3 DPS correctly with res modx", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Bagpipe(new OperatorData(operator), {
+                moduleIndex: 1,
+                skillIndex: 2,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(3104);
+            expect(dps).toBeLessThan(3106);
+        });
+
+        test("should calculate s1 DPS correctly mody", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Bagpipe(new OperatorData(operator), {
+                moduleIndex: 2,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(2068);
+            expect(dps).toBeLessThan(2070);
+        });
+        test("should calculate s1 DPS correctly with def mody", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Bagpipe(new OperatorData(operator), {
+                moduleIndex: 2,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(1633);
+            expect(dps).toBeLessThan(1635);
+        });
+        test("should calculate s1 DPS correctly with res mody", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Bagpipe(new OperatorData(operator), {
+                moduleIndex: 2,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(2068);
+            expect(dps).toBeLessThan(2070);
+        });
+
+        test("should calculate s2 DPS correctly mody", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Bagpipe(new OperatorData(operator), {
+                moduleIndex: 2,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(1550);
+            expect(dps).toBeLessThan(1552);
+        });
+        test("should calculate s2 DPS correctly with def mody", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Bagpipe(new OperatorData(operator), {
+                moduleIndex: 2,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(1193);
+            expect(dps).toBeLessThan(1195);
+        });
+        test("should calculate s2 DPS correctly with res mody", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Bagpipe(new OperatorData(operator), {
+                moduleIndex: 2,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(1550);
+            expect(dps).toBeLessThan(1552);
+        });
+
+        test("should calculate s3 DPS correctly mody", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Bagpipe(new OperatorData(operator), {
+                moduleIndex: 2,
+                skillIndex: 2,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(3819);
+            expect(dps).toBeLessThan(3821);
+        });
+        test("should calculate s3 DPS correctly with def mody", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Bagpipe(new OperatorData(operator), {
+                moduleIndex: 2,
+                skillIndex: 2,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(3290);
+            expect(dps).toBeLessThan(3292);
+        });
+        test("should calculate s3 DPS correctly with res mody", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Bagpipe(new OperatorData(operator), {
+                moduleIndex: 2,
+                skillIndex: 2,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(3819);
+            expect(dps).toBeLessThan(3821);
         });
     });
 });
