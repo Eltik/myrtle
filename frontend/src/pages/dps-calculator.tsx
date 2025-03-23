@@ -9,12 +9,16 @@ import type { NextPage } from "next";
 import OperatorListItem from "~/components/dps-calculator/operator-list-item";
 import type { DPSCalculatorResponse, DPSOperator, DPSOperatorResponse, OperatorParams } from "~/types/impl/api/impl/dps-calculator";
 import { DPSChart } from "~/components/dps-calculator/dps-chart";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+
+type ChartDataType = "defense" | "resistance";
 
 const DPSCalculator: NextPage<Props> = ({ data }) => {
     const [selectedOperators, setSelectedOperators] = useState<Operator[]>([]);
     const [dpsOperators, setDPSOperators] = useState<DPSOperator[]>([]);
     const [isOperatorSelectorOpen, setIsOperatorSelectorOpen] = useState(false);
     const [operatorParams, setOperatorParams] = useState<Record<string, OperatorParams>>({});
+    const [chartDataType, setChartDataType] = useState<ChartDataType>("defense");
 
     const getDPSOperators = useCallback(async () => {
         for (const operator of selectedOperators) {
@@ -85,38 +89,72 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
     };
 
     const generateChartData = async () => {
-        interface ChartPoint {
+        interface DefenseChartPoint {
             defense: number;
             [operatorName: string]: number;
         }
 
-        const chartData: ChartPoint[] = [];
-        const maxDefense = 2000;
-        const defenseStep = 100;
-
-        // Create all defense data points
-        for (let defense = 0; defense <= maxDefense; defense += defenseStep) {
-            chartData.push({ defense });
+        interface ResistanceChartPoint {
+            resistance: number;
+            [operatorName: string]: number;
         }
 
-        // Fetch DPS data for all operators with a single request per operator
-        for (const operator of selectedOperators) {
-            const dpsResult = await calculateDPS(operator, 0, maxDefense, 0, 0);
+        const maxValue = 2000;
+        const step = 100;
 
-            // Map the results to the appropriate data points
-            dpsResult.def.forEach((point) => {
-                const index = Math.floor(point.def / defenseStep);
-                if (index >= 0 && index < chartData.length && chartData[index]) {
-                    const currentPoint = chartData[index];
-                    chartData[index] = {
-                        ...currentPoint,
-                        [operator.name]: point.dps,
-                    };
-                }
-            });
+        if (chartDataType === "defense") {
+            const chartData: DefenseChartPoint[] = [];
+
+            // Create all defense data points
+            for (let defense = 0; defense <= maxValue; defense += step) {
+                chartData.push({ defense });
+            }
+
+            // Fetch DPS data for all operators with a single request per operator
+            for (const operator of selectedOperators) {
+                const dpsResult = await calculateDPS(operator, 0, maxValue, 0, 0);
+
+                // Map the results to the appropriate data points
+                dpsResult.def.forEach((point) => {
+                    const index = Math.floor(point.def / step);
+                    if (index >= 0 && index < chartData.length && chartData[index]) {
+                        const currentPoint = chartData[index];
+                        chartData[index] = {
+                            ...currentPoint,
+                            [operator.name]: point.dps,
+                        };
+                    }
+                });
+            }
+
+            return chartData;
+        } else {
+            const chartData: ResistanceChartPoint[] = [];
+
+            // Create all resistance data points
+            for (let resistance = 0; resistance <= maxValue; resistance += step) {
+                chartData.push({ resistance });
+            }
+
+            // Fetch DPS data for all operators with a single request per operator
+            for (const operator of selectedOperators) {
+                const dpsResult = await calculateDPS(operator, 0, 0, 0, maxValue);
+
+                // Map the results to the appropriate data points
+                dpsResult.res.forEach((point) => {
+                    const index = Math.floor(point.res / step);
+                    if (index >= 0 && index < chartData.length && chartData[index]) {
+                        const currentPoint = chartData[index];
+                        chartData[index] = {
+                            ...currentPoint,
+                            [operator.name]: point.dps,
+                        };
+                    }
+                });
+            }
+
+            return chartData;
         }
-
-        return chartData;
     };
 
     return (
@@ -156,7 +194,20 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
                         </div>
                     </div>
                     <div>
-                        <DPSChart operators={selectedOperators} generateChartData={generateChartData} />
+                        <Tabs defaultValue="defense" className="w-full" onValueChange={(value) => setChartDataType(value as ChartDataType)}>
+                            <div className="mb-4 flex items-center justify-between">
+                                <TabsList>
+                                    <TabsTrigger value="defense">Defense</TabsTrigger>
+                                    <TabsTrigger value="resistance">Resistance</TabsTrigger>
+                                </TabsList>
+                            </div>
+                            <TabsContent value="defense" className="mt-0">
+                                <DPSChart operators={selectedOperators} generateChartData={generateChartData} xAxisLabel="Defense" chartType="defense" />
+                            </TabsContent>
+                            <TabsContent value="resistance" className="mt-0">
+                                <DPSChart operators={selectedOperators} generateChartData={generateChartData} xAxisLabel="Resistance" chartType="resistance" />
+                            </TabsContent>
+                        </Tabs>
                     </div>
                 </div>
             </motion.div>
