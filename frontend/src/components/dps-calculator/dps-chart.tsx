@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, type TooltipProps } from "recharts";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, BarChart, Bar, type TooltipProps } from "recharts";
 import type { Operator } from "~/types/impl/api/static/operator";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
@@ -17,11 +17,25 @@ interface ResistanceChartPoint {
 
 type ChartPoint = DefenseChartPoint | ResistanceChartPoint;
 
+type ChartDisplayMode = "line" | "area" | "bar";
+
+interface ChartSettings {
+    targets: number;
+    showAverage: boolean;
+    showTotal: boolean;
+    maxValue: number;
+    stepSize: number;
+    displayMode: ChartDisplayMode;
+    showDots: boolean;
+    smoothCurves: boolean;
+}
+
 export interface DPSChartProps {
     operators: Operator[];
     generateChartData: () => Promise<ChartPoint[]>;
     xAxisLabel: string;
     chartType: "defense" | "resistance";
+    chartSettings: ChartSettings;
 }
 
 // Custom tooltip component for better styling
@@ -50,9 +64,18 @@ const CustomTooltip = ({ active, payload, label, xAxisLabel }: TooltipProps<Valu
     return null;
 };
 
-export function DPSChart({ operators, generateChartData, xAxisLabel, chartType }: DPSChartProps) {
+export function DPSChart({ operators, generateChartData, xAxisLabel, chartType, chartSettings }: DPSChartProps) {
     const [data, setData] = useState<ChartPoint[]>([]);
     const [loading, setLoading] = useState(false);
+    // Add a ref to track the latest request and chart type
+    const requestIdRef = useRef(0);
+    const lastChartTypeRef = useRef<string>(chartType);
+
+    // Reset requestId when chart type changes to prioritize the new chart type's data
+    if (lastChartTypeRef.current !== chartType) {
+        requestIdRef.current = 0;
+        lastChartTypeRef.current = chartType;
+    }
 
     // Generate a unique color for each operator based on their index
     const operatorColors = useMemo(() => {
@@ -92,6 +115,10 @@ export function DPSChart({ operators, generateChartData, xAxisLabel, chartType }
     }, [operators]);
 
     useEffect(() => {
+        // Increment request ID to track the current request
+        const currentRequestId = ++requestIdRef.current;
+        let isMounted = true;
+
         const fetchData = async () => {
             if (operators.length === 0) {
                 setData([]);
@@ -101,16 +128,34 @@ export function DPSChart({ operators, generateChartData, xAxisLabel, chartType }
             setLoading(true);
             try {
                 const chartData = await generateChartData();
-                setData(chartData);
+                // Only update state if this is still the latest request for the current chart type and component is mounted
+                if (currentRequestId === requestIdRef.current && isMounted && lastChartTypeRef.current === chartType) {
+                    setData(chartData);
+                    setLoading(false);
+                }
             } catch (error) {
                 console.error("Error generating chart data:", error);
-            } finally {
-                setLoading(false);
+                if (currentRequestId === requestIdRef.current && isMounted) {
+                    setLoading(false);
+                }
             }
         };
 
         void fetchData();
-    }, [operators, generateChartData, chartType]);
+
+        // Cleanup function to handle component unmount or dependencies changing
+        return () => {
+            isMounted = false;
+        };
+    }, [
+        operators,
+        generateChartData,
+        chartType,
+        // Only include data-affecting settings, not display-only settings
+        chartSettings.targets,
+        chartSettings.maxValue,
+        chartSettings.stepSize,
+    ]);
 
     const xDataKey = chartType === "defense" ? "defense" : "resistance";
 
@@ -120,6 +165,94 @@ export function DPSChart({ operators, generateChartData, xAxisLabel, chartType }
             return `${(value / 1000).toFixed(1)}k`;
         }
         return value.toString();
+    };
+
+    // Function to render the appropriate chart type based on settings
+    const renderChart = () => {
+        const chartProps = {
+            data,
+            margin: {
+                top: 5,
+                right: 30,
+                left: 20,
+                bottom: 25,
+            },
+        };
+
+        const axesProps = (
+            <>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                <XAxis
+                    dataKey={xDataKey}
+                    label={{
+                        value: xAxisLabel,
+                        position: "insideBottomRight",
+                        offset: -10,
+                    }}
+                    tickFormatter={formatValue}
+                />
+                <YAxis
+                    label={{
+                        value: "DPS",
+                        angle: -90,
+                        position: "insideLeft",
+                    }}
+                    tickFormatter={formatValue}
+                />
+                <Tooltip content={<CustomTooltip xAxisLabel={xAxisLabel} />} cursor={{ strokeDasharray: "3 3", stroke: "#9ca3af", strokeWidth: 1 }} />
+                <Legend layout="horizontal" verticalAlign="bottom" wrapperStyle={{ paddingTop: 20 }} formatter={(value: string) => <span className="text-sm font-medium">{value}</span>} />
+            </>
+        );
+
+        // Determine curve type based on settings
+        const curveType = chartSettings.smoothCurves ? "monotone" : "linear";
+
+        // Common props for visualizations
+        const dotProps = chartSettings.showDots ? { dot: { r: 3 } } : { dot: false };
+        const activeDotProps = { activeDot: { r: 6 } };
+
+        switch (chartSettings.displayMode) {
+            case "area":
+                return (
+                    <AreaChart {...chartProps}>
+                        {axesProps}
+                        {operators.map((operator) => {
+                            if (!operator.name) return null;
+                            const opName = operator.name;
+                            const color = operatorColors[opName];
+
+                            return <Area key={operator.id ?? `op-${Math.random()}`} type={curveType} dataKey={opName} stroke={color} fill={color} fillOpacity={0.3} strokeWidth={2} {...dotProps} {...activeDotProps} animationDuration={300} />;
+                        })}
+                    </AreaChart>
+                );
+
+            case "bar":
+                return (
+                    <BarChart {...chartProps} barGap={0} barCategoryGap={5}>
+                        {axesProps}
+                        {operators.map((operator) => {
+                            if (!operator.name) return null;
+                            const opName = operator.name;
+
+                            return <Bar key={operator.id ?? `op-${Math.random()}`} dataKey={opName} fill={operatorColors[opName]} animationDuration={300} />;
+                        })}
+                    </BarChart>
+                );
+
+            case "line":
+            default:
+                return (
+                    <LineChart {...chartProps}>
+                        {axesProps}
+                        {operators.map((operator) => {
+                            if (!operator.name) return null;
+                            const opName = operator.name;
+
+                            return <Line key={operator.id ?? `op-${Math.random()}`} type={curveType} dataKey={opName} stroke={operatorColors[opName]} strokeWidth={2} {...dotProps} {...activeDotProps} animationDuration={300} />;
+                        })}
+                    </LineChart>
+                );
+        }
     };
 
     return (
@@ -135,44 +268,7 @@ export function DPSChart({ operators, generateChartData, xAxisLabel, chartType }
                 ) : operators.length > 0 ? (
                     <div className="h-[450px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <LineChart
-                                data={data}
-                                margin={{
-                                    top: 5,
-                                    right: 30,
-                                    left: 20,
-                                    bottom: 25,
-                                }}
-                            >
-                                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                                <XAxis
-                                    dataKey={xDataKey}
-                                    label={{
-                                        value: xAxisLabel,
-                                        position: "insideBottomRight",
-                                        offset: -10,
-                                    }}
-                                    tickFormatter={formatValue}
-                                />
-                                <YAxis
-                                    label={{
-                                        value: "DPS",
-                                        angle: -90,
-                                        position: "insideLeft",
-                                    }}
-                                    tickFormatter={formatValue}
-                                />
-                                <Tooltip content={<CustomTooltip xAxisLabel={xAxisLabel} />} cursor={{ strokeDasharray: "3 3", stroke: "#9ca3af", strokeWidth: 1 }} />
-                                <Legend layout="horizontal" verticalAlign="bottom" wrapperStyle={{ paddingTop: 20 }} formatter={(value) => <span className="text-sm font-medium">{value}</span>} />
-                                {operators.map((operator) => {
-                                    // Skip operators without a name
-                                    if (!operator.name) return null;
-
-                                    const operatorKey = operator.id ?? `op-${Math.random()}`;
-
-                                    return <Line key={operatorKey} type="monotone" dataKey={operator.name} stroke={operatorColors[operator.name]} strokeWidth={2} dot={false} activeDot={{ r: 6 }} animationDuration={300} />;
-                                })}
-                            </LineChart>
+                            {renderChart()}
                         </ResponsiveContainer>
                     </div>
                 ) : (
