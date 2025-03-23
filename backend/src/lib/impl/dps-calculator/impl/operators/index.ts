@@ -18,6 +18,7 @@ import Ashlock from "./impl/ashlock";
 import Astesia from "./impl/astesia";
 import Aurora from "./impl/aurora";
 import Ayerscarpe from "./impl/ayerscarpe";
+import Bagpipe from "./impl/bagpipe";
 
 const operators = [
     {
@@ -99,6 +100,10 @@ const operators = [
     {
         id: "char_294_ayer",
         object: Ayerscarpe,
+    },
+    {
+        id: "char_222_bpipe",
+        object: Bagpipe,
     },
 ];
 
