@@ -17,7 +17,6 @@ export default function OperatorListItem({ operator, onParamsChange }: OperatorL
     const initializedRef = useRef(false);
 
     const handleParamChange = (key: keyof OperatorParams, value: OperatorParams[keyof OperatorParams]) => {
-        console.log("asdf");
         const newParams = { ...params, [key]: value };
         setParams(newParams);
         onParamsChange(newParams);
