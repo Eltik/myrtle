@@ -9,11 +9,7 @@ export default async function handler(request: Request, response: ServerResponse
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({
-                id: request.body.id,
-                params: request.body.params,
-                enemy: request.body.enemy,
-            }),
+            body: JSON.stringify(request.body),
         })
     ).json()) as DPSCalculatorResponse;
 
@@ -24,11 +20,14 @@ export default async function handler(request: Request, response: ServerResponse
 
 interface Request {
     body: {
-        id: string;
+        method: "operator" | "dps";
+        id?: string;
         params?: OperatorParams;
-        enemy?: {
-            defense?: number;
-            res?: number;
+        range?: {
+            minDef?: number;
+            maxDef?: number;
+            minRes?: number;
+            maxRes?: number;
         };
     };
 }

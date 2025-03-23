@@ -3,12 +3,25 @@ import type { Module } from "../static/modules";
 import type { Operator } from "../static/operator";
 
 export type DPSCalculatorResponse = {
-    dps: number;
+    dps: DPS;
     operator: DPSOperator;
+    totalDPS: number;
+    averageDPS: number;
 };
 
 export type DPSOperatorResponse = {
     operator: DPSOperator;
+};
+
+export type DPS = {
+    def: {
+        dps: number;
+        def: number;
+    }[];
+    res: {
+        dps: number;
+        res: number;
+    }[];
 };
 
 export type DPSOperator = {
