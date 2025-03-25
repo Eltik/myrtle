@@ -126,9 +126,11 @@ function OperatorSelector({ operators, selectedOperators, isOpen, onClose, onSel
                     <DialogHeader>
                         <DialogTitle>Select Operators</DialogTitle>
                     </DialogHeader>
-                    <div className="mb-4 flex items-center space-x-2">
-                        <Search className="h-4 w-4 text-muted-foreground" />
-                        <Input placeholder="Search operators..." value={search} onChange={(e) => setSearch(e.target.value)} className="flex-1" />
+                    <div className="mb-4 flex flex-col items-center gap-2 space-x-2 sm:flex-row sm:gap-0">
+                        <div className="flex items-center space-x-2">
+                            <Search className="h-4 w-4 text-muted-foreground" />
+                            <Input placeholder="Search operators..." value={search} onChange={(e) => setSearch(e.target.value)} className="flex-1" />
+                        </div>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" className="ml-auto">
