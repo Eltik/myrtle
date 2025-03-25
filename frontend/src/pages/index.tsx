@@ -2,13 +2,28 @@ import { LogIn, Users } from "lucide-react";
 import Head from "next/head";
 import { HomeChart } from "~/components/home/home-chart";
 import { Button } from "~/components/ui/button";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useState } from "react";
 
 export default function Home() {
     const fadeIn = {
         hidden: { opacity: 0, y: -20 },
         visible: { opacity: 1, y: 0 },
     };
+
+    const words = ["Arknights", "Operator", "Farming", "Recruitment", "Squad"] as const;
+    const [currentWord, setCurrentWord] = useState(0);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCurrentWord((prev) => (prev + 1) % words.length);
+        }, 3000);
+        return () => clearInterval(interval);
+    }, [words.length]);
+
+    const beforeText = "Elevate your ";
+    const afterText = " experience to the next level.";
+    const currentWordText = words[currentWord] ?? words[0];
 
     return (
         <>
@@ -33,7 +48,72 @@ export default function Home() {
             >
                 <motion.div variants={fadeIn} className="col-span-full rounded-xl border bg-card text-card-foreground shadow">
                     <div className="flex flex-col space-y-1.5 p-6 pb-2">
-                        <h2 className="scroll-m-20 pb-0 text-3xl font-bold tracking-tight lg:text-xl xl:text-4xl">Elevate your Arknights experience to the next level.</h2>
+                        <h2 className="scroll-m-20 pb-0 text-3xl font-bold tracking-tight lg:text-xl xl:text-4xl">
+                            <div className="flex flex-wrap gap-0.5">
+                                {/* Static prefix text */}
+                                {beforeText.split("").map((letter, i) => (
+                                    <motion.span
+                                        key={`prefix-${letter}-${i}`}
+                                        variants={{
+                                            hidden: { opacity: 0, y: 20, filter: "blur(10px)" },
+                                            visible: {
+                                                opacity: 1,
+                                                y: 0,
+                                                filter: "blur(0px)",
+                                                transition: {
+                                                    duration: 0.3,
+                                                    delay: i * 0.02,
+                                                },
+                                            },
+                                        }}
+                                        className={letter === " " ? "w-2" : ""}
+                                    >
+                                        {letter}
+                                    </motion.span>
+                                ))}
+
+                                {/* Animated changing word */}
+                                <AnimatePresence mode="wait">
+                                    {currentWordText.split("").map((letter, i) => (
+                                        <motion.span
+                                            key={`word-${currentWord}-${letter}-${i}`}
+                                            initial={{ opacity: 0, y: 20, filter: "blur(10px)" }}
+                                            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                                            exit={{ opacity: 0, y: -20, filter: "blur(10px)" }}
+                                            transition={{
+                                                duration: 0.3,
+                                                delay: i * 0.02,
+                                            }}
+                                            className="text-[#f59a9f]"
+                                        >
+                                            {letter}
+                                        </motion.span>
+                                    ))}
+                                </AnimatePresence>
+
+                                {/* Static suffix text */}
+                                {afterText.split("").map((letter, i) => (
+                                    <motion.span
+                                        key={`suffix-${letter}-${i}`}
+                                        variants={{
+                                            hidden: { opacity: 0, y: 20, filter: "blur(10px)" },
+                                            visible: {
+                                                opacity: 1,
+                                                y: 0,
+                                                filter: "blur(0px)",
+                                                transition: {
+                                                    duration: 0.3,
+                                                    delay: (beforeText.length + i) * 0.02,
+                                                },
+                                            },
+                                        }}
+                                        className={letter === " " ? "w-2" : ""}
+                                    >
+                                        {letter}
+                                    </motion.span>
+                                ))}
+                            </div>
+                        </h2>
                     </div>
                     <p className="p-6 pt-0">An advanced Arknights toolkit for the modern player. Manage your operators, track your progress, and more.</p>
                 </motion.div>
