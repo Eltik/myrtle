@@ -13,4 +13,5 @@ export type OperatorSelectorProps = {
 export type OperatorListItemProps = {
     operator: DPSOperator;
     onParamsChange: (params: OperatorParams) => void;
+    onRemove?: (operatorId: string) => void;
 };

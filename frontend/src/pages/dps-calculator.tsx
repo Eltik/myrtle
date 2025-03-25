@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
 import type { Operator } from "~/types/impl/api/static/operator";
 import { Button } from "~/components/ui/button";
@@ -17,6 +17,8 @@ import { Label } from "~/components/ui/label";
 import { Switch } from "~/components/ui/switch";
 import { Slider } from "~/components/ui/slider";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
+import Link from "next/link";
+import { ChevronDown } from "lucide-react";
 
 type ChartDataType = "defense" | "resistance";
 type ChartDisplayMode = "line" | "area" | "bar";
@@ -50,6 +52,7 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
     });
     const [averageDPS, setAverageDPS] = useState<number | null>(null);
     const [totalDPS, setTotalDPS] = useState<number | null>(null);
+    const [isChartSettingsOpen, setIsChartSettingsOpen] = useState(true);
 
     const getDPSOperators = useCallback(async () => {
         for (const operator of selectedOperators) {
@@ -211,12 +214,27 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
         setChartDataType(value as ChartDataType);
     };
 
+    const handleRemoveOperator = (operatorId: string) => {
+        // Remove from dpsOperators
+        setDPSOperators((prevOperators) => prevOperators.filter((op) => op.operatorData.data.id !== operatorId));
+
+        // Remove from selectedOperators
+        setSelectedOperators((prevOperators) => prevOperators.filter((op) => op.id !== operatorId));
+
+        // Remove from operatorParams
+        setOperatorParams((prevParams) => {
+            const newParams = { ...prevParams };
+            delete newParams[operatorId];
+            return newParams;
+        });
+    };
+
     return (
         <>
             <Head>
-                <title>myrtle.moe</title>
+                <title>DPS Calculator</title>
                 <meta name="title" content="myrtle.moe" />
-                <meta name="description" content="Elevate your Arknights experience to the next level." />
+                <meta name="description" content="Calculate DPS for Arknights operators." />
                 <link rel="icon" href="/favicon.ico" />
             </Head>
             <motion.div
@@ -232,7 +250,16 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
                 }}
                 className="container mx-auto p-4"
             >
-                <h1 className="mb-4 mt-2 text-2xl font-bold">Arknights DPS Calculator</h1>
+                <h1 className="mt-2 text-2xl font-bold">Arknights DPS Calculator</h1>
+                <p className="mb-4 text-xs md:text-sm">
+                    Display DPS for a single operator or compare multiple operators. Please note that the calculator may not have all operators available.
+                    <br />
+                    <b>Note:</b> This DPS calculator uses calculations from{" "}
+                    <Link href={"http://github.com/WhoAteMyCQQkie/ArknightsDpsCompare/"} className="text-blue-500 hover:underline">
+                        WhoAteMyCQQkie/ArknightsDpsCompare
+                    </Link>
+                    . All credit for the DPS calculations goes to them.
+                </p>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div className="flex flex-col gap-2">
                         <div>
@@ -242,117 +269,137 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
                         </div>
                         <OperatorSelector operators={data} selectedOperators={selectedOperators} isOpen={isOperatorSelectorOpen} onClose={() => setIsOperatorSelectorOpen(false)} onSelect={setSelectedOperators} />
 
-                        {/* Chart settings card */}
-                        <Card className="mb-4">
-                            <CardHeader className="pb-2">
-                                <CardTitle className="text-lg">Chart Settings</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label>Number of Enemy Targets</Label>
-                                    <Select defaultValue={chartSettings.targets.toString()} onValueChange={(value) => handleChartSettingChange("targets", parseInt(value))}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select targets" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {[1, 2, 3, 4, 5, 6].map((number) => (
-                                                <SelectItem key={number} value={number.toString()}>
-                                                    {number}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <Separator />
-
-                                <div className="space-y-2">
-                                    <Label>Display Options</Label>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="flex items-center space-x-2">
-                                            <Switch id="show-average" checked={chartSettings.showAverage} onCheckedChange={(checked) => handleChartSettingChange("showAverage", checked)} />
-                                            <Label htmlFor="show-average">Show Average DPS</Label>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <Switch id="show-total" checked={chartSettings.showTotal} onCheckedChange={(checked) => handleChartSettingChange("showTotal", checked)} />
-                                            <Label htmlFor="show-total">Show Total DPS</Label>
-                                        </div>
-                                    </div>
-
-                                    {(chartSettings.showAverage && averageDPS !== null) || (chartSettings.showTotal && totalDPS !== null) ? (
-                                        <div className="mt-2 grid grid-cols-2 gap-4 rounded-md bg-secondary p-2 text-sm">
-                                            {chartSettings.showAverage && averageDPS !== null && (
-                                                <div>
-                                                    <span className="font-medium">Avg DPS:</span> {averageDPS.toLocaleString()}
-                                                </div>
-                                            )}
-                                            {chartSettings.showTotal && totalDPS !== null && (
-                                                <div>
-                                                    <span className="font-medium">Total DPS:</span> {totalDPS.toLocaleString()}
-                                                </div>
-                                            )}
-                                        </div>
-                                    ) : null}
-                                </div>
-
-                                <Separator />
-
-                                <div className="space-y-2">
-                                    <Label>Value Range</Label>
-                                    <div className="space-y-4">
-                                        <div className="space-y-2">
-                                            <div className="flex justify-between">
-                                                <Label htmlFor="max-value">
-                                                    Maximum {chartDataType === "defense" ? "DEF" : "RES"} Value: {chartSettings.maxValue}
-                                                </Label>
+                        {/* Collapsible Chart settings card */}
+                        <Card className={`mb-4 w-full ${isChartSettingsOpen ? "" : "transition-all duration-150 hover:bg-primary-foreground"}`}>
+                            <button className="w-full text-left focus:outline-none" onClick={() => setIsChartSettingsOpen(!isChartSettingsOpen)} aria-expanded={isChartSettingsOpen}>
+                                <CardHeader className="flex flex-row items-center justify-between">
+                                    <CardTitle className="text-lg">Chart Settings</CardTitle>
+                                    <motion.div animate={{ rotate: isChartSettingsOpen ? 180 : 0 }} transition={{ duration: 0.3 }}>
+                                        <ChevronDown className="h-4 w-4" />
+                                    </motion.div>
+                                </CardHeader>
+                            </button>
+                            <AnimatePresence initial={false}>
+                                {isChartSettingsOpen && (
+                                    <motion.div
+                                        initial="collapsed"
+                                        animate="open"
+                                        exit="collapsed"
+                                        variants={{
+                                            open: { opacity: 1, height: "auto" },
+                                            collapsed: { opacity: 0, height: 0 },
+                                        }}
+                                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                                    >
+                                        <CardContent className="space-y-4">
+                                            <div className="space-y-2">
+                                                <Label>Number of Enemy Targets</Label>
+                                                <Select defaultValue={chartSettings.targets.toString()} onValueChange={(value) => handleChartSettingChange("targets", parseInt(value))}>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select targets" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {[1, 2, 3, 4, 5, 6].map((number) => (
+                                                            <SelectItem key={number} value={number.toString()}>
+                                                                {number}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
                                             </div>
-                                            <Slider id="max-value" min={500} max={5000} step={500} value={[chartSettings.maxValue]} onValueChange={(values) => handleChartSettingChange("maxValue", values[0] ?? 2000)} />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <div className="flex justify-between">
-                                                <Label htmlFor="step-size">Step Size: {chartSettings.stepSize}</Label>
+
+                                            <Separator />
+
+                                            <div className="space-y-2">
+                                                <Label>Display Options</Label>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="flex items-center space-x-2">
+                                                        <Switch id="show-average" checked={chartSettings.showAverage} onCheckedChange={(checked) => handleChartSettingChange("showAverage", checked)} />
+                                                        <Label htmlFor="show-average">Show Average DPS</Label>
+                                                    </div>
+                                                    <div className="flex items-center space-x-2">
+                                                        <Switch id="show-total" checked={chartSettings.showTotal} onCheckedChange={(checked) => handleChartSettingChange("showTotal", checked)} />
+                                                        <Label htmlFor="show-total">Show Total DPS</Label>
+                                                    </div>
+                                                </div>
+
+                                                {(chartSettings.showAverage && averageDPS !== null) || (chartSettings.showTotal && totalDPS !== null) ? (
+                                                    <div className="mt-2 grid grid-cols-2 gap-4 rounded-md bg-secondary p-2 text-sm">
+                                                        {chartSettings.showAverage && averageDPS !== null && (
+                                                            <div>
+                                                                <span className="font-medium">Avg DPS:</span> {averageDPS.toLocaleString()}
+                                                            </div>
+                                                        )}
+                                                        {chartSettings.showTotal && totalDPS !== null && (
+                                                            <div>
+                                                                <span className="font-medium">Total DPS:</span> {totalDPS.toLocaleString()}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ) : null}
                                             </div>
-                                            <Slider id="step-size" min={50} max={500} step={50} value={[chartSettings.stepSize]} onValueChange={(values) => handleChartSettingChange("stepSize", values[0] ?? 100)} />
-                                        </div>
-                                    </div>
-                                </div>
 
-                                <Separator />
+                                            <Separator />
 
-                                <div className="space-y-2">
-                                    <Label>Chart Style</Label>
-                                    <RadioGroup defaultValue={chartSettings.displayMode} onValueChange={(value: string) => handleChartSettingChange("displayMode", value as ChartDisplayMode)} className="grid grid-cols-3 gap-4">
-                                        <div className="flex items-center space-x-2">
-                                            <RadioGroupItem value="line" id="chart-line" />
-                                            <Label htmlFor="chart-line">Line</Label>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <RadioGroupItem value="area" id="chart-area" />
-                                            <Label htmlFor="chart-area">Area</Label>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <RadioGroupItem value="bar" id="chart-bar" />
-                                            <Label htmlFor="chart-bar">Bar</Label>
-                                        </div>
-                                    </RadioGroup>
+                                            <div className="space-y-2">
+                                                <Label>Value Range</Label>
+                                                <div className="space-y-4">
+                                                    <div className="space-y-2">
+                                                        <div className="flex justify-between">
+                                                            <Label htmlFor="max-value">
+                                                                Maximum {chartDataType === "defense" ? "DEF" : "RES"} Value: {chartSettings.maxValue}
+                                                            </Label>
+                                                        </div>
+                                                        <Slider id="max-value" min={500} max={5000} step={500} value={[chartSettings.maxValue]} onValueChange={(values) => handleChartSettingChange("maxValue", values[0] ?? 2000)} />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <div className="flex justify-between">
+                                                            <Label htmlFor="step-size">Step Size: {chartSettings.stepSize}</Label>
+                                                        </div>
+                                                        <Slider id="step-size" min={50} max={500} step={50} value={[chartSettings.stepSize]} onValueChange={(values) => handleChartSettingChange("stepSize", values[0] ?? 100)} />
+                                                    </div>
+                                                </div>
+                                            </div>
 
-                                    <div className="mt-2 grid grid-cols-2 gap-4">
-                                        <div className="flex items-center space-x-2">
-                                            <Switch id="show-dots" checked={chartSettings.showDots} onCheckedChange={(checked) => handleChartSettingChange("showDots", checked)} />
-                                            <Label htmlFor="show-dots">Show Data Points</Label>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <Switch id="smooth-curves" checked={chartSettings.smoothCurves} onCheckedChange={(checked) => handleChartSettingChange("smoothCurves", checked)} />
-                                            <Label htmlFor="smooth-curves">Smooth Curves</Label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </CardContent>
+                                            <Separator />
+
+                                            <div className="space-y-2">
+                                                <Label>Chart Style</Label>
+                                                <RadioGroup defaultValue={chartSettings.displayMode} onValueChange={(value: string) => handleChartSettingChange("displayMode", value as ChartDisplayMode)} className="grid grid-cols-3 gap-4">
+                                                    <div className="flex items-center space-x-2">
+                                                        <RadioGroupItem value="line" id="chart-line" />
+                                                        <Label htmlFor="chart-line">Line</Label>
+                                                    </div>
+                                                    <div className="flex items-center space-x-2">
+                                                        <RadioGroupItem value="area" id="chart-area" />
+                                                        <Label htmlFor="chart-area">Area</Label>
+                                                    </div>
+                                                    <div className="flex items-center space-x-2">
+                                                        <RadioGroupItem value="bar" id="chart-bar" />
+                                                        <Label htmlFor="chart-bar">Bar</Label>
+                                                    </div>
+                                                </RadioGroup>
+
+                                                <div className="mt-2 grid grid-cols-2 gap-4">
+                                                    <div className="flex items-center space-x-2">
+                                                        <Switch id="show-dots" checked={chartSettings.showDots} onCheckedChange={(checked) => handleChartSettingChange("showDots", checked)} />
+                                                        <Label htmlFor="show-dots">Show Data Points</Label>
+                                                    </div>
+                                                    <div className="flex items-center space-x-2">
+                                                        <Switch id="smooth-curves" checked={chartSettings.smoothCurves} onCheckedChange={(checked) => handleChartSettingChange("smoothCurves", checked)} />
+                                                        <Label htmlFor="smooth-curves">Smooth Curves</Label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </Card>
 
                         <div className="space-y-4">
                             {dpsOperators.map((operator) => (
-                                <OperatorListItem key={operator.operatorData.data.id} operator={operator} onParamsChange={(params) => handleOperatorParamsChange(operator.operatorData.data.id ?? "", params)} />
+                                <OperatorListItem key={operator.operatorData.data.id} operator={operator} onParamsChange={(params) => handleOperatorParamsChange(operator.operatorData.data.id ?? "", params)} onRemove={handleRemoveOperator} />
                             ))}
                         </div>
                     </div>

@@ -8,10 +8,11 @@ import { OperatorRarity } from "~/types/impl/api/static/operator";
 import { Input } from "../ui/input";
 import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import { Button } from "../ui/button";
 
-export default function OperatorListItem({ operator, onParamsChange }: OperatorListItemProps) {
+export default function OperatorListItem({ operator, onParamsChange, onRemove }: OperatorListItemProps) {
     const [params, setParams] = useState<OperatorParams>({});
     const [isOpen, setIsOpen] = useState(false);
     const initializedRef = useRef(false);
@@ -42,8 +43,8 @@ export default function OperatorListItem({ operator, onParamsChange }: OperatorL
     return (
         <Card className={`mb-4 w-full ${isOpen ? "" : "transition-all duration-150 hover:bg-primary-foreground"}`}>
             <div>
-                <button className="w-full text-left focus:outline-none" onClick={() => setIsOpen(!isOpen)} aria-expanded={isOpen}>
-                    <CardContent className="flex items-center justify-between p-4">
+                <div className="flex items-center justify-between p-4">
+                    <button className="flex flex-grow items-center justify-between text-left focus:outline-none" onClick={() => setIsOpen(!isOpen)} aria-expanded={isOpen}>
                         <div className="flex items-center">
                             <Image src={`https://raw.githubusercontent.com/ArknightsAssets/ArknightsAssets/cn/assets/torappu/dynamicassets/arts/charavatars/${operator.operatorData.data.id}.png`} alt={operator.operatorData.data.name} width={48} height={48} className="mr-4 rounded-full" />
                             <h3 className="text-lg font-semibold">{operator.operatorData.data.name}</h3>
@@ -51,8 +52,20 @@ export default function OperatorListItem({ operator, onParamsChange }: OperatorL
                         <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.3 }}>
                             <ChevronDown className="h-4 w-4" />
                         </motion.div>
-                    </CardContent>
-                </button>
+                    </button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="ml-2 h-8 w-8 rounded-full"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onRemove?.(operator.operatorData.data.id ?? "");
+                        }}
+                        aria-label={`Remove ${operator.operatorData.data.name}`}
+                    >
+                        <X className="h-4 w-4" />
+                    </Button>
+                </div>
                 <AnimatePresence initial={false}>
                     {isOpen && (
                         <motion.div
@@ -140,7 +153,7 @@ export default function OperatorListItem({ operator, onParamsChange }: OperatorL
                                     <div className="space-y-2">
                                         {operator.talentDamageNames.map((talent) => (
                                             <div key={talent} className="flex items-center">
-                                                <Switch id={`${operator.operatorData.data.id}-${talent}`} onCheckedChange={(checked) => handleParamChange("conditionals", { ...params.conditionals, [talent]: checked })} defaultChecked={operator.talentDamage} />
+                                                <Switch id={`${operator.operatorData.data.id}-${talent}`} onCheckedChange={(checked) => handleParamChange("conditionals", { ...params.conditionals, talentDamage: checked })} defaultChecked={operator.talentDamage} />
                                                 <Label htmlFor={`${operator.operatorData.data.id}-${talent}`} className="ml-2">
                                                     {talent.charAt(0).toUpperCase() + talent.slice(1)}
                                                 </Label>
@@ -148,7 +161,7 @@ export default function OperatorListItem({ operator, onParamsChange }: OperatorL
                                         ))}
                                         {operator.talent2DamageNames.map((talent) => (
                                             <div key={talent} className="flex items-center">
-                                                <Switch id={`${operator.operatorData.data.id}-${talent}`} onCheckedChange={(checked) => handleParamChange("conditionals", { ...params.conditionals, [talent]: checked })} defaultChecked={operator.talent2Damage} />
+                                                <Switch id={`${operator.operatorData.data.id}-${talent}`} onCheckedChange={(checked) => handleParamChange("conditionals", { ...params.conditionals, talent2Damage: checked })} defaultChecked={operator.talent2Damage} />
                                                 <Label htmlFor={`${operator.operatorData.data.id}-${talent}`} className="ml-2">
                                                     {talent.charAt(0).toUpperCase() + talent.slice(1)}
                                                 </Label>
@@ -156,7 +169,7 @@ export default function OperatorListItem({ operator, onParamsChange }: OperatorL
                                         ))}
                                         {operator.traitDamageNames.map((trait) => (
                                             <div key={trait} className="flex items-center">
-                                                <Switch id={`${operator.operatorData.data.id}-${trait}`} onCheckedChange={(checked) => handleParamChange("conditionals", { ...params.conditionals, [trait]: checked })} defaultChecked={operator.traitDamage} />
+                                                <Switch id={`${operator.operatorData.data.id}-${trait}`} onCheckedChange={(checked) => handleParamChange("conditionals", { ...params.conditionals, traitDamage: checked })} defaultChecked={operator.traitDamage} />
                                                 <Label htmlFor={`${operator.operatorData.data.id}-${trait}`} className="ml-2">
                                                     {trait.charAt(0).toUpperCase() + trait.slice(1)}
                                                 </Label>
@@ -164,7 +177,7 @@ export default function OperatorListItem({ operator, onParamsChange }: OperatorL
                                         ))}
                                         {operator.skillDamageNames.map((skill) => (
                                             <div key={skill} className="flex items-center">
-                                                <Switch id={`${operator.operatorData.data.id}-${skill}`} onCheckedChange={(checked) => handleParamChange("conditionals", { ...params.conditionals, [skill]: checked })} defaultChecked={operator.skillDamage} />
+                                                <Switch id={`${operator.operatorData.data.id}-${skill}`} onCheckedChange={(checked) => handleParamChange("conditionals", { ...params.conditionals, skillDamage: checked })} defaultChecked={operator.skillDamage} />
                                                 <Label htmlFor={`${operator.operatorData.data.id}-${skill}`} className="ml-2">
                                                     {skill.charAt(0).toUpperCase() + skill.slice(1)}
                                                 </Label>
@@ -172,7 +185,7 @@ export default function OperatorListItem({ operator, onParamsChange }: OperatorL
                                         ))}
                                         {operator.moduleDamageNames.map((operatorModule) => (
                                             <div key={operatorModule} className="flex items-center">
-                                                <Switch id={`${operator.operatorData.data.id}-${operatorModule}`} onCheckedChange={(checked) => handleParamChange("conditionals", { ...params.conditionals, [operatorModule]: checked })} defaultChecked={operator.moduleDamage} />
+                                                <Switch id={`${operator.operatorData.data.id}-${operatorModule}`} onCheckedChange={(checked) => handleParamChange("conditionals", { ...params.conditionals, moduleDamage: checked })} defaultChecked={operator.moduleDamage} />
                                                 <Label htmlFor={`${operator.operatorData.data.id}-${operatorModule}`} className="ml-2">
                                                     {operatorModule.charAt(0).toUpperCase() + operatorModule.slice(1)}
                                                 </Label>

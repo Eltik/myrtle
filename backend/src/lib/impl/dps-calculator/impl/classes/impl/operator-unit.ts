@@ -181,11 +181,11 @@ export class OperatorUnit {
         /**
          * @description Set conditionals.
          */
-        this.traitDamage = params.allCond === true || (params.conditionals.traitDamage === true && params.allCond !== false) ? true : false;
-        this.talentDamage = params.allCond === true || (params.conditionals.talentDamage === true && params.allCond !== false) ? true : false;
-        this.talent2Damage = params.allCond === true || (params.conditionals.talent2Damage === true && params.allCond !== false) ? true : false;
-        this.skillDamage = params.allCond === true || (params.conditionals.skillDamage === true && params.allCond !== false) ? true : false;
-        this.moduleDamage = params.allCond === true || (params.conditionals.moduleDamage === true && params.allCond !== false) ? true : false;
+        this.traitDamage = params.allCond === false ? false : (params.conditionals.traitDamage ?? true);
+        this.talentDamage = params.allCond === false ? false : (params.conditionals.talentDamage ?? true);
+        this.talent2Damage = params.allCond === false ? false : (params.conditionals.talent2Damage ?? true);
+        this.skillDamage = params.allCond === false ? false : (params.conditionals.skillDamage ?? true);
+        this.moduleDamage = params.allCond === false ? false : (params.conditionals.moduleDamage ?? true);
 
         /**
          * @description Set targets.
