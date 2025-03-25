@@ -12,13 +12,13 @@ import { DPSChart } from "~/components/dps-calculator/dps-chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Separator } from "~/components/ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { Label } from "~/components/ui/label";
 import { Switch } from "~/components/ui/switch";
 import { Slider } from "~/components/ui/slider";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
+import { Input } from "~/components/ui/input";
 
 type ChartDataType = "defense" | "resistance";
 type ChartDisplayMode = "line" | "area" | "bar";
@@ -32,6 +32,11 @@ interface ChartSettings {
     displayMode: ChartDisplayMode;
     showDots: boolean;
     smoothCurves: boolean;
+}
+
+interface OperatorDPSStats {
+    averageDPS: number;
+    totalDPS: number;
 }
 
 const DPSCalculator: NextPage<Props> = ({ data }) => {
@@ -50,8 +55,7 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
         showDots: false,
         smoothCurves: true,
     });
-    const [averageDPS, setAverageDPS] = useState<number | null>(null);
-    const [totalDPS, setTotalDPS] = useState<number | null>(null);
+    const [operatorDPSStats, setOperatorDPSStats] = useState<Record<string, OperatorDPSStats>>({});
     const [isChartSettingsOpen, setIsChartSettingsOpen] = useState(true);
 
     const getDPSOperators = useCallback(async () => {
@@ -130,10 +134,14 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
                 })
             ).json()) as DPSCalculatorResponse;
 
-            // Always set these values regardless of display settings
-            // This way we don't trigger re-renders when only the display toggle changes
-            setAverageDPS(data.averageDPS);
-            setTotalDPS(data.totalDPS);
+            // Store DPS stats for this operator
+            setOperatorDPSStats((prev) => ({
+                ...prev,
+                [operator.id ?? ""]: {
+                    averageDPS: data.averageDPS,
+                    totalDPS: data.totalDPS,
+                },
+            }));
 
             return data.dps;
         },
@@ -294,18 +302,7 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
                                         <CardContent className="space-y-4">
                                             <div className="space-y-2">
                                                 <Label>Number of Enemy Targets</Label>
-                                                <Select defaultValue={chartSettings.targets.toString()} onValueChange={(value) => handleChartSettingChange("targets", parseInt(value))}>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select targets" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {[1, 2, 3, 4, 5, 6].map((number) => (
-                                                            <SelectItem key={number} value={number.toString()}>
-                                                                {number}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
+                                                <Input type="number" min={1} max={99} value={chartSettings.targets} onChange={(e) => handleChartSettingChange("targets", Math.max(1, Math.min(99, parseInt(e.target.value) || 1)))} className="w-24" />
                                             </div>
 
                                             <Separator />
@@ -323,18 +320,22 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
                                                     </div>
                                                 </div>
 
-                                                {(chartSettings.showAverage && averageDPS !== null) || (chartSettings.showTotal && totalDPS !== null) ? (
-                                                    <div className="mt-2 grid grid-cols-2 gap-4 rounded-md bg-secondary p-2 text-sm">
-                                                        {chartSettings.showAverage && averageDPS !== null && (
-                                                            <div>
-                                                                <span className="font-medium">Avg DPS:</span> {averageDPS.toLocaleString()}
-                                                            </div>
-                                                        )}
-                                                        {chartSettings.showTotal && totalDPS !== null && (
-                                                            <div>
-                                                                <span className="font-medium">Total DPS:</span> {totalDPS.toLocaleString()}
-                                                            </div>
-                                                        )}
+                                                {(chartSettings.showAverage || chartSettings.showTotal) && Object.keys(operatorDPSStats).length > 0 ? (
+                                                    <div className="mt-2 space-y-2 rounded-md bg-secondary p-2 text-sm">
+                                                        {selectedOperators.map((operator) => {
+                                                            const stats = operatorDPSStats[operator.id ?? ""];
+                                                            if (!stats) return null;
+
+                                                            return (
+                                                                <div key={operator.id} className="flex justify-between">
+                                                                    <span className="font-medium">{operator.name}:</span>
+                                                                    <div className="space-x-4">
+                                                                        {chartSettings.showAverage && <span>Avg: {stats.averageDPS.toLocaleString()}</span>}
+                                                                        {chartSettings.showTotal && <span>Total: {stats.totalDPS.toLocaleString()}</span>}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
                                                     </div>
                                                 ) : null}
                                             </div>
