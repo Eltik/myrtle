@@ -4,6 +4,8 @@ import { HomeChart } from "~/components/home/home-chart";
 import { Button } from "~/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
+import { Dialog, DialogTrigger } from "~/components/ui/dialog";
+import { LoginDialogue } from "~/components/base/login-dialogue";
 
 export default function Home() {
     const fadeIn = {
@@ -11,7 +13,7 @@ export default function Home() {
         visible: { opacity: 1, y: 0 },
     };
 
-    const words = ["Arknights", "Operator", "Farming", "Recruitment", "Squad"] as const;
+    const words = ["Arknights", "Operator", "Farming", "Recruitment"] as const;
     const [currentWord, setCurrentWord] = useState(0);
 
     useEffect(() => {
@@ -21,8 +23,6 @@ export default function Home() {
         return () => clearInterval(interval);
     }, [words.length]);
 
-    const beforeText = "Elevate your ";
-    const afterText = " experience to the next level.";
     const currentWordText = words[currentWord] ?? words[0];
 
     return (
@@ -49,69 +49,62 @@ export default function Home() {
                 <motion.div variants={fadeIn} className="col-span-full rounded-xl border bg-card text-card-foreground shadow">
                     <div className="flex flex-col space-y-1.5 p-6 pb-2">
                         <h2 className="scroll-m-20 pb-0 text-3xl font-bold tracking-tight lg:text-xl xl:text-4xl">
-                            <div className="flex flex-wrap gap-0.5">
+                            <div className="flex flex-wrap items-center">
                                 {/* Static prefix text */}
-                                {beforeText.split("").map((letter, i) => (
-                                    <motion.span
-                                        key={`prefix-${letter}-${i}`}
-                                        variants={{
-                                            hidden: { opacity: 0, y: 20, filter: "blur(10px)" },
-                                            visible: {
-                                                opacity: 1,
-                                                y: 0,
-                                                filter: "blur(0px)",
-                                                transition: {
-                                                    duration: 0.3,
-                                                    delay: i * 0.02,
-                                                },
+                                <motion.span
+                                    variants={{
+                                        hidden: { opacity: 0, y: 20, filter: "blur(10px)" },
+                                        visible: {
+                                            opacity: 1,
+                                            y: 0,
+                                            filter: "blur(0px)",
+                                            transition: {
+                                                duration: 0.3,
                                             },
-                                        }}
-                                        className={letter === " " ? "w-2" : ""}
-                                    >
-                                        {letter}
-                                    </motion.span>
-                                ))}
+                                        },
+                                    }}
+                                    className="after:content-[''] after:inline-block after:w-[0.375em]"
+                                >
+                                    Elevate your
+                                </motion.span>
 
                                 {/* Animated changing word */}
-                                <AnimatePresence mode="wait">
-                                    {currentWordText.split("").map((letter, i) => (
-                                        <motion.span
-                                            key={`word-${currentWord}-${letter}-${i}`}
-                                            initial={{ opacity: 0, y: 20, filter: "blur(10px)" }}
-                                            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                                            exit={{ opacity: 0, y: -20, filter: "blur(10px)" }}
-                                            transition={{
-                                                duration: 0.3,
-                                                delay: i * 0.02,
-                                            }}
-                                            className="text-[#f59a9f]"
-                                        >
-                                            {letter}
-                                        </motion.span>
-                                    ))}
-                                </AnimatePresence>
+                                <div className="inline-flex [&:not(:first-child)]:ml-0 [&:not(:last-child)]:mr-[0.375em]">
+                                    <AnimatePresence mode="wait">
+                                        {currentWordText.split("").map((letter, i) => (
+                                            <motion.span
+                                                key={`word-${currentWord}-${letter}-${i}`}
+                                                initial={{ opacity: 0, y: 20, filter: "blur(10px)" }}
+                                                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                                                exit={{ opacity: 0, y: -20, filter: "blur(10px)" }}
+                                                transition={{
+                                                    duration: 0.3,
+                                                    delay: i * 0.02,
+                                                }}
+                                                className="text-[#f59a9f] inline-block"
+                                            >
+                                                {letter}
+                                            </motion.span>
+                                        ))}
+                                    </AnimatePresence>
+                                </div>
 
                                 {/* Static suffix text */}
-                                {afterText.split("").map((letter, i) => (
-                                    <motion.span
-                                        key={`suffix-${letter}-${i}`}
-                                        variants={{
-                                            hidden: { opacity: 0, y: 20, filter: "blur(10px)" },
-                                            visible: {
-                                                opacity: 1,
-                                                y: 0,
-                                                filter: "blur(0px)",
-                                                transition: {
-                                                    duration: 0.3,
-                                                    delay: (beforeText.length + i) * 0.02,
-                                                },
+                                <motion.span
+                                    variants={{
+                                        hidden: { opacity: 0, y: 20, filter: "blur(10px)" },
+                                        visible: {
+                                            opacity: 1,
+                                            y: 0,
+                                            filter: "blur(0px)",
+                                            transition: {
+                                                duration: 0.3,
                                             },
-                                        }}
-                                        className={letter === " " ? "w-2" : ""}
-                                    >
-                                        {letter}
-                                    </motion.span>
-                                ))}
+                                        },
+                                    }}
+                                >
+                                    experience to the next level.
+                                </motion.span>
                             </div>
                         </h2>
                     </div>
@@ -131,10 +124,15 @@ export default function Home() {
                                 <div className="ms-4 flex flex-col">
                                     <span className="text-lg font-semibold">Login</span>
                                     <p>Login with a YoStar-bounded Arknights account to get started.</p>
-                                    <Button className="flex w-28 flex-row justify-center">
-                                        <LogIn />
-                                        Login
-                                    </Button>
+                                    <Dialog>
+                                        <DialogTrigger asChild>
+                                            <Button className="flex w-28 flex-row justify-center">
+                                                <LogIn />
+                                                Login
+                                            </Button>
+                                        </DialogTrigger>
+                                        <LoginDialogue />
+                                    </Dialog>
                                 </div>
                             </li>
                             <li className="mb-10 ms-8 flex items-center">
