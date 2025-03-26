@@ -3,26 +3,26 @@ import { OperatorData } from "../lib/impl/dps-calculator/impl/classes/impl/opera
 import { init as initLocal } from "../lib/impl/local";
 import { init } from "../lib/impl/dps-calculator";
 import operators from "../lib/impl/local/impl/gamedata/impl/operators";
-import TwelveF from "../lib/impl/dps-calculator/impl/operators/impl/12f";
-import Aak from "../lib/impl/dps-calculator/impl/operators/impl/aak";
-import Absinthe from "../lib/impl/dps-calculator/impl/operators/impl/absinthe";
-import Aciddrop from "../lib/impl/dps-calculator/impl/operators/impl/aciddrop";
-import Adnachiel from "../lib/impl/dps-calculator/impl/operators/impl/adnachiel";
-import Andreana from "../lib/impl/dps-calculator/impl/operators/impl/andreana";
-import Angelina from "../lib/impl/dps-calculator/impl/operators/impl/angelina";
-import Aosta from "../lib/impl/dps-calculator/impl/operators/impl/aosta";
-import April from "../lib/impl/dps-calculator/impl/operators/impl/april";
-import Archetto from "../lib/impl/dps-calculator/impl/operators/impl/archetto";
-import Arene from "../lib/impl/dps-calculator/impl/operators/impl/arene";
-import Asbestos from "../lib/impl/dps-calculator/impl/operators/impl/asbestos";
-import Ascalon from "../lib/impl/dps-calculator/impl/operators/impl/ascalon";
-import Ash from "../lib/impl/dps-calculator/impl/operators/impl/ash";
-import Ashlock from "../lib/impl/dps-calculator/impl/operators/impl/ashlock";
-import Astesia from "../lib/impl/dps-calculator/impl/operators/impl/astesia";
-import Astgenne from "../lib/impl/dps-calculator/impl/operators/impl/astgenne";
-import Aurora from "../lib/impl/dps-calculator/impl/operators/impl/aurora";
-import Ayerscarpe from "../lib/impl/dps-calculator/impl/operators/impl/ayerscarpe";
-import Bagpipe from "../lib/impl/dps-calculator/impl/operators/impl/bagpipe";
+import TwelveF from "../lib/impl/dps-calculator/impl/operators/impl/#/12f";
+import Aak from "../lib/impl/dps-calculator/impl/operators/impl/a/aak";
+import Absinthe from "../lib/impl/dps-calculator/impl/operators/impl/a/absinthe";
+import Aciddrop from "../lib/impl/dps-calculator/impl/operators/impl/a/aciddrop";
+import Adnachiel from "../lib/impl/dps-calculator/impl/operators/impl/a/adnachiel";
+import Andreana from "../lib/impl/dps-calculator/impl/operators/impl/a/andreana";
+import Angelina from "../lib/impl/dps-calculator/impl/operators/impl/a/angelina";
+import Aosta from "../lib/impl/dps-calculator/impl/operators/impl/a/aosta";
+import April from "../lib/impl/dps-calculator/impl/operators/impl/a/april";
+import Archetto from "../lib/impl/dps-calculator/impl/operators/impl/a/archetto";
+import Arene from "../lib/impl/dps-calculator/impl/operators/impl/a/arene";
+import Asbestos from "../lib/impl/dps-calculator/impl/operators/impl/a/asbestos";
+import Ascalon from "../lib/impl/dps-calculator/impl/operators/impl/a/ascalon";
+import Ash from "../lib/impl/dps-calculator/impl/operators/impl/a/ash";
+import Ashlock from "../lib/impl/dps-calculator/impl/operators/impl/a/ashlock";
+import Astesia from "../lib/impl/dps-calculator/impl/operators/impl/a/astesia";
+import Astgenne from "../lib/impl/dps-calculator/impl/operators/impl/a/astgenne";
+import Aurora from "../lib/impl/dps-calculator/impl/operators/impl/a/aurora";
+import Ayerscarpe from "../lib/impl/dps-calculator/impl/operators/impl/a/ayerscarpe";
+import Bagpipe from "../lib/impl/dps-calculator/impl/operators/impl/b/bagpipe";
 
 // Initialize data before running tests
 beforeAll(async () => {
