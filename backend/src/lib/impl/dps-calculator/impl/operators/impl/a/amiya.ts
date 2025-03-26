@@ -1,6 +1,6 @@
-import type { OperatorParams } from "../../../../../../types/impl/lib/impl/dps-calculator";
-import OperatorUnit from "../../classes";
-import { OperatorData } from "../../classes/impl/operator-data";
+import type { OperatorParams } from "../../../../../../../types/impl/lib/impl/dps-calculator";
+import OperatorUnit from "../../../classes";
+import { OperatorData } from "../../../classes/impl/operator-data";
 
 export default class Amiya extends OperatorUnit {
     private s3: number;
