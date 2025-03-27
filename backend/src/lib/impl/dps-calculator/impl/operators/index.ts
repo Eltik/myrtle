@@ -20,6 +20,7 @@ import Aurora from "./impl/a/aurora";
 import Ayerscarpe from "./impl/a/ayerscarpe";
 import Bagpipe from "./impl/b/bagpipe";
 import Beehunter from "./impl/b/beehunter";
+import Beeswax from "./impl/b/beeswax";
 
 const operators = [
     {
@@ -109,6 +110,10 @@ const operators = [
     {
         id: "char_137_brownb",
         object: Beehunter,
+    },
+    {
+        id: "char_344_beewax",
+        object: Beeswax,
     },
 ];
 
