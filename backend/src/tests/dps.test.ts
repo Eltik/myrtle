@@ -25,6 +25,7 @@ import Ayerscarpe from "../lib/impl/dps-calculator/impl/operators/impl/a/ayersca
 import Bagpipe from "../lib/impl/dps-calculator/impl/operators/impl/b/bagpipe";
 import Beehunter from "../lib/impl/dps-calculator/impl/operators/impl/b/beehunter";
 import Beeswax from "../lib/impl/dps-calculator/impl/operators/impl/b/beeswax";
+import Bibeak from "../lib/impl/dps-calculator/impl/operators/impl/b/bibeak";
 
 // Initialize data before running tests
 beforeAll(async () => {
@@ -1987,6 +1988,81 @@ describe("Operator DPS Calculations", () => {
             const dps = unit.skillDPS({ defense: 0, res: 20 });
             expect(dps).toBeGreaterThan(349);
             expect(dps).toBeLessThan(351);
+        });
+    });
+
+    describe("Bibeak", () => {
+        const baseParams = {
+            moduleIndex: 1,
+        };
+        const operatorId = "char_252_bibeak";
+
+        test("should calculate s1 DPS correctly", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Bibeak(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(2629);
+            expect(dps).toBeLessThan(2631);
+        });
+        test("should calculate s1 DPS correctly with def", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Bibeak(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(1928);
+            expect(dps).toBeLessThan(1930);
+        });
+        test("should calculate s1 DPS correctly with res", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Bibeak(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(2629);
+            expect(dps).toBeLessThan(2631);
+        });
+
+        test("should calculate s2 DPS correctly", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Bibeak(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(2293);
+            expect(dps).toBeLessThan(2295);
+        });
+        test("should calculate s2 DPS correctly with def", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Bibeak(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(1614);
+            expect(dps).toBeLessThan(1616);
+        });
+        test("should calculate s2 DPS correctly with res", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Bibeak(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(2230);
+            expect(dps).toBeLessThan(2232);
         });
     });
 });
