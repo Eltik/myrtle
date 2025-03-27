@@ -21,6 +21,7 @@ import Ayerscarpe from "./impl/a/ayerscarpe";
 import Bagpipe from "./impl/b/bagpipe";
 import Beehunter from "./impl/b/beehunter";
 import Beeswax from "./impl/b/beeswax";
+import Bibeak from "./impl/b/bibeak";
 
 const operators = [
     {
@@ -114,6 +115,10 @@ const operators = [
     {
         id: "char_344_beewax",
         object: Beeswax,
+    },
+    {
+        id: "char_252_bibeak",
+        object: Bibeak,
     },
 ];
 

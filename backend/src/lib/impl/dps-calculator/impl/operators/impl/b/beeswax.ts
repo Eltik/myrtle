@@ -6,14 +6,13 @@ export default class Beeswax extends OperatorUnit {
     constructor(operatorData: OperatorData, params: OperatorParams) {
         super(operatorData, params, 1, 1, 1, [0, 1]);
 
-        this.skillDamageNames = [];
+        const finalAtk = this.atk * (1 + this.buffATK) + this.buffATKFlat;
+        const nukeHit = finalAtk * this.skillParameters[0];
+
+        const skillDamageName = `InitialHit: ${Math.round(nukeHit)}`;
+
+        this.skillDamageNames = [skillDamageName];
         if (this.skillIndex === 1) {
-            const finalAtk = this.atk * (1 + this.buffATK) + this.buffATKFlat;
-            const nukeHit = finalAtk * this.skillParameters[0];
-
-            const skillDamageName = `InitialHit: ${Math.round(nukeHit)}`;
-            this.skillDamageNames.push(skillDamageName);
-
             if (this.skillDamageName) {
                 this.skillDamageName += ` ${skillDamageName}`;
             } else {
