@@ -24,6 +24,7 @@ import Aurora from "../lib/impl/dps-calculator/impl/operators/impl/a/aurora";
 import Ayerscarpe from "../lib/impl/dps-calculator/impl/operators/impl/a/ayerscarpe";
 import Bagpipe from "../lib/impl/dps-calculator/impl/operators/impl/b/bagpipe";
 import Beehunter from "../lib/impl/dps-calculator/impl/operators/impl/b/beehunter";
+import Beeswax from "../lib/impl/dps-calculator/impl/operators/impl/b/beeswax";
 
 // Initialize data before running tests
 beforeAll(async () => {
@@ -1911,6 +1912,81 @@ describe("Operator DPS Calculations", () => {
             const dps = unit.skillDPS({ defense: 0, res: 20 });
             expect(dps).toBeGreaterThan(3049);
             expect(dps).toBeLessThan(3051);
+        });
+    });
+
+    describe("Beeswax", () => {
+        const baseParams = {
+            moduleIndex: 1,
+        };
+        const operatorId = "char_344_beewax";
+
+        test("should calculate s1 DPS correctly", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Beeswax(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(699);
+            expect(dps).toBeLessThan(701);
+        });
+        test("should calculate s1 DPS correctly with def", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Beeswax(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(699);
+            expect(dps).toBeLessThan(701);
+        });
+        test("should calculate s1 DPS correctly with res", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Beeswax(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(559);
+            expect(dps).toBeLessThan(561);
+        });
+
+        test("should calculate s2 DPS correctly", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Beeswax(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(436);
+            expect(dps).toBeLessThan(438);
+        });
+        test("should calculate s2 DPS correctly with def", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Beeswax(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(436);
+            expect(dps).toBeLessThan(438);
+        });
+        test("should calculate s2 DPS correctly with res", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Beeswax(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(349);
+            expect(dps).toBeLessThan(351);
         });
     });
 });
