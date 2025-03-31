@@ -1,4 +1,4 @@
-import { OperatorNation, OperatorRarity, OperatorSubProfession, type Operator } from "~/types/impl/api/static/operator";
+import { OperatorNation, OperatorRarity, type OperatorSubProfession, type Operator } from "~/types/impl/api/static/operator";
 import { capitalize, formatProfession, formatSubProfession, rarityToNumber } from "~/helper";
 import { ArrowDownFromLine, ArrowUpFromLine, ChevronDown, ChevronLeft, ChevronRight, Filter, List, Table2 } from "lucide-react";
 import { Button } from "../ui/button";
@@ -54,6 +54,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
     const [filterRace, setFilterRace] = useState<OperatorRace[]>([]);
     const [filterNation, setFilterNation] = useState<(keyof OperatorNation)[]>([]);
     const [filterGender, setFilterGender] = useState<("Unknown" | "Female" | "Male" | "Conviction")[]>([]);
+    const [filterArtists, setFilterArtists] = useState<string[]>([]);
 
     // Reset to first page when filters change
     const resetToFirstPage = () => {
@@ -78,6 +79,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
     const setFilterGenderWithReset = handleFilterChange(setFilterGender);
     const setFilterSkillTypesWithReset = handleFilterChange(setFilterSkillTypes);
     const setFilterSkillChargeTypesWithReset = handleFilterChange(setFilterSkillChargeTypes);
+    const setFilterArtistsWithReset = handleFilterChange(setFilterArtists);
     const setSearchTermWithReset = handleFilterChange(setSearchTerm);
 
     const options = [
@@ -143,6 +145,42 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
         resetToFirstPage();
     };
 
+    // Group operators by profession and sub-profession
+    const groupedProfessions = useMemo(() => {
+        return operators.reduce(
+            (acc, operator) => {
+                const profession = operator.profession;
+                const subProfessionId = operator.subProfessionId.toUpperCase() as OperatorSubProfession;
+
+                if (!acc[profession]) {
+                    acc[profession] = {} as Record<OperatorSubProfession, Operator[]>;
+                }
+                if (!acc[profession][subProfessionId]) {
+                    acc[profession][subProfessionId] = [];
+                }
+
+                acc[profession][subProfessionId]?.push(operator);
+                return acc;
+            },
+            {} as Record<OperatorProfession, Record<OperatorSubProfession, Operator[]>>,
+        );
+    }, [operators]);
+
+    const groupedArtists = useMemo(() => {
+        return operators.reduce(
+            (acc, operator) => {
+                operator.artists.forEach((artist) => {
+                    if (!acc[artist]) {
+                        acc[artist] = [];
+                    }
+                    acc[artist].push(operator);
+                });
+                return acc;
+            },
+            {} as Record<string, Operator[]>,
+        );
+    }, [operators]);
+
     const isClassChecked = (value: OperatorProfession): Checked => filterClasses.includes(value);
     const handleClassCheck = (value: OperatorProfession) => {
         if (filterClasses.includes(value)) {
@@ -203,6 +241,15 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
             setFilterNationWithReset(filterNation.filter((v) => v !== value));
         } else {
             setFilterNationWithReset([...filterNation, value]);
+        }
+    };
+
+    const isArtistChecked = (value: string): Checked => filterArtists.includes(value);
+    const handleArtistCheck = (value: string) => {
+        if (filterArtists.includes(value)) {
+            setFilterArtistsWithReset(filterArtists.filter((v) => v !== value));
+        } else {
+            setFilterArtistsWithReset([...filterArtists, value]);
         }
     };
 
@@ -344,7 +391,8 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
             .filter((char) => filterBirthPlace.length === 0 || (char.profile?.basicInfo.placeOfBirth && String(char.profile?.basicInfo.placeOfBirth) !== "" && filterBirthPlace.includes(char.profile?.basicInfo.placeOfBirth)))
             .filter((char) => filterRace.length === 0 || (char.profile?.basicInfo.race && String(char.profile?.basicInfo.race) !== "" && filterRace.includes(char.profile?.basicInfo.race)))
             .filter((char) => filterNation.length === 0 || (char.nationId && String(char.nationId) !== "" && filterNation.includes(char.nationId)))
-            .filter((char) => (filterGender.includes("Male") ? (char.profile?.basicInfo.gender === "Male]" ? true : false) : filterGender.length === 0 || (char.profile?.basicInfo.gender && String(char.profile?.basicInfo.gender) !== "" && filterGender.includes(char.profile?.basicInfo.gender as "Unknown" | "Female" | "Male" | "Conviction"))))
+            .filter((char) => filterGender.length === 0 || (char.profile?.basicInfo.gender && String(char.profile?.basicInfo.gender) !== "" && filterGender.includes(char.profile?.basicInfo.gender as "Unknown" | "Female" | "Male" | "Conviction")))
+            .filter((char) => filterArtists.length === 0 || char.artists.some((artist) => filterArtists.includes(artist)))
             .filter(
                 (char) =>
                     filterSkillTypes.length === 0 ||
@@ -391,7 +439,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                 }
                 return sortOrder === "asc" ? -comparison : comparison;
             });
-    }, [operators, canActivateSkill, showLimited, isModule, searchTerm, filterClasses, filterSubClasses, filterRarity, filterBirthPlace, filterRace, filterNation, filterGender, filterSkillTypes, filterSkillChargeTypes, sortBy, sortOrder, statsSortBy]);
+    }, [operators, canActivateSkill, showLimited, isModule, searchTerm, filterClasses, filterSubClasses, filterRarity, filterBirthPlace, filterRace, filterNation, filterGender, filterSkillTypes, filterSkillChargeTypes, sortBy, sortOrder, statsSortBy, filterArtists]);
 
     // Calculate total number of pages
     const validOperators = sortedAndFilteredCharacters.filter((operator) => operator.id?.startsWith("char"));
@@ -476,14 +524,14 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                     <DropdownMenuContent className="max-h-64 w-[200px] overflow-y-scroll">
                                         <DropdownMenuLabel>Classes</DropdownMenuLabel>
                                         <DropdownMenuSeparator />
-                                        {Object.keys(OperatorProfession).map((key) => {
-                                            const value = OperatorProfession[key as keyof typeof OperatorProfession];
-                                            return (
+                                        {Object.keys(OperatorProfession)
+                                            .map((key) => OperatorProfession[key as keyof typeof OperatorProfession])
+                                            .sort((a, b) => formatProfession(a).localeCompare(formatProfession(b)))
+                                            .map((value) => (
                                                 <DropdownMenuCheckboxItem key={value} checked={isClassChecked(value)} onCheckedChange={() => handleClassCheck(value)}>
                                                     {formatProfession(value)}
                                                 </DropdownMenuCheckboxItem>
-                                            );
-                                        })}
+                                            ))}
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                                 <DropdownMenu>
@@ -496,14 +544,17 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                     <DropdownMenuContent className="max-h-64 w-[200px] overflow-y-scroll">
                                         <DropdownMenuLabel>Subclasses</DropdownMenuLabel>
                                         <DropdownMenuSeparator />
-                                        {Object.keys(OperatorSubProfession).map((key) => {
-                                            const value = OperatorSubProfession[key as keyof typeof OperatorSubProfession];
-                                            return (
-                                                <DropdownMenuCheckboxItem key={value} checked={isSubClassChecked(value)} onCheckedChange={() => handleSubClassCheck(value)}>
-                                                    {formatSubProfession(value.toLowerCase())}
-                                                </DropdownMenuCheckboxItem>
-                                            );
-                                        })}
+                                        {Object.entries(groupedProfessions).map(([profession, subclasses]) => (
+                                            <div key={profession}>
+                                                <DropdownMenuLabel className="font-semibold">{formatProfession(profession)}</DropdownMenuLabel>
+                                                {Object.keys(subclasses).map((subclass) => (
+                                                    <DropdownMenuCheckboxItem key={subclass} checked={isSubClassChecked(subclass as OperatorSubProfession)} onCheckedChange={() => handleSubClassCheck(subclass as OperatorSubProfession)}>
+                                                        {formatSubProfession(subclass.toLowerCase())}
+                                                    </DropdownMenuCheckboxItem>
+                                                ))}
+                                                <DropdownMenuSeparator />
+                                            </div>
+                                        ))}
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                                 <DropdownMenu>
@@ -568,6 +619,25 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                                     </DropdownMenuCheckboxItem>
                                                 );
                                             })}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" className="w-[200px] justify-between">
+                                            <span className="mr-2 truncate">{filterArtists.length === 0 ? <span className="font-normal">Filter by Artist</span> : filterArtists.join(", ")}</span>
+                                            <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="max-h-64 w-[200px] overflow-y-scroll">
+                                        <DropdownMenuLabel>Artists</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        {Object.keys(groupedArtists)
+                                            .sort((a, b) => a.localeCompare(b))
+                                            .map((artist) => (
+                                                <DropdownMenuCheckboxItem key={artist} checked={isArtistChecked(artist)} onCheckedChange={() => handleArtistCheck(artist)}>
+                                                    {artist}
+                                                </DropdownMenuCheckboxItem>
+                                            ))}
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </div>

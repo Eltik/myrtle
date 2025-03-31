@@ -63,7 +63,7 @@ export default function Home() {
                                             },
                                         },
                                     }}
-                                    className="after:content-[''] after:inline-block after:w-[0.375em]"
+                                    className="after:inline-block after:w-[0.375em] after:content-['']"
                                 >
                                     Elevate your
                                 </motion.span>
@@ -81,7 +81,7 @@ export default function Home() {
                                                     duration: 0.3,
                                                     delay: i * 0.02,
                                                 }}
-                                                className="text-[#f59a9f] inline-block"
+                                                className="inline-block text-[#f59a9f]"
                                             >
                                                 {letter}
                                             </motion.span>
