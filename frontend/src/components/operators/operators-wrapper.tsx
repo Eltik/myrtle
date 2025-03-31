@@ -10,6 +10,7 @@ import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMe
 import type { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu";
 import { OperatorProfession } from "~/types/impl/api/static/operator";
 import { OperatorsGrid } from "./operators-grid";
+import { OperatorsTable } from "./operators-table";
 import { Checkbox } from "../ui/checkbox";
 import { Label } from "../ui/label";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
@@ -25,7 +26,7 @@ type Checked = DropdownMenuCheckboxItemProps["checked"];
 
 export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
     const [searchTerm, setSearchTerm] = useState("");
-    const [viewOption, setViewOption] = useState<"grid" | "portrait">("grid");
+    const [viewOption, setViewOption] = useState<"grid" | "table">("grid");
     const [showOptions, setShowOptions] = useState(false);
 
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
@@ -498,7 +499,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                         <div className="flex w-full flex-col justify-between gap-4 md:flex-row">
                             <div className="flex items-center justify-between gap-3">
                                 <h1 className="relative flex scroll-m-20 items-center gap-2 text-xl font-bold tracking-tight sm:justify-start lg:text-2xl xl:text-3xl">Operators</h1>
-                                <Button variant="outline" className="flex flex-row" onClick={() => setViewOption(viewOption === "grid" ? "portrait" : "grid")}>
+                                <Button variant="outline" className="flex flex-row" onClick={() => setViewOption(viewOption === "grid" ? "table" : "grid")}>
                                     {viewOption === "grid" ? <Table2 className="h-4 w-4" /> : <List className="h-4 w-4" />}
                                 </Button>
                             </div>
@@ -759,7 +760,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                 </div>
             </div>
             <div className={`transition-all duration-150 ${showOptions ? "" : "-mt-8"}`}>
-                <OperatorsGrid operators={validOperators} currentPage={currentPage} pageSize={pageSize} />
+                {viewOption === "grid" ? <OperatorsGrid operators={validOperators} currentPage={currentPage} pageSize={pageSize} /> : <OperatorsTable operators={validOperators} currentPage={currentPage} pageSize={pageSize} />}
 
                 {/* Pagination Controls */}
                 <div className="mt-8 flex items-center justify-center gap-2">
