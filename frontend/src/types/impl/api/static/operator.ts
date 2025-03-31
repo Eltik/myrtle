@@ -212,6 +212,7 @@ export type Operator = {
     })[];
     handbook: HandbookItem;
     profile: OperatorProfile | null;
+    artists: string[];
 };
 
 export enum OperatorPosition {

@@ -1,4 +1,4 @@
-import { getHandbook, getSkill, modules } from "../..";
+import { getHandbook, getSkill, getSkins, getVoices, modules } from "../..";
 import type { Drone, Operator } from "../../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/operators";
 import { STATIC_DATA } from "../../../handler";
 import { parseOperatorProfile } from "../../../helper";
@@ -82,6 +82,26 @@ export const getAll = (extraData: boolean = true): Operator[] => {
                     profile: null,
                 });
             }
+        }
+
+        // Handle VA's
+        const voiceData = getVoices(id);
+        if (voiceData) {
+            Object.assign(operator, {
+                voiceActors: voiceData.map((voice) => ({
+                    id: voice.id,
+                    name: voice.data?.[0]?.cvName ?? null,
+                    language: voice.data?.[0]?.language ?? null,
+                })),
+            });
+        }
+
+        // Handle artists
+        const skins = getSkins(id);
+        if (skins) {
+            Object.assign(operator, {
+                artists: skins.map((skin) => skin.displaySkin.drawerList).flat(),
+            });
         }
 
         return {
@@ -181,6 +201,21 @@ export default (id: string): Operator | null => {
                     profile: null,
                 });
             }
+        }
+
+        // Handle artists
+        const skins = getSkins(id);
+        if (skins) {
+            const artists: string[] = [];
+            for (const skin of skins) {
+                for (const drawer of skin.displaySkin.drawerList) {
+                    if (artists.includes(drawer)) continue;
+                    artists.push(drawer);
+                }
+            }
+            Object.assign(operator, {
+                artists,
+            });
         }
 
         return {
