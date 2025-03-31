@@ -109,7 +109,7 @@ export type Operator = {
                 skillType: string;
                 duration: number;
                 spData: {
-                    spType: string;
+                    spType: string | number;
                     levelUpCost: [];
                     maxChargeTime: number;
                     spCost: number;

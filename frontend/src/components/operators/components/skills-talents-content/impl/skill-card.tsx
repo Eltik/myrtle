@@ -77,10 +77,10 @@ function SkillCard({ skill, level }: { skill: Operator["skills"][0]; level: numb
                         <span
                             className="text-base text-muted-foreground"
                             style={{
-                                color: (skill.static?.levels[level]?.spData.spType ?? "") === "INCREASE_WITH_TIME" ? "#a7e855" : (skill.static?.levels[level]?.spData.spType ?? "") === "INCREASE_WHEN_ATTACK" ? "#f98d3f" : "#ffcf53",
+                                color: (skill.static?.levels[level]?.spData.spType ?? "") === 8 ? "#9c9a9a" : (skill.static?.levels[level]?.spData.spType ?? "") === "INCREASE_WITH_TIME" ? "#a7e855" : (skill.static?.levels[level]?.spData.spType ?? "") === "INCREASE_WHEN_ATTACK" ? "#f98d3f" : "#ffcf53",
                             }}
                         >
-                            {formatSkillType(skill.static?.levels[level]?.spData.spType ?? "")} Recovery
+                            {formatSkillType(skill.static?.levels[level]?.spData.spType ?? "") !== "Passive" ? formatSkillType(skill.static?.levels[level]?.spData.spType ?? "") + " Recovery" : "Passive"}
                         </span>
                     </div>
                 </CardTitle>
