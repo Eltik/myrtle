@@ -309,8 +309,8 @@ export const formatSubProfession = (subProfession: string): string => {
     }
 };
 
-export const formatSkillType = (type: string): string => {
-    return type === "INCREASE_WHEN_ATTACK" ? "Offensive" : type === "INCREASE_WITH_TIME" ? "Auto" : "Defensive";
+export const formatSkillType = (type: string | number): string => {
+    return type === 8 ? "Passive" : type === "INCREASE_WHEN_ATTACK" ? "Offensive" : type === "INCREASE_WITH_TIME" ? "Auto" : "Defensive";
 };
 
 export function capitalize(s: string) {
