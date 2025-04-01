@@ -62,66 +62,49 @@ function CharactersGrid({ data }: { data: User }) {
     }, [sortBy, sortOrder, filterRarity, searchTerm]);
 
     return (
-        <>
-            <div className="flex w-full flex-col space-y-4 md:flex-row md:space-x-4 md:space-y-0">
-                <Input placeholder="Search operators..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="md:w-1/3" />
-                <Select value={sortBy} onValueChange={(value: "level" | "rarity" | "obtained") => setSortBy(value)}>
-                    <SelectTrigger className="transition-all duration-150 hover:bg-secondary md:w-1/4">
-                        <SelectValue placeholder="Sort by" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="level" className="cursor-pointer">
-                            Sort by Level
-                        </SelectItem>
-                        <SelectItem value="rarity" className="cursor-pointer">
-                            Sort by Rarity
-                        </SelectItem>
-                        <SelectItem value="obtained" className="cursor-pointer">
-                            Sort by Obtained
-                        </SelectItem>
-                    </SelectContent>
-                </Select>
-                <Select value={filterRarity.toString()} onValueChange={(value) => setFilterRarity(value === "all" ? "all" : stringToOperatorRarity(value))}>
-                    <SelectTrigger className="transition-all duration-150 hover:bg-secondary md:w-1/4">
-                        <SelectValue placeholder="Filter by Rarity" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all" className="cursor-pointer">
-                            All Rarities
-                        </SelectItem>
-                        <SelectItem value="TIER_6" className="cursor-pointer">
-                            6 Star
-                        </SelectItem>
-                        <SelectItem value="TIER_5" className="cursor-pointer">
-                            5 Star
-                        </SelectItem>
-                        <SelectItem value="TIER_4" className="cursor-pointer">
-                            4 Star
-                        </SelectItem>
-                        <SelectItem value="TIER_3" className="cursor-pointer">
-                            3 Star
-                        </SelectItem>
-                        <SelectItem value="TIER_2" className="cursor-pointer">
-                            2 Star
-                        </SelectItem>
-                        <SelectItem value="TIER_1" className="cursor-pointer">
-                            1 Star
-                        </SelectItem>
-                    </SelectContent>
-                </Select>
-                <Button onClick={toggleSortOrder} variant="outline" className="flex flex-row">
-                    <span>{capitalize(sortOrder)}</span>
-                    {sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
-                </Button>
+        <div className="flex w-full flex-col space-y-6">
+            <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex w-full flex-col gap-4 sm:w-auto sm:flex-row sm:items-center">
+                    <Input placeholder="Search operators..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full sm:w-[300px]" />
+                    <Select value={sortBy} onValueChange={(value: "level" | "rarity" | "obtained") => setSortBy(value)}>
+                        <SelectTrigger className="w-full sm:w-[200px]">
+                            <SelectValue placeholder="Sort by" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="level">Sort by Level</SelectItem>
+                            <SelectItem value="rarity">Sort by Rarity</SelectItem>
+                            <SelectItem value="obtained">Sort by Obtained</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Select value={filterRarity.toString()} onValueChange={(value) => setFilterRarity(value === "all" ? "all" : stringToOperatorRarity(value))}>
+                        <SelectTrigger className="w-full sm:w-[200px]">
+                            <SelectValue placeholder="Filter by Rarity" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Rarities</SelectItem>
+                            <SelectItem value="TIER_6">6 Star</SelectItem>
+                            <SelectItem value="TIER_5">5 Star</SelectItem>
+                            <SelectItem value="TIER_4">4 Star</SelectItem>
+                            <SelectItem value="TIER_3">3 Star</SelectItem>
+                            <SelectItem value="TIER_2">2 Star</SelectItem>
+                            <SelectItem value="TIER_1">1 Star</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Button onClick={toggleSortOrder} variant="outline" className="flex w-full items-center justify-center gap-2 sm:w-auto">
+                        <span>{capitalize(sortOrder)}</span>
+                        {sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+                    </Button>
+                </div>
             </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {sortedAndFilteredCharacters.slice(0, displayCount).map((char, index) => (
-                    <div key={char.charId} ref={index === displayCount - 1 ? lastCharacterRef : null}>
+                    <div key={char.charId} ref={index === displayCount - 1 ? lastCharacterRef : null} className="w-full">
                         <CharacterCard data={char} />
                     </div>
                 ))}
             </div>
-        </>
+        </div>
     );
 }
 
