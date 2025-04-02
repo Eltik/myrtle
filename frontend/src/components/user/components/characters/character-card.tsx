@@ -16,40 +16,16 @@ function CharacterCard({ data }: { data: CharacterData }) {
                     <CardContent className="text-left">
                         <ScrollArea className="h-[620px] pb-6 md:h-[400px]">
                             <div className="grid gap-3 md:grid-cols-2">
-                                <div className="relative h-full w-full">
-                                    <Image
-                                        loading="lazy"
-                                        className="invisible hidden h-full w-full rounded-lg md:visible md:block"
-                                        alt="Operator Image"
-                                        src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/${data.skin ? encodeURIComponent(data.skin.includes("@") ? data.skin.replaceAll("@", "_") : data.skin.replaceAll("#", "_")) : encodeURIComponent((data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").includes("@") ? (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("@", "_") : (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("#", "_"))}.png`}
-                                        fill
-                                        sizes="100vw"
-                                        style={{
-                                            objectFit: "contain",
-                                        }}
-                                        decoding="async"
-                                    />
-                                    <Image
-                                        loading="lazy"
-                                        className="visible block h-full w-full rounded-lg md:invisible md:hidden"
-                                        alt="Operator Image"
-                                        width={500}
-                                        height={500}
-                                        src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/${data.skin ? encodeURIComponent(data.skin.includes("@") ? data.skin.replaceAll("@", "_") : data.skin.replaceAll("#", "_")) : encodeURIComponent((data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").includes("@") ? (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("@", "_") : (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("#", "_"))}.png`}
-                                        style={{
-                                            maxWidth: "100%",
-                                            height: "auto",
-                                            objectFit: "contain",
-                                        }}
-                                        decoding="async"
-                                    />
-                                </div>
                                 <div className="space-y-4 py-3">
                                     <div className="space-y-1">
-                                        <h2 className="text-2xl font-bold">{data.static?.name}</h2>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            {formatProfession(data.static?.profession ?? "")} | {formatSubProfession(data.static?.subProfessionId ?? "")}
-                                        </p>
+                                        <div className="h-8 overflow-hidden">
+                                            <h2 className="text-2xl font-bold truncate">{data.static?.name}</h2>
+                                        </div>
+                                        <div className="flex h-6 flex-col justify-center">
+                                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                {formatProfession(data.static?.profession ?? "")} | {formatSubProfession(data.static?.subProfessionId ?? "")}
+                                            </p>
+                                        </div>
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="">
@@ -94,6 +70,36 @@ function CharacterCard({ data }: { data: CharacterData }) {
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                                <div className="relative h-full w-full">
+                                    <Image
+                                        loading="lazy"
+                                        className="invisible hidden h-full w-full rounded-lg object-cover md:visible md:block"
+                                        alt="Operator Image"
+                                        src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/${data.skin ? encodeURIComponent(data.skin.includes("@") ? data.skin.replaceAll("@", "_") : data.skin.replaceAll("#", "_")) : encodeURIComponent((data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").includes("@") ? (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("@", "_") : (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("#", "_"))}.png`}
+                                        fill
+                                        sizes="100vw"
+                                        style={{
+                                            objectFit: "cover",
+                                            objectPosition: "center 20%",
+                                        }}
+                                        decoding="async"
+                                    />
+                                    <Image
+                                        loading="lazy"
+                                        className="visible block h-full w-full rounded-lg object-cover md:invisible md:hidden"
+                                        alt="Operator Image"
+                                        width={500}
+                                        height={500}
+                                        src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/${data.skin ? encodeURIComponent(data.skin.includes("@") ? data.skin.replaceAll("@", "_") : data.skin.replaceAll("#", "_")) : encodeURIComponent((data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").includes("@") ? (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("@", "_") : (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("#", "_"))}.png`}
+                                        style={{
+                                            maxWidth: "100%",
+                                            height: "auto",
+                                            objectFit: "cover",
+                                            objectPosition: "center 20%",
+                                        }}
+                                        decoding="async"
+                                    />
                                 </div>
                             </div>
                             <div className="flex w-full flex-col gap-5">

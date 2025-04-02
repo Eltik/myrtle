@@ -44,6 +44,9 @@ function CharactersList({ data }: { data: User }) {
                     </Button>
                 );
             },
+            cell: ({ row }) => {
+                return <div className="pl-4">{row.getValue("name")}</div>;
+            },
         },
         {
             accessorKey: "promotion",
@@ -57,16 +60,18 @@ function CharactersList({ data }: { data: User }) {
             },
             cell: ({ row }) => {
                 return (
-                    <Image
-                        src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/elite/${String(row.getValue("promotion"))}.png`}
-                        width={35}
-                        height={35}
-                        alt="Promotion"
-                        style={{
-                            maxWidth: "100%",
-                            height: "auto",
-                        }}
-                    />
+                    <div className="pl-8">
+                        <Image
+                            src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/elite/${String(row.getValue("promotion"))}.png`}
+                            width={35}
+                            height={35}
+                            alt="Promotion"
+                            style={{
+                                maxWidth: "100%",
+                                height: "auto",
+                            }}
+                        />
+                    </div>
                 );
             },
         },
@@ -82,16 +87,18 @@ function CharactersList({ data }: { data: User }) {
             },
             cell: ({ row }) => {
                 return (
-                    <Image
-                        src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/potential/${Number(row.getValue("potential")) + 1}.png`}
-                        width={40}
-                        height={40}
-                        alt="Potential"
-                        style={{
-                            maxWidth: "100%",
-                            height: "auto",
-                        }}
-                    />
+                    <div className="pl-6">
+                        <Image
+                            src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/potential/${Number(row.getValue("potential")) + 1}.png`}
+                            width={40}
+                            height={40}
+                            alt="Potential"
+                            style={{
+                                maxWidth: "100%",
+                                height: "auto",
+                            }}
+                        />
+                    </div>
                 );
             },
         },
