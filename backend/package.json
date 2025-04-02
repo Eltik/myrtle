@@ -37,7 +37,9 @@
         "build": "bun build ./src/index.ts --outdir ./dist --target node",
         "prettier": "bunx prettier --write .",
         "lint": "bun run prettier && bunx eslint --fix .",
-        "test:dps": "bun test src/tests/dps.test.ts"
+        "test:dps": "bun test src/tests/dps.test.ts",
+        "export": "bun run src/scripts/export.ts",
+        "import": "bun run src/scripts/import.ts"
     },
     "type": "module"
 }

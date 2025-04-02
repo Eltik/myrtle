@@ -19,7 +19,7 @@ function CharacterCard({ data }: { data: CharacterData }) {
                                 <div className="space-y-4 py-3">
                                     <div className="space-y-1">
                                         <div className="h-8 overflow-hidden">
-                                            <h2 className="text-2xl font-bold truncate">{data.static?.name}</h2>
+                                            <h2 className="truncate text-2xl font-bold">{data.static?.name}</h2>
                                         </div>
                                         <div className="flex h-6 flex-col justify-center">
                                             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -55,6 +55,21 @@ function CharacterCard({ data }: { data: CharacterData }) {
                                                     objectFit: "contain",
                                                 }}
                                             />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">Level</p>
+                                        <div className="flex items-center">
+                                            <div className="relative -ml-1 flex h-12 w-12 items-center justify-center">
+                                                <svg className="h-12 w-12 -rotate-90">
+                                                    <circle className="text-gray-700" strokeWidth="4" stroke="currentColor" fill="transparent" r="16" cx="24" cy="24" />
+                                                    <circle className="text-[rgb(255,220,102)]" strokeWidth="4" strokeDasharray={100} strokeDashoffset={100 - (data.exp / (data.static?.phases?.[data.evolvePhase]?.maxLevel ?? 90)) * 100} strokeLinecap="round" stroke="currentColor" fill="transparent" r="16" cx="24" cy="24" />
+                                                </svg>
+                                                <div className="absolute">
+                                                    <span className="text-sm font-semibold">{data.level}</span>
+                                                </div>
+                                            </div>
+                                            <span className="text-sm text-gray-500 dark:text-gray-400">/ {data.static?.phases?.[data.evolvePhase]?.maxLevel ?? 90}</span>
                                         </div>
                                     </div>
                                     <div className="space-y-1">
@@ -164,6 +179,51 @@ function CharacterCard({ data }: { data: CharacterData }) {
                                     )}
                                 </div>
                             </div>
+                            {data.currentEquip && data.static?.modules && data.static.modules.length > 0 && (
+                                <div className="mt-4 flex w-full flex-col gap-3">
+                                    <div className="space-y-1 text-left">
+                                        <span className="font-bold">Modules</span>
+                                        <Separator />
+                                    </div>
+                                    <div className="flex h-full flex-row flex-wrap gap-4 text-left">
+                                        {data.static.modules.map((module, index) => {
+                                            const isEquipped = data.currentEquip === module.uniEquipId;
+                                            const moduleLevel = data.equip[module.uniEquipId]?.level ?? 0;
+                                            if (!isEquipped && moduleLevel !== 0) return null;
+
+                                            return (
+                                                <div className="space-y-1" key={`module-${index}`}>
+                                                    <div className="flex w-full flex-row items-center gap-2">
+                                                        <Image
+                                                            src={module.image ?? `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/equip/icon/${module.uniEquipIcon}.png`}
+                                                            width={35}
+                                                            height={35}
+                                                            alt="Module"
+                                                            style={{
+                                                                maxWidth: "100%",
+                                                                height: "auto",
+                                                                objectFit: "contain",
+                                                            }}
+                                                        />
+                                                        <div className="text-md">
+                                                            <p className="text-xs text-gray-400">
+                                                                {module.typeName1} {module.typeName2 ? `(${module.typeName2})` : ""}
+                                                            </p>
+                                                            <b className={isEquipped ? "line-clamp-1 text-blue-200" : "line-clamp-1 text-inherit"}>{module.uniEquipName}</b>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <div className="flex flex-row items-center">
+                                                            <span className="text-base">Level {moduleLevel}</span>
+                                                            {isEquipped && <span className="ml-2 text-sm text-blue-200">(Equipped)</span>}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
                         </ScrollArea>
                     </CardContent>
                 </Card>
