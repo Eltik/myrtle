@@ -30,7 +30,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
     const [showOptions, setShowOptions] = useState(false);
 
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-    const [sortBy, setSortBy] = useState<"name" | "rarity" | "limited" | "stats">("name");
+    const [sortBy, setSortBy] = useState<"name" | "rarity" | "limited" | "stats" | "class">("rarity");
 
     const [isModule, setIsModule] = useState(false);
     const [showLimited, setShowLimited] = useState(true);
@@ -85,13 +85,17 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
 
     const options = [
         {
-            label: "Name",
-            value: "name",
+            label: "Rarity",
+            value: "rarity",
             default: true,
         },
         {
-            label: "Rarity",
-            value: "rarity",
+            label: "Class",
+            value: "class",
+        },
+        {
+            label: "Name",
+            value: "name",
         },
         {
             label: "Limited",
@@ -136,6 +140,8 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
     const handleSelect = (value: string) => {
         if (value === "stats") {
             setSortBy("stats");
+        } else if (value === "class") {
+            setSortBy("class");
         } else if (value === "name" || value === "rarity" || value === "limited") {
             setSortBy(value);
             setStatsSortBy("maxHp"); // Reset stats sorting when switching to name or rarity
@@ -370,9 +376,11 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                 });
                             }
                         }
-                    }
 
-                    return char;
+                        return char;
+                    } else {
+                        return char;
+                    }
                 } else {
                     const lastPhase = char.phases[char.phases.length - 1];
                     if (lastPhase) {
@@ -424,6 +432,24 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                         break;
                     case "rarity":
                         comparison = rarityToNumber(b.rarity) - rarityToNumber(a.rarity);
+                        if (comparison === 0) {
+                            // If same rarity, sort by class
+                            const classOrder = [OperatorProfession.VANGUARD, OperatorProfession.GUARD, OperatorProfession.DEFENDER, OperatorProfession.SNIPER, OperatorProfession.CASTER, OperatorProfession.SUPPORTER, OperatorProfession.MEDIC, OperatorProfession.SPECIALIST];
+                            const classComparison = classOrder.indexOf(a.profession) - classOrder.indexOf(b.profession);
+                            if (classComparison === 0) {
+                                // If same class, sort by name
+                                return a.name.localeCompare(b.name);
+                            }
+                            return classComparison;
+                        }
+                        break;
+                    case "class":
+                        const classOrder = [OperatorProfession.VANGUARD, OperatorProfession.GUARD, OperatorProfession.DEFENDER, OperatorProfession.SNIPER, OperatorProfession.CASTER, OperatorProfession.SUPPORTER, OperatorProfession.MEDIC, OperatorProfession.SPECIALIST];
+                        comparison = classOrder.indexOf(a.profession) - classOrder.indexOf(b.profession);
+                        if (comparison === 0) {
+                            // If same class, sort by name
+                            return a.name.localeCompare(b.name);
+                        }
                         break;
                     case "limited":
                         comparison = (b.handbook?.isLimited ? 1 : 0) - (a.handbook?.isLimited ? 1 : 0);

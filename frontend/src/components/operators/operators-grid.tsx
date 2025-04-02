@@ -25,7 +25,7 @@ export function OperatorsGrid({ operators, currentPage, pageSize }: { operators:
 
     return (
         <>
-            <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-5 lg:gap-6 xl:grid-cols-6 xl:gap-8">
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-6 lg:gap-3 xl:grid-cols-8 xl:gap-4">
                 {paginatedOperators.map((operator) => {
                     const operatorId = operator.id!; // We know it's non-null from our filter
                     const isHovered = hoveredOperator === operatorId;
@@ -43,15 +43,15 @@ export function OperatorsGrid({ operators, currentPage, pageSize }: { operators:
                             </div>
                             <div className="absolute inset-x-0 bottom-0 z-10">
                                 <div className="relative">
-                                    <div className="h-16 w-full bg-background/80 backdrop-blur-sm" />
-                                    <h2 className="sm:text-md absolute bottom-2 left-1 line-clamp-2 max-w-[85%] pr-12 text-base font-bold uppercase opacity-60 transition-opacity group-hover:opacity-100 md:text-xl">{operator.name}</h2>
-                                    <div className="absolute bottom-2 right-1 flex scale-75 items-center opacity-0 transition-all duration-200 group-hover:scale-100 group-hover:opacity-100">
-                                        <div className="h-6 w-6 md:h-10 md:w-10">
+                                    <div className="h-12 w-full bg-background/80 backdrop-blur-sm" />
+                                    <h2 className="absolute bottom-1 left-1 line-clamp-2 max-w-[85%] pr-8 text-xs font-bold uppercase opacity-60 transition-opacity group-hover:opacity-100 sm:text-sm md:text-sm">{operator.name}</h2>
+                                    <div className="absolute bottom-1 right-1 flex scale-75 items-center opacity-0 transition-all duration-200 group-hover:scale-100 group-hover:opacity-100">
+                                        <div className="h-4 w-4 md:h-6 md:w-6">
                                             <Image src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/classes/class_${formatProfession(operator.profession).toLowerCase()}.png`} alt={formatProfession(operator.profession)} loading="lazy" width={160} height={160} decoding="async" />
                                         </div>
                                     </div>
-                                    <div className={`absolute bottom-0 h-1 w-full ${operator.rarity === OperatorRarity.sixStar ? "bg-[#f7a452]" : operator.rarity === OperatorRarity.fiveStar ? "bg-[#f7e79e]" : operator.rarity === OperatorRarity.fourStar ? "bg-[#bcabdb]" : operator.rarity === OperatorRarity.threeStar ? "bg-[#88c8e3]" : operator.rarity === OperatorRarity.twoStar ? "bg-[#7ef2a3]" : "bg-white"} ${shouldGrayscale ? "grayscale" : ""} ${isHovered ? "grayscale-0" : ""}`} />
-                                    <div className={`absolute -bottom-1 h-2 w-full blur-sm ${operator.rarity === OperatorRarity.sixStar ? "bg-[#cc9b6a]" : operator.rarity === OperatorRarity.fiveStar ? "bg-[#d6c474]" : operator.rarity === OperatorRarity.fourStar ? "bg-[#9e87c7]" : operator.rarity === OperatorRarity.threeStar ? "bg-[#62a2bd]" : operator.rarity === OperatorRarity.twoStar ? "bg-[#57ab72]" : "bg-gray-500"}`} />
+                                    <div className={`absolute bottom-0 h-0.5 w-full ${operator.rarity === OperatorRarity.sixStar ? "bg-[#f7a452]" : operator.rarity === OperatorRarity.fiveStar ? "bg-[#f7e79e]" : operator.rarity === OperatorRarity.fourStar ? "bg-[#bcabdb]" : operator.rarity === OperatorRarity.threeStar ? "bg-[#88c8e3]" : operator.rarity === OperatorRarity.twoStar ? "bg-[#7ef2a3]" : "bg-white"} ${shouldGrayscale ? "grayscale" : ""} ${isHovered ? "grayscale-0" : ""}`} />
+                                    <div className={`absolute -bottom-0.5 h-1 w-full blur-sm ${operator.rarity === OperatorRarity.sixStar ? "bg-[#cc9b6a]" : operator.rarity === OperatorRarity.fiveStar ? "bg-[#d6c474]" : operator.rarity === OperatorRarity.fourStar ? "bg-[#9e87c7]" : operator.rarity === OperatorRarity.threeStar ? "bg-[#62a2bd]" : operator.rarity === OperatorRarity.twoStar ? "bg-[#57ab72]" : "bg-gray-500"}`} />
                                 </div>
                             </div>
                         </Link>
