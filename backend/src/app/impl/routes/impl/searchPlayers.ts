@@ -1,4 +1,4 @@
-import { redis } from "../../../";
+import { redis, REDIS_KEY } from "../../../";
 import search from "../../../../lib/impl/user/impl/search";
 import { type AKServer, AuthSession } from "../../../../types/impl/lib/impl/authentication";
 import middleware from "../../middleware";
@@ -41,7 +41,7 @@ const handler = async (req: Request): Promise<Response> => {
             return middleware.createResponse(JSON.stringify({ error: "Invalid server given." }), 400);
         }
 
-        const cached = await redis.get(`search-players-${server}-${nickname}-${nicknumber}-${limit}`);
+        const cached = await redis.get(`${REDIS_KEY}-search-players-${server}-${nickname}-${nicknumber}-${limit}`);
         if (cached) {
             return middleware.createResponse(cached);
         }
@@ -50,7 +50,7 @@ const handler = async (req: Request): Promise<Response> => {
 
         try {
             const data = await search(session, server, nickname, nicknumber ?? undefined, limit ?? undefined);
-            await redis.set(`search-players-${server}-${nickname}-${nicknumber}-${limit}`, JSON.stringify(data), "EX", route.cacheTime);
+            await redis.set(`${REDIS_KEY}-search-players-${server}-${nickname}-${nicknumber}-${limit}`, JSON.stringify(data), "EX", route.cacheTime);
             return middleware.createResponse(JSON.stringify(data));
         } catch (e: any) {
             return middleware.createResponse(e.message, 500);
