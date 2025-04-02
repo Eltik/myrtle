@@ -1,5 +1,5 @@
 import type { CharacterData, User } from "~/types/impl/api";
-import { OperatorPhase, OperatorRarity } from "~/types/impl/api/static/operator";
+import { OperatorPhase, OperatorProfession, OperatorRarity } from "~/types/impl/api/static/operator";
 
 export const parsePhase = (phase: string) => {
     switch (phase) {
@@ -178,6 +178,13 @@ export const formatProfession = (profession: string): string => {
     }
 };
 
+export const sortProfessions = (professions: OperatorProfession[]): OperatorProfession[] => {
+    return professions.sort((a, b) => {
+        const order = [OperatorProfession.VANGUARD, OperatorProfession.GUARD, OperatorProfession.DEFENDER, OperatorProfession.SNIPER, OperatorProfession.CASTER, OperatorProfession.SUPPORTER, OperatorProfession.MEDIC, OperatorProfession.SPECIALIST];
+        return order.indexOf(a) - order.indexOf(b);
+    });
+};
+
 export const formatSubProfession = (subProfession: string): string => {
     switch (subProfession) {
         case "physician":
@@ -269,12 +276,12 @@ export const formatSubProfession = (subProfession: string): string => {
         case "pusher":
             return "Pusher";
         case "dollkeeper":
-            return "Doll Keeper";
+            return "Dollkeeper";
         case "agent":
             return "Agent";
         case "fighter":
             return "Brawler";
-        case "liberator":
+        case "librator":
             return "Liberator";
         case "hammer":
             return "Earthshaker";
@@ -304,6 +311,8 @@ export const formatSubProfession = (subProfession: string): string => {
             return "Abjurer";
         case "traper":
             return "Trapmaster";
+        case "alchemist":
+            return "Alchemist";
         default:
             return subProfession;
     }
