@@ -1,5 +1,5 @@
 import { OperatorNation, OperatorRarity, type OperatorSubProfession, type Operator } from "~/types/impl/api/static/operator";
-import { capitalize, formatProfession, formatSubProfession, rarityToNumber } from "~/helper";
+import { capitalize, formatProfession, formatSubProfession, rarityToNumber, sortProfessions } from "~/helper";
 import { ArrowDownFromLine, ArrowUpFromLine, ChevronDown, ChevronLeft, ChevronRight, Filter, List, Table2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { useMemo, useState } from "react";
@@ -525,14 +525,11 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                     <DropdownMenuContent className="max-h-64 w-[200px] overflow-y-scroll">
                                         <DropdownMenuLabel>Classes</DropdownMenuLabel>
                                         <DropdownMenuSeparator />
-                                        {Object.keys(OperatorProfession)
-                                            .map((key) => OperatorProfession[key as keyof typeof OperatorProfession])
-                                            .sort((a, b) => formatProfession(a).localeCompare(formatProfession(b)))
-                                            .map((value) => (
-                                                <DropdownMenuCheckboxItem key={value} checked={isClassChecked(value)} onCheckedChange={() => handleClassCheck(value)}>
-                                                    {formatProfession(value)}
-                                                </DropdownMenuCheckboxItem>
-                                            ))}
+                                        {sortProfessions(Object.keys(OperatorProfession).map((key: string) => OperatorProfession[key as keyof typeof OperatorProfession])).map((value: OperatorProfession) => (
+                                            <DropdownMenuCheckboxItem key={value} checked={isClassChecked(value)} onCheckedChange={() => handleClassCheck(value)}>
+                                                {formatProfession(value)}
+                                            </DropdownMenuCheckboxItem>
+                                        ))}
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                                 <DropdownMenu>
@@ -545,10 +542,10 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                     <DropdownMenuContent className="max-h-64 w-[200px] overflow-y-scroll">
                                         <DropdownMenuLabel>Subclasses</DropdownMenuLabel>
                                         <DropdownMenuSeparator />
-                                        {Object.entries(groupedProfessions).map(([profession, subclasses]) => (
+                                        {sortProfessions(Object.keys(groupedProfessions).filter((profession): profession is OperatorProfession => profession !== "TOKEN" && profession !== "TRAP" && Object.values(OperatorProfession).includes(profession as OperatorProfession))).map((profession) => (
                                             <div key={profession}>
                                                 <DropdownMenuLabel className="font-semibold">{formatProfession(profession)}</DropdownMenuLabel>
-                                                {Object.keys(subclasses).map((subclass) => (
+                                                {Object.keys(groupedProfessions[profession]).map((subclass) => (
                                                     <DropdownMenuCheckboxItem key={subclass} checked={isSubClassChecked(subclass as OperatorSubProfession)} onCheckedChange={() => handleSubClassCheck(subclass as OperatorSubProfession)}>
                                                         {formatSubProfession(subclass.toLowerCase())}
                                                     </DropdownMenuCheckboxItem>
