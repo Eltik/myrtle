@@ -17,6 +17,8 @@ export const redis: Redis = env.REDIS_URL
           call: async () => void 0,
       } as unknown as Redis);
 
+export const REDIS_KEY = "myrtle";
+
 const start = async () => {
     const routesData: {
         [key: string]: { path: string; handler: (req: Request) => Promise<Response>; rateLimit: number };

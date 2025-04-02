@@ -1,4 +1,4 @@
-import { redis } from "../../..";
+import { redis, REDIS_KEY } from "../../..";
 import { env } from "../../../../env";
 import { calculateTrust, getHandbook, getMaterial, modules } from "../../../../lib/impl/local/impl/gamedata";
 import { getAll as getAllMaterials } from "../../../../lib/impl/local/impl/gamedata/impl/materials";
@@ -33,7 +33,7 @@ const handler = async (req: Request): Promise<Response> => {
                 case "materials":
                     const materialId = body?.id ?? paths[2] ?? url.searchParams.get("id") ?? null;
 
-                    const materialsCached = await redis.get(`static:materials:${materialId ?? "none"}`);
+                    const materialsCached = await redis.get(`${REDIS_KEY}-static:materials:${materialId ?? "none"}`);
                     if (materialsCached) {
                         return middleware.createResponse(materialsCached);
                     }
@@ -41,7 +41,7 @@ const handler = async (req: Request): Promise<Response> => {
                     const materials = materialId ? getMaterial(materialId) : getAllMaterials();
 
                     await redis.set(
-                        `static:materials:${materialId ?? "none"}`,
+                        `${REDIS_KEY}-static:materials:${materialId ?? "none"}`,
                         JSON.stringify({
                             materials,
                         }),
@@ -59,7 +59,7 @@ const handler = async (req: Request): Promise<Response> => {
                     if (!method) {
                         const id = body?.id ?? paths[3] ?? url.searchParams.get("id") ?? null;
 
-                        const modulesIdCached = await redis.get(`static:modules:${id ?? "none"}`);
+                        const modulesIdCached = await redis.get(`${REDIS_KEY}-static:modules:${id ?? "none"}`);
                         if (modulesIdCached) {
                             return middleware.createResponse(modulesIdCached);
                         }
@@ -67,7 +67,7 @@ const handler = async (req: Request): Promise<Response> => {
                         const modulesData = id ? modules.get(id) : await getAllModules();
 
                         await redis.set(
-                            `static:modules:${id ?? "none"}`,
+                            `${REDIS_KEY}-static:modules:${id ?? "none"}`,
                             JSON.stringify({
                                 modules: modulesData,
                             }),
@@ -85,7 +85,7 @@ const handler = async (req: Request): Promise<Response> => {
                             case "charid":
                                 const charId = body?.id ?? paths[3] ?? url.searchParams.get("id") ?? null;
 
-                                const modulesCharIdCached = await redis.get(`static:modules:charid:${charId ?? "none"}`);
+                                const modulesCharIdCached = await redis.get(`${REDIS_KEY}-static:modules:charid:${charId ?? "none"}`);
                                 if (modulesCharIdCached) {
                                     return middleware.createResponse(modulesCharIdCached);
                                 }
@@ -93,7 +93,7 @@ const handler = async (req: Request): Promise<Response> => {
                                 const modulesData = modules.getByCharId(charId);
 
                                 await redis.set(
-                                    `static:modules:charid:${charId ?? "none"}`,
+                                    `${REDIS_KEY}-static:modules:charid:${charId ?? "none"}`,
                                     JSON.stringify({
                                         modules: modulesData,
                                     }),
@@ -109,7 +109,7 @@ const handler = async (req: Request): Promise<Response> => {
                             case "details":
                                 const id = body?.id ?? paths[3] ?? url.searchParams.get("id") ?? null;
 
-                                const modulesDetailsCached = await redis.get(`static:modules:details:${id ?? "none"}`);
+                                const modulesDetailsCached = await redis.get(`${REDIS_KEY}-static:modules:details:${id ?? "none"}`);
                                 if (modulesDetailsCached) {
                                     return middleware.createResponse(modulesDetailsCached);
                                 }
@@ -117,7 +117,7 @@ const handler = async (req: Request): Promise<Response> => {
                                 const details = modules.getModuleDetails(id);
 
                                 await redis.set(
-                                    `static:modules:details:${id ?? "none"}`,
+                                    `${REDIS_KEY}-static:modules:details:${id ?? "none"}`,
                                     JSON.stringify({
                                         details,
                                     }),
@@ -137,7 +137,7 @@ const handler = async (req: Request): Promise<Response> => {
                 case "operators":
                     const operatorId = body?.id ?? paths[2] ?? url.searchParams.get("id") ?? null;
 
-                    const operatorsCached = await redis.get(`static:operators:${operatorId ?? "none"}`);
+                    const operatorsCached = await redis.get(`${REDIS_KEY}-static:operators:${operatorId ?? "none"}`);
                     if (operatorsCached) {
                         return middleware.createResponse(operatorsCached);
                     }
@@ -145,7 +145,7 @@ const handler = async (req: Request): Promise<Response> => {
                     const operatorsData = operatorId ? operators(operatorId) : getAllOperators();
 
                     await redis.set(
-                        `static:operators:${operatorId ?? "none"}`,
+                        `${REDIS_KEY}-static:operators:${operatorId ?? "none"}`,
                         JSON.stringify({
                             operators: operatorsData,
                         }),
@@ -161,7 +161,7 @@ const handler = async (req: Request): Promise<Response> => {
                 case "ranges":
                     const rangeId = body?.id ?? paths[2] ?? url.searchParams.get("id") ?? null;
 
-                    const rangesCached = await redis.get(`static:ranges:${rangeId ?? "none"}`);
+                    const rangesCached = await redis.get(`${REDIS_KEY}-static:ranges:${rangeId ?? "none"}`);
                     if (rangesCached) {
                         return middleware.createResponse(rangesCached);
                     }
@@ -169,7 +169,7 @@ const handler = async (req: Request): Promise<Response> => {
                     const range = rangeId ? ranges(rangeId) : getAllRanges();
 
                     await redis.set(
-                        `static:ranges:${rangeId ?? "none"}`,
+                        `${REDIS_KEY}-static:ranges:${rangeId ?? "none"}`,
                         JSON.stringify({
                             range,
                         }),
@@ -185,7 +185,7 @@ const handler = async (req: Request): Promise<Response> => {
                 case "skills":
                     const skillId = body?.id ?? paths[2] ?? url.searchParams.get("id") ?? null;
 
-                    const skillsCached = await redis.get(`static:skills:${skillId ?? "none"}`);
+                    const skillsCached = await redis.get(`${REDIS_KEY}-static:skills:${skillId ?? "none"}`);
                     if (skillsCached) {
                         return middleware.createResponse(skillsCached);
                     }
@@ -193,7 +193,7 @@ const handler = async (req: Request): Promise<Response> => {
                     const skillsData = skillId ? skills(skillId) : getAllSkills();
 
                     await redis.set(
-                        `static:skills:${skillId ?? "none"}`,
+                        `${REDIS_KEY}-static:skills:${skillId ?? "none"}`,
                         JSON.stringify({
                             skills: skillsData,
                         }),
@@ -209,7 +209,7 @@ const handler = async (req: Request): Promise<Response> => {
                 case "trust":
                     const trust = body?.trust ?? paths[2] ?? url.searchParams.get("trust") ?? null;
 
-                    const trustCached = await redis.get(`static:trust:${trust ?? "none"}`);
+                    const trustCached = await redis.get(`${REDIS_KEY}-static:trust:${trust ?? "none"}`);
                     if (trustCached) {
                         return middleware.createResponse(trustCached);
                     }
@@ -217,7 +217,7 @@ const handler = async (req: Request): Promise<Response> => {
                     const trustData = trust ? calculateTrust(Number(trust)) : null;
 
                     await redis.set(
-                        `static:trust:${trust ?? "none"}`,
+                        `${REDIS_KEY}-static:trust:${trust ?? "none"}`,
                         JSON.stringify({
                             trust: trustData,
                         }),
@@ -233,7 +233,7 @@ const handler = async (req: Request): Promise<Response> => {
                 case "handbook":
                     const charId = body?.id ?? paths[2] ?? url.searchParams.get("id") ?? null;
 
-                    const handbookCached = await redis.get(`static:handbook:${charId ?? "none"}`);
+                    const handbookCached = await redis.get(`${REDIS_KEY}-static:handbook:${charId ?? "none"}`);
                     if (handbookCached) {
                         return middleware.createResponse(handbookCached);
                     }
@@ -241,7 +241,7 @@ const handler = async (req: Request): Promise<Response> => {
                     const handbookData = charId ? getHandbook(charId) : null;
 
                     await redis.set(
-                        `static:handbook:${charId ?? "none"}`,
+                        `${REDIS_KEY}-static:handbook:${charId ?? "none"}`,
                         JSON.stringify({
                             handbook: handbookData,
                         }),
@@ -257,7 +257,7 @@ const handler = async (req: Request): Promise<Response> => {
                 case "skins":
                     const skinId = body?.id ?? paths[2] ?? url.searchParams.get("id") ?? null;
 
-                    const skinsCached = await redis.get(`static:skins:${skinId ?? "none"}`);
+                    const skinsCached = await redis.get(`${REDIS_KEY}-static:skins:${skinId ?? "none"}`);
                     if (skinsCached) {
                         return middleware.createResponse(skinsCached);
                     }
@@ -265,7 +265,7 @@ const handler = async (req: Request): Promise<Response> => {
                     const skinsData = skinId ? skins(skinId) : getAllSkins();
 
                     await redis.set(
-                        `static:skins:${skinId ?? "none"}`,
+                        `${REDIS_KEY}-static:skins:${skinId ?? "none"}`,
                         JSON.stringify({
                             skins: skinsData,
                         }),
@@ -281,7 +281,7 @@ const handler = async (req: Request): Promise<Response> => {
                 case "voices":
                     const voiceId = body?.id ?? paths[2] ?? url.searchParams.get("id") ?? null;
 
-                    const voicesCached = await redis.get(`static:voices:${voiceId ?? "none"}`);
+                    const voicesCached = await redis.get(`${REDIS_KEY}-static:voices:${voiceId ?? "none"}`);
                     if (voicesCached) {
                         return middleware.createResponse(voicesCached);
                     }
@@ -289,7 +289,7 @@ const handler = async (req: Request): Promise<Response> => {
                     const voicesData = voiceId ? voices(voiceId) : getAllVoices();
 
                     await redis.set(
-                        `static:voices:${voiceId ?? "none"}`,
+                        `${REDIS_KEY}-static:voices:${voiceId ?? "none"}`,
                         JSON.stringify({
                             voices: voicesData,
                         }),
