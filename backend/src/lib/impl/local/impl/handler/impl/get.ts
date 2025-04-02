@@ -5,7 +5,7 @@ import { exists } from "./exists";
 export const get = async (table: ExcelTables) => {
     if (!(await exists(table))) return null;
 
-    const file = Bun.file(join(import.meta.dir, `./data/${table}.json`));
+    const file = Bun.file(join(process.cwd(), "data", `${table}.json`));
 
     return await file.json();
 };

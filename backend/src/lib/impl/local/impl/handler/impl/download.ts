@@ -37,7 +37,7 @@ export const download = async (table: ExcelTables) => {
     try {
         const url = `https://raw.githubusercontent.com/${GAME_DATA_REPOSITORY}/main/en_US/gamedata/excel/${table}.json`;
         const data = await fetchWithRetry(url);
-        await Bun.write(join(import.meta.dir, `./data/${table}.json`), JSON.stringify(data, null, 4));
+        await Bun.write(join(process.cwd(), "data", `${table}.json`), JSON.stringify(data, null, 4));
         return data;
     } catch (error) {
         console.error(`Failed to download ${table} from ${GAME_DATA_REPOSITORY}:`, error);
