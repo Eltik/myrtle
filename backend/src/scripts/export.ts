@@ -15,7 +15,7 @@ function formatDuration(ms: number): string {
     const seconds = Math.floor(ms / 1000);
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
-    
+
     if (hours > 0) return `${hours}h ${minutes % 60}m ${seconds % 60}s`;
     if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
     return `${seconds}s`;
@@ -23,9 +23,9 @@ function formatDuration(ms: number): string {
 
 function sanitizeData(data: any): any {
     if (data === null || data === undefined) return null;
-    if (typeof data === 'object') {
+    if (typeof data === "object") {
         if (Array.isArray(data)) {
-            return data.map(item => sanitizeData(item));
+            return data.map((item) => sanitizeData(item));
         }
         const sanitized: any = {};
         for (const [key, value] of Object.entries(data)) {
@@ -41,7 +41,7 @@ function sanitizeData(data: any): any {
 (async () => {
     console.log(colors.cyan("\n=== Starting Database Export ===\n"));
     const startTime = Date.now();
-    
+
     await listener();
     await db.init();
 
@@ -67,7 +67,7 @@ function sanitizeData(data: any): any {
             allData.push(...batch);
             offset += batch.length;
             batchCount++;
-            
+
             // Show progress every 5 batches
             if (batchCount % 5 === 0) {
                 console.log(colors.gray(`  Fetched ${allData.length} rows so far...`));
@@ -76,7 +76,7 @@ function sanitizeData(data: any): any {
 
         // Sanitize and validate the data before writing
         const sanitizedData = sanitizeData(allData);
-        
+
         // Validate JSON serialization
         try {
             JSON.stringify(sanitizedData);
