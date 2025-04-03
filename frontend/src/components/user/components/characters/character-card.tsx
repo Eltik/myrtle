@@ -189,7 +189,8 @@ function CharacterCard({ data }: { data: CharacterData }) {
                                         {data.static.modules.map((module, index) => {
                                             const isEquipped = data.currentEquip === module.uniEquipId;
                                             const moduleLevel = data.equip[module.uniEquipId]?.level ?? 0;
-                                            if (!isEquipped && moduleLevel !== 0) return null;
+                                            const isLocked = data.equip[module.uniEquipId]?.locked === 1;
+                                            if (module.typeName1 === "ORIGINAL" || moduleLevel === 0 || isLocked) return null;
 
                                             return (
                                                 <div className="space-y-1" key={`module-${index}`}>

@@ -15,6 +15,7 @@ function CharactersList({ data }: { data: User }) {
         potential: number;
         recruited: number;
         trust: number;
+        level: number;
     } | null>[] = [
         {
             accessorKey: "icon",
@@ -114,6 +115,20 @@ function CharactersList({ data }: { data: User }) {
             },
             cell: ({ row }) => {
                 return <p>{new Date(Number(row.getValue("recruited")) * 1000).toLocaleString()}</p>;
+            },
+        },
+        {
+            accessorKey: "level",
+            header: ({ column }) => {
+                return (
+                    <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+                        Level
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                );
+            },
+            cell: ({ row }) => {
+                return <div className="pl-6">{row.getValue("level")}</div>;
             },
         },
         {

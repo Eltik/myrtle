@@ -61,10 +61,11 @@ function CharacterDialogueCard({ data }: { data: CharacterData }) {
             </CardHeader>
             <CardContent>
                 <Tabs defaultValue="info" className="w-full" onValueChange={handleTabChange}>
-                    <TabsList className="grid w-full grid-cols-4">
+                    <TabsList className="grid w-full grid-cols-5">
                         <TabsTrigger value="info">Info</TabsTrigger>
                         <TabsTrigger value="stats">Stats</TabsTrigger>
                         <TabsTrigger value="skills">Skills</TabsTrigger>
+                        <TabsTrigger value="modules">Modules</TabsTrigger>
                         <TabsTrigger value="talents">Talents</TabsTrigger>
                     </TabsList>
                     <TabsContent value="info">
@@ -212,6 +213,52 @@ function CharacterDialogueCard({ data }: { data: CharacterData }) {
                                     </div>
                                 );
                             })}
+                        </ScrollArea>
+                    </TabsContent>
+                    <TabsContent value="modules">
+                        <ScrollArea className="h-[200px] w-full rounded-md border p-4">
+                            {data.static?.modules && data.static.modules.length > 0 ? (
+                                <div className="flex flex-col gap-4">
+                                    {data.static.modules.map((module, index) => {
+                                        const isEquipped = data.currentEquip === module.uniEquipId;
+                                        const moduleLevel = data.equip[module.uniEquipId]?.level ?? 0;
+                                        const isLocked = data.equip[module.uniEquipId]?.locked === 1;
+                                        if (module.typeName1 === "ORIGINAL" || moduleLevel === 0 || isLocked) return null;
+
+                                        return (
+                                            <div className="space-y-2" key={`module-${index}`}>
+                                                <div className="flex w-full flex-row items-center gap-2">
+                                                    <Image
+                                                        src={`https://raw.githubusercontent.com/fexli/ArknightsResource/main/equip/${module.uniEquipIcon}.png`}
+                                                        width={35}
+                                                        height={35}
+                                                        alt="Module"
+                                                        style={{
+                                                            maxWidth: "100%",
+                                                            height: "auto",
+                                                            objectFit: "contain",
+                                                        }}
+                                                    />
+                                                    <div className="text-md">
+                                                        <p className="text-xs text-gray-400">
+                                                            {module.typeName1} {module.typeName2 ? `(${module.typeName2})` : ""}
+                                                        </p>
+                                                        <b className={isEquipped ? "line-clamp-1 text-blue-200" : "line-clamp-1 text-inherit"}>{module.uniEquipName}</b>
+                                                    </div>
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <div className="flex flex-row items-center">
+                                                        <span className="text-base">Level {moduleLevel}</span>
+                                                        {isEquipped && <span className="ml-2 text-sm text-blue-200">(Equipped)</span>}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="text-sm text-gray-500 dark:text-gray-400">No modules found.</div>
+                            )}
                         </ScrollArea>
                     </TabsContent>
                 </Tabs>
