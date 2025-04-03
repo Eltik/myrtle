@@ -91,7 +91,7 @@ function CharacterCard({ data }: { data: CharacterData }) {
                                         loading="lazy"
                                         className="invisible hidden h-full w-full rounded-lg object-cover md:visible md:block"
                                         alt="Operator Image"
-                                        src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/${data.skin ? encodeURIComponent(data.skin.includes("@") ? data.skin.replaceAll("@", "_") : data.skin.replaceAll("#", "_")) : encodeURIComponent((data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").includes("@") ? (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("@", "_") : (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("#", "_"))}.png`}
+                                        src={`https://raw.githubusercontent.com/fexli/ArknightsResource/main/charpack/${data.skin ? data.skin.replaceAll("@", "_").replaceAll("#", "_") : (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("@", "_").replaceAll("#", "_")}.png`}
                                         fill
                                         sizes="100vw"
                                         style={{
@@ -106,7 +106,7 @@ function CharacterCard({ data }: { data: CharacterData }) {
                                         alt="Operator Image"
                                         width={500}
                                         height={500}
-                                        src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/${data.skin ? encodeURIComponent(data.skin.includes("@") ? data.skin.replaceAll("@", "_") : data.skin.replaceAll("#", "_")) : encodeURIComponent((data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").includes("@") ? (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("@", "_") : (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("#", "_"))}.png`}
+                                        src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/${data.skin ? data.skin.replaceAll("@", "_").replaceAll("#", "_") : (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("@", "_").replaceAll("#", "_")}.png`}
                                         style={{
                                             maxWidth: "100%",
                                             height: "auto",
@@ -195,7 +195,7 @@ function CharacterCard({ data }: { data: CharacterData }) {
                                                 <div className="space-y-1" key={`module-${index}`}>
                                                     <div className="flex w-full flex-row items-center gap-2">
                                                         <Image
-                                                            src={module.image ?? `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/equip/icon/${module.uniEquipIcon}.png`}
+                                                            src={`https://raw.githubusercontent.com/fexli/ArknightsResource/main/equip/${module.uniEquipIcon}.png`}
                                                             width={35}
                                                             height={35}
                                                             alt="Module"

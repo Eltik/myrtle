@@ -9,7 +9,7 @@ import { ArrowDown, ArrowUp } from "lucide-react";
 import CharacterCard from "./components/characters/character-card";
 
 function CharactersGrid({ data }: { data: User }) {
-    const [sortBy, setSortBy] = useState<"level" | "rarity" | "obtained">("level");
+    const [sortBy, setSortBy] = useState<"level" | "rarity" | "obtained" | "potential">("level");
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
     const [filterRarity, setFilterRarity] = useState<OperatorRarity | "all">("all");
     const [searchTerm, setSearchTerm] = useState("");
@@ -33,6 +33,9 @@ function CharactersGrid({ data }: { data: User }) {
                         break;
                     case "obtained":
                         comparison = b.gainTime - a.gainTime;
+                        break;
+                    case "potential":
+                        comparison = (b.potentialRank ?? 0) - (a.potentialRank ?? 0);
                         break;
                 }
                 return sortOrder === "asc" ? -comparison : comparison;
@@ -66,7 +69,7 @@ function CharactersGrid({ data }: { data: User }) {
             <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex w-full flex-col gap-4 sm:w-auto sm:flex-row sm:items-center">
                     <Input placeholder="Search operators..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full sm:w-[300px]" />
-                    <Select value={sortBy} onValueChange={(value: "level" | "rarity" | "obtained") => setSortBy(value)}>
+                    <Select value={sortBy} onValueChange={(value: "level" | "rarity" | "obtained" | "potential") => setSortBy(value)}>
                         <SelectTrigger className="w-full sm:w-[200px]">
                             <SelectValue placeholder="Sort by" />
                         </SelectTrigger>
@@ -74,6 +77,7 @@ function CharactersGrid({ data }: { data: User }) {
                             <SelectItem value="level">Sort by Level</SelectItem>
                             <SelectItem value="rarity">Sort by Rarity</SelectItem>
                             <SelectItem value="obtained">Sort by Obtained</SelectItem>
+                            <SelectItem value="potential">Sort by Potential</SelectItem>
                         </SelectContent>
                     </Select>
                     <Select value={filterRarity.toString()} onValueChange={(value) => setFilterRarity(value === "all" ? "all" : stringToOperatorRarity(value))}>

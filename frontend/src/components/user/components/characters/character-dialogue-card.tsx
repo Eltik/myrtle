@@ -37,7 +37,7 @@ function CharacterDialogueCard({ data }: { data: CharacterData }) {
                 <div className="relative h-64 w-full">
                     <Image
                         loading="lazy"
-                        src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/${data.skin ? encodeURIComponent(data.skin.includes("@") ? data.skin.replaceAll("@", "_") : data.skin.replaceAll("#", "_")) : encodeURIComponent((data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").includes("@") ? (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("@", "_") : (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("#", "_"))}.png`}
+                        src={`https://raw.githubusercontent.com/fexli/ArknightsResource/main/charpack/${data.skin ? data.skin.replaceAll("@", "_").replaceAll("#", "_") : (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("@", "_").replaceAll("#", "_")}.png`}
                         alt={name}
                         className="h-48 w-full rounded-t-lg"
                         fill
