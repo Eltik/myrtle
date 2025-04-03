@@ -236,7 +236,7 @@ function InfoContent({ operator }: { operator: Operator }) {
     };
 
     const handleFavorPointChange = (value: number) => {
-        if (value >= 0 && value <= 100) {
+        if (value >= 0 && value <= 200) {
             setFavorPoint(value);
         }
     };
