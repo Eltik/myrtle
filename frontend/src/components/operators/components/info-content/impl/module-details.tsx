@@ -39,7 +39,7 @@ export function ModuleDetails({ currentModule, modules, moduleData }: ModuleDeta
                 {/* Module Header */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <Image src={currentModuleInfo.image ?? ""} alt={currentModuleInfo.uniEquipName} className="h-24 w-24 rounded-md" width={96} height={96} />
+                        <Image src={currentModuleInfo.image ?? `https://raw.githubusercontent.com/fexli/ArknightsResource/main/equip/${currentModuleInfo.uniEquipIcon}.png`} alt={currentModuleInfo.uniEquipName} className="h-24 w-24 rounded-md" width={96} height={96} />
                         <div>
                             <h3 className="text-lg font-semibold">{currentModuleInfo.uniEquipName}</h3>
                             <div className="flex gap-1">
