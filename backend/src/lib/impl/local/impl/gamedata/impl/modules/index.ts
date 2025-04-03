@@ -1,4 +1,4 @@
-import { ACESHIP_REPOSITORY } from "../..";
+import { ACESHIP_REPOSITORY, FEXLI_REPOSITORY } from "../..";
 import type { Modules } from "../../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/modules";
 import { STATIC_DATA } from "../../../handler";
 import { get } from "./impl/get";
@@ -8,7 +8,7 @@ import { getModuleDetails } from "./impl/getDetails";
 export const getAll = (): Modules => {
     const data = STATIC_DATA?.UNIEQUIP_TABLE as Modules;
     for (const module in data.equipDict) {
-        Object.assign(data.equipDict[module], { id: module, image: `https://raw.githubusercontent.com/${ACESHIP_REPOSITORY}/main/equip/icon/${encodeURIComponent(data.equipDict[module].uniEquipIcon)}.png` });
+        Object.assign(data.equipDict[module], { id: module, image: `https://raw.githubusercontent.com/${FEXLI_REPOSITORY}/main/equip/${encodeURIComponent(data.equipDict[module].uniEquipIcon)}.png` });
     }
     return data;
 };
