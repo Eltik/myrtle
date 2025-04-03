@@ -22,7 +22,7 @@ import { Handbook } from "./impl/handbook";
 // https://sanitygone.help/operators/gavial-the-invincible#page-content
 
 function InfoContent({ operator }: { operator: Operator }) {
-    const [showControls, setShowControls] = useState<boolean>(false); // Show controls for the operator
+    const [showControls, setShowControls] = useState<boolean>(true); // Show controls for the operator by default
     const [isModuleDetailsExpanded, setIsModuleDetailsExpanded] = useState(true);
     const [isHandbookExpanded, setIsHandbookExpanded] = useState(true);
 
@@ -256,18 +256,31 @@ function InfoContent({ operator }: { operator: Operator }) {
                     <div className="flex flex-col gap-2">
                         <TopDescription operator={operator} />
                     </div>
-                    <div className="mt-4">
-                        <Button variant={"outline"} onClick={() => setShowControls(!showControls)} className="flex flex-row items-center">
-                            {showControls ? "Hide" : "Show"} Controls
-                            <ChevronDown className={`ml-auto transition-transform ${showControls ? "rotate-180" : ""}`} />
-                        </Button>
-                    </div>
-                    <div className={`overflow-hidden transition-all duration-300 ${showControls ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"}`}>
-                        <ModuleInfo phaseIndex={phaseIndex} moduleData={moduleData} modules={modules} currentModule={currentModule} setCurrentModule={setCurrentModule} currentModuleLevel={currentModuleLevel} setCurrentModuleLevel={setCurrentModuleLevel} favorPoint={favorPoint} setFavorPoint={setFavorPoint} operator={operator} setPotentialRank={setPotentialRank} handleFavorPointChange={handleFavorPointChange} />
-                        <div className="mt-3 max-w-md">
-                            <LevelSlider phaseIndex={phaseIndex} maxLevels={operator.phases.map((phase) => phase.maxLevel)} onLevelChange={handleLevelChange} />
+
+                    {/* Controls Section with improved visibility and organization */}
+                    <div className="mt-4 rounded-md border p-4">
+                        <div className="mb-2 flex items-center justify-between">
+                            <h3 className="text-lg font-semibold">Operator Controls</h3>
+                            <Button variant={"outline"} onClick={() => setShowControls(!showControls)} className="flex flex-row items-center" size="sm">
+                                {showControls ? "Hide" : "Show"} Controls
+                                <ChevronDown className={`ml-auto h-4 w-4 transition-transform ${showControls ? "rotate-180" : ""}`} />
+                            </Button>
+                        </div>
+
+                        <div className={`overflow-hidden transition-all duration-300 ${showControls ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"}`}>
+                            <div className="mb-4 rounded-md bg-muted/30 p-3 text-sm">
+                                <p>Adjust these controls to see how the operator&apos;s stats change at different levels, with different modules, and at various trust levels.</p>
+                            </div>
+
+                            <ModuleInfo phaseIndex={phaseIndex} moduleData={moduleData} modules={modules} currentModule={currentModule} setCurrentModule={setCurrentModule} currentModuleLevel={currentModuleLevel} setCurrentModuleLevel={setCurrentModuleLevel} favorPoint={favorPoint} setFavorPoint={setFavorPoint} operator={operator} setPotentialRank={setPotentialRank} handleFavorPointChange={handleFavorPointChange} />
+
+                            <div className="mt-3 max-w-md">
+                                <div className="mb-2 text-sm font-medium">Operator Level</div>
+                                <LevelSlider phaseIndex={phaseIndex} maxLevels={operator.phases.map((phase) => phase.maxLevel)} onLevelChange={handleLevelChange} />
+                            </div>
                         </div>
                     </div>
+
                     <Stats operator={operator} attributeStats={attributeStats} setPhaseIndex={setPhaseIndex} setLevel={setLevel} />
                 </div>
                 <div className="mt-2 w-full">
