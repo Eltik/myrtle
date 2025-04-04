@@ -6,19 +6,66 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "~/
 import { ScrollArea } from "~/components/ui/scroll-area";
 import Image from "next/image";
 import { formatProfession } from "~/helper";
+import { useState, useEffect, useRef } from "react";
 
 function CharacterCard({ data }: { data: CharacterData }) {
-    // Full artwork for desktop
-    const operatorImageDesktop = `https://raw.githubusercontent.com/fexli/ArknightsResource/main/charpack/${data.skin ? data.skin.replaceAll("@", "_").replaceAll("#", "_") : (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("@", "_").replaceAll("#", "_")}.png`;
-
-    // Full artwork for mobile
-    const operatorImageMobile = `https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/${data.skin ? data.skin.replaceAll("@", "_").replaceAll("#", "_") : (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("@", "_").replaceAll("#", "_")}.png`;
-
     // Get operator static data
     const operator = data.static;
 
     // Calculate trust percentage
     const trustPercentage = operator ? (operator.trust / 200) * 100 : 0;
+    
+    // State for animation effects
+    const [isHovered, setIsHovered] = useState(false);
+    const [isLoaded, setIsLoaded] = useState(false);
+    const [levelProgress, setLevelProgress] = useState(0);
+    const [trustProgress, setTrustProgress] = useState(0);
+    
+    // Ref for the card element
+    const cardRef = useRef<HTMLDivElement>(null);
+    
+    // Animation effect on mount
+    useEffect(() => {
+        setIsLoaded(true);
+    }, []);
+    
+    // Intersection Observer setup
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries.length > 0) {
+                    const entry = entries[0];
+                    if (entry?.isIntersecting) {
+                        // Animate progress bars when in view
+                        setTimeout(() => {
+                            setLevelProgress((data.level / (operator?.phases[data.evolvePhase]?.maxLevel ?? 1)) * 100);
+                            setTrustProgress(trustPercentage);
+                        }, 300); // Small delay for better visual effect
+                        if (entry.target) {
+                            observer.unobserve(entry.target);
+                        }
+                    }
+                }
+            },
+            { threshold: 0.2 } // Trigger when 20% of the card is visible
+        );
+        
+        if (cardRef.current) {
+            observer.observe(cardRef.current);
+        }
+        
+        return () => {
+            if (cardRef.current) {
+                observer.unobserve(cardRef.current);
+            }
+        };
+    }, [data.level, operator, data.evolvePhase, trustPercentage]);
+
+    // Full artwork for desktop
+    const operatorImageDesktop = `https://raw.githubusercontent.com/fexli/ArknightsResource/main/charpack/${data.skin ? data.skin.replaceAll("@", "_").replaceAll("#", "_") : (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("@", "_").replaceAll("#", "_")}.png`;
+
+    // Full artwork for mobile
+    const operatorImageMobile = `https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/${data.skin ? data.skin.replaceAll("@", "_").replaceAll("#", "_") : (data.tmpl?.[data.currentTmpl ?? 0]?.skinId ?? "").replaceAll("@", "_").replaceAll("#", "_")}.png`;
 
     // Get current phase
     const getPhaseIcon = () => {
@@ -33,6 +80,7 @@ function CharacterCard({ data }: { data: CharacterData }) {
                     height: "auto",
                     objectFit: "contain",
                 }}
+                className="transition-transform duration-300 hover:scale-110"
             />
         );
     };
@@ -51,7 +99,17 @@ function CharacterCard({ data }: { data: CharacterData }) {
 
         return Array(starCount)
             .fill(0)
-            .map((_, i) => <Image key={i} src="https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/star.png" width={16} height={16} alt="Star" className="h-4 w-4" />);
+            .map((_, i) => (
+                <Image 
+                    key={i} 
+                    src="https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/star.png" 
+                    width={16} 
+                    height={16} 
+                    alt="Star" 
+                    className="h-4 w-4 transition-all duration-300 hover:scale-125 hover:rotate-12" 
+                    style={{ transitionDelay: `${i * 50}ms` }}
+                />
+            ));
     };
 
     // Get profession icon
@@ -67,14 +125,14 @@ function CharacterCard({ data }: { data: CharacterData }) {
             TANK: "https://raw.githubusercontent.com/Aceship/Arknight-Images/main/classes/class_defender.png",
         };
 
-        return <Image src={professionMap[profession.toLowerCase() as keyof typeof professionMap] || `https://raw.githubusercontent.com/Aceship/Arknight-Images/main/classes/class_${profession.toLowerCase()}.png`} width={24} height={24} alt={profession} className="h-6 w-6" />;
+        return <Image src={professionMap[profession.toLowerCase() as keyof typeof professionMap] || `https://raw.githubusercontent.com/Aceship/Arknight-Images/main/classes/class_${profession.toLowerCase()}.png`} width={24} height={24} alt={profession} className="h-6 w-6 transition-transform duration-300 hover:scale-110 hover:rotate-12" />;
     };
 
     // Get potential level display
     const getPotentialDisplay = (rank: number) => {
         return (
             <div className="flex items-center gap-1">
-                <Image src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/potential/${rank + 1}.png`} width={24} height={24} alt={`Potential ${rank + 1}`} className="h-6 w-6" />
+                <Image src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/potential/${rank + 1}.png`} width={24} height={24} alt={`Potential ${rank + 1}`} className="h-6 w-6 transition-transform duration-300 hover:scale-110" />
                 <span className="text-xs text-gray-500">+{rank}</span>
             </div>
         );
@@ -86,7 +144,7 @@ function CharacterCard({ data }: { data: CharacterData }) {
 
         return (
             <div className="flex items-center gap-1">
-                <Image src={`/m-${level}_0.webp`} width={24} height={24} alt={`Mastery ${level}`} className="h-6 w-6" />
+                <Image src={`/m-${level}_0.webp`} width={24} height={24} alt={`Mastery ${level}`} className="h-6 w-6 transition-transform duration-300 hover:scale-110" />
                 <span className="text-xs text-gray-500">M{level}</span>
             </div>
         );
@@ -99,7 +157,7 @@ function CharacterCard({ data }: { data: CharacterData }) {
         return (
             <div className="flex items-center gap-0">
                 <span className="text-xs text-gray-500">Lv.</span>
-                <Image src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/rank/${level}.png`} width={16} height={16} alt={`Module Level ${level}`} className="h-4 w-4" />
+                <Image src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/rank/${level}.png`} width={16} height={16} alt={`Module Level ${level}`} className="h-4 w-4 transition-transform duration-300 hover:scale-110" />
             </div>
         );
     };
@@ -141,20 +199,41 @@ function CharacterCard({ data }: { data: CharacterData }) {
     const stats = getOperatorStats();
 
     return (
-        <Card className="w-full overflow-hidden border-2 border-muted/30 transition-all duration-300 hover:border-muted">
+        <Card 
+            ref={cardRef}
+            className={`w-full overflow-hidden border-2 border-muted/30 transition-all duration-300 hover:border-muted hover:shadow-lg ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+        >
             <div className="relative">
                 {/* Operator Image */}
                 <div className="relative h-64 w-full overflow-hidden">
                     {/* Desktop image */}
-                    <Image loading="lazy" decoding="async" src={operatorImageDesktop} alt={getOperatorName()} className="hidden h-full w-full object-cover md:block" width={200} height={200} />
+                    <Image 
+                        loading="lazy" 
+                        decoding="async" 
+                        src={operatorImageDesktop} 
+                        alt={getOperatorName()} 
+                        className={`hidden h-full w-full object-cover transition-transform duration-300 md:block ${isHovered ? 'scale-105' : 'scale-100'}`} 
+                        width={200} 
+                        height={200} 
+                    />
                     {/* Mobile image */}
-                    <Image loading="lazy" decoding="async" src={operatorImageMobile} alt={getOperatorName()} className="block h-full w-full object-cover md:hidden" width={200} height={200} />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                    <Image 
+                        loading="lazy" 
+                        decoding="async" 
+                        src={operatorImageMobile} 
+                        alt={getOperatorName()} 
+                        className={`block h-full w-full object-cover transition-transform duration-300 md:hidden ${isHovered ? 'scale-105' : 'scale-100'}`} 
+                        width={200} 
+                        height={200} 
+                    />
+                    <div className={`absolute inset-0 bg-gradient-to-t from-black/70 to-transparent transition-opacity duration-300 ${isHovered ? 'opacity-90' : 'opacity-70'}`} />
 
                     {/* Operator Info Overlay */}
                     <div className="absolute bottom-0 left-0 right-0 p-4">
-                        <h3 className="mt-2 max-w-[75%] text-xl font-bold text-white">{getOperatorName()}</h3>
-                        <div className="flex items-center justify-between">
+                        <h3 className={`mt-2 max-w-[75%] text-xl font-bold text-white transition-all duration-300 ${isHovered ? 'translate-y-0' : 'translate-y-1'}`}>{getOperatorName()}</h3>
+                        <div className={`flex items-center justify-between transition-all duration-300 ${isHovered ? 'translate-y-0' : 'translate-y-1'}`}>
                             <div className="flex items-center gap-2">
                                 <div className="flex flex-row gap-0">{getRarityStars(getOperatorRarity())}</div>
                                 <div className="flex flex-row items-center gap-1">
@@ -176,7 +255,10 @@ function CharacterCard({ data }: { data: CharacterData }) {
                                 <span className="text-sm font-medium">Level</span>
                                 <span className="text-sm font-bold">{data.level}</span>
                             </div>
-                            <Progress value={(data.level / (operator?.phases[data.evolvePhase]?.maxLevel ?? 1)) * 100} className="h-1.5" />
+                            <Progress 
+                                value={levelProgress} 
+                                className="h-1.5 transition-all duration-1000 ease-out" 
+                            />
                         </div>
 
                         <div>
@@ -184,7 +266,10 @@ function CharacterCard({ data }: { data: CharacterData }) {
                                 <span className="text-sm font-medium">Trust</span>
                                 <span className="text-sm font-bold">{operator?.trust ?? 0}/200</span>
                             </div>
-                            <Progress value={trustPercentage} className="h-1.5" />
+                            <Progress 
+                                value={trustProgress} 
+                                className="h-1.5 transition-all duration-1000 ease-out" 
+                            />
                         </div>
                     </div>
 
@@ -250,10 +335,19 @@ function CharacterCard({ data }: { data: CharacterData }) {
                                     {data.skills && data.skills.length > 0 ? (
                                         <div className="space-y-3 p-2">
                                             {data.skills.map((skill, index) => (
-                                                <div key={`skill-${index}`} className="rounded-md border p-3">
+                                                <div 
+                                                    key={`skill-${index}`} 
+                                                    className="rounded-md border p-3 transition-all duration-300 hover:border-primary/50 hover:bg-muted/30"
+                                                >
                                                     <div className="flex items-center justify-between">
                                                         <div className="flex items-center gap-2">
-                                                            <Image src={`https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/skill/skill_icon_${skill.static?.iconId ?? skill.static?.skillId}.png`} width={32} height={32} alt="Skill" className="h-8 w-8" />
+                                                            <Image 
+                                                                src={`https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/skill/skill_icon_${skill.static?.iconId ?? skill.static?.skillId}.png`} 
+                                                                width={32} 
+                                                                height={32} 
+                                                                alt="Skill" 
+                                                                className="h-8 w-8 transition-transform duration-300 hover:scale-110 hover:rotate-12" 
+                                                            />
                                                             <div>
                                                                 <div className="font-medium">{skill.static?.levels[0]?.name}</div>
                                                                 <div className="text-xs text-gray-500">{skill.static?.levels[0]?.description}</div>
@@ -299,10 +393,19 @@ function CharacterCard({ data }: { data: CharacterData }) {
                                                 if (module.typeName1 === "ORIGINAL" || moduleLevel === 0) return null;
 
                                                 return (
-                                                    <div key={`module-${index}`} className={`rounded-md border p-3 ${isEquipped ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" : ""}`}>
+                                                    <div 
+                                                        key={`module-${index}`} 
+                                                        className={`rounded-md border p-3 transition-all duration-300 hover:border-primary/50 hover:bg-muted/30 ${isEquipped ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" : ""}`}
+                                                    >
                                                         <div className="flex items-center justify-between">
                                                             <div className="flex items-center gap-2">
-                                                                <Image src={`https://raw.githubusercontent.com/fexli/ArknightsResource/main/equip/${module.uniEquipIcon}.png`} width={32} height={32} alt="Module" className="h-8 w-8" />
+                                                                <Image 
+                                                                    src={`https://raw.githubusercontent.com/fexli/ArknightsResource/main/equip/${module.uniEquipIcon}.png`} 
+                                                                    width={32} 
+                                                                    height={32} 
+                                                                    alt="Module" 
+                                                                    className="h-8 w-8 transition-transform duration-300 hover:scale-110 hover:rotate-12" 
+                                                                />
                                                                 <div>
                                                                     <div className="font-medium">{module.uniEquipName}</div>
                                                                     <div className="text-xs text-gray-500">
