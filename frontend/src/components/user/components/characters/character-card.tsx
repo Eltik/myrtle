@@ -315,7 +315,7 @@ function CharacterCard({ data }: { data: CharacterData }) {
                                         {data.skills && data.skills.length > 0 ? (
                                             <div className="space-y-3 p-2">
                                                 {data.skills.map((skill, index) => (
-                                                    <div key={`skill-${index}`} className={`rounded-md border p-3 ${skill.specializeLevel > 0 ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" : ""}`}>
+                                                    <div key={`skill-${index}`} className={`rounded-md border p-3 ${data.defaultSkillIndex === index ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" : ""}`}>
                                                         <div className="flex items-start justify-between">
                                                             <div className="flex min-w-0 flex-1 items-start gap-2">
                                                                 <Image src={`https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/skill/skill_icon_${skill.static?.iconId ?? skill.static?.skillId}.png`} width={32} height={32} alt="Skill" className="h-8 w-8 flex-shrink-0" />
