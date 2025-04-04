@@ -52,6 +52,9 @@ function Items({ data }: { data: User }) {
                     </Button>
                 );
             },
+            cell: ({ row }) => {
+                return <div className="pl-6">{row.getValue("amount")}</div>;
+            },
         },
     ];
 
