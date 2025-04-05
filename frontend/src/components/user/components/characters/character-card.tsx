@@ -145,13 +145,19 @@ function CharacterCard({ data }: { data: CharacterData }) {
     };
 
     // Get skill level display
-    const getSkillLevelDisplay = (level: number) => {
-        if (level === 0) return null;
+    const getSkillLevelDisplay = (specializeLevel: number, mainSkillLvl: number) => {
+        if (specializeLevel === 0)
+            return (
+                <div className="flex flex-row items-center gap-0">
+                    <span className="text-xs text-gray-500">Lv.</span>
+                    <Image src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/rank/${mainSkillLvl}.png`} width={24} height={24} alt={`Skill Level ${mainSkillLvl}`} className="h-6 w-6 transition-transform duration-300 hover:scale-110" />
+                </div>
+            );
 
         return (
             <div className="flex items-center gap-1">
-                <Image src={`/m-${level}_0.webp`} width={24} height={24} alt={`Mastery ${level}`} className="h-6 w-6 transition-transform duration-300 hover:scale-110" />
-                <span className="text-xs text-gray-500">M{level}</span>
+                <Image src={`/m-${specializeLevel}_0.webp`} width={24} height={24} alt={`Mastery ${specializeLevel}`} className="h-6 w-6 transition-transform duration-300 hover:scale-110" />
+                <span className="text-xs text-gray-500">M{specializeLevel}</span>
             </div>
         );
     };
@@ -324,12 +330,12 @@ function CharacterCard({ data }: { data: CharacterData }) {
                                                                     <span
                                                                         className="block text-xs leading-tight text-gray-500"
                                                                         dangerouslySetInnerHTML={{
-                                                                            __html: descriptionToHtml(skill.static?.levels[skill.specializeLevel]?.description ?? "", skill.static?.levels[skill.specializeLevel]?.blackboard ?? []),
+                                                                            __html: descriptionToHtml(skill.static?.levels[skill.specializeLevel > 0 ? data.mainSkillLvl + skill.specializeLevel - 1 : data.mainSkillLvl - 1]?.description ?? "", skill.static?.levels[skill.specializeLevel > 0 ? data.mainSkillLvl + skill.specializeLevel - 1 : data.mainSkillLvl - 1]?.blackboard ?? []),
                                                                         }}
                                                                     ></span>
                                                                 </div>
                                                             </div>
-                                                            <div className="ml-2 flex-shrink-0">{getSkillLevelDisplay(skill.specializeLevel)}</div>
+                                                            <div className="ml-2 flex-shrink-0">{getSkillLevelDisplay(skill.specializeLevel, data.mainSkillLvl)}</div>
                                                         </div>
                                                     </div>
                                                 ))}
@@ -351,22 +357,10 @@ function CharacterCard({ data }: { data: CharacterData }) {
                                         {operator?.modules && operator.modules.length > 0 ? (
                                             <div className="space-y-3 p-2">
                                                 {operator.modules.map((module, index) => {
-                                                    // Use a type guard to ensure module.id is defined
-                                                    const moduleId = module.id;
-                                                    if (!moduleId) return null;
-
-                                                    const isEquipped = data.currentEquip === moduleId;
-
-                                                    // Safely access the equip property with proper type checking
-                                                    let moduleLevel = 0;
-                                                    if (data.equip && typeof data.equip === "object" && moduleId in data.equip) {
-                                                        const equipData = data.equip[moduleId];
-                                                        if (equipData && typeof equipData === "object" && "level" in equipData) {
-                                                            moduleLevel = equipData.level;
-                                                        }
-                                                    }
-
-                                                    if (module.typeName1 === "ORIGINAL" || moduleLevel === 0) return null;
+                                                    const isEquipped = data.currentEquip === module.uniEquipId;
+                                                    const moduleLevel = data.equip[module.uniEquipId]?.level ?? 0;
+                                                    const isLocked = data.equip[module.uniEquipId]?.locked === 1;
+                                                    if (module.typeName1 === "ORIGINAL" || moduleLevel === 0 || isLocked) return null;
 
                                                     return (
                                                         <div key={`module-${index}`} className={`rounded-md border p-3 ${isEquipped ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" : ""}`}>
