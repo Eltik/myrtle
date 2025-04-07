@@ -259,7 +259,7 @@ export function ChibiViewer() {
                                         </TabsList>
 
                                         <TabsContent value="canvas" className="mt-0">
-                                            <ChibiRenderer selectedOperator={selectedOperator} selectedSkin={selectedSkin} repoBaseUrl={repoBaseUrl} />
+                                            <ChibiRenderer selectedOperator={selectedOperator} selectedSkin={selectedSkin} repoBaseURL={repoBaseUrl} />
                                         </TabsContent>
 
                                         <TabsContent value="info" className="mt-0">
