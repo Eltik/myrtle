@@ -4,55 +4,68 @@ import type { RepoItem, SpineFiles, CharacterSkin, CharacterData } from "../../.
  * Process characters into a more frontend-friendly format
  */
 export function processCharsForFrontend(items: RepoItem[]): CharacterData[] {
-    // Filter for character directories (they start with "char_")
-    const charDirectories = items.filter((item) => item.contentType === "directory" && item.name.startsWith("char_"));
+    // Filter for character directories (they are named like "amiya1", "amiya2", etc.)
+    const charDirectories = items.filter((item) => item.contentType === "directory" && !item.name.startsWith("."));
 
-    // Map to a more usable structure
-    return charDirectories.map((charDir) => {
-        // Extract operator code (e.g., "char_002_amiya")
-        const operatorCode = charDir.name;
+    // Group directories by operator code
+    const groupedDirs = new Map<string, RepoItem[]>();
+    for (const dir of charDirectories) {
+        const operatorCode = extractOperatorCode(dir.name);
+        if (!groupedDirs.has(operatorCode)) {
+            groupedDirs.set(operatorCode, []);
+        }
+        groupedDirs.get(operatorCode)!.push(dir);
+    }
 
-        // Get skins/versions available
-        const skins =
-            charDir.children
-                ?.filter((child) => child.contentType === "directory")
-                .map((skin) => {
-                    // Detect animation types available for this skin
-                    const animationTypes: CharacterSkin["animationTypes"] = {};
+    // Process each operator
+    return Array.from(groupedDirs.entries()).map(([operatorCode, dirs]) => {
+        // Get skins/versions available from all directories for this operator
+        const skins = dirs.flatMap((dir) => {
+            // Each directory represents a skin variant
+            const animationTypes: CharacterSkin["animationTypes"] = {};
 
-                    // Check for dorm/base animations
-                    if (hasRequiredSpineFiles(skin)) {
-                        animationTypes.dorm = extractSpineFiles(skin);
-                    }
+            // Check for animation directories
+            const frontDir = dir.children?.find((child) => child.contentType === "directory" && child.name.toLowerCase() === "front");
+            const backDir = dir.children?.find((child) => child.contentType === "directory" && child.name.toLowerCase() === "back");
+            const dormDir = dir.children?.find((child) => child.contentType === "directory" && child.name.toLowerCase() === "dorm");
+            const buildDir = dir.children?.find((child) => child.contentType === "directory" && child.name.toLowerCase() === "build");
 
-                    // Check for combat animations (front, back)
-                    // The combat animations would be in subdirectories named 'front' and 'back'
-                    const frontDir = skin.children?.find((child) => child.contentType === "directory" && child.name.toLowerCase() === "front");
+            // Check each animation type
+            if (frontDir && hasRequiredSpineFiles(frontDir)) {
+                animationTypes.front = extractSpineFiles(frontDir);
+            }
 
-                    const backDir = skin.children?.find((child) => child.contentType === "directory" && child.name.toLowerCase() === "back");
+            if (backDir && hasRequiredSpineFiles(backDir)) {
+                animationTypes.back = extractSpineFiles(backDir);
+            }
 
-                    if (frontDir && hasRequiredSpineFiles(frontDir)) {
-                        animationTypes.front = extractSpineFiles(frontDir);
-                    }
+            // Use build directory for dorm animations if it exists
+            if (buildDir && hasRequiredSpineFiles(buildDir)) {
+                animationTypes.dorm = extractSpineFiles(buildDir);
+            }
+            // Otherwise use dorm directory if it exists
+            else if (dormDir && hasRequiredSpineFiles(dormDir)) {
+                animationTypes.dorm = extractSpineFiles(dormDir);
+            }
+            // Finally, check if the skin directory itself has spine files
+            else if (hasRequiredSpineFiles(dir)) {
+                animationTypes.dorm = extractSpineFiles(dir);
+            }
 
-                    if (backDir && hasRequiredSpineFiles(backDir)) {
-                        animationTypes.back = extractSpineFiles(backDir);
-                    }
+            const hasAnySpineData = Boolean(animationTypes.dorm || animationTypes.front || animationTypes.back);
 
-                    const hasAnySpineData = Boolean(animationTypes.dorm || animationTypes.front || animationTypes.back);
-
-                    return {
-                        name: skin.name,
-                        path: skin.path,
-                        hasSpineData: hasAnySpineData,
-                        animationTypes,
-                    };
-                }) || [];
+            return {
+                name: dir.name,
+                path: dir.path,
+                hasSpineData: hasAnySpineData,
+                animationTypes,
+            };
+        });
 
         return {
             operatorCode,
             name: operatorCodeToName(operatorCode),
-            path: charDir.path,
+            path: dirs[0].path, // Use the first directory's path as the base path
             skins,
         };
     });
@@ -62,7 +75,15 @@ export function processCharsForFrontend(items: RepoItem[]): CharacterData[] {
  * Extract just a list of operator codes
  */
 export function extractOperatorList(items: RepoItem[]) {
-    return items.filter((item) => item.contentType === "directory" && item.name.startsWith("char_")).map((item) => item.name);
+    return Array.from(new Set(items.filter((item) => item.contentType === "directory" && !item.name.startsWith(".")).map((item) => extractOperatorCode(item.name))));
+}
+
+/**
+ * Extract operator code from directory name
+ */
+function extractOperatorCode(dirName: string): string {
+    // Remove any numbers at the end (e.g., "amiya1" -> "amiya")
+    return dirName.replace(/\d+$/, "");
 }
 
 /**
@@ -99,12 +120,6 @@ function extractSpineFiles(dir: RepoItem): SpineFiles {
  * Convert operator code to a more readable name
  */
 function operatorCodeToName(code: string) {
-    // Remove "char_" prefix
-    const withoutPrefix = code.replace("char_", "");
-
-    // Extract the name part (after the numbers)
-    const namePart = withoutPrefix.split("_").slice(1).join("_");
-
     // Capitalize first letter and replace underscores with spaces
-    return namePart.charAt(0).toUpperCase() + namePart.slice(1).replace(/_/g, " ");
+    return code.charAt(0).toUpperCase() + code.slice(1).replace(/_/g, " ");
 }
