@@ -10,8 +10,8 @@ import getSkins from "./impl/skins";
 import getVoices from "./impl/voices";
 
 export const RESOURCE_REPOSITORY = "yuanyan3060/ArknightsGameResource";
-export const ACESHIP_REPOSITORY = "Aceship/Arknight-Images";
 export const FEXLI_REPOSITORY = "fexli/ArknightsResource";
 export const VOICE_REPOSITORY = "PseudoMon/arknights-audio";
+export const CHIBI_REPOSITORY = "HermitzPlanner/chibi-assets";
 
 export { getMaterial, modules, getSkill, getRanges, getOperator, getHandbook, calculateTrust, enemies, getSkins, getVoices };

@@ -3,11 +3,11 @@ import { mkdir, stat } from "node:fs/promises";
 import type { CachedData, RepoItem } from "../../../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/chibis";
 
 // Cache version - increment when structure changes
-const CACHE_VERSION = 2; // Updated for combat animations support
+const CACHE_VERSION = 5; // Updated for optimized crawling and improved structure
 
 const CACHE_DIR = resolve(process.cwd(), "data/cache");
 const CACHE_FILE = join(CACHE_DIR, `chibi-data-v${CACHE_VERSION}.json`);
-const CACHE_DURATION = 7 * 24 * 60 * 60 * 1000; // 1 week in milliseconds
+const CACHE_DURATION = 12 * 60 * 60 * 1000; // 12 hours in milliseconds (reduced from 24 hours)
 
 // Ensure cache directory exists
 const ensureCacheDir = async () => {
@@ -24,7 +24,11 @@ export const isCacheValid = async (): Promise<boolean> => {
         const file = Bun.file(CACHE_FILE);
         const exists = await file.exists();
 
-        if (!exists) return false;
+        if (!exists) {
+            await mkdir(CACHE_DIR, { recursive: true });
+            await Bun.write(CACHE_FILE, JSON.stringify({ version: CACHE_VERSION, timestamp: Date.now(), data: [] }));
+            return false;
+        }
 
         // Get file stats using fs/promises
         const fileInfo = await stat(CACHE_FILE);
@@ -47,10 +51,24 @@ export const loadFromCache = async (): Promise<RepoItem[]> => {
         const text = await file.text();
         const parsed = JSON.parse(text) as CachedData;
 
-        // Verify cache version (if we add this to the cached data in the future)
+        // Verify cache version
         if (parsed.version && parsed.version !== CACHE_VERSION) {
             console.log(`Cache version mismatch: expected ${CACHE_VERSION}, got ${parsed.version}`);
             return [];
+        }
+
+        // Verify data structure
+        if (!Array.isArray(parsed.data)) {
+            console.log("Invalid cache data structure");
+            return [];
+        }
+
+        // Verify each item has required fields
+        for (const item of parsed.data) {
+            if (!item.name || !item.path || !item.contentType) {
+                console.log("Invalid item in cache:", item);
+                return [];
+            }
         }
 
         console.log(`Loaded chibi data from cache (created ${new Date(parsed.timestamp).toLocaleString()})`);

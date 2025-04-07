@@ -2,12 +2,14 @@ import type { GitHubCommit } from "../../../../types/impl/lib/impl/cron";
 import colors from "colors";
 import { stat } from "node:fs/promises";
 import { join } from "path";
+import { env } from "../../../../env";
 
 const MAX_TIME_DIFFERENCE = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 export const checkRepoUpdate = async (owner: string, repo: string): Promise<{ updated: boolean; lastUpdate: Date; commit: string }> => {
     try {
-        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/commits/main`);
+        const headers = env.GITHUB_TOKEN ? { Authorization: `Bearer ${env.GITHUB_TOKEN}` } : undefined;
+        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/commits/main`, { headers });
         if (!response.ok) throw new Error(`Failed to fetch ${owner}/${repo}`);
 
         const data = (await response.json()) as GitHubCommit;

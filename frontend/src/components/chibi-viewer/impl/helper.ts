@@ -1,9 +1,20 @@
 import type { FormattedChibis } from "~/types/impl/frontend/impl/chibis";
 
+/*
 export const getAssetURL = (repoBaseURL: string, path: string) => {
     // Remove the initial "./" if present
     const normalizedPath = path.startsWith("./") ? path.substring(2) : path;
     return `${repoBaseURL}${normalizedPath}`;
+};
+*/
+
+export const getAssetURL = (repoBaseURL: string, path: string) => {
+    console.log("Getting asset URL", { repoBaseURL, path });
+    const plannerId = 'reedalter2';
+    const perspective = 'front';
+    const skinId = 'char_1020_reed2_summer_17';
+    const chibiExntension = '.skel';
+    return `https://raw.githubusercontent.com/HermitzPlanner/${'chibi-assets'}/main/${plannerId}/${perspective}/${skinId}${chibiExntension}`
 };
 
 export const getSkinData = (selectedOperator: FormattedChibis | null, selectedSkin: string | null, repoBaseURL: string, viewType: "dorm" | "front" | "back"): {

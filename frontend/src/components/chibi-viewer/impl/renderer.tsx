@@ -71,22 +71,38 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseURL }: C
         spineAtlas: TextureAtlas;
         spineData: ISkeletonData;
     }) => {
+        // Clear any existing spine object
+        if (spineRef.current) {
+            appRef.current?.stage.removeChild(spineRef.current);
+            spineRef.current.destroy();
+            spineRef.current = null;
+        }
+
+        // Create a new spine object
         spineRef.current = new Spine(skinAsset.spineData);
 
+        // Set available animations
         setAvailableAnimations(skinAsset.spineData.animations.map((animation) => animation.name));
 
+        // Fix the positioning calculation
         if (appRef.current) {
+            // Center the spine horizontally
             spineRef.current.x = appRef.current.screen.width / 2;
             
+            // Position vertically based on animation type
             if (selectedAnimation === "Sit" || selectedAnimation === "Sitting") {
+                // Move up for sitting animations
                 spineRef.current.y = appRef.current.screen.height * 0.6;
             } else {
+                // Default position
                 spineRef.current.y = appRef.current.screen.height * 0.5;
             }
         }
 
+        // Set a reasonable scale
         spineRef.current.scale.set(0.8);
 
+        // Set initial animation based on view type
         if (viewType !== "dorm") {
             if (spineRef.current.spineData.findAnimation("Start")) {
                 spineRef.current.state.setAnimation(0, "Start", false);
@@ -113,13 +129,15 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseURL }: C
                     spineRef.current?.state.setAnimation(0, 'Idle', true);
                 }
             }
-        })
+        });
 
+        // Add the spine object to the stage
         appRef.current?.stage.addChild(spineRef.current);
+        
+        // Render the stage
         appRef.current?.renderer.render(appRef.current?.stage);
 
         console.log("Finished rendering");
-
         setIsLoading(false);
     }, [selectedAnimation, viewType]);
 
@@ -133,16 +151,21 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseURL }: C
         setIsLoading(true);
         setError(null);
 
-        void PIXI.Assets.load(skinData.skel).then((skinAsset: {
-            spineAtlas: TextureAtlas;
-            spineData: ISkeletonData;
-        }) => {
-            console.log("Skin asset loaded:", skinAsset);
-            renderSkinSpine(skinAsset);
-        }).catch((err) => {
-            console.error("Failed to load primary asset:", err);
-            // Try and load build version
-        });
+        // Load the skeleton file directly
+        PIXI.Assets.load(skinData.skel)
+            .then((skinAsset: {
+                spineAtlas: TextureAtlas;
+                spineData: ISkeletonData;
+            }) => {
+                console.log("Skin asset loaded:", skinAsset);
+                renderSkinSpine(skinAsset);
+                setIsLoading(false);
+            })
+            .catch((err: Error) => {
+                console.error("Failed to load skeleton:", err);
+                setError(`Failed to load skeleton: ${err.message}`);
+                setIsLoading(false);
+            });
     }, [selectedOperator, selectedSkin, repoBaseURL, viewType, renderSkinSpine]);
 
     useEffect(() => {
@@ -166,6 +189,7 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseURL }: C
             powerPreference: "high-performance",
             preserveDrawingBuffer: true,
             context: null,
+            resolution: window.devicePixelRatio || 1,
         });
         appRef.current = pixiApp;
 
@@ -176,12 +200,13 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseURL }: C
 
         return () => {
             if (spineRef.current) {
+                appRef.current?.stage.removeChild(spineRef.current);
                 spineRef.current.destroy();
                 spineRef.current = null;
             }
             
             if (appRef.current) {
-                appRef.current.destroy(true, true);
+                appRef.current.destroy(true, { children: true, texture: true, baseTexture: true });
                 appRef.current = null;
             }
         };
