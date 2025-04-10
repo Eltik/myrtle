@@ -16,4 +16,4 @@ echo "Download path: $DOWNLOAD_PATH"
 echo ""
 
 # Run the TypeScript file directly with Bun
-bun run "$SCRIPT_DIR/src/lib/impl/local/impl/handler/impl/ark-downloader.ts" "$DOWNLOAD_PATH" 
+bun run "$SCRIPT_DIR/src/lib/impl/local/impl/assets/impl/ark-downloader.ts" "$DOWNLOAD_PATH" 

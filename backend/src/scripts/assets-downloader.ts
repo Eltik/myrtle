@@ -4,7 +4,7 @@
  */
 
 import { existsSync, mkdirSync } from "fs";
-import ArkAssets from "../lib/impl/local/impl/handler/impl/ark-downloader";
+import ArkAssets from "../lib/impl/local/impl/assets/ark-downloader";
 
 // Setup variables
 const downloadDir = process.argv[2] || "./downloads";
