@@ -193,10 +193,24 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseURL }: C
         });
         appRef.current = pixiApp;
 
-        renderCanvas();
+        // Add the view to the DOM first
         canvasContainerRef.current?.appendChild(pixiApp.view as unknown as Node);
+        
+        // Set up the animation loop
+        const tick = () => {
+            if (spineRef.current && pixiApp?.renderer) {
+                // Update the spine animation
+                spineRef.current.update(0.016); // Update with approximate 60fps delta time
+                // Render the stage
+                pixiApp.renderer.render(pixiApp.stage);
+            }
+            requestAnimationFrame(tick);
+        };
+        
+        // Start the animation loop
+        requestAnimationFrame(tick);
 
-        setIsLoading(false);
+        renderCanvas();
 
         return () => {
             if (spineRef.current) {

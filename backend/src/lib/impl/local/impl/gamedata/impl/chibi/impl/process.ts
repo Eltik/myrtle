@@ -5,12 +5,14 @@ import type { RepoItem, SpineFiles, CharacterSkin, CharacterData } from "../../.
  */
 export function processCharsForFrontend(items: RepoItem[]): CharacterData[] {
     // Filter for character directories (they are named like "amiya1", "amiya2", etc.)
-    const charDirectories = items.filter((item) => item.contentType === "directory" && !item.name.startsWith("."));
+    const charDirectories = items.filter((item) => item.contentType === "dir" && !item.name.startsWith("."));
 
     // Group directories by operator code
     const groupedDirs = new Map<string, RepoItem[]>();
     for (const dir of charDirectories) {
-        const operatorCode = extractOperatorCode(dir.name);
+        const operatorCode = extractOperatorCode(dir);
+        if (!operatorCode) continue; // Skip if no operator code found
+
         if (!groupedDirs.has(operatorCode)) {
             groupedDirs.set(operatorCode, []);
         }
@@ -20,15 +22,15 @@ export function processCharsForFrontend(items: RepoItem[]): CharacterData[] {
     // Process each operator
     return Array.from(groupedDirs.entries()).map(([operatorCode, dirs]) => {
         // Get skins/versions available from all directories for this operator
-        const skins = dirs.flatMap((dir) => {
+        const skins: CharacterSkin[] = dirs.map((dir) => {
             // Each directory represents a skin variant
             const animationTypes: CharacterSkin["animationTypes"] = {};
 
             // Check for animation directories
-            const frontDir = dir.children?.find((child) => child.contentType === "directory" && child.name.toLowerCase() === "front");
-            const backDir = dir.children?.find((child) => child.contentType === "directory" && child.name.toLowerCase() === "back");
-            const dormDir = dir.children?.find((child) => child.contentType === "directory" && child.name.toLowerCase() === "dorm");
-            const buildDir = dir.children?.find((child) => child.contentType === "directory" && child.name.toLowerCase() === "build");
+            const frontDir = dir.children?.find((child) => child.contentType === "dir" && child.name.toLowerCase() === "front");
+            const backDir = dir.children?.find((child) => child.contentType === "dir" && child.name.toLowerCase() === "back");
+            const dormDir = dir.children?.find((child) => child.contentType === "dir" && child.name.toLowerCase() === "dorm");
+            const buildDir = dir.children?.find((child) => child.contentType === "dir" && child.name.toLowerCase() === "build");
 
             // Check each animation type
             if (frontDir && hasRequiredSpineFiles(frontDir)) {
@@ -75,15 +77,30 @@ export function processCharsForFrontend(items: RepoItem[]): CharacterData[] {
  * Extract just a list of operator codes
  */
 export function extractOperatorList(items: RepoItem[]) {
-    return Array.from(new Set(items.filter((item) => item.contentType === "directory" && !item.name.startsWith(".")).map((item) => extractOperatorCode(item.name))));
+    return Array.from(new Set(items.filter((item) => item.contentType === "dir" && !item.name.startsWith(".")).map((item) => extractOperatorCode(item))));
 }
 
 /**
  * Extract operator code from directory name
  */
-function extractOperatorCode(dirName: string): string {
-    // Remove any numbers at the end (e.g., "amiya1" -> "amiya")
-    return dirName.replace(/\d+$/, "");
+function extractOperatorCode(dir: RepoItem): string {
+    // Filter until we find a child that starts with char_
+    const charChild = dir.children?.find((child) => child.name.startsWith("char_"));
+    if (!charChild) {
+        // If no direct child with char_, search recursively
+        for (const child of dir.children || []) {
+            if (child.contentType === "dir") {
+                const code = extractOperatorCode(child);
+                if (code) return code;
+            }
+        }
+        return "";
+    }
+
+    // Extract the base operator code from the character file name
+    // Example: char_416_zumama_boc_3.atlas -> char_416_zumama
+    const match = charChild.name.match(/^(char_\d+_[a-zA-Z]+)/);
+    return match ? match[1] : "";
 }
 
 /**
@@ -120,6 +137,5 @@ function extractSpineFiles(dir: RepoItem): SpineFiles {
  * Convert operator code to a more readable name
  */
 function operatorCodeToName(code: string) {
-    // Capitalize first letter and replace underscores with spaces
-    return code.charAt(0).toUpperCase() + code.slice(1).replace(/_/g, " ");
+    return code;
 }

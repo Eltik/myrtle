@@ -177,7 +177,7 @@ export function ChibiViewer() {
     };
 
     // GitHub raw content URL base for the repository
-    const repoBaseUrl = "https://raw.githubusercontent.com/fexli/ArknightsResource/main/";
+    const repoBaseUrl = "https://raw.githubusercontent.com/HermitzPlanner/chibi-assets/main/";
 
     return (
         <div className="container mx-auto py-8">
