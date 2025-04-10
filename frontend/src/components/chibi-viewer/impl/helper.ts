@@ -10,11 +10,13 @@ export const getAssetURL = (repoBaseURL: string, path: string) => {
 
 export const getAssetURL = (repoBaseURL: string, path: string) => {
     console.log("Getting asset URL", { repoBaseURL, path });
-    const plannerId = 'reedalter2';
-    const perspective = 'front';
-    const skinId = 'char_1020_reed2_summer_17';
-    const chibiExntension = '.skel';
-    return `https://raw.githubusercontent.com/HermitzPlanner/${'chibi-assets'}/main/${plannerId}/${perspective}/${skinId}${chibiExntension}`
+    const plannerId = path.split("/")[0];
+    const perspective = path.split("/")[1];
+    const skinId = path.split("/")[2]?.split(".")[0];
+    const chibiExntension = path.split("/")[2]?.split(".")[1];
+    const assetURL = `https://raw.githubusercontent.com/HermitzPlanner/${'chibi-assets'}/main/${plannerId}/${perspective}/${skinId}.${chibiExntension}`
+    console.log("Asset URL", assetURL);
+    return assetURL;
 };
 
 export const getSkinData = (selectedOperator: FormattedChibis | null, selectedSkin: string | null, repoBaseURL: string, viewType: "dorm" | "front" | "back"): {
