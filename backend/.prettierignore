@@ -20,3 +20,5 @@ tsconfig.tsbuildinfo
 src/lib/impl/local/impl/data/*
 *.mp3
 *.ttf
+*.py
+*.sh
