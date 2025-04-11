@@ -1,5 +1,5 @@
 import { GAME_DATA_REPOSITORY } from "../local/impl/handler";
-import { RESOURCE_REPOSITORY, FEXLI_REPOSITORY } from "../local/impl/gamedata";
+import { RESOURCE_REPOSITORY } from "../local/impl/gamedata";
 import colors from "colors";
 import { checkRepoUpdate } from "./impl/checkRepoUpdate";
 import { cleanAndRedownloadGameData } from "./impl/cleanGameData";
@@ -20,18 +20,15 @@ export const init = async () => {
 
         const [gameDataOwner, gameDataRepo] = GAME_DATA_REPOSITORY.split("/");
         const [resourceOwner, resourceRepo] = RESOURCE_REPOSITORY.split("/");
-        const [fexliOwner, fexliRepo] = FEXLI_REPOSITORY.split("/");
 
         const gameDataStatus = await checkRepoUpdate(gameDataOwner, gameDataRepo);
         const resourceStatus = await checkRepoUpdate(resourceOwner, resourceRepo);
-        const fexliStatus = await checkRepoUpdate(fexliOwner, fexliRepo);
 
         // Log status for each repository
         console.log(colors.gray(`Game Data Repository (${gameDataOwner}/${gameDataRepo}):`), colors.yellow(`Last updated: ${gameDataStatus.lastUpdate.toLocaleString()}`), colors.gray(`Commit: ${gameDataStatus.commit}`));
         console.log(colors.gray(`Resource Repository (${resourceOwner}/${resourceRepo}):`), colors.yellow(`Last updated: ${resourceStatus.lastUpdate.toLocaleString()}`), colors.gray(`Commit: ${resourceStatus.commit}`));
-        console.log(colors.gray(`Fexli Repository (${fexliOwner}/${fexliRepo}):`), colors.yellow(`Last updated: ${fexliStatus.lastUpdate.toLocaleString()}`), colors.gray(`Commit: ${fexliStatus.commit}`));
 
-        if (gameDataStatus.updated || resourceStatus.updated || fexliStatus.updated) {
+        if (gameDataStatus.updated || resourceStatus.updated) {
             console.log(colors.yellow("Repository updates detected, cleaning and redownloading data..."));
             await cleanAndRedownloadGameData();
         }

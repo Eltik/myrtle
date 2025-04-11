@@ -1,4 +1,3 @@
-import colors from "colors";
 import path from "path";
 import middleware from "../../middleware";
 import { env } from "../../../../env";
@@ -107,8 +106,6 @@ const handler = async (req: Request): Promise<Response> => {
                 400,
             );
         }
-
-        console.log(colors.gray(`CDN Request: ${colors.yellow(assetPath)}`));
 
         // Determine appropriate cache configuration based on file type
         const cacheControl = getCacheConfig(assetPath);

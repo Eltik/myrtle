@@ -1,4 +1,3 @@
-import { RESOURCE_REPOSITORY } from "../..";
 import type { Skill } from "../../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/skills";
 import { STATIC_DATA } from "../../../handler";
 
@@ -7,7 +6,7 @@ export const getAll = (): Skill[] => {
     const skills = Object.entries(data).map(([id, data]) => ({
         id,
         ...data,
-        image: `https://raw.githubusercontent.com/${RESOURCE_REPOSITORY}/main/skill/skill_icon_${id}.png`,
+        image: `/spritepack/skill_icon_${id}.png`,
     }));
     return skills;
 };

@@ -1,5 +1,3 @@
-// https://github.com/HermitzPlanner/chibi-assets/tree/main
-// This implementation supports multiple animation types: dorm (base), front and back combat animations
 import type { RepoItem } from "../../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/chibis";
 import { isCacheValid, loadFromCache, saveToCache } from "./impl/caching";
 import { crawlLocalChibis } from "./impl/crawl";
