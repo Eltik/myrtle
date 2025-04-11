@@ -8,6 +8,7 @@ A robust Arknights API inspired by ArkPRTS, built with modern TypeScript and Bun
 - **Redis caching**: Implements efficient caching for frequently accessed data
 - **PostgreSQL database**: Robust data storage and management
 - **Asset management**: Complete pipeline for downloading, unpacking, and processing Arknights assets
+- **CDN service**: Secure delivery of game assets with intelligent caching
 - **DPS Calculator**: Comprehensive damage calculation system for operators
 - **Event-driven architecture**: Efficient event handling and data processing
 - **Data import/export**: Tools for managing game data
@@ -135,6 +136,7 @@ The project uses several configuration files for different aspects of developmen
 - `zod` - Schema validation for data integrity
 - `eventemitter2` - Event handling system
 - `colors` - Terminal output formatting
+- `mime-types` - MIME type detection for CDN service
 
 ### Development Dependencies
 - TypeScript - Type safety and modern JavaScript features
@@ -156,6 +158,81 @@ The DPS tests verify:
 - Talent effects and combinations
 - Equipment and buff calculations
 - Enemy defense and resistance handling
+
+## 📚 CDN Service
+
+The backend includes a modern and secure CDN service for serving assets from the `unpacked` directory.
+
+### CDN Features
+
+- **Path Validation**: Protection against path traversal attacks
+- **Security**: Restricted file types and proper validation
+- **Caching**: Intelligent cache control based on file types
+- **Conditional Requests**: Support for If-Modified-Since headers
+- **Metrics**: Built-in request tracking and monitoring
+- **Performance**: Optimized for speed with Bun's file handling
+
+### CDN Usage
+
+The CDN service is available at:
+
+```
+/cdn/<asset_path>
+```
+
+For example, to serve an image at `/unpacked/images/my-image.png`:
+
+```
+https://your-domain.com/cdn/images/my-image.png
+```
+
+### Cache Configuration
+
+Different file types have different cache configurations:
+
+- **Images** (.jpg, .jpeg, .png, .gif, .webp, .svg): 30 days
+- **Audio/Video** (.mp3, .ogg, .wav, .mp4, .webm): 7 days
+- **Data files** (.json, .xml, .csv, .txt, .pdf): 1 day
+
+### CDN Monitoring
+
+Basic CDN metrics are available at:
+
+```
+/cdn/info
+```
+
+This endpoint provides information about:
+- Total requests
+- Successful/failed requests
+- Bytes sent
+- Requests by file type
+
+### CDN Security
+
+The CDN implements several security measures:
+- Path validation to prevent directory traversal
+- File type allowlist
+- Size validation
+- Proper MIME type detection
+
+### CDN Environment Configuration
+
+The CDN uses the `UNPACKED_DIR` environment variable to determine where to serve files from. 
+By default, it's set to `./unpacked`.
+
+To customize:
+
+```
+UNPACKED_DIR=/path/to/your/assets
+```
+
+### Supported File Types
+
+- Images: .jpg, .jpeg, .png, .gif, .webp, .svg
+- Audio: .mp3, .ogg, .wav
+- Video: .mp4, .webm
+- Documents: .pdf, .json, .txt, .csv, .xml
 
 ## 📝 License
 
