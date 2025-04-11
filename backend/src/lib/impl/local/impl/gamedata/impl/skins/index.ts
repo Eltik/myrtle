@@ -1,4 +1,4 @@
-import { FEXLI_REPOSITORY, RESOURCE_REPOSITORY } from "../..";
+import { RESOURCE_REPOSITORY } from "../..";
 import type { SkinData, Skin } from "../../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/skins";
 import { STATIC_DATA } from "../../../handler";
 
@@ -42,9 +42,9 @@ const getSkinImages = (skin: Skin) => {
     };
 
     return {
-        avatar: `https://raw.githubusercontent.com/${RESOURCE_REPOSITORY}/main/avatar/${skin.avatarId}.png`,
+        avatar: `/spritepack/${skin.avatarId}.png`,
         portrait: `https://raw.githubusercontent.com/${RESOURCE_REPOSITORY}/main/portrait/${skin.portraitId}.png`,
-        skin: `https://raw.githubusercontent.com/${FEXLI_REPOSITORY}/main/charpack/${formatSkinId(skin.skinId)}`,
+        skin: `/skinpack/${formatSkinId(skin.skinId)}`,
     };
 };
 

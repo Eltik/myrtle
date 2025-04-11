@@ -2,6 +2,9 @@ import { DEFAULT_HEADERS, DOMAINS } from "../../..";
 import type { AKDomain, AKServer, AuthSession } from "../../../../../../types/impl/lib/impl/authentication";
 import { loadNetworkConfig } from "../../load/impl/networkConfig";
 
+// Global request timeout (5 seconds)
+const REQUEST_TIMEOUT_MS = 5000;
+
 export const request = async (domain: AKDomain, endpoint: string | null = null, args?: RequestInit, server?: AKServer, session?: AuthSession): Promise<Response> => {
     server = server ? server : "en";
 
@@ -49,6 +52,20 @@ export const request = async (domain: AKDomain, endpoint: string | null = null, 
         Object.assign(args.headers, DEFAULT_HEADERS);
     }
 
-    const data = await fetch(url, args);
-    return data;
+    // Add signal with timeout to the request
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+    try {
+        if (!args.signal) {
+            args.signal = controller.signal;
+        }
+
+        const data = await fetch(url, args);
+        clearTimeout(timeoutId);
+        return data;
+    } catch (error) {
+        clearTimeout(timeoutId);
+        throw error;
+    }
 };
