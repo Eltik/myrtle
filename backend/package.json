@@ -44,6 +44,8 @@
         "export": "bun run src/scripts/export.ts",
         "import": "bun run src/scripts/import.ts",
         "download": "bun run src/scripts/assets-downloader.ts",
+        "download-direct": "bun run src/scripts/download-manual.ts",
+        "unpack": "bun run src/scripts/assets-unpacker.ts",
         "scan-lz4": "bun run src/scripts/lz4-tester.ts"
     },
     "type": "module"

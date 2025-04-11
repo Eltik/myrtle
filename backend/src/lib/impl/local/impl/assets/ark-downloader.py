@@ -3,7 +3,6 @@
 
 import bson
 import json
-import keyboard
 import os
 import random
 import re
@@ -14,11 +13,19 @@ import threading
 import time
 import UnityPy
 import zipfile
+import argparse
 from Crypto.Cipher import AES
 from enum import Enum
 from io import BytesIO
 from pathlib import Path
 from tqdm import tqdm
+
+# Only import keyboard in interactive mode
+try:
+    import keyboard
+    has_keyboard = True
+except ImportError:
+    has_keyboard = False
 
 def printc(*string: str, color: list[int] or list[list[int]] = list(), sep: str = ' ', start: str = '', end: str = '\n', show_time: bool = True, log = print) -> None:
     log(start + ('\033[1;30m[{}]\033[0m '.format(time.strftime('%H:%M:%S')) if show_time else '') +
@@ -127,7 +134,13 @@ class ArkAssets:
         for item in self.hot_update_list:
             _size = self.hot_update_list[item]['totalSize']
             _per = _size / self.total_size
-            options.append((item, '{:<35}{:<7}{}'.format('{:<15} 包大小: {}'.format(item, scale(_size)), '{:.2f}%'.format(_per * 100), int(_per * (os.get_terminal_size().columns - 46)) *'█'), [1, 34]))
+            try:
+                terminal_width = os.get_terminal_size().columns
+            except OSError:
+                # Fallback when running in a non-terminal environment (e.g. through Node.js)
+                terminal_width = 80  # Default terminal width
+            progress_bar_width = max(1, int(_per * (terminal_width - 46)))
+            options.append((item, '{:<35}{:<7}{}'.format('{:<15} 包大小: {}'.format(item, scale(_size)), '{:.2f}%'.format(_per * 100), progress_bar_width *'█'), [1, 34]))
             printc(options[_i][1], color=options[_i][2])
             _i += 1
         del _i
@@ -422,16 +435,57 @@ class ArkAssets:
             lock.acquire()
         printc('{:<80}'.format('[{}]'.format(path)), 'Downloaded   Time: {:.3f}s  Average Speed:{}'.format(st, scale(length / st) + '/s'),
             color=[[36], [1, 32]], log=tqdm.write)
+        try:
+            terminal_width = os.get_terminal_size().columns
+        except OSError:
+            # Fallback when running in a non-terminal environment
+            terminal_width = 80
         _per = length / 10485760
         if _per > 1:
             _per = 1
-        printc('{:<16} {}'.format('dat size: ' + scale(length), int(_per * (os.get_terminal_size().columns - 33)) * '█'),
+        printc('{:<16} {}'.format('dat size: ' + scale(length), int(_per * (terminal_width - 33)) * '█'),
             color=[1, 34], log=tqdm.write)
         pbar.close()
         if lock != None:
             lock.release()
         return res
 
-a = ArkAssets()
-a.download('/Users/eltik/Documents/Coding/Testing/ArkAssets')
-# a.download_fromlist(['lpack/lcom'], 'D:/ArkAssets')
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Download Arknights assets')
+    parser.add_argument('-o', '--output', help='Output directory for downloaded assets', default='./ArkAssets')
+    parser.add_argument('-p', '--packages', help='Comma-separated list of packages to download', default='')
+    parser.add_argument('--all', action='store_true', help='Download all packages')
+    parser.add_argument('-s', '--server', type=int, choices=[0, 1], default=0, help='Server: 0=Official, 1=Bilibili')
+    parser.add_argument('--interactive', action='store_true', help='Run in interactive mode')
+    
+    args = parser.parse_args()
+    
+    a = ArkAssets(ArkAssets.Servers(args.server))
+    
+    # Interactive mode requires keyboard module
+    if args.interactive and not has_keyboard:
+        printc("Interactive mode requires the keyboard module. Please install with 'pip install keyboard'", color=[1, 31])
+        sys.exit(1)
+    
+    # If run with command line arguments, use them
+    if args.interactive:
+        # Run in interactive mode
+        a.download(args.output)
+    elif args.all or args.packages:
+        if args.all:
+            a.download_fromlist([item for item in a.hot_update_list], args.output)
+        else:
+            packages = args.packages.split(',')
+            valid_packages = [pkg for pkg in packages if pkg in a.hot_update_list]
+            if valid_packages:
+                a.download_fromlist(valid_packages, args.output)
+            else:
+                printc("No valid packages specified. Available packages:", color=[1, 31])
+                for pkg in a.hot_update_list:
+                    printc(f" - {pkg}", color=[1, 34])
+    else:
+        # When no specific mode is selected, show available packages
+        printc("Available packages:", color=[1, 36])
+        for pkg in a.hot_update_list:
+            size = scale(a.hot_update_list[pkg]['totalSize'])
+            printc(f" - {pkg} ({size})", color=[1, 34])
