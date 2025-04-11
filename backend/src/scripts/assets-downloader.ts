@@ -11,7 +11,7 @@ import { runArkDownloader } from "../lib/impl/local/impl/assets/ark-downloader";
 const args = process.argv.slice(2);
 
 // Setup variables
-const downloadDir = process.env.DOWNLOAD_DIR || "./downloads";
+const downloadDir = process.env.DOWNLOAD_DIR || "./ArkAssets";
 const pythonCommand = process.platform === "win32" ? "python" : "python3";
 
 // Set debugging flags
@@ -117,7 +117,7 @@ async function run() {
     try {
         // Download using the Python script via our wrapper
         const result = await runArkDownloader({
-            savedir: downloadDir,
+            outputDir: downloadDir,
         });
 
         if (result.success) {
