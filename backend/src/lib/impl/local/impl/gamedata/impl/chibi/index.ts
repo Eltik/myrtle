@@ -2,7 +2,7 @@
 // This implementation supports multiple animation types: dorm (base), front and back combat animations
 import type { RepoItem } from "../../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/chibis";
 import { isCacheValid, loadFromCache, saveToCache } from "./impl/caching";
-import { crawlDirectory } from "./impl/crawl";
+import { crawlLocalChibis } from "./impl/crawl";
 export { processCharsForFrontend, extractOperatorList } from "./impl/process";
 
 export const CHIBIS: RepoItem[] = [];
@@ -27,14 +27,14 @@ export const init = async () => {
             }
         }
 
-        // If cache is invalid or empty, crawl the repository
-        console.log("Cache invalid or expired, recrawling GitHub repository...");
-        const items = await crawlDirectory("");
+        // If cache is invalid or empty, crawl the local directories
+        console.log("Cache invalid or expired, scanning local chibi directories...");
+        const items = await crawlLocalChibis();
 
         // Store the results
         CHIBIS.length = 0; // Clear current data
         CHIBIS.push(...items);
-        console.log(`Successfully crawled ${CHIBIS.length} root items`);
+        console.log(`Successfully processed ${CHIBIS.length} unique operators from local files`);
 
         // Save to cache for future use
         await saveToCache(CHIBIS);
