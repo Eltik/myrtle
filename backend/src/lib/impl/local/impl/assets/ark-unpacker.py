@@ -47,9 +47,11 @@ from tqdm import tqdm
 
 # Critical: Set environment variable for Arknights-specific handling
 os.environ['UNITYPY_AK'] = '1'
+print(f"UNITYPY_AK environment variable set to: {os.environ.get('UNITYPY_AK')}")
 
 # Enable debug mode
 debug_mode = True
+print("Debug mode is enabled. Will show detailed output.")
 
 class Colors:
     RESET = '\033[0m'

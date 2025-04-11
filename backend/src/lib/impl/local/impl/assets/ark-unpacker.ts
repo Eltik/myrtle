@@ -2,22 +2,23 @@ import { spawn } from "child_process";
 import { resolve } from "path";
 import { existsSync } from "fs";
 
-interface DownloaderOptions {
+interface UnpackerOptions {
+    inputDir?: string;
     outputDir?: string;
-    packages?: string[];
+    directories?: string[];
+    force?: boolean;
+    debug?: boolean;
     all?: boolean;
-    server?: 0 | 1; // 0=Official, 1=Bilibili
-    interactive?: boolean;
-    listOnly?: boolean; // New option to only list packages without downloading
+    listDirs?: boolean;
 }
 
 /**
- * Runs the Arknights asset downloader Python script
- * @param options Configuration options for the downloader
+ * Runs the Arknights asset unpacker Python script
+ * @param options Configuration options for the unpacker
  * @returns Promise resolving to success status and output message
  */
-export async function runArkDownloader(options: DownloaderOptions = {}): Promise<{ success: boolean; message: string }> {
-    const scriptPath = resolve(__dirname, "ark-downloader.py");
+export async function runArkUnpacker(options: UnpackerOptions = {}): Promise<{ success: boolean; message: string }> {
+    const scriptPath = resolve(__dirname, "ark-unpacker.py");
 
     // Verify the Python script exists
     if (!existsSync(scriptPath)) {
@@ -25,32 +26,36 @@ export async function runArkDownloader(options: DownloaderOptions = {}): Promise
     }
 
     // Build command arguments
-    const args: string[] = [scriptPath];
+    const args: string[] = [];
+
+    if (options.inputDir) {
+        args.push("-i", options.inputDir);
+    }
 
     if (options.outputDir) {
         args.push("-o", options.outputDir);
     }
 
-    // List packages only without downloading if listOnly is true
-    if (options.listOnly) {
-        // Don't add other download-related flags
-    }
-    // Handle packages or --all flag
-    else if (options.all || (!options.packages && !options.interactive)) {
-        // Default to downloading all packages if not specified otherwise
+    // Handle directories or --all flag
+    if (options.all) {
         args.push("--all");
-    } else if (options.packages && options.packages.length > 0) {
-        args.push("-p", options.packages.join(","));
+    } else if (options.directories && options.directories.length > 0) {
+        args.push("-d");
+        // The Python script expects directories as separate arguments after -d
+        // not as a comma-separated string
+        args.push(...options.directories);
     }
 
-    // Set server if specified
-    if (options.server !== undefined) {
-        args.push("-s", options.server.toString());
+    if (options.force) {
+        args.push("-f");
     }
 
-    // Use interactive mode if specifically requested
-    if (options.interactive) {
-        args.push("--interactive");
+    if (options.debug) {
+        args.push("--debug");
+    }
+
+    if (options.listDirs) {
+        args.push("--list-dirs");
     }
 
     // For safety, ensure Python is available
@@ -58,9 +63,9 @@ export async function runArkDownloader(options: DownloaderOptions = {}): Promise
         const pythonCommand = process.platform === "win32" ? "python" : "python3";
 
         return new Promise((resolve) => {
-            console.log(`Running command: ${pythonCommand} ${args.join(" ")}`);
+            console.log(`Running command: ${pythonCommand} ${scriptPath} ${args.join(" ")}`);
 
-            const pythonProcess = spawn(pythonCommand, args);
+            const pythonProcess = spawn(pythonCommand, [scriptPath, ...args]);
 
             let stdout = "";
             let stderr = "";
@@ -115,34 +120,24 @@ export async function runArkDownloader(options: DownloaderOptions = {}): Promise
                             message: `Completed with errors: ${errorDetails || stderr || stdout}`,
                         });
                     } else {
-                        // If it's just listing packages, it's a success even without downloads
-                        if (options.listOnly) {
-                            // Extract list of packages
-                            const packageList = stdout.match(/Available packages:[\s\S]*?(?=--|$)/);
+                        // Extract success statistics
+                        let stats = "";
+                        const statsMatch = stdout.match(/Processing completed![\s\S]*?(?:={10,})/);
+                        if (statsMatch) {
+                            stats = statsMatch[0];
+                        }
+
+                        // Check if assets were actually extracted
+                        if (stdout.includes("Total assets extracted: 0")) {
                             resolve({
-                                success: true,
-                                message: packageList ? packageList[0] : "Package list retrieved successfully",
+                                success: false,
+                                message: "Process completed but no assets were extracted. Please check your input directory.",
                             });
                         } else {
-                            // Extract success statistics for downloads
-                            let stats = "";
-                            const statsMatch = stdout.match(/Processing completed![\s\S]*?(?:={10,})/);
-                            if (statsMatch) {
-                                stats = statsMatch[0];
-                            }
-
-                            // Check if assets were actually downloaded
-                            if (stdout.includes("Total assets downloaded: 0")) {
-                                resolve({
-                                    success: false,
-                                    message: "Process completed but no assets were downloaded. Please check your settings.",
-                                });
-                            } else {
-                                resolve({
-                                    success: true,
-                                    message: stats || "Downloading completed successfully",
-                                });
-                            }
+                            resolve({
+                                success: true,
+                                message: stats || "Unpacking completed successfully",
+                            });
                         }
                     }
                 }
