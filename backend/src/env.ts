@@ -6,4 +6,6 @@ export const env = {
     REDIS_URL: process.env.REDIS_URL,
     REDIS_CACHE_TIME: Number(process.env.REDIS_CACHE_TIME) ?? 60 * 60 * 24 * 7,
     GITHUB_TOKEN: process.env.GITHUB_TOKEN,
+    DOWNLOAD_DIR: process.env.DOWNLOAD_DIR ?? "./ArkAssets",
+    UNPACKED_DIR: process.env.UNPACKED_DIR ?? "./unpacked",
 };

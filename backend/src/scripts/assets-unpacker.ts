@@ -6,6 +6,7 @@
 import { existsSync, mkdirSync } from "fs";
 import { resolve } from "path";
 import { runArkUnpacker } from "../lib/impl/local/impl/assets/ark-unpacker";
+import { env } from "../env";
 
 // Parse command line arguments properly
 const args = process.argv.slice(2);
@@ -13,8 +14,8 @@ const flagArgs = args.filter((arg) => arg.startsWith("-"));
 const positionalArgs = args.filter((arg) => !arg.startsWith("-"));
 
 // Setup variables - only use non-flag arguments as positional parameters
-const inputDir = positionalArgs[0] || "./downloads";
-const outputDir = positionalArgs[1] || "./unpacked";
+const inputDir = positionalArgs[0] || env.DOWNLOAD_DIR;
+const outputDir = positionalArgs[1] || env.UNPACKED_DIR;
 const forceReprocess = flagArgs.includes("--force") || flagArgs.includes("-f");
 const debugMode = flagArgs.includes("--debug");
 const listDirs = flagArgs.includes("--list-dirs");

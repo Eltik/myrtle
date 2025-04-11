@@ -1,95 +1,166 @@
 # Myrtle Backend
 
-Robust Arknights API inspired by ArkPRTS.
+A robust Arknights API inspired by ArkPRTS, built with modern TypeScript and Bun runtime. This backend service provides comprehensive data and calculations for the Arknights game, including operator statistics, DPS calculations, and game asset management.
 
-## Features
+## 🚀 Features
 
-- Game data retrieval and parsing
-- Asset downloading and unpacking
-- LZ4 decompression support for Unity asset bundles
-- Structured logging for better debugging
-- Various Arknights-specific utilities
+- **Modern TypeScript-based API server**: Built with Bun runtime for optimal performance
+- **Redis caching**: Implements efficient caching for frequently accessed data
+- **PostgreSQL database**: Robust data storage and management
+- **Asset management**: Complete pipeline for downloading, unpacking, and processing Arknights assets
+- **DPS Calculator**: Comprehensive damage calculation system for operators
+- **Event-driven architecture**: Efficient event handling and data processing
+- **Data import/export**: Tools for managing game data
 
-## Game Data
+## 📋 Prerequisites
 
-This backend interfaces with Arknights game data and assets.
+### Core Requirements
+- [Bun](https://bun.sh/) (Latest version) - Primary runtime
+- Node.js 18+ - Required for development tools
+- PostgreSQL - Database server
+- Redis - Caching server
 
-## Asset Handling
+### Asset Management Requirements
+- Python 3.8+ - Required for asset downloading
+- Python Dependencies:
+  - `requests` - For HTTP requests
+  - `tqdm` - For progress bars
+  - `beautifulsoup4` - For HTML parsing
+  - `lxml` - For XML parsing
+  - `pillow` - For image processing
+  - `cryptography` - For asset verification
+- Sufficient disk space for game assets (~10GB recommended)
 
-The backend includes utilities for downloading and processing Arknights assets, including:
+### Development Tools
+- Git - Version control
+- A code editor with TypeScript support (VS Code recommended)
 
-- Asset downloading from official servers
-- Unity asset bundle unpacking
-- Text, image, and audio asset extraction
-- LZ4 decompression for compressed assets
+## 🛠️ Installation
 
-## Configuration
+1. Clone the repository:
+```bash
+git clone [repository-url]
+cd backend
+```
 
-The system can be configured using environment variables:
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| ARKNIGHTS_LOG_LEVEL | Logging level (DEBUG, INFO, WARN, ERROR) | INFO |
-
-## Development
-
-### Prerequisites
-
-- [Bun](https://bun.sh/) runtime
-- Node.js 18+
-
-### Setup
-
+2. Install dependencies:
 ```bash
 bun install
 ```
 
-### Running
-
+3. Install Python dependencies:
 ```bash
-# Development
-bun dev
-
-# Production
-bun start
+pip install requests tqdm beautifulsoup4 lxml pillow cryptography
 ```
 
-### Building
-
+4. Set up environment configuration:
 ```bash
-bun run build
+cp .env.example .env
 ```
 
-## LZ4 Decompression
+5. Configure the following environment variables in `.env`:
+- `PORT`: Server port (default: 3060)
+- `LOAD_AK_CONFIG`: Whether to load Arknights configuration
+- `REDIS_URL`: Redis connection URL
+- `DATABASE_URL`: PostgreSQL connection URL
+- `REDIS_CACHE_TIME`: Cache duration in seconds (default: 3600)
 
-The system now supports full LZ4 decompression for Unity asset bundles. This feature enables extracting game assets that are compressed using the LZ4 algorithm.
+## 🚀 Development
 
-Implementation details:
-- Detects LZ4 compression from Unity bundle headers
-- Uses the lz4js JavaScript library for decompression (no native dependencies)
-- Compatible with Bun runtime (avoids Node-API native modules)
-- Implements full Unity asset bundle block handling:
-  - Properly decompresses the blocks info data
-  - Parses block metadata (sizes, compression flags)
-  - Processes each data block individually
-  - Handles both compressed and uncompressed blocks
-- Provides detailed logging of the decompression process
-- Includes fallback mechanism for handling edge cases
+### Available Scripts
 
-### Compatibility
+#### Core Development
+- `bun run dev` - Start development server with hot reload
+- `bun run build` - Build the project for production
+- `bun run start` - Start the production server
+- `bun run lint` - Run linting and formatting
 
-The implementation uses a pure JavaScript LZ4 implementation (lz4js) which:
-- Works natively with Bun without requiring Node-API or native modules
-- Provides the same compression/decompression capabilities as the C++ implementation
-- Has a simpler API that avoids buffer allocation issues
+#### Asset Management
+- `bun run download` - Download Arknights assets using Python script
+  - Options:
+    - `--quiet`: Less verbose output
+    - `--help`: Show help message
+- `bun run unpack` - Unpack downloaded assets
+- `bun run export` - Export processed data
+- `bun run import` - Import data into the database
 
-## Logging System
+#### Testing
+- `bun run test:dps` - Run DPS calculation tests
+  - Tests operator damage calculations
+  - Validates operator skill mechanics
+  - Checks operator talent interactions
 
-A structured logging system has been implemented to improve debugging capabilities:
+### Project Structure
 
-- Multiple log levels (DEBUG, INFO, WARN, ERROR)
-- Component-based logging for better context
-- Color-coded output for improved readability
-- Configurable verbosity via environment variables
+```
+backend/
+├── src/
+│   ├── app/         # Application logic and API endpoints
+│   ├── database/    # Database models, migrations, and queries
+│   ├── events/      # Event system and handlers
+│   ├── helper/      # Utility functions and helpers
+│   ├── lib/         # Core libraries and implementations
+│   │   ├── impl/
+│   │   │   ├── dps-calculator/  # DPS calculation engine
+│   │   │   ├── local/          # Local data management
+│   │   │   └── assets/         # Asset processing
+│   ├── scripts/     # Utility scripts for data management
+│   ├── tests/       # Test files and test utilities
+│   └── types/       # TypeScript type definitions
+├── dist/            # Compiled output
+├── data/            # Processed game data
+├── exports/         # Data export directory
+├── ArkAssets/       # Downloaded game assets
+└── unpacked/        # Unpacked game assets
+```
 
-You can set the log level using the `ARKNIGHTS_LOG_LEVEL` environment variable. 
+## 🔧 Configuration
+
+The project uses several configuration files for different aspects of development:
+
+- `tsconfig.json` - TypeScript configuration and compiler options
+- `.prettierrc.json` - Code formatting rules and style preferences
+- `eslint.config.mjs` - Linting rules and code quality standards
+- `.env` - Environment variables and runtime configuration
+- `.prettierignore` - Files to exclude from formatting
+- `.gitignore` - Files to exclude from version control
+
+## 📦 Dependencies
+
+### Main Dependencies
+- `cheerio` - HTML parsing for web scraping
+- `crypto-js` - Cryptographic operations for asset verification
+- `ioredis` - Redis client for caching
+- `pg` - PostgreSQL client for database operations
+- `zod` - Schema validation for data integrity
+- `eventemitter2` - Event handling system
+- `colors` - Terminal output formatting
+
+### Development Dependencies
+- TypeScript - Type safety and modern JavaScript features
+- ESLint - Code linting and quality control
+- Prettier - Code formatting
+- Bun Types - TypeScript definitions for Bun
+
+## 🧪 Testing
+
+The project includes comprehensive testing, particularly for the DPS calculator:
+
+```bash
+bun run test:dps
+```
+
+The DPS tests verify:
+- Operator damage calculations
+- Skill mechanics and interactions
+- Talent effects and combinations
+- Equipment and buff calculations
+- Enemy defense and resistance handling
+
+## 📝 License
+
+TBD
+
+## �� Contributing
+
+TBD
