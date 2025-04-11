@@ -6,12 +6,13 @@
 import { existsSync, mkdirSync } from "fs";
 import { spawn } from "child_process";
 import { runArkDownloader } from "../lib/impl/local/impl/assets/ark-downloader";
+import { env } from "../env";
 
 // Parse command line arguments
 const args = process.argv.slice(2);
 
 // Setup variables
-const downloadDir = process.env.DOWNLOAD_DIR || "./ArkAssets";
+const downloadDir = env.DOWNLOAD_DIR;
 const pythonCommand = process.platform === "win32" ? "python" : "python3";
 
 // Set debugging flags
