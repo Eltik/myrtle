@@ -1,10 +1,10 @@
 import type { AKDomain, AKServer } from "../../../types/impl/lib/impl/authentication";
 import load from "./impl/load";
 
-export const PASSPORT_DOMAINS = {
-    en: "https://passport.arknights.global",
-    jp: "https://passport.arknights.jp",
-    kr: "https://passport.arknights.kr",
+export const YOSTAR_DOMAINS = {
+    en: "https://en-sdk-api.yostarplat.com",
+    jp: "https://jp-sdk-api.yostarplat.com",
+    kr: "https://jp-sdk-api.yostarplat.com",
     cn: "ERROR",
     bili: "ERROR",
     tw: "ERROR",

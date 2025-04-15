@@ -14,12 +14,17 @@ export const getAssetURL = (repoBaseURL: string, path: string) => {
     const perspective = path.split("/")[1];
     const skinId = path.split("/")[2]?.split(".")[0];
     const chibiExntension = path.split("/")[2]?.split(".")[1];
-    const assetURL = `https://raw.githubusercontent.com/HermitzPlanner/${'chibi-assets'}/main/${plannerId}/${perspective}/${skinId}.${chibiExntension}`
+    const assetURL = `https://raw.githubusercontent.com/HermitzPlanner/${"chibi-assets"}/main/${plannerId}/${perspective}/${skinId}.${chibiExntension}`;
     console.log("Asset URL", assetURL);
     return assetURL;
 };
 
-export const getSkinData = (selectedOperator: FormattedChibis | null, selectedSkin: string | null, repoBaseURL: string, viewType: "dorm" | "front" | "back"): {
+export const getSkinData = (
+    selectedOperator: FormattedChibis | null,
+    selectedSkin: string | null,
+    repoBaseURL: string,
+    viewType: "dorm" | "front" | "back",
+): {
     atlas: string;
     png: string;
     skel: string;
@@ -193,4 +198,4 @@ export const getSkinData = (selectedOperator: FormattedChibis | null, selectedSk
         back: { path: skin.back.path, hasAssets: !!(skin.back.atlas && skin.back.png && skin.back.skel) },
     });
     return null;
-}
+};

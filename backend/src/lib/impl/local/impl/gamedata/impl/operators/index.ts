@@ -208,6 +208,8 @@ export default (id: string): Operator | null => {
         if (skins) {
             const artists: string[] = [];
             for (const skin of skins) {
+                if (!skin.displaySkin.drawerList) continue;
+
                 for (const drawer of skin.displaySkin.drawerList) {
                     if (artists.includes(drawer)) continue;
                     artists.push(drawer);

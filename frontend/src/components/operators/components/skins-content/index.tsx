@@ -9,6 +9,7 @@ import { SkinDetailsPanel } from "./impl/skin-details-panel";
 import { SkinSelector } from "./impl/skin-selector";
 import { FullscreenDialog } from "./impl/fullscreen-dialog";
 import { InfoSection } from "./impl/info-section";
+import { getCDNURL } from "~/lib/cdn";
 
 function SkinsContent({ operator }: { operator: Operator }) {
     // State for the currently selected skin
@@ -20,7 +21,7 @@ function SkinsContent({ operator }: { operator: Operator }) {
     const [skins, setSkins] = useState<UISkin[]>([]);
     const [chibi, setChibi] = useState<ChibisSimplified | null>(null);
 
-    const repoBaseUrl = "https://raw.githubusercontent.com/fexli/ArknightsResource/main/";
+    const repoBaseUrl = getCDNURL("");
 
     // Define fallbackSkin with useMemo to avoid recalculation on every render
     const fallbackSkin = useMemo(() => getFallbackSkin(operator, repoBaseUrl), [operator, repoBaseUrl]);

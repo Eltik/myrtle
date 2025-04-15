@@ -1,4 +1,4 @@
-import { PASSPORT_DOMAINS } from "../../../../..";
+import { YOSTAR_DOMAINS } from "../../../../..";
 import type { AKDomain, AKServer } from "../../../../../../../../types/impl/lib/impl/authentication";
 import request from "../../../../request";
 
@@ -7,22 +7,20 @@ export const submitYostarAuth = async (
     code: string,
     server: AKServer,
 ): Promise<{
-    yostar_uid: string;
-    yostar_token: string;
+    token: string;
 }> => {
     const body = {
-        account: email,
-        code: code,
+        Account: email,
+        Code: code,
     };
 
     const data = (await (
-        await request(PASSPORT_DOMAINS[server] as AKDomain, "account/yostar_auth_submit", {
+        await request(YOSTAR_DOMAINS[server] as AKDomain, "yostar/get-auth", {
             body: JSON.stringify(body),
         })
-    ).json()) as { yostar_uid: string; yostar_token: string };
+    ).json()) as { Data: { Token: string } };
 
     return {
-        yostar_uid: data.yostar_uid,
-        yostar_token: data.yostar_token,
+        token: data.Data.Token,
     };
 };
