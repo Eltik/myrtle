@@ -10,6 +10,7 @@ import { ChibiRenderer } from "./impl/renderer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { cn } from "~/lib/utils";
+import { getCDNURL } from "../../lib/cdn";
 
 export function ChibiViewer() {
     const [chibis, setChibis] = useState<FormattedChibis[]>([]);
@@ -176,8 +177,8 @@ export function ChibiViewer() {
         }
     };
 
-    // GitHub raw content URL base for the repository
-    const repoBaseUrl = "https://raw.githubusercontent.com/HermitzPlanner/chibi-assets/main/";
+    // Replace GitHub raw content URL with our CDN proxy using the utility
+    const repoBaseUrl = getCDNURL("");
 
     return (
         <div className="container mx-auto py-8">

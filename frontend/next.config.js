@@ -34,6 +34,15 @@ const config = {
             },
         ],
     },
+    // Add rewrites for proxying CDN requests
+    async rewrites() {
+        return [
+            {
+                source: "/assets/:path*",
+                destination: `${process.env.BACKEND_URL ?? "http://localhost:3060"}/cdn/:path*`,
+            },
+        ];
+    },
 };
 
 export default config;

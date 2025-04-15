@@ -8,6 +8,7 @@ import type { Range } from "~/types/impl/api/static/ranges";
 import { useEffect, useState } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
 import { ArrowDownIcon, ArrowUpIcon } from "lucide-react";
+import { getCDNURL } from "~/lib/cdn";
 
 function SkillCard({ skill, level }: { skill: Operator["skills"][0]; level: number }) {
     const [currentRange, setCurrentRange] = useState<Range | null>(null);
@@ -62,7 +63,7 @@ function SkillCard({ skill, level }: { skill: Operator["skills"][0]; level: numb
             <CardHeader>
                 <CardTitle className="flex flex-row items-center gap-2 text-xl font-bold">
                     <Image
-                        src={skill.static?.image ?? ""}
+                        src={getCDNURL(`${skill.static?.image ?? ""}`)}
                         width={50}
                         height={50}
                         alt="Skill"

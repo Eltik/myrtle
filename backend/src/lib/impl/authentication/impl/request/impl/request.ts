@@ -1,6 +1,7 @@
-import { DEFAULT_HEADERS, DOMAINS } from "../../..";
+import { DEFAULT_HEADERS, DEVICE_IDS, DOMAINS } from "../../..";
 import type { AKDomain, AKServer, AuthSession } from "../../../../../../types/impl/lib/impl/authentication";
 import { loadNetworkConfig } from "../../load/impl/networkConfig";
+import { generateHeaders } from "../../yostar/impl/login/impl/generateHeaders";
 
 // Global request timeout (5 seconds)
 const REQUEST_TIMEOUT_MS = 5000;
@@ -51,6 +52,8 @@ export const request = async (domain: AKDomain, endpoint: string | null = null, 
     } else {
         Object.assign(args.headers, DEFAULT_HEADERS);
     }
+
+    Object.assign(args.headers, generateHeaders(JSON.stringify(args.body), server))
 
     // Add signal with timeout to the request
     const controller = new AbortController();

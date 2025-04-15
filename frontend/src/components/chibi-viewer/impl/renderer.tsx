@@ -16,7 +16,7 @@ type ChibiRendererProps = {
 export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseURL }: ChibiRendererProps) {
     const appRef = useRef<PIXI.Application | null>(null);
     const spineRef = useRef<Spine | null>(null);
-    
+
     const [selectedAnimation, setSelectedAnimation] = useState<string>("Idle");
     const [availableAnimations, setAvailableAnimations] = useState<string[]>([]);
     const [viewType, setViewType] = useState<"dorm" | "front" | "back">("front");
@@ -30,25 +30,28 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseURL }: C
     // Function to handle mouse down for dragging
     const handleMouseDown = useCallback((e: React.MouseEvent) => {
         if (!spineRef.current) return;
-        
+
         setIsDragging(true);
         setDragStart({
             x: e.clientX - spineRef.current.x,
-            y: e.clientY - spineRef.current.y
+            y: e.clientY - spineRef.current.y,
         });
     }, []);
 
     // Function to handle mouse move for dragging
-    const handleMouseMove = useCallback((e: React.MouseEvent) => {
-        if (!spineRef.current || !isDragging || !dragStart) return;
-        
-        spineRef.current.x = e.clientX - dragStart.x;
-        spineRef.current.y = e.clientY - dragStart.y;
-        
-        if (appRef.current) {
-            appRef.current.renderer.render(appRef.current.stage);
-        }
-    }, [isDragging, dragStart]);
+    const handleMouseMove = useCallback(
+        (e: React.MouseEvent) => {
+            if (!spineRef.current || !isDragging || !dragStart) return;
+
+            spineRef.current.x = e.clientX - dragStart.x;
+            spineRef.current.y = e.clientY - dragStart.y;
+
+            if (appRef.current) {
+                appRef.current.renderer.render(appRef.current.stage);
+            }
+        },
+        [isDragging, dragStart],
+    );
 
     // Function to handle mouse up to stop dragging
     const handleMouseUp = useCallback(() => {
@@ -59,87 +62,87 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseURL }: C
     // Function to reset position
     const resetPosition = useCallback(() => {
         if (!spineRef.current || !appRef.current) return;
-        
+
         // Reset to center
         spineRef.current.x = appRef.current.screen.width / 2;
         spineRef.current.y = appRef.current.screen.height * 0.5;
-        
+
         appRef.current.renderer.render(appRef.current.stage);
     }, []);
 
-    const renderSkinSpine = useCallback((skinAsset: {
-        spineAtlas: TextureAtlas;
-        spineData: ISkeletonData;
-    }) => {
-        // Clear any existing spine object
-        if (spineRef.current) {
-            appRef.current?.stage.removeChild(spineRef.current);
-            spineRef.current.destroy();
-            spineRef.current = null;
-        }
-
-        // Create a new spine object
-        spineRef.current = new Spine(skinAsset.spineData);
-
-        // Set available animations
-        setAvailableAnimations(skinAsset.spineData.animations.map((animation) => animation.name));
-
-        // Fix the positioning calculation
-        if (appRef.current) {
-            // Center the spine horizontally
-            spineRef.current.x = appRef.current.screen.width / 2;
-            
-            // Position vertically based on animation type
-            if (selectedAnimation === "Sit" || selectedAnimation === "Sitting") {
-                // Move up for sitting animations
-                spineRef.current.y = appRef.current.screen.height * 0.6;
-            } else {
-                // Default position
-                spineRef.current.y = appRef.current.screen.height * 0.5;
+    const renderSkinSpine = useCallback(
+        (skinAsset: { spineAtlas: TextureAtlas; spineData: ISkeletonData }) => {
+            // Clear any existing spine object
+            if (spineRef.current) {
+                appRef.current?.stage.removeChild(spineRef.current);
+                spineRef.current.destroy();
+                spineRef.current = null;
             }
-        }
 
-        // Set a reasonable scale
-        spineRef.current.scale.set(0.8);
+            // Create a new spine object
+            spineRef.current = new Spine(skinAsset.spineData);
 
-        // Set initial animation based on view type
-        if (viewType !== "dorm") {
-            if (spineRef.current.spineData.findAnimation("Start")) {
-                spineRef.current.state.setAnimation(0, "Start", false);
-            } else if (spineRef.current.spineData.findAnimation("Start_A")) {
-                spineRef.current.state.setAnimation(0, "Start_A", false);
-            } else {
-                spineRef.current.state.setAnimation(0, "Idle", true);
-            }
-        } else {
-            if (spineRef.current.spineData.findAnimation("Relax")) {
-                spineRef.current.state.setAnimation(0, "Relax", true);
-            } else {
-                spineRef.current.state.setAnimation(0, "Idle", true);
-            }
-        }
+            // Set available animations
+            setAvailableAnimations(skinAsset.spineData.animations.map((animation) => animation.name));
 
-        spineRef.current.interactive = true;
-        spineRef.current.alpha = 1;
+            // Fix the positioning calculation
+            if (appRef.current) {
+                // Center the spine horizontally
+                spineRef.current.x = appRef.current.screen.width / 2;
 
-        spineRef.current.state.addListener({
-            complete: (event) => {
-                console.log(event);
-                if (event.animationEnd && viewType !== 'dorm') {
-                    spineRef.current?.state.setAnimation(0, 'Idle', true);
+                // Position vertically based on animation type
+                if (selectedAnimation === "Sit" || selectedAnimation === "Sitting") {
+                    // Move up for sitting animations
+                    spineRef.current.y = appRef.current.screen.height * 0.6;
+                } else {
+                    // Default position
+                    spineRef.current.y = appRef.current.screen.height * 0.5;
                 }
             }
-        });
 
-        // Add the spine object to the stage
-        appRef.current?.stage.addChild(spineRef.current);
-        
-        // Render the stage
-        appRef.current?.renderer.render(appRef.current?.stage);
+            // Set a reasonable scale
+            spineRef.current.scale.set(0.8);
 
-        console.log("Finished rendering");
-        setIsLoading(false);
-    }, [selectedAnimation, viewType]);
+            // Set initial animation based on view type
+            if (viewType !== "dorm") {
+                if (spineRef.current.spineData.findAnimation("Start")) {
+                    spineRef.current.state.setAnimation(0, "Start", false);
+                } else if (spineRef.current.spineData.findAnimation("Start_A")) {
+                    spineRef.current.state.setAnimation(0, "Start_A", false);
+                } else {
+                    spineRef.current.state.setAnimation(0, "Idle", true);
+                }
+            } else {
+                if (spineRef.current.spineData.findAnimation("Relax")) {
+                    spineRef.current.state.setAnimation(0, "Relax", true);
+                } else {
+                    spineRef.current.state.setAnimation(0, "Idle", true);
+                }
+            }
+
+            spineRef.current.interactive = true;
+            spineRef.current.alpha = 1;
+
+            spineRef.current.state.addListener({
+                complete: (event) => {
+                    console.log(event);
+                    if (event.animationEnd && viewType !== "dorm") {
+                        spineRef.current?.state.setAnimation(0, "Idle", true);
+                    }
+                },
+            });
+
+            // Add the spine object to the stage
+            appRef.current?.stage.addChild(spineRef.current);
+
+            // Render the stage
+            appRef.current?.renderer.render(appRef.current?.stage);
+
+            console.log("Finished rendering");
+            setIsLoading(false);
+        },
+        [selectedAnimation, viewType],
+    );
 
     const renderCanvas = useCallback(() => {
         const skinData = getSkinData(selectedOperator, selectedSkin, repoBaseURL, viewType);
@@ -153,10 +156,7 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseURL }: C
 
         // Load the skeleton file directly
         PIXI.Assets.load(skinData.skel)
-            .then((skinAsset: {
-                spineAtlas: TextureAtlas;
-                spineData: ISkeletonData;
-            }) => {
+            .then((skinAsset: { spineAtlas: TextureAtlas; spineData: ISkeletonData }) => {
                 console.log("Skin asset loaded:", skinAsset);
                 renderSkinSpine(skinAsset);
                 setIsLoading(false);
@@ -195,7 +195,7 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseURL }: C
 
         // Add the view to the DOM first
         canvasContainerRef.current?.appendChild(pixiApp.view as unknown as Node);
-        
+
         // Set up the animation loop
         const tick = () => {
             if (spineRef.current && pixiApp?.renderer) {
@@ -206,7 +206,7 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseURL }: C
             }
             requestAnimationFrame(tick);
         };
-        
+
         // Start the animation loop
         requestAnimationFrame(tick);
 
@@ -218,7 +218,7 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseURL }: C
                 spineRef.current.destroy();
                 spineRef.current = null;
             }
-            
+
             if (appRef.current) {
                 appRef.current.destroy(true, { children: true, texture: true, baseTexture: true });
                 appRef.current = null;
@@ -274,26 +274,16 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseURL }: C
                                 </SelectContent>
                             </Select>
                         </div>
-                        
+
                         {/* Reset Position Button */}
                         <div className="flex justify-end">
-                            <button 
-                                onClick={resetPosition}
-                                className="rounded-md bg-gray-200 px-3 py-1 text-sm hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600"
-                                disabled={isLoading}
-                            >
+                            <button onClick={resetPosition} className="rounded-md bg-gray-200 px-3 py-1 text-sm hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600" disabled={isLoading}>
                                 Center
                             </button>
                         </div>
                     </div>
                     {/* Display area */}
-                    <div 
-                        className="relative h-[400px] w-full bg-[#111014]"
-                        onMouseDown={handleMouseDown}
-                        onMouseMove={handleMouseMove}
-                        onMouseUp={handleMouseUp}
-                        onMouseLeave={handleMouseUp}
-                    >
+                    <div className="relative h-[400px] w-full bg-[#111014]" onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}>
                         <div ref={canvasContainerRef} className="h-full w-full" style={{ cursor: isDragging ? "grabbing" : "grab" }} />
                         {isLoading && (
                             <div className="absolute inset-0 flex items-center justify-center bg-black/20">
@@ -313,5 +303,5 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseURL }: C
                 </CardContent>
             </Card>
         </>
-    )
+    );
 }

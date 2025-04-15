@@ -38,6 +38,15 @@ export const crawlLocalChibis = async (): Promise<RepoItem[]> => {
         let totalFiles = 0;
         let matchedFiles = 0;
 
+        // Track complete file sets by operator and animation type
+        const fileTracker = new Map<
+            string,
+            {
+                base: { atlas: boolean; skel: boolean; png: boolean };
+                skin: Map<string, { atlas: boolean; skel: boolean; png: boolean }>;
+            }
+        >();
+
         // Function to crawl a directory and process files
         const crawlDir = async (dirPath: string, isChararts: boolean) => {
             if (!fs.existsSync(dirPath)) {
@@ -75,7 +84,69 @@ export const crawlLocalChibis = async (): Promise<RepoItem[]> => {
                     const opId = `${prefix}${id}`;
 
                     matchedFiles++;
-                    console.log(colors.green(`✓ Matched file ${fileName} to operator ID: ${opId}`));
+
+                    // Determine the animation type (base or skin)
+                    const animType = isChararts ? "base" : "skin";
+
+                    // Determine file type (atlas, skel, png)
+                    const isAtlas = fileName.toLowerCase().endsWith(".atlas");
+                    const isSkel = fileName.toLowerCase().endsWith(".skel");
+                    const isPng = fileName.toLowerCase().endsWith(".png");
+
+                    // If not one of the required file types, skip
+                    if (!isAtlas && !isSkel && !isPng) {
+                        return;
+                    }
+
+                    // Initialize tracker for this operator if needed
+                    if (!fileTracker.has(opId)) {
+                        fileTracker.set(opId, {
+                            base: { atlas: false, skel: false, png: false },
+                            skin: new Map(),
+                        });
+                    }
+
+                    const tracker = fileTracker.get(opId)!;
+
+                    // Extract skin name for skin animations
+                    let skinName = "";
+                    if (animType === "skin") {
+                        // Try to extract skin name from file name - everything after char_XXX_name_
+                        const skinMatch = fileName.match(/(?:char|build_char)_\d+_[a-z0-9]+_(.+?)(?:\.|_Atlas|_SkeletonData|$)/i);
+                        if (skinMatch && skinMatch[1]) {
+                            skinName = skinMatch[1].toLowerCase();
+
+                            // Initialize tracker for this skin if needed
+                            if (!tracker.skin.has(skinName)) {
+                                tracker.skin.set(skinName, { atlas: false, skel: false, png: false });
+                            }
+
+                            // Update tracker for this skin
+                            const skinTracker = tracker.skin.get(skinName)!;
+                            if (isAtlas) skinTracker.atlas = true;
+                            if (isSkel) skinTracker.skel = true;
+                            if (isPng) skinTracker.png = true;
+                        } else {
+                            // If we can't extract the skin name, use the filename as a fallback
+                            skinName = fileName.split(".")[0].toLowerCase();
+
+                            // Initialize tracker for this skin if needed
+                            if (!tracker.skin.has(skinName)) {
+                                tracker.skin.set(skinName, { atlas: false, skel: false, png: false });
+                            }
+
+                            // Update tracker for this skin
+                            const skinTracker = tracker.skin.get(skinName)!;
+                            if (isAtlas) skinTracker.atlas = true;
+                            if (isSkel) skinTracker.skel = true;
+                            if (isPng) skinTracker.png = true;
+                        }
+                    } else {
+                        // Update tracker for base animation
+                        if (isAtlas) tracker.base.atlas = true;
+                        if (isSkel) tracker.base.skel = true;
+                        if (isPng) tracker.base.png = true;
+                    }
 
                     // Create operator if it doesn't exist
                     if (!operatorMap.has(opId)) {
@@ -142,6 +213,51 @@ export const crawlLocalChibis = async (): Promise<RepoItem[]> => {
         // Print stats
         console.log(colors.cyan(`📊 File analysis: ${matchedFiles}/${totalFiles} files matched to operators (${Math.round((matchedFiles / totalFiles) * 100)}%)`));
         console.log(colors.cyan(`🔍 Found ${operatorMap.size} unique operators`));
+
+        // Count operators with complete spine data
+        let completeBaseCount = 0;
+        let completeSkinCount = 0;
+        let totalSkinCount = 0;
+
+        for (const [opId, data] of fileTracker.entries()) {
+            // Check if base animation is complete
+            if (data.base.atlas && data.base.skel && data.base.png) {
+                completeBaseCount++;
+            } else {
+                // If base animation is incomplete, remove those files
+                const operator = operatorMap.get(opId);
+                if (operator) {
+                    const baseDir = operator.children!.find((c) => c.name === "base");
+                    if (baseDir) {
+                        baseDir.children = [];
+                    }
+                }
+            }
+
+            // Check each skin
+            for (const [skinName, skinData] of data.skin.entries()) {
+                totalSkinCount++;
+                if (skinData.atlas && skinData.skel && skinData.png) {
+                    completeSkinCount++;
+                } else {
+                    // If skin is incomplete, remove those specific files
+                    const operator = operatorMap.get(opId);
+                    if (operator) {
+                        const skinDir = operator.children!.find((c) => c.name === "skin");
+                        if (skinDir && skinDir.children) {
+                            // Keep only files that don't belong to this incomplete skin
+                            skinDir.children = skinDir.children.filter((file) => {
+                                // Skip files that don't match the incomplete skin
+                                return !file.name.toLowerCase().includes(skinName.toLowerCase());
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        console.log(colors.cyan(`🎮 Animation stats: ${completeBaseCount}/${operatorMap.size} operators with complete base animations`));
+        console.log(colors.cyan(`🎭 Skin stats: ${completeSkinCount}/${totalSkinCount} complete skin animations`));
 
         // Log top 10 operators by file count
         const operatorCounts = new Map<string, number>();

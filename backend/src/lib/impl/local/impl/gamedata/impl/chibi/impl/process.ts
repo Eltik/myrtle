@@ -5,70 +5,101 @@ import type { RepoItem, SpineFiles, CharacterSkin, CharacterData } from "../../.
  */
 export function processCharsForFrontend(items: RepoItem[]): CharacterData[] {
     // The items are already organized by operator code in our new structure
-    return items.map((operatorDir) => {
-        // Each top-level directory is an operator
-        const operatorCode = operatorDir.name;
+    return items
+        .map((operatorDir) => {
+            // Each top-level directory is an operator
+            const operatorCode = operatorDir.name;
 
-        // Process skins for this operator
-        const skins: CharacterSkin[] = [];
+            // Process skins for this operator
+            const skins: CharacterSkin[] = [];
 
-        // Process base and skin directories
-        if (operatorDir.children) {
-            // The base skin
-            const baseDir = operatorDir.children.find((child) => child.contentType === "dir" && child.name === "base");
+            // Process base and skin directories
+            if (operatorDir.children) {
+                // The base skin - which now contains front and back views
+                const baseDir = operatorDir.children.find((child) => child.contentType === "dir" && child.name === "base");
 
-            if (baseDir) {
-                const baseSkin: CharacterSkin = {
-                    name: "default",
-                    path: baseDir.path,
-                    hasSpineData: true,
-                    animationTypes: {},
-                };
+                if (baseDir && baseDir.children) {
+                    // Process front view
+                    const frontDir = baseDir.children.find((child) => child.contentType === "dir" && child.name === "front");
+                    const backDir = baseDir.children.find((child) => child.contentType === "dir" && child.name === "back");
 
-                // Add spine files for base animation
-                baseSkin.animationTypes.front = extractSpineFiles(baseDir);
+                    // Extract spine files for front and back animations
+                    const frontSpineFiles = frontDir ? extractSpineFiles(frontDir) : { atlas: null, skel: null, png: null };
+                    const backSpineFiles = backDir ? extractSpineFiles(backDir) : { atlas: null, skel: null, png: null };
 
-                skins.push(baseSkin);
-            }
+                    // Only add if at least one view has complete spine files
+                    const hasFrontComplete = hasCompleteSpineFiles(frontSpineFiles);
+                    const hasBackComplete = hasCompleteSpineFiles(backSpineFiles);
 
-            // The skin variants
-            const skinDir = operatorDir.children.find((child) => child.contentType === "dir" && child.name === "skin");
+                    if (hasFrontComplete || hasBackComplete) {
+                        const baseSkin: CharacterSkin = {
+                            name: "default",
+                            path: baseDir.path,
+                            hasSpineData: true,
+                            animationTypes: {},
+                        };
 
-            if (skinDir && skinDir.children) {
-                // Each set of spine files in skins represents a different skin
-                // Group files by their name prefix (before the extension)
-                const skinGroups = groupFilesByPrefix(skinDir.children);
+                        // Add front view if complete
+                        if (hasFrontComplete) {
+                            baseSkin.animationTypes.front = frontSpineFiles;
+                        }
 
-                // Process each skin group
-                for (const [prefix, files] of skinGroups.entries()) {
-                    const skinFiles: RepoItem = {
-                        name: prefix,
-                        path: `${skinDir.path}/${prefix}`,
-                        contentType: "dir",
-                        children: files,
-                    };
+                        // Add back view if complete
+                        if (hasBackComplete) {
+                            baseSkin.animationTypes.back = backSpineFiles;
+                        }
 
-                    const skin: CharacterSkin = {
-                        name: prefix,
-                        path: skinFiles.path,
-                        hasSpineData: true,
-                        animationTypes: {
-                            front: extractSpineFiles(skinFiles),
-                        },
-                    };
+                        skins.push(baseSkin);
+                    }
+                }
 
-                    skins.push(skin);
+                // The skin variants
+                const skinDir = operatorDir.children.find((child) => child.contentType === "dir" && child.name === "skin");
+
+                if (skinDir && skinDir.children) {
+                    // Each set of spine files in skins represents a different skin
+                    // Group files by their name prefix (before the extension)
+                    const skinGroups = groupFilesByPrefix(skinDir.children);
+
+                    // Process each skin group
+                    for (const [prefix, files] of skinGroups.entries()) {
+                        const skinFiles: RepoItem = {
+                            name: prefix,
+                            path: `${skinDir.path}/${prefix}`,
+                            contentType: "dir",
+                            children: files,
+                        };
+
+                        // Extract spine files and only add if complete
+                        const spineFiles = extractSpineFiles(skinFiles);
+                        if (hasCompleteSpineFiles(spineFiles)) {
+                            const skin: CharacterSkin = {
+                                name: prefix,
+                                path: skinFiles.path,
+                                hasSpineData: true,
+                                animationTypes: {
+                                    front: spineFiles,
+                                },
+                            };
+
+                            skins.push(skin);
+                        }
+                    }
                 }
             }
-        }
 
-        return {
-            operatorCode,
-            name: operatorCodeToName(operatorCode),
-            path: operatorDir.path,
-            skins,
-        };
-    });
+            // Only return operators that have at least one valid skin
+            if (skins.length > 0) {
+                return {
+                    operatorCode,
+                    name: operatorCodeToName(operatorCode),
+                    path: operatorDir.path,
+                    skins,
+                };
+            }
+            return null;
+        })
+        .filter(Boolean) as CharacterData[]; // Filter out null entries
 }
 
 /**
@@ -116,6 +147,13 @@ function extractSpineFiles(dir: RepoItem): SpineFiles {
         skel: skel?.path || null,
         png: png?.path || null,
     };
+}
+
+/**
+ * Check if spine files are complete (has all required files)
+ */
+function hasCompleteSpineFiles(spineFiles: SpineFiles): boolean {
+    return Boolean(spineFiles.atlas && spineFiles.skel && spineFiles.png);
 }
 
 /**

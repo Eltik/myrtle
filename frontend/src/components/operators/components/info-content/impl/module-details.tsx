@@ -11,6 +11,7 @@ import Image from "next/image";
 import { descriptionToHtml } from "~/helper/descriptionParser";
 import { parsePhase } from "~/helper";
 import { OperatorPhase } from "~/types/impl/api/static/operator";
+import { getCDNURL } from "~/lib/cdn";
 
 interface ModuleDetailsProps {
     currentModule: string;
@@ -39,7 +40,7 @@ export function ModuleDetails({ currentModule, modules, moduleData }: ModuleDeta
                 {/* Module Header */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <Image src={currentModuleInfo.image ?? `https://raw.githubusercontent.com/fexli/ArknightsResource/main/equip/${currentModuleInfo.uniEquipIcon}.png`} alt={currentModuleInfo.uniEquipName} className="h-24 w-24 rounded-md" width={96} height={96} />
+                        <Image src={currentModuleInfo.image ? getCDNURL(currentModuleInfo.image) : getCDNURL(`equip/${currentModuleInfo.uniEquipIcon}.png`)} alt={currentModuleInfo.uniEquipName} className="h-24 w-24 rounded-md" width={96} height={96} />
                         <div>
                             <h3 className="text-lg font-semibold">{currentModuleInfo.uniEquipName}</h3>
                             <div className="flex gap-1">
