@@ -1,42 +1,66 @@
 # Backend
 
-A robust Arknights API inspired by ArkPRTS, built with modern TypeScript and Bun runtime. This backend service provides comprehensive data and calculations for the Arknights game, including operator statistics, DPS calculations, and game asset management.
+A robust Arknights API inspired by [ArkPRTS](https://github.com/thesadru/ArkPRTS), built with modern TypeScript and Bun runtime. This backend service provides comprehensive data and calculations for the Arknights game, including operator statistics, DPS calculations, and game asset management.
 
-## 🚀 Features
+## Table of Contents
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+  - [Core Requirements](#core-requirements)
+  - [Asset Management Requirements](#asset-management-requirements)
+  - [Development Tools](#development-tools)
+- [Installation](#installation)
+- [Development](#development)
+  - [Available Scripts](#available-scripts)
+  - [Project Structure](#project-structure)
+- [Configuration](#configuration)
+- [Dependencies](#dependencies)
+- [Testing](#testing)
+- [CDN Service](#cdn-service)
+  - [CDN Features](#cdn-features)
+  - [CDN Usage](#cdn-usage)
+  - [Cache Configuration](#cache-configuration)
+  - [CDN Monitoring](#cdn-monitoring)
+  - [CDN Security](#cdn-security)
+  - [CDN Environment Configuration](#cdn-environment-configuration)
+  - [Supported File Types](#supported-file-types)
+- [License](#license)
+- [Contributing](#contributing)
 
-- **Modern TypeScript-based API server**: Built with Bun runtime for optimal performance
-- **Redis caching**: Implements efficient caching for frequently accessed data
-- **PostgreSQL database**: Robust data storage and management
+## Features
+
+- **Modern TypeScript-based API server**: Built with [Bun runtime](https://bun.sh/) for optimal performance
+- **[Redis](https://redis.io/) caching**: Implements efficient caching for frequently accessed data
+- **[PostgreSQL](https://www.postgresql.org/) database**: Robust data storage and management
 - **Asset management**: Complete pipeline for downloading, unpacking, and processing Arknights assets
 - **CDN service**: Secure delivery of game assets with intelligent caching
 - **DPS Calculator**: Comprehensive damage calculation system for operators
 - **Event-driven architecture**: Efficient event handling and data processing
 - **Data import/export**: Tools for managing game data
 
-## 📋 Prerequisites
+## Prerequisites
 
 ### Core Requirements
 - [Bun](https://bun.sh/) (Latest version) - Primary runtime
-- Node.js 18+ - Required for development tools
-- PostgreSQL - Database server
-- Redis - Caching server
+- [Node.js](https://nodejs.org/) 18+ - Required for development tools
+- [PostgreSQL](https://www.postgresql.org/) - Database server
+- [Redis](https://redis.io/) - Caching server
 
 ### Asset Management Requirements
-- Python 3.8+ - Required for asset downloading
+- [Python 3.8+](https://www.python.org/downloads/) - Required for asset downloading
 - Python Dependencies:
-  - `requests` - For HTTP requests
-  - `tqdm` - For progress bars
-  - `beautifulsoup4` - For HTML parsing
-  - `lxml` - For XML parsing
-  - `pillow` - For image processing
-  - `cryptography` - For asset verification
+  - [`requests`](https://pypi.org/project/requests/) - For HTTP requests
+  - [`tqdm`](https://pypi.org/project/tqdm/) - For progress bars
+  - [`beautifulsoup4`](https://pypi.org/project/beautifulsoup4/) - For HTML parsing
+  - [`lxml`](https://pypi.org/project/lxml/) - For XML parsing
+  - [`pillow`](https://pypi.org/project/Pillow/) - For image processing
+  - [`cryptography`](https://pypi.org/project/cryptography/) - For asset verification
 - Sufficient disk space for game assets (~10GB recommended)
 
 ### Development Tools
-- Git - Version control
-- A code editor with TypeScript support (VS Code recommended)
+- [Git](https://git-scm.com/) - Version control
+- A code editor with TypeScript support ([VS Code](https://code.visualstudio.com/) recommended)
 
-## 🛠️ Installation
+## Installation
 
 1. Clone the repository:
 ```bash
@@ -66,7 +90,7 @@ cp .env.example .env
 - `DATABASE_URL`: PostgreSQL connection URL
 - `REDIS_CACHE_TIME`: Cache duration in seconds (default: 3600)
 
-## 🚀 Development
+## Development
 
 ### Available Scripts
 
@@ -115,7 +139,7 @@ backend/
 └── unpacked/        # Unpacked game assets
 ```
 
-## 🔧 Configuration
+## Configuration
 
 The project uses several configuration files for different aspects of development:
 
@@ -126,25 +150,25 @@ The project uses several configuration files for different aspects of developmen
 - `.prettierignore` - Files to exclude from formatting
 - `.gitignore` - Files to exclude from version control
 
-## 📦 Dependencies
+## Dependencies
 
 ### Main Dependencies
-- `cheerio` - HTML parsing for web scraping
-- `crypto-js` - Cryptographic operations for asset verification
-- `ioredis` - Redis client for caching
-- `pg` - PostgreSQL client for database operations
-- `zod` - Schema validation for data integrity
-- `eventemitter2` - Event handling system
-- `colors` - Terminal output formatting
-- `mime-types` - MIME type detection for CDN service
+- [`cheerio`](https://github.com/cheeriojs/cheerio) - HTML parsing for web scraping
+- [`crypto-js`](https://github.com/brix/crypto-js) - Cryptographic operations for asset verification
+- [`ioredis`](https://github.com/luin/ioredis) - Redis client for caching
+- [`pg`](https://node-postgres.com/) - PostgreSQL client for database operations
+- [`zod`](https://github.com/colinhacks/zod) - Schema validation for data integrity
+- [`eventemitter2`](https://github.com/EventEmitter2/EventEmitter2) - Event handling system
+- [`colors`](https://github.com/Marak/colors.js) - Terminal output formatting
+- [`mime-types`](https://github.com/jshttp/mime-types) - MIME type detection for CDN service
 
 ### Development Dependencies
-- TypeScript - Type safety and modern JavaScript features
-- ESLint - Code linting and quality control
-- Prettier - Code formatting
-- Bun Types - TypeScript definitions for Bun
+- [TypeScript](https://www.typescriptlang.org/) - Type safety and modern JavaScript features
+- [ESLint](https://eslint.org/) - Code linting and quality control
+- [Prettier](https://prettier.io/) - Code formatting
+- [Bun Types](https://bun.sh/docs/typescript) - TypeScript definitions for Bun
 
-## 🧪 Testing
+## Testing
 
 The project includes comprehensive testing, particularly for the DPS calculator:
 
@@ -159,7 +183,7 @@ The DPS tests verify:
 - Equipment and buff calculations
 - Enemy defense and resistance handling
 
-## 📚 CDN Service
+## CDN Service
 
 The backend includes a modern and secure CDN service for serving assets from the `unpacked` directory.
 
@@ -234,10 +258,10 @@ UNPACKED_DIR=/path/to/your/assets
 - Video: .mp4, .webm
 - Documents: .pdf, .json, .txt, .csv, .xml
 
-## 📝 License
+## License
 
 TBD
 
-## �� Contributing
+## Contributing
 
 TBD
