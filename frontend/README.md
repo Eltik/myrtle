@@ -31,9 +31,8 @@ A Next.js frontend application built with the T3 Stack that provides the user in
 
 ## Installation
 
-1. Clone the repository:
+1. Move into the `./frontend` directory:
 ```bash
-git clone [repository-url]
 cd frontend
 ```
 
