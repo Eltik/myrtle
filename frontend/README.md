@@ -1,76 +1,61 @@
 # Frontend
 
-This is a Next.js frontend application built with the T3 Stack that provides the user interface for myrtle.moe.
+A Next.js frontend application built with the T3 Stack that provides the user interface for myrtle.moe.
 
-## Technology Stack
+## Table of Contents
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Development](#development)
+  - [Available Scripts](#available-scripts)
+  - [Starting the Development Server](#starting-the-development-server)
+- [Project Structure](#project-structure)
+- [Configuration](#configuration)
+- [Backend Integration](#backend-integration)
+- [Deployment](#deployment)
+- [Learn More](#learn-more)
 
-- [Next.js](https://nextjs.org) - React framework for building the UI
-- [Tailwind CSS](https://tailwindcss.com) - Utility-first CSS framework
-- [shadcn/ui](https://ui.shadcn.com/) - UI component library built with Radix UI and Tailwind
-- [Zustand](https://zustand-demo.pmnd.rs/) - State management
-- [Framer Motion](https://www.framer.com/motion/) - Animation library
-- [PixiJS](https://pixijs.com/) - WebGL rendering for animations
+## Features
 
-## Getting Started
+- **[Next.js Framework](https://nextjs.org)**: React framework for building the UI
+- **[Tailwind CSS](https://tailwindcss.com)**: Utility-first CSS framework
+- **[shadcn/ui](https://ui.shadcn.com/)**: UI component library built with Radix UI and Tailwind
+- **[Zustand](https://zustand-demo.pmnd.rs/)**: State management
+- **[Framer Motion](https://www.framer.com/motion/)**: Animation library
+- **[PixiJS](https://pixijs.com/)**: WebGL rendering for animations
 
-### Prerequisites
+## Prerequisites
 
 - Node.js 18+ or Bun
 - Backend service running (see backend README)
 
-### Setup Instructions
+## Installation
 
-1. Clone the repository
-2. Navigate to the frontend directory
-   ```bash
-   cd frontend
-   ```
-3. Install dependencies
-   ```bash
-   npm install
-   # or
-   bun install
-   ```
-4. Copy the environment variables
-   ```bash
-   cp .env.example .env
-   ```
-5. Update the `.env` file with:
-   ```
-   BACKEND_URL="http://localhost:3060"
-   REVALIDATION_SECRET="your-secret-here"
-   ```
-6. Start the development server
-   ```bash
-   npm run dev
-   # or
-   bun dev
-   ```
-7. Open [http://localhost:3000](http://localhost:3000) in your browser
+1. Clone the repository:
+```bash
+git clone [repository-url]
+cd frontend
+```
 
-## Project Structure
+2. Install dependencies:
+```bash
+npm install
+# or
+bun install
+```
 
-- `src/components/` - Reusable UI components
-- `src/pages/` - Next.js pages and API routes
-- `src/lib/` - Utility functions and shared code
-- `src/styles/` - Global styles and Tailwind configuration
-- `src/hooks/` - Custom React hooks
-- `src/store/` - Zustand stores for state management
-- `src/types/` - TypeScript type definitions
-- `src/helper/` - Helper functions
+3. Set up environment configuration:
+```bash
+cp .env.example .env
+```
 
-## Connecting to the Backend
+4. Configure the following environment variables in `.env`:
+- `BACKEND_URL`: The URL of the backend API (default: "http://localhost:3060")
+- `REVALIDATION_SECRET`: Secret key for revalidating static pages
 
-The frontend connects to the backend API through the `BACKEND_URL` environment variable. By default, this points to `http://localhost:3060` in development.
+## Development
 
-API requests are handled through custom hooks and service functions that communicate with the backend endpoints.
-
-### Environment Variables
-
-- `BACKEND_URL` - The URL of the backend API
-- `REVALIDATION_SECRET` - Secret key for revalidating static pages
-
-## Scripts
+### Available Scripts
 
 - `npm run dev` - Start the development server
 - `npm run build` - Build the production application
@@ -78,9 +63,52 @@ API requests are handled through custom hooks and service functions that communi
 - `npm run lint` - Run ESLint
 - `npm run format:write` - Format code with Prettier
 
+### Starting the Development Server
+
+```bash
+npm run dev
+# or
+bun dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser to view the application.
+
+## Project Structure
+
+```
+frontend/
+├── src/
+│   ├── components/  # Reusable UI components
+│   ├── pages/       # Next.js pages and API routes
+│   ├── lib/         # Utility functions and shared code
+│   ├── styles/      # Global styles and Tailwind configuration
+│   ├── hooks/       # Custom React hooks
+│   ├── store/       # Zustand stores for state management
+│   ├── types/       # TypeScript type definitions
+│   └── helper/      # Helper functions
+```
+
+## Configuration
+
+The project uses several configuration files:
+
+- `tsconfig.json` - TypeScript configuration
+- `.prettierrc` - Code formatting rules
+- `.eslintrc.json` - Linting rules
+- `.env` - Environment variables
+
+## Backend Integration
+
+The frontend connects to the backend API through the `BACKEND_URL` environment variable. 
+By default, this points to `http://localhost:3060` in development.
+
+API requests are handled through custom hooks and service functions that communicate 
+with the backend endpoints.
+
 ## Deployment
 
-The application can be deployed on platforms like Vercel, Netlify, or using Docker. Make sure to set the appropriate environment variables according to your deployment environment.
+The application can be deployed on platforms like Vercel, Netlify, or using Docker. 
+Make sure to set the appropriate environment variables according to your deployment environment.
 
 ## Learn More
 
