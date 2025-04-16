@@ -46,9 +46,8 @@ A comprehensive toolkit for downloading and unpacking Arknights game assets.
 
 ## Installation
 
-1. Clone the repository:
+1. Move into the `./assets` directory:
 ```bash
-git clone [repository-url]
 cd assets
 ```
 

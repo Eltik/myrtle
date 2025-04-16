@@ -62,9 +62,8 @@ A robust Arknights API inspired by [ArkPRTS](https://github.com/thesadru/ArkPRTS
 
 ## Installation
 
-1. Clone the repository:
+1. Move into the `./backend` directory:
 ```bash
-git clone [repository-url]
 cd backend
 ```
 
