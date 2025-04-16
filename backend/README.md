@@ -1,4 +1,4 @@
-# Myrtle Backend
+# Backend
 
 A robust Arknights API inspired by ArkPRTS, built with modern TypeScript and Bun runtime. This backend service provides comprehensive data and calculations for the Arknights game, including operator statistics, DPS calculations, and game asset management.
 

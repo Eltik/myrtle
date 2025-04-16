@@ -14,7 +14,7 @@ export default async (email: string, server: AKServer): Promise<void> => {
         await request(YOSTAR_DOMAINS[server] as AKDomain, "yostar/send-code", {
             body: JSON.stringify(body),
         })
-    ).json()) as { Code: number; Data: { Ticket: string }; Msg: string; };
+    ).json()) as { Code: number; Data: { Ticket: string }; Msg: string };
     console.log(data);
 
     if (data.Code !== 0) {
