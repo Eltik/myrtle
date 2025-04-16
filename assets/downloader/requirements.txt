@@ -1,0 +1,7 @@
+bson~=0.5
+keyboard>=0.13.5
+requests>=2.25.1
+UnityPy~=1.22
+pycryptodome~=3.22
+tqdm>=4.61.0
+Pillow~=9.5

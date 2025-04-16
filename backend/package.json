@@ -42,9 +42,7 @@
         "lint": "bun run prettier && bunx eslint --fix .",
         "test:dps": "bun test src/tests/dps.test.ts",
         "export": "bun run src/scripts/export.ts",
-        "import": "bun run src/scripts/import.ts",
-        "download": "bun run src/scripts/assets-downloader.ts",
-        "unpack": "bun run src/scripts/assets-unpacker.ts"
+        "import": "bun run src/scripts/import.ts"
     },
     "type": "module"
 }
