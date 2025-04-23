@@ -2,7 +2,7 @@
 
 A comprehensive Arknights game information and calculation platform with an elegant, modern interface.
 
-[![GitHub license](https://img.shields.io/github/license/Eltik/myrtle.moe)](https://github.com/yourusername/myrtle.moe/blob/main/LICENSE)
+[![GitHub license](https://img.shields.io/github/license/Eltik/myrtle.moe)](https://github.com/Eltik/myrtle.moe/blob/main/LICENSE)
 [![Frontend](https://img.shields.io/badge/Frontend-Next.js-blue)](frontend/)
 [![Backend](https://img.shields.io/badge/Backend-Bun-black)](backend/)
 [![Demo](https://img.shields.io/badge/Demo-Live-brightgreen)](https://myrtle.moe)

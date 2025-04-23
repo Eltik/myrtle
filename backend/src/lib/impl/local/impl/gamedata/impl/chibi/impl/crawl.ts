@@ -2,10 +2,23 @@ import type { RepoItem } from "../../../../../../../../types/impl/lib/impl/local
 import colors from "colors";
 import fs from "fs";
 import path from "path";
+import { env } from "../../../../../../../../env";
 
-// Local paths for chibi assets - using paths relative to backend directory
-export const CHARARTS_PATH = path.resolve(process.cwd(), "unpacked", "chararts");
-export const SKINPACK_PATH = path.resolve(process.cwd(), "unpacked", "skinpack");
+// Base assets path - use environment variable if available or fallback to default
+const BASE_ASSETS_PATH = env.UNPACKED_DIR 
+    ? path.resolve(env.UNPACKED_DIR) 
+    : path.resolve(process.cwd(), "..", "assets", "Unpacked");
+
+// Paths for different types of chibi assets
+export const CHARARTS_PATH = path.resolve(BASE_ASSETS_PATH, "chararts");
+export const SKINPACK_PATH = path.resolve(BASE_ASSETS_PATH, "skinpack");
+export const DYNILLUST_PATH = path.resolve(BASE_ASSETS_PATH, "arts", "dynchars", "DynIllust");
+
+// Subdirectories for different sprite types - ensure these match the ones used in process.ts
+// BattleFront maps to front animation type
+// BattleBack maps to back animation type
+// Building maps to dorm animation type
+const SUBDIRS = ["BattleBack", "BattleFront", "Building"];
 
 // Path to store the chibi data
 const CHIBI_DATA_PATH = path.resolve(process.cwd(), "data", "chibi-data.json");
@@ -29,10 +42,21 @@ const saveChibiData = (data: RepoItem[]): void => {
     }
 };
 
-// Main crawl function that crawls both chararts and skinpack directories
+// Check if the paths exist and warn if not
+const checkPaths = () => {
+    const paths = [CHARARTS_PATH, SKINPACK_PATH, DYNILLUST_PATH];
+    paths.forEach(p => {
+        if (!fs.existsSync(p)) {
+            console.log(colors.yellow(`⚠️ Directory not found: ${p}`));
+        }
+    });
+};
+
+// Main crawl function that crawls all chibi asset directories
 export const crawlLocalChibis = async (): Promise<RepoItem[]> => {
     try {
         console.log(colors.cyan(`ℹ️ Crawling local chibi assets...`));
+        checkPaths();
 
         const operatorMap = new Map<string, RepoItem>();
         let totalFiles = 0;
@@ -42,224 +66,272 @@ export const crawlLocalChibis = async (): Promise<RepoItem[]> => {
         const fileTracker = new Map<
             string,
             {
-                base: { atlas: boolean; skel: boolean; png: boolean };
-                skin: Map<string, { atlas: boolean; skel: boolean; png: boolean }>;
+                base: { [subdir: string]: boolean };
+                skin: Map<string, { [subdir: string]: boolean }>;
+                dynIllust: Map<string, boolean>;
             }
         >();
 
-        // Function to crawl a directory and process files
-        const crawlDir = async (dirPath: string, isChararts: boolean) => {
-            if (!fs.existsSync(dirPath)) {
-                console.log(colors.yellow(`⚠️ Directory not found: ${dirPath}`));
+        // Function to process a file
+        const processFile = (filePath: string, fileName: string, type: 'base' | 'skin' | 'dynIllust', subdir?: string) => {
+            // Skip monobehaviour files
+            if (fileName.toLowerCase().startsWith("monobehaviour_")) {
                 return;
             }
 
-            const processFile = (filePath: string, fileName: string) => {
-                // Skip monobehaviour files
-                if (fileName.toLowerCase().startsWith("monobehaviour_")) {
-                    return;
-                }
+            // Skip files with $1, $2, etc. (but allow $0)
+            if (fileName.match(/\$[1-9]\d*\./)) {
+                return;
+            }
 
-                totalFiles++;
+            totalFiles++;
 
-                // Debug output
-                if (totalFiles < 50 || totalFiles % 1000 === 0) {
-                    console.log(colors.gray(`🔍 Processing file: ${fileName}`));
+            // Log progress
+            if (totalFiles < 50 || totalFiles % 1000 === 0) {
+                console.log(colors.gray(`🔍 Processing file: ${fileName}`));
+            }
 
-                    // Test regex match
-                    const match = fileName.match(/(build_char_|char_)(\d+_[a-zA-Z0-9]+)/i);
-                    if (match) {
-                        console.log(colors.green(`  ✅ Regex match: ${match[0]} -> ${match[2]}`));
-                    } else {
-                        console.log(colors.red(`  ❌ No regex match`));
+            // Match operator ID
+            let match;
+            let opId = "";
+            let skinName = "";
+            
+            if (type === 'dynIllust') {
+                // Handle dynamic illustrations
+                match = fileName.match(/dyn_illust_(char_\d+_[a-zA-Z0-9]+)/i);
+                if (match) {
+                    opId = match[1].toLowerCase();
+                    
+                    // Extract skin name if present
+                    const skinMatch = fileName.match(/dyn_illust_char_\d+_[a-zA-Z0-9]+_(.+?)(?:\.|$)/i);
+                    if (skinMatch && skinMatch[1]) {
+                        skinName = skinMatch[1].toLowerCase();
                     }
                 }
-
-                // Match operator ID
-                const match = fileName.match(/(build_char_|char_)(\d+_[a-zA-Z0-9]+)/i);
+            } else {
+                // Handle regular chibis and skins
+                match = fileName.match(/(build_char_|char_)(\d+_[a-zA-Z0-9]+)/i);
                 if (match) {
-                    // Extract the operator ID
                     const prefix = "char_";
                     const id = match[2].toLowerCase();
-                    const opId = `${prefix}${id}`;
-
-                    matchedFiles++;
-
-                    // Determine the animation type (base or skin)
-                    const animType = isChararts ? "base" : "skin";
-
-                    // Determine file type (atlas, skel, png)
-                    const isAtlas = fileName.toLowerCase().endsWith(".atlas");
-                    const isSkel = fileName.toLowerCase().endsWith(".skel");
-                    const isPng = fileName.toLowerCase().endsWith(".png");
-
-                    // If not one of the required file types, skip
-                    if (!isAtlas && !isSkel && !isPng) {
-                        return;
-                    }
-
-                    // Initialize tracker for this operator if needed
-                    if (!fileTracker.has(opId)) {
-                        fileTracker.set(opId, {
-                            base: { atlas: false, skel: false, png: false },
-                            skin: new Map(),
-                        });
-                    }
-
-                    const tracker = fileTracker.get(opId)!;
-
+                    opId = `${prefix}${id}`;
+                    
                     // Extract skin name for skin animations
-                    let skinName = "";
-                    if (animType === "skin") {
-                        // Try to extract skin name from file name - everything after char_XXX_name_
-                        const skinMatch = fileName.match(/(?:char|build_char)_\d+_[a-z0-9]+_(.+?)(?:\.|_Atlas|_SkeletonData|$)/i);
+                    if (type === 'skin') {
+                        const skinMatch = fileName.match(/(?:char|build_char)_\d+_[a-z0-9]+_(.+?)(?:\.|#|\$|_Atlas|_SkeletonData|$)/i);
                         if (skinMatch && skinMatch[1]) {
                             skinName = skinMatch[1].toLowerCase();
-
-                            // Initialize tracker for this skin if needed
-                            if (!tracker.skin.has(skinName)) {
-                                tracker.skin.set(skinName, { atlas: false, skel: false, png: false });
-                            }
-
-                            // Update tracker for this skin
-                            const skinTracker = tracker.skin.get(skinName)!;
-                            if (isAtlas) skinTracker.atlas = true;
-                            if (isSkel) skinTracker.skel = true;
-                            if (isPng) skinTracker.png = true;
-                        } else {
-                            // If we can't extract the skin name, use the filename as a fallback
-                            skinName = fileName.split(".")[0].toLowerCase();
-
-                            // Initialize tracker for this skin if needed
-                            if (!tracker.skin.has(skinName)) {
-                                tracker.skin.set(skinName, { atlas: false, skel: false, png: false });
-                            }
-
-                            // Update tracker for this skin
-                            const skinTracker = tracker.skin.get(skinName)!;
-                            if (isAtlas) skinTracker.atlas = true;
-                            if (isSkel) skinTracker.skel = true;
-                            if (isPng) skinTracker.png = true;
                         }
-                    } else {
-                        // Update tracker for base animation
-                        if (isAtlas) tracker.base.atlas = true;
-                        if (isSkel) tracker.base.skel = true;
-                        if (isPng) tracker.base.png = true;
                     }
+                }
+            }
 
-                    // Create operator if it doesn't exist
-                    if (!operatorMap.has(opId)) {
-                        operatorMap.set(opId, {
-                            name: opId,
-                            path: opId,
-                            contentType: "dir",
-                            children: [
-                                // Create base and skin directories
-                                {
-                                    name: "base",
-                                    path: `${opId}/base`,
-                                    contentType: "dir",
-                                    children: [],
-                                },
-                                {
-                                    name: "skin",
-                                    path: `${opId}/skin`,
-                                    contentType: "dir",
-                                    children: [],
-                                },
-                            ],
-                        });
-                    }
+            if (match && opId) {
+                matchedFiles++;
 
-                    // Get the operator
-                    const operator = operatorMap.get(opId)!;
-
-                    // Get the correct folder (base or skin)
-                    const folderName = isChararts ? "base" : "skin";
-                    const folder = operator.children!.find((c) => c.name === folderName)!;
-
-                    // Add the file to the folder
-                    folder.children!.push({
-                        name: fileName,
-                        path: `${opId}/${folderName}/${fileName}`,
-                        contentType: "file",
+                // Initialize tracker for this operator if needed
+                if (!fileTracker.has(opId)) {
+                    fileTracker.set(opId, {
+                        base: {},
+                        skin: new Map(),
+                        dynIllust: new Map()
                     });
                 }
-            };
 
-            // Read all files recursively
-            const readDirRecursive = (dirPath: string) => {
-                const files = fs.readdirSync(dirPath);
-                for (const file of files) {
-                    const fullPath = path.join(dirPath, file);
-                    const stats = fs.statSync(fullPath);
-                    if (stats.isDirectory()) {
-                        readDirRecursive(fullPath);
-                    } else {
-                        processFile(fullPath, file);
+                const tracker = fileTracker.get(opId)!;
+
+                // Update tracker based on file type
+                if (type === 'base' && subdir) {
+                    tracker.base[subdir] = true;
+                } else if (type === 'skin' && subdir) {
+                    if (!tracker.skin.has(skinName)) {
+                        tracker.skin.set(skinName, {});
                     }
+                    const skinData = tracker.skin.get(skinName);
+                    if (skinData && subdir) {
+                        skinData[subdir] = true;
+                    }
+                } else if (type === 'dynIllust') {
+                    tracker.dynIllust.set(skinName || 'base', true);
                 }
-            };
 
-            // Start crawling
-            readDirRecursive(dirPath);
+                // Create operator if it doesn't exist
+                if (!operatorMap.has(opId)) {
+                    operatorMap.set(opId, {
+                        name: opId,
+                        path: opId,
+                        contentType: "dir",
+                        children: [
+                            // Create directories for different asset types
+                            {
+                                name: "base",
+                                path: `${opId}/base`,
+                                contentType: "dir",
+                                children: [],
+                            },
+                            {
+                                name: "skin",
+                                path: `${opId}/skin`,
+                                contentType: "dir",
+                                children: [],
+                            },
+                            {
+                                name: "dynIllust",
+                                path: `${opId}/dynIllust`,
+                                contentType: "dir",
+                                children: [],
+                            }
+                        ],
+                    });
+                }
+
+                // Get the operator
+                const operator = operatorMap.get(opId)!;
+
+                // Get the correct folder (base, skin, or dynIllust)
+                const folderName = type;
+                const folder = operator.children!.find((c) => c.name === folderName)!;
+
+                // Add subdirectory information to the file name if available
+                const displayName = subdir ? `${subdir}/${fileName}` : fileName;
+
+                // Add the file to the folder
+                folder.children!.push({
+                    name: displayName,
+                    path: `${opId}/${folderName}/${displayName}`,
+                    contentType: "file",
+                });
+            }
         };
 
-        // Crawl both directories
-        await crawlDir(CHARARTS_PATH, true);
-        await crawlDir(SKINPACK_PATH, false);
+        // Function to crawl a directory and process files
+        const crawlDir = async (baseDir: string, type: 'base' | 'skin' | 'dynIllust') => {
+            if (!fs.existsSync(baseDir)) {
+                console.log(colors.yellow(`⚠️ Directory not found: ${baseDir}`));
+                return;
+            }
+
+            if (type === 'dynIllust') {
+                // Process dynamic illustrations directory
+                const readDynIllustDir = (dirPath: string) => {
+                    if (!fs.existsSync(dirPath)) return;
+                    
+                    const items = fs.readdirSync(dirPath);
+                    for (const item of items) {
+                        const fullPath = path.join(dirPath, item);
+                        const stats = fs.statSync(fullPath);
+                        
+                        if (stats.isDirectory()) {
+                            // Process files inside dynIllust subdirectories
+                            const subFiles = fs.readdirSync(fullPath);
+                            for (const file of subFiles) {
+                                processFile(path.join(fullPath, file), file, 'dynIllust');
+                            }
+                        } else if (stats.isFile()) {
+                            // Process dynIllust files directly in the main directory
+                            processFile(fullPath, item, 'dynIllust');
+                        }
+                    }
+                };
+                
+                readDynIllustDir(baseDir);
+            } else {
+                // Process normal chibi and skin directories with their respective subdirectories
+                for (const subdir of SUBDIRS) {
+                    const dirPath = path.join(baseDir, subdir);
+                    if (!fs.existsSync(dirPath)) {
+                        console.log(colors.yellow(`⚠️ Subdirectory not found: ${dirPath}`));
+                        continue;
+                    }
+                    
+                    const readSubDir = (dirPath: string) => {
+                        const files = fs.readdirSync(dirPath);
+                        for (const file of files) {
+                            const fullPath = path.join(dirPath, file);
+                            const stats = fs.statSync(fullPath);
+                            
+                            if (stats.isDirectory()) {
+                                readSubDir(fullPath);
+                            } else {
+                                processFile(fullPath, file, type, subdir);
+                            }
+                        }
+                    };
+                    
+                    readSubDir(dirPath);
+                }
+            }
+        };
+
+        // Crawl all directories
+        await crawlDir(CHARARTS_PATH, 'base');
+        await crawlDir(SKINPACK_PATH, 'skin');
+        await crawlDir(DYNILLUST_PATH, 'dynIllust');
 
         // Print stats
         console.log(colors.cyan(`📊 File analysis: ${matchedFiles}/${totalFiles} files matched to operators (${Math.round((matchedFiles / totalFiles) * 100)}%)`));
         console.log(colors.cyan(`🔍 Found ${operatorMap.size} unique operators`));
 
-        // Count operators with complete spine data
-        let completeBaseCount = 0;
-        let completeSkinCount = 0;
-        let totalSkinCount = 0;
+        // Count operators with assets
+        let operatorsWithBase = 0;
+        let operatorsWithSkins = 0;
+        let operatorsWithDynIllust = 0;
+        let totalSkins = 0;
+        let totalDynIllusts = 0;
 
         for (const [opId, data] of fileTracker.entries()) {
-            // Check if base animation is complete
-            if (data.base.atlas && data.base.skel && data.base.png) {
-                completeBaseCount++;
+            // Check if operator has base assets
+            if (Object.keys(data.base).length > 0) {
+                operatorsWithBase++;
             } else {
-                // If base animation is incomplete, remove those files
+                // If no base assets, clear the base directory
                 const operator = operatorMap.get(opId);
                 if (operator) {
-                    const baseDir = operator.children!.find((c) => c.name === "base");
+                    const baseDir = operator.children!.find(c => c.name === "base");
                     if (baseDir) {
                         baseDir.children = [];
                     }
                 }
             }
 
-            // Check each skin
-            for (const [skinName, skinData] of data.skin.entries()) {
-                totalSkinCount++;
-                if (skinData.atlas && skinData.skel && skinData.png) {
-                    completeSkinCount++;
-                } else {
-                    // If skin is incomplete, remove those specific files
-                    const operator = operatorMap.get(opId);
-                    if (operator) {
-                        const skinDir = operator.children!.find((c) => c.name === "skin");
-                        if (skinDir && skinDir.children) {
-                            // Keep only files that don't belong to this incomplete skin
-                            skinDir.children = skinDir.children.filter((file) => {
-                                // Skip files that don't match the incomplete skin
-                                return !file.name.toLowerCase().includes(skinName.toLowerCase());
-                            });
-                        }
+            // Check skins
+            const skinCount = data.skin.size;
+            if (skinCount > 0) {
+                operatorsWithSkins++;
+                totalSkins += skinCount;
+            } else {
+                // If no skins, clear the skin directory
+                const operator = operatorMap.get(opId);
+                if (operator) {
+                    const skinDir = operator.children!.find(c => c.name === "skin");
+                    if (skinDir) {
+                        skinDir.children = [];
+                    }
+                }
+            }
+
+            // Check dynamic illustrations
+            const dynIllustCount = data.dynIllust.size;
+            if (dynIllustCount > 0) {
+                operatorsWithDynIllust++;
+                totalDynIllusts += dynIllustCount;
+            } else {
+                // If no dynamic illustrations, clear the dynIllust directory
+                const operator = operatorMap.get(opId);
+                if (operator) {
+                    const dynIllustDir = operator.children!.find(c => c.name === "dynIllust");
+                    if (dynIllustDir) {
+                        dynIllustDir.children = [];
                     }
                 }
             }
         }
 
-        console.log(colors.cyan(`🎮 Animation stats: ${completeBaseCount}/${operatorMap.size} operators with complete base animations`));
-        console.log(colors.cyan(`🎭 Skin stats: ${completeSkinCount}/${totalSkinCount} complete skin animations`));
+        console.log(colors.cyan(`👤 Base sprites: ${operatorsWithBase}/${operatorMap.size} operators have base sprites`));
+        console.log(colors.cyan(`🎭 Skin sprites: ${operatorsWithSkins}/${operatorMap.size} operators with skins (${totalSkins} total skins)`));
+        console.log(colors.cyan(`✨ Dynamic illustrations: ${operatorsWithDynIllust}/${operatorMap.size} operators with dynamic illustrations (${totalDynIllusts} total)`));
 
-        // Log top 10 operators by file count
+        // Log top 10 operators by asset count
         const operatorCounts = new Map<string, number>();
         for (const [opId, operator] of operatorMap.entries()) {
             let count = 0;
@@ -272,7 +344,7 @@ export const crawlLocalChibis = async (): Promise<RepoItem[]> => {
         const topOperators = [...operatorCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
 
         if (topOperators.length > 0) {
-            console.log(colors.cyan("📋 Top operators by file count:"));
+            console.log(colors.cyan("📋 Top operators by asset count:"));
             topOperators.forEach(([opId, count]) => {
                 console.log(colors.gray(`   ${opId}: ${count} files`));
             });

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { FormattedChibis } from "~/types/impl/frontend/impl/chibis";
 import * as PIXI from "pixi.js";
 import { type ISkeletonData, Spine, type TextureAtlas } from "pixi-spine";
 import { getSkinData } from "./helper";
+import { type AnimationType, type FormattedChibis } from "./types";
 
 import { Card, CardContent } from "~/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
@@ -19,7 +19,7 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseURL }: C
 
     const [selectedAnimation, setSelectedAnimation] = useState<string>("Idle");
     const [availableAnimations, setAvailableAnimations] = useState<string[]>([]);
-    const [viewType, setViewType] = useState<"dorm" | "front" | "back">("front");
+    const [viewType, setViewType] = useState<AnimationType>("front");
 
     const canvasContainerRef = useRef<HTMLDivElement>(null);
     const [isDragging, setIsDragging] = useState(false);
@@ -145,14 +145,34 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseURL }: C
     );
 
     const renderCanvas = useCallback(() => {
-        const skinData = getSkinData(selectedOperator, selectedSkin, repoBaseURL, viewType);
+        // If we don't have an operator selected, abort
+        if (!selectedOperator) {
+            setError("No operator selected");
+            setIsLoading(false);
+            return;
+        }
+
+        // Create an array with just the selected operator to pass to getSkinData
+        const operators = [selectedOperator];
+        
+        // Get the skin data using the updated function
+        const skinData = getSkinData(operators, selectedOperator.operatorCode, selectedSkin, viewType);
+        
         if (!skinData) {
-            setError("Failed to load skin data");
+            console.error("Failed to load skin data", { selectedOperator, selectedSkin, viewType });
+            setError("Failed to load skin data - check console for details");
+            setIsLoading(false);
             return;
         }
 
         setIsLoading(true);
         setError(null);
+
+        console.log("Loading skin assets:", {
+            atlas: skinData.atlas,
+            png: skinData.png,
+            skel: skinData.skel
+        });
 
         // Load the skeleton file directly
         PIXI.Assets.load(skinData.skel)
@@ -166,7 +186,7 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseURL }: C
                 setError(`Failed to load skeleton: ${err.message}`);
                 setIsLoading(false);
             });
-    }, [selectedOperator, selectedSkin, repoBaseURL, viewType, renderSkinSpine]);
+    }, [selectedOperator, selectedSkin, viewType, renderSkinSpine]);
 
     useEffect(() => {
         if (!canvasContainerRef.current) {
@@ -182,14 +202,11 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseURL }: C
             height: 400,
             backgroundColor: 0x111014,
             antialias: true,
-            premultipliedAlpha: true,
             backgroundAlpha: 1,
-            clearBeforeRender: true,
-            hello: true,
-            powerPreference: "high-performance",
-            preserveDrawingBuffer: true,
-            context: null,
             resolution: window.devicePixelRatio || 1,
+            clearBeforeRender: true,
+            premultipliedAlpha: true,
+            powerPreference: "high-performance",
         });
         appRef.current = pixiApp;
 
@@ -237,7 +254,7 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseURL }: C
     };
 
     const handleViewTypeChange = (value: string) => {
-        setViewType(value as "dorm" | "front" | "back");
+        setViewType(value as AnimationType);
     };
 
     return (

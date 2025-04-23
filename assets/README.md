@@ -175,6 +175,45 @@ python assets/unpacker/helper/combine_alpha.py --input-dir Unpacked --delete-alp
 - `--delete-alpha`: Delete alpha files after combining
 - `--threads`: Number of processing threads
 
+### Finding Missing Assets
+
+Sometimes when unpacking downloaded assets, there will be assets that did not get extracted. To find the missing assets, you can run the `find-assets.py` file:
+
+```bash
+python unpacker/missing/find-assets.py --find-missing --source-dir Input-Dir --extracted-dir Unpacked-Dir -o Output-Dir
+```
+
+This will compare the directory containing the original `.ab` files with the output directory and find the missing assets until finally writing a `missing-assets.json` file to a directory.
+
+#### Available Options
+
+- `--source-dir`: The directory containing the original resource files (aka `.ab` files)
+- `--extracted-dir`: The directory containing all the unpacked assets
+- `-o`: The directory where the `missing-assets.json` file gets written to
+
+### Extract Targeted Assets
+
+If you have a list of the missing assets using the helper script [above](#finding-missing-assets), then you can run the command below which uses the `Main.py` file.
+
+```bash
+python unpacker/Main.py -m ab -i Input-Dir -o Unpacked-Dir --target-list missing-assets.json --image --spine --text --audio --resume --skip-problematic --timeout <num>
+```
+
+#### Available Options
+
+- `-m, --mode`: Unpacking mode (`ab` for AssetBundle)
+- `-i, --input`: Input directory containing downloaded assets
+- `-o, --output`: Output directory for unpacked assets
+- `--target-list`: Path to the JSON file listing specific assets to extract
+- Resource type flags:
+  - `--image`: Extract image assets
+  - `--text`: Extract text assets
+  - `--audio`: Extract audio assets
+  - `--spine`: Extract Spine animation models
+- `--resume`: Resume from last interrupted position
+- `--skip-problematic`: Skip files that caused problems previously
+- `--timeout`: Set processing timeout per file (seconds)
+
 ## Credits
 
 This toolkit is based on several open-source projects with slight modifications:

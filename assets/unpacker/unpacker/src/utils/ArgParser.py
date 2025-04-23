@@ -87,6 +87,12 @@ class _ArkUnpackerArgParser(argparse.ArgumentParser):
             help="in resolve ab mode: timeout in seconds for processing each file (default: 300)",
         )
         parser.add_argument(
+            "--target-list",
+            type=str,
+            default=None,
+            help="in resolve ab mode: path to a JSON file containing a list of specific .ab files to process",
+        )
+        parser.add_argument(
             "-l",
             "--logging-level",
             choices=range(5),

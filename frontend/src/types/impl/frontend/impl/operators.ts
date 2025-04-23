@@ -52,7 +52,6 @@ export interface UISkin {
     name: string;
     description: string;
     image: string;
-    fallbackImage?: string;
     obtainMethod: string;
     releaseDate: string;
     artists: string[];
