@@ -107,13 +107,6 @@ const handler = async (req: Request): Promise<Response> => {
             );
         }
 
-        // Check if there's a cache busting query parameter ('v')
-        const hasCacheBusting = url.searchParams.has('v');
-        if (hasCacheBusting) {
-            // Log the cache busting request if needed
-            console.log(`Cache busting request for: ${assetPath}`);
-        }
-
         // Determine if we're in development mode
         const isDevelopment = process.env.NODE_ENV === "development";
 

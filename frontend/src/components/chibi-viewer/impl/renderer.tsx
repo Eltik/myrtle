@@ -8,6 +8,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~
 import type { ChibiAnimation, FormattedChibis } from "~/types/impl/frontend/impl/chibis";
 import { getCDNURL } from "~/lib/cdn";
 
+// Helper function to create safe Rectangles with number values
+const createSafeRectangle = (x: number | string = 0, y: number | string = 0, width: number | string = 0, height: number | string = 0): PIXI.Rectangle => {
+    return new PIXI.Rectangle(
+        Number(x),
+        Number(y),
+        Number(width),
+        Number(height)
+    );
+};
+
 type ChibiRendererProps = {
     selectedOperator: FormattedChibis | null;
     selectedSkin: string | null;
@@ -217,24 +227,35 @@ export function ChibiRenderer({ selectedOperator, selectedSkin }: ChibiRendererP
             skel: skinData.skel,
         });
 
-        // Set up texture loading with proper settings
-        const textureOptions = {
-            metadata: {
-                resolution: window.devicePixelRatio || 1,
-                mipmap: PIXI.MIPMAP_MODES.ON,
-            }
-        };
-
-        // Load the skeleton file directly with better error handling
-        PIXI.Assets.load(skinData.skel)
-            .then((skinAsset: { spineAtlas: TextureAtlas; spineData: ISkeletonData }) => {
-                console.log("Skin asset loaded:", skinAsset);
-                renderSkinSpine(skinAsset);
+        // Fix for "Cannot read properties of undefined (reading 'image')" error
+        // The issue is likely that the atlas file references an image that can't be found
+        
+        // Modify the way assets are loaded
+        // First, fix the image path by making sure the image is loaded first
+        PIXI.Assets.load(skinData.png)
+            .then(texture => {
+                // Only after the image is loaded and available in the cache, load the skeleton
+                return PIXI.Assets.load(skinData.skel);
             })
-            .catch((err: Error) => {
-                console.error("Failed to load skeleton:", err);
-                setError(`Failed to load skeleton: ${err.message}`);
+            .then((result: any) => {
+                console.log("Loaded asset:", result);
+                // If the asset loaded correctly, process it
+                if (result && typeof result === 'object' && 'spineData' in result) {
+                    renderSkinSpine(result as { spineAtlas: TextureAtlas; spineData: ISkeletonData });
+                } else {
+                    throw new Error("Invalid spine data loaded");
+                }
+            })
+            .catch(err => {
+                console.error("Failed to load assets:", err);
+                setError(`Failed to load assets: ${err instanceof Error ? err.message : String(err)}`);
                 setIsLoading(false);
+
+                // If we get the specific "Cannot read properties of undefined (reading 'image')" error,
+                // provide a more helpful error message
+                if (err instanceof Error && err.message.includes("Cannot read properties of undefined (reading 'image')")) {
+                    setError("Error loading spine: The atlas file couldn't find the image. Please check that image paths match.");
+                }
             });
     }, [selectedOperator, selectedSkin, viewType, renderSkinSpine]);
 
