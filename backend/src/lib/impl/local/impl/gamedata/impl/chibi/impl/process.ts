@@ -1,11 +1,18 @@
 import type { RepoItem, CharacterSkin, CharacterData, AnimationType } from "../../../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/chibis";
 
 /**
+ * Clean folder name by removing $number pattern at the end
+ */
+function cleanFolderName(name: string): string {
+    return name.replace(/\$\d+$/, '');
+}
+
+/**
  * Process characters into a more frontend-friendly format
  */
 export function processCharsForFrontend(items: RepoItem[]): CharacterData[] {
     return items.map((operator) => {
-        const operatorCode = operator.name;
+        const operatorCode = cleanFolderName(operator.name);
         const characterData: CharacterData = {
             operatorCode,
             name: operatorCode,
@@ -18,7 +25,8 @@ export function processCharsForFrontend(items: RepoItem[]): CharacterData[] {
             operator.children.forEach((skinFolder) => {
                 if (skinFolder.children) {
                     // Determine if this is a base skin or a special skin
-                    const isBaseSkin = skinFolder.name === "base";
+                    const cleanedSkinFolderName = cleanFolderName(skinFolder.name);
+                    const isBaseSkin = cleanedSkinFolderName === "base";
                     const skinName = isBaseSkin ? "default" : extractSkinName(skinFolder);
 
                     const skin: CharacterSkin = {
@@ -76,7 +84,7 @@ export function processCharsForFrontend(items: RepoItem[]): CharacterData[] {
                                     const parts = childPath.split("/");
                                     const fileName = parts[parts.length - 1];
                                     const fileBaseName = fileName.split(".")[0];
-                                    processedPath = `/chararts/${parts[0]}/${fileBaseName}/${fileName}`;
+                                    processedPath = `/chararts/${parts[0]}/${cleanFolderName(fileBaseName)}/${fileName}`;
                                 } else {
                                     // Fallback if the expected pattern isn't found
                                     processedPath = `/chararts/${filePath}`;
@@ -89,7 +97,8 @@ export function processCharsForFrontend(items: RepoItem[]): CharacterData[] {
                                 const parts = filePath.split("/");
                                 const fileName = parts[parts.length - 1];
                                 // Extract the file path for skinpack
-                                processedPath = `/skinpack/${file.name.split(".")[0]}/${fileName}`;
+                                const cleanedName = cleanFolderName(file.name.split(".")[0]);
+                                processedPath = `/skinpack/${cleanedName}/${fileName}`;
                             }
 
                             // Initialize spineFiles object for this animation type if it doesn't exist
@@ -161,7 +170,7 @@ function extractSkinName(skinFolder: RepoItem): string {
     }
 
     // If we couldn't extract a name, use the folder name
-    return skinFolder.name;
+    return cleanFolderName(skinFolder.name);
 }
 
 /**
@@ -169,5 +178,5 @@ function extractSkinName(skinFolder: RepoItem): string {
  */
 export function extractOperatorList(items: RepoItem[]) {
     // With our new structure, each top-level item is already an operator
-    return items.map((item) => item.name);
+    return items.map((item) => cleanFolderName(item.name));
 }
