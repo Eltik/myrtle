@@ -10,7 +10,6 @@ import { ChibiRenderer } from "./impl/renderer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { cn } from "~/lib/utils";
-import { getCDNURL } from "../../lib/cdn";
 
 export function ChibiViewer() {
     const [chibis, setChibis] = useState<FormattedChibis[]>([]);
@@ -176,9 +175,6 @@ export function ChibiViewer() {
         }
     };
 
-    // Replace GitHub raw content URL with our CDN proxy using the utility
-    const repoBaseUrl = getCDNURL("", true);
-
     return (
         <div className="container mx-auto py-8">
             <div className="flex flex-col md:flex-row">
@@ -259,7 +255,7 @@ export function ChibiViewer() {
                                         </TabsList>
 
                                         <TabsContent value="canvas" className="mt-0">
-                                            <ChibiRenderer selectedOperator={selectedOperator} selectedSkin={selectedSkin} repoBaseURL={repoBaseUrl} />
+                                            <ChibiRenderer selectedOperator={selectedOperator} selectedSkin={selectedSkin} />
                                         </TabsContent>
 
                                         <TabsContent value="info" className="mt-0">
