@@ -1,122 +1,144 @@
-import { type AnimationType, type AnimationData, type FormattedChibis, type FormattedSkin, type SkinData } from "./types";
+import { getCDNURL } from "~/lib/cdn";
+import type { AnimationType, ChibiAnimation, FormattedChibis } from "~/types/impl/frontend/impl/chibis";
 
-/**
- * Get the full URL for an asset
- */
-function getAssetURL(assetPath: string): string {
-    // The backend now provides full paths, so we use them directly
-    return assetPath;
-}
-
-/**
- * Get the skin data for the selected operator and skin
- * @param operators Array of operators with their skins
- * @param selectedOperator Selected operator code
- * @param selectedSkin Selected skin name or path
- * @param selectedView Selected view type
- * @returns Skin data object or null if not found
- */
-export function getSkinData(
-    operators: FormattedChibis[],
-    selectedOperator: string | null,
-    selectedSkin: string | null,
-    selectedView: AnimationType
-): SkinData | null {
-    console.log("Input params:", { operators, selectedOperator, selectedSkin, selectedView });
-    
-    if (!operators || operators.length === 0) {
-        console.warn("No operators data provided");
-        return null;
-    }
-    
-    // Find the selected operator or use the first one
-    const operator = selectedOperator
-        ? operators.find((op) => op.operatorCode === selectedOperator)
-        : operators[0];
-        
-    if (!operator) {
-        console.warn(`Operator ${selectedOperator} not found`);
-        return null;
-    }
-    
-    // Find the selected skin
-    let skin: FormattedSkin | undefined;
-    
-    if (selectedSkin) {
-        // Check if selectedSkin is a name or a path
-        skin = operator.skins.find((s: FormattedSkin) => s.name === selectedSkin);
-        
-        // If not found by name, try to find by path (dorm, front, or back path)
-        if (!skin) {
-            skin = operator.skins.find((s: FormattedSkin) => 
-                s.dorm.path === selectedSkin || 
-                s.front.path === selectedSkin || 
-                s.back.path === selectedSkin
-            );
-        }
-    }
-    
-    // If still not found, use default skin or first available
+export function getSkinData(selectedOperator: FormattedChibis, selectedSkin: string, viewType: ChibiAnimation): AnimationType | null {
+    console.log("Getting skin data for", { selectedOperator, selectedSkin, viewType });
+    console.log("Selected operator skins", selectedOperator.skins);
+    const skin = selectedOperator.skins.find((s) => s.dorm.path === selectedSkin || s.front.path === selectedSkin || s.back.path === selectedSkin);
     if (!skin) {
-        skin = operator.skins.find((s: FormattedSkin) => s.name === "Default") ?? operator.skins[0];
-    }
-        
-    if (!skin) {
-        console.warn(`Skin ${selectedSkin} not found for operator ${operator.operatorCode}`);
-        return null;
-    }
-    
-    // Get the view data with fallbacks
-    const viewData = getViewData(skin, selectedView);
-    if (!viewData) {
-        console.warn(`No valid view data found for ${selectedView} view`);
-        return null;
-    }
-    
-    console.log("Selected skin data:", { operator, skin, viewData });
-    
-    return buildSkinData(operator, skin, viewData, selectedView);
-}
+        // Fallback: Try to use the first skin if available
+        if (selectedOperator.skins.length > 0) {
+            const fallbackSkin = selectedOperator.skins[0];
+            if (fallbackSkin) {
+                console.log("Using fallback skin", { fallbackSkin: fallbackSkin.name });
 
-/**
- * Helper function to get view data with fallback options
- */
-function getViewData(skin: FormattedSkin, view: AnimationType): AnimationData | null {
-    // Try the selected view first
-    if (skin[view]?.atlas && skin[view]?.png && skin[view]?.skel) {
-        return skin[view];
-    }
-    
-    // Fallback order: dorm -> front -> back
-    const fallbacks: AnimationType[] = ["dorm", "front", "back"];
-    
-    for (const fallback of fallbacks) {
-        if (fallback !== view && skin[fallback]?.atlas && 
-            skin[fallback]?.png && skin[fallback]?.skel) {
-            console.log(`Falling back to ${fallback} view`);
-            return skin[fallback];
+                // Try the selected view type first, then fall back to others
+                if (viewType === "dorm" && fallbackSkin.dorm?.atlas && fallbackSkin.dorm?.png && fallbackSkin.dorm?.skel) {
+                    return {
+                        atlas: getCDNURL(fallbackSkin.dorm.atlas, true),
+                        png: getCDNURL(fallbackSkin.dorm.png, true),
+                        skel: getCDNURL(fallbackSkin.dorm.skel, true),
+                    };
+                } else if (viewType === "front" && fallbackSkin.front?.atlas && fallbackSkin.front?.png && fallbackSkin.front?.skel) {
+                    return {
+                        atlas: getCDNURL(fallbackSkin.front.atlas, true),
+                        png: getCDNURL(fallbackSkin.front.png, true),
+                        skel: getCDNURL(fallbackSkin.front.skel, true),
+                    };
+                } else if (viewType === "back" && fallbackSkin.back?.atlas && fallbackSkin.back?.png && fallbackSkin.back?.skel) {
+                    return {
+                        atlas: getCDNURL(fallbackSkin.back.atlas, true),
+                        png: getCDNURL(fallbackSkin.back.png, true),
+                        skel: getCDNURL(fallbackSkin.back.skel, true),
+                    };
+                }
+
+                // If the selected view type isn't available, try any available view
+                if (fallbackSkin.dorm?.atlas && fallbackSkin.dorm?.png && fallbackSkin.dorm?.skel) {
+                    return {
+                        atlas: getCDNURL(fallbackSkin.dorm.atlas, true),
+                        png: getCDNURL(fallbackSkin.dorm.png, true),
+                        skel: getCDNURL(fallbackSkin.dorm.skel, true),
+                    };
+                } else if (fallbackSkin.front?.atlas && fallbackSkin.front?.png && fallbackSkin.front?.skel) {
+                    return {
+                        atlas: getCDNURL(fallbackSkin.front.atlas, true),
+                        png: getCDNURL(fallbackSkin.front.png, true),
+                        skel: getCDNURL(fallbackSkin.front.skel, true),
+                    };
+                } else if (fallbackSkin.back?.atlas && fallbackSkin.back?.png && fallbackSkin.back?.skel) {
+                    return {
+                        atlas: getCDNURL(fallbackSkin.back.atlas, true),
+                        png: getCDNURL(fallbackSkin.back.png, true),
+                        skel: getCDNURL(fallbackSkin.back.skel, true),
+                    };
+                }
+            }
         }
+
+        return null;
     }
-    
+
+    // First, try to use the selected view type if it has all required assets
+    if (viewType === "dorm" && skin.dorm.atlas && skin.dorm.png && skin.dorm.skel) {
+        console.log("Using dorm view (selected)", { path: skin.dorm.path });
+        return {
+            atlas: getCDNURL(skin.dorm.atlas, true),
+            png: getCDNURL(skin.dorm.png, true),
+            skel: getCDNURL(skin.dorm.skel, true),
+        };
+    } else if (viewType === "front" && skin.front.atlas && skin.front.png && skin.front.skel) {
+        console.log("Using front view (selected)", { path: skin.front.path });
+        return {
+            atlas: getCDNURL(skin.front.atlas, true),
+            png: getCDNURL(skin.front.png, true),
+            skel: getCDNURL(skin.front.skel, true),
+        };
+    } else if (viewType === "back" && skin.back.atlas && skin.back.png && skin.back.skel) {
+        console.log("Using back view (selected)", { path: skin.back.path });
+        return {
+            atlas: getCDNURL(skin.back.atlas, true),
+            png: getCDNURL(skin.back.png, true),
+            skel: getCDNURL(skin.back.skel, true),
+        };
+    }
+
+    // If the selected view type doesn't have all required assets, check if the path matches a specific view
+    if (selectedSkin === skin.dorm.path && skin.dorm.atlas && skin.dorm.png && skin.dorm.skel) {
+        console.log("Using dorm view (path match)", { path: skin.dorm.path });
+        return {
+            atlas: getCDNURL(skin.dorm.atlas, true),
+            png: getCDNURL(skin.dorm.png, true),
+            skel: getCDNURL(skin.dorm.skel, true),
+        };
+    } else if (selectedSkin === skin.front.path && skin.front.atlas && skin.front.png && skin.front.skel) {
+        console.log("Using front view (path match)", { path: skin.front.path });
+        return {
+            atlas: getCDNURL(skin.front.atlas, true),
+            png: getCDNURL(skin.front.png, true),
+            skel: getCDNURL(skin.front.skel, true),
+        };
+    } else if (selectedSkin === skin.back.path && skin.back.atlas && skin.back.png && skin.back.skel) {
+        console.log("Using back view (path match)", { path: skin.back.path });
+        return {
+            atlas: getCDNURL(skin.back.atlas, true),
+            png: getCDNURL(skin.back.png, true),
+            skel: getCDNURL(skin.back.skel, true),
+        };
+    }
+
+    // If we get here, we found a skin but the selected view doesn't have all required assets
+    // Try to use any available view as a fallback
+    console.log("Selected view missing assets, trying fallbacks");
+
+    if (skin.dorm.atlas && skin.dorm.png && skin.dorm.skel) {
+        console.log("Falling back to dorm view");
+        return {
+            atlas: getCDNURL(skin.dorm.atlas, true),
+            png: getCDNURL(skin.dorm.png, true),
+            skel: getCDNURL(skin.dorm.skel, true),
+        };
+    } else if (skin.front.atlas && skin.front.png && skin.front.skel) {
+        console.log("Falling back to front view");
+        return {
+            atlas: getCDNURL(skin.front.atlas, true),
+            png: getCDNURL(skin.front.png, true),
+            skel: getCDNURL(skin.front.skel, true),
+        };
+    } else if (skin.back.atlas && skin.back.png && skin.back.skel) {
+        console.log("Falling back to back view");
+        return {
+            atlas: getCDNURL(skin.back.atlas, true),
+            png: getCDNURL(skin.back.png, true),
+            skel: getCDNURL(skin.back.skel, true),
+        };
+    }
+
+    console.log("No valid view found for skin", {
+        selectedSkin,
+        dorm: { path: skin.dorm.path, hasAssets: !!(skin.dorm.atlas && skin.dorm.png && skin.dorm.skel) },
+        front: { path: skin.front.path, hasAssets: !!(skin.front.atlas && skin.front.png && skin.front.skel) },
+        back: { path: skin.back.path, hasAssets: !!(skin.back.atlas && skin.back.png && skin.back.skel) },
+    });
     return null;
-}
-
-/**
- * Build the skin data object with correctly formatted URLs
- */
-function buildSkinData(
-    operator: FormattedChibis,
-    skin: FormattedSkin,
-    viewData: AnimationData,
-    view: AnimationType
-): SkinData {
-    return {
-        atlas: getAssetURL(viewData.atlas),
-        png: getAssetURL(viewData.png),
-        skel: getAssetURL(viewData.skel),
-        name: skin.name,
-        code: operator.operatorCode,
-        path: viewData.path,
-        view: view
-    };
 }

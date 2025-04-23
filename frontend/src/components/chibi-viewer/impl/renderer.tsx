@@ -2,10 +2,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import * as PIXI from "pixi.js";
 import { type ISkeletonData, Spine, type TextureAtlas } from "pixi-spine";
 import { getSkinData } from "./helper";
-import { type AnimationType, type FormattedChibis } from "./types";
 
 import { Card, CardContent } from "~/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import type { ChibiAnimation, FormattedChibis } from "~/types/impl/frontend/impl/chibis";
+import { getCDNURL } from "~/lib/cdn";
 
 type ChibiRendererProps = {
     selectedOperator: FormattedChibis | null;
@@ -19,7 +20,7 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseURL }: C
 
     const [selectedAnimation, setSelectedAnimation] = useState<string>("Idle");
     const [availableAnimations, setAvailableAnimations] = useState<string[]>([]);
-    const [viewType, setViewType] = useState<AnimationType>("front");
+    const [viewType, setViewType] = useState<ChibiAnimation>("front");
 
     const canvasContainerRef = useRef<HTMLDivElement>(null);
     const [isDragging, setIsDragging] = useState(false);
@@ -152,12 +153,9 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseURL }: C
             return;
         }
 
-        // Create an array with just the selected operator to pass to getSkinData
-        const operators = [selectedOperator];
-        
         // Get the skin data using the updated function
-        const skinData = getSkinData(operators, selectedOperator.operatorCode, selectedSkin, viewType);
-        
+        const skinData = getSkinData(selectedOperator, selectedSkin ?? "default", viewType);
+
         if (!skinData) {
             console.error("Failed to load skin data", { selectedOperator, selectedSkin, viewType });
             setError("Failed to load skin data - check console for details");
@@ -165,13 +163,19 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseURL }: C
             return;
         }
 
+        Object.assign(skinData, {
+            atlas: getCDNURL(skinData.atlas, true),
+            png: getCDNURL(skinData.png, true),
+            skel: getCDNURL(skinData.skel, true),
+        });
+
         setIsLoading(true);
         setError(null);
 
         console.log("Loading skin assets:", {
             atlas: skinData.atlas,
             png: skinData.png,
-            skel: skinData.skel
+            skel: skinData.skel,
         });
 
         // Load the skeleton file directly
@@ -254,7 +258,7 @@ export function ChibiRenderer({ selectedOperator, selectedSkin, repoBaseURL }: C
     };
 
     const handleViewTypeChange = (value: string) => {
-        setViewType(value as AnimationType);
+        setViewType(value as ChibiAnimation);
     };
 
     return (

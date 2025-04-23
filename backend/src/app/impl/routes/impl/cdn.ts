@@ -107,8 +107,23 @@ const handler = async (req: Request): Promise<Response> => {
             );
         }
 
-        // Determine appropriate cache configuration based on file type
-        const cacheControl = getCacheConfig(assetPath);
+        // Check if there's a cache busting query parameter ('v')
+        const hasCacheBusting = url.searchParams.has('v');
+        if (hasCacheBusting) {
+            // Log the cache busting request if needed
+            console.log(`Cache busting request for: ${assetPath}`);
+        }
+
+        // Determine if we're in development mode
+        const isDevelopment = process.env.NODE_ENV === "development";
+
+        // Determine appropriate cache configuration based on file type and environment
+        let cacheControl = getCacheConfig(assetPath);
+        
+        // In development mode, disable caching
+        if (isDevelopment) {
+            cacheControl = "no-store, max-age=0";
+        }
 
         // Use our cdn middleware to serve the asset
         const response = await middleware.serveAsset(req, assetPath, {

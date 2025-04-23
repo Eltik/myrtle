@@ -14,6 +14,9 @@ import type { Voice, Voices } from "~/types/impl/api/static/voices";
 const CACHE_TAG = "static-api";
 const CACHE_TTL = 3600; // Cache lifetime in seconds (1 hour)
 
+// Determine if we're in development mode
+const isDevelopment = env.NODE_ENV === "development";
+
 // Function to fetch data from backend without caching
 const fetchWithoutCache = async <T>(endpoint: string, body: object): Promise<T> => {
     const response = await fetch(`${env.BACKEND_URL}${endpoint}`, {
@@ -57,6 +60,23 @@ const fetchWithCache = unstable_cache(
     },
 );
 
+// Function that decides whether to use cache or not based on environment
+const fetchData = async <T>(endpoint: string, body: object, cacheKey?: string[]): Promise<T> => {
+    // In development mode, always bypass cache
+    if (isDevelopment) {
+        console.log("Development mode: Cache disabled");
+        return fetchWithoutCache<T>(endpoint, body);
+    }
+
+    // In production, use cache if a cache key is provided
+    if (cacheKey) {
+        return fetchWithCache<T>(endpoint, body, cacheKey);
+    }
+
+    // Default fallback to non-cached fetch
+    return fetchWithoutCache<T>(endpoint, body);
+};
+
 export default async function handler(request: Request, response: ServerResponse) {
     try {
         switch (request.body.type) {
@@ -66,7 +86,7 @@ export default async function handler(request: Request, response: ServerResponse
                     id: request.body.id,
                 };
 
-                const materials = await fetchWithCache<{ materials: Item[] }>("/static", requestBody, [`${CACHE_TAG}-materials-${request.body.id ?? "all"}`]);
+                const materials = await fetchData<{ materials: Item[] }>("/static", requestBody, isDevelopment ? undefined : [`${CACHE_TAG}-materials-${request.body.id ?? "all"}`]);
 
                 response.writeHead(200, { "Content-Type": "application/json" });
                 response.write(
@@ -83,7 +103,7 @@ export default async function handler(request: Request, response: ServerResponse
                     method: request.body.method,
                 };
 
-                const modules = await fetchWithCache<{ modules: Modules } | { details: ModuleData } | { modules: Module[] } | { modules: Module }>("/static", requestBody, [`${CACHE_TAG}-modules-${request.body.id ?? "all"}-${request.body.method ?? "default"}`]);
+                const modules = await fetchData<{ modules: Modules } | { details: ModuleData } | { modules: Module[] } | { modules: Module }>("/static", requestBody, isDevelopment ? undefined : [`${CACHE_TAG}-modules-${request.body.id ?? "all"}-${request.body.method ?? "default"}`]);
 
                 response.writeHead(200, { "Content-Type": "application/json" });
                 response.write(JSON.stringify(modules));
@@ -111,7 +131,7 @@ export default async function handler(request: Request, response: ServerResponse
                     id: request.body.id,
                 };
 
-                const ranges = await fetchWithCache<{ range: Ranges }>("/static", requestBody, [`${CACHE_TAG}-ranges-${request.body.id ?? "all"}`]);
+                const ranges = await fetchData<{ range: Ranges }>("/static", requestBody, isDevelopment ? undefined : [`${CACHE_TAG}-ranges-${request.body.id ?? "all"}`]);
 
                 response.writeHead(200, { "Content-Type": "application/json" });
                 response.write(
@@ -127,7 +147,7 @@ export default async function handler(request: Request, response: ServerResponse
                     id: request.body.id,
                 };
 
-                const skills = await fetchWithCache<{ skills: Skill[] }>("/static", requestBody, [`${CACHE_TAG}-skills-${request.body.id ?? "all"}`]);
+                const skills = await fetchData<{ skills: Skill[] }>("/static", requestBody, isDevelopment ? undefined : [`${CACHE_TAG}-skills-${request.body.id ?? "all"}`]);
 
                 response.writeHead(200, { "Content-Type": "application/json" });
                 response.write(
@@ -145,22 +165,15 @@ export default async function handler(request: Request, response: ServerResponse
                 };
 
                 // Trust data can be modified, so we need to be careful with caching
-                // Only cache GET requests (without trust parameter)
-                const useCache = request.body.trust === undefined;
+                // Only cache GET requests (without trust parameter) and not in development
+                const useCache = request.body.trust === undefined && !isDevelopment;
 
                 let trust;
                 if (useCache) {
                     trust = await fetchWithCache<{ trust: number | null }>("/static", requestBody, [`${CACHE_TAG}-trust-${request.body.id ?? "all"}`]);
                 } else {
-                    // For updates, bypass cache
-                    const response = await fetch(`${env.BACKEND_URL}/static`, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify(requestBody),
-                    });
-                    trust = (await response.json()) as { trust: number | null };
+                    // For updates or in development, bypass cache
+                    trust = await fetchWithoutCache<{ trust: number | null }>("/static", requestBody);
                 }
 
                 response.writeHead(200, { "Content-Type": "application/json" });
@@ -177,7 +190,7 @@ export default async function handler(request: Request, response: ServerResponse
                     id: request.body.id,
                 };
 
-                const handbook = await fetchWithCache<{ handbook: string }>("/static", requestBody, [`${CACHE_TAG}-handbook-${request.body.id ?? "all"}`]);
+                const handbook = await fetchData<{ handbook: string }>("/static", requestBody, isDevelopment ? undefined : [`${CACHE_TAG}-handbook-${request.body.id ?? "all"}`]);
 
                 response.writeHead(200, { "Content-Type": "application/json" });
                 response.write(
@@ -193,7 +206,7 @@ export default async function handler(request: Request, response: ServerResponse
                     id: request.body.id,
                 };
 
-                const skins = await fetchWithCache<{ skins: Skin[] | SkinData }>("/static", requestBody, [`${CACHE_TAG}-skins-${request.body.id ?? "all"}`]);
+                const skins = await fetchData<{ skins: Skin[] | SkinData }>("/static", requestBody, isDevelopment ? undefined : [`${CACHE_TAG}-skins-${request.body.id ?? "all"}`]);
 
                 response.writeHead(200, { "Content-Type": "application/json" });
                 response.write(JSON.stringify(skins));

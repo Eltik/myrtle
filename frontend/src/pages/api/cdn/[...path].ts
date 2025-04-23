@@ -15,6 +15,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(405).json({ error: "Method not allowed" });
     }
 
+    // Determine if we're in development mode
+    const isDevelopment = env.NODE_ENV === "development";
+
     try {
         // Get path from request
         const path = req.query.path as string[];
@@ -53,16 +56,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // Get content type and other headers from backend response
         const contentType = response.headers.get("Content-Type") ?? "application/octet-stream";
         const contentLength = response.headers.get("Content-Length");
-        const cacheControl = response.headers.get("Cache-Control");
+        const cacheControl = isDevelopment ? "no-store, max-age=0" : (response.headers.get("Cache-Control") ?? null);
         const etag = response.headers.get("ETag");
         const lastModified = response.headers.get("Last-Modified");
 
         // Set response headers
         res.setHeader("Content-Type", contentType);
         if (contentLength) res.setHeader("Content-Length", contentLength);
+
+        // In development, always use no-cache, otherwise use the backend's cache control
         if (cacheControl) res.setHeader("Cache-Control", cacheControl);
+
         if (etag) res.setHeader("ETag", etag);
         if (lastModified) res.setHeader("Last-Modified", lastModified);
+
+        // If in development mode, log that caching is disabled
+        if (isDevelopment) {
+            console.log("Development mode: CDN cache disabled");
+        }
 
         // Get the response body as buffer and send it
         const buffer = await response.arrayBuffer();
