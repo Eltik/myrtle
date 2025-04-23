@@ -28,6 +28,8 @@ const DEFAULT_ALLOWED_EXTENSIONS = [
     ".txt",
     ".csv",
     ".xml",
+    ".skel",
+    ".atlas",
 ];
 
 /**
@@ -54,6 +56,15 @@ function validateAndNormalizePath(assetPath: string): string | null {
  */
 const serveAsset = async (req: Request, assetPath: string, options: CdnOptions = {}): Promise<Response> => {
     try {
+        // Check for cache busting query parameter (ignore it)
+        const url = new URL(req.url);
+        const hasCacheBusting = url.searchParams.has('v');
+        
+        // Log cache busting requests in development
+        if (hasCacheBusting && process.env.NODE_ENV === "development") {
+            console.log(`Cache busting parameter detected for: ${assetPath}`);
+        }
+        
         // Validate and normalize the path
         const normalizedPath = validateAndNormalizePath(assetPath);
 

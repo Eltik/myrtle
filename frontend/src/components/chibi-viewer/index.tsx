@@ -4,7 +4,7 @@ import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { Skeleton } from "~/components/ui/skeleton";
 import type { ChibisSimplified } from "~/types/impl/api/impl/chibis";
-import type { FormattedChibis } from "~/types/impl/frontend/impl/chibis";
+import type { AnimationType, FormattedChibis, SkinData } from "~/types/impl/frontend/impl/chibis";
 import { type Operator } from "~/types/impl/api/static/operator";
 import { ChibiRenderer } from "./impl/renderer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
@@ -45,26 +45,13 @@ export function ChibiViewer() {
                 data: operatorsList.find((data) => data.id === operatorCode),
             };
 
-            type AnimationType = {
-                atlas?: string;
-                png?: string;
-                skel?: string;
-            };
-
-            type SkinData = {
-                name: string;
-                dorm?: { atlas: string; png: string; skel: string; path: string };
-                front?: { atlas: string; png: string; skel: string; path: string };
-                back?: { atlas: string; png: string; skel: string; path: string };
-            };
-
             const skinsByName = new Map<string, SkinData>();
 
             for (const skin of chibi.skins) {
-                // The backend now sends full skin names like "default" or "char_301_cutter_marthe#8"
+                // The backend now sends full skin names like "default"
                 const skinName = skin.name;
 
-                const existingSkin = skinsByName.get(skinName) ?? { name: skinName };
+                const existingSkin = skinsByName.get(skinName);
 
                 const createAnimationData = (animationType: AnimationType | undefined) => ({
                     atlas: animationType?.atlas ?? "",
@@ -77,20 +64,29 @@ export function ChibiViewer() {
                 // BattleFront -> front
                 // BattleBack -> back
                 // Building -> dorm
-                
+
                 if (skin.animationTypes?.dorm) {
-                    existingSkin.dorm = createAnimationData(skin.animationTypes.dorm);
+                    Object.assign(existingSkin ?? {}, { dorm: createAnimationData(skin.animationTypes.dorm) });
                 }
 
                 if (skin.animationTypes?.front) {
-                    existingSkin.front = createAnimationData(skin.animationTypes.front);
+                    Object.assign(existingSkin ?? {}, { front: createAnimationData(skin.animationTypes.front) });
                 }
 
                 if (skin.animationTypes?.back) {
-                    existingSkin.back = createAnimationData(skin.animationTypes.back);
+                    Object.assign(existingSkin ?? [], { back: createAnimationData(skin.animationTypes.back) });
                 }
 
-                skinsByName.set(skinName, existingSkin);
+                if (existingSkin) {
+                    skinsByName.set(skinName, existingSkin);
+                } else {
+                    skinsByName.set(skinName, {
+                        name: skinName,
+                        dorm: createAnimationData(skin.animationTypes?.dorm),
+                        front: createAnimationData(skin.animationTypes?.front),
+                        back: createAnimationData(skin.animationTypes?.back),
+                    });
+                }
             }
 
             const emptyAnimationData = {

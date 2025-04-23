@@ -41,3 +41,18 @@ export type ResourceMap = Record<
         data?: unknown;
     }
 >;
+
+export type AnimationType = {
+    atlas: string;
+    png: string;
+    skel: string;
+};
+
+export type SkinData = {
+    name: string;
+    dorm?: { atlas: string; png: string; skel: string; path: string };
+    front?: { atlas: string; png: string; skel: string; path: string };
+    back?: { atlas: string; png: string; skel: string; path: string };
+};
+
+export type ChibiAnimation = "front" | "back" | "dorm";

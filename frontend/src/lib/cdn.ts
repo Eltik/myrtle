@@ -2,21 +2,52 @@
  * Utilities for working with the CDN service
  */
 
+import { env } from "~/env.js";
+
+// Client-safe way to detect development mode
+const isDevelopment = env.NEXT_PUBLIC_NODE_ENV !== "production";
+
 /**
  * Get the CDN URL for a given asset path
  *
  * @param path - The path to the asset within the CDN
  * @param useApiRoute - Whether to use the API route (more control) or the rewrite (more efficient)
+ * @param bustCache - Whether to add a cache-busting query parameter
  * @returns The full URL to the asset
  */
-export function getCDNURL(path: string, useApiRoute = false): string {
+export function getCDNURL(path: string, useApiRoute = false, bustCache?: boolean): string {
+    // Check if path already has cache busting parameter
+    if (path.includes("?v=") || path.includes("&v=")) {
+        // Already has cache busting, return as is (with leading slash if needed)
+        return path.startsWith("/") ? path : `/${path}`;
+    }
+
     // Remove any leading slashes
     const cleanPath = path.replace(/^\/+/, "");
+
+    // Check if the path already contains the prefix to avoid duplication
+    if (cleanPath.startsWith("api/cdn/") || cleanPath.startsWith("assets/")) {
+        // Path already has prefix, just use it directly
+        const url = `/${cleanPath}`;
+
+        // Determine whether to bust cache based on explicit parameter or development environment
+        const shouldBustCache = bustCache ?? isDevelopment;
+
+        // Add cache busting query parameter if needed
+        return shouldBustCache ? `${url}${url.includes("?") ? "&" : "?"}v=${Date.now()}` : url;
+    }
 
     // Choose between API route or direct rewrite
     const baseUrl = useApiRoute ? "/api/cdn/" : "/assets/";
 
-    return `${baseUrl}${cleanPath}`;
+    // Create base URL
+    const url = `${baseUrl}${cleanPath}`;
+
+    // Determine whether to bust cache based on explicit parameter or development environment
+    const shouldBustCache = bustCache ?? isDevelopment;
+
+    // Add cache busting query parameter if needed
+    return shouldBustCache ? `${url}${url.includes("?") ? "&" : "?"}v=${Date.now()}` : url;
 }
 
 /**
@@ -24,10 +55,11 @@ export function getCDNURL(path: string, useApiRoute = false): string {
  *
  * @param path - The path to the chibi asset
  * @param useApiRoute - Whether to use the API route (more control) or the rewrite (more efficient)
+ * @param bustCache - Whether to add a cache-busting query parameter
  * @returns The full URL to the chibi asset
  */
-export function getChibiAssetURL(path: string, useApiRoute = false): string {
-    return getCDNURL(`chibis/${path}`, useApiRoute);
+export function getChibiAssetURL(path: string, useApiRoute = false, bustCache?: boolean): string {
+    return getCDNURL(`chibis/${path}`, useApiRoute, bustCache);
 }
 
 /**
@@ -48,8 +80,9 @@ export enum AssetType {
  * @param type - The type of asset
  * @param path - The path to the asset within its category
  * @param useApiRoute - Whether to use the API route
+ * @param bustCache - Whether to add a cache-busting query parameter
  * @returns The full URL to the asset
  */
-export function getAssetURL(type: AssetType, path: string, useApiRoute = false): string {
-    return getCDNURL(`${type}/${path}`, useApiRoute);
+export function getAssetURL(type: AssetType, path: string, useApiRoute = false, bustCache?: boolean): string {
+    return getCDNURL(`${type}/${path}`, useApiRoute, bustCache);
 }

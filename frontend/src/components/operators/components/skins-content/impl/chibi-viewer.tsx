@@ -7,7 +7,7 @@ import type { FormattedChibis, ResourceMap, SpineAnimation } from "~/types/impl/
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { getCDNURL } from "~/lib/cdn";
 
-export function ChibiViewer({ chibi, skinId }: { chibi: ChibisSimplified; skinId: string; }) {
+export function ChibiViewer({ chibi, skinId }: { chibi: ChibisSimplified; skinId: string }) {
     const [formattedChibi, setFormattedChibi] = useState<FormattedChibis | null>(null);
 
     // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
@@ -191,7 +191,7 @@ export function ChibiViewer({ chibi, skinId }: { chibi: ChibisSimplified; skinId
     // Helper to generate asset URLs for the CDN
     const getAssetUrl = useCallback((path: string) => {
         if (!path) return "";
-        
+
         // With our new backend structure, paths will look like:
         // chararts/BattleFront/file.ext  (for default skins, front animations)
         // chararts/BattleBack/file.ext   (for default skins, back animations)
@@ -199,7 +199,7 @@ export function ChibiViewer({ chibi, skinId }: { chibi: ChibisSimplified; skinId
         // skinpack/BattleFront/file.ext  (for skin variants, front animations)
         // skinpack/BattleBack/file.ext   (for skin variants, back animations)
         // skinpack/Building/file.ext     (for skin variants, dorm animations)
-        
+
         // Just pass the path directly to the CDN, since it's already properly formatted by the backend
         return getCDNURL(`chibis/${path}`, true);
     }, []);

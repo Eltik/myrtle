@@ -5,9 +5,7 @@ import path from "path";
 import { env } from "../../../../../../../../env";
 
 // Base assets path - use environment variable if available or fallback to default
-const BASE_ASSETS_PATH = env.UNPACKED_DIR 
-    ? path.resolve(env.UNPACKED_DIR) 
-    : path.resolve(process.cwd(), "..", "assets", "Unpacked");
+const BASE_ASSETS_PATH = env.UNPACKED_DIR ? path.resolve(env.UNPACKED_DIR) : path.resolve(process.cwd(), "..", "assets", "Unpacked");
 
 // Paths for different types of chibi assets
 export const CHARARTS_PATH = path.resolve(BASE_ASSETS_PATH, "chararts");
@@ -45,7 +43,7 @@ const saveChibiData = (data: RepoItem[]): void => {
 // Check if the paths exist and warn if not
 const checkPaths = () => {
     const paths = [CHARARTS_PATH, SKINPACK_PATH, DYNILLUST_PATH];
-    paths.forEach(p => {
+    paths.forEach((p) => {
         if (!fs.existsSync(p)) {
             console.log(colors.yellow(`⚠️ Directory not found: ${p}`));
         }
@@ -73,7 +71,7 @@ export const crawlLocalChibis = async (): Promise<RepoItem[]> => {
         >();
 
         // Function to process a file
-        const processFile = (filePath: string, fileName: string, type: 'base' | 'skin' | 'dynIllust', subdir?: string) => {
+        const processFile = (filePath: string, fileName: string, type: "base" | "skin" | "dynIllust", subdir?: string) => {
             // Skip monobehaviour files
             if (fileName.toLowerCase().startsWith("monobehaviour_")) {
                 return;
@@ -95,13 +93,13 @@ export const crawlLocalChibis = async (): Promise<RepoItem[]> => {
             let match;
             let opId = "";
             let skinName = "";
-            
-            if (type === 'dynIllust') {
+
+            if (type === "dynIllust") {
                 // Handle dynamic illustrations
                 match = fileName.match(/dyn_illust_(char_\d+_[a-zA-Z0-9]+)/i);
                 if (match) {
                     opId = match[1].toLowerCase();
-                    
+
                     // Extract skin name if present
                     const skinMatch = fileName.match(/dyn_illust_char_\d+_[a-zA-Z0-9]+_(.+?)(?:\.|$)/i);
                     if (skinMatch && skinMatch[1]) {
@@ -115,9 +113,9 @@ export const crawlLocalChibis = async (): Promise<RepoItem[]> => {
                     const prefix = "char_";
                     const id = match[2].toLowerCase();
                     opId = `${prefix}${id}`;
-                    
+
                     // Extract skin name for skin animations
-                    if (type === 'skin') {
+                    if (type === "skin") {
                         const skinMatch = fileName.match(/(?:char|build_char)_\d+_[a-z0-9]+_(.+?)(?:\.|#|\$|_Atlas|_SkeletonData|$)/i);
                         if (skinMatch && skinMatch[1]) {
                             skinName = skinMatch[1].toLowerCase();
@@ -134,16 +132,16 @@ export const crawlLocalChibis = async (): Promise<RepoItem[]> => {
                     fileTracker.set(opId, {
                         base: {},
                         skin: new Map(),
-                        dynIllust: new Map()
+                        dynIllust: new Map(),
                     });
                 }
 
                 const tracker = fileTracker.get(opId)!;
 
                 // Update tracker based on file type
-                if (type === 'base' && subdir) {
+                if (type === "base" && subdir) {
                     tracker.base[subdir] = true;
-                } else if (type === 'skin' && subdir) {
+                } else if (type === "skin" && subdir) {
                     if (!tracker.skin.has(skinName)) {
                         tracker.skin.set(skinName, {});
                     }
@@ -151,8 +149,8 @@ export const crawlLocalChibis = async (): Promise<RepoItem[]> => {
                     if (skinData && subdir) {
                         skinData[subdir] = true;
                     }
-                } else if (type === 'dynIllust') {
-                    tracker.dynIllust.set(skinName || 'base', true);
+                } else if (type === "dynIllust") {
+                    tracker.dynIllust.set(skinName || "base", true);
                 }
 
                 // Create operator if it doesn't exist
@@ -180,7 +178,7 @@ export const crawlLocalChibis = async (): Promise<RepoItem[]> => {
                                 path: `${opId}/dynIllust`,
                                 contentType: "dir",
                                 children: [],
-                            }
+                            },
                         ],
                     });
                 }
@@ -205,35 +203,35 @@ export const crawlLocalChibis = async (): Promise<RepoItem[]> => {
         };
 
         // Function to crawl a directory and process files
-        const crawlDir = async (baseDir: string, type: 'base' | 'skin' | 'dynIllust') => {
+        const crawlDir = async (baseDir: string, type: "base" | "skin" | "dynIllust") => {
             if (!fs.existsSync(baseDir)) {
                 console.log(colors.yellow(`⚠️ Directory not found: ${baseDir}`));
                 return;
             }
 
-            if (type === 'dynIllust') {
+            if (type === "dynIllust") {
                 // Process dynamic illustrations directory
                 const readDynIllustDir = (dirPath: string) => {
                     if (!fs.existsSync(dirPath)) return;
-                    
+
                     const items = fs.readdirSync(dirPath);
                     for (const item of items) {
                         const fullPath = path.join(dirPath, item);
                         const stats = fs.statSync(fullPath);
-                        
+
                         if (stats.isDirectory()) {
                             // Process files inside dynIllust subdirectories
                             const subFiles = fs.readdirSync(fullPath);
                             for (const file of subFiles) {
-                                processFile(path.join(fullPath, file), file, 'dynIllust');
+                                processFile(path.join(fullPath, file), file, "dynIllust");
                             }
                         } else if (stats.isFile()) {
                             // Process dynIllust files directly in the main directory
-                            processFile(fullPath, item, 'dynIllust');
+                            processFile(fullPath, item, "dynIllust");
                         }
                     }
                 };
-                
+
                 readDynIllustDir(baseDir);
             } else {
                 // Process normal chibi and skin directories with their respective subdirectories
@@ -243,13 +241,13 @@ export const crawlLocalChibis = async (): Promise<RepoItem[]> => {
                         console.log(colors.yellow(`⚠️ Subdirectory not found: ${dirPath}`));
                         continue;
                     }
-                    
+
                     const readSubDir = (dirPath: string) => {
                         const files = fs.readdirSync(dirPath);
                         for (const file of files) {
                             const fullPath = path.join(dirPath, file);
                             const stats = fs.statSync(fullPath);
-                            
+
                             if (stats.isDirectory()) {
                                 readSubDir(fullPath);
                             } else {
@@ -257,16 +255,16 @@ export const crawlLocalChibis = async (): Promise<RepoItem[]> => {
                             }
                         }
                     };
-                    
+
                     readSubDir(dirPath);
                 }
             }
         };
 
         // Crawl all directories
-        await crawlDir(CHARARTS_PATH, 'base');
-        await crawlDir(SKINPACK_PATH, 'skin');
-        await crawlDir(DYNILLUST_PATH, 'dynIllust');
+        await crawlDir(CHARARTS_PATH, "base");
+        await crawlDir(SKINPACK_PATH, "skin");
+        await crawlDir(DYNILLUST_PATH, "dynIllust");
 
         // Print stats
         console.log(colors.cyan(`📊 File analysis: ${matchedFiles}/${totalFiles} files matched to operators (${Math.round((matchedFiles / totalFiles) * 100)}%)`));
@@ -287,7 +285,7 @@ export const crawlLocalChibis = async (): Promise<RepoItem[]> => {
                 // If no base assets, clear the base directory
                 const operator = operatorMap.get(opId);
                 if (operator) {
-                    const baseDir = operator.children!.find(c => c.name === "base");
+                    const baseDir = operator.children!.find((c) => c.name === "base");
                     if (baseDir) {
                         baseDir.children = [];
                     }
@@ -303,7 +301,7 @@ export const crawlLocalChibis = async (): Promise<RepoItem[]> => {
                 // If no skins, clear the skin directory
                 const operator = operatorMap.get(opId);
                 if (operator) {
-                    const skinDir = operator.children!.find(c => c.name === "skin");
+                    const skinDir = operator.children!.find((c) => c.name === "skin");
                     if (skinDir) {
                         skinDir.children = [];
                     }
@@ -319,7 +317,7 @@ export const crawlLocalChibis = async (): Promise<RepoItem[]> => {
                 // If no dynamic illustrations, clear the dynIllust directory
                 const operator = operatorMap.get(opId);
                 if (operator) {
-                    const dynIllustDir = operator.children!.find(c => c.name === "dynIllust");
+                    const dynIllustDir = operator.children!.find((c) => c.name === "dynIllust");
                     if (dynIllustDir) {
                         dynIllustDir.children = [];
                     }
