@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { Maximize2 } from "lucide-react";
 import type { UISkin } from "~/types/impl/frontend/impl/operators";
+import { getCDNURL } from "~/lib/cdn";
 
 interface SkinImageViewerProps {
     operator: {
@@ -23,7 +24,7 @@ export function SkinImageViewer({ operator, selectedSkinData, imageSrc, isImageL
                 </div>
             )}
             <Image
-                src={imageSrc}
+                src={getCDNURL(imageSrc, true)}
                 alt={`${operator.name} - ${selectedSkinData.name}`}
                 fill
                 style={{

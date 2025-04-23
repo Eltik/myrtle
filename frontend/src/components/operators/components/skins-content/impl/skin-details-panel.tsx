@@ -5,10 +5,9 @@ import type { UISkin } from "~/types/impl/frontend/impl/operators";
 interface SkinDetailsPanelProps {
     selectedSkinData: UISkin;
     chibi: ChibisSimplified | null;
-    repoBaseUrl: string;
 }
 
-export function SkinDetailsPanel({ selectedSkinData, chibi, repoBaseUrl }: SkinDetailsPanelProps) {
+export function SkinDetailsPanel({ selectedSkinData, chibi }: SkinDetailsPanelProps) {
     return (
         <div className="flex w-full flex-col space-y-3 overflow-hidden rounded-lg border bg-card/50 p-3 backdrop-blur-sm sm:space-y-4 sm:p-4">
             <h3 className="truncate border-b pb-1 text-base font-semibold sm:pb-2 sm:text-lg md:text-xl">{selectedSkinData.name}</h3>
@@ -43,7 +42,7 @@ export function SkinDetailsPanel({ selectedSkinData, chibi, repoBaseUrl }: SkinD
             {/* Chibi viewer with better size constraints */}
             {chibi && (
                 <div className="mt-auto w-full overflow-hidden pt-2 sm:pt-3 md:pt-4">
-                    <ChibiViewer chibi={chibi} skinId={selectedSkinData.id} repoBaseUrl={repoBaseUrl} />
+                    <ChibiViewer chibi={chibi} skinId={selectedSkinData.id} />
                 </div>
             )}
 

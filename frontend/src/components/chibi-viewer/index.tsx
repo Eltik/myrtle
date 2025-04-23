@@ -23,20 +23,17 @@ export function ChibiViewer() {
 
     const formatData = useCallback((data: ChibisSimplified[], operatorsList: Operator[]): FormattedChibis[] => {
         // Deduplicate operators by their ID, keeping the first occurrence
-        const uniqueData = data.reduce<ChibisSimplified[]>((acc, curr) => {
-            const operatorCode = curr.operatorCode.includes("/") ? (curr.operatorCode.split("/").pop() ?? curr.operatorCode) : curr.operatorCode;
-
-            const isDuplicate = acc.some((item) => {
-                const itemCode = item.operatorCode.includes("/") ? (item.operatorCode.split("/").pop() ?? item.operatorCode) : item.operatorCode;
-                return itemCode === operatorCode;
-            });
-
-            if (!isDuplicate) {
-                acc.push(curr);
+        const uniqueOperators = new Set<string>();
+        const uniqueData = data.filter((chibi) => {
+            const id = chibi.operatorCode;
+            if (uniqueOperators.has(id)) {
+                return false;
             }
-            return acc;
-        }, []);
+            uniqueOperators.add(id);
+            return true;
+        });
 
+        // Map the simplified data to the frontend format
         return uniqueData.map((chibi) => {
             const operatorCode = chibi.operatorCode.includes("/") ? (chibi.operatorCode.split("/").pop() ?? chibi.operatorCode) : chibi.operatorCode;
 
@@ -64,7 +61,8 @@ export function ChibiViewer() {
             const skinsByName = new Map<string, SkinData>();
 
             for (const skin of chibi.skins) {
-                const skinName = skin.name.startsWith("build_") ? (skin.name.split("build_")[1]?.split("/")[0] ?? chibi.name) : skin.name;
+                // The backend now sends full skin names like "default" or "char_301_cutter_marthe#8"
+                const skinName = skin.name;
 
                 const existingSkin = skinsByName.get(skinName) ?? { name: skinName };
 
@@ -75,6 +73,11 @@ export function ChibiViewer() {
                     path: skin.path,
                 });
 
+                // Mapping animation types according to our new backend format:
+                // BattleFront -> front
+                // BattleBack -> back
+                // Building -> dorm
+                
                 if (skin.animationTypes?.dorm) {
                     existingSkin.dorm = createAnimationData(skin.animationTypes.dorm);
                 }
@@ -178,7 +181,7 @@ export function ChibiViewer() {
     };
 
     // Replace GitHub raw content URL with our CDN proxy using the utility
-    const repoBaseUrl = getCDNURL("");
+    const repoBaseUrl = getCDNURL("", true);
 
     return (
         <div className="container mx-auto py-8">

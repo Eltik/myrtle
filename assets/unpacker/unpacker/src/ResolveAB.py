@@ -22,8 +22,21 @@ from .utils.Logger import Logger
 from .utils.SaverUtils import SafeSaver
 from .utils.TaskUtils import ThreadCtrl, UICtrl, TaskReporter, TaskReporterTracker
 
-# New compression algorithm introduced in Arknights v2.5.04+
+# New compression algorithms introduced in Arknights
+# LZ4AK (v2.5.04+) - Currently used but labeled as LZHAM
 CompressionHelper.DECOMPRESSION_MAP[CompressionFlags.LZHAM] = decompress_lz4ak
+
+# Real LZHAM support (for future versions)
+try:
+    from .lzham.Block import decompress_lzham
+    # Define a custom LZHAM compression flag since it might not be in the enum yet
+    # This will need to be updated when the actual enum value is known
+    LZHAM_COMPRESSION_FLAG = 4  # This value may need to be adjusted
+    CompressionHelper.DECOMPRESSION_MAP[LZHAM_COMPRESSION_FLAG] = decompress_lzham
+    Logger.info("LZHAM decompression support enabled")
+except ImportError as e:
+    Logger.info(f"LZHAM decompression not available: {e}")
+    Logger.info("Only LZ4AK decompression will be used (current Arknights version)")
 
 
 class Resource:
@@ -389,6 +402,7 @@ def main(
     resume: bool = False,
     skip_problematic: bool = False,
     timeout: int = 300,  # 5 minutes timeout per file
+    target_list: Optional[str] = None,
 ):
     """Extract all the AB files from the given directory or extract a given AB file.
 
@@ -403,6 +417,7 @@ def main(
     :param resume: Whether to resume from previous checkpoint.
     :param skip_problematic: Whether to skip files that are known to cause issues.
     :param timeout: Timeout in seconds for processing each file.
+    :param target_list: Optional path to a JSON file containing a list of specific .ab files to process. If provided, checkpoint/resume logic is skipped.
     :rtype: None;
     """
     print("\nParsing paths...", s=1)
@@ -412,49 +427,107 @@ def main(
     src = os.path.normpath(src)
     destdir = os.path.normpath(destdir)
     
+    using_target_list = False
     # Get the list of files to process
-    flist = [src] if os.path.isfile(src) else get_filelist(src)
-    flist = list(filter(is_ab_file, flist))
+    if target_list and os.path.exists(target_list):
+        using_target_list = True
+        Logger.info(f"ResolveAB: Loading target file list from {target_list}")
+        try:
+            with open(target_list, 'r') as f:
+                target_data = json.load(f)
+                # Assuming the JSON contains a list under a key like "assets" or similar
+                # Check common keys first
+                if isinstance(target_data, dict):
+                    possible_keys = ["lzham_missing_assets", "missing_assets", "lzham_assets", "assets", "files"]
+                    flist = None
+                    for key in possible_keys:
+                        if key in target_data and isinstance(target_data[key], list):
+                            flist = target_data[key]
+                            Logger.info(f"ResolveAB: Loaded {len(flist)} files from key '{key}' in {target_list}")
+                            break
+                    if flist is None:
+                         Logger.error(f"ResolveAB: Could not find a valid list of files in {target_list}. Looked for keys: {possible_keys}")
+                         flist = []
+                elif isinstance(target_data, list):
+                    flist = target_data # Assume the JSON is just a list of paths
+                    Logger.info(f"ResolveAB: Loaded {len(flist)} files directly from list in {target_list}")
+                else:
+                    Logger.error(f"ResolveAB: Invalid format in {target_list}. Expected a JSON list or dict with a list.")
+                    flist = []
+            # Validate paths in the list
+            flist = [os.path.normpath(f) for f in flist if isinstance(f, str) and f.endswith('.ab')]
+            valid_count = 0
+            final_flist = []
+            for f_path in flist:
+                if os.path.exists(f_path):
+                    final_flist.append(f_path)
+                    valid_count += 1
+                else:
+                    # Try resolving relative to the source directory if it doesn't exist directly
+                    potential_path = os.path.normpath(os.path.join(os.path.dirname(src) if os.path.isfile(src) else src, os.path.basename(f_path)))
+                    if os.path.exists(potential_path):
+                         final_flist.append(potential_path)
+                         valid_count += 1
+                    else:
+                         Logger.warn(f"ResolveAB: File specified in target list not found: {f_path} (also checked {potential_path})")
+            flist = final_flist
+            Logger.info(f"ResolveAB: Processing {len(flist)} valid files from target list.")
+        except Exception as e:
+            Logger.error(f"ResolveAB: Failed to load or parse target list {target_list}: {e}")
+            flist = []
+    else:
+        if target_list:
+             Logger.warn(f"ResolveAB: Target list file not found: {target_list}. Falling back to scanning source directory.")
+        flist = [src] if os.path.isfile(src) else get_filelist(src)
+        flist = list(filter(is_ab_file, flist))
 
-    # Create checkpoint file path
-    checkpoint_file = os.path.join(destdir, "extraction_checkpoint.json")
-    problematic_files_path = os.path.join(destdir, "problematic_files.json")
+    # --- Checkpoint and Problematic File Handling (Skip if using target_list) ---
     processed_files = set()
     problematic_files = set()
-    
-    # Load checkpoint if resuming
-    if resume and os.path.exists(checkpoint_file):
-        try:
-            with open(checkpoint_file, 'r') as f:
-                checkpoint_data = json.load(f)
-                processed_files = set(checkpoint_data.get('processed_files', []))
-                Logger.info(f"ResolveAB: Resuming from checkpoint with {len(processed_files)} previously processed files.")
-        except Exception as e:
-            Logger.warn(f"ResolveAB: Failed to load checkpoint: {e}")
-    
-    # Load problematic files list
-    if os.path.exists(problematic_files_path):
-        try:
-            with open(problematic_files_path, 'r') as f:
-                problematic_data = json.load(f)
-                problematic_files = set(problematic_data.get('problematic_files', []))
-                Logger.info(f"ResolveAB: Found {len(problematic_files)} problematic files to skip.")
-        except Exception as e:
-            Logger.warn(f"ResolveAB: Failed to load problematic files list: {e}")
-    
-    # Filter out already processed files and problematic files if needed
-    original_count = len(flist)
-    if resume:
-        flist = [f for f in flist if f not in processed_files]
-        Logger.info(f"ResolveAB: Skipping {original_count - len(flist)} already processed files.")
-    
-    if skip_problematic and problematic_files:
-        skipped_count = len(flist)
-        flist = [f for f in flist if f not in problematic_files]
-        skipped_count = skipped_count - len(flist)
-        Logger.info(f"ResolveAB: Skipping {skipped_count} problematic files.")
+    checkpoint_file = os.path.join(destdir, "extraction_checkpoint.json")
+    problematic_files_path = os.path.join(destdir, "problematic_files.json")
 
-    if do_del and not resume:
+    if not using_target_list:
+        # Load checkpoint if resuming
+        if resume and os.path.exists(checkpoint_file):
+            try:
+                with open(checkpoint_file, 'r') as f:
+                    checkpoint_data = json.load(f)
+                    processed_files = set(checkpoint_data.get('processed_files', []))
+                    Logger.info(f"ResolveAB: Resuming from checkpoint with {len(processed_files)} previously processed files.")
+            except Exception as e:
+                Logger.warn(f"ResolveAB: Failed to load checkpoint: {e}")
+        
+        # Load problematic files list
+        if os.path.exists(problematic_files_path):
+            try:
+                with open(problematic_files_path, 'r') as f:
+                    problematic_data = json.load(f)
+                    problematic_files = set(problematic_data.get('problematic_files', []))
+                    Logger.info(f"ResolveAB: Found {len(problematic_files)} problematic files.")
+            except Exception as e:
+                Logger.warn(f"ResolveAB: Failed to load problematic files list: {e}")
+        
+        # Filter out already processed files and problematic files if needed
+        original_count = len(flist)
+        if resume:
+            flist = [f for f in flist if f not in processed_files]
+            Logger.info(f"ResolveAB: Skipping {original_count - len(flist)} already processed files based on checkpoint.")
+        
+        if skip_problematic and problematic_files:
+            skipped_count = len(flist)
+            flist = [f for f in flist if f not in problematic_files]
+            skipped_count = skipped_count - len(flist)
+            Logger.info(f"ResolveAB: Skipping {skipped_count} problematic files based on list.")
+    else:
+        if resume:
+            Logger.warn("ResolveAB: --resume flag ignored when --target-list is used.")
+        if skip_problematic:
+             Logger.warn("ResolveAB: --skip-problematic flag ignored when --target-list is used.")
+        Logger.info(f"ResolveAB: Processing {len(flist)} files specified in the target list.")
+    # --- End Checkpoint Handling ---
+
+    if do_del and not resume and not using_target_list: # Only delete if not resuming and not using target list
         print("\nCleaning...", s=1)
         rmdir(destdir)  # Danger zone
     SafeSaver.get_instance().reset_counter()
@@ -501,16 +574,17 @@ def main(
         # Ensure the directory exists
         os.makedirs(curdestdir, exist_ok=True)
         
-        # Save a checkpoint after each file is processed
+        # Save a checkpoint after each file is processed (ONLY if not using target_list)
         def on_file_processed():
             tr_processed.report()
-            # Save to checkpoint
-            processed_files.add(i)
-            try:
-                with open(checkpoint_file, 'w') as f:
-                    json.dump({'processed_files': list(processed_files)}, f)
-            except Exception as e:
-                Logger.warn(f"ResolveAB: Failed to save checkpoint: {e}")
+            if not using_target_list:
+                # Save to checkpoint
+                processed_files.add(i)
+                try:
+                    with open(checkpoint_file, 'w') as f:
+                        json.dump({'processed_files': list(processed_files)}, f)
+                except Exception as e:
+                    Logger.warn(f"ResolveAB: Failed to save checkpoint: {e}")
         
         # Create a thread with timeout
         thread = thread_ctrl.run_subthread(
@@ -535,16 +609,18 @@ def main(
             time.sleep(1)
             ui.refresh(post_delay=0.1)
         
-        # If the thread is still running after timeout, mark it as problematic
+        # If the thread is still running after timeout, mark it as problematic (ONLY if not using target_list)
         if thread.is_alive():
-            Logger.warn(f"ResolveAB: File {i} timed out after {timeout} seconds, marking as problematic.")
-            # Add to problematic files list
-            problematic_files.add(i)
-            try:
-                with open(problematic_files_path, 'w') as f:
-                    json.dump({'problematic_files': list(problematic_files)}, f)
-            except Exception as e:
-                Logger.warn(f"ResolveAB: Failed to save problematic files list: {e}")
+            Logger.warn(f"ResolveAB: File {i} timed out after {timeout} seconds.")
+            if not using_target_list:
+                Logger.info(f"ResolveAB: Marking {i} as problematic.")
+                # Add to problematic files list
+                problematic_files.add(i)
+                try:
+                    with open(problematic_files_path, 'w') as f:
+                        json.dump({'problematic_files': list(problematic_files)}, f)
+                except Exception as e:
+                    Logger.warn(f"ResolveAB: Failed to save problematic files list: {e}")
             
             # Terminate the thread
             thread_ctrl.terminate_subthread(thread)
@@ -552,13 +628,14 @@ def main(
             # Report progress as if the file was processed
             tr_processed.report()
             
-            # Save to checkpoint so we don't try this file again
-            processed_files.add(i)
-            try:
-                with open(checkpoint_file, 'w') as f:
-                    json.dump({'processed_files': list(processed_files)}, f)
-            except Exception as e:
-                Logger.warn(f"ResolveAB: Failed to save checkpoint: {e}")
+            # Save to checkpoint so we don't try this file again (ONLY if not using target_list)
+            if not using_target_list:
+                processed_files.add(i)
+                try:
+                    with open(checkpoint_file, 'w') as f:
+                        json.dump({'processed_files': list(processed_files)}, f)
+                except Exception as e:
+                    Logger.warn(f"ResolveAB: Failed to save checkpoint: {e}")
 
     ui.reset()
     ui.loop_stop()

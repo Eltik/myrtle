@@ -151,7 +151,7 @@ def run_custom_resolve_ab():
     ###
     prt_continue()
     title("ArkUnpacker - Processing")
-    AU_Rs.main(src, destdir, do_del, do_img, do_txt, do_aud, do_spi, separate, resume, skip_problematic, timeout)
+    AU_Rs.main(src, destdir, do_del, do_img, do_txt, do_aud, do_spi, separate, resume, skip_problematic, timeout, args.target_list)
 
 
 def run_custom_combine_image():
@@ -600,6 +600,7 @@ if __name__ == "__main__":
                     args.resume,
                     args.skip_problematic,
                     args.timeout,
+                    args.target_list,
                 )
             elif args.mode == "cb":
                 validate_input_output_arg(parser, args)
