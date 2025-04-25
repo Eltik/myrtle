@@ -227,21 +227,77 @@ export function ChibiRenderer({ selectedOperator, selectedSkin }: ChibiRendererP
             skel: skinData.skel,
         });
 
-        // Fix for "Cannot read properties of undefined (reading 'image')" error
-        // The issue is likely that the atlas file references an image that can't be found
-        
-        // Modify the way assets are loaded
-        // First, fix the image path by making sure the image is loaded first
-        PIXI.Assets.load(skinData.png)
-            .then(texture => {
-                // Only after the image is loaded and available in the cache, load the skeleton
-                return PIXI.Assets.load(skinData.skel);
+        // First, load the atlas file to get the expected image dimensions
+        fetch(skinData.atlas)
+            .then(response => response.text())
+            .then(atlasText => {
+                // Parse the atlas file to extract image dimensions
+                const sizeRegex = /size: (\d+),(\d+)/;
+                const imageMatch = sizeRegex.exec(atlasText);
+                if (!imageMatch) {
+                    throw new Error("Could not find image dimensions in atlas file");
+                }
+                
+                const [_, width, height] = imageMatch;
+                console.log("Expected image dimensions:", { width, height });
+                
+                // Use a more direct approach to load the image and create a texture with the correct dimensions
+                return new Promise<void>((resolve, reject) => {
+                    // Create a unique key for the texture
+                    const textureKey = `custom_${skinData.png}`;
+                    
+                    // Load the image directly
+                    const img = new Image();
+                    img.onload = () => {
+                        try {
+                            // Create a texture from the image
+                            const texture = PIXI.Texture.from(img);
+                            
+                            // Create a new texture with the correct dimensions
+                            const newTexture = new PIXI.Texture(
+                                texture.baseTexture,
+                                new PIXI.Rectangle(0, 0, Number(width), Number(height))
+                            );
+                            
+                            // Add the texture to the cache
+                            PIXI.Assets.cache.set(textureKey, newTexture);
+                            
+                            // Now load the skeleton
+                            PIXI.Assets.load(skinData.skel)
+                                .then(() => {
+                                    resolve();
+                                })
+                                .catch((error) => {
+                                    reject(error instanceof Error ? error : new Error(String(error)));
+                                });
+                        } catch (error) {
+                            reject(error instanceof Error ? error : new Error(String(error)));
+                        }
+                    };
+                    
+                    img.onerror = () => {
+                        reject(new Error("Failed to load image"));
+                    };
+                    
+                    img.src = skinData.png;
+                });
             })
-            .then((result: any) => {
-                console.log("Loaded asset:", result);
-                // If the asset loaded correctly, process it
-                if (result && typeof result === 'object' && 'spineData' in result) {
-                    renderSkinSpine(result as { spineAtlas: TextureAtlas; spineData: ISkeletonData });
+            .then(() => {
+                // Now that we've loaded the assets, we can render the spine
+                const spineAsset = PIXI.Assets.cache.get(skinData.skel);
+                console.log("Loaded asset:", spineAsset);
+                
+                // Check if the asset has the required properties
+                if (spineAsset && 
+                    typeof spineAsset === 'object' && 
+                    'spineData' in spineAsset && 
+                    'spineAtlas' in spineAsset) {
+                    // We've verified the structure, now we can safely cast
+                    const typedSpineAsset = spineAsset as { 
+                        spineAtlas: TextureAtlas; 
+                        spineData: ISkeletonData 
+                    };
+                    renderSkinSpine(typedSpineAsset);
                 } else {
                     throw new Error("Invalid spine data loaded");
                 }
