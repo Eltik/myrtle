@@ -18,6 +18,12 @@ const createSafeRectangle = (x: number | string = 0, y: number | string = 0, wid
     );
 };
 
+// Define resource types for the loader
+interface SpineResource {
+    spineData?: ISkeletonData;
+    name?: string;
+}
+
 type ChibiRendererProps = {
     selectedOperator: FormattedChibis | null;
     selectedSkin: string | null;
@@ -27,6 +33,66 @@ const CHIBI_OFFSET_X = 0.25;
 const CHIBI_OFFSET_Y = 0.43;
 const CHIBI_SCALE = 0.7;
 const ANIMATION_SPEED = 0.5; // Animation speed multiplier (lower = slower)
+
+// Helper to remove out-of-bounds frames from the atlas
+const clampAtlasFrames = (atlasContent: string, pngWidth: number, pngHeight: number): string => {
+    const lines = atlasContent.split('\n');
+    let output: string[] = [];
+    let frameStartIdx = -1;
+    let currentFrame: string | null = null;
+    let xy: [number, number] | null = null;
+    let size: [number, number] | null = null;
+    for (const line of lines) {
+        // Detect start of a frame
+        if (line.trim() && !line.startsWith(' ') && !line.includes(':')) {
+            if (
+                currentFrame &&
+                xy && size &&
+                (xy[0] + size[0] > pngWidth || xy[1] + size[1] > pngHeight)
+            ) {
+                output = output.slice(0, frameStartIdx);
+            }
+            currentFrame = line;
+            xy = null;
+            size = null;
+            frameStartIdx = output.length;
+        }
+        // Parse xy and size
+        if (line.trim().startsWith('xy:')) {
+            const match = /xy:\s*(\d+),\s*(\d+)/.exec(line);
+            xy = match?.[1] && match?.[2] ? [Number(match[1]), Number(match[2])] : xy;
+        }
+        if (line.trim().startsWith('size:')) {
+            const match = /size:\s*(\d+),\s*(\d+)/.exec(line);
+            size = match?.[1] && match?.[2] ? [Number(match[1]), Number(match[2])] : size;
+        }
+        output.push(line);
+    }
+    if (
+        currentFrame &&
+        xy && size &&
+        (xy[0] + size[0] > pngWidth || xy[1] + size[1] > pngHeight)
+    ) {
+        output = output.slice(0, frameStartIdx);
+    }
+    return output.join('\n');
+};
+
+// Function to modify the atlas file to match the PNG size (440x440)
+const modifyAtlasFile = async (atlasUrl: string, actualWidth: number, actualHeight: number): Promise<string> => {
+    try {
+        const response = await fetch(atlasUrl);
+        if (!response.ok) throw new Error(`Failed to fetch atlas file: ${response.statusText}`);
+        let atlasContent = await response.text();
+        // Remove out-of-bounds frames
+        atlasContent = clampAtlasFrames(atlasContent, actualWidth, actualHeight);
+        const blob = new Blob([atlasContent], { type: 'text/plain' });
+        return URL.createObjectURL(blob);
+    } catch (err) {
+        console.error("Error modifying atlas file:", err);
+        return atlasUrl;
+    }
+};
 
 export function ChibiRenderer({ selectedOperator, selectedSkin }: ChibiRendererProps) {
     const appRef = useRef<PIXI.Application | null>(null);
@@ -201,119 +267,132 @@ export function ChibiRenderer({ selectedOperator, selectedSkin }: ChibiRendererP
             setIsLoading(false);
             return;
         }
-
         // Get the skin data using the updated function
         const skinData = getSkinData(selectedOperator, selectedSkin ?? "default", viewType);
-
         if (!skinData) {
             console.error("Failed to load skin data", { selectedOperator, selectedSkin, viewType });
             setError("Failed to load skin data - check console for details");
             setIsLoading(false);
             return;
         }
-
         Object.assign(skinData, {
             atlas: getCDNURL(skinData.atlas, true),
             png: getCDNURL(skinData.png, true),
             skel: getCDNURL(skinData.skel, true),
         });
-
         setIsLoading(true);
         setError(null);
-
         console.log("Loading skin assets:", {
             atlas: skinData.atlas,
             png: skinData.png,
             skel: skinData.skel,
         });
-
-        // First, load the atlas file to get the expected image dimensions
-        fetch(skinData.atlas)
-            .then(response => response.text())
-            .then(atlasText => {
-                // Parse the atlas file to extract image dimensions
-                const sizeRegex = /size: (\d+),(\d+)/;
-                const imageMatch = sizeRegex.exec(atlasText);
-                if (!imageMatch) {
-                    throw new Error("Could not find image dimensions in atlas file");
-                }
-                
-                const [_, width, height] = imageMatch;
-                console.log("Expected image dimensions:", { width, height });
-                
-                // Use a more direct approach to load the image and create a texture with the correct dimensions
-                return new Promise<void>((resolve, reject) => {
-                    // Create a unique key for the texture
-                    const textureKey = `custom_${skinData.png}`;
-                    
-                    // Load the image directly
-                    const img = new Image();
-                    img.onload = () => {
+        if (!appRef.current) {
+            setError("PIXI application not initialized");
+            setIsLoading(false);
+            return;
+        }
+        const app = appRef.current;
+        const loader = app.loader as PIXI.Loader;
+        loader.reset();
+        try {
+            const loadId = Date.now().toString();
+            // Patch the atlas file to match the PNG size (440x440)
+            void (async () => {
+                const modifiedAtlasUrl = await modifyAtlasFile(skinData.atlas, 440, 440);
+                if (typeof loader.add === 'function') loader.add(`chibi_atlas_${loadId}`, modifiedAtlasUrl);
+                if (typeof loader.add === 'function') loader.add(`chibi_skel_${loadId}`, skinData.skel);
+                if (typeof loader.add === 'function') loader.add(`chibi_image_${loadId}`, skinData.png);
+                if (typeof loader.load === 'function') {
+                    void loader.load((_: unknown, resources: Record<string, SpineResource>) => {
                         try {
-                            // Create a texture from the image
-                            const texture = PIXI.Texture.from(img);
-                            
-                            // Create a new texture with the correct dimensions
-                            const newTexture = new PIXI.Texture(
-                                texture.baseTexture,
-                                new PIXI.Rectangle(0, 0, Number(width), Number(height))
-                            );
-                            
-                            // Add the texture to the cache
-                            PIXI.Assets.cache.set(textureKey, newTexture);
-                            
-                            // Now load the skeleton
-                            PIXI.Assets.load(skinData.skel)
-                                .then(() => {
-                                    resolve();
-                                })
-                                .catch((error) => {
-                                    reject(error instanceof Error ? error : new Error(String(error)));
+                            if (spineRef.current?.parent) {
+                                spineRef.current.parent.removeChild(spineRef.current);
+                                spineRef.current.destroy();
+                                spineRef.current = null;
+                            }
+                            const skelResource = resources[`chibi_skel_${loadId}`];
+                            const atlasResource = resources[`chibi_atlas_${loadId}`];
+                            if (!skelResource || !atlasResource) {
+                                setError("Failed to load spine resources");
+                                setIsLoading(false);
+                                return;
+                            }
+                            if (skelResource.spineData) {
+                                const spineData = new Spine(skelResource.spineData);
+                                spineData.state.timeScale = ANIMATION_SPEED;
+                                const animations = spineData.spineData.animations.map((animation: { name: string }) => animation.name);
+                                setAvailableAnimations(animations);
+                                if (selectedAnimation && spineData.spineData.findAnimation(selectedAnimation)) {
+                                    spineData.state.setAnimation(0, selectedAnimation, true);
+                                } else {
+                                    if (viewType !== "dorm") {
+                                        if (spineData.spineData.findAnimation("Start")) {
+                                            spineData.state.setAnimation(0, "Start", false);
+                                        } else if (spineData.spineData.findAnimation("Start_A")) {
+                                            spineData.state.setAnimation(0, "Start_A", false);
+                                        } else {
+                                            spineData.state.setAnimation(0, "Idle", true);
+                                        }
+                                    } else {
+                                        if (spineData.spineData.findAnimation("Relax")) {
+                                            spineData.state.setAnimation(0, "Relax", true);
+                                        } else {
+                                            spineData.state.setAnimation(0, "Idle", true);
+                                        }
+                                    }
+                                }
+                                if (appRef.current) {
+                                    const { width, height } = appRef.current.screen;
+                                    spineData.x = width * CHIBI_OFFSET_X;
+                                    spineData.y = height * CHIBI_OFFSET_Y;
+                                    const scale = Math.min(width / 1000, height / 800) * CHIBI_SCALE;
+                                    spineData.scale.set(scale);
+                                }
+                                spineData.state.addListener({
+                                    complete: (event) => {
+                                        if (event.animationEnd && viewType !== "dorm") {
+                                            const track = spineData.state.tracks[0];
+                                            if (track && ((track as unknown as { animation: { name: string } }).animation.name === "Start" || (track as unknown as { animation: { name: string } }).animation.name === "Start_A")) {
+                                                spineData.state.setAnimation(0, "Idle", true);
+                                            }
+                                        }
+                                    },
                                 });
-                        } catch (error) {
-                            reject(error instanceof Error ? error : new Error(String(error)));
+                                appRef.current?.stage.addChild(spineData);
+                                spineRef.current = spineData;
+                                appRef.current?.renderer.render(appRef.current?.stage);
+                                console.log("Finished rendering");
+                                setIsLoading(false);
+                            } else {
+                                setError("Invalid spine data format");
+                                setIsLoading(false);
+                            }
+                        } catch (err) {
+                            console.error("Spine rendering error:", err);
+                            setError(`Failed to render chibi: ${err instanceof Error ? err.message : String(err)}`);
+                            setIsLoading(false);
                         }
-                    };
-                    
-                    img.onerror = () => {
-                        reject(new Error("Failed to load image"));
-                    };
-                    
-                    img.src = skinData.png;
-                });
-            })
-            .then(() => {
-                // Now that we've loaded the assets, we can render the spine
-                const spineAsset = PIXI.Assets.cache.get(skinData.skel);
-                console.log("Loaded asset:", spineAsset);
-                
-                // Check if the asset has the required properties
-                if (spineAsset && 
-                    typeof spineAsset === 'object' && 
-                    'spineData' in spineAsset && 
-                    'spineAtlas' in spineAsset) {
-                    // We've verified the structure, now we can safely cast
-                    const typedSpineAsset = spineAsset as { 
-                        spineAtlas: TextureAtlas; 
-                        spineData: ISkeletonData 
-                    };
-                    renderSkinSpine(typedSpineAsset);
-                } else {
-                    throw new Error("Invalid spine data loaded");
+                    });
                 }
-            })
-            .catch(err => {
-                console.error("Failed to load assets:", err);
-                setError(`Failed to load assets: ${err instanceof Error ? err.message : String(err)}`);
-                setIsLoading(false);
-
-                // If we get the specific "Cannot read properties of undefined (reading 'image')" error,
-                // provide a more helpful error message
-                if (err instanceof Error && err.message.includes("Cannot read properties of undefined (reading 'image')")) {
-                    setError("Error loading spine: The atlas file couldn't find the image. Please check that image paths match.");
+                if (loader.onError && typeof loader.onError.add === 'function') {
+                    loader.onError.add((_: unknown, resource: unknown) => {
+                        let name = 'unknown';
+                        if (resource && typeof resource === 'object' && 'name' in resource && typeof (resource as { name?: unknown }).name === 'string') {
+                            name = (resource as { name: string }).name;
+                        }
+                        console.error("Loader error:", resource);
+                        setError(`Failed to load resource: ${name}`);
+                        setIsLoading(false);
+                    });
                 }
-            });
-    }, [selectedOperator, selectedSkin, viewType, renderSkinSpine]);
+            })();
+        } catch (err) {
+            console.error("Loader setup error:", err);
+            setError(`Failed to set up loader: ${err instanceof Error ? err.message : String(err)}`);
+            setIsLoading(false);
+        }
+    }, [selectedOperator, selectedSkin, viewType, selectedAnimation]);
 
     useEffect(() => {
         if (!canvasContainerRef.current) {

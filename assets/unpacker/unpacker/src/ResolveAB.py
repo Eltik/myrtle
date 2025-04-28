@@ -14,6 +14,7 @@ from UnityPy.enums.BundleFile import CompressionFlags
 from UnityPy.files.File import File
 from UnityPy.helpers import CompressionHelper
 from UnityPy.streams.EndianBinaryReader import EndianBinaryReader
+from PIL import Image
 
 from .CombineRGBwithA import AlphaRGBCombiner
 from .lz4ak.Block import decompress_lz4ak
@@ -21,6 +22,7 @@ from .utils.GlobalMethods import print, rmdir, get_filelist, is_ab_file, stacktr
 from .utils.Logger import Logger
 from .utils.SaverUtils import SafeSaver
 from .utils.TaskUtils import ThreadCtrl, UICtrl, TaskReporter, TaskReporterTracker
+from .utils.AtlasFile import AtlasFile
 
 # New compression algorithms introduced in Arknights
 # LZ4AK (v2.5.04+) - Currently used but labeled as LZHAM
@@ -250,6 +252,14 @@ class Resource:
                     self.type = Resource.SpineAsset.BATTLE_FRONT
                 else:
                     self.type = Resource.SpineAsset.BATTLE_BACK
+                    
+            # Parse the atlas file to get dimensions
+            self.atlas_data = None
+            try:
+                self.atlas_data = AtlasFile.loads(self.atlas.m_Script)
+                Logger.debug(f'ResolveAB: Successfully parsed atlas file "{self.atlas.m_Name}"')
+            except Exception as e:
+                Logger.warn(f'ResolveAB: Failed to parse atlas file "{self.atlas.m_Name}": {e}')
 
         def add_prefix(self):
             """Renames the Spine assets which includes skel, atlas and png files.
@@ -286,6 +296,15 @@ class Resource:
             # Ensure the destination directory exists
             os.makedirs(destdir, exist_ok=True)
             
+            # Get atlas dimensions if available
+            atlas_width = None
+            atlas_height = None
+            if self.atlas_data and "pages" in self.atlas_data and len(self.atlas_data["pages"]) > 0:
+                page = self.atlas_data["pages"][0]
+                if "size" in page:
+                    atlas_width, atlas_height = page["size"]
+                    Logger.debug(f'ResolveAB: Atlas dimensions: {atlas_width}x{atlas_height}')
+            
             for i in self.tex_list:
                 if i[0]:
                     rgb = i[0].image
@@ -296,6 +315,13 @@ class Resource:
                             f'ResolveAB: Spine asset "{i[0].m_Name}" found with no Alpha texture.'
                         )
                         rgba = AlphaRGBCombiner.apply_premultiplied_alpha(rgb)
+                    
+                    # Resize the image if atlas dimensions are available
+                    if atlas_width is not None and atlas_height is not None:
+                        # Only resize if the dimensions don't match
+                        if rgba.width != atlas_width or rgba.height != atlas_height:
+                            Logger.debug(f'ResolveAB: Resizing image from {rgba.width}x{rgba.height} to {atlas_width}x{atlas_height}')
+                            rgba = rgba.resize((atlas_width, atlas_height), Image.LANCZOS)
                     
                     # Create the directory for this specific file if needed
                     file_dir = osp.dirname(osp.join(destdir, i[0].m_Name))
