@@ -15,7 +15,7 @@ const isDevelopment = env.NEXT_PUBLIC_NODE_ENV !== "production";
  * @param bustCache - Whether to add a cache-busting query parameter
  * @returns The full URL to the asset
  */
-export function getCDNURL(path: string, useApiRoute = false, bustCache?: boolean): string {
+export function getCDNURL(path: string, useApiRoute = true, bustCache?: boolean): string {
     // Check if path already has cache busting parameter
     if (path.includes("?v=") || path.includes("&v=")) {
         // Already has cache busting, return as is (with leading slash if needed)
@@ -26,7 +26,7 @@ export function getCDNURL(path: string, useApiRoute = false, bustCache?: boolean
     const cleanPath = path.replace(/^\/+/, "");
 
     // Check if the path already contains the prefix to avoid duplication
-    if (cleanPath.startsWith("api/cdn/") || cleanPath.startsWith("assets/")) {
+    if (cleanPath.startsWith("api/cdn/")) {
         // Path already has prefix, just use it directly
         const url = `/${cleanPath}`;
 
@@ -37,10 +37,10 @@ export function getCDNURL(path: string, useApiRoute = false, bustCache?: boolean
         return shouldBustCache ? `${url}${url.includes("?") ? "&" : "?"}v=${Date.now()}` : url;
     }
 
-    // Choose between API route or direct rewrite
-    const baseUrl = useApiRoute ? "/api/cdn/" : "/assets/";
+    // Always use the API route
+    const baseUrl = "/api/cdn/";
 
-    // Create base URL
+    // Create base URL with path (assuming path is already encoded)
     const url = `${baseUrl}${cleanPath}`;
 
     // Determine whether to bust cache based on explicit parameter or development environment

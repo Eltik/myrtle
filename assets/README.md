@@ -196,7 +196,7 @@ This will compare the directory containing the original `.ab` files with the out
 If you have a list of the missing assets using the helper script [above](#finding-missing-assets), then you can run the command below which uses the `Main.py` file.
 
 ```bash
-python unpacker/Main.py -m ab -i Input-Dir -o Unpacked-Dir --target-list missing-assets.json --image --spine --text --audio --resume --skip-problematic --timeout <num>
+python unpacker/Main.py -m ab -i Input-Dir -o Unpacked-Dir --target-list missing_assets.json --image --spine --text --audio --resume --skip-problematic --timeout <num>
 ```
 
 #### Available Options
