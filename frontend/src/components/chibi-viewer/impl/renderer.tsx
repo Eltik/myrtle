@@ -21,22 +21,30 @@ const ANIMATION_SPEED = 0.5; // Animation speed multiplier (lower = slower)
 // Helper function to ensure URLs are properly encoded
 function encodeURL(url: string): string {
     try {
-        // Split the URL into parts (handle undefined case)
-        const [basePath, query] = (url || '').split('?');
+        if (!url) return '';
         
-        // Split the path into segments and encode each one
-        const encodedBase = basePath.split('/').map(segment => {
-            // If the segment is already encoded (contains %), leave it as is
+        // Split the URL into parts
+        const parts = url.split('?');
+        const basePath = parts[0] ?? '';
+        const query = parts[1];
+        
+        // Split the path into segments
+        const segments = basePath.split('/');
+        
+        // Process each segment
+        const encodedSegments = segments.map(segment => {
+            // If the segment already contains encoded characters, don't encode it again
             if (segment.includes('%')) {
                 return segment;
             }
             
-            // Double encode # to prevent it from being interpreted as a fragment
+            // Replace # with %23 and encode the rest
             return encodeURIComponent(segment.replace(/#/g, '%23'));
-        }).join('/');
+        });
         
-        // Return with query string if it exists
-        return query ? `${encodedBase}?${query}` : encodedBase;
+        // Reconstruct the URL
+        const encodedPath = encodedSegments.join('/');
+        return query ? `${encodedPath}?${query}` : encodedPath;
     } catch (error) {
         console.error('Error encoding URL:', error);
         return url;
