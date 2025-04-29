@@ -19,20 +19,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const isDevelopment = env.NODE_ENV === "development";
 
     try {
-        // Get path from request
-        const path = req.query.path as string[];
-        const pathString = path.join("/");
+        // Get raw URL to handle special characters properly
+        const rawUrl = req.url!;
+        const urlParts = rawUrl.split('/api/cdn/')[1];
+        if (!urlParts) {
+            return res.status(400).json({ error: "Invalid path" });
+        }
 
-        // Build the backend URL
-        const backendUrl = `${env.BACKEND_URL ?? "http://localhost:3060"}/cdn/${pathString}`;
+        // Split at query string if it exists
+        const [pathPart, queryPart] = urlParts.split('?');
+        
+        // Build the backend URL, maintaining the original encoding
+        const backendUrl = `${env.BACKEND_URL ?? "http://localhost:3060"}/cdn/${pathPart}`;
+        const fullUrl = queryPart ? `${backendUrl}?${queryPart}` : backendUrl;
 
-        // Forward any query parameters
-        const queryString = Object.entries(req.query)
-            .filter(([key]) => key !== "path")
-            .map(([key, value]) => `${key}=${encodeURIComponent(String(value))}`)
-            .join("&");
-
-        const fullUrl = queryString ? `${backendUrl}?${queryString}` : backendUrl;
+        console.log("CDN Request:", {
+            originalUrl: rawUrl,
+            processedUrl: fullUrl
+        });
 
         // Make request to backend
         const response = await fetch(fullUrl, {
@@ -47,6 +51,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         // If response failed, return error
         if (!response.ok) {
+            console.error("Backend request failed:", {
+                status: response.status,
+                url: fullUrl,
+                statusText: response.statusText
+            });
             return res.status(response.status).json({
                 error: "Failed to fetch asset",
                 status: response.status,

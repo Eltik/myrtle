@@ -168,8 +168,8 @@ export function ChibiViewer() {
 
     const handleOperatorSelect = (operator: FormattedChibis) => {
         setSelectedOperator(operator);
-        if (operator.skins && operator.skins.length > 0 && operator.skins[0]?.dorm.path) {
-            setSelectedSkin(operator.skins[0].dorm.path);
+        if (operator.skins && operator.skins.length > 0 && operator.skins[0]?.front.path) {
+            setSelectedSkin(operator.skins[0].front.path);
         } else {
             setSelectedSkin(null);
         }
@@ -239,7 +239,7 @@ export function ChibiViewer() {
                                             {selectedOperator.skins && selectedOperator.skins.length > 0 && (
                                                 <div className="flex flex-wrap gap-2">
                                                     {selectedOperator.skins.map((skin, index) => (
-                                                        <Button key={index} variant={selectedSkin === skin.dorm.path ? "default" : "outline"} onClick={() => setSelectedSkin(skin.dorm.path)} size="sm">
+                                                        <Button key={index} variant={selectedSkin === skin.dorm.path ? "default" : "outline"} onClick={() => setSelectedSkin(skin.front.path)} size="sm">
                                                             Skin {index + 1}
                                                         </Button>
                                                     ))}

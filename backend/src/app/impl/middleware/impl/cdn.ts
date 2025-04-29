@@ -36,19 +36,27 @@ const DEFAULT_ALLOWED_EXTENSIONS = [
  * Validates and normalizes the asset path to prevent path traversal attacks
  */
 function validateAndNormalizePath(assetPath: string): string | null {
-    // Remove any null bytes
-    const sanitizedPath = assetPath.replace(/\0/g, "");
+    try {
+        // Remove any null bytes
+        const sanitizedPath = assetPath.replace(/\0/g, "");
 
-    // Normalize the path to resolve any '..' or '.' segments
-    const normalizedPath = path.normalize(sanitizedPath);
+        // Decode the path once to handle URL encoding
+        const decodedPath = decodeURIComponent(sanitizedPath);
 
-    // Check if the normalized path contains any attempts to navigate outside
-    if (normalizedPath.includes("..")) {
+        // Normalize the path to resolve any '..' or '.' segments
+        const normalizedPath = path.normalize(decodedPath);
+
+        // Check if the normalized path contains any attempts to navigate outside
+        if (normalizedPath.includes("..")) {
+            return null;
+        }
+
+        // Strip any leading slashes to prevent absolute path access
+        return normalizedPath.replace(/^\/+/, "");
+    } catch (error) {
+        console.error("Error in validateAndNormalizePath:", error);
         return null;
     }
-
-    // Strip any leading slashes to prevent absolute path access
-    return normalizedPath.replace(/^\/+/, "");
 }
 
 /**

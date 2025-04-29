@@ -1,11 +1,53 @@
 import { getCDNURL } from "~/lib/cdn";
 import type { AnimationType, ChibiAnimation, FormattedChibis } from "~/types/impl/frontend/impl/chibis";
 
+// Helper function to ensure consistent URL encoding of paths
+function encodeAssetPath(path: string): string {
+    return path.split("/").map(segment => encodeURIComponent(segment)).join("/");
+}
+
 export function getSkinData(selectedOperator: FormattedChibis, selectedSkin: string, viewType: ChibiAnimation): AnimationType | null {
-    console.log("Getting skin data for", { selectedOperator, selectedSkin, viewType });
-    console.log("Selected operator skins", selectedOperator.skins);
-    const skin = selectedOperator.skins.find((s) => s.dorm.path === selectedSkin || s.front.path === selectedSkin || s.back.path === selectedSkin);
+    console.log("Getting skin data for", { 
+        operatorName: selectedOperator.name, 
+        selectedSkin, 
+        viewType,
+        availableSkins: selectedOperator.skins.map(s => ({ 
+            name: s.name, 
+            paths: { 
+                dorm: s.dorm.path, 
+                front: s.front.path, 
+                back: s.back.path 
+            } 
+        }))
+    });
+
+    // First try to find a skin by name
+    let skin = selectedOperator.skins.find(s => s.name === selectedSkin);
+    
+    // If not found by name, try to find by path
     if (!skin) {
+        console.log("Skin not found by name, trying to find by path");
+        const encodedSelectedSkin = encodeAssetPath(selectedSkin);
+        skin = selectedOperator.skins.find((s) => 
+            encodeAssetPath(s.dorm.path) === encodedSelectedSkin || 
+            encodeAssetPath(s.front.path) === encodedSelectedSkin || 
+            encodeAssetPath(s.back.path) === encodedSelectedSkin
+        );
+    }
+    
+    // If still not found, try to find by partial path match
+    if (!skin) {
+        console.log("Skin not found by exact path, trying partial match");
+        const encodedSelectedSkin = encodeAssetPath(selectedSkin);
+        skin = selectedOperator.skins.find((s) => 
+            encodeAssetPath(s.dorm.path).includes(encodedSelectedSkin) || 
+            encodeAssetPath(s.front.path).includes(encodedSelectedSkin) || 
+            encodeAssetPath(s.back.path).includes(encodedSelectedSkin)
+        );
+    }
+
+    if (!skin) {
+        console.log("No matching skin found, using fallback");
         // Fallback: Try to use the first skin if available
         if (selectedOperator.skins.length > 0) {
             const fallbackSkin = selectedOperator.skins[0];
@@ -15,95 +57,99 @@ export function getSkinData(selectedOperator: FormattedChibis, selectedSkin: str
                 // Try the selected view type first, then fall back to others
                 if (viewType === "dorm" && fallbackSkin.dorm?.atlas && fallbackSkin.dorm?.png && fallbackSkin.dorm?.skel) {
                     return {
-                        atlas: getCDNURL(fallbackSkin.dorm.atlas, true),
-                        png: getCDNURL(fallbackSkin.dorm.png, true),
-                        skel: getCDNURL(fallbackSkin.dorm.skel, true),
+                        atlas: getCDNURL(encodeAssetPath(fallbackSkin.dorm.atlas), false),
+                        png: getCDNURL(encodeAssetPath(fallbackSkin.dorm.png), false),
+                        skel: getCDNURL(encodeAssetPath(fallbackSkin.dorm.skel), false),
                     };
                 } else if (viewType === "front" && fallbackSkin.front?.atlas && fallbackSkin.front?.png && fallbackSkin.front?.skel) {
                     return {
-                        atlas: getCDNURL(fallbackSkin.front.atlas, true),
-                        png: getCDNURL(fallbackSkin.front.png, true),
-                        skel: getCDNURL(fallbackSkin.front.skel, true),
+                        atlas: getCDNURL(encodeAssetPath(fallbackSkin.front.atlas), false),
+                        png: getCDNURL(encodeAssetPath(fallbackSkin.front.png), false),
+                        skel: getCDNURL(encodeAssetPath(fallbackSkin.front.skel), false),
                     };
                 } else if (viewType === "back" && fallbackSkin.back?.atlas && fallbackSkin.back?.png && fallbackSkin.back?.skel) {
                     return {
-                        atlas: getCDNURL(fallbackSkin.back.atlas, true),
-                        png: getCDNURL(fallbackSkin.back.png, true),
-                        skel: getCDNURL(fallbackSkin.back.skel, true),
+                        atlas: getCDNURL(encodeAssetPath(fallbackSkin.back.atlas), false),
+                        png: getCDNURL(encodeAssetPath(fallbackSkin.back.png), false),
+                        skel: getCDNURL(encodeAssetPath(fallbackSkin.back.skel), false),
                     };
                 }
 
                 // If the selected view type isn't available, try any available view
                 if (fallbackSkin.dorm?.atlas && fallbackSkin.dorm?.png && fallbackSkin.dorm?.skel) {
                     return {
-                        atlas: getCDNURL(fallbackSkin.dorm.atlas, true),
-                        png: getCDNURL(fallbackSkin.dorm.png, true),
-                        skel: getCDNURL(fallbackSkin.dorm.skel, true),
+                        atlas: getCDNURL(encodeAssetPath(fallbackSkin.dorm.atlas), false),
+                        png: getCDNURL(encodeAssetPath(fallbackSkin.dorm.png), false),
+                        skel: getCDNURL(encodeAssetPath(fallbackSkin.dorm.skel), false),
                     };
                 } else if (fallbackSkin.front?.atlas && fallbackSkin.front?.png && fallbackSkin.front?.skel) {
                     return {
-                        atlas: getCDNURL(fallbackSkin.front.atlas, true),
-                        png: getCDNURL(fallbackSkin.front.png, true),
-                        skel: getCDNURL(fallbackSkin.front.skel, true),
+                        atlas: getCDNURL(encodeAssetPath(fallbackSkin.front.atlas), false),
+                        png: getCDNURL(encodeAssetPath(fallbackSkin.front.png), false),
+                        skel: getCDNURL(encodeAssetPath(fallbackSkin.front.skel), false),
                     };
                 } else if (fallbackSkin.back?.atlas && fallbackSkin.back?.png && fallbackSkin.back?.skel) {
                     return {
-                        atlas: getCDNURL(fallbackSkin.back.atlas, true),
-                        png: getCDNURL(fallbackSkin.back.png, true),
-                        skel: getCDNURL(fallbackSkin.back.skel, true),
+                        atlas: getCDNURL(encodeAssetPath(fallbackSkin.back.atlas), false),
+                        png: getCDNURL(encodeAssetPath(fallbackSkin.back.png), false),
+                        skel: getCDNURL(encodeAssetPath(fallbackSkin.back.skel), false),
                     };
                 }
             }
         }
 
+        console.log("No valid fallback skin found");
         return null;
     }
+
+    console.log("Found matching skin:", { skinName: skin.name });
 
     // First, try to use the selected view type if it has all required assets
     if (viewType === "dorm" && skin.dorm.atlas && skin.dorm.png && skin.dorm.skel) {
         console.log("Using dorm view (selected)", { path: skin.dorm.path });
         return {
-            atlas: getCDNURL(skin.dorm.atlas, true),
-            png: getCDNURL(skin.dorm.png, true),
-            skel: getCDNURL(skin.dorm.skel, true),
+            atlas: getCDNURL(encodeAssetPath(skin.dorm.atlas), false),
+            png: getCDNURL(encodeAssetPath(skin.dorm.png), false),
+            skel: getCDNURL(encodeAssetPath(skin.dorm.skel), false),
         };
     } else if (viewType === "front" && skin.front.atlas && skin.front.png && skin.front.skel) {
         console.log("Using front view (selected)", { path: skin.front.path });
         return {
-            atlas: getCDNURL(skin.front.atlas, true),
-            png: getCDNURL(skin.front.png, true),
-            skel: getCDNURL(skin.front.skel, true),
+            atlas: getCDNURL(encodeAssetPath(skin.front.atlas), false),
+            png: getCDNURL(encodeAssetPath(skin.front.png), false),
+            skel: getCDNURL(encodeAssetPath(skin.front.skel), false),
         };
     } else if (viewType === "back" && skin.back.atlas && skin.back.png && skin.back.skel) {
         console.log("Using back view (selected)", { path: skin.back.path });
         return {
-            atlas: getCDNURL(skin.back.atlas, true),
-            png: getCDNURL(skin.back.png, true),
-            skel: getCDNURL(skin.back.skel, true),
+            atlas: getCDNURL(encodeAssetPath(skin.back.atlas), false),
+            png: getCDNURL(encodeAssetPath(skin.back.png), false),
+            skel: getCDNURL(encodeAssetPath(skin.back.skel), false),
         };
     }
 
     // If the selected view type doesn't have all required assets, check if the path matches a specific view
-    if (selectedSkin === skin.dorm.path && skin.dorm.atlas && skin.dorm.png && skin.dorm.skel) {
+    const encodedSelectedSkin = encodeAssetPath(selectedSkin);
+    if (encodeAssetPath(skin.dorm.path) === encodedSelectedSkin && skin.dorm.atlas && skin.dorm.png && skin.dorm.skel) {
         console.log("Using dorm view (path match)", { path: skin.dorm.path });
         return {
-            atlas: getCDNURL(skin.dorm.atlas, true),
-            png: getCDNURL(skin.dorm.png, true),
-            skel: getCDNURL(skin.dorm.skel, true),
+            atlas: getCDNURL(encodeAssetPath(skin.dorm.atlas), false),
+            png: getCDNURL(encodeAssetPath(skin.dorm.png), false),
+            skel: getCDNURL(encodeAssetPath(skin.dorm.skel), false),
         };
-    } else if (selectedSkin === skin.front.path && skin.front.atlas && skin.front.png && skin.front.skel) {
+    } else if (encodeAssetPath(skin.front.path) === encodedSelectedSkin && skin.front.atlas && skin.front.png && skin.front.skel) {
         console.log("Using front view (path match)", { path: skin.front.path });
         return {
-            atlas: getCDNURL(skin.front.atlas, true),
-            png: getCDNURL(skin.front.png, true),
-            skel: getCDNURL(skin.front.skel, true),
+            atlas: getCDNURL(encodeAssetPath(skin.front.atlas), false),
+            png: getCDNURL(encodeAssetPath(skin.front.png), false),
+            skel: getCDNURL(encodeAssetPath(skin.front.skel), false),
         };
-    } else if (selectedSkin === skin.back.path && skin.back.atlas && skin.back.png && skin.back.skel) {
+    } else if (encodeAssetPath(skin.back.path) === encodedSelectedSkin && skin.back.atlas && skin.back.png && skin.back.skel) {
         console.log("Using back view (path match)", { path: skin.back.path });
         return {
-            atlas: getCDNURL(skin.back.atlas, true),
-            png: getCDNURL(skin.back.png, true),
-            skel: getCDNURL(skin.back.skel, true),
+            atlas: getCDNURL(encodeAssetPath(skin.back.atlas), false),
+            png: getCDNURL(encodeAssetPath(skin.back.png), false),
+            skel: getCDNURL(encodeAssetPath(skin.back.skel), false),
         };
     }
 
@@ -114,23 +160,23 @@ export function getSkinData(selectedOperator: FormattedChibis, selectedSkin: str
     if (skin.dorm.atlas && skin.dorm.png && skin.dorm.skel) {
         console.log("Falling back to dorm view");
         return {
-            atlas: getCDNURL(skin.dorm.atlas, true),
-            png: getCDNURL(skin.dorm.png, true),
-            skel: getCDNURL(skin.dorm.skel, true),
+            atlas: getCDNURL(encodeAssetPath(skin.dorm.atlas), false),
+            png: getCDNURL(encodeAssetPath(skin.dorm.png), false),
+            skel: getCDNURL(encodeAssetPath(skin.dorm.skel), false),
         };
     } else if (skin.front.atlas && skin.front.png && skin.front.skel) {
         console.log("Falling back to front view");
         return {
-            atlas: getCDNURL(skin.front.atlas, true),
-            png: getCDNURL(skin.front.png, true),
-            skel: getCDNURL(skin.front.skel, true),
+            atlas: getCDNURL(encodeAssetPath(skin.front.atlas), false),
+            png: getCDNURL(encodeAssetPath(skin.front.png), false),
+            skel: getCDNURL(encodeAssetPath(skin.front.skel), false),
         };
     } else if (skin.back.atlas && skin.back.png && skin.back.skel) {
         console.log("Falling back to back view");
         return {
-            atlas: getCDNURL(skin.back.atlas, true),
-            png: getCDNURL(skin.back.png, true),
-            skel: getCDNURL(skin.back.skel, true),
+            atlas: getCDNURL(encodeAssetPath(skin.back.atlas), false),
+            png: getCDNURL(encodeAssetPath(skin.back.png), false),
+            skel: getCDNURL(encodeAssetPath(skin.back.skel), false),
         };
     }
 
