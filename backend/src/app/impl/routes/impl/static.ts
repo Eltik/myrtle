@@ -1,5 +1,6 @@
 import { redis, REDIS_KEY } from "../../..";
 import { env } from "../../../../env";
+import { filterObject } from "../../../../helper";
 import { calculateTrust, getHandbook, getMaterial, modules } from "../../../../lib/impl/local/impl/gamedata";
 import { getAll as getAllMaterials } from "../../../../lib/impl/local/impl/gamedata/impl/materials";
 import { getAll as getAllModules } from "../../../../lib/impl/local/impl/gamedata/impl/modules";
@@ -136,18 +137,47 @@ const handler = async (req: Request): Promise<Response> => {
                     }
                 case "operators":
                     const operatorId = body?.id ?? paths[2] ?? url.searchParams.get("id") ?? null;
+                    const fieldsParam = body?.fields ?? url.searchParams.get("fields") ?? null;
 
-                    const operatorsCached = await redis.get(`${REDIS_KEY}-static:operators:${operatorId ?? "none"}`);
+                    let fields: string[] | null = null;
+                    if (typeof fieldsParam === "string") {
+                        // Split comma-separated string from query params
+                        fields = fieldsParam
+                            .split(",")
+                            .map((f) => f.trim())
+                            .filter((f) => f.length > 0);
+                    } else if (Array.isArray(fieldsParam)) {
+                        // Use array directly from body
+                        fields = fieldsParam.filter((f) => typeof f === "string" && f.length > 0);
+                    }
+                    // Ensure fields is null if empty after processing or invalid type
+                    if (!fields || fields.length === 0) {
+                        fields = null;
+                    }
+
+                    const fieldsCacheKey = fields ? [...fields].sort().join(",") : "all";
+                    const cacheKey = `${REDIS_KEY}-static:operators:${operatorId ?? "none"}:fields:${fieldsCacheKey}`;
+
+                    const operatorsCached = await redis.get(cacheKey);
                     if (operatorsCached) {
                         return middleware.createResponse(operatorsCached);
                     }
 
-                    const operatorsData = operatorId ? operators(operatorId) : getAllOperators();
+                    const operatorsDataRaw = operatorId ? operators(operatorId) : getAllOperators();
+
+                    let finalOperatorsData: any = operatorsDataRaw;
+                    if (fields && operatorsDataRaw) {
+                        if (Array.isArray(operatorsDataRaw)) {
+                            finalOperatorsData = operatorsDataRaw.map((op: any) => filterObject(op, fields!));
+                        } else {
+                            finalOperatorsData = filterObject(operatorsDataRaw, fields);
+                        }
+                    }
 
                     await redis.set(
-                        `${REDIS_KEY}-static:operators:${operatorId ?? "none"}`,
+                        cacheKey,
                         JSON.stringify({
-                            operators: operatorsData,
+                            operators: finalOperatorsData,
                         }),
                         "EX",
                         env.REDIS_CACHE_TIME,
@@ -155,7 +185,7 @@ const handler = async (req: Request): Promise<Response> => {
 
                     return middleware.createResponse(
                         JSON.stringify({
-                            operators: operatorsData,
+                            operators: finalOperatorsData,
                         }),
                     );
                 case "ranges":
@@ -322,6 +352,7 @@ type Body = {
     id?: string;
     method?: string;
     trust?: number;
+    fields?: string[];
 };
 
 export default route;

@@ -1,5 +1,5 @@
 import { OperatorNation, OperatorRarity, type OperatorSubProfession, type Operator } from "~/types/impl/api/static/operator";
-import { capitalize, formatProfession, formatSubProfession, rarityToNumber, sortProfessions } from "~/helper";
+import { capitalize, formatGroupId, formatProfession, formatSubProfession, formatTeamId, rarityToNumber, sortProfessions } from "~/helper";
 import { ArrowDownFromLine, ArrowUpFromLine, ChevronDown, ChevronLeft, ChevronRight, Filter, List, Table2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { useMemo, useState } from "react";
@@ -54,6 +54,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
     const [filterBirthPlace, setFilterBirthPlace] = useState<OperatorBirthPlace[]>([]);
     const [filterRace, setFilterRace] = useState<OperatorRace[]>([]);
     const [filterNation, setFilterNation] = useState<(keyof OperatorNation)[]>([]);
+    const [filterFaction, setFilterFaction] = useState<string[]>([]);
     const [filterGender, setFilterGender] = useState<("Unknown" | "Female" | "Male" | "Conviction")[]>([]);
     const [filterArtists, setFilterArtists] = useState<string[]>([]);
 
@@ -76,8 +77,9 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
     const setFilterRarityWithReset = handleFilterChange(setFilterRarity);
     const setFilterBirthPlaceWithReset = handleFilterChange(setFilterBirthPlace);
     const setFilterRaceWithReset = handleFilterChange(setFilterRace);
-    const setFilterNationWithReset = handleFilterChange(setFilterNation);
     const setFilterGenderWithReset = handleFilterChange(setFilterGender);
+    const setFilterNationWithReset = handleFilterChange(setFilterNation);
+    const setFilterFactionWithReset = handleFilterChange(setFilterFaction);
     const setFilterSkillTypesWithReset = handleFilterChange(setFilterSkillTypes);
     const setFilterSkillChargeTypesWithReset = handleFilterChange(setFilterSkillChargeTypes);
     const setFilterArtistsWithReset = handleFilterChange(setFilterArtists);
@@ -188,6 +190,27 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
         );
     }, [operators]);
 
+    const groupedFactions = useMemo(() => {
+        return operators.reduce(
+            (acc, operator) => {
+                if (operator.groupId) {
+                    if (!acc[operator.groupId]) {
+                        acc[operator.groupId] = [];
+                    }
+                    acc[operator.groupId]?.push(operator);
+                }
+                if (operator.teamId) {
+                    if (!acc[operator.teamId]) {
+                        acc[operator.teamId] = [];
+                    }
+                    acc[operator.teamId]?.push(operator);
+                }
+                return acc;
+            },
+            {} as Record<string, Operator[]>,
+        );
+    }, [operators]);
+
     const isClassChecked = (value: OperatorProfession): Checked => filterClasses.includes(value);
     const handleClassCheck = (value: OperatorProfession) => {
         if (filterClasses.includes(value)) {
@@ -242,12 +265,30 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
         }
     };
 
+    const isGenderChecked = (value: "Unknown" | "Female" | "Male" | "Conviction"): Checked => filterGender.includes(value);
+    const handleGenderCheck = (value: "Unknown" | "Female" | "Male" | "Conviction") => {
+        if (filterGender.includes(value)) {
+            setFilterGenderWithReset(filterGender.filter((v) => v !== value));
+        } else {
+            setFilterGenderWithReset([...filterGender, value]);
+        }
+    };
+
     const isNationChecked = (value: keyof OperatorNation): Checked => filterNation.includes(value);
     const handleNationChecked = (value: keyof OperatorNation) => {
         if (filterNation.includes(value)) {
             setFilterNationWithReset(filterNation.filter((v) => v !== value));
         } else {
             setFilterNationWithReset([...filterNation, value]);
+        }
+    };
+
+    const isFactionChecked = (value: string): Checked => filterFaction.includes(value);
+    const handleFactionCheck = (value: string) => {
+        if (filterFaction.includes(value)) {
+            setFilterFactionWithReset(filterFaction.filter((v) => v !== value));
+        } else {
+            setFilterFactionWithReset([...filterFaction, value]);
         }
     };
 
@@ -399,8 +440,9 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
             .filter((char) => filterRarity === "all" || char.rarity === filterRarity)
             .filter((char) => filterBirthPlace.length === 0 || (char.profile?.basicInfo.placeOfBirth && String(char.profile?.basicInfo.placeOfBirth) !== "" && filterBirthPlace.includes(char.profile?.basicInfo.placeOfBirth)))
             .filter((char) => filterRace.length === 0 || (char.profile?.basicInfo.race && String(char.profile?.basicInfo.race) !== "" && filterRace.includes(char.profile?.basicInfo.race)))
-            .filter((char) => filterNation.length === 0 || (char.nationId && String(char.nationId) !== "" && filterNation.includes(char.nationId)))
             .filter((char) => filterGender.length === 0 || (char.profile?.basicInfo.gender && String(char.profile?.basicInfo.gender) !== "" && filterGender.includes(char.profile?.basicInfo.gender as "Unknown" | "Female" | "Male" | "Conviction")))
+            .filter((char) => filterNation.length === 0 || (char.nationId && String(char.nationId) !== "" && filterNation.includes(char.nationId)))
+            .filter((char) => filterFaction.length === 0 || ((char.groupId ?? char.teamId) && String(char.groupId ?? char.teamId) !== "" && filterFaction.includes(char.groupId ?? char.teamId ?? "")))
             .filter((char) => filterArtists.length === 0 || char.artists.some((artist) => filterArtists.includes(artist)))
             .filter(
                 (char) =>
@@ -466,7 +508,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                 }
                 return sortOrder === "asc" ? -comparison : comparison;
             });
-    }, [operators, canActivateSkill, showLimited, isModule, searchTerm, filterClasses, filterSubClasses, filterRarity, filterBirthPlace, filterRace, filterNation, filterGender, filterSkillTypes, filterSkillChargeTypes, sortBy, sortOrder, statsSortBy, filterArtists]);
+    }, [operators, canActivateSkill, showLimited, isModule, searchTerm, filterClasses, filterSubClasses, filterRarity, filterBirthPlace, filterRace, filterGender, filterNation, filterFaction, filterArtists, filterSkillTypes, filterSkillChargeTypes, sortBy, sortOrder, statsSortBy]);
 
     // Calculate total number of pages
     const validOperators = sortedAndFilteredCharacters.filter((operator) => operator.id?.startsWith("char"));
@@ -584,6 +626,30 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="outline" className="w-[200px] justify-between">
+                                            <span className="mr-2 truncate">{filterGender.length === 0 ? <span className="font-normal">Filter by Gender</span> : filterGender.map((v) => v).join(", ")}</span>
+                                            <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="max-h-64 w-[200px] overflow-y-scroll">
+                                        <DropdownMenuLabel>Genders</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuCheckboxItem key="Male" checked={isGenderChecked("Male")} onCheckedChange={() => handleGenderCheck("Male")}>
+                                            Male
+                                        </DropdownMenuCheckboxItem>
+                                        <DropdownMenuCheckboxItem key="Female" checked={isGenderChecked("Female")} onCheckedChange={() => handleGenderCheck("Female")}>
+                                            Female
+                                        </DropdownMenuCheckboxItem>
+                                        <DropdownMenuCheckboxItem key="Conviction" checked={isGenderChecked("Conviction")} onCheckedChange={() => handleGenderCheck("Conviction")}>
+                                            Conviction
+                                        </DropdownMenuCheckboxItem>
+                                        <DropdownMenuCheckboxItem key="Unknown" checked={isGenderChecked("Unknown")} onCheckedChange={() => handleGenderCheck("Unknown")}>
+                                            Unknown
+                                        </DropdownMenuCheckboxItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" className="w-[200px] justify-between">
                                             <span className="mr-2 truncate">{filterBirthPlace.length === 0 ? <span className="font-normal">Filter Place of Birth</span> : filterBirthPlace.map((v) => v).join(", ")}</span>
                                             <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                                         </Button>
@@ -598,6 +664,26 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                             .map((value) => (
                                                 <DropdownMenuCheckboxItem key={value} checked={isBirthPlaceChecked(value)} onCheckedChange={() => handleBirthPlaceCheck(value)}>
                                                     {value}
+                                                </DropdownMenuCheckboxItem>
+                                            ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" className="w-[200px] justify-between">
+                                            <span className="mr-2 truncate">{filterFaction.length === 0 ? <span className="font-normal">Filter Faction</span> : filterFaction.map((v) => formatGroupId(formatTeamId(v))).join(", ")}</span>
+                                            <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="max-h-64 w-[200px] overflow-y-scroll">
+                                        <DropdownMenuLabel>Factions</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        {Object.keys(groupedFactions)
+                                            .filter(Boolean)
+                                            .sort((a, b) => String(a).localeCompare(String(b)))
+                                            .map((value) => (
+                                                <DropdownMenuCheckboxItem key={value} checked={isFactionChecked(value)} onCheckedChange={() => handleFactionCheck(value)}>
+                                                    {formatGroupId(formatTeamId(value))}
                                                 </DropdownMenuCheckboxItem>
                                             ))}
                                     </DropdownMenuContent>

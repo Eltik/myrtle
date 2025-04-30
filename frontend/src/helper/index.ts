@@ -122,18 +122,18 @@ export const formatGroupId = (groupId: string) => {
         case "dublinn":
             return "Dublinn";
         case "elite":
-            return "Rhodes Island Elite Operators";
+            return "Elite Operators";
         case "sui":
             return "Yan Sui";
         default:
-            return capitalize(groupId);
+            return groupId;
     }
 };
 
 export const formatTeamId = (teamId: string) => {
     switch (teamId.toLowerCase()) {
         case "action4":
-            return "Op Team A4";
+            return "Action Team A4";
         case "reserve1":
             return "Reserve Op Team A1";
         case "reserve4":
