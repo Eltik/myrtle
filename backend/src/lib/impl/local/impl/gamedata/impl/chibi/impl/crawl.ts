@@ -116,9 +116,17 @@ export const crawlLocalChibis = async (): Promise<RepoItem[]> => {
 
                     // Extract skin name for skin animations
                     if (type === "skin") {
-                        const skinMatch = fileName.match(/(?:char|build_char)_\d+_[a-z0-9]+_(.+?)(?:\.|#|\$|_Atlas|_SkeletonData|$)/i);
-                        if (skinMatch && skinMatch[1]) {
-                            skinName = skinMatch[1].toLowerCase();
+                        // Remove common suffixes first to isolate base name + skin name
+                        const basePlusSkin = fileName.replace(/(_Atlas|_SkeletonData|\.\w+|\$0)/i, "");
+                        // Check if the remaining name starts with the opId followed by '_'
+                        const opIdPrefix = (match[1] + id).toLowerCase(); // build_char_... or char_...
+                        if (basePlusSkin.toLowerCase().startsWith(opIdPrefix + "_")) {
+                            // The part after opIdPrefix + '_' is the skin name
+                            skinName = basePlusSkin.substring(opIdPrefix.length + 1).toLowerCase();
+                        } else {
+                            // Fallback or default skin - assign an empty string or a default marker if needed
+                            skinName = ""; // Or potentially derive from directory if structure allows
+                            // console.warn(`Could not derive skin name for ${fileName}, opId: ${opIdPrefix}`);
                         }
                     }
                 }
@@ -188,15 +196,56 @@ export const crawlLocalChibis = async (): Promise<RepoItem[]> => {
 
                 // Get the correct folder (base, skin, or dynIllust)
                 const folderName = type;
-                const folder = operator.children!.find((c) => c.name === folderName)!;
+                let targetFolder: RepoItem | undefined;
+
+                if (type === "skin") {
+                    // Find the main 'skin' parent folder
+                    const skinParentFolder = operator.children!.find((c) => c.name === "skin")!;
+                    // Ensure children array exists
+                    if (!skinParentFolder.children) {
+                        skinParentFolder.children = [];
+                    }
+                    // Find or create the specific skin subfolder using skinName
+                    targetFolder = skinParentFolder.children!.find((c) => c.name === skinName);
+                    if (!targetFolder) {
+                        targetFolder = {
+                            name: skinName,
+                            path: `${opId}/skin/${skinName}`, // Path for the skin-specific folder
+                            contentType: "dir",
+                            children: [],
+                        };
+                        skinParentFolder.children!.push(targetFolder);
+                    }
+                } else {
+                    // Find the 'base' or 'dynIllust' folder directly under the operator
+                    targetFolder = operator.children!.find((c) => c.name === folderName);
+                }
+
+                // Ensure the target folder exists and has a children array
+                if (!targetFolder) {
+                    console.error(colors.red(`❌ Could not find or create target folder for ${opId}/${folderName}${type === "skin" ? "/" + skinName : ""}`));
+                    return; // Skip this file if folder is missing
+                }
+                if (!targetFolder.children) {
+                    targetFolder.children = [];
+                }
 
                 // Add subdirectory information to the file name if available
                 const displayName = subdir ? `${subdir}/${fileName}` : fileName;
+                // Construct the final file path based on the type and structure
+                let finalPath = `${opId}/${folderName}`;
+                if (type === "skin") {
+                    finalPath += `/${skinName}`; // Add skinName for skin paths
+                }
+                if (subdir) {
+                    finalPath += `/${subdir}`; // Add subdir like BattleFront
+                }
+                finalPath += `/${fileName}`; // Add the actual filename
 
                 // Add the file to the folder
-                folder.children!.push({
-                    name: displayName,
-                    path: `${opId}/${folderName}/${displayName}`,
+                targetFolder.children!.push({
+                    name: displayName, // Keep subdir in name for clarity within the skin/type folder
+                    path: finalPath, // Use the fully constructed path
                     contentType: "file",
                 });
             }

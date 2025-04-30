@@ -112,7 +112,7 @@ const handler = async (req: Request): Promise<Response> => {
 
         // Determine appropriate cache configuration based on file type and environment
         let cacheControl = getCacheConfig(assetPath);
-        
+
         // In development mode, disable caching
         if (isDevelopment) {
             cacheControl = "no-store, max-age=0";

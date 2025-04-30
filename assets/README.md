@@ -159,6 +159,16 @@ assets/
 
 ## Helper Utilities
 
+### Renaming Assets
+
+Due to Arknights having files such as `char_254_vodfox_witch#2` which has a `#` that is not supported by websites, it is recommended to run the `rename_assets.py` script to rename all the files to not include hashes.
+
+```bash
+python assets/unpacker/helper/rename_assets.py Unpacked
+```
+
+Where `unpacked` is the unpacked directory.
+
 ### Combining Alpha Channels
 
 Many Arknights images have separate alpha channel files. The toolkit includes a utility to combine these:
@@ -180,23 +190,23 @@ python assets/unpacker/helper/combine_alpha.py --input-dir Unpacked --delete-alp
 Sometimes when unpacking downloaded assets, there will be assets that did not get extracted. To find the missing assets, you can run the `find-assets.py` file:
 
 ```bash
-python unpacker/missing/find-assets.py --find-missing --source-dir Input-Dir --extracted-dir Unpacked-Dir -o Output-Dir
+python assets/unpacker/missing/find-assets.py --find-missing --source-dir Input-Dir --extracted-dir Unpacked-Dir -o Output-Dir
 ```
 
-This will compare the directory containing the original `.ab` files with the output directory and find the missing assets until finally writing a `missing-assets.json` file to a directory.
+This will compare the directory containing the original `.ab` files with the output directory and find the missing assets until finally writing a `missing_assets.json` file to a directory.
 
 #### Available Options
 
 - `--source-dir`: The directory containing the original resource files (aka `.ab` files)
 - `--extracted-dir`: The directory containing all the unpacked assets
-- `-o`: The directory where the `missing-assets.json` file gets written to
+- `-o`: The directory where the `missing_assets.json` file gets written to
 
 ### Extract Targeted Assets
 
 If you have a list of the missing assets using the helper script [above](#finding-missing-assets), then you can run the command below which uses the `Main.py` file.
 
 ```bash
-python unpacker/Main.py -m ab -i Input-Dir -o Unpacked-Dir --target-list missing_assets.json --image --spine --text --audio --resume --skip-problematic --timeout <num>
+python assets/unpacker/unpacker/Main.py -m ab -i Input-Dir -o Unpacked-Dir --target-list missing_assets.json --image --spine --text --audio --resume --skip-problematic --timeout <num>
 ```
 
 #### Available Options

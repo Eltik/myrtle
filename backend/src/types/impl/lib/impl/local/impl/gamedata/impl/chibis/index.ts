@@ -12,7 +12,7 @@ export interface CachedData {
 }
 
 // Animation types for different views
-export type AnimationType = "front" | "back" | "dorm";
+export type AnimationType = "front" | "back" | "dorm" | "dynamic";
 
 // Spine files for an animation type
 export interface SpineFiles {
@@ -30,6 +30,7 @@ export interface CharacterSkin {
         front?: SpineFiles;
         back?: SpineFiles;
         dorm?: SpineFiles;
+        dynamic?: SpineFiles;
     };
 }
 

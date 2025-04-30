@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as PIXI from "pixi.js";
 import { type ISkeletonData, Spine, type TextureAtlas } from "pixi-spine";
+import type { LoadAsset } from "pixi.js";
 import { getSkinData } from "./helper";
 
 import { Card, CardContent } from "~/components/ui/card";
@@ -28,22 +29,17 @@ function encodeURL(url: string): string {
         const basePath = parts[0] ?? '';
         const query = parts[1];
         
-        // Split the path into segments
-        const segments = basePath.split('/');
-        
-        // Process each segment
-        const encodedSegments = segments.map(segment => {
+        // Split the path into segments and encode each segment
+        const pathSegments = basePath.split('/');
+        const encodedPath = pathSegments.map(segment => {
             // If the segment already contains encoded characters, don't encode it again
             if (segment.includes('%')) {
                 return segment;
             }
-            
-            // Replace # with %23 and encode the rest
-            return encodeURIComponent(segment.replace(/#/g, '%23'));
-        });
+            return encodeURIComponent(segment);
+        }).join('/');
         
         // Reconstruct the URL
-        const encodedPath = encodedSegments.join('/');
         return query ? `${encodedPath}?${query}` : encodedPath;
     } catch (error) {
         console.error('Error encoding URL:', error);
@@ -265,39 +261,41 @@ export function ChibiRenderer({ selectedOperator, selectedSkin }: ChibiRendererP
             return;
         }
 
-        // Ensure all URLs are properly encoded
-        const encodedUrls = {
+        // Get CDN URLs for assets (encodeURL handles basic encoding)
+        const assetUrls = {
             atlas: encodeURL(skinData.atlas),
-            png: encodeURL(skinData.png),
+            png: encodeURL(skinData.png), // Keep png for potential future use, but loader uses atlas
             skel: encodeURL(skinData.skel)
         };
 
-        console.log("Loading skin assets:", encodedUrls);
+        console.log("Loading skin assets (URLs):", assetUrls);
 
         setIsLoading(true);
         setError(null);
 
-        // Load the skeleton file directly with better error handling
-        PIXI.Assets.load(encodedUrls.skel)
-            .then((skinAsset: { spineAtlas: TextureAtlas; spineData: ISkeletonData }) => {
-                console.log("Skin asset loaded:", skinAsset);
-                if (!skinAsset) {
-                    setError("Failed to load skin asset: Asset is null");
+        // Directly load the skeleton asset using PIXI.Assets
+        // The spine loader will use the .atlas reference within the .skel
+        // and automatically load the associated texture (.png)
+        PIXI.Assets.load(assetUrls.skel)
+             .then((spineAsset: { spineAtlas: TextureAtlas; spineData: ISkeletonData }) => {
+                // The loaded asset should contain both atlas and skeleton data
+                console.log("Spine asset loaded successfully:", {
+                    hasSpineAtlas: !!spineAsset?.spineAtlas,
+                    hasSpineData: !!spineAsset?.spineData,
+                    animations: spineAsset?.spineData?.animations?.map(a => a.name)
+                });
+
+                if (!spineAsset?.spineData) { // Check specifically for spineData
+                    setError("Failed to load skeleton data from asset.");
                     setIsLoading(false);
                     return;
                 }
-                
-                if (!skinAsset.spineData) {
-                    setError("Failed to load skin asset: Spine data is missing");
-                    setIsLoading(false);
-                    return;
-                }
-                
-                renderSkinSpine(skinAsset);
+
+                renderSkinSpine(spineAsset);
             })
             .catch((err: Error) => {
-                console.error("Failed to load skeleton:", err);
-                setError(`Failed to load skeleton: ${err.message}`);
+                console.error("Failed to load Spine asset:", err);
+                setError(`Failed to load skeleton/atlas: ${err.message}`);
                 setIsLoading(false);
             });
     }, [selectedOperator, selectedSkin, viewType, renderSkinSpine]);

@@ -43,18 +43,24 @@ function validateAndNormalizePath(assetPath: string): string | null {
         // Decode the path once to handle URL encoding
         const decodedPath = decodeURIComponent(sanitizedPath);
 
-        // Normalize the path to resolve any '..' or '.' segments
-        const normalizedPath = path.normalize(decodedPath);
-
-        // Check if the normalized path contains any attempts to navigate outside
-        if (normalizedPath.includes("..")) {
-            return null;
+        // Split into segments and handle each segment
+        const segments = decodedPath.split("/");
+        const normalizedSegments: string[] = [];
+        for (const segment of segments) {
+            // Skip empty segments (e.g., from multiple slashes)
+            if (!segment) continue;
+            // Check for path traversal *before* adding
+            if (segment.includes("..")) {
+                return null; // Invalid path
+            }
+            normalizedSegments.push(segment);
         }
+
+        const normalizedPath = normalizedSegments.join("/");
 
         // Strip any leading slashes to prevent absolute path access
         return normalizedPath.replace(/^\/+/, "");
-    } catch (error) {
-        console.error("Error in validateAndNormalizePath:", error);
+    } catch {
         return null;
     }
 }
@@ -132,8 +138,7 @@ const serveAsset = async (req: Request, assetPath: string, options: CdnOptions =
             status: 200,
             headers,
         });
-    } catch (err) {
-        console.error("Error serving asset:", err);
+    } catch {
         return createResponse(JSON.stringify({ error: "Internal server error" }), 500);
     }
 };
