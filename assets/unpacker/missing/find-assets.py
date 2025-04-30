@@ -934,27 +934,37 @@ def find_missing_assets(source_dir: str, extracted_dir: str, output_dir: str, ve
         relative_path = os.path.relpath(source_file, source_dir)
         relative_path_dir = os.path.dirname(relative_path)
         if relative_path_dir == '.': relative_path_dir = ""
+        source_basename = os.path.basename(source_file)
         ab_name_no_ext = os.path.splitext(source_basename)[0]
-        expected_parent_dir = os.path.join(extracted_dir, relative_path_dir)
+
+        # *** ADDED: Replace # with _ in path components derived from source ***
+        relative_path_dir_renamed = relative_path_dir.replace('#', '_')
+        ab_name_no_ext_renamed = ab_name_no_ext.replace('#', '_')
+        # *** END ADDED ***
+
+        # Use the renamed components to build the expected path in the extracted directory
+        expected_parent_dir = os.path.join(extracted_dir, relative_path_dir_renamed)
         asset_category = "general"
-        normalized_relative_path = relative_path.replace("\\", "/")
+        normalized_relative_path = relative_path.replace("\\", "/") # Keep original for category check
         if normalized_relative_path.startswith("chararts/"): asset_category = "chararts"
         elif normalized_relative_path.startswith("skinpack/"): asset_category = "skinpack"
         elif normalized_relative_path.startswith("arts/dynchars/"): asset_category = "dynchars"
         elif normalized_relative_path.startswith("audio/"): asset_category = "audio"
-        potential_base_names = set([ab_name_no_ext])
-        normalized_ab_name_lower = ab_name_no_ext.lower()
+        
+        # Use the renamed name for potential base name generation
+        potential_base_names = set([ab_name_no_ext_renamed])
+        normalized_ab_name_lower = ab_name_no_ext_renamed.lower()
         for prefix in common_prefixes:
             if normalized_ab_name_lower.startswith(prefix.lower()):
-                potential_base_names.add(ab_name_no_ext[len(prefix):])
+                potential_base_names.add(ab_name_no_ext_renamed[len(prefix):])
                 break
-        potential_normalized_names = set(name.lower().replace('#','') for name in potential_base_names)
+        potential_normalized_names = set(name.lower() for name in potential_base_names)
 
         if verbose and is_debug_file:
              print(f"  Asset Category: {asset_category}")
-             print(f"  Expected Parent Dir: {expected_parent_dir}")
-             print(f"  Potential Base Names: {potential_base_names}")
-             print(f"  Potential Normalized Names for Matching: {potential_normalized_names}")
+             print(f"  Expected Parent Dir (Renamed): {expected_parent_dir}")
+             print(f"  Potential Base Names (Renamed): {potential_base_names}")
+             print(f"  Potential Normalized Names for Matching (Renamed): {potential_normalized_names}")
 
 
         # --- Check Logic ---
@@ -964,11 +974,13 @@ def find_missing_assets(source_dir: str, extracted_dir: str, output_dir: str, ve
         found_primary_match = False
 
         actual_dirs_in_parent = parent_dir_contents.get(expected_parent_dir, [])
-        if verbose and is_debug_file: print(f"  Actual Dirs in Parent: {actual_dirs_in_parent}")
+        if verbose and is_debug_file: print(f"  Actual Dirs in Parent (in {expected_parent_dir}): {actual_dirs_in_parent}")
 
         # 1. Check subdirectories using startswith matching (Primary Method)
         for actual_dir_name in actual_dirs_in_parent:
-            normalized_actual_name = actual_dir_name.lower().replace('#','')
+            # *** MODIFIED: Normalize the *actual* dir name found on disk ***
+            normalized_actual_name = actual_dir_name.lower()
+            # Check against the *renamed* potential names
             is_potential_match = any(normalized_actual_name.startswith(pnn) for pnn in potential_normalized_names)
 
             if is_potential_match:
@@ -976,7 +988,7 @@ def find_missing_assets(source_dir: str, extracted_dir: str, output_dir: str, ve
                 matched_actual_path_candidate = os.path.join(expected_parent_dir, actual_dir_name)
                 if verbose and is_debug_file: print(f"    Checking Primary Candidate SubDir: {matched_actual_path_candidate}")
 
-                # Call content check with is_fallback_check=False
+                # Call content check with the renamed base names
                 has_required_content = check_specific_content(
                     matched_actual_path_candidate, asset_category, potential_base_names, verbose, is_debug_file, is_fallback_check=False
                 )

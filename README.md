@@ -69,9 +69,46 @@ cd myrtle.moe
 2. Set up and install each component:
 
 ```bash
+###
+# Assets Toolkit
+# Necessary for the backend and frontend to work.
+###
 # Set up assets toolkit
 cd assets
-pip install -r downloader/requirements.txt
+
+# Download assets to ./assets/Unpacked directory
+python assets/downloader/ark-downloader.py --output assets/ArkAssets
+
+# Install unpacker dependencies
+cd assets/unpacker/unpacker
+poetry install
+
+# Build unpacker
+python Build.py # For Windows
+
+chmod +x build_macos.sh # For MacOS
+./build_macos.sh
+
+# Run unpacker. If the unpacker starts stalling, stop the unpacker and add the --resume argument.
+./build/dist/ArkUnpacker-v4.0.0 -m ab -i ../../ArkAssets --image --text --audio --spine -o ../../Unpacked
+
+# Combine alpha assets
+cd ../../../ # Move back to main directory
+python assets/unpacker/helper/combine_alpha.py --input-dir ./assets/Unpacked --delete-alpha
+
+# Rename assets to proper naming convention
+python assets/unpacker/helper/rename_assets.py ./assets/Unpacked
+
+# Find missing assets, as when unpacking sometimes (especially if the unpacker stalled)
+# there will be assets that weren't unpacked properly.
+python assets/unpacker/missing/find-assets.py --find-missing --source-dir ./assets/ArkAssets --extracted-dir ./assets/Unpacked -o ./assets/unpacker/missing
+
+# Extract those missing assets
+python assets/unpacker/unpacker/Main.py -m ab -i ./assets/ArkAssets -o ./assets/Unpacked --target-list ./assets/unpacker/missing/missing_assets.json --image --spine --text --audio --resume --skip-problematic --timeout 20
+
+###
+# Backend
+###
 
 # Set up backend
 cd ../backend
@@ -85,12 +122,6 @@ cp .env.example .env
 # Edit .env with your configuration
 bun install
 ```
-
-3. Download and process game assets:
-```bash
-cd assets
-python downloader/ark-downloader.py
-# Follow the unpacker instructions in the assets README
 ```
 
 ### Running the Application

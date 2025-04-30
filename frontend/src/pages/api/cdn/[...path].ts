@@ -15,6 +15,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(405).json({ error: "Method not allowed" });
     }
 
+    // Log the raw incoming URL first thing
+    // console.log("RAW CDN request URL:", req.url);
+
     // Determine if we're in development mode
     const isDevelopment = env.NODE_ENV === "development";
 
@@ -30,13 +33,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const [pathPart, queryPart] = urlParts.split('?');
         
         // Build the backend URL, maintaining the original encoding
-        const backendUrl = `${env.BACKEND_URL ?? "http://localhost:3060"}/cdn/${pathPart}`;
+        // Handle both encoded and unencoded special characters
+        const encodedPath = pathPart ? pathPart.split('/').map(segment => {
+            // If the segment already contains encoded characters, don't encode it again
+            if (segment.includes('%')) {
+                return segment;
+            }
+            // Handle special characters like # that might be unencoded
+            // First replace # with %23, then encode any other special characters
+            const withHashEncoded = segment.replace(/#/g, '%23');
+            return encodeURIComponent(withHashEncoded);
+        }).join('/') : '';
+        const backendUrl = `${env.BACKEND_URL ?? "http://localhost:3060"}/cdn/${encodedPath}`;
         const fullUrl = queryPart ? `${backendUrl}?${queryPart}` : backendUrl;
 
-        console.log("CDN Request:", {
-            originalUrl: rawUrl,
-            processedUrl: fullUrl
-        });
+        // console.log("CDN proxy request:", {
+        //     originalPath: pathPart,
+        //     encodedPath,
+        //     backendUrl,
+        //     fullUrl
+        // });
 
         // Make request to backend
         const response = await fetch(fullUrl, {
