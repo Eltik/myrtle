@@ -44,7 +44,7 @@ const getSkinImages = (skin: Skin) => {
     return {
         avatar: `/spritepack/${skin.avatarId}.png`,
         portrait: `https://raw.githubusercontent.com/${RESOURCE_REPOSITORY}/main/portrait/${skin.portraitId}.png`,
-        skin: `/skinpack/${formatSkinId(skin.skinId)}`,
+        skin: skin.skinId.includes("@") || skin.skinId.includes("#") ? `/skinpack/${formatSkinId(skin.skinId)}` : `/chararts/${skin.skinId}`,
     };
 };
 

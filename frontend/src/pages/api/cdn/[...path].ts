@@ -24,26 +24,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
         // Get raw URL to handle special characters properly
         const rawUrl = req.url!;
-        const urlParts = rawUrl.split('/api/cdn/')[1];
+        const urlParts = rawUrl.split("/api/cdn/")[1];
         if (!urlParts) {
             return res.status(400).json({ error: "Invalid path" });
         }
 
         // Split at query string if it exists
-        const [pathPart, queryPart] = urlParts.split('?');
-        
+        const [pathPart, queryPart] = urlParts.split("?");
+
         // Build the backend URL, maintaining the original encoding
         // Handle both encoded and unencoded special characters
-        const encodedPath = pathPart ? pathPart.split('/').map(segment => {
-            // If the segment already contains encoded characters, don't encode it again
-            if (segment.includes('%')) {
-                return segment;
-            }
-            // Handle special characters like # that might be unencoded
-            // First replace # with %23, then encode any other special characters
-            const withHashEncoded = segment.replace(/#/g, '%23');
-            return encodeURIComponent(withHashEncoded);
-        }).join('/') : '';
+        const encodedPath = pathPart
+            ? pathPart
+                  .split("/")
+                  .map((segment) => {
+                      // If the segment already contains encoded characters, don't encode it again
+                      if (segment.includes("%")) {
+                          return segment;
+                      }
+                      // Handle special characters like # that might be unencoded
+                      // First replace # with %23, then encode any other special characters
+                      const withHashEncoded = segment.replace(/#/g, "%23");
+                      return encodeURIComponent(withHashEncoded);
+                  })
+                  .join("/")
+            : "";
         const backendUrl = `${env.BACKEND_URL ?? "http://localhost:3060"}/cdn/${encodedPath}`;
         const fullUrl = queryPart ? `${backendUrl}?${queryPart}` : backendUrl;
 
@@ -70,7 +75,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             console.error("Backend request failed:", {
                 status: response.status,
                 url: fullUrl,
-                statusText: response.statusText
+                statusText: response.statusText,
             });
             return res.status(response.status).json({
                 error: "Failed to fetch asset",

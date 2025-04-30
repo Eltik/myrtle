@@ -3,47 +3,72 @@ import type { AnimationType, ChibiAnimation, FormattedChibis } from "~/types/imp
 
 // Helper function to ensure consistent URL encoding of paths
 function encodeAssetPath(path: string): string {
-    return path.split("/").map(segment => encodeURIComponent(segment)).join("/");
+    return path
+        .split("/")
+        .map((segment) => encodeURIComponent(segment))
+        .join("/");
+}
+
+// Helper function to ensure URLs are properly encoded
+export function encodeURL(url: string): string {
+    try {
+        if (!url) return "";
+
+        // Split the URL into parts
+        const parts = url.split("?");
+        const basePath = parts[0] ?? "";
+        const query = parts[1];
+
+        // Split the path into segments and encode each segment
+        const pathSegments = basePath.split("/");
+        const encodedPath = pathSegments
+            .map((segment) => {
+                // If the segment already contains encoded characters, don't encode it again
+                if (segment.includes("%")) {
+                    return segment;
+                }
+                return encodeURIComponent(segment);
+            })
+            .join("/");
+
+        // Reconstruct the URL
+        return query ? `${encodedPath}?${query}` : encodedPath;
+    } catch (error) {
+        console.error("Error encoding URL:", error);
+        return url;
+    }
 }
 
 export function getSkinData(selectedOperator: FormattedChibis, selectedSkin: string, viewType: ChibiAnimation): AnimationType | null {
-    console.log("Getting skin data for", { 
-        operatorName: selectedOperator.name, 
-        selectedSkin, 
+    console.log("Getting skin data for", {
+        operatorName: selectedOperator.name,
+        selectedSkin,
         viewType,
-        availableSkins: selectedOperator.skins.map(s => ({ 
-            name: s.name, 
-            paths: { 
-                dorm: s.dorm.path, 
-                front: s.front.path, 
-                back: s.back.path 
-            } 
-        }))
+        availableSkins: selectedOperator.skins.map((s) => ({
+            name: s.name,
+            paths: {
+                dorm: s.dorm.path,
+                front: s.front.path,
+                back: s.back.path,
+            },
+        })),
     });
 
     // First try to find a skin by name
-    let skin = selectedOperator.skins.find(s => s.name === selectedSkin);
-    
+    let skin = selectedOperator.skins.find((s) => s.name === selectedSkin);
+
     // If not found by name, try to find by path
     if (!skin) {
         console.log("Skin not found by name, trying to find by path");
         const encodedSelectedSkin = encodeAssetPath(selectedSkin);
-        skin = selectedOperator.skins.find((s) => 
-            encodeAssetPath(s.dorm.path) === encodedSelectedSkin || 
-            encodeAssetPath(s.front.path) === encodedSelectedSkin || 
-            encodeAssetPath(s.back.path) === encodedSelectedSkin
-        );
+        skin = selectedOperator.skins.find((s) => encodeAssetPath(s.dorm.path) === encodedSelectedSkin || encodeAssetPath(s.front.path) === encodedSelectedSkin || encodeAssetPath(s.back.path) === encodedSelectedSkin);
     }
-    
+
     // If still not found, try to find by partial path match
     if (!skin) {
         console.log("Skin not found by exact path, trying partial match");
         const encodedSelectedSkin = encodeAssetPath(selectedSkin);
-        skin = selectedOperator.skins.find((s) => 
-            encodeAssetPath(s.dorm.path).includes(encodedSelectedSkin) || 
-            encodeAssetPath(s.front.path).includes(encodedSelectedSkin) || 
-            encodeAssetPath(s.back.path).includes(encodedSelectedSkin)
-        );
+        skin = selectedOperator.skins.find((s) => encodeAssetPath(s.dorm.path).includes(encodedSelectedSkin) || encodeAssetPath(s.front.path).includes(encodedSelectedSkin) || encodeAssetPath(s.back.path).includes(encodedSelectedSkin));
     }
 
     if (!skin) {

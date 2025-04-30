@@ -41,17 +41,19 @@ export function getCDNURL(path: string, useApiRoute = true, bustCache?: boolean)
     const baseUrl = "/api/cdn/";
 
     // Split the path into segments and encode each segment
-    const pathSegments = cleanPath.split('/');
-    const encodedPath = pathSegments.map(segment => {
-        // If the segment already contains encoded characters, don't encode it again
-        if (segment.includes('%')) {
-            return segment;
-        }
-        // Handle special characters like # that might be unencoded
-        // First replace # with %23, then encode any other special characters
-        const withHashEncoded = segment.replace(/#/g, '%23');
-        return encodeURIComponent(withHashEncoded);
-    }).join('/');
+    const pathSegments = cleanPath.split("/");
+    const encodedPath = pathSegments
+        .map((segment) => {
+            // If the segment already contains encoded characters, don't encode it again
+            if (segment.includes("%")) {
+                return segment;
+            }
+            // Handle special characters like # that might be unencoded
+            // First replace # with %23, then encode any other special characters
+            const withHashEncoded = segment.replace(/#/g, "%23");
+            return encodeURIComponent(withHashEncoded);
+        })
+        .join("/");
 
     // Create base URL with encoded path
     const url = `${baseUrl}${encodedPath}`;

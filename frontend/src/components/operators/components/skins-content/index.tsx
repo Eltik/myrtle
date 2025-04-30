@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Separator } from "~/components/ui/separator";
 import type { Operator } from "~/types/impl/api/static/operator";
-import type { ChibisSimplified } from "~/types/impl/api/impl/chibis";
 import type { UISkin } from "~/types/impl/frontend/impl/operators";
 import { fetchSkins, fetchChibi, convertToUISkins } from "./impl/helper";
 import { SkinImageViewer } from "./impl/skin-image-viewer";
@@ -9,6 +8,7 @@ import { SkinDetailsPanel } from "./impl/skin-details-panel";
 import { SkinSelector } from "./impl/skin-selector";
 import { FullscreenDialog } from "./impl/fullscreen-dialog";
 import { InfoSection } from "./impl/info-section";
+import type { FormattedChibis } from "~/types/impl/frontend/impl/chibis";
 
 function SkinsContent({ operator }: { operator: Operator }) {
     // State for the currently selected skin
@@ -18,7 +18,7 @@ function SkinsContent({ operator }: { operator: Operator }) {
     const [fullscreenOpen, setFullscreenOpen] = useState(false);
 
     const [skins, setSkins] = useState<UISkin[]>([]);
-    const [chibi, setChibi] = useState<ChibisSimplified | null>(null);
+    const [chibi, setChibi] = useState<FormattedChibis | null>(null);
 
     useEffect(() => {
         const loadSkinsAndChibi = async () => {
@@ -26,7 +26,7 @@ function SkinsContent({ operator }: { operator: Operator }) {
             const uiSkins = convertToUISkins(skinsData);
             setSkins(uiSkins);
 
-            const chibiData = await fetchChibi(operator.id ?? "");
+            const chibiData = await fetchChibi(operator.id ?? "", operator);
             setChibi(chibiData[0] ?? null);
         };
 
