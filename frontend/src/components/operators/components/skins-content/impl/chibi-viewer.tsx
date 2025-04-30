@@ -1,518 +1,320 @@
-import { type ISkeletonData, Spine } from "pixi-spine";
+import { type ISkeletonData, Spine, type TextureAtlas } from "pixi-spine";
 import * as PIXI from "pixi.js";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Card, CardContent } from "~/components/ui/card";
-import type { ChibisSimplified } from "~/types/impl/api/impl/chibis";
-import type { FormattedChibis, ResourceMap, SpineAnimation } from "~/types/impl/frontend/impl/chibis";
+import type { ChibiAnimation, FormattedChibis } from "~/types/impl/frontend/impl/chibis";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
-import { getCDNURL } from "~/lib/cdn";
+import { encodeURL, getSkinData } from "./helper";
 
-export function ChibiViewer({ chibi, skinId }: { chibi: ChibisSimplified; skinId: string }) {
-    const [formattedChibi, setFormattedChibi] = useState<FormattedChibis | null>(null);
+const CHIBI_OFFSET_X = 0.3;
+const CHIBI_OFFSET_Y = 0.45;
+const CHIBI_SCALE = 1;
+const ANIMATION_SPEED = 0.5; // Animation speed multiplier (lower = slower)
 
-    // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
+export function ChibiViewer({ chibi, skinId }: { chibi: FormattedChibis; skinId: string }) {
     const appRef = useRef<PIXI.Application | null>(null);
     const spineRef = useRef<Spine | null>(null);
 
     const [selectedAnimation, setSelectedAnimation] = useState<string>("Idle");
     const [availableAnimations, setAvailableAnimations] = useState<string[]>([]);
-    const [viewType, setViewType] = useState<"dorm" | "front" | "back">("dorm");
-
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [viewType, setViewType] = useState<ChibiAnimation>("front");
 
     const canvasContainerRef = useRef<HTMLDivElement>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    const skinIdToChibiId = (skinId: string) => {
-        // Ex.
-        // char_332_archet@shining#1
-        // Should be:
-        // char_332_archet_shining_1
+    // Function to update canvas size based on container
+    const updateCanvasSize = useCallback(() => {
+        if (!canvasContainerRef.current || !appRef.current) return;
 
-        return skinId.replace("@", "_").replace("#", "_");
-    };
+        const containerWidth = canvasContainerRef.current.clientWidth;
+        const containerHeight = canvasContainerRef.current.clientHeight;
 
-    const formatData = useCallback((): FormattedChibis => {
-        const operatorCode = chibi.operatorCode.includes("/") ? (chibi.operatorCode.split("/").pop() ?? chibi.operatorCode) : chibi.operatorCode;
+        appRef.current.renderer.resize(containerWidth, containerHeight);
 
-        const formattedChibi: FormattedChibis = {
-            name: chibi.name,
-            operatorCode,
-            path: chibi.path,
-            skins: [],
-        };
+        // Reposition spine if it exists
+        if (spineRef.current) {
+            // Adjust positioning to account for the chibi's built-in offset
+            spineRef.current.x = containerWidth * CHIBI_OFFSET_X; // Move further left from center
+            spineRef.current.y = containerHeight * CHIBI_OFFSET_Y; // Keep the good vertical position
 
-        type AnimationType = {
-            atlas?: string;
-            png?: string;
-            skel?: string;
-        };
+            // Calculate appropriate scale based on container size
+            const scale = Math.min(containerWidth / 1000, containerHeight / 800) * CHIBI_SCALE;
+            spineRef.current.scale.set(scale);
+        }
+    }, []);
 
-        type SkinData = {
-            name: string;
-            dorm?: { atlas: string; png: string; skel: string; path: string };
-            front?: { atlas: string; png: string; skel: string; path: string };
-            back?: { atlas: string; png: string; skel: string; path: string };
-        };
-
-        const skinsByName = new Map<string, SkinData>();
-
-        for (const skin of chibi.skins) {
-            const skinName = skin.name.startsWith("build_") ? (skin.name.split("build_")[1]?.split("/")[0] ?? chibi.name) : skin.name;
-
-            const existingSkin = skinsByName.get(skinName) ?? { name: skinName };
-
-            const createAnimationData = (animationType: AnimationType | undefined) => ({
-                atlas: animationType?.atlas ?? "",
-                png: animationType?.png ?? "",
-                skel: animationType?.skel ?? "",
-                path: skin.path,
-            });
-
-            if (skin.animationTypes?.dorm) {
-                existingSkin.dorm = createAnimationData(skin.animationTypes.dorm);
+    const renderSkinSpine = useCallback(
+        (skinAsset: { spineAtlas: TextureAtlas; spineData: ISkeletonData }) => {
+            // Clear any existing spine object
+            if (spineRef.current) {
+                appRef.current?.stage.removeChild(spineRef.current);
+                spineRef.current.destroy();
+                spineRef.current = null;
             }
 
-            if (skin.animationTypes?.front) {
-                existingSkin.front = createAnimationData(skin.animationTypes.front);
-            }
+            try {
+                // Validate spine data
+                if (!skinAsset.spineData) {
+                    throw new Error("Spine data is missing");
+                }
 
-            if (skin.animationTypes?.back) {
-                existingSkin.back = createAnimationData(skin.animationTypes.back);
-            }
+                // Create a new spine object
+                spineRef.current = new Spine(skinAsset.spineData);
 
-            skinsByName.set(skinName, existingSkin);
+                // Set the animation speed to 1x (slower)
+                spineRef.current.state.timeScale = ANIMATION_SPEED;
+
+                // Set available animations
+                const animations = skinAsset.spineData.animations.map((animation) => animation.name);
+                setAvailableAnimations(animations);
+
+                if (appRef.current) {
+                    const { width, height } = appRef.current.screen;
+
+                    // Adjust positioning to account for the chibi's built-in offset
+                    spineRef.current.x = width * CHIBI_OFFSET_X; // Move further left from center
+                    spineRef.current.y = height * CHIBI_OFFSET_Y; // Keep the good vertical position
+
+                    // Calculate appropriate scale based on container size
+                    const scale = Math.min(width / 1000, height / 800) * CHIBI_SCALE;
+                    spineRef.current.scale.set(scale);
+                }
+
+                // Set animation based on selected animation if it exists in available animations
+                if (selectedAnimation && spineRef.current.spineData.findAnimation(selectedAnimation)) {
+                    spineRef.current.state.setAnimation(0, selectedAnimation, true);
+                } else {
+                    // Fall back to default animations based on view type
+                    if (viewType !== "dorm") {
+                        if (spineRef.current.spineData.findAnimation("Start")) {
+                            spineRef.current.state.setAnimation(0, "Start", false);
+                        } else if (spineRef.current.spineData.findAnimation("Start_A")) {
+                            spineRef.current.state.setAnimation(0, "Start_A", false);
+                        } else {
+                            spineRef.current.state.setAnimation(0, "Idle", true);
+                        }
+                    } else {
+                        if (spineRef.current.spineData.findAnimation("Relax")) {
+                            spineRef.current.state.setAnimation(0, "Relax", true);
+                        } else {
+                            spineRef.current.state.setAnimation(0, "Idle", true);
+                        }
+                    }
+                }
+
+                spineRef.current.interactive = true;
+                spineRef.current.alpha = 1;
+
+                spineRef.current.state.addListener({
+                    complete: (event) => {
+                        // Only handle animation completion for non-dorm view
+                        if (event.animationEnd && viewType !== "dorm") {
+                            // Get the track entry and check the animation name
+                            const track = spineRef.current?.state.tracks[0];
+                            if (track && ((track as unknown as { animation: { name: string } }).animation.name === "Start" || (track as unknown as { animation: { name: string } }).animation.name === "Start_A")) {
+                                spineRef.current?.state.setAnimation(0, "Idle", true);
+                            }
+                        }
+                    },
+                });
+
+                // Add the spine object to the stage
+                if (!appRef.current) {
+                    throw new Error("PIXI application is not initialized");
+                }
+
+                appRef.current.stage.addChild(spineRef.current);
+
+                // Render the stage
+                appRef.current.renderer.render(appRef.current.stage);
+
+                setIsLoading(false);
+            } catch (err) {
+                console.error("Spine rendering error:", err);
+                setError(`Failed to render chibi: ${err instanceof Error ? err.message : String(err)}`);
+                setIsLoading(false);
+            }
+        },
+        [selectedAnimation, viewType],
+    );
+
+    const renderCanvas = useCallback(() => {
+        // If we don't have an operator selected, abort
+        if (!chibi) {
+            setError("No operator selected");
+            setIsLoading(false);
+            return;
         }
 
-        const emptyAnimationData = {
-            atlas: "",
-            png: "",
-            skel: "",
-            path: "",
+        // Get the skin data using the updated function
+        const skinData = getSkinData(chibi, skinId ?? "default", viewType);
+
+        if (!skinData) {
+            console.error("Failed to load skin data", {
+                operatorName: chibi.name,
+                selectedSkin: skinId,
+                viewType,
+                availableSkins: chibi.skins.map((s) => s.name),
+            });
+            setError("Failed to load skin data. Skin data is missing.");
+            setIsLoading(false);
+            return;
+        }
+
+        // Check if any of the required assets are empty
+        if (!skinData.atlas || !skinData.png || !skinData.skel) {
+            console.error("Skin data is missing required assets", {
+                atlas: !!skinData.atlas,
+                png: !!skinData.png,
+                skel: !!skinData.skel,
+            });
+            setError("Skin data is missing required assets.");
+            setIsLoading(false);
+            return;
+        }
+
+        // Get CDN URLs for assets (encodeURL handles basic encoding)
+        const assetUrls = {
+            atlas: encodeURL(skinData.atlas),
+            png: encodeURL(skinData.png), // Keep png for potential future use, but loader uses atlas
+            skel: encodeURL(skinData.skel),
         };
 
-        formattedChibi.skins = Array.from(skinsByName.values()).map((skin) => ({
-            name: skin.name,
-            dorm: skin.dorm ?? emptyAnimationData,
-            front: skin.front ?? emptyAnimationData,
-            back: skin.back ?? emptyAnimationData,
-        }));
+        setIsLoading(true);
+        setError(null);
 
-        return formattedChibi;
-    }, [chibi]);
+        // Directly load the skeleton asset using PIXI.Assets
+        // The spine loader will use the .atlas reference within the .skel
+        // and automatically load the associated texture (.png)
+        PIXI.Assets.load(assetUrls.skel)
+            .then((spineAsset: { spineAtlas: TextureAtlas; spineData: ISkeletonData }) => {
+                // The loaded asset should contain both atlas and skeleton data
+                if (!spineAsset?.spineData) {
+                    // Check specifically for spineData
+                    setError("Failed to load skeleton data from asset.");
+                    setIsLoading(false);
+                    return;
+                }
+
+                renderSkinSpine(spineAsset);
+            })
+            .catch((err: Error) => {
+                console.error("Failed to load Spine asset:", err);
+                setError(`Failed to load skeleton/atlas: ${err.message}`);
+                setIsLoading(false);
+            });
+    }, [chibi, skinId, viewType, renderSkinSpine]);
 
     useEffect(() => {
-        const formattedChibi = formatData();
-
-        setFormattedChibi(formattedChibi);
-    }, [formatData]);
-
-    useEffect(() => {
-        if (!canvasContainerRef.current) return;
+        if (!canvasContainerRef.current) {
+            return;
+        }
 
         if (appRef.current) {
             appRef.current.destroy(true, true);
         }
 
+        // Get container dimensions
+        const containerWidth = canvasContainerRef.current.clientWidth;
+        // Use a taller height for the container
+        const containerHeight = canvasContainerRef.current.clientHeight || 450;
+
         const pixiApp = new PIXI.Application({
-            width: 400,
-            height: 400,
-            backgroundColor: 0x000000,
+            width: containerWidth,
+            height: containerHeight,
+            backgroundColor: 0x111014,
             antialias: true,
-            transparent: true,
-            autoDensity: true, // Enable automatic resizing
             resolution: window.devicePixelRatio || 1,
-        });
+            backgroundAlpha: 1,
+            clearBeforeRender: true,
+            premultipliedAlpha: true,
+            powerPreference: "high-performance",
+        } as PIXI.IApplicationOptions);
+        appRef.current = pixiApp;
 
-        canvasContainerRef.current.innerHTML = "";
-        canvasContainerRef.current.appendChild(pixiApp.view);
-        appRef.current = pixiApp; // Store in ref instead of state
+        // Add the view to the DOM first
+        canvasContainerRef.current?.appendChild(pixiApp.view as unknown as Node);
 
-        // Function to center the spine object if it exists
-        const centerSpine = () => {
-            if (spineRef.current && appRef.current) {
-                // Center the spine
-                spineRef.current.x = appRef.current.screen.width / 2;
-                spineRef.current.y = (appRef.current.screen.height / 2) * 2;
+        // Set up the animation loop
+        const tick = () => {
+            if (spineRef.current && pixiApp?.renderer) {
+                // Update the spine animation
+                spineRef.current.update(0.016); // Update with approximate 60fps delta time
+                // Render the stage
+                pixiApp.renderer.render(pixiApp.stage);
             }
+            requestAnimationFrame(tick);
         };
 
-        // Function to resize the canvas and recenter the spine
+        // Start the animation loop
+        requestAnimationFrame(tick);
+
+        // Handle window resize
         const handleResize = () => {
-            if (!canvasContainerRef.current || !appRef.current) return;
-
-            // Get the parent element dimensions
-            const parentWidth = canvasContainerRef.current.clientWidth || 400;
-            const parentHeight = canvasContainerRef.current.clientHeight || 400;
-
-            // Resize the canvas
-            appRef.current.renderer.resize(parentWidth, parentHeight);
-
-            // Recenter the spine
-            centerSpine();
+            updateCanvasSize();
         };
 
-        // Initial resize
-        handleResize();
-
-        // Set up resize listener
         window.addEventListener("resize", handleResize);
 
-        // Also monitor container size changes
-        const resizeObserver = new ResizeObserver(() => {
-            handleResize();
-        });
+        renderCanvas();
 
-        if (canvasContainerRef.current) {
-            resizeObserver.observe(canvasContainerRef.current);
-        }
-
-        // Clean up on unmount
         return () => {
             window.removeEventListener("resize", handleResize);
-            resizeObserver.disconnect();
 
-            // Safer destroy to avoid the "cancelResize is not a function" error
-            try {
-                if (appRef.current) {
-                    // Clean up PIXI application
-                    appRef.current.destroy(false, { children: true, texture: true, baseTexture: true });
-                }
-            } catch (err) {
-                console.error("Error cleaning up Pixi application:", err);
+            if (spineRef.current) {
+                appRef.current?.stage.removeChild(spineRef.current);
+                spineRef.current.destroy();
+                spineRef.current = null;
             }
 
-            // Clear references
-            appRef.current = null;
-            spineRef.current = null;
+            if (appRef.current) {
+                appRef.current.destroy(true, { children: true, texture: true, baseTexture: true });
+                appRef.current = null;
+            }
         };
-    }, []);
+    }, [renderCanvas, updateCanvasSize]);
 
-    // Helper to generate asset URLs for the CDN
-    const getAssetUrl = useCallback((path: string) => {
-        if (!path) return "";
+    // Effect to reset animation if it becomes invalid after view type change
+    useEffect(() => {
+        // Only run if animations are loaded and the selected one is no longer valid
+        if (availableAnimations.length > 0 && !availableAnimations.includes(selectedAnimation)) {
+            let newAnimation: string | undefined = undefined;
 
-        // With our new backend structure, paths will look like:
-        // chararts/BattleFront/file.ext  (for default skins, front animations)
-        // chararts/BattleBack/file.ext   (for default skins, back animations)
-        // chararts/Building/file.ext     (for default skins, dorm animations)
-        // skinpack/BattleFront/file.ext  (for skin variants, front animations)
-        // skinpack/BattleBack/file.ext   (for skin variants, back animations)
-        // skinpack/Building/file.ext     (for skin variants, dorm animations)
-
-        // Just pass the path directly to the CDN, since it's already properly formatted by the backend
-        return getCDNURL(`chibis/${path}`, true);
-    }, []);
-
-    const getSkinData = useCallback(() => {
-        const chibiId = skinIdToChibiId(skinId);
-
-        const skin = formattedChibi?.skins.find((s) => s.dorm.path.includes(chibiId) || s.front.path.includes(chibiId) || s.back.path.includes(chibiId));
-        if (!skin) {
-            console.log("Could not find matching skin", {
-                selectedSkin: skinId,
-                availableSkins: formattedChibi?.skins.map((s) => ({
-                    dorm: s.dorm.path,
-                    front: s.front.path,
-                    back: s.back.path,
-                })),
-            });
-
-            if (formattedChibi && formattedChibi.skins.length > 0) {
-                const fallbackSkin = formattedChibi.skins[0];
-                if (fallbackSkin) {
-                    console.log("Using fallback skin", { fallbackSkin: fallbackSkin.name });
-
-                    // Try the selected view type first, then fall back to others
-                    if (viewType === "dorm" && fallbackSkin.dorm?.atlas && fallbackSkin.dorm?.png && fallbackSkin.dorm?.skel) {
-                        return {
-                            atlas: getAssetUrl(fallbackSkin.dorm.atlas),
-                            png: getAssetUrl(fallbackSkin.dorm.png),
-                            skel: getAssetUrl(fallbackSkin.dorm.skel),
-                            type: "dorm",
-                        };
-                    } else if (viewType === "front" && fallbackSkin.front?.atlas && fallbackSkin.front?.png && fallbackSkin.front?.skel) {
-                        return {
-                            atlas: getAssetUrl(fallbackSkin.front.atlas),
-                            png: getAssetUrl(fallbackSkin.front.png),
-                            skel: getAssetUrl(fallbackSkin.front.skel),
-                            type: "front",
-                        };
-                    } else if (viewType === "back" && fallbackSkin.back?.atlas && fallbackSkin.back?.png && fallbackSkin.back?.skel) {
-                        return {
-                            atlas: getAssetUrl(fallbackSkin.back.atlas),
-                            png: getAssetUrl(fallbackSkin.back.png),
-                            skel: getAssetUrl(fallbackSkin.back.skel),
-                            type: "back",
-                        };
-                    }
-
-                    // If the selected view type isn't available, try any available view
-                    if (fallbackSkin.dorm?.atlas && fallbackSkin.dorm?.png && fallbackSkin.dorm?.skel) {
-                        return {
-                            atlas: getAssetUrl(fallbackSkin.dorm.atlas),
-                            png: getAssetUrl(fallbackSkin.dorm.png),
-                            skel: getAssetUrl(fallbackSkin.dorm.skel),
-                            type: "dorm",
-                        };
-                    } else if (fallbackSkin.front?.atlas && fallbackSkin.front?.png && fallbackSkin.front?.skel) {
-                        return {
-                            atlas: getAssetUrl(fallbackSkin.front.atlas),
-                            png: getAssetUrl(fallbackSkin.front.png),
-                            skel: getAssetUrl(fallbackSkin.front.skel),
-                            type: "front",
-                        };
-                    } else if (fallbackSkin.back?.atlas && fallbackSkin.back?.png && fallbackSkin.back?.skel) {
-                        return {
-                            atlas: getAssetUrl(fallbackSkin.back.atlas),
-                            png: getAssetUrl(fallbackSkin.back.png),
-                            skel: getAssetUrl(fallbackSkin.back.skel),
-                            type: "back",
-                        };
-                    }
+            if (viewType === "dorm") {
+                if (availableAnimations.includes("Relax")) {
+                    newAnimation = "Relax";
+                } else if (availableAnimations.includes("Idle")) {
+                    newAnimation = "Idle";
+                } else {
+                    // Fallback: If neither Relax nor Idle exist, pick the first available one.
+                    // We already know availableAnimations.length > 0 from the outer check.
+                    newAnimation = availableAnimations[0];
+                }
+            } else {
+                // Front or Back view
+                if (availableAnimations.includes("Idle")) {
+                    newAnimation = "Idle";
+                } else {
+                    // Fallback: If Idle doesn't exist, pick the first available one.
+                    // We already know availableAnimations.length > 0 from the outer check.
+                    newAnimation = availableAnimations[0];
                 }
             }
 
-            return null;
-        }
-
-        if (viewType === "dorm" && skin.dorm.atlas && skin.dorm.png && skin.dorm.skel) {
-            console.log("Using dorm view (selected)", { path: skin.dorm.path });
-            return {
-                atlas: getAssetUrl(skin.dorm.atlas),
-                png: getAssetUrl(skin.dorm.png),
-                skel: getAssetUrl(skin.dorm.skel),
-                type: "dorm",
-            };
-        } else if (viewType === "front" && skin.front.atlas && skin.front.png && skin.front.skel) {
-            console.log("Using front view (selected)", { path: skin.front.path });
-            return {
-                atlas: getAssetUrl(skin.front.atlas),
-                png: getAssetUrl(skin.front.png),
-                skel: getAssetUrl(skin.front.skel),
-                type: "front",
-            };
-        } else if (viewType === "back" && skin.back.atlas && skin.back.png && skin.back.skel) {
-            console.log("Using back view (selected)", { path: skin.back.path });
-            return {
-                atlas: getAssetUrl(skin.back.atlas),
-                png: getAssetUrl(skin.back.png),
-                skel: getAssetUrl(skin.back.skel),
-                type: "back",
-            };
-        }
-
-        if (skin.dorm.path.includes(chibiId) && skin.dorm.atlas && skin.dorm.png && skin.dorm.skel) {
-            console.log("Using dorm view (path match)", { path: skin.dorm.path });
-            return {
-                atlas: getAssetUrl(skin.dorm.atlas),
-                png: getAssetUrl(skin.dorm.png),
-                skel: getAssetUrl(skin.dorm.skel),
-                type: "dorm",
-            };
-        } else if (skin.front.path.includes(chibiId) && skin.front.atlas && skin.front.png && skin.front.skel) {
-            console.log("Using front view (path match)", { path: skin.front.path });
-            return {
-                atlas: getAssetUrl(skin.front.atlas),
-                png: getAssetUrl(skin.front.png),
-                skel: getAssetUrl(skin.front.skel),
-                type: "front",
-            };
-        } else if (skin.back.path.includes(chibiId) && skin.back.atlas && skin.back.png && skin.back.skel) {
-            console.log("Using back view (path match)", { path: skin.back.path });
-            return {
-                atlas: getAssetUrl(skin.back.atlas),
-                png: getAssetUrl(skin.back.png),
-                skel: getAssetUrl(skin.back.skel),
-                type: "back",
-            };
-        }
-
-        // If we get here, we found a skin but the selected view doesn't have all required assets
-        // Try to use any available view as a fallback
-        console.log("Selected view missing assets, trying fallbacks");
-
-        if (skin.dorm.atlas && skin.dorm.png && skin.dorm.skel) {
-            console.log("Falling back to dorm view");
-            return {
-                atlas: getAssetUrl(skin.dorm.atlas),
-                png: getAssetUrl(skin.dorm.png),
-                skel: getAssetUrl(skin.dorm.skel),
-                type: "dorm",
-            };
-        } else if (skin.front.atlas && skin.front.png && skin.front.skel) {
-            console.log("Falling back to front view");
-            return {
-                atlas: getAssetUrl(skin.front.atlas),
-                png: getAssetUrl(skin.front.png),
-                skel: getAssetUrl(skin.front.skel),
-                type: "front",
-            };
-        } else if (skin.back.atlas && skin.back.png && skin.back.skel) {
-            console.log("Falling back to back view");
-            return {
-                atlas: getAssetUrl(skin.back.atlas),
-                png: getAssetUrl(skin.back.png),
-                skel: getAssetUrl(skin.back.skel),
-                type: "back",
-            };
-        }
-
-        console.log("No valid view found for skin", {
-            selectedSkin: skinId,
-            dorm: { path: skin.dorm.path, hasAssets: !!(skin.dorm.atlas && skin.dorm.png && skin.dorm.skel) },
-            front: { path: skin.front.path, hasAssets: !!(skin.front.atlas && skin.front.png && skin.front.skel) },
-            back: { path: skin.back.path, hasAssets: !!(skin.back.atlas && skin.back.png && skin.back.skel) },
-        });
-
-        return null;
-    }, [formattedChibi, getAssetUrl, skinId, viewType]);
-
-    useEffect(() => {
-        // Get the skin data using our helper function
-        const skinData = getSkinData();
-        if (!skinData || !appRef.current) {
-            // Set error if we have an operator and skin selected but couldn't get skin data
-            if (formattedChibi && skinId) {
-                setError(`Could not load skin data for ${skinId}`);
-            }
-            return;
-        }
-
-        const atlasURL = skinData.atlas;
-        const skelURL = skinData.skel;
-        const imageURL = skinData.png;
-
-        setIsLoading(true);
-        setError(null);
-
-        const app = appRef.current;
-        const loader = app.loader;
-
-        loader.reset();
-
-        try {
-            // Generate unique identifiers for this specific load operation with a timestamp
-            const loadId = Date.now().toString();
-            loader.add(`chibi_atlas_${loadId}`, atlasURL);
-            loader.add(`chibi_skel_${loadId}`, skelURL);
-            loader.add(`chibi_image_${loadId}`, imageURL);
-
-            loader.load((_: unknown, resources: ResourceMap) => {
-                try {
-                    if (spineRef.current?.parent) {
-                        spineRef.current.parent.removeChild(spineRef.current);
-                        spineRef.current = null;
-                    }
-
-                    // Update resource references to use our new unique identifiers
-                    const skelResource = resources[`chibi_skel_${loadId}`];
-                    const atlasResource = resources[`chibi_atlas_${loadId}`];
-
-                    if (!skelResource || !atlasResource) {
-                        setError("Failed to load spine resources");
-                        setIsLoading(false);
-                        return;
-                    }
-
-                    if (skelResource.spineData) {
-                        const spineData = new Spine(skelResource.spineData as ISkeletonData);
-
-                        // Scale it appropriately
-                        spineData.scale.set(0.5);
-
-                        // Add to stage
-                        const app = appRef.current;
-                        if (app) {
-                            app.stage.addChild(spineData);
-                        }
-
-                        // Store spine in ref
-                        spineRef.current = spineData;
-
-                        // Get available animations - casting to our minimal interface
-                        const animations = spineData.spineData.animations.map((anim: SpineAnimation) => anim.name);
-                        setAvailableAnimations(animations);
-
-                        // Set default animation if available - after storing spine in ref
-                        let initialAnimation = "Idle";
-                        if (animations.includes("Idle")) {
-                            spineData.state.setAnimation(0, "Idle", true);
-                            setSelectedAnimation("Idle");
-                            initialAnimation = "Idle";
-                        } else if (animations.length > 0) {
-                            const defaultAnim = animations[0] ?? "Idle";
-                            spineData.state.setAnimation(0, defaultAnim, true);
-                            setSelectedAnimation(defaultAnim);
-                            initialAnimation = defaultAnim;
-                        }
-
-                        // Adjust position based on the animation type
-                        if (appRef.current) {
-                            // First center the spine
-                            spineData.x = appRef.current.screen.width / 2;
-                            spineData.y = (appRef.current.screen.height / 2) * 2;
-
-                            // Then adjust for specific animations
-                            if (initialAnimation.toLowerCase().includes("sit") || initialAnimation.toLowerCase() === "sitting") {
-                                // Move up by only 10% of screen height to match the adjustment function
-                                spineData.y = spineData.y * 1.5;
-                                console.log("Adjusting initial position for sitting animation");
-                            }
-                        }
-
-                        setError(null);
-                    } else {
-                        setError("Invalid spine data format");
-                    }
-                } catch (e: unknown) {
-                    // Handle error properly with type checking
-                    const errorMessage = e instanceof Error ? e.message : "Unknown error occurred";
-                    setError(errorMessage);
-                } finally {
-                    setIsLoading(false);
+            // Only update state and spine if we found a valid new animation
+            // and it's different from the current one
+            if (newAnimation && newAnimation !== selectedAnimation) {
+                setSelectedAnimation(newAnimation);
+                // Also apply it immediately to the spine if it exists
+                if (spineRef.current) {
+                    spineRef.current.state.setAnimation(0, newAnimation, true);
+                    spineRef.current.state.timeScale = ANIMATION_SPEED;
                 }
-            });
-
-            loader.onError.add(() => {
-                setError("Failed to load spine resources");
-                setIsLoading(false);
-            });
-        } catch (e: unknown) {
-            // Handle error properly with type checking
-            const errorMessage = e instanceof Error ? e.message : "Unknown error occurred";
-            setError(errorMessage);
-        }
-    }, [formattedChibi, skinId, getAssetUrl, getSkinData, viewType]);
-
-    // Function to adjust position based on animation type
-    const adjustPositionForAnimation = useCallback(() => {
-        if (!spineRef.current || !appRef.current) return;
-
-        // Base position is center of screen
-        const baseX = appRef.current.screen.width / 2;
-        const baseY = (appRef.current.screen.height / 2) * 1.75;
-
-        // Apply the position
-        spineRef.current.x = baseX;
-        spineRef.current.y = baseY;
-    }, []);
-
-    useEffect(() => {
-        // Only try to change animation if spine exists and animation name is valid
-        if (spineRef.current?.state && selectedAnimation && availableAnimations.includes(selectedAnimation)) {
-            try {
-                spineRef.current.state.setAnimation(0, selectedAnimation, true);
-
-                // Adjust position based on the animation type
-                adjustPositionForAnimation();
-            } catch (error) {
-                console.error("Failed to set animation:", error);
             }
         }
-    }, [selectedAnimation, availableAnimations, adjustPositionForAnimation]);
+    }, [viewType, availableAnimations, selectedAnimation]);
 
-    // Handle animation change
     const handleAnimationChange = (value: string) => {
         setSelectedAnimation(value);
 
@@ -520,26 +322,21 @@ export function ChibiViewer({ chibi, skinId }: { chibi: ChibisSimplified; skinId
         if (spineRef.current && value) {
             // Set the animation
             spineRef.current.state.setAnimation(0, value, true);
-
-            // Adjust position based on the animation type
-            adjustPositionForAnimation();
+            // Ensure the timeScale is maintained
+            spineRef.current.state.timeScale = ANIMATION_SPEED;
         }
     };
 
-    // Handle view type change
     const handleViewTypeChange = (value: string) => {
-        setViewType(value as "dorm" | "front" | "back");
+        setViewType(value as ChibiAnimation);
     };
-
-    // Get current skin data for UI display
-    const spineData = getSkinData();
 
     return (
         <Card className="w-full">
             <CardContent className="pb-4 pt-6">
                 <div className="mb-4 flex flex-col gap-4">
                     <div className="flex items-center gap-2">
-                        <Select value={selectedAnimation} onValueChange={handleAnimationChange} disabled={!spineData || availableAnimations.length === 0 || isLoading}>
+                        <Select value={selectedAnimation} onValueChange={handleAnimationChange} disabled={!spineRef.current || availableAnimations.length === 0 || isLoading}>
                             <SelectTrigger className="w-[180px]">
                                 <SelectValue placeholder="Select Animation" />
                             </SelectTrigger>

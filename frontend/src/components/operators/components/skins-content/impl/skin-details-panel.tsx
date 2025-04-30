@@ -1,10 +1,10 @@
-import { type ChibisSimplified } from "~/types/impl/api/impl/chibis";
 import { ChibiViewer } from "./chibi-viewer";
 import type { UISkin } from "~/types/impl/frontend/impl/operators";
+import type { FormattedChibis } from "~/types/impl/frontend/impl/chibis";
 
 interface SkinDetailsPanelProps {
     selectedSkinData: UISkin;
-    chibi: ChibisSimplified | null;
+    chibi: FormattedChibis | null;
 }
 
 export function SkinDetailsPanel({ selectedSkinData, chibi }: SkinDetailsPanelProps) {
