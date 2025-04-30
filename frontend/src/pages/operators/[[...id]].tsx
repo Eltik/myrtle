@@ -39,6 +39,7 @@ export const getServerSideProps = async ({
                 },
                 body: JSON.stringify({
                     type: "operators",
+                    fields: ["id", "nationId", "teamId", "profession", "rarity", "name", "subProfessionId", "artists", "groupId", "skills", "handbook", "modules", "phases", "profile"],
                 }),
             })
         ).json()) as {

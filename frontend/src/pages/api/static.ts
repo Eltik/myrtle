@@ -113,9 +113,15 @@ export default async function handler(request: Request, response: ServerResponse
                 const requestBody = {
                     type: request.body.type,
                     id: request.body.id,
+                    fields: request.body.fields,
                 };
 
-                const operators = await fetchWithoutCache<{ operators: Operator[] }>("/static", requestBody);
+                // Generate a cache key based on ID and sorted fields
+                const fieldsKey = request.body.fields ? [...request.body.fields].sort().join(",") : "all";
+                const cacheKey = isDevelopment ? undefined : [`${CACHE_TAG}-operators-${request.body.id ?? "all"}-fields-${fieldsKey}`];
+
+                // Use fetchData for caching and allow partial operator types
+                const operators = await fetchData<{ operators: Partial<Operator>[] | Partial<Operator> }>("/static", requestBody, cacheKey);
 
                 response.writeHead(200, { "Content-Type": "application/json" });
                 response.write(
@@ -251,5 +257,6 @@ interface Request {
         id?: string;
         method?: string;
         trust?: number;
+        fields?: string[];
     };
 }
