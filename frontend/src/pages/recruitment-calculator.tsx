@@ -12,6 +12,10 @@ import type { Operator } from "~/types/impl/api/static/operator";
 import { rarityToNumber } from "~/helper";
 import { cn } from "~/lib/utils";
 import Link from "next/link";
+import { List, User } from "lucide-react"; // Import icons for buttons
+import Image from "next/image"; // Import next/image
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "~/components/ui/hover-card"; // Import HoverCard components
+import { Badge } from "~/components/ui/badge"; // Import Badge component
 
 // Define expected data structures
 interface Tag {
@@ -86,6 +90,8 @@ const RecruitmentCalculator = () => {
     const [errorOutcomes, setErrorOutcomes] = useState<string | null>(null);
     // State to manage showing tags for a clicked operator
     const [selectedOpInfo, setSelectedOpInfo] = useState<SelectedOpInfo | null>(null);
+    // State for toggling view mode
+    const [viewMode, setViewMode] = useState<"text" | "profile">("text");
 
     // Fetch all tags from the backend via the /api/static proxy
     useEffect(() => {
@@ -315,19 +321,22 @@ const RecruitmentCalculator = () => {
         return Array.from(tagsSet);
     };
 
-    // Click handler for operator elements
+    // Click handler for operator elements (now only used in text view)
     const handleOperatorClick = (op: Operator, outcomeIndex: number) => {
+        // If profile view is active, do nothing on click (handled by hover)
+        if (viewMode === "profile") return;
+
         const opId = op.id ?? op.name; // Use ID or fallback to name
         // Check if clicking the already selected operator
         if (selectedOpInfo?.outcomeIndex === outcomeIndex && selectedOpInfo?.operatorId === opId) {
             setSelectedOpInfo(null); // Hide tags
         } else {
             // Calculate and store the tags for the newly clicked operator
-            const allTags = getOperatorDisplayTags(op);
+            const allTags = getOperatorDisplayTags(op); // Reuse the tag calculation
             setSelectedOpInfo({
                 outcomeIndex,
                 operatorId: opId,
-                allTags,
+                allTags, // Store pre-calculated tags
             });
         }
     };
@@ -394,8 +403,42 @@ const RecruitmentCalculator = () => {
                     <Separator className="my-6" />
 
                     <div>
-                        <h3 className="mb-2 text-lg font-semibold">Possible Operator Outcomes</h3>
+                        {/* header */}
+                        <div className="mb-2 flex items-center justify-between">
+                            <h3 className="text-lg font-semibold">Possible Operator Outcomes</h3>
+                        </div>
                         <div className="relative min-h-[150px] rounded-md border bg-muted/50 p-4">
+                            {/* New container for Legend and Buttons */}
+                            <div className="mb-2 flex min-h-[28px] items-center justify-between">
+                                {" "}
+                                {/* Added min-h for alignment when legend is hidden */}
+                                {/* Legend for Profile View (Moved Here) */}
+                                <div>
+                                    {" "}
+                                    {/* Left side container */}
+                                    {possibleOutcomes.length > 0 && (
+                                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                            {" "}
+                                            {/* Legend content */}
+                                            <span className="relative flex h-3 w-3 items-center justify-center rounded-full bg-blue-600 shadow-sm">
+                                                <span className="absolute inline-flex h-full w-full animate-pulse rounded-full bg-blue-400 opacity-75"></span>
+                                                <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-500"></span>
+                                            </span>
+                                            <span>= Recruitment Only</span>
+                                        </div>
+                                    )}
+                                </div>
+                                {/* View Mode Toggle Buttons (Moved Here) */}
+                                <div className="flex items-center gap-1">
+                                    <Button variant={viewMode === "text" ? "secondary" : "ghost"} size="sm" onClick={() => setViewMode("text")} title="Text View">
+                                        <List className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant={viewMode === "profile" ? "secondary" : "ghost"} size="sm" onClick={() => setViewMode("profile")} title="Profile View">
+                                        <User className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+
                             {isLoadingOutcomes && (
                                 <div className="absolute inset-0 z-10 flex items-center justify-center rounded-md bg-background/80">
                                     <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -442,30 +485,116 @@ const RecruitmentCalculator = () => {
                                                                 </td>
                                                                 {/* Operators Column - Use outcome.operators */}
                                                                 <td className="p-2">
-                                                                    <div className="flex flex-wrap gap-x-2 gap-y-1">
-                                                                        {/* Sort and map outcome.operators */}
-                                                                        {outcome.operators
-                                                                            .sort((a, b) => {
-                                                                                const rarityA = rarityToNumber(a.rarity);
-                                                                                const rarityB = rarityToNumber(b.rarity);
-                                                                                if (rarityB !== rarityA) return rarityB - rarityA;
-                                                                                return a.name.localeCompare(b.name);
-                                                                            })
-                                                                            .map((op) => {
-                                                                                const rarityNum = rarityToNumber(op.rarity);
-                                                                                const opId = op.id ?? op.name;
-                                                                                const isSelected = selectedOpInfo?.outcomeIndex === outcomeIndex && selectedOpInfo?.operatorId === opId;
-                                                                                return (
-                                                                                    <span key={opId} onClick={() => handleOperatorClick(op, outcomeIndex)} className={cn(getRarityColor(rarityNum), "cursor-pointer rounded px-1 py-0.5 hover:bg-primary/10", isSelected && "bg-primary/20 ring-1 ring-primary")} title="Click to see all tags">
-                                                                                        {op.name} ({rarityNum}★)
-                                                                                        {/* Use op.recruitOnly directly */}
-                                                                                        {op.recruitOnly && <span className="ml-0.5 text-xs text-blue-500 opacity-80">*</span>}
-                                                                                    </span>
-                                                                                );
-                                                                            })}
-                                                                    </div>
-                                                                    {/* Conditionally display tags for the selected operator */}
-                                                                    {selectedOpInfo?.outcomeIndex === outcomeIndex && (
+                                                                    {viewMode === "text" ? (
+                                                                        <div className="flex flex-wrap gap-x-2 gap-y-1">
+                                                                            {/* Sort and map outcome.operators */}
+                                                                            {outcome.operators
+                                                                                .sort((a, b) => {
+                                                                                    const rarityA = rarityToNumber(a.rarity);
+                                                                                    const rarityB = rarityToNumber(b.rarity);
+                                                                                    if (rarityB !== rarityA) return rarityB - rarityA;
+                                                                                    return a.name.localeCompare(b.name);
+                                                                                })
+                                                                                .map((op) => {
+                                                                                    const rarityNum = rarityToNumber(op.rarity);
+                                                                                    const opId = op.id ?? op.name;
+                                                                                    const isSelected = selectedOpInfo?.outcomeIndex === outcomeIndex && selectedOpInfo?.operatorId === opId;
+
+                                                                                    // Text View (or fallback)
+                                                                                    return (
+                                                                                        <span key={opId} onClick={() => handleOperatorClick(op, outcomeIndex)} className={cn(getRarityColor(rarityNum), "cursor-pointer rounded px-1 py-0.5 hover:bg-primary/10", isSelected && "bg-primary/15 ring-1 ring-primary/25 transition-all duration-150")} title="Click to see all tags">
+                                                                                            {op.name} ({rarityNum}★)
+                                                                                            {/* Replace asterisk with flashing dot */}
+                                                                                            {op.recruitOnly && (
+                                                                                                <span className="ml-1.5 inline-flex h-2 w-2 items-center justify-center rounded-full bg-blue-600 align-middle shadow-sm" /* Smaller size (h-2 w-2), adjusted ml */ title="Recruitment Only">
+                                                                                                    {/* Use relative positioning for inline context */}
+                                                                                                    <span className="inline-flex h-full w-full animate-pulse rounded-full bg-blue-400 opacity-75"></span>
+                                                                                                    <span className="relative -ml-2 inline-flex h-1.5 w-1.5 rounded-full bg-blue-500"></span> {/* Smaller inner dot, adjusted position */}
+                                                                                                </span>
+                                                                                            )}
+                                                                                        </span>
+                                                                                    );
+                                                                                })}
+                                                                        </div>
+                                                                    ) : (
+                                                                        <div className="flex flex-wrap gap-x-2 gap-y-2">
+                                                                            {" "}
+                                                                            {/* Reduced gap slightly */}
+                                                                            {/* Profile View Mapping */}
+                                                                            {outcome.operators
+                                                                                .sort((a, b) => {
+                                                                                    const rarityA = rarityToNumber(a.rarity);
+                                                                                    const rarityB = rarityToNumber(b.rarity);
+                                                                                    if (rarityB !== rarityA) return rarityB - rarityA;
+                                                                                    return a.name.localeCompare(b.name);
+                                                                                })
+                                                                                .map((op) => {
+                                                                                    const rarityNum = rarityToNumber(op.rarity);
+                                                                                    const opId = op.id ?? op.name;
+                                                                                    // isSelected is no longer needed for profile card styling (handled by hover/focus)
+                                                                                    const imageUrl = `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/portrait/${op.id}_1.png`;
+                                                                                    const displayTags = getOperatorDisplayTags(op); // Calculate tags for hover card
+
+                                                                                    return (
+                                                                                        <HoverCard key={opId} openDelay={200} closeDelay={100}>
+                                                                                            <HoverCardTrigger asChild>
+                                                                                                <div
+                                                                                                    // Removed onClick handler
+                                                                                                    className={cn(
+                                                                                                        "relative aspect-[3/4] h-36 cursor-pointer overflow-hidden rounded border border-border transition-all hover:scale-105 hover:shadow-md",
+                                                                                                        // Selection ring is removed, hover/focus provides feedback
+                                                                                                    )}
+                                                                                                    title={`${op.name}`} // Simplified title
+                                                                                                    tabIndex={0} // Make it focusable
+                                                                                                >
+                                                                                                    <Image
+                                                                                                        src={imageUrl}
+                                                                                                        alt={op.name}
+                                                                                                        fill
+                                                                                                        sizes="(max-width: 768px) 16vw, 11vw" // Adjusted sizes for h-36
+                                                                                                        className="object-cover"
+                                                                                                        loading="lazy"
+                                                                                                        unoptimized
+                                                                                                    />
+                                                                                                    {/* Bottom overlay for info - Smaller Text, Adjusted Padding */}
+                                                                                                    <div className="absolute inset-x-0 bottom-0 bg-black/75 p-1 pt-1.5 backdrop-blur-sm">
+                                                                                                        {" "}
+                                                                                                        {/* Adjusted padding */}
+                                                                                                        <div className={`truncate text-xs font-semibold ${getRarityColor(rarityNum - 1)}`}>{op.name}</div> {/* Smaller text (xs) */}
+                                                                                                        <div className="text-[10px] text-yellow-300">{Array(rarityNum).fill("★").join("")}</div> {/* Smaller text (10px) */}
+                                                                                                    </div>
+                                                                                                    {/* Recruitment Only Badge (Flashing Dot) */}
+                                                                                                    {op.recruitOnly && (
+                                                                                                        <span className="absolute right-1 top-1 flex h-3 w-3 items-center justify-center rounded-full bg-blue-600 shadow-md" title="Recruitment Only">
+                                                                                                            <span className="absolute inline-flex h-full w-full animate-pulse rounded-full bg-blue-400 opacity-75"></span>
+                                                                                                            <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-500"></span>
+                                                                                                        </span>
+                                                                                                    )}
+                                                                                                </div>
+                                                                                            </HoverCardTrigger>
+                                                                                            <HoverCardContent side="top" className="w-auto max-w-[250px] p-2">
+                                                                                                <div className="flex flex-col gap-1">
+                                                                                                    <p className="mb-1 text-sm font-semibold">{op.name}</p>
+                                                                                                    <div className="flex flex-wrap gap-1">
+                                                                                                        {displayTags.length > 0 ? (
+                                                                                                            displayTags.map((tagName) => (
+                                                                                                                <Badge variant="secondary" key={tagName}>
+                                                                                                                    {tagName}
+                                                                                                                </Badge>
+                                                                                                            ))
+                                                                                                        ) : (
+                                                                                                            <p className="text-xs text-muted-foreground">No specific tags found.</p>
+                                                                                                        )}
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            </HoverCardContent>
+                                                                                        </HoverCard>
+                                                                                    );
+                                                                                })}
+                                                                        </div>
+                                                                    )}
+                                                                    {/* Conditionally display tags for the selected operator (TEXT VIEW ONLY) */}
+                                                                    {viewMode === "text" && selectedOpInfo?.outcomeIndex === outcomeIndex && (
                                                                         <div className="mt-2 flex flex-wrap gap-1 border-t pt-2">
                                                                             {selectedOpInfo.allTags.map((tagName) => (
                                                                                 <div key={tagName} className="whitespace-nowrap rounded bg-accent px-1.5 py-0.5 text-xs text-accent-foreground">
