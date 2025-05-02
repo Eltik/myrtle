@@ -4,12 +4,14 @@ import { filterObject } from "../../../../helper";
 import { calculateTrust, getHandbook, getMaterial, modules } from "../../../../lib/impl/local/impl/gamedata";
 import { getAll as getAllMaterials } from "../../../../lib/impl/local/impl/gamedata/impl/materials";
 import { getAll as getAllModules } from "../../../../lib/impl/local/impl/gamedata/impl/modules";
+import { getAll as getAllGacha } from "../../../../lib/impl/local/impl/gamedata/impl/gacha";
 import operators, { getAll as getAllOperators } from "../../../../lib/impl/local/impl/gamedata/impl/operators";
 import ranges, { getAll as getAllRanges } from "../../../../lib/impl/local/impl/gamedata/impl/ranges";
 import skills, { getAll as getAllSkills } from "../../../../lib/impl/local/impl/gamedata/impl/skills";
 import skins, { getAll as getAllSkins } from "../../../../lib/impl/local/impl/gamedata/impl/skins";
 import voices, { getAll as getAllVoices } from "../../../../lib/impl/local/impl/gamedata/impl/voices";
 import middleware from "../../middleware";
+import { calculateRecruitment, getRecruitment } from "../../../../lib/impl/local/impl/gamedata/impl/gacha/impl/recruitment";
 
 const handler = async (req: Request): Promise<Response> => {
     try {
@@ -328,6 +330,47 @@ const handler = async (req: Request): Promise<Response> => {
                     );
 
                     return middleware.createResponse(JSON.stringify({ voices: voicesData }));
+                case "gacha":
+                    const gachaMethod = body?.method ?? paths[2] ?? url.searchParams.get("method") ?? null;
+                    if (!gachaMethod) {
+                        const gachaCached = await redis.get(`${REDIS_KEY}-static:gacha`);
+                        if (gachaCached) {
+                            return middleware.createResponse(gachaCached);
+                        }
+                        return middleware.createResponse(JSON.stringify({ gacha: getAllGacha() }));
+                    }
+
+                    switch (gachaMethod.toLowerCase()) {
+                        case "recruitment":
+                            const recruitmentCached = await redis.get(`${REDIS_KEY}-static:gacha:recruitment`);
+                            if (recruitmentCached) {
+                                return middleware.createResponse(recruitmentCached);
+                            }
+
+                            const recruitmentData = getRecruitment();
+
+                            await redis.set(`${REDIS_KEY}-static:gacha:recruitment`, JSON.stringify({ recruitment: recruitmentData }), "EX", env.REDIS_CACHE_TIME);
+
+                            return middleware.createResponse(JSON.stringify({ recruitment: recruitmentData }));
+                        case "calculate":
+                            const recruitment = body?.recruitment ?? paths[3] ?? url.searchParams.get("recruitment") ?? null;
+
+                            if (!recruitment) {
+                                return middleware.createResponse(JSON.stringify({ error: "No recruitment provided." }), 400);
+                            }
+
+                            const rData = getRecruitment();
+
+                            if (!rData) {
+                                return middleware.createResponse(JSON.stringify({ error: "Internal server error. No recruitment data found." }), 400);
+                            }
+
+                            const recruitmentResult = calculateRecruitment(new Set(recruitment.split(",")), rData.RECRUIT_POOL, rData.TAG_MAP);
+
+                            return middleware.createResponse(JSON.stringify({ recruitment: recruitmentResult }));
+                        default:
+                            return middleware.createResponse(JSON.stringify({ error: "Invalid method." }), 400);
+                    }
                 default:
                     return middleware.createResponse(JSON.stringify({ error: "Invalid type." }), 400);
             }
@@ -348,11 +391,12 @@ const route = {
 };
 
 type Body = {
-    type: "materials" | "modules" | "operators" | "ranges" | "skills" | "trust" | "handbook" | "skins" | "voices";
+    type: "materials" | "modules" | "operators" | "ranges" | "skills" | "trust" | "handbook" | "skins" | "voices" | "recruitment";
     id?: string;
     method?: string;
     trust?: number;
     fields?: string[];
+    recruitment?: string;
 };
 
 export default route;

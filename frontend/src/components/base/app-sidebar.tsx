@@ -33,7 +33,7 @@ const items = [
             },
             {
                 title: "Recruitment Calculator",
-                url: "#",
+                url: "/recruitment-calculator",
             },
             {
                 title: "Chibi Viewer",
