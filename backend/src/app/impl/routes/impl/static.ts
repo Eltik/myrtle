@@ -365,7 +365,7 @@ const handler = async (req: Request): Promise<Response> => {
                                 return middleware.createResponse(JSON.stringify({ error: "Internal server error. No recruitment data found." }), 400);
                             }
 
-                            const recruitmentResult = calculateRecruitment(new Set(recruitment.split(",")), rData.RECRUIT_POOL, rData.TAG_MAP);
+                            const recruitmentResult = calculateRecruitment(new Set(recruitment.split(",")), rData.RECRUIT_POOL, rData.TAG_MAP, true);
 
                             return middleware.createResponse(JSON.stringify({ recruitment: recruitmentResult }));
                         default:
