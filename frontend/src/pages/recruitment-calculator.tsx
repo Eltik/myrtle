@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Card, CardContent } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
@@ -12,45 +12,16 @@ import type { Operator } from "~/types/impl/api/static/operator";
 import { rarityToNumber } from "~/helper";
 import { cn } from "~/lib/utils";
 import Link from "next/link";
-import { List, User } from "lucide-react"; // Import icons for buttons
+import { List, User, Search } from "lucide-react"; // Import icons for buttons
 import Image from "next/image"; // Import next/image
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "~/components/ui/hover-card"; // Import HoverCard components
 import { Badge } from "~/components/ui/badge"; // Import Badge component
-
-// Define expected data structures
-interface Tag {
-    tagId: string;
-    tagName: string;
-    tagGroup: number;
-    tagCat?: string;
-}
-
-// Updated OperatorOutcome structure
-type OperatorOutcome = {
-    label: string[];
-    operators: (Operator & { recruitOnly: boolean })[];
-};
-
-// Use Record for better type safety
-type GroupedTags = Record<string, Tag[]>;
-
-// Define the expected structure of the API response (Success)
-interface ApiResponse<T> {
-    data: T;
-    error?: string; // Should ideally not be present on success
-}
-
-// Define a potential structure for error responses from the API proxy
-interface ErrorResponse {
-    error?: string;
-}
-
-// Type for storing info about the clicked operator for tag display
-interface SelectedOpInfo {
-    outcomeIndex: number;
-    operatorId: string;
-    allTags: string[]; // Store pre-calculated tags here
-}
+import { Input } from "~/components/ui/input"; // Import Input component
+import Head from "next/head";
+import type { ApiResponse, ErrorResponse, OperatorOutcome } from "~/types/impl/frontend/impl/recruitment-calculator";
+import type { SelectedOpInfo } from "~/types/impl/frontend/impl/recruitment-calculator";
+import type { Tag } from "~/types/impl/frontend/impl/recruitment-calculator";
+import type { GroupedTags } from "~/types/impl/frontend/impl/recruitment-calculator";
 
 // Helper map for operator profession to tag ID (based on old code's logic)
 const PROFESSION_TO_TAG_ID: Record<string, string> = {
@@ -92,6 +63,15 @@ const RecruitmentCalculator = () => {
     const [selectedOpInfo, setSelectedOpInfo] = useState<SelectedOpInfo | null>(null);
     // State for toggling view mode
     const [viewMode, setViewMode] = useState<"text" | "profile">("text");
+    // State for tag search query
+    const [tagSearchQuery, setTagSearchQuery] = useState<string>("");
+
+    // State for resizable tag area
+    const initialTagAreaHeight = 288; // Corresponds to h-72
+    const [tagAreaHeight, setTagAreaHeight] = useState<number>(initialTagAreaHeight);
+    const [isDragging, setIsDragging] = useState<boolean>(false);
+    const dragStartRef = useRef<{ y: number; height: number } | null>(null);
+    const scrollAreaRef = useRef<HTMLDivElement>(null); // Ref for the ScrollArea container
 
     // Fetch all tags from the backend via the /api/static proxy
     useEffect(() => {
@@ -159,6 +139,56 @@ const RecruitmentCalculator = () => {
         };
         void fetchTags();
     }, []);
+
+    // Drag handling effects
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            if (!isDragging || !dragStartRef.current) return;
+
+            const deltaY = e.clientY - dragStartRef.current.y;
+            let newHeight = dragStartRef.current.height + deltaY;
+
+            // Clamp height (min: initial, max: 75% of viewport height)
+            const maxHeight = window.innerHeight * 0.75;
+            newHeight = Math.max(initialTagAreaHeight, Math.min(newHeight, maxHeight));
+
+            setTagAreaHeight(newHeight);
+        };
+
+        const handleMouseUp = () => {
+            if (isDragging) {
+                setIsDragging(false);
+                dragStartRef.current = null;
+                // Optional: Remove text selection cursor style globally if applied
+                document.body.style.cursor = "";
+                document.body.style.userSelect = "";
+            }
+        };
+
+        if (isDragging) {
+            // Optional: Change cursor globally to indicate dragging
+            document.body.style.cursor = "ns-resize";
+            document.body.style.userSelect = "none"; // Prevent text selection during drag
+            window.addEventListener("mousemove", handleMouseMove);
+            window.addEventListener("mouseup", handleMouseUp);
+        } else {
+            window.removeEventListener("mousemove", handleMouseMove);
+            window.removeEventListener("mouseup", handleMouseUp);
+        }
+
+        // Cleanup listeners on component unmount or when isDragging changes
+        return () => {
+            window.removeEventListener("mousemove", handleMouseMove);
+            window.removeEventListener("mouseup", handleMouseUp);
+            // Reset global styles if component unmounts while dragging
+            if (document.body.style.cursor === "ns-resize") {
+                document.body.style.cursor = "";
+            }
+            if (document.body.style.userSelect === "none") {
+                document.body.style.userSelect = "";
+            }
+        };
+    }, [isDragging]); // Re-run effect when isDragging changes
 
     // Calculate outcomes by sending selected tags to the /api/static proxy
     const calculateOutcomes = useCallback(async (tagsToCalculate: Set<string>) => {
@@ -273,6 +303,16 @@ const RecruitmentCalculator = () => {
         });
     };
 
+    const handleMouseDownOnGrabber = (e: React.MouseEvent<HTMLDivElement>) => {
+        setIsDragging(true);
+        dragStartRef.current = {
+            y: e.clientY,
+            height: tagAreaHeight,
+        };
+        // Prevent default text selection behavior during drag
+        e.preventDefault();
+    };
+
     const resetSelection = () => {
         setSelectedTags(new Set());
         setSelectedOpInfo(null); // Clear selected op tags on reset
@@ -280,10 +320,10 @@ const RecruitmentCalculator = () => {
 
     // Helper function to get rarity color - adjust as needed
     const getRarityColor = (rarityNum: number): string => {
-        if (rarityNum === 6) return "text-red-600 font-bold";
-        if (rarityNum === 5) return "text-orange-500 font-semibold";
-        if (rarityNum === 4) return "text-yellow-500 font-semibold";
-        if (rarityNum === 3) return "text-purple-500";
+        if (rarityNum === 6) return "text-orange-500 font-bold";
+        if (rarityNum === 5) return "text-yellow-500 font-semibold";
+        if (rarityNum === 4) return "text-purple-500 font-semibold";
+        if (rarityNum === 3) return "text-blue-500";
         if (rarityNum === 2) return "text-green-600";
         if (rarityNum === 1) return "text-gray-500";
         return "text-gray-400";
@@ -342,152 +382,210 @@ const RecruitmentCalculator = () => {
     };
 
     return (
-        <div className="container mx-auto p-4">
-            <h1 className="mt-2 text-2xl font-bold">Arknights Recruitment Calculator</h1>
-            <p className="mb-4 text-xs md:text-sm">
-                Calculate the probability of getting a specific operator or operators in a recruitment. Please note that the calculator may not have all operators available.
-                <br />
-                <b>Note:</b> This calculator uses calculations from{" "}
-                <Link href={"https://github.com/akgcc/akgcc.github.io"} className="text-blue-500 hover:underline">
-                    akgcc/akgcc.github.io
-                </Link>
-                . All credit for the recruitment calculations goes to them.
-            </p>
-            <Card>
-                <CardContent>
-                    <div className="mb-4 pt-2">
-                        <h3 className="mb-2 text-lg font-semibold">Select Tags (Up to 5)</h3>
-                        {isLoadingTags ? (
-                            <div className="mb-4 flex h-72 w-full items-center justify-center rounded-md border p-4">
-                                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                                <span className="ml-2">Loading tags...</span>
-                            </div>
-                        ) : errorTags ? (
-                            <Alert variant="destructive" className="mb-4">
-                                <AlertTitle>Error Loading Tags</AlertTitle>
-                                <AlertDescription>{errorTags}</AlertDescription>
-                            </Alert>
-                        ) : (
-                            <ScrollArea className="mb-4 h-72 w-full rounded-md border p-4">
-                                {Object.entries(groupedTags).length > 0 ? (
-                                    Object.entries(groupedTags).map(([type, tags]) => (
-                                        <div key={type} className="mb-4">
-                                            <h4 className="mb-2 font-medium text-primary">{type}</h4>
-                                            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                                                {tags.map((tag) => (
-                                                    <div key={tag.tagId} className="flex items-center space-x-2 rounded-md border p-2 transition-colors hover:bg-accent">
-                                                        <Checkbox
-                                                            id={tag.tagId}
-                                                            checked={selectedTags.has(tag.tagId)}
-                                                            onCheckedChange={(checked: boolean | "indeterminate") => handleTagChange(tag.tagId, checked)} // Added type here too
-                                                            disabled={selectedTags.size >= 5 && !selectedTags.has(tag.tagId)}
-                                                        />
-                                                        <label htmlFor={tag.tagId} className={`text-sm font-medium leading-none ${selectedTags.size >= 5 && !selectedTags.has(tag.tagId) ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer"}`}>
-                                                            {tag.tagName}
-                                                        </label>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <p className="text-muted-foreground">No tags found or failed to load.</p>
-                                )}
-                            </ScrollArea>
-                        )}
-                        <Button onClick={resetSelection} variant="outline" disabled={selectedTags.size === 0}>
-                            Reset Selection
-                        </Button>
-                    </div>
-
-                    <Separator className="my-6" />
-
-                    <div>
-                        {/* header */}
-                        <div className="mb-2 flex items-center justify-between">
-                            <h3 className="text-lg font-semibold">Possible Operator Outcomes</h3>
-                        </div>
-                        <div className="relative min-h-[150px] rounded-md border bg-muted/50 p-4">
-                            {/* New container for Legend and Buttons */}
-                            <div className="mb-2 flex min-h-[28px] items-center justify-between">
-                                {" "}
-                                {/* Added min-h for alignment when legend is hidden */}
-                                {/* Legend for Profile View (Moved Here) */}
-                                <div>
-                                    {" "}
-                                    {/* Left side container */}
-                                    {possibleOutcomes.length > 0 && (
-                                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                            {" "}
-                                            {/* Legend content */}
-                                            <span className="relative flex h-3 w-3 items-center justify-center rounded-full bg-blue-600 shadow-sm">
-                                                <span className="absolute inline-flex h-full w-full animate-pulse rounded-full bg-blue-400 opacity-75"></span>
-                                                <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-500"></span>
-                                            </span>
-                                            <span>= Recruitment Only</span>
-                                        </div>
-                                    )}
+        <>
+            <Head>
+                <title>Arknights Recruitment Calculator</title>
+                <meta name="title" content="Arknights Recruitment Calculator" />
+                <meta name="description" content="Calculate the probability of getting a specific operator or operators in a recruitment." />
+                <link rel="icon" href="/favicon.ico" />
+            </Head>
+            <div className="container mx-auto p-4">
+                <h1 className="mt-2 text-2xl font-bold">Arknights Recruitment Calculator</h1>
+                <p className="mb-4 text-xs md:text-sm">
+                    Calculate the probability of getting a specific operator or operators in a recruitment. Please note that the calculator may not have all operators available.
+                    <br />
+                    <b>Note:</b> This calculator uses calculations from{" "}
+                    <Link href={"https://github.com/akgcc/akgcc.github.io"} className="text-blue-500 hover:underline">
+                        akgcc/akgcc.github.io
+                    </Link>
+                    . All credit for the recruitment calculations goes to them.
+                </p>
+                <Card>
+                    <CardContent>
+                        <div className="mb-4 pt-2">
+                            <h3 className="mb-2 text-lg font-semibold">Select Tags (Up to 5)</h3>
+                            {isLoadingTags ? (
+                                <div className="mb-4 flex h-72 w-full items-center justify-center rounded-md border p-4">
+                                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                                    <span className="ml-2">Loading tags...</span>
                                 </div>
-                                {/* View Mode Toggle Buttons (Moved Here) */}
-                                <div className="flex items-center gap-1">
-                                    <Button variant={viewMode === "text" ? "secondary" : "ghost"} size="sm" onClick={() => setViewMode("text")} title="Text View">
-                                        <List className="h-4 w-4" />
-                                    </Button>
-                                    <Button variant={viewMode === "profile" ? "secondary" : "ghost"} size="sm" onClick={() => setViewMode("profile")} title="Profile View">
-                                        <User className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            </div>
-
-                            {isLoadingOutcomes && (
-                                <div className="absolute inset-0 z-10 flex items-center justify-center rounded-md bg-background/80">
-                                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                                    <span className="ml-2">Calculating...</span>
-                                </div>
-                            )}
-                            {errorOutcomes && (
+                            ) : errorTags ? (
                                 <Alert variant="destructive" className="mb-4">
-                                    <AlertTitle>Calculation Error</AlertTitle>
-                                    <AlertDescription>{errorOutcomes}</AlertDescription>
+                                    <AlertTitle>Error Loading Tags</AlertTitle>
+                                    <AlertDescription>{errorTags}</AlertDescription>
                                 </Alert>
-                            )}
-                            {!isLoadingOutcomes && !errorOutcomes && (
+                            ) : (
                                 <>
-                                    {selectedTags.size === 0 ? (
-                                        <p className="text-muted-foreground">Select tags above...</p>
-                                    ) : possibleOutcomes.length > 0 ? (
-                                        <table className="w-full table-fixed border-collapse text-sm">
-                                            <thead>
-                                                <tr className="border-b">
-                                                    <th className="w-1/3 px-2 py-2 text-left font-medium text-muted-foreground">Combination</th>
-                                                    <th className="w-2/3 px-2 py-2 text-left font-medium text-muted-foreground">Operators</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {/* Map over the possible results */}
+                                    <div className="relative mb-3 flex items-center gap-2">
+                                        {" "}
+                                        {/* Flex container for input and icons */}
+                                        <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /> {/* Search Icon */}
+                                        <Input
+                                            type="text"
+                                            placeholder="Search tags..."
+                                            value={tagSearchQuery}
+                                            onChange={(e) => setTagSearchQuery(e.target.value)}
+                                            className="flex-grow pl-8" // Add padding for the icon and allow input to grow
+                                        />
+                                    </div>
+                                    <ScrollArea ref={scrollAreaRef} className="w-full overflow-auto rounded-t-md border border-b-0 p-4" style={{ height: `${tagAreaHeight}px` }}>
+                                        {Object.entries(groupedTags).length > 0 ? (
+                                            Object.entries(groupedTags).map(([type, tags]) => {
+                                                const filteredTags = tags.filter((tag) => tag.tagName.toLowerCase().includes(tagSearchQuery.toLowerCase()));
+
+                                                if (filteredTags.length === 0) {
+                                                    return null; // Don't render the group if no tags match the search
+                                                }
+
+                                                return (
+                                                    <div key={type} className="mb-4">
+                                                        <h4 className="mb-2 font-medium text-primary">{type}</h4>
+                                                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                                                            {filteredTags.map((tag) => {
+                                                                const isDisabled = selectedTags.size >= 5 && !selectedTags.has(tag.tagId);
+                                                                const isChecked = selectedTags.has(tag.tagId);
+
+                                                                return (
+                                                                    <div
+                                                                        key={tag.tagId}
+                                                                        className={cn(
+                                                                            "flex items-center space-x-2 rounded-md border p-2 transition-colors hover:bg-accent",
+                                                                            !isDisabled && "cursor-pointer", // Add cursor-pointer if not disabled
+                                                                            isDisabled && "cursor-not-allowed opacity-70", // Style disabled state
+                                                                        )}
+                                                                        onClick={() => {
+                                                                            if (!isDisabled) {
+                                                                                handleTagChange(tag.tagId, !isChecked); // Toggle based on current state
+                                                                            }
+                                                                        }}
+                                                                    >
+                                                                        <Checkbox
+                                                                            id={tag.tagId}
+                                                                            checked={isChecked}
+                                                                            // Keep onCheckedChange for accessibility and direct checkbox clicks
+                                                                            onCheckedChange={(checked: boolean | "indeterminate") => handleTagChange(tag.tagId, checked)}
+                                                                            disabled={isDisabled}
+                                                                            aria-labelledby={`${tag.tagId}-label`} // Associate checkbox with label for screen readers
+                                                                        />
+                                                                        <label
+                                                                            id={`${tag.tagId}-label`} // Add id for aria-labelledby
+                                                                            htmlFor={tag.tagId} // Keep htmlFor for label-checkbox association
+                                                                            className={`select-none text-sm font-medium leading-none ${isDisabled ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer"}`} // Remove explicit cursor-pointer here
+                                                                            // Prevent label click from propagating to the div's onClick
+                                                                            onClick={(e) => e.stopPropagation()}
+                                                                        >
+                                                                            {tag.tagName}
+                                                                        </label>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })
+                                        ) : (
+                                            <p className="text-muted-foreground">No tags found or failed to load.</p>
+                                        )}
+                                    </ScrollArea>
+                                    {/* Draggable Grabber Handle */}
+                                    <div onMouseDown={handleMouseDownOnGrabber} className="mb-4 h-2 w-full cursor-ns-resize rounded-b-md border border-t-0 bg-muted transition-colors hover:bg-muted-foreground/20 active:bg-muted-foreground/30" title="Drag to resize tags area">
+                                        {/* Optional: Add visual indicator like dots */}
+                                        <div className="flex h-full items-center justify-center">
+                                            <span className="h-1 w-8 rounded-full bg-muted-foreground/40"></span>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                            <Button onClick={resetSelection} variant="outline" disabled={selectedTags.size === 0}>
+                                Reset Selection
+                            </Button>
+                        </div>
+
+                        <Separator className="my-6" />
+
+                        <div>
+                            {/* header */}
+                            <div className="mb-2 flex items-center justify-between">
+                                <h3 className="text-lg font-semibold">Possible Operator Outcomes</h3>
+                            </div>
+                            <div className="relative min-h-[150px] rounded-md border bg-muted/50 p-4">
+                                {/* New container for Legend and Buttons */}
+                                <div className="mb-2 flex min-h-[28px] items-center justify-between">
+                                    {" "}
+                                    {/* Added min-h for alignment when legend is hidden */}
+                                    {/* Legend for Profile View (Moved Here) */}
+                                    <div>
+                                        {" "}
+                                        {/* Left side container */}
+                                        {possibleOutcomes.length > 0 && (
+                                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                                {" "}
+                                                {/* Legend content */}
+                                                <span className="relative flex h-3 w-3 items-center justify-center rounded-full bg-blue-600 shadow-sm">
+                                                    <span className="absolute inline-flex h-full w-full animate-pulse rounded-full bg-blue-400 opacity-75"></span>
+                                                    <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-500"></span>
+                                                </span>
+                                                <span>= Recruitment Only</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    {/* View Mode Toggle Buttons (Moved Here) */}
+                                    <div className="flex items-center gap-1">
+                                        <Button variant={viewMode === "text" ? "secondary" : "ghost"} size="sm" onClick={() => setViewMode("text")} title="Text View">
+                                            <List className="h-4 w-4" />
+                                        </Button>
+                                        <Button variant={viewMode === "profile" ? "secondary" : "ghost"} size="sm" onClick={() => setViewMode("profile")} title="Profile View">
+                                            <User className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                {isLoadingOutcomes && (
+                                    <div className="absolute inset-0 z-10 flex items-center justify-center rounded-md bg-background/80">
+                                        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                                        <span className="ml-2">Calculating...</span>
+                                    </div>
+                                )}
+                                {errorOutcomes && (
+                                    <Alert variant="destructive" className="mb-4">
+                                        <AlertTitle>Calculation Error</AlertTitle>
+                                        <AlertDescription>{errorOutcomes}</AlertDescription>
+                                    </Alert>
+                                )}
+                                {!isLoadingOutcomes && !errorOutcomes && (
+                                    <>
+                                        {selectedTags.size === 0 ? (
+                                            <p className="text-muted-foreground">Select tags above...</p>
+                                        ) : possibleOutcomes.length > 0 ? (
+                                            <div className="-mx-4 text-sm">
+                                                {" "}
+                                                {/* Container replacing table/tbody, negative margin to counter padding */}
                                                 {possibleOutcomes.map(
                                                     (outcome, outcomeIndex) =>
-                                                        // Use outcome.operators instead of outcome.matches
                                                         outcome.operators &&
                                                         outcome.operators.length > 0 && (
-                                                            <tr key={outcomeIndex} className="border-b align-top last:border-b-0 hover:bg-muted/20">
-                                                                {/* Render logic for tags and operators remains the same */}
-                                                                {/* Tags Column - Use outcome.label */}
-                                                                <td className="p-2">
-                                                                    <div className="flex flex-wrap gap-1">
-                                                                        {/* Map over outcome.label (string[]) */}
+                                                            <div key={outcomeIndex} className="flex flex-col border-b px-4 py-2 last:border-b-0 hover:bg-muted/20 md:flex-row">
+                                                                {/* Tags Section (Combination) */}
+                                                                <div className="md:w-1/3 md:pr-2">
+                                                                    <p className="mb-1 font-medium text-muted-foreground md:hidden">Combination:</p>
+                                                                    <div className="flex flex-wrap gap-1 pb-2 md:pb-0">
                                                                         {outcome.label.map((tagName) => (
                                                                             <div key={tagName} className="whitespace-nowrap rounded bg-secondary px-1.5 py-0.5 text-xs font-medium text-secondary-foreground">
                                                                                 {tagName}
                                                                             </div>
                                                                         ))}
                                                                     </div>
-                                                                </td>
-                                                                {/* Operators Column - Use outcome.operators */}
-                                                                <td className="p-2">
+                                                                </div>
+
+                                                                {/* Separator for mobile view */}
+                                                                <div className="my-2 border-t md:hidden"></div>
+
+                                                                {/* Operators Section */}
+                                                                <div className="md:w-2/3 md:pl-2">
+                                                                    <p className="mb-1 font-medium text-muted-foreground md:hidden">Operators:</p>
                                                                     {viewMode === "text" ? (
                                                                         <div className="flex flex-wrap gap-x-2 gap-y-1">
-                                                                            {/* Sort and map outcome.operators */}
+                                                                            {/* Text View Mapping */}
                                                                             {outcome.operators
                                                                                 .sort((a, b) => {
                                                                                     const rarityA = rarityToNumber(a.rarity);
@@ -499,17 +597,13 @@ const RecruitmentCalculator = () => {
                                                                                     const rarityNum = rarityToNumber(op.rarity);
                                                                                     const opId = op.id ?? op.name;
                                                                                     const isSelected = selectedOpInfo?.outcomeIndex === outcomeIndex && selectedOpInfo?.operatorId === opId;
-
-                                                                                    // Text View (or fallback)
                                                                                     return (
                                                                                         <span key={opId} onClick={() => handleOperatorClick(op, outcomeIndex)} className={cn(getRarityColor(rarityNum), "cursor-pointer rounded px-1 py-0.5 hover:bg-primary/10", isSelected && "bg-primary/15 ring-1 ring-primary/25 transition-all duration-150")} title="Click to see all tags">
                                                                                             {op.name} ({rarityNum}★)
-                                                                                            {/* Replace asterisk with flashing dot */}
                                                                                             {op.recruitOnly && (
-                                                                                                <span className="ml-1.5 inline-flex h-2 w-2 items-center justify-center rounded-full bg-blue-600 align-middle shadow-sm" /* Smaller size (h-2 w-2), adjusted ml */ title="Recruitment Only">
-                                                                                                    {/* Use relative positioning for inline context */}
+                                                                                                <span className="ml-1.5 inline-flex h-2 w-2 items-center justify-center rounded-full bg-blue-600 align-middle shadow-sm" title="Recruitment Only">
                                                                                                     <span className="inline-flex h-full w-full animate-pulse rounded-full bg-blue-400 opacity-75"></span>
-                                                                                                    <span className="relative -ml-2 inline-flex h-1.5 w-1.5 rounded-full bg-blue-500"></span> {/* Smaller inner dot, adjusted position */}
+                                                                                                    <span className="relative -ml-2 inline-flex h-1.5 w-1.5 rounded-full bg-blue-500"></span>
                                                                                                 </span>
                                                                                             )}
                                                                                         </span>
@@ -517,9 +611,7 @@ const RecruitmentCalculator = () => {
                                                                                 })}
                                                                         </div>
                                                                     ) : (
-                                                                        <div className="flex flex-wrap gap-x-2 gap-y-2">
-                                                                            {" "}
-                                                                            {/* Reduced gap slightly */}
+                                                                        <div className="flex flex-wrap gap-x-1.5 gap-y-1.5 md:gap-x-2 md:gap-y-2">
                                                                             {/* Profile View Mapping */}
                                                                             {outcome.operators
                                                                                 .sort((a, b) => {
@@ -531,39 +623,18 @@ const RecruitmentCalculator = () => {
                                                                                 .map((op) => {
                                                                                     const rarityNum = rarityToNumber(op.rarity);
                                                                                     const opId = op.id ?? op.name;
-                                                                                    // isSelected is no longer needed for profile card styling (handled by hover/focus)
                                                                                     const imageUrl = `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/portrait/${op.id}_1.png`;
-                                                                                    const displayTags = getOperatorDisplayTags(op); // Calculate tags for hover card
+                                                                                    const displayTags = getOperatorDisplayTags(op);
 
                                                                                     return (
                                                                                         <HoverCard key={opId} openDelay={200} closeDelay={100}>
                                                                                             <HoverCardTrigger asChild>
-                                                                                                <div
-                                                                                                    // Removed onClick handler
-                                                                                                    className={cn(
-                                                                                                        "relative aspect-[3/4] h-36 cursor-pointer overflow-hidden rounded border border-border transition-all hover:scale-105 hover:shadow-md",
-                                                                                                        // Selection ring is removed, hover/focus provides feedback
-                                                                                                    )}
-                                                                                                    title={`${op.name}`} // Simplified title
-                                                                                                    tabIndex={0} // Make it focusable
-                                                                                                >
-                                                                                                    <Image
-                                                                                                        src={imageUrl}
-                                                                                                        alt={op.name}
-                                                                                                        fill
-                                                                                                        sizes="(max-width: 768px) 16vw, 11vw" // Adjusted sizes for h-36
-                                                                                                        className="object-cover"
-                                                                                                        loading="lazy"
-                                                                                                        unoptimized
-                                                                                                    />
-                                                                                                    {/* Bottom overlay for info - Smaller Text, Adjusted Padding */}
+                                                                                                <div className={cn("relative aspect-[3/4] h-28 cursor-pointer overflow-hidden rounded border border-border transition-all hover:scale-105 hover:shadow-md md:h-36")} title={`${op.name}`} tabIndex={0}>
+                                                                                                    <Image src={imageUrl} alt={op.name} fill sizes="(max-width: 767px) 14vw, (min-width: 768px) 11vw" className="object-cover" loading="lazy" unoptimized />
                                                                                                     <div className="absolute inset-x-0 bottom-0 bg-black/75 p-1 pt-1.5 backdrop-blur-sm">
-                                                                                                        {" "}
-                                                                                                        {/* Adjusted padding */}
-                                                                                                        <div className={`truncate text-xs font-semibold ${getRarityColor(rarityNum - 1)}`}>{op.name}</div> {/* Smaller text (xs) */}
-                                                                                                        <div className="text-[10px] text-yellow-300">{Array(rarityNum).fill("★").join("")}</div> {/* Smaller text (10px) */}
+                                                                                                        <div className={`truncate text-xs font-semibold ${getRarityColor(rarityNum)}`}>{op.name}</div>
+                                                                                                        <div className="text-[10px] text-yellow-300">{Array(rarityNum).fill("★").join("")}</div>
                                                                                                     </div>
-                                                                                                    {/* Recruitment Only Badge (Flashing Dot) */}
                                                                                                     {op.recruitOnly && (
                                                                                                         <span className="absolute right-1 top-1 flex h-3 w-3 items-center justify-center rounded-full bg-blue-600 shadow-md" title="Recruitment Only">
                                                                                                             <span className="absolute inline-flex h-full w-full animate-pulse rounded-full bg-blue-400 opacity-75"></span>
@@ -603,22 +674,22 @@ const RecruitmentCalculator = () => {
                                                                             ))}
                                                                         </div>
                                                                     )}
-                                                                </td>
-                                                            </tr>
+                                                                </div>
+                                                            </div>
                                                         ),
                                                 )}
-                                            </tbody>
-                                        </table>
-                                    ) : (
-                                        <p className="text-muted-foreground">No guaranteed outcomes found for the selected tags.</p>
-                                    )}
-                                </>
-                            )}
+                                            </div>
+                                        ) : (
+                                            <p className="text-muted-foreground">No guaranteed outcomes found for the selected tags.</p>
+                                        )}
+                                    </>
+                                )}
+                            </div>
                         </div>
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
+                    </CardContent>
+                </Card>
+            </div>
+        </>
     );
 };
 

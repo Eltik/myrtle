@@ -45,7 +45,7 @@ const items = [
             },
             {
                 title: "Squad Randomizer",
-                url: "#",
+                url: "/squad-randomizer",
             },
         ],
     },
