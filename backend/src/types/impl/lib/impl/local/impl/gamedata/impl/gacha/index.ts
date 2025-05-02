@@ -1,3 +1,10 @@
+import type { Operator } from "../operators";
+
+export type RecruitResult = {
+    label: string[];
+    operators: Operator[];
+};
+
 export enum GachaRuleType {
     NORMAL = "NORMAL",
     LIMITED = "LIMITED",

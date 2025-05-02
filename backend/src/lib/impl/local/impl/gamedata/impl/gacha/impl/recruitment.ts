@@ -8,7 +8,7 @@ import { getAll as getCharPatch } from "../../charpatch";
 import { OperatorPosition, OperatorProfession, type Operator } from "../../../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/operators";
 import { STATIC_DATA } from "../../../../handler";
 import { getOperator } from "../../..";
-import type { GachaTag } from "../../../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/gacha";
+import type { GachaTag, RecruitResult } from "../../../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/gacha";
 import { operatorRarityToNumber } from "../../../../../../dps-calculator/impl/helper/operatorRarityToNumber";
 import type { RecruitGroup } from "../../../../../../../../types/impl/lib/impl/local/impl/gamedata/impl/gacha/impl/recruitment";
 
@@ -140,75 +140,75 @@ const getRecruitPool = (chars: Record<string, Operator>, recruitDetail: string, 
     return true;
 };
 
-export const calculateRecruitment = (recruitment: Set<string>, RECRUIT_POOL: Record<string, Operator>, TAG_MAP: Record<string, GachaTag>, showRobots: boolean = true) => {
+export const calculateRecruitment = (recruitment: Set<string>, RECRUIT_POOL: Record<string, Operator>, TAG_MAP: Record<string, GachaTag>, showRobots: boolean = true, noobMode: boolean = false) => {
     const combinations = getCombinations(recruitment);
 
     const groups: RecruitGroup[] = [];
 
-    for (const combination of combinations) {
-        if (combination.length === 0) continue;
+    combinations.forEach((combination) => {
+        if (combination.length === 0) return;
 
         const tags = combination.map((tag) => TAG_MAP[tag]);
-        const matches = [];
+        const matches: Operator[] = [];
 
         const hasTopOp = combination.includes("11");
 
-        const filteredOps = Object.values(RECRUIT_POOL)
-            .filter((op) => hasTopOp || operatorRarityToNumber(op.rarity) < 5)
-            .filter(Boolean);
-
-        for (const op of filteredOps) {
-            const match = tags.every((tag) => {
-                switch (tag.tagCat) {
-                    case "Position":
-                        switch (tag.tagId) {
-                            case 9:
-                                return op.position === OperatorPosition.MELEE;
-                            case 10:
-                                return op.position === OperatorPosition.RANGED;
+        Object.values(RECRUIT_POOL)
+            .filter((op) => hasTopOp || operatorRarityToNumber(op.rarity) <= 5)
+            .forEach((op) => {
+                if (
+                    tags.every((tag) => {
+                        switch (tag.tagCat) {
+                            case "Position":
+                                switch (tag.tagId) {
+                                    case 9:
+                                        return op.position === OperatorPosition.MELEE;
+                                    case 10:
+                                        return op.position === OperatorPosition.RANGED;
+                                }
+                            case "Rarity":
+                                switch (tag.tagId) {
+                                    case 17:
+                                        return operatorRarityToNumber(op.rarity) === 1;
+                                    case 14:
+                                        return operatorRarityToNumber(op.rarity) === 4;
+                                    case 11:
+                                        return operatorRarityToNumber(op.rarity) === 5;
+                                    case 28:
+                                        return operatorRarityToNumber(op.rarity) === 0;
+                                }
+                            case "Class":
+                                switch (tag.tagId) {
+                                    case 1:
+                                        return op.profession === OperatorProfession.GUARD;
+                                    case 2:
+                                        return op.profession === OperatorProfession.SNIPER;
+                                    case 3:
+                                        return op.profession === OperatorProfession.DEFENDER;
+                                    case 4:
+                                        return op.profession === OperatorProfession.MEDIC;
+                                    case 5:
+                                        return op.profession === OperatorProfession.SUPPORTER;
+                                    case 6:
+                                        return op.profession === OperatorProfession.CASTER;
+                                    case 7:
+                                        return op.profession === OperatorProfession.SPECIALIST;
+                                    case 8:
+                                        return op.profession === OperatorProfession.VANGUARD;
+                                }
+                            case "Affix":
+                                switch (tag.tagId) {
+                                    default:
+                                        return op.tagList?.includes(tag.tagName);
+                                }
                         }
-                    case "Rarity":
-                        switch (tag.tagId) {
-                            case 17:
-                                return operatorRarityToNumber(op.rarity) === 1;
-                            case 14:
-                                return operatorRarityToNumber(op.rarity) === 4;
-                            case 11:
-                                return operatorRarityToNumber(op.rarity) === 5;
-                            case 28:
-                                return operatorRarityToNumber(op.rarity) === 0;
-                        }
-                    case "Class":
-                        switch (tag.tagId) {
-                            case 1:
-                                return op.profession === OperatorProfession.GUARD;
-                            case 2:
-                                return op.profession === OperatorProfession.SNIPER;
-                            case 3:
-                                return op.profession === OperatorProfession.DEFENDER;
-                            case 4:
-                                return op.profession === OperatorProfession.MEDIC;
-                            case 5:
-                                return op.profession === OperatorProfession.SUPPORTER;
-                            case 6:
-                                return op.profession === OperatorProfession.CASTER;
-                            case 7:
-                                return op.profession === OperatorProfession.SPECIALIST;
-                            case 8:
-                                return op.profession === OperatorProfession.VANGUARD;
-                        }
-                    case "Affix":
-                        switch (tag.tagId) {
-                            default:
-                                return op.tagList?.includes(tag.tagName);
-                        }
+                    })
+                ) {
+                    matches.push(op);
                 }
             });
 
-            if (match) {
-                matches.push(op);
-            }
-
+        if (matches.length > 0) {
             const newGroup: RecruitGroup = {
                 tags,
                 matches,
@@ -217,8 +217,6 @@ export const calculateRecruitment = (recruitment: Set<string>, RECRUIT_POOL: Rec
                 nineHourOpCount: matches.reduce((count, op) => (operatorRarityToNumber(op.rarity) > 1 ? count + 1 : count), 0),
             };
 
-            // Handle special cases with "Starter" and "Robot" tags.
-            // Uses 3.5 rarity for robots which puts them above 4* but below 5*.
             if (newGroup.lowest9hrRarity === 99) {
                 const lowestRarity = newGroup.matches.reduce((minr, op) => Math.min(minr, operatorRarityToNumber(op.rarity)), 99);
 
@@ -227,18 +225,25 @@ export const calculateRecruitment = (recruitment: Set<string>, RECRUIT_POOL: Rec
             }
 
             newGroup.matches.sort((a, b) => {
-                if (a.rarity !== b.rarity) {
-                    if (showRobots && newGroup.lowest9hrRarity === 3) {
-                        if (operatorRarityToNumber(a.rarity) === 0) return -1;
-                        if (operatorRarityToNumber(b.rarity) === 0) return 1;
-                    }
+                const rarityA = operatorRarityToNumber(a.rarity);
+                const rarityB = operatorRarityToNumber(b.rarity);
 
-                    if (operatorRarityToNumber(a.rarity) < 2) {
-                        return operatorRarityToNumber(b.rarity) < 2 ? operatorRarityToNumber(b.rarity) - operatorRarityToNumber(a.rarity) : 1;
-                    } else if (operatorRarityToNumber(b.rarity) < 2) {
-                        return -1;
+                if (showRobots && newGroup.lowest9hrRarity === 3.5) {
+                    if (rarityA === 0 && rarityB !== 0) return -1;
+                    if (rarityA !== 0 && rarityB === 0) return 1;
+                }
+
+                if (rarityA !== rarityB) {
+                    const aIsLow = rarityA < 2;
+                    const bIsLow = rarityB < 2;
+
+                    if (aIsLow && !bIsLow) return 1;
+                    if (!aIsLow && bIsLow) return -1;
+
+                    if (!aIsLow && !bIsLow) {
+                        return rarityA - rarityB;
                     } else {
-                        return operatorRarityToNumber(a.rarity) - operatorRarityToNumber(b.rarity);
+                        return rarityB - rarityA;
                     }
                 }
 
@@ -247,9 +252,48 @@ export const calculateRecruitment = (recruitment: Set<string>, RECRUIT_POOL: Rec
 
             groups.push(newGroup);
         }
+    });
+
+    if (!noobMode) {
+        groups.filter((group) => group.lowest9hrRarity > 2);
+    } else if (!showRobots) {
+        groups.filter((group) => group.lowest9hrRarity > 0);
     }
 
-    return groups;
+    groups.sort((a, b) => {
+        if (b.lowest9hrRarity !== a.lowest9hrRarity) {
+            return b.lowest9hrRarity - a.lowest9hrRarity;
+        }
+
+        if (b.highestRarity !== a.highestRarity) {
+            return b.highestRarity - a.highestRarity;
+        }
+
+        return a.nineHourOpCount - b.nineHourOpCount;
+    });
+
+    const result: RecruitResult[] = [];
+
+    groups.forEach((group) => {
+        if (group.matches.length === 0) return;
+
+        const label: string[] = [];
+        const operators = group.matches;
+
+        group.tags.forEach((tag) => {
+            const name = tag.tagName;
+            label.push(name);
+        });
+
+        const row = {
+            label,
+            operators,
+        };
+
+        result.push(row);
+    });
+
+    return result;
 };
 
 const getCombinations = (recruitment: Set<string>) => {
