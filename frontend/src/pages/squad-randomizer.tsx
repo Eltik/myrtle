@@ -50,6 +50,17 @@ const renderStars = (rarityEnum: OperatorRarity) => {
     );
 };
 
+// Helper function to get rarity border color + shadow
+const getRarityBorderColor = (rarityNum: number): string => {
+    if (rarityNum === 6) return "border border-orange-400/60 shadow-[0_0_6px_theme(colors.orange.400/50)]"; // Top Op
+    if (rarityNum === 5) return "border border-yellow-400/60 shadow-[0_0_6px_theme(colors.yellow.400/50)]"; // Senior Op
+    if (rarityNum === 4) return "border border-purple-400/60 shadow-[0_0_6px_theme(colors.purple.400/50)]"; // 4*
+    if (rarityNum === 3) return "border border-blue-400/60 shadow-[0_0_6px_theme(colors.blue.400/50)]"; // 3*
+    if (rarityNum === 2) return "border border-green-500/60 shadow-[0_0_6px_theme(colors.green.500/50)]"; // 2*
+    if (rarityNum === 1) return "border border-gray-400/60 shadow-[0_0_6px_theme(colors.gray.400/50)]"; // 1*
+    return "border border-gray-300/60 shadow-[0_0_6px_theme(colors.gray.300/50)]"; // Default/Robot
+};
+
 const SquadRandomizer = () => {
     const [allOperators, setAllOperators] = useState<OperatorOption[]>([]);
     const [filteredOperators, setFilteredOperators] = useState<OperatorOption[]>([]);
@@ -258,7 +269,6 @@ const SquadRandomizer = () => {
                         variant={isExcluded ? "secondary" : "outline"}
                         size="sm"
                         onClick={() => {
-                            console.log(`Button clicked for ${op.name} (ID: ${op.id})`);
                             handleToggleExclude(op.id);
                         }}
                         title={isExcluded ? "Allow in squad" : "Exclude from squad"}
@@ -283,7 +293,7 @@ const SquadRandomizer = () => {
         return (
             <div key={op.id} className={cn("group relative aspect-[2/3] cursor-pointer overflow-hidden rounded-md border border-muted/50 bg-card shadow-sm transition-all duration-150", isExcluded ? "opacity-50 grayscale" : "hover:border-foreground/50 hover:shadow-md")} onClick={() => handleToggleExclude(op.id)} title={isExcluded ? `Click to Allow ${op.name}` : `Click to Exclude ${op.name}`}>
                 <Image src={imageUrl} alt={op.name} fill sizes="(max-width: 640px) 30vw, (max-width: 1024px) 15vw, 10vw" className={cn("object-cover transition-transform duration-150", !isExcluded && "group-hover:scale-105")} loading="lazy" unoptimized />
-                <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-2 pt-4">
+                <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/80 via-black/50 bg-black/60 to-transparent p-2 backdrop-blur-sm">
                     <p className={`truncate text-sm font-semibold ${displayRarityColor}`}>{op.name}</p>
                     <p className="truncate text-xs text-gray-300">{displayProfession}</p>
                     <div className="text-xs text-yellow-300">{Array(rarityNum).fill("★").join("")}</div>
@@ -329,12 +339,19 @@ const SquadRandomizer = () => {
                                 const displayRarityColor = RARITY_COLORS[op.rarity] ?? "text-white";
                                 const displayProfession = formatProfession(op.profession);
                                 const imageUrl = `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${op.id}.png`;
-                                const borderClass = RARITY_COLORS[op.rarity] ?? "border-gray-500";
+                                const rarityNum = rarityToNumber(op.rarity);
 
                                 return (
-                                    <div key={op.id} className={cn("relative aspect-square overflow-hidden rounded-md border bg-card text-card-foreground shadow-sm", borderClass)} title={`${op.name} (${displayProfession})`}>
+                                    <div
+                                        key={op.id}
+                                        className={cn(
+                                            "relative aspect-square overflow-hidden rounded-md bg-card text-card-foreground shadow-sm",
+                                            getRarityBorderColor(rarityNum),
+                                        )}
+                                        title={`${op.name} (${displayProfession})`}
+                                    >
                                         <Image src={imageUrl} alt={op.name} fill sizes="(max-width: 640px) 20vw, 10vw" className={cn("object-cover")} unoptimized />
-                                        <div className={`absolute inset-x-0 bottom-0 bg-black/60 px-1 py-0.5 text-center text-[10px] font-medium ${displayRarityColor} truncate`}>{op.name}</div>
+                                        <div className={`absolute inset-x-0 bottom-0 backdrop-blur-sm bg-black/60 px-1 py-0.5 text-center text-[10px] font-medium ${displayRarityColor} truncate`}>{op.name}</div>
                                     </div>
                                 );
                             })}
@@ -373,17 +390,13 @@ const SquadRandomizer = () => {
                                     <CommandGroup>
                                         {Array.from({ length: 6 }, (_, i) => i + 1).map((rarityNum) => {
                                             const isSelected = filterRarityNumeric.has(rarityNum);
-                                            const rarityEnumEntry = Object.entries(OperatorRarity)
-                                                .filter(([key]) => isNaN(Number(key)))
-                                                .find(([, val]) => rarityToNumber(val as OperatorRarity) === rarityNum);
-                                            const rarityEnum = rarityEnumEntry ? OperatorRarity[rarityEnumEntry[0] as keyof typeof OperatorRarity] : undefined;
 
                                             return (
                                                 <CommandItem key={rarityNum} onSelect={() => handleRarityChange(rarityNum)} className="text-sm">
                                                     <div className={cn("mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary", isSelected ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible")}>
                                                         <CheckIcon className={cn("h-4 w-4")} />
                                                     </div>
-                                                    <span className={`${rarityEnum ? RARITY_COLORS[rarityEnum] : "text-white"}`}>{rarityNum}★</span>
+                                                    <span>{rarityNum}★</span>
                                                 </CommandItem>
                                             );
                                         })}

@@ -329,6 +329,17 @@ const RecruitmentCalculator = () => {
         return "text-gray-400";
     };
 
+    // Helper function to get rarity border color
+    const getRarityBorderColor = (rarityNum: number): string => {
+        if (rarityNum === 6) return "border border-orange-400/60 shadow-[0_0_6px_theme(colors.orange.400/50)]"; // Top Op
+        if (rarityNum === 5) return "border border-yellow-400/60 shadow-[0_0_6px_theme(colors.yellow.400/50)]"; // Senior Op
+        if (rarityNum === 4) return "border border-purple-400/60 shadow-[0_0_6px_theme(colors.purple.400/50)]"; // 4*
+        if (rarityNum === 3) return "border border-blue-400/60 shadow-[0_0_6px_theme(colors.blue.400/50)]"; // 3*
+        if (rarityNum === 2) return "border border-green-500/60 shadow-[0_0_6px_theme(colors.green.500/50)]"; // 2*
+        if (rarityNum === 1) return "border border-gray-400/60 shadow-[0_0_6px_theme(colors.gray.400/50)]"; // 1*
+        return "border border-gray-300/60 shadow-[0_0_6px_theme(colors.gray.300/50)]"; // Default/Robot
+    };
+
     // Function to get all relevant tags for an operator (based on old code logic)
     const getOperatorDisplayTags = (op: Operator): string[] => {
         const tagsSet = new Set<string>();
@@ -629,7 +640,14 @@ const RecruitmentCalculator = () => {
                                                                                     return (
                                                                                         <HoverCard key={opId} openDelay={200} closeDelay={100}>
                                                                                             <HoverCardTrigger asChild>
-                                                                                                <div className={cn("relative aspect-[3/4] h-28 cursor-pointer overflow-hidden rounded border border-border transition-all hover:scale-105 hover:shadow-md md:h-36")} title={`${op.name}`} tabIndex={0}>
+                                                                                                <div
+                                                                                                    className={cn(
+                                                                                                        "relative aspect-[3/4] h-28 cursor-pointer overflow-hidden rounded transition-all hover:scale-105 hover:shadow-md md:h-36",
+                                                                                                        getRarityBorderColor(rarityNum), // Apply rarity border and shadow
+                                                                                                    )}
+                                                                                                    title={`${op.name}`}
+                                                                                                    tabIndex={0}
+                                                                                                >
                                                                                                     <Image src={imageUrl} alt={op.name} fill sizes="(max-width: 767px) 14vw, (min-width: 768px) 11vw" className="object-cover" loading="lazy" unoptimized />
                                                                                                     <div className="absolute inset-x-0 bottom-0 bg-black/75 p-1 pt-1.5 backdrop-blur-sm">
                                                                                                         <div className={`truncate text-xs font-semibold ${getRarityColor(rarityNum)}`}>{op.name}</div>
