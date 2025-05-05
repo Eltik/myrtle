@@ -247,10 +247,10 @@ const SquadRandomizer = () => {
         const imageUrl = `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${op.id}.png`;
 
         return (
-            <div key={op.id} className={cn("flex items-center justify-between border-b p-2 last:border-b-0", isExcluded && "bg-muted/30 opacity-60")}>
-                <div className="mr-2 flex min-w-0 flex-1 items-center space-x-3">
+            <div key={op.id} className={cn("flex items-center border-b p-2 last:border-b-0", isExcluded && "bg-muted/30 opacity-60")}>
+                <div className="mr-2 flex min-w-0 items-center space-x-3">
                     <Image src={imageUrl} alt={op.name} width={40} height={40} className={cn("flex-shrink-0 rounded-full", isExcluded && "grayscale")} unoptimized />
-                    <div className="min-w-0 flex-1 overflow-hidden">
+                    <div className="min-w-0 overflow-hidden">
                         <p className={`truncate font-semibold ${displayRarityColor}`}>{op.name}</p>
                         <p className="truncate text-xs text-muted-foreground">
                             {renderStars(op.rarity)} {displaySubProfession} <span className="mx-1">|</span> {displayProfession}
@@ -264,7 +264,7 @@ const SquadRandomizer = () => {
                         </div>
                     </div>
                 </div>
-                <div className="flex flex-shrink-0 items-center space-x-1 sm:space-x-2">
+                <div className="ml-auto flex flex-shrink-0 items-center space-x-1 sm:space-x-2">
                     <Button
                         variant={isExcluded ? "secondary" : "outline"}
                         size="sm"
@@ -306,6 +306,19 @@ const SquadRandomizer = () => {
             </div>
         );
     };
+
+    // Handler to exclude all currently filtered operators
+    const handleExcludeAllVisible = useCallback(() => {
+        setExcludedOperators((prev) => {
+            const newSet = new Set(prev);
+            filteredOperators.forEach((op) => {
+                if (op.id) {
+                    newSet.add(op.id);
+                }
+            });
+            return newSet;
+        });
+    }, [filteredOperators]); // Depend on filteredOperators
 
     return (
         <div className="container mx-auto flex h-screen flex-col p-4">
@@ -548,33 +561,43 @@ const SquadRandomizer = () => {
                             </Badge>
                         ))}
                     {/* Clear Buttons Container - Removed ml-auto for testing */}
-                    {filterRarityNumeric.size < 6 || filterProfession.size < Object.values(OperatorProfession).length || selectedTags.size > 0 || excludedOperators.size > 0 ? (
-                        <div className="flex items-center gap-2">
-                            {" "}
-                            {/* Removed ml-auto */}
-                            {/* Clear Excluded Button */}
-                            {excludedOperators.size > 0 && (
-                                <Button variant="link" size="sm" className="h-auto p-0 px-2 text-xs text-destructive hover:text-destructive/80" onClick={() => setExcludedOperators(new Set())}>
-                                    Clear excluded ({excludedOperators.size})
-                                </Button>
-                            )}
-                            {/* Clear Filters Button */}
-                            {filterRarityNumeric.size < 6 || filterProfession.size < Object.values(OperatorProfession).length || selectedTags.size > 0 ? (
-                                <Button
-                                    variant="link"
-                                    size="sm"
-                                    className="h-auto p-0 px-2 text-xs text-muted-foreground"
-                                    onClick={() => {
-                                        setFilterRarityNumeric(new Set([1, 2, 3, 4, 5, 6]));
-                                        setFilterProfession(new Set(Object.values(OperatorProfession)));
-                                        setSelectedTags(new Set());
-                                    }}
-                                >
-                                    Clear filters
-                                </Button>
-                            ) : null}
-                        </div>
-                    ) : null}
+                    <div className="flex items-center gap-2"> {/* Container for clear buttons */}
+                        {/* Exclude All Visible Button - Moved outside the conditional below */}
+                        <Button
+                            variant="link"
+                            size="sm"
+                            className="h-auto p-0 px-2 text-xs text-destructive hover:text-destructive/80 disabled:text-muted-foreground/50 disabled:no-underline"
+                            onClick={handleExcludeAllVisible}
+                            disabled={filteredOperators.length === 0}
+                        >
+                            Exclude all visible ({filteredOperators.length})
+                        </Button>
+                        {filterRarityNumeric.size < 6 || filterProfession.size < Object.values(OperatorProfession).length || selectedTags.size > 0 || excludedOperators.size > 0 ? (
+                            <>
+                                {/* Clear Excluded Button */}
+                                {excludedOperators.size > 0 && (
+                                    <Button variant="link" size="sm" className="h-auto p-0 px-2 text-xs text-destructive hover:text-destructive/80" onClick={() => setExcludedOperators(new Set())}>
+                                        Clear excluded ({excludedOperators.size})
+                                    </Button>
+                                )}
+                                {/* Clear Filters Button */}
+                                {filterRarityNumeric.size < 6 || filterProfession.size < Object.values(OperatorProfession).length || selectedTags.size > 0 ? (
+                                    <Button
+                                        variant="link"
+                                        size="sm"
+                                        className="h-auto p-0 px-2 text-xs text-muted-foreground"
+                                        onClick={() => {
+                                            setFilterRarityNumeric(new Set([1, 2, 3, 4, 5, 6]));
+                                            setFilterProfession(new Set(Object.values(OperatorProfession)));
+                                            setSelectedTags(new Set());
+                                        }}
+                                    >
+                                        Clear filters
+                                    </Button>
+                                ) : null}
+                            </>
+                        ) : null}
+                    </div>
                 </div>
 
                 {/* Operator List/Grid Area */}
