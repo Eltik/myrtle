@@ -650,7 +650,7 @@ const RecruitmentCalculator = () => {
                                                                                                 >
                                                                                                     <Image src={imageUrl} alt={op.name} fill sizes="(max-width: 767px) 14vw, (min-width: 768px) 11vw" className="object-cover" loading="lazy" unoptimized />
                                                                                                     <div className="absolute inset-x-0 bottom-0 bg-black/75 p-1 pt-1.5 backdrop-blur-sm">
-                                                                                                        <div className={`truncate text-xs font-semibold ${getRarityColor(rarityNum)}`}>{op.name}</div>
+                                                                                                        <div className="truncate text-xs font-semibold">{op.name}</div>
                                                                                                         <div className="text-[10px] text-yellow-300">{Array(rarityNum).fill("★").join("")}</div>
                                                                                                     </div>
                                                                                                     {op.recruitOnly && (
