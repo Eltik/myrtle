@@ -16,7 +16,7 @@ export const NETWORK_ROUTES = {
     kr: "https://ak-conf.arknights.kr/config/prod/official/network_config",
     cn: "https://ak-conf.hypergryph.com/config/prod/official/network_config",
     bili: "https://ak-conf.hypergryph.com/config/prod/b/network_config",
-    tw: "https://ak-conf.txwy.tw/config/prod/official/network_config",
+    tw: "https://ak-conf-tw.gryphline.com/config/prod/official/network_config",
 };
 
 export const DEFAULT_HEADERS = {

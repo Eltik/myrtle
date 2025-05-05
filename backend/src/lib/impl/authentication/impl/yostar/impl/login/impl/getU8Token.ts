@@ -1,4 +1,6 @@
 import { DEVICE_IDS } from "../../../../..";
+import emitter from "../../../../../../../../events";
+import { Events } from "../../../../../../../../events";
 import type { AKServer } from "../../../../../../../../types/impl/lib/impl/authentication";
 import request from "../../../../request";
 import { generateU8Sign } from "./generateU8Sign";
@@ -20,18 +22,21 @@ export const getU8Token = async (
         tw: "ERROR",
     }[server];
 
-    const extension: { type: number; uid: string; token: string } | { uid: string; access_token: string } | null = null;
+    // Initialize extension as an object
+    let extension: { type: number; uid: string; token: string } | { uid: string; access_token: string };
     if (channelID === "3") {
-        Object.assign(extension ?? {}, {
+        // EN, JP, KR
+        extension = {
             type: 1,
             uid: yostarUID,
             token: accessToken,
-        });
+        };
     } else {
-        Object.assign(extension ?? {}, {
+        // CN, Bili (Assuming this structure is correct for them)
+        extension = {
             uid: yostarUID,
             access_token: accessToken,
-        });
+        };
     }
 
     const body = {
@@ -39,7 +44,7 @@ export const getU8Token = async (
         platform: 1,
         channelId: channelID,
         subChannel: channelID,
-        extension: JSON.stringify(extension, null, 0).replace(/\s/g, ""),
+        extension: JSON.stringify(extension),
 
         // Optional fields
         worldId: channelID,
@@ -53,10 +58,29 @@ export const getU8Token = async (
     });
 
     const data = (await (
-        await request("u8", "user/v1/getToken", {
-            body: JSON.stringify(body),
+        await request("u8", true, "user/v1/getToken", {
+            method: "POST",
+            body: body,
         })
-    ).json()) as { uid: string; token: string };
+    ).json()) as {
+        result: number;
+        captcha: any;
+        error: string;
+        uid: string;
+        channelUid: string;
+        token: string;
+        isGuest: number;
+        extension: string;
+    };
+
+    if (data.result !== 0) {
+        await emitter.emit(Events.AUTH_YOSTAR_GET_U8_TOKEN_ERROR, {
+            uid: yostarUID,
+            accessToken,
+            server,
+            data,
+        });
+    }
 
     const uid = data.uid;
     const token = data.token;

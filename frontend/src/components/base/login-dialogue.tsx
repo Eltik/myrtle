@@ -102,6 +102,8 @@ export function LoginDialogue() {
                 path: "/",
             });
 
+            console.log(`Successfully logged in as ${login.uid}.`);
+
             toast({
                 title: "Success: Logged in",
                 description: "You have successfully logged in. Fetching player data...",

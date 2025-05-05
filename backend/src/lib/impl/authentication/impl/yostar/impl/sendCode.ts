@@ -11,13 +11,16 @@ export default async (email: string, server: AKServer): Promise<void> => {
     };
 
     const data = (await (
-        await request(YOSTAR_DOMAINS[server] as AKDomain, "yostar/send-code", {
-            body: JSON.stringify(body),
+        await request(YOSTAR_DOMAINS[server] as AKDomain, true, "yostar/send-code", {
+            body: body,
         })
-    ).json()) as { Code: number; Data: { Ticket: string }; Msg: string };
-    console.log(data);
+    ).json()) as {
+        Code: number;
+        Data: any;
+        Msg: string;
+    };
 
-    if (data.Code !== 0) {
+    if (data.Code !== 200) {
         await emitter.emit(Events.AUTH_YOSTAR_CODE_ERROR, {
             email,
             data,

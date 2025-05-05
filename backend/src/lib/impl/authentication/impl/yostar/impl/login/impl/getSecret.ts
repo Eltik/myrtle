@@ -1,4 +1,6 @@
 import { DEVICE_IDS, VERSIONS } from "../../../../..";
+import emitter from "../../../../../../../../events";
+import { Events } from "../../../../../../../../events";
 import type { AKServer } from "../../../../../../../../types/impl/lib/impl/authentication";
 import { loadVersionConfig } from "../../../../load/impl/versionConfig";
 import request from "../../../../request";
@@ -36,11 +38,27 @@ export const getSecret = async (uid: string, u8Token: string, server: AKServer):
     };
 
     const data = (await (
-        await request("gs", "account/login", {
-            body: JSON.stringify(body),
+        await request("gs", true, "account/login", {
+            method: "POST",
+            body: body,
             headers,
         })
-    ).json()) as { secret: string };
+    ).json()) as {
+        result: number;
+        uid: string;
+        secret: string;
+        serviceLicenseVersion: number;
+        majorVersion: string;
+    };
+
+    if (data.result !== 0) {
+        await emitter.emit(Events.AUTH_YOSTAR_GET_SECRET_ERROR, {
+            uid,
+            u8Token,
+            server,
+            data,
+        });
+    }
 
     const secret = data.secret;
     return secret;
