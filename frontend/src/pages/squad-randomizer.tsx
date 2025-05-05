@@ -293,7 +293,7 @@ const SquadRandomizer = () => {
         return (
             <div key={op.id} className={cn("group relative aspect-[2/3] cursor-pointer overflow-hidden rounded-md border border-muted/50 bg-card shadow-sm transition-all duration-150", isExcluded ? "opacity-50 grayscale" : "hover:border-foreground/50 hover:shadow-md")} onClick={() => handleToggleExclude(op.id)} title={isExcluded ? `Click to Allow ${op.name}` : `Click to Exclude ${op.name}`}>
                 <Image src={imageUrl} alt={op.name} fill sizes="(max-width: 640px) 30vw, (max-width: 1024px) 15vw, 10vw" className={cn("object-cover transition-transform duration-150", !isExcluded && "group-hover:scale-105")} loading="lazy" unoptimized />
-                <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/80 via-black/50 bg-black/60 to-transparent p-2 backdrop-blur-sm">
+                <div className="absolute inset-x-0 bottom-0 z-10 bg-black/60 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-2 backdrop-blur-sm">
                     <p className={`truncate text-sm font-semibold ${displayRarityColor}`}>{op.name}</p>
                     <p className="truncate text-xs text-gray-300">{displayProfession}</p>
                     <div className="text-xs text-yellow-300">{Array(rarityNum).fill("★").join("")}</div>
@@ -349,22 +349,14 @@ const SquadRandomizer = () => {
                         <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7">
                             {randomizedSquad.map((op) => {
                                 if (!op?.id) return null;
-                                const displayRarityColor = RARITY_COLORS[op.rarity] ?? "text-white";
                                 const displayProfession = formatProfession(op.profession);
                                 const imageUrl = `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${op.id}.png`;
                                 const rarityNum = rarityToNumber(op.rarity);
 
                                 return (
-                                    <div
-                                        key={op.id}
-                                        className={cn(
-                                            "relative aspect-square overflow-hidden rounded-md bg-card text-card-foreground shadow-sm",
-                                            getRarityBorderColor(rarityNum),
-                                        )}
-                                        title={`${op.name} (${displayProfession})`}
-                                    >
+                                    <div key={op.id} className={cn("relative aspect-square overflow-hidden rounded-md bg-card text-card-foreground shadow-sm", getRarityBorderColor(rarityNum))} title={`${op.name} (${displayProfession})`}>
                                         <Image src={imageUrl} alt={op.name} fill sizes="(max-width: 640px) 20vw, 10vw" className={cn("object-cover")} unoptimized />
-                                        <div className={`absolute inset-x-0 bottom-0 backdrop-blur-sm bg-black/60 px-1 py-0.5 text-center text-[10px] font-medium ${displayRarityColor} truncate`}>{op.name}</div>
+                                        <div className="${displayRarityColor} absolute inset-x-0 bottom-0 truncate bg-black/60 px-1 py-0.5 text-center text-[10px] font-medium backdrop-blur-sm">{op.name}</div>
                                     </div>
                                 );
                             })}
@@ -561,15 +553,11 @@ const SquadRandomizer = () => {
                             </Badge>
                         ))}
                     {/* Clear Buttons Container - Removed ml-auto for testing */}
-                    <div className="flex items-center gap-2"> {/* Container for clear buttons */}
+                    <div className="flex items-center gap-2">
+                        {" "}
+                        {/* Container for clear buttons */}
                         {/* Exclude All Visible Button - Moved outside the conditional below */}
-                        <Button
-                            variant="link"
-                            size="sm"
-                            className="h-auto p-0 px-2 text-xs text-destructive hover:text-destructive/80 disabled:text-muted-foreground/50 disabled:no-underline"
-                            onClick={handleExcludeAllVisible}
-                            disabled={filteredOperators.length === 0}
-                        >
+                        <Button variant="link" size="sm" className="h-auto p-0 px-2 text-xs text-destructive hover:text-destructive/80 disabled:text-muted-foreground/50 disabled:no-underline" onClick={handleExcludeAllVisible} disabled={filteredOperators.length === 0}>
                             Exclude all visible ({filteredOperators.length})
                         </Button>
                         {filterRarityNumeric.size < 6 || filterProfession.size < Object.values(OperatorProfession).length || selectedTags.size > 0 || excludedOperators.size > 0 ? (
