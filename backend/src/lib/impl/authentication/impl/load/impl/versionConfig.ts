@@ -25,7 +25,7 @@ export const loadVersionConfig = async (server: AKServer | "all") => {
 
         // Create the actual fetch promise
         const fetchPromise = (async () => {
-            return await (await request("hv", null, undefined, server)).json();
+            return await (await request("hv", false, null, undefined, server)).json();
         })();
 
         // Race the fetch against the timeout

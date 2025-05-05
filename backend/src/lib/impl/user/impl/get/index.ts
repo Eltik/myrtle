@@ -4,14 +4,17 @@ import { authRequest } from "../../../authentication/impl/request/impl/auth";
 import { calculateTrust, getMaterial, getOperator, getSkill } from "../../../local/impl/gamedata";
 
 export default async (session: AuthSession, server: AKServer): Promise<User | null> => {
+    const body = {
+        platform: 1,
+    };
+
     const data = (await (
         await authRequest(
             "account/syncData",
             session,
             {
-                body: JSON.stringify({
-                    platform: 1,
-                }),
+                method: "POST",
+                body: body,
             },
             server,
         )

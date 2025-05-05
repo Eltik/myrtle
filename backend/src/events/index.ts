@@ -20,6 +20,10 @@ export enum Events {
     CONFIG_VERSION_INITIATED = "config.version.initiated",
 
     AUTH_YOSTAR_CODE_SUCCESS = "auth.yostar.code.success",
+    AUTH_YOSTAR_SUBMIT_CODE_ERROR = "auth.yostar.submit.code.error",
+    AUTH_YOSTAR_TOKEN_ERROR = "auth.yostar.token.error",
+    AUTH_YOSTAR_GET_SECRET_ERROR = "auth.yostar.get.secret.error",
+    AUTH_YOSTAR_GET_U8_TOKEN_ERROR = "auth.yostar.get.u8.token.error",
     AUTH_YOSTAR_CODE_ERROR = "auth.yostar.code.error",
     AUTH_YOSTAR_LOGIN_SUCCESS = "auth.yostar.login.success",
     AUTH_YOSTAR_LOGIN_ERROR = "auth.yostar.login.error",

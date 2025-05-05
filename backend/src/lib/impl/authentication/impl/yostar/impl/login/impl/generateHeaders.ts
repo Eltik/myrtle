@@ -1,6 +1,6 @@
 import type { AKServer } from "../../../../../../../../types/impl/lib/impl/authentication";
-import { v4 as uuidv4 } from "uuid";
-import { createHash } from "crypto";
+import { createHash, randomUUID } from "crypto";
+import { DEFAULT_HEADERS } from "../../../../..";
 
 export const generateHeaders = (body: string, server: AKServer = "en", yostarUID: string | null = null, yostarToken: string | null = null, deviceId: string | null = null) => {
     const headers = {
@@ -11,14 +11,15 @@ export const generateHeaders = (body: string, server: AKServer = "en", yostarUID
         GVersionNo: "2000112",
         GBuildNo: "",
         Lang: server === "en" ? "en" : server === "jp" ? "jp" : "ko",
-        DeviceID: deviceId || uuidv4(),
+        DeviceID: deviceId || randomUUID(),
         DeviceModel: "F9",
         UID: yostarUID || "",
         Token: yostarToken || "",
         Time: Math.floor(Date.now() / 1000),
     };
 
-    const jsonString = JSON.stringify(headers).replace(/,/g, ":");
+    const jsonString = JSON.stringify(headers, null, "");
+
     const md5Hash = createHash("md5")
         .update(jsonString + body + "886c085e4a8d30a703367b120dd8353948405ec2")
         .digest("hex");
@@ -29,7 +30,10 @@ export const generateHeaders = (body: string, server: AKServer = "en", yostarUID
     };
 
     return {
-        Authorization: JSON.stringify(headerAuth).replace(/,/g, ":"),
+        "X-Unity-Version": DEFAULT_HEADERS["X-Unity-Version"],
+        "User-Agent": DEFAULT_HEADERS["User-Agent"],
+        Connection: DEFAULT_HEADERS["Connection"],
+        Authorization: JSON.stringify(headerAuth, null, ""),
         "Content-Type": "application/json",
     };
 };

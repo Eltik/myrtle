@@ -6,7 +6,9 @@ import { generateHeaders } from "../../yostar/impl/login/impl/generateHeaders";
 // Global request timeout (5 seconds)
 const REQUEST_TIMEOUT_MS = 5000;
 
-export const request = async (domain: AKDomain, endpoint: string | null = null, args?: RequestInit, server?: AKServer, session?: AuthSession): Promise<Response> => {
+// Modify args type to allow object for body, as we stringify it internally
+// Using 'any' for simplicity as fetch handles various types and we stringify before signing
+export const request = async (domain: AKDomain, assignHeaders: boolean = true, endpoint: string | null = null, args?: Omit<RequestInit, "body"> & { body?: any }, server?: AKServer, session?: AuthSession): Promise<Response> => {
     server = server ? server : "en";
 
     let url: string = "";
@@ -53,7 +55,18 @@ export const request = async (domain: AKDomain, endpoint: string | null = null, 
         Object.assign(args.headers, DEFAULT_HEADERS);
     }
 
-    Object.assign(args.headers, generateHeaders(JSON.stringify(args.body), server));
+    // Pass uid and secret (as token) to generateHeaders if session exists
+    const bodyStringForSign = JSON.stringify(args.body); // Stringify once
+    if (assignHeaders) {
+        const yostarHeaders = generateHeaders(
+            bodyStringForSign, // Use the pre-stringified version
+            server,
+            session?.uid,
+            session?.secret, // Assuming session.secret corresponds to the Python 'token'
+            // deviceId is omitted, assuming generateHeaders handles default like Python
+        );
+        Object.assign(args.headers, yostarHeaders);
+    }
 
     // Add signal with timeout to the request
     const controller = new AbortController();
@@ -64,7 +77,10 @@ export const request = async (domain: AKDomain, endpoint: string | null = null, 
             args.signal = controller.signal;
         }
 
-        const data = await fetch(url, args);
+        // Use the stringified body for the fetch call, matching the signature calculation
+        const fetchOptions = { ...args, body: bodyStringForSign }; // Use bodyStringForSign
+
+        const data = await fetch(url, fetchOptions as RequestInit); // Pass the modified options
         clearTimeout(timeoutId);
         return data;
     } catch (error) {

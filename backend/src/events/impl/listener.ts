@@ -58,6 +58,22 @@ export const listener = async () => {
         console.log(colors.red(`Error sending code to ${data.email}:`), data);
     });
 
+    emitter.on(Events.AUTH_YOSTAR_SUBMIT_CODE_ERROR, async (data) => {
+        console.log(colors.red(`Error submitting code to ${data.email}:`), data);
+    });
+
+    emitter.on(Events.AUTH_YOSTAR_TOKEN_ERROR, async (data) => {
+        console.log(colors.red(`Error getting token from ${data.email}:`), data);
+    });
+
+    emitter.on(Events.AUTH_YOSTAR_GET_SECRET_ERROR, async (data) => {
+        console.log(colors.red(`Error getting secret from ${data.email}:`), data);
+    });
+
+    emitter.on(Events.AUTH_YOSTAR_GET_U8_TOKEN_ERROR, async (data) => {
+        console.log(colors.red(`Error getting U8 token from ${data.uid}:`), data);
+    });
+
     emitter.on(Events.AUTH_YOSTAR_LOGIN_SUCCESS, async (data) => {
         console.log(colors.green(`Logged in successfully as ${data.uid}.`));
     });
