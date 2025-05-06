@@ -19,13 +19,13 @@ function UserHeader({ data }: { data: User }) {
                         <CardTitle className="text-2xl">
                             <div className="flex flex-row gap-4">
                                 <div>
-                                    {data.status.nickName}
+                                    {data.status.nickName && data.status.nickName.length > 0 ? data.status.nickName : "Unknown"}
                                     <span className="text-muted-foreground">#{data.status.nickNumber}</span>
                                 </div>
                                 <div
                                     className="hidden cursor-pointer rounded-md border p-2 transition-all duration-150 hover:bg-secondary md:block"
                                     onClick={() => {
-                                        void navigator.clipboard.writeText(`${data.status.nickName}#${data.status.nickNumber}`);
+                                        void navigator.clipboard.writeText(`${data.status.nickName && data.status.nickName.length > 0 ? data.status.nickName : "Unknown"}#${data.status.nickNumber}`);
                                         toast({
                                             title: "Success!",
                                             description: "Copied username to clipboard.",

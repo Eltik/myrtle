@@ -1,4 +1,4 @@
-import type { CharacterData, User } from "~/types/impl/api";
+import type { CharacterData, StoredUser, User } from "~/types/impl/api";
 import { OperatorPhase, OperatorProfession, OperatorRarity } from "~/types/impl/api/static/operator";
 
 export const parsePhase = (phase: string) => {
@@ -430,7 +430,7 @@ export function getAvatarById(charId: string) {
     return `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${normalizeSkinId(charId)}.png`;
 }
 
-export function getAvatarSkinId(user: User) {
+export function getAvatarSkinId(user: User | StoredUser) {
     if (!user.status) return "https://static.wikia.nocookie.net/mrfz/images/4/46/Symbol_profile.png/revision/latest?cb=20220418145951";
 
     const secretaryId = user.status.secretary;
