@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import type { StoredUser } from "~/types/impl/api";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
+import { getAvatarSkinId } from "~/helper";
 
 export function Navbar() {
     const [cookies] = useCookies(["login"]);
@@ -33,13 +34,13 @@ export function Navbar() {
                                         <DropdownMenuTrigger>
                                             <div className="flex flex-row rounded-md border px-2 transition-all duration-150 hover:bg-secondary">
                                                 <Avatar className="h-12 w-12">
-                                                    <AvatarImage src={""} alt="@shadcn" />
+                                                    <AvatarImage src={getAvatarSkinId(playerData)} alt="@shadcn" />
                                                     <AvatarFallback>{playerData.status?.nickName?.slice(0, 1) ?? "E"}</AvatarFallback>
                                                 </Avatar>
                                                 <div className="flex flex-row items-center gap-2">
                                                     <div className="ml-2 hidden flex-col justify-center md:flex">
-                                                        <div className="text-sm font-semibold">{playerData.status?.nickName ?? "Elysium"}</div>
-                                                        <div className="text-xs text-muted-foreground">#{playerData.status?.nickNumber ?? "8777"}</div>
+                                                        <div className="text-sm font-semibold">{playerData.status?.nickName && playerData.status?.nickName.length > 0 ? playerData.status?.nickName : "Unknown"}</div>
+                                                        <div className="text-xs text-muted-foreground">#{playerData.status?.nickNumber ?? "-1"}</div>
                                                     </div>
                                                     <ChevronDown size={15} />
                                                 </div>
@@ -49,36 +50,42 @@ export function Navbar() {
                                             <DropdownMenuLabel>My Account</DropdownMenuLabel>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuGroup>
-                                                <DropdownMenuItem>
-                                                    <Link href={`/user/${playerData.status.uid}`}>Profile</Link>
-                                                    <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem>
-                                                    <Link href={"/statistics"}>Statistics</Link>
-                                                    <DropdownMenuShortcut>⇧⌘⌥S</DropdownMenuShortcut>
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem>
-                                                    <Link href={"/settings"}>Settings</Link>
-                                                    <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
-                                                </DropdownMenuItem>
+                                                <Link href={`/user/${playerData.status.uid}`}>
+                                                    <DropdownMenuItem className="cursor-pointer">
+                                                        Profile
+                                                        <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+                                                    </DropdownMenuItem>
+                                                </Link>
+                                                <Link href={"/statistics"}>
+                                                    <DropdownMenuItem className="cursor-pointer">
+                                                        Statistics
+                                                        <DropdownMenuShortcut>⇧⌘⌥S</DropdownMenuShortcut>
+                                                    </DropdownMenuItem>
+                                                </Link>
+                                                <Link href={"/settings"}>
+                                                    <DropdownMenuItem className="cursor-pointer">
+                                                        Settings
+                                                        <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+                                                    </DropdownMenuItem>
+                                                </Link>
                                             </DropdownMenuGroup>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuGroup>
-                                                <DropdownMenuItem>
-                                                    <Link href={"https://github.com/Eltik/myrtle"} target="_blank">
-                                                        GitHub
-                                                    </Link>
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem>
-                                                    <Link href={"#"}>Discord</Link>
-                                                </DropdownMenuItem>
+                                                <Link href={"https://github.com/Eltik/myrtle"} target="_blank">
+                                                    <DropdownMenuItem className="cursor-pointer">GitHub</DropdownMenuItem>
+                                                </Link>
+                                                <Link href={"#"}>
+                                                    <DropdownMenuItem className="cursor-pointer">Discord</DropdownMenuItem>
+                                                </Link>
                                                 <DropdownMenuItem disabled>API</DropdownMenuItem>
                                             </DropdownMenuGroup>
                                             <DropdownMenuSeparator />
-                                            <DropdownMenuItem>
-                                                <Link href={"/logout"}>Log Out</Link>
-                                                <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
-                                            </DropdownMenuItem>
+                                            <Link href={"/logout"}>
+                                                <DropdownMenuItem className="cursor-pointer">
+                                                    Log Out
+                                                    <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
+                                                </DropdownMenuItem>
+                                            </Link>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </>

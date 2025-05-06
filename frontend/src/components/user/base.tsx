@@ -14,23 +14,27 @@ function Base({ data }: { data: User }) {
                     <div>
                         <p className="text-sm text-muted-foreground">Trading Posts</p>
                         <div className="flex flex-wrap gap-2">
-                            {Object.values(data.building.rooms.TRADING).map((post, index) => {
-                                const roomSlotKey = Object.keys(data.building.rooms.TRADING)[index]!;
-                                const roomSlot = data.building.roomSlots[roomSlotKey]!;
-                                const roomId = Object.keys(data.building.rooms.TRADING)[index] ?? "";
-                                return <TradingPost data={post} chars={data.building.chars} roomSlot={roomSlot} roomId={roomId} key={index} />;
-                            })}
+                            {data.building.rooms.TRADING
+                                ? Object.values(data.building.rooms.TRADING).map((post, index) => {
+                                      const roomSlotKey = Object.keys(data.building.rooms.TRADING)[index]!;
+                                      const roomSlot = data.building.roomSlots[roomSlotKey]!;
+                                      const roomId = Object.keys(data.building.rooms.TRADING)[index] ?? "";
+                                      return <TradingPost data={post} chars={data.building.chars} roomSlot={roomSlot} roomId={roomId} key={index} />;
+                                  })
+                                : null}
                         </div>
                     </div>
                     <div>
                         <p className="text-sm text-muted-foreground">Factories</p>
                         <div className="flex flex-wrap gap-2">
-                            {Object.values(data.building.rooms.MANUFACTURE).map((post, index) => {
-                                const roomSlotKey = Object.keys(data.building.rooms.MANUFACTURE)[index]!;
-                                const roomSlot = data.building.roomSlots[roomSlotKey]!;
-                                const roomId = Object.keys(data.building.rooms.MANUFACTURE)[index] ?? "";
-                                return <Factory data={post} chars={data.building.chars} roomSlot={roomSlot} roomId={roomId} key={index} />;
-                            })}
+                            {data.building.rooms.MANUFACTURE
+                                ? Object.values(data.building.rooms.MANUFACTURE).map((post, index) => {
+                                      const roomSlotKey = Object.keys(data.building.rooms.MANUFACTURE)[index]!;
+                                      const roomSlot = data.building.roomSlots[roomSlotKey]!;
+                                      const roomId = Object.keys(data.building.rooms.MANUFACTURE)[index] ?? "";
+                                      return <Factory data={post} chars={data.building.chars} roomSlot={roomSlot} roomId={roomId} key={index} />;
+                                  })
+                                : null}
                         </div>
                     </div>
                 </div>
