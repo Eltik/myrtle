@@ -1,5 +1,5 @@
 import { rarityToNumber } from "~/helper";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -13,12 +13,16 @@ import { useStore } from "zustand";
 import type { StoredUser } from "~/types/impl/api";
 import { usePlayer } from "~/store";
 import type { PlayerResponse } from "~/types/impl/api/impl/player";
+import { Loader2 } from "lucide-react";
+import Link from "next/link";
 
 export const TopSection = ({ allOperators, squadSize, handleSquadSizeChange, handleRandomize, isLoading, filteredOperators, excludedOperators, randomizedSquad, setExcludedOperators }: { allOperators: Operator[]; squadSize: number; handleSquadSizeChange: (e: React.ChangeEvent<HTMLInputElement>) => void; handleRandomize: () => void; isLoading: boolean; filteredOperators: Operator[]; excludedOperators: Set<string>; randomizedSquad: Operator[]; setExcludedOperators: (operators: Set<string>) => void }) => {
     const playerData = useStore(usePlayer, (state) => (state as { playerData: StoredUser })?.playerData);
+    const [isImporting, setIsImporting] = useState(false);
 
     const importUserOperators = async () => {
         if (!playerData) return;
+        setIsImporting(true);
 
         try {
             const response = await fetch("/api/player", {
@@ -63,6 +67,8 @@ export const TopSection = ({ allOperators, squadSize, handleSquadSizeChange, han
         } catch (error) {
             console.error("Error importing user operators:", error);
             // TODO: Consider adding user-facing error feedback
+        } finally {
+            setIsImporting(false);
         }
     };
 
@@ -86,8 +92,15 @@ export const TopSection = ({ allOperators, squadSize, handleSquadSizeChange, han
                         Randomize Squad
                     </Button>
                     {playerData && (
-                        <Button onClick={importUserOperators} className="mt-2 w-full">
-                            Import My Operators
+                        <Button onClick={importUserOperators} disabled={isImporting} className="mt-2 w-full">
+                            {isImporting ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Importing...
+                                </>
+                            ) : (
+                                "Import My Operators"
+                            )}
                         </Button>
                     )}
                 </div>
@@ -106,10 +119,10 @@ export const TopSection = ({ allOperators, squadSize, handleSquadSizeChange, han
                                 const rarityNum = rarityToNumber(op.rarity);
 
                                 return (
-                                    <div key={op.id} className={cn("relative aspect-square overflow-hidden rounded-md bg-card text-card-foreground shadow-sm", getRarityBorderColor(rarityNum))} title={`${op.name} (${displayProfession})`}>
+                                    <Link href={`/operators?id=${op.id}`} key={op.id} className={cn("relative aspect-square overflow-hidden rounded-md bg-card text-card-foreground shadow-sm", getRarityBorderColor(rarityNum))} title={`${op.name} (${displayProfession})`}>
                                         <Image src={imageUrl} alt={op.name} fill sizes="(max-width: 640px) 20vw, 10vw" className={cn("object-cover")} unoptimized />
                                         <div className="absolute inset-x-0 bottom-0 truncate bg-black/60 px-1 py-0.5 text-center text-[10px] font-medium backdrop-blur-sm">{op.name}</div>
-                                    </div>
+                                    </Link>
                                 );
                             })}
                         </div>
