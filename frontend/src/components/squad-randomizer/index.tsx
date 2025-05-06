@@ -142,7 +142,7 @@ const Randomizer = () => {
 
             {error && <p className="mb-4 flex-shrink-0 text-red-500">Error loading operators: {error}</p>}
 
-            <TopSection allOperators={allOperators} squadSize={squadSize} handleSquadSizeChange={handleSquadSizeChange} handleRandomize={handleRandomize} isLoading={isLoading} filteredOperators={filteredOperators} excludedOperators={excludedOperators} randomizedSquad={randomizedSquad} />
+            <TopSection allOperators={allOperators} squadSize={squadSize} handleSquadSizeChange={handleSquadSizeChange} handleRandomize={handleRandomize} isLoading={isLoading} filteredOperators={filteredOperators} excludedOperators={excludedOperators} randomizedSquad={randomizedSquad} setExcludedOperators={setExcludedOperators} />
 
             {/* Bottom Section: Filters and Operator List */}
             <div className="flex min-h-0 flex-grow flex-col border-t pt-4">

@@ -1,4 +1,5 @@
 import { rarityToNumber } from "~/helper";
+import { useMemo } from "react";
 
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -8,8 +9,68 @@ import type { Operator } from "~/types/impl/api/static/operator";
 import Image from "next/image";
 import { cn } from "~/lib/utils";
 import { getRarityBorderColor } from "./helper";
+import { useStore } from "zustand";
+import type { StoredUser } from "~/types/impl/api";
+import { usePlayer } from "~/store";
+import type { PlayerResponse } from "~/types/impl/api/impl/player";
 
-export const TopSection = ({ allOperators, squadSize, handleSquadSizeChange, handleRandomize, isLoading, filteredOperators, excludedOperators, randomizedSquad }: { allOperators: Operator[]; squadSize: number; handleSquadSizeChange: (e: React.ChangeEvent<HTMLInputElement>) => void; handleRandomize: () => void; isLoading: boolean; filteredOperators: Operator[]; excludedOperators: Set<string>; randomizedSquad: Operator[] }) => {
+export const TopSection = ({ allOperators, squadSize, handleSquadSizeChange, handleRandomize, isLoading, filteredOperators, excludedOperators, randomizedSquad, setExcludedOperators }: { allOperators: Operator[]; squadSize: number; handleSquadSizeChange: (e: React.ChangeEvent<HTMLInputElement>) => void; handleRandomize: () => void; isLoading: boolean; filteredOperators: Operator[]; excludedOperators: Set<string>; randomizedSquad: Operator[]; setExcludedOperators: (operators: Set<string>) => void }) => {
+    const playerData = useStore(usePlayer, (state) => (state as { playerData: StoredUser })?.playerData);
+
+    const importUserOperators = async () => {
+        if (!playerData) return;
+
+        try {
+            const response = await fetch("/api/player", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    uid: playerData?.status.uid,
+                    server: "en",
+                }),
+            });
+
+            if (!response.ok) {
+                console.error("Failed to fetch player data:", response.statusText);
+                // TODO: Consider adding user-facing error feedback (e.g., toast notification)
+                return;
+            }
+
+            const data = (await response.json()) as PlayerResponse;
+
+            if (!data?.[0]?.data?.troop?.chars) {
+                console.warn("Player troop data not found or empty in API response.");
+                // TODO: Consider adding user-facing feedback
+                return;
+            }
+
+            // Set of operator IDs the player owns
+            const playerOwnedOperatorIds = new Set<string>(Object.values(data[0].data.troop.chars).map((char) => char.charId));
+
+            // Create a new set based on current exclusions to ensure immutability
+            const updatedExcludedOperators = new Set(excludedOperators);
+
+            // Add operators the player doesn't own to the exclusion set
+            for (const operator of allOperators) {
+                if (operator.id && !playerOwnedOperatorIds.has(operator.id)) {
+                    updatedExcludedOperators.add(operator.id);
+                }
+            }
+
+            setExcludedOperators(updatedExcludedOperators);
+        } catch (error) {
+            console.error("Error importing user operators:", error);
+            // TODO: Consider adding user-facing error feedback
+        }
+    };
+
+    // Memoize the count of available operators for randomization
+    const availableOperatorsCount = useMemo(() => {
+        return filteredOperators.filter((op) => op.id && !excludedOperators.has(op.id)).length;
+    }, [filteredOperators, excludedOperators]);
+
     return (
         <>
             {/* Top Section: Options and Results */}
@@ -21,9 +82,14 @@ export const TopSection = ({ allOperators, squadSize, handleSquadSizeChange, han
                         <Label htmlFor="squadSize">Squad Size</Label>
                         <Input id="squadSize" type="number" value={squadSize} onChange={handleSquadSizeChange} min="1" max={allOperators.length > 0 ? allOperators.length : 12} className="mt-1" />
                     </div>
-                    <Button onClick={handleRandomize} disabled={isLoading || filteredOperators.filter((op) => op.id && !excludedOperators.has(op.id)).length < squadSize} className="w-full">
+                    <Button onClick={handleRandomize} disabled={isLoading || availableOperatorsCount < squadSize} className="w-full">
                         Randomize Squad
                     </Button>
+                    {playerData && (
+                        <Button onClick={importUserOperators} className="mt-2 w-full">
+                            Import My Operators
+                        </Button>
+                    )}
                 </div>
 
                 {/* Column 2 & 3: Randomized Squad */}
@@ -42,7 +108,7 @@ export const TopSection = ({ allOperators, squadSize, handleSquadSizeChange, han
                                 return (
                                     <div key={op.id} className={cn("relative aspect-square overflow-hidden rounded-md bg-card text-card-foreground shadow-sm", getRarityBorderColor(rarityNum))} title={`${op.name} (${displayProfession})`}>
                                         <Image src={imageUrl} alt={op.name} fill sizes="(max-width: 640px) 20vw, 10vw" className={cn("object-cover")} unoptimized />
-                                        <div className="${displayRarityColor} absolute inset-x-0 bottom-0 truncate bg-black/60 px-1 py-0.5 text-center text-[10px] font-medium backdrop-blur-sm">{op.name}</div>
+                                        <div className="absolute inset-x-0 bottom-0 truncate bg-black/60 px-1 py-0.5 text-center text-[10px] font-medium backdrop-blur-sm">{op.name}</div>
                                     </div>
                                 );
                             })}

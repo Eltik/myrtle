@@ -5,7 +5,7 @@ const SquadRandomizer = () => {
         <>
             <Randomizer />
         </>
-    )
+    );
 };
 
 export default SquadRandomizer;
