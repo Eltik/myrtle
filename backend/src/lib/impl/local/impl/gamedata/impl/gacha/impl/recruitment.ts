@@ -169,13 +169,13 @@ export const calculateRecruitment = (recruitment: Set<string>, RECRUIT_POOL: Rec
                             case "Rarity":
                                 switch (tag.tagId) {
                                     case 17:
-                                        return operatorRarityToNumber(op.rarity) === 1;
+                                        return operatorRarityToNumber(op.rarity) === 2;
                                     case 14:
-                                        return operatorRarityToNumber(op.rarity) === 4;
-                                    case 11:
                                         return operatorRarityToNumber(op.rarity) === 5;
+                                    case 11:
+                                        return operatorRarityToNumber(op.rarity) === 6;
                                     case 28:
-                                        return operatorRarityToNumber(op.rarity) === 0;
+                                        return operatorRarityToNumber(op.rarity) === 1;
                                 }
                             case "Class":
                                 switch (tag.tagId) {
