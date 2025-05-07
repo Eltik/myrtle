@@ -10,6 +10,7 @@ import { ScrollArea } from "~/components/ui/scroll-area";
 import { Progress } from "~/components/ui/progress";
 import { Skeleton } from "~/components/ui/skeleton";
 import { getAttributeStats, getMaxAttributeStats } from "~/helper/getAttributeStats";
+import { descriptionToHtml } from "~/helper/descriptionParser";
 
 function CharacterDialogueCard({ data }: { data: CharacterData }) {
     const { static: operatorData, skills } = data;
@@ -172,9 +173,9 @@ function CharacterDialogueCard({ data }: { data: CharacterData }) {
                                                     <span className="text-muted-foreground">{skill.static?.levels[parseSkillStaticLevel(data.mainSkillLvl, skill.specializeLevel)]?.spData.spCost ?? 0} SP</span>
                                                 </span>
                                                 <span
-                                                    className="text-xs"
+                                                    className="text-xs text-gray-500"
                                                     dangerouslySetInnerHTML={{
-                                                        __html: insertBlackboard(skill.static?.levels[parseSkillStaticLevel(data.mainSkillLvl, skill.specializeLevel)]?.description ?? "", skill.static?.levels[parseSkillStaticLevel(data.mainSkillLvl, skill.specializeLevel)]?.blackboard?.concat({ key: "duration", value: skill.static?.levels[parseSkillStaticLevel(data.mainSkillLvl, skill.specializeLevel)]?.duration ?? 0, valueStr: skill.static?.levels[parseSkillStaticLevel(data.mainSkillLvl, skill.specializeLevel)]?.duration?.toString() ?? "" }) ?? []) ?? "",
+                                                        __html: descriptionToHtml(skill.static?.levels[parseSkillStaticLevel(data.mainSkillLvl, skill.specializeLevel)]?.description ?? "", skill.static?.levels[parseSkillStaticLevel(data.mainSkillLvl, skill.specializeLevel)]?.blackboard?.concat({ key: "duration", value: skill.static?.levels[parseSkillStaticLevel(data.mainSkillLvl, skill.specializeLevel)]?.duration ?? 0, valueStr: skill.static?.levels[parseSkillStaticLevel(data.mainSkillLvl, skill.specializeLevel)]?.duration?.toString() ?? "" }) ?? []),
                                                     }}
                                                 ></span>
                                             </div>
@@ -255,9 +256,14 @@ function CharacterDialogueCard({ data }: { data: CharacterData }) {
                                             </div>
                                         );
                                     })}
+                                    {!data.static.modules.some((module) => {
+                                        const moduleLevel = data.equip[module.uniEquipId]?.level ?? 0;
+                                        const isLocked = data.equip[module.uniEquipId]?.locked === 1;
+                                        return module.typeName1 !== "ORIGINAL" && moduleLevel > 0 && !isLocked;
+                                    }) && <div className="text-sm text-gray-500 dark:text-gray-400">No modules unlocked.</div>}
                                 </div>
                             ) : (
-                                <div className="text-sm text-gray-500 dark:text-gray-400">No modules found.</div>
+                                <div className="text-sm text-gray-500 dark:text-gray-400">No modules available.</div>
                             )}
                         </ScrollArea>
                     </TabsContent>
