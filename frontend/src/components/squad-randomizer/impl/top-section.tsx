@@ -15,11 +15,13 @@ import { usePlayer } from "~/store";
 import type { PlayerResponse } from "~/types/impl/api/impl/player";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
+import { Checkbox } from "~/components/ui/checkbox";
 
 export const TopSection = ({ allOperators, squadSize, handleSquadSizeChange, handleRandomize, isLoading, filteredOperators, excludedOperators, randomizedSquad, setExcludedOperators }: { allOperators: Operator[]; squadSize: number; handleSquadSizeChange: (e: React.ChangeEvent<HTMLInputElement>) => void; handleRandomize: () => void; isLoading: boolean; filteredOperators: Operator[]; excludedOperators: Set<string>; randomizedSquad: Operator[]; setExcludedOperators: (operators: Set<string>) => void }) => {
     const playerData = useStore(usePlayer, (state) => (state as { playerData: StoredUser })?.playerData);
     const [isImporting, setIsImporting] = useState(false);
-
+    const [onlyE1, setOnlyE1] = useState(false);
+    const [onlyE2, setOnlyE2] = useState(false);
     const importUserOperators = async () => {
         if (!playerData) return;
         setIsImporting(true);
@@ -51,14 +53,18 @@ export const TopSection = ({ allOperators, squadSize, handleSquadSizeChange, han
             }
 
             // Set of operator IDs the player owns
-            const playerOwnedOperatorIds = new Set<string>(Object.values(data[0].data.troop.chars).map((char) => char.charId));
+            const playerOwnedOperatorIds = new Set<string>(
+                Object.values(data[0].data.troop.chars)
+                    .filter((char) => (onlyE2 ? char.evolvePhase > 1 : onlyE1 ? char.evolvePhase > 0 : char))
+                    .map((char) => char.charId),
+            );
 
             // Create a new set based on current exclusions to ensure immutability
-            const updatedExcludedOperators = new Set(excludedOperators);
+            const updatedExcludedOperators = new Set<string>();
 
             // Add operators the player doesn't own to the exclusion set
             for (const operator of allOperators) {
-                if (operator.id && !playerOwnedOperatorIds.has(operator.id)) {
+                if (operator.id && operator.id.startsWith("char_") && !playerOwnedOperatorIds.has(operator.id)) {
                     updatedExcludedOperators.add(operator.id);
                 }
             }
@@ -92,16 +98,24 @@ export const TopSection = ({ allOperators, squadSize, handleSquadSizeChange, han
                         Randomize Squad
                     </Button>
                     {playerData && (
-                        <Button onClick={importUserOperators} disabled={isImporting} className="mt-2 w-full">
-                            {isImporting ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Importing...
-                                </>
-                            ) : (
-                                "Import My Operators"
-                            )}
-                        </Button>
+                        <>
+                            <div className="flex items-center space-x-2">
+                                <Checkbox id="onlyE1" checked={onlyE1 || onlyE2} onCheckedChange={(checked) => setOnlyE1(checked === "indeterminate" ? false : checked)} />
+                                <Label htmlFor="onlyE1">{"> E1"}</Label>
+                                <Checkbox id="onlyE2" checked={onlyE2} onCheckedChange={(checked) => setOnlyE2(checked === "indeterminate" ? false : checked)} />
+                                <Label htmlFor="onlyE2">Only E2</Label>
+                            </div>
+                            <Button onClick={importUserOperators} disabled={isImporting} className="mt-2 w-full">
+                                {isImporting ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Importing...
+                                    </>
+                                ) : (
+                                    "Import My Operators"
+                                )}
+                            </Button>
+                        </>
                     )}
                 </div>
 
