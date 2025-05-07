@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from "react";
-import { RARITY_COLORS, getRarityBorderColor } from "./helper";
+import { getRarityBorderColor } from "./helper";
 import type { Operator } from "~/types/impl/api/static/operator";
 import { formatProfession, rarityToNumber } from "~/helper";
 import Image from "next/image";

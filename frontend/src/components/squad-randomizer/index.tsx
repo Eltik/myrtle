@@ -4,7 +4,7 @@ import { Button } from "~/components/ui/button";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import type { Operator } from "~/types/impl/api/static/operator";
 import { OperatorProfession } from "~/types/impl/api/static/operator";
-import { ListIcon, GridIcon, ArrowUpIcon, ChevronUpIcon, ChevronDownIcon } from "lucide-react";
+import { ListIcon, GridIcon, ArrowUpIcon, ChevronUpIcon } from "lucide-react";
 import { rarityToNumber } from "~/helper"; // Import helpers
 import { renderOperatorListItem } from "~/components/squad-randomizer/impl/render-operator-list";
 import { renderOperatorGridItem } from "~/components/squad-randomizer/impl/render-operator-grid-item";
@@ -56,13 +56,13 @@ const Randomizer = () => {
             transition: {
                 height: {
                     duration: 0.3,
-                    ease: [0.4, 0, 0.2, 1]
+                    ease: [0.4, 0, 0.2, 1],
                 },
                 opacity: {
                     duration: 0.2,
-                    delay: 0.1
-                }
-            }
+                    delay: 0.1,
+                },
+            },
         },
         collapsed: {
             height: 0,
@@ -70,24 +70,24 @@ const Randomizer = () => {
             transition: {
                 height: {
                     duration: 0.3,
-                    ease: [0.4, 0, 0.2, 1]
+                    ease: [0.4, 0, 0.2, 1],
                 },
                 opacity: {
-                    duration: 0.2
-                }
-            }
-        }
+                    duration: 0.2,
+                },
+            },
+        },
     };
 
     const buttonVariants = {
         expanded: {
             rotate: 0,
-            transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] }
+            transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] },
         },
         collapsed: {
             rotate: 180,
-            transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] }
-        }
+            transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] },
+        },
     };
 
     useEffect(() => {
@@ -204,14 +204,14 @@ const Randomizer = () => {
             setShowScrollTop(scrollY > 300); // Show button when scrolled more than 300px
         };
 
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
     const scrollToTop = () => {
         window.scrollTo({
             top: 0,
-            behavior: 'smooth'
+            behavior: "smooth",
         });
     };
 
@@ -227,14 +227,9 @@ const Randomizer = () => {
             <div className="flex min-h-0 flex-grow flex-col border-t pt-4">
                 <h2 className="mb-3 flex-shrink-0 text-xl font-semibold">Filter & Select Operators</h2>
                 {/* Filter Controls Row */}
-                <div className="sticky top-14 z-30 bg-background/50 backdrop-blur-md rounded-b-md shadow-md">
+                <div className="sticky top-14 z-30 rounded-b-md bg-background/50 shadow-md backdrop-blur-md">
                     <AnimatePresence initial={false}>
-                        <motion.div
-                            initial="collapsed"
-                            animate={isFiltersCollapsed ? "collapsed" : "expanded"}
-                            variants={filterVariants}
-                            className="overflow-hidden"
-                        >
+                        <motion.div initial="collapsed" animate={isFiltersCollapsed ? "collapsed" : "expanded"} variants={filterVariants} className="overflow-hidden">
                             <div className="mb-1 flex flex-shrink-0 flex-wrap items-center gap-2 p-2">
                                 <Input type="text" placeholder="Search operators..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="h-9 max-w-xs bg-background" />
                                 <RarityFilter filterRarityNumeric={filterRarityNumeric} setFilterRarityNumeric={setFilterRarityNumeric} />
@@ -251,21 +246,15 @@ const Randomizer = () => {
                                     </Button>
                                 </div>
                                 <p className="mt-2 flex-shrink-0 text-sm text-muted-foreground">
-                                    Showing {filteredOperators.length} / {allOperators.length} operators.
+                                    Showing {filteredOperators.filter((op) => op.id?.startsWith("char_")).length} / {allOperators.filter((op) => op.id?.startsWith("char_")).length} operators.
                                     {excludedOperators.size > 0 && ` ${excludedOperators.size} excluded.`}
                                 </p>
                             </div>
                             <DisplayFilters filterRarityNumeric={filterRarityNumeric} filterProfession={filterProfession} selectedTags={selectedTags} filteredOperators={filteredOperators} excludedOperators={excludedOperators} setFilterRarityNumeric={setFilterRarityNumeric} setFilterProfession={setFilterProfession} setSelectedTags={setSelectedTags} setExcludedOperators={setExcludedOperators} />
                         </motion.div>
                     </AnimatePresence>
-                    <Button
-                        onClick={() => setIsFiltersCollapsed(!isFiltersCollapsed)}
-                        className="w-full flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-all bg-muted/40 hover:bg-muted/70 rounded-b-md"
-                    >
-                        <motion.div
-                            variants={buttonVariants}
-                            animate={isFiltersCollapsed ? "collapsed" : "expanded"}
-                        >
+                    <Button onClick={() => setIsFiltersCollapsed(!isFiltersCollapsed)} className="flex w-full items-center justify-center gap-2 rounded-b-md bg-muted/40 text-sm text-muted-foreground transition-all hover:bg-muted/70 hover:text-foreground">
+                        <motion.div variants={buttonVariants} animate={isFiltersCollapsed ? "collapsed" : "expanded"}>
                             <ChevronUpIcon className="h-4 w-4" />
                         </motion.div>
                     </Button>
@@ -278,16 +267,7 @@ const Randomizer = () => {
             </div>
 
             {/* Add Scroll to Top Button */}
-            <Button
-                onClick={scrollToTop}
-                className={`fixed bottom-8 right-8 z-50 rounded-full shadow-lg transition-all duration-300 ${
-                    showScrollTop 
-                        ? 'opacity-100 translate-y-0' 
-                        : 'opacity-0 translate-y-4 pointer-events-none'
-                }`}
-                size="icon"
-                variant="secondary"
-            >
+            <Button onClick={scrollToTop} className={`fixed bottom-8 right-8 z-50 rounded-full shadow-lg transition-all duration-300 ${showScrollTop ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-4 opacity-0"}`} size="icon" variant="secondary">
                 <ArrowUpIcon className="h-4 w-4" />
             </Button>
         </div>
