@@ -6,9 +6,9 @@ import type { ChibiAnimation, FormattedChibis } from "~/types/impl/frontend/impl
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { encodeURL, getSkinData } from "./helper";
 
-const CHIBI_OFFSET_X = 0.3;
-const CHIBI_OFFSET_Y = 0.45;
-const CHIBI_SCALE = 1;
+const CHIBI_OFFSET_X = 0.25;
+const CHIBI_OFFSET_Y = 0.43;
+const CHIBI_SCALE = 0.7;
 const ANIMATION_SPEED = 0.5; // Animation speed multiplier (lower = slower)
 
 export function ChibiViewer({ chibi, skinId }: { chibi: FormattedChibis; skinId: string }) {
@@ -365,7 +365,7 @@ export function ChibiViewer({ chibi, skinId }: { chibi: FormattedChibis; skinId:
                     </div>
                 </div>
 
-                <div className="relative h-[300px] w-full">
+                <div className="relative h-[200px] w-full">
                     <div ref={canvasContainerRef} className="h-full w-full" />
                     {isLoading && (
                         <div className="absolute inset-0 flex items-center justify-center bg-black/20">

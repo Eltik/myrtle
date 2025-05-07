@@ -8,6 +8,7 @@ import { Badge } from "~/components/ui/badge";
 import { descriptionToHtml } from "~/helper/descriptionParser";
 import { parsePhase } from "~/helper";
 import Image from "next/image";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
 
 function TalentsContent({ operator }: { operator: Operator }) {
     const [isTalentsOpen, setIsTalentsOpen] = useState(true);
@@ -83,7 +84,16 @@ function TalentsContent({ operator }: { operator: Operator }) {
                                                                 <div className="mt-3 flex flex-wrap gap-2">
                                                                     {candidate.blackboard.map((item, i) => (
                                                                         <Badge key={i} variant="secondary" className="flex items-center gap-1 text-xs">
-                                                                            <span className="font-mono">{item.key}</span>
+                                                                            <TooltipProvider>
+                                                                                <Tooltip>
+                                                                                    <TooltipTrigger asChild>
+                                                                                        <span className="max-w-[50vw] truncate font-mono">{item.key}</span>
+                                                                                    </TooltipTrigger>
+                                                                                    <TooltipContent>
+                                                                                        <p>{item.key}</p>
+                                                                                    </TooltipContent>
+                                                                                </Tooltip>
+                                                                            </TooltipProvider>
                                                                             <ChevronRight className="h-3 w-3 opacity-50" />
                                                                             <span className="font-semibold">{item.value < 0 ? item.value : `+${item.value}`}</span>
                                                                         </Badge>
