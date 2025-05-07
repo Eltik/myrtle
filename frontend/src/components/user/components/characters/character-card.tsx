@@ -368,9 +368,15 @@ function CharacterCard({ data }: { data: CharacterData }) {
                                                         </div>
                                                     );
                                                 })}
+                                                {/* Check if all modules are filtered out */}
+                                                {!operator.modules.some((module) => {
+                                                    const moduleLevel = data.equip[module.uniEquipId]?.level ?? 0;
+                                                    const isLocked = data.equip[module.uniEquipId]?.locked === 1;
+                                                    return module.typeName1 !== "ORIGINAL" && moduleLevel > 0 && !isLocked;
+                                                }) && <div className="text-sm text-gray-500">No modules unlocked.</div>}
                                             </div>
                                         ) : (
-                                            <div className="p-2 text-sm text-gray-500">No modules found.</div>
+                                            <div className="p-2 text-sm text-gray-500">No modules available.</div>
                                         )}
                                     </ScrollArea>
                                 </AccordionContent>
