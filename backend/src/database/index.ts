@@ -198,7 +198,7 @@ class DatabaseHandler {
         }
     }
 
-    async read<T>(tableName: string, conditions: Partial<T> = {}, fields?: string[]) {
+    async read<T>(tableName: string, conditions: Partial<T> = {}, fields?: string[]): Promise<T[]> {
         const keys = Object.keys(conditions);
         const values = Object.values(conditions);
 

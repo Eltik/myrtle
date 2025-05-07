@@ -10,6 +10,7 @@ import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent } from "~/components/ui/dialog";
 import CharacterDialogueCard from "./character-dialogue-card";
 import { descriptionToHtml } from "~/helper/descriptionParser";
+import { getAttributeStats } from "~/helper/getAttributeStats";
 
 function CharacterCard({ data }: { data: CharacterData }) {
     // Get operator static data
@@ -191,21 +192,9 @@ function CharacterCard({ data }: { data: CharacterData }) {
 
     // Get operator stats
     const getOperatorStats = () => {
-        if (!operator?.phases || operator.phases.length <= data.evolvePhase) {
-            return null;
-        }
-
-        const phase = operator.phases[data.evolvePhase];
-        if (!phase) return null;
-
-        const maxLevel = phase.maxLevel;
-        const level = Math.min(data.level, maxLevel);
-
-        // Find the closest keyframe
-        const keyframe = phase.attributesKeyFrames.find((kf) => kf.level <= level);
-        if (!keyframe) return null;
-
-        return keyframe.data;
+        const moduleData = operator?.modules.find((module) => module.uniEquipId === data.currentEquip)?.data;
+        const battleEquip = moduleData ? { [data.currentEquip]: moduleData } : undefined;
+        return getAttributeStats(data, data.level, battleEquip);
     };
 
     const stats = getOperatorStats();

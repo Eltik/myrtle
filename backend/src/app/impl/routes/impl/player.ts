@@ -1,5 +1,6 @@
 import { db } from "../../../../database";
 import { tableName as userTableName } from "../../../../database/impl/users";
+import { modules } from "../../../../lib/impl/local/impl/gamedata";
 import { UserDB } from "../../../../types/impl/database/impl/users";
 import type { AKServer } from "../../../../types/impl/lib/impl/authentication";
 import middleware from "../../middleware";
@@ -47,6 +48,20 @@ const handler = async (req: Request): Promise<Response> => {
                 },
                 fields,
             );
+
+            // Scuff but necessary
+            for (const char of Object.values(data[0].data.troop.chars)) {
+                if (char.static?.modules) {
+                    for (const module of char.static.modules) {
+                        const moduleData = modules.getModuleDetails(module.id ?? "");
+                        if (moduleData) {
+                            Object.assign(module, {
+                                data: moduleData,
+                            });
+                        }
+                    }
+                }
+            }
 
             return middleware.createResponse(JSON.stringify(data));
         } catch (e) {

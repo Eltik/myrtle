@@ -9,12 +9,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { Progress } from "~/components/ui/progress";
 import { Skeleton } from "~/components/ui/skeleton";
-import { useAttributeStats } from "~/hooks/use-attribute-stats";
-import { getMaxAttributeStats } from "~/helper/getAttributeStats";
+import { getAttributeStats, getMaxAttributeStats } from "~/helper/getAttributeStats";
 
 function CharacterDialogueCard({ data }: { data: CharacterData }) {
     const { static: operatorData, skills } = data;
-    const { attributeStats, fetchAttributeStats } = useAttributeStats(data);
 
     if (!operatorData) return null;
 
@@ -25,11 +23,13 @@ function CharacterDialogueCard({ data }: { data: CharacterData }) {
         return "★".repeat(starCount);
     };
 
-    const handleTabChange = (value: string) => {
-        if (value === "stats" && !attributeStats) {
-            void fetchAttributeStats();
-        }
+    const getOperatorStats = () => {
+        const moduleData = data.static?.modules.find((module) => module.uniEquipId === data.currentEquip)?.data;
+        const battleEquip = moduleData ? { [data.currentEquip]: moduleData } : undefined;
+        return getAttributeStats(data, data.level, battleEquip);
     };
+
+    const attributeStats = getOperatorStats();
 
     return (
         <Card className="grid max-h-[calc(100vh-7rem)] w-full max-w-2xl gap-6 overflow-hidden rounded-lg border-0 shadow-lg md:py-6">
@@ -60,7 +60,7 @@ function CharacterDialogueCard({ data }: { data: CharacterData }) {
                 </div>
             </CardHeader>
             <CardContent>
-                <Tabs defaultValue="info" className="w-full" onValueChange={handleTabChange}>
+                <Tabs defaultValue="info" className="w-full">
                     <TabsList className="grid w-full grid-cols-5">
                         <TabsTrigger value="info">Info</TabsTrigger>
                         <TabsTrigger value="stats">Stats</TabsTrigger>
