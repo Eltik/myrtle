@@ -5,7 +5,7 @@ import { Button } from "~/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { Dialog, DialogTrigger } from "~/components/ui/dialog";
-import { LoginDialogue } from "~/components/base/login-dialogue";
+import { LoginDialogue } from "~/components/layout/login-dialogue";
 
 export default function Home() {
     const fadeIn = {
