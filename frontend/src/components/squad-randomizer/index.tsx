@@ -4,7 +4,7 @@ import { Button } from "~/components/ui/button";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import type { Operator } from "~/types/impl/api/static/operator";
 import { OperatorProfession } from "~/types/impl/api/static/operator";
-import { ListIcon, GridIcon } from "lucide-react";
+import { ListIcon, GridIcon, ArrowUpIcon, ChevronUpIcon, ChevronDownIcon } from "lucide-react";
 import { rarityToNumber } from "~/helper"; // Import helpers
 import { renderOperatorListItem } from "~/components/squad-randomizer/impl/render-operator-list";
 import { renderOperatorGridItem } from "~/components/squad-randomizer/impl/render-operator-grid-item";
@@ -13,6 +13,7 @@ import { RarityFilter } from "~/components/squad-randomizer/impl/rarity-filter";
 import { ProfessionFilter } from "~/components/squad-randomizer/impl/profession-filter";
 import { TagFilter } from "~/components/squad-randomizer/impl/tag-filter";
 import { DisplayFilters } from "~/components/squad-randomizer/impl/display-filters";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Randomizer = () => {
     const [allOperators, setAllOperators] = useState<Operator[]>([]);
@@ -28,6 +29,7 @@ const Randomizer = () => {
     const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
     const [allTags, setAllTags] = useState<Set<string>>(new Set());
     const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
+    const [showScrollTop, setShowScrollTop] = useState(false);
 
     const [visibleOperatorCount, setVisibleOperatorCount] = useState(40);
 
@@ -44,6 +46,49 @@ const Randomizer = () => {
         },
         [visibleOperatorCount, filteredOperators.length],
     );
+
+    const [isFiltersCollapsed, setIsFiltersCollapsed] = useState(false);
+
+    const filterVariants = {
+        expanded: {
+            height: "auto",
+            opacity: 1,
+            transition: {
+                height: {
+                    duration: 0.3,
+                    ease: [0.4, 0, 0.2, 1]
+                },
+                opacity: {
+                    duration: 0.2,
+                    delay: 0.1
+                }
+            }
+        },
+        collapsed: {
+            height: 0,
+            opacity: 0,
+            transition: {
+                height: {
+                    duration: 0.3,
+                    ease: [0.4, 0, 0.2, 1]
+                },
+                opacity: {
+                    duration: 0.2
+                }
+            }
+        }
+    };
+
+    const buttonVariants = {
+        expanded: {
+            rotate: 0,
+            transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] }
+        },
+        collapsed: {
+            rotate: 180,
+            transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] }
+        }
+    };
 
     useEffect(() => {
         const fetchOperators = async () => {
@@ -152,6 +197,24 @@ const Randomizer = () => {
         setRandomizedSquad(finalSquad);
     }, [filteredOperators, excludedOperators, squadSize]);
 
+    // Add scroll handler
+    useEffect(() => {
+        const handleScroll = () => {
+            const scrollY = window.scrollY;
+            setShowScrollTop(scrollY > 300); // Show button when scrolled more than 300px
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    const scrollToTop = () => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    };
+
     return (
         <div className="container mx-auto flex flex-col p-4">
             <h1 className="mb-6 flex-shrink-0 text-3xl font-bold">Arknights Squad Randomizer</h1>
@@ -163,35 +226,70 @@ const Randomizer = () => {
             {/* Bottom Section: Filters and Operator List */}
             <div className="flex min-h-0 flex-grow flex-col border-t pt-4">
                 <h2 className="mb-3 flex-shrink-0 text-xl font-semibold">Filter & Select Operators</h2>
-
                 {/* Filter Controls Row */}
-                <div className="mb-1 flex flex-shrink-0 flex-wrap items-center gap-2">
-                    <Input type="text" placeholder="Search operators..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="h-9 max-w-xs" />
-                    <RarityFilter filterRarityNumeric={filterRarityNumeric} setFilterRarityNumeric={setFilterRarityNumeric} />
-                    <ProfessionFilter filterProfession={filterProfession} setFilterProfession={setFilterProfession} />
-                    <TagFilter selectedTags={selectedTags} setSelectedTags={setSelectedTags} allTags={allTags} />
+                <div className="sticky top-14 z-30 bg-background/50 backdrop-blur-md rounded-b-md shadow-md">
+                    <AnimatePresence initial={false}>
+                        <motion.div
+                            initial="collapsed"
+                            animate={isFiltersCollapsed ? "collapsed" : "expanded"}
+                            variants={filterVariants}
+                            className="overflow-hidden"
+                        >
+                            <div className="mb-1 flex flex-shrink-0 flex-wrap items-center gap-2 p-2">
+                                <Input type="text" placeholder="Search operators..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="h-9 max-w-xs bg-background" />
+                                <RarityFilter filterRarityNumeric={filterRarityNumeric} setFilterRarityNumeric={setFilterRarityNumeric} />
+                                <ProfessionFilter filterProfession={filterProfession} setFilterProfession={setFilterProfession} />
+                                <TagFilter selectedTags={selectedTags} setSelectedTags={setSelectedTags} allTags={allTags} />
 
-                    {/* View Toggle Buttons */}
-                    <div className="ml-auto flex items-center space-x-1">
-                        <Button variant={viewMode === "list" ? "secondary" : "outline"} size="icon" onClick={() => setViewMode("list")} title="List View">
-                            <ListIcon className="h-4 w-4" />
-                        </Button>
-                        <Button variant={viewMode === "grid" ? "secondary" : "outline"} size="icon" onClick={() => setViewMode("grid")} title="Grid View">
-                            <GridIcon className="h-4 w-4" />
-                        </Button>
-                    </div>
+                                {/* View Toggle Buttons */}
+                                <div className="ml-auto flex items-center space-x-1">
+                                    <Button variant={viewMode === "list" ? "secondary" : "outline"} size="icon" onClick={() => setViewMode("list")} title="List View">
+                                        <ListIcon className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant={viewMode === "grid" ? "secondary" : "outline"} size="icon" onClick={() => setViewMode("grid")} title="Grid View">
+                                        <GridIcon className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                <p className="mt-2 flex-shrink-0 text-sm text-muted-foreground">
+                                    Showing {filteredOperators.length} / {allOperators.length} operators.
+                                    {excludedOperators.size > 0 && ` ${excludedOperators.size} excluded.`}
+                                </p>
+                            </div>
+                            <DisplayFilters filterRarityNumeric={filterRarityNumeric} filterProfession={filterProfession} selectedTags={selectedTags} filteredOperators={filteredOperators} excludedOperators={excludedOperators} setFilterRarityNumeric={setFilterRarityNumeric} setFilterProfession={setFilterProfession} setSelectedTags={setSelectedTags} setExcludedOperators={setExcludedOperators} />
+                        </motion.div>
+                    </AnimatePresence>
+                    <Button
+                        onClick={() => setIsFiltersCollapsed(!isFiltersCollapsed)}
+                        className="w-full flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-all bg-muted/40 hover:bg-muted/70 rounded-b-md"
+                    >
+                        <motion.div
+                            variants={buttonVariants}
+                            animate={isFiltersCollapsed ? "collapsed" : "expanded"}
+                        >
+                            <ChevronUpIcon className="h-4 w-4" />
+                        </motion.div>
+                    </Button>
                 </div>
-                <DisplayFilters filterRarityNumeric={filterRarityNumeric} filterProfession={filterProfession} selectedTags={selectedTags} filteredOperators={filteredOperators} excludedOperators={excludedOperators} setFilterRarityNumeric={setFilterRarityNumeric} setFilterProfession={setFilterProfession} setSelectedTags={setSelectedTags} setExcludedOperators={setExcludedOperators} />
 
                 {/* Operator List/Grid Area */}
                 <ScrollArea className="h-full min-h-[300px] flex-grow rounded-md border">
                     <div className="p-2">{isLoading ? <p className="text-center text-muted-foreground">Loading operators...</p> : filteredOperators.length > 0 ? viewMode === "list" ? <div className="space-y-0.5">{filteredOperators.slice(0, visibleOperatorCount).map((op, index) => renderOperatorListItem(op, excludedOperators, setExcludedOperators, index === visibleOperatorCount - 1 ? lastCharacterRef : null))}</div> : <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8">{filteredOperators.slice(0, visibleOperatorCount).map((op, index) => renderOperatorGridItem(op, excludedOperators, setExcludedOperators, index === visibleOperatorCount - 1 ? lastCharacterRef : null))}</div> : <p className="text-center text-muted-foreground">No operators match filters.</p>}</div>
                 </ScrollArea>
-                <p className="mt-2 flex-shrink-0 text-sm text-muted-foreground">
-                    Showing {filteredOperators.length} / {allOperators.length} operators.
-                    {excludedOperators.size > 0 && ` ${excludedOperators.size} excluded.`}
-                </p>
             </div>
+
+            {/* Add Scroll to Top Button */}
+            <Button
+                onClick={scrollToTop}
+                className={`fixed bottom-8 right-8 z-50 rounded-full shadow-lg transition-all duration-300 ${
+                    showScrollTop 
+                        ? 'opacity-100 translate-y-0' 
+                        : 'opacity-0 translate-y-4 pointer-events-none'
+                }`}
+                size="icon"
+                variant="secondary"
+            >
+                <ArrowUpIcon className="h-4 w-4" />
+            </Button>
         </div>
     );
 };
