@@ -11,7 +11,7 @@ import { Button } from "~/components/ui/button";
 import type { Dispatch, SetStateAction } from "react";
 
 // Updated List View Renderer
-export const renderOperatorListItem = (op: Operator, excludedOperators: Set<string>, setExcludedOperators: Dispatch<SetStateAction<Set<string>>>) => {
+export const renderOperatorListItem = (op: Operator, excludedOperators: Set<string>, setExcludedOperators: Dispatch<SetStateAction<Set<string>>>, lastCharacterRef: ((node: HTMLDivElement) => void) | null) => {
     if (!op.id) return null;
     const isExcluded = excludedOperators.has(op.id);
     const displayRarityColor = RARITY_COLORS[op.rarity] ?? "text-white";
@@ -33,7 +33,7 @@ export const renderOperatorListItem = (op: Operator, excludedOperators: Set<stri
     };
 
     return (
-        <div key={op.id} className={cn("flex items-center border-b p-2 last:border-b-0", isExcluded && "bg-muted/30 opacity-60")}>
+        <div key={op.id} ref={lastCharacterRef} className={cn("flex items-center border-b p-2 last:border-b-0", isExcluded && "bg-muted/30 opacity-60")}>
             <div className="mr-2 flex min-w-0 items-center space-x-3">
                 <Image src={imageUrl} alt={op.name} width={40} height={40} className={cn("flex-shrink-0 rounded-full", isExcluded && "grayscale")} unoptimized />
                 <div className="min-w-0 overflow-hidden">

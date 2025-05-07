@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { ScrollArea } from "~/components/ui/scroll-area";
@@ -28,6 +28,22 @@ const Randomizer = () => {
     const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
     const [allTags, setAllTags] = useState<Set<string>>(new Set());
     const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
+
+    const [visibleOperatorCount, setVisibleOperatorCount] = useState(40);
+
+    const observer = useRef<IntersectionObserver | null>(null);
+    const lastCharacterRef = useCallback(
+        (node: HTMLDivElement) => {
+            if (observer.current) observer.current.disconnect();
+            observer.current = new IntersectionObserver((entries) => {
+                if (entries[0]?.isIntersecting && visibleOperatorCount < filteredOperators.length) {
+                    setVisibleOperatorCount((prevCount) => Math.min(prevCount + 40, filteredOperators.length));
+                }
+            });
+            if (node) observer.current.observe(node);
+        },
+        [visibleOperatorCount, filteredOperators.length],
+    );
 
     useEffect(() => {
         const fetchOperators = async () => {
@@ -137,7 +153,7 @@ const Randomizer = () => {
     }, [filteredOperators, excludedOperators, squadSize]);
 
     return (
-        <div className="container mx-auto flex h-screen flex-col p-4">
+        <div className="container mx-auto flex flex-col p-4">
             <h1 className="mb-6 flex-shrink-0 text-3xl font-bold">Arknights Squad Randomizer</h1>
 
             {error && <p className="mb-4 flex-shrink-0 text-red-500">Error loading operators: {error}</p>}
@@ -169,7 +185,7 @@ const Randomizer = () => {
 
                 {/* Operator List/Grid Area */}
                 <ScrollArea className="h-full min-h-[300px] flex-grow rounded-md border">
-                    <div className="p-2">{isLoading ? <p className="text-center text-muted-foreground">Loading operators...</p> : filteredOperators.length > 0 ? viewMode === "list" ? <div className="space-y-0.5">{filteredOperators.map((op) => renderOperatorListItem(op, excludedOperators, setExcludedOperators))}</div> : <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8">{filteredOperators.map((op) => renderOperatorGridItem(op, excludedOperators, setExcludedOperators))}</div> : <p className="text-center text-muted-foreground">No operators match filters.</p>}</div>
+                    <div className="p-2">{isLoading ? <p className="text-center text-muted-foreground">Loading operators...</p> : filteredOperators.length > 0 ? viewMode === "list" ? <div className="space-y-0.5">{filteredOperators.slice(0, visibleOperatorCount).map((op, index) => renderOperatorListItem(op, excludedOperators, setExcludedOperators, index === visibleOperatorCount - 1 ? lastCharacterRef : null))}</div> : <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8">{filteredOperators.slice(0, visibleOperatorCount).map((op, index) => renderOperatorGridItem(op, excludedOperators, setExcludedOperators, index === visibleOperatorCount - 1 ? lastCharacterRef : null))}</div> : <p className="text-center text-muted-foreground">No operators match filters.</p>}</div>
                 </ScrollArea>
                 <p className="mt-2 flex-shrink-0 text-sm text-muted-foreground">
                     Showing {filteredOperators.length} / {allOperators.length} operators.

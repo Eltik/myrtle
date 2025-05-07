@@ -1,7 +1,7 @@
 import { GeistSans } from "geist/font/sans";
 import { type AppType } from "next/app";
-import Layout from "~/components/base/layout";
-import { ThemeProvider } from "~/components/base/theme-provider";
+import Layout from "~/components/layout/layout";
+import { ThemeProvider } from "~/components/layout/theme-provider";
 import { CookiesProvider } from "react-cookie";
 import { PagesProgressBar as ProgressBar } from "next-nprogress-bar";
 
