@@ -351,6 +351,15 @@ export class OperatorData {
                                             requiredPotential: candidate.requiredPotentialRank,
                                             talentData: candidate.blackboard.map((data) => data.value),
                                         });
+                                    } else if (candidate.name === talent2Name) {
+                                        this.talent2Parameters.push({
+                                            requiredPromotion: 2,
+                                            requiredLevel: candidate.unlockCondition.level,
+                                            requiredModuleId: operatorModule.id ?? "",
+                                            requiredModuleLevel: equipLevel,
+                                            requiredPotential: candidate.requiredPotentialRank,
+                                            talentData: candidate.blackboard.map((data) => data.value),
+                                        });
                                     }
                                 } else {
                                     if (candidate.name === talent1Name) {
