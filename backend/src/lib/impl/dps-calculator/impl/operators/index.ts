@@ -22,6 +22,7 @@ import Bagpipe from "./impl/b/bagpipe";
 import Beehunter from "./impl/b/beehunter";
 import Beeswax from "./impl/b/beeswax";
 import Bibeak from "./impl/b/bibeak";
+import Blaze from "./impl/b/blaze";
 
 const operators = [
     {
@@ -119,6 +120,10 @@ const operators = [
     {
         id: "char_252_bibeak",
         object: Bibeak,
+    },
+    {
+        id: "char_017_huang",
+        object: Blaze,
     },
 ];
 

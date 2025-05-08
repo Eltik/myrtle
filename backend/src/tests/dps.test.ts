@@ -26,6 +26,7 @@ import Bagpipe from "../lib/impl/dps-calculator/impl/operators/impl/b/bagpipe";
 import Beehunter from "../lib/impl/dps-calculator/impl/operators/impl/b/beehunter";
 import Beeswax from "../lib/impl/dps-calculator/impl/operators/impl/b/beeswax";
 import Bibeak from "../lib/impl/dps-calculator/impl/operators/impl/b/bibeak";
+import Blaze from "../lib/impl/dps-calculator/impl/operators/impl/b/blaze";
 
 // Initialize data before running tests
 beforeAll(async () => {
@@ -2063,6 +2064,81 @@ describe("Operator DPS Calculations", () => {
             const dps = unit.skillDPS({ defense: 0, res: 20 });
             expect(dps).toBeGreaterThan(2230);
             expect(dps).toBeLessThan(2232);
+        });
+    });
+
+    describe("Blaze", () => {
+        const baseParams = {
+            moduleIndex: 1,
+        };
+        const operatorId = "char_017_huang";
+
+        test("should calculate s1 DPS correctly", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Blaze(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(1618);
+            expect(dps).toBeLessThan(1620);
+        });
+        test("should calculate s1 DPS correctly with def", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Blaze(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(1338);
+            expect(dps).toBeLessThan(1340);
+        });
+        test("should calculate s1 DPS correctly with res", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Blaze(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(1618);
+            expect(dps).toBeLessThan(1620);
+        });
+
+        test("should calculate s2 DPS correctly", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Blaze(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(1925);
+            expect(dps).toBeLessThan(1927);
+        });
+        test("should calculate s2 DPS correctly with def", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Blaze(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(1645);
+            expect(dps).toBeLessThan(1647);
+        });
+        test("should calculate s2 DPS correctly with res", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Blaze(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(1925);
+            expect(dps).toBeLessThan(1927);
         });
     });
 });
