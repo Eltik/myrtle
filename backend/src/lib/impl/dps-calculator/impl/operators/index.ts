@@ -24,6 +24,7 @@ import Beeswax from "./impl/b/beeswax";
 import Bibeak from "./impl/b/bibeak";
 import Blaze from "./impl/b/blaze";
 import Blemishine from "./impl/b/blemishine";
+import Blitz from "./impl/b/blitz";
 
 const operators = [
     {
@@ -129,6 +130,10 @@ const operators = [
     {
         id: "char_423_blemsh",
         object: Blemishine,
+    },
+    {
+        id: "char_457_blitz",
+        object: Blitz,
     },
 ];
 

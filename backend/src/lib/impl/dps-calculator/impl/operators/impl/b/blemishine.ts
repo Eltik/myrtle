@@ -4,7 +4,7 @@ import { OperatorData } from "../../../classes/impl/operator-data";
 
 export default class Blemishine extends OperatorUnit {
     constructor(operatorData: OperatorData, params: OperatorParams) {
-        super(operatorData, params, 2, 1, 1, [0, 1, 2]);
+        super(operatorData, params, 2, 1, 2, [0, 1, 2]);
 
         this.talent2DamageNames = ["vsSleep", "w/o sleep"];
         if (this.elite > 0) {
