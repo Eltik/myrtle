@@ -401,6 +401,15 @@ export class OperatorData {
                                             requiredPotential: candidate.requiredPotentialRank,
                                             talentData: candidate.blackboard.map((data) => data.value),
                                         });
+                                    } else if (candidate.name === talent2Name) {
+                                        this.talent2Parameters.push({
+                                            requiredPromotion: 2,
+                                            requiredLevel: candidate.unlockCondition.level,
+                                            requiredModuleId: operatorModule.id ?? "",
+                                            requiredModuleLevel: equipLevel,
+                                            requiredPotential: candidate.requiredPotentialRank,
+                                            talentData: candidate.blackboard.map((data) => data.value),
+                                        });
                                     }
                                 } else {
                                     if (candidate.name === talent1Name) {
@@ -435,6 +444,15 @@ export class OperatorData {
                                 if (candidate.prefabKey === "1" || candidate.prefabKey === "2") {
                                     if (candidate.name === talent1Name) {
                                         this.talent1Parameters.push({
+                                            requiredPromotion: 2,
+                                            requiredLevel: candidate.unlockCondition.level,
+                                            requiredModuleId: operatorModule.id ?? "",
+                                            requiredModuleLevel: equipLevel,
+                                            requiredPotential: candidate.requiredPotentialRank,
+                                            talentData: candidate.blackboard.map((data) => data.value),
+                                        });
+                                    } else if (candidate.name === talent2Name) {
+                                        this.talent2Parameters.push({
                                             requiredPromotion: 2,
                                             requiredLevel: candidate.unlockCondition.level,
                                             requiredModuleId: operatorModule.id ?? "",
