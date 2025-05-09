@@ -27,6 +27,7 @@ import Beehunter from "../lib/impl/dps-calculator/impl/operators/impl/b/beehunte
 import Beeswax from "../lib/impl/dps-calculator/impl/operators/impl/b/beeswax";
 import Bibeak from "../lib/impl/dps-calculator/impl/operators/impl/b/bibeak";
 import Blaze from "../lib/impl/dps-calculator/impl/operators/impl/b/blaze";
+import Blemishine from "../lib/impl/dps-calculator/impl/operators/impl/b/blemishine";
 
 // Initialize data before running tests
 beforeAll(async () => {
@@ -2139,6 +2140,115 @@ describe("Operator DPS Calculations", () => {
             const dps = unit.skillDPS({ defense: 0, res: 20 });
             expect(dps).toBeGreaterThan(1925);
             expect(dps).toBeLessThan(1927);
+        });
+    });
+
+    describe("Blemishine", () => {
+        const baseParams = {
+            moduleIndex: 2,
+        };
+        const operatorId = "char_423_blemsh";
+
+        test("should calculate s1 DPS correctly", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Blemishine(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(1185);
+            expect(dps).toBeLessThan(1187);
+        });
+        test("should calculate s1 DPS correctly with def", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Blemishine(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(935);
+            expect(dps).toBeLessThan(937);
+        });
+        test("should calculate s1 DPS correctly with res", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Blemishine(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(1185);
+            expect(dps).toBeLessThan(1187);
+        });
+
+        test("should calculate s2 DPS correctly", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Blemishine(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(1819);
+            expect(dps).toBeLessThan(1821);
+        });
+        test("should calculate s2 DPS correctly with def", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Blemishine(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(1569);
+            expect(dps).toBeLessThan(1571);
+        });
+        test("should calculate s2 DPS correctly with res", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Blemishine(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(1819);
+            expect(dps).toBeLessThan(1821);
+        });
+
+        test("should calculate s3 DPS correctly", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Blemishine(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 2,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(3639);
+            expect(dps).toBeLessThan(3641);
+        });
+        test("should calculate s3 DPS correctly with def", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Blemishine(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 2,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(3389);
+            expect(dps).toBeLessThan(3391);
+        });
+        test("should calculate s3 DPS correctly with res", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Blemishine(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 2,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(3275);
+            expect(dps).toBeLessThan(3277);
         });
     });
 });
