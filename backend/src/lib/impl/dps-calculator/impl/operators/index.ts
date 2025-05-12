@@ -25,6 +25,8 @@ import Bibeak from "./impl/b/bibeak";
 import Blaze from "./impl/b/blaze";
 import Blemishine from "./impl/b/blemishine";
 import Blitz from "./impl/b/blitz";
+import BluePoison from "./impl/b/blue-poison";
+import Broca from "./impl/b/broca";
 
 const operators = [
     {
@@ -134,6 +136,14 @@ const operators = [
     {
         id: "char_457_blitz",
         object: Blitz,
+    },
+    {
+        id: "char_129_bluep",
+        object: BluePoison,
+    },
+    {
+        id: "char_356_broca",
+        object: Broca,
     },
 ];
 

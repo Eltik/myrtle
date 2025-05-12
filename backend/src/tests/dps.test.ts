@@ -29,6 +29,8 @@ import Bibeak from "../lib/impl/dps-calculator/impl/operators/impl/b/bibeak";
 import Blaze from "../lib/impl/dps-calculator/impl/operators/impl/b/blaze";
 import Blemishine from "../lib/impl/dps-calculator/impl/operators/impl/b/blemishine";
 import Blitz from "../lib/impl/dps-calculator/impl/operators/impl/b/blitz";
+import BluePoison from "../lib/impl/dps-calculator/impl/operators/impl/b/blue-poison";
+import Broca from "../lib/impl/dps-calculator/impl/operators/impl/b/broca";
 
 // Initialize data before running tests
 beforeAll(async () => {
@@ -2424,6 +2426,156 @@ describe("Operator DPS Calculations", () => {
             const dps = unit.skillDPS({ defense: 0, res: 20 });
             expect(dps).toBeGreaterThan(2980);
             expect(dps).toBeLessThan(2982);
+        });
+    });
+
+    describe("Blue Poison", () => {
+        const baseParams = {
+            moduleIndex: 1,
+        };
+        const operatorId = "char_129_bluep";
+
+        test("should calculate s1 DPS correctly", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new BluePoison(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(1049);
+            expect(dps).toBeLessThan(1051);
+        });
+        test("should calculate s1 DPS correctly with def", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new BluePoison(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(713);
+            expect(dps).toBeLessThan(715);
+        });
+        test("should calculate s1 DPS correctly with res", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new BluePoison(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(1030);
+            expect(dps).toBeLessThan(1032);
+        });
+
+        test("should calculate s2 DPS correctly", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new BluePoison(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(2244);
+            expect(dps).toBeLessThan(2246);
+        });
+        test("should calculate s2 DPS correctly with def", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new BluePoison(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(1572);
+            expect(dps).toBeLessThan(1574);
+        });
+        test("should calculate s2 DPS correctly with res", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new BluePoison(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(2225);
+            expect(dps).toBeLessThan(2227);
+        });
+    });
+
+    describe("Broca", () => {
+        const baseParams = {
+            moduleIndex: 1,
+        };
+        const operatorId = "char_356_broca";
+
+        test("should calculate s1 DPS correctly", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Broca(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(1609);
+            expect(dps).toBeLessThan(1611);
+        });
+        test("should calculate s1 DPS correctly with def", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Broca(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(1609);
+            expect(dps).toBeLessThan(1611);
+        });
+        test("should calculate s1 DPS correctly with res", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Broca(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(1287);
+            expect(dps).toBeLessThan(1289);
+        });
+
+        test("should calculate s2 DPS correctly", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Broca(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(1520);
+            expect(dps).toBeLessThan(1522);
+        });
+        test("should calculate s2 DPS correctly with def", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Broca(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(1520);
+            expect(dps).toBeLessThan(1522);
+        });
+        test("should calculate s2 DPS correctly with res", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Broca(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(1216);
+            expect(dps).toBeLessThan(1218);
         });
     });
 });
