@@ -31,6 +31,7 @@ import Blemishine from "../lib/impl/dps-calculator/impl/operators/impl/b/blemish
 import Blitz from "../lib/impl/dps-calculator/impl/operators/impl/b/blitz";
 import BluePoison from "../lib/impl/dps-calculator/impl/operators/impl/b/blue-poison";
 import Broca from "../lib/impl/dps-calculator/impl/operators/impl/b/broca";
+import Bryophyta from "../lib/impl/dps-calculator/impl/operators/impl/b/bryophyta";
 
 // Initialize data before running tests
 beforeAll(async () => {
@@ -2576,6 +2577,81 @@ describe("Operator DPS Calculations", () => {
             const dps = unit.skillDPS({ defense: 0, res: 20 });
             expect(dps).toBeGreaterThan(1216);
             expect(dps).toBeLessThan(1218);
+        });
+    });
+
+    describe("Bryophyta", () => {
+        const baseParams = {
+            moduleIndex: 1,
+        };
+        const operatorId = "char_4106_bryota";
+
+        test("should calculate s1 DPS correctly", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Bryophyta(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(1221);
+            expect(dps).toBeLessThan(1223);
+        });
+        test("should calculate s1 DPS correctly with def", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Bryophyta(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(935);
+            expect(dps).toBeLessThan(937);
+        });
+        test("should calculate s1 DPS correctly with res", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Bryophyta(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 0,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(1221);
+            expect(dps).toBeLessThan(1223);
+        });
+
+        test("should calculate s2 DPS correctly", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Bryophyta(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 0 });
+            expect(dps).toBeGreaterThan(1659);
+            expect(dps).toBeLessThan(1661);
+        });
+        test("should calculate s2 DPS correctly with def", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Bryophyta(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 300, res: 0 });
+            expect(dps).toBeGreaterThan(1373);
+            expect(dps).toBeLessThan(1375);
+        });
+        test("should calculate s2 DPS correctly with res", () => {
+            const operator = operators(operatorId);
+            if (!operator) throw new Error("Operator not found");
+            const unit = new Bryophyta(new OperatorData(operator), {
+                ...baseParams,
+                skillIndex: 1,
+            });
+            const dps = unit.skillDPS({ defense: 0, res: 20 });
+            expect(dps).toBeGreaterThan(1659);
+            expect(dps).toBeLessThan(1661);
         });
     });
 });

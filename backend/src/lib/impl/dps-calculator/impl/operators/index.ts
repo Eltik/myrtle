@@ -27,6 +27,7 @@ import Blemishine from "./impl/b/blemishine";
 import Blitz from "./impl/b/blitz";
 import BluePoison from "./impl/b/blue-poison";
 import Broca from "./impl/b/broca";
+import Bryophyta from "./impl/b/bryophyta";
 
 const operators = [
     {
@@ -144,6 +145,10 @@ const operators = [
     {
         id: "char_356_broca",
         object: Broca,
+    },
+    {
+        id: "char_4106_bryota",
+        object: Bryophyta,
     },
 ];
 
