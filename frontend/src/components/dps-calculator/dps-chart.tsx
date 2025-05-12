@@ -5,6 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
 import { type NameType, type ValueType } from "recharts/types/component/DefaultTooltipContent";
 
+// Define SelectedOperator type matching the one in dps-calculator.tsx
+interface SelectedOperator extends Operator {
+    instanceId: string;
+    displayName: string;
+}
+
 interface DefenseChartPoint {
     defense: number;
     [operatorName: string]: number;
@@ -31,7 +37,7 @@ interface ChartSettings {
 }
 
 export interface DPSChartProps {
-    operators: Operator[];
+    operators: SelectedOperator[];
     generateChartData: () => Promise<ChartPoint[]>;
     xAxisLabel: string;
     chartType: "defense" | "resistance";
@@ -106,8 +112,8 @@ export function DPSChart({ operators, generateChartData, xAxisLabel, chartType, 
         const result: Record<string, string> = {};
 
         operators.forEach((operator, index) => {
-            if (operator.name) {
-                Object.assign(result, { [operator.name]: colors[index % colors.length] });
+            if (operator.displayName) {
+                result[operator.displayName] = colors[index % colors.length] ?? "#8884d8";
             }
         });
 
@@ -217,11 +223,10 @@ export function DPSChart({ operators, generateChartData, xAxisLabel, chartType, 
                     <AreaChart {...chartProps}>
                         {axesProps}
                         {operators.map((operator) => {
-                            if (!operator.name) return null;
-                            const opName = operator.name;
-                            const color = operatorColors[opName];
+                            if (!operator.displayName) return null;
+                            const color = operatorColors[operator.displayName];
 
-                            return <Area key={operator.id ?? `op-${Math.random()}`} type={curveType} dataKey={opName} stroke={color} fill={color} fillOpacity={0.3} strokeWidth={2} {...dotProps} {...activeDotProps} animationDuration={300} />;
+                            return <Area key={operator.instanceId} type={curveType} dataKey={operator.displayName} stroke={color} fill={color} fillOpacity={0.3} strokeWidth={2} {...dotProps} {...activeDotProps} animationDuration={300} />;
                         })}
                     </AreaChart>
                 );
@@ -231,10 +236,8 @@ export function DPSChart({ operators, generateChartData, xAxisLabel, chartType, 
                     <BarChart {...chartProps} barGap={0} barCategoryGap={5}>
                         {axesProps}
                         {operators.map((operator) => {
-                            if (!operator.name) return null;
-                            const opName = operator.name;
-
-                            return <Bar key={operator.id ?? `op-${Math.random()}`} dataKey={opName} fill={operatorColors[opName]} animationDuration={300} />;
+                            if (!operator.displayName) return null;
+                            return <Bar key={operator.instanceId} dataKey={operator.displayName} fill={operatorColors[operator.displayName]} animationDuration={300} />;
                         })}
                     </BarChart>
                 );
@@ -245,10 +248,8 @@ export function DPSChart({ operators, generateChartData, xAxisLabel, chartType, 
                     <LineChart {...chartProps}>
                         {axesProps}
                         {operators.map((operator) => {
-                            if (!operator.name) return null;
-                            const opName = operator.name;
-
-                            return <Line key={operator.id ?? `op-${Math.random()}`} type={curveType} dataKey={opName} stroke={operatorColors[opName]} strokeWidth={2} {...dotProps} {...activeDotProps} animationDuration={300} />;
+                            if (!operator.displayName) return null;
+                            return <Line key={operator.instanceId} type={curveType} dataKey={operator.displayName} stroke={operatorColors[operator.displayName]} strokeWidth={2} {...dotProps} {...activeDotProps} animationDuration={300} />;
                         })}
                     </LineChart>
                 );
