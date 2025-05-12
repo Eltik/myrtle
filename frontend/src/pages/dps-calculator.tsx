@@ -34,14 +34,24 @@ interface ChartSettings {
     smoothCurves: boolean;
 }
 
+interface SelectedOperator extends Operator {
+    instanceId: string;
+    displayName: string;
+}
+
+interface SelectedDPSOperator extends DPSOperator {
+    instanceId: string;
+    displayName: string;
+}
+
 interface OperatorDPSStats {
     averageDPS: number;
     totalDPS: number;
 }
 
 const DPSCalculator: NextPage<Props> = ({ data }) => {
-    const [selectedOperators, setSelectedOperators] = useState<Operator[]>([]);
-    const [dpsOperators, setDPSOperators] = useState<DPSOperator[]>([]);
+    const [selectedOperators, setSelectedOperators] = useState<SelectedOperator[]>([]);
+    const [dpsOperators, setDPSOperators] = useState<SelectedDPSOperator[]>([]);
     const [isOperatorSelectorOpen, setIsOperatorSelectorOpen] = useState(false);
     const [operatorParams, setOperatorParams] = useState<Record<string, OperatorParams>>({});
     const [chartDataType, setChartDataType] = useState<ChartDataType>("defense");
@@ -58,44 +68,77 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
     const [operatorDPSStats, setOperatorDPSStats] = useState<Record<string, OperatorDPSStats>>({});
     const [isChartSettingsOpen, setIsChartSettingsOpen] = useState(true);
 
-    const handleOperatorSelectionChange = (newSelectedOps: Operator[]) => {
-        const newSelectedIds = new Set(newSelectedOps.map((op) => op.id).filter((id) => id !== null && id !== undefined));
+    const handleOperatorSelectionChange = (newSelectedBaseOps: Operator[]) => {
+        const newBaseOpIds = new Set(newSelectedBaseOps.map((op) => op.id));
 
-        // Update selectedOperators state
-        setSelectedOperators(newSelectedOps);
+        setSelectedOperators((prevSelectedOperators) => {
+            const nextSelectedOperators: SelectedOperator[] = [];
+            const existingInstanceCounts: Record<string, number> = {};
 
-        // Filter dpsOperators based on new selection
-        setDPSOperators((prevDpsOps) => prevDpsOps.filter((dpsOp) => newSelectedIds.has(dpsOp.operatorData.data.id ?? "")));
+            // Keep existing operators that are still selected in the modal
+            prevSelectedOperators.forEach((op) => {
+                if (newBaseOpIds.has(op.id)) {
+                    nextSelectedOperators.push(op); // Keep existing instanceId and displayName
+                    Object.assign(existingInstanceCounts, {
+                        [op.id ?? ""]: (existingInstanceCounts[op.id ?? ""] ?? 0) + 1,
+                    });
+                }
+            });
 
-        // Filter operatorParams based on new selection
+            // Add new operators that were not previously present (as single instances)
+            newSelectedBaseOps.forEach((baseOp) => {
+                if (!nextSelectedOperators.some((selOp) => selOp.id === baseOp.id)) {
+                    const instanceId = `${baseOp.id}_${Date.now()}`;
+                    // For operators added via selector, their initial displayName is just their name
+                    // Duplicates will get suffixes later via a duplicate button.
+                    const displayName = baseOp.name;
+                    nextSelectedOperators.push({ ...baseOp, instanceId, displayName });
+                }
+            });
+            return nextSelectedOperators;
+        });
+
+        // Update dpsOperators and operatorParams based on the new selectedOperators
+        // This needs to be done more carefully, perhaps in an effect listening to selectedOperators
+    };
+
+    useEffect(() => {
+        // Synchronize dpsOperators and operatorParams with selectedOperators
+        setDPSOperators((prevDpsOps) => {
+            const newDpsOps: SelectedDPSOperator[] = [];
+            const currentSelectedInstanceIds = new Set(selectedOperators.map((op) => op.instanceId));
+            prevDpsOps.forEach((dpsOp) => {
+                if (currentSelectedInstanceIds.has(dpsOp.instanceId)) {
+                    newDpsOps.push(dpsOp);
+                }
+            });
+            return newDpsOps;
+        });
+
         setOperatorParams((prevParams) => {
-            const updatedParams: Record<string, OperatorParams> = {};
-
-            // Keep params for operators that are still selected
-            for (const opId in prevParams) {
-                if (newSelectedIds.has(opId)) {
-                    const params = prevParams[opId];
-                    // This check should ideally not be needed if prevParams is correctly typed
-                    // and its keys guarantee non-undefined values.
+            const newOpParams: Record<string, OperatorParams> = {};
+            const currentSelectedInstanceIds = new Set(selectedOperators.map((op) => op.instanceId));
+            // Iterate over the keys of prevParams which are known to be strings
+            Object.keys(prevParams).forEach((instanceId) => {
+                if (currentSelectedInstanceIds.has(instanceId)) {
+                    const params = prevParams[instanceId];
                     if (params !== undefined) {
-                        updatedParams[opId] = params;
+                        newOpParams[instanceId] = params;
                     }
                 }
-            }
-            // Note: This logic doesn't add default params for newly selected operators.
-            // That might be handled when getDPSOperators fetches/adds them to dpsOperators.
-            return updatedParams;
+            });
+            return newOpParams;
         });
-    };
+    }, [selectedOperators]);
 
     const getDPSOperators = useCallback(async () => {
         for (const operator of selectedOperators) {
-            // Check if this operator is already in dpsOperators
-            const isInDPSOperators = dpsOperators.find((op) => operator.id === op.operatorData.data.id);
+            const isInDPSOperators = dpsOperators.find((op) => op.instanceId === operator.instanceId);
 
             if (!isInDPSOperators) {
                 try {
-                    const data = (await (
+                    const paramsForFetch = operatorParams[operator.instanceId];
+                    const fetchedOperatorData = (await (
                         await fetch("/api/dpsCalculator", {
                             method: "POST",
                             headers: {
@@ -103,14 +146,20 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
                             },
                             body: JSON.stringify({
                                 method: "operator",
-                                id: operator.id,
-                                params: operatorParams[operator.id ?? ""],
+                                id: operator.id, // Use base ID for fetching
+                                params: paramsForFetch,
                             }),
                         })
                     ).json()) as DPSOperatorResponse;
 
-                    if (data.operator) {
-                        setDPSOperators((prevDPSOperators) => [...prevDPSOperators, data.operator]);
+                    if (fetchedOperatorData.operator) {
+                        setDPSOperators((prevDPSOperators) => {
+                            // Check if the instanceId already exists before adding
+                            if (prevDPSOperators.some((op) => op.instanceId === operator.instanceId)) {
+                                return prevDPSOperators; // Already exists, don't add again
+                            }
+                            return [...prevDPSOperators, { ...fetchedOperatorData.operator, instanceId: operator.instanceId, displayName: operator.displayName }];
+                        });
                     }
                 } catch (error) {
                     console.error("Error fetching DPS operator:", error);
@@ -121,12 +170,12 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
 
     useEffect(() => {
         void getDPSOperators();
-    }, [getDPSOperators, selectedOperators]);
+    }, [selectedOperators, getDPSOperators]);
 
-    const handleOperatorParamsChange = (operatorId: string, params: OperatorParams) => {
+    const handleOperatorParamsChange = (instanceId: string, params: OperatorParams) => {
         setOperatorParams((prevParams) => ({
             ...prevParams,
-            [operatorId]: params,
+            [instanceId]: params,
         }));
     };
 
@@ -138,9 +187,9 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
     };
 
     const calculateDPS = useCallback(
-        async (operator: Operator, minDef: number, maxDef: number, minRes: number, maxRes: number) => {
+        async (operator: SelectedOperator, minDef: number, maxDef: number, minRes: number, maxRes: number) => {
             const params = {
-                ...operatorParams[operator.id ?? ""],
+                ...(operatorParams[operator.instanceId] ?? {}),
                 targets: chartSettings.targets,
             };
 
@@ -152,7 +201,7 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
                     },
                     body: JSON.stringify({
                         method: "dps",
-                        id: operator.id,
+                        id: operator.id, // Use base ID for API
                         params,
                         range: {
                             minDef,
@@ -164,10 +213,10 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
                 })
             ).json()) as DPSCalculatorResponse;
 
-            // Store DPS stats for this operator
+            // Store DPS stats for this operator instance
             setOperatorDPSStats((prev) => ({
                 ...prev,
-                [operator.id ?? ""]: {
+                [operator.instanceId]: {
                     averageDPS: data.averageDPS,
                     totalDPS: data.totalDPS,
                 },
@@ -211,7 +260,7 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
                         const currentPoint = chartData[index];
                         chartData[index] = {
                             ...currentPoint,
-                            [operator.name]: point.dps,
+                            [operator.displayName]: point.dps,
                         };
                     }
                 });
@@ -237,7 +286,7 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
                         const currentPoint = chartData[index];
                         chartData[index] = {
                             ...currentPoint,
-                            [operator.name]: point.dps,
+                            [operator.displayName]: point.dps,
                         };
                     }
                 });
@@ -252,19 +301,49 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
         setChartDataType(value as ChartDataType);
     };
 
-    const handleRemoveOperator = (operatorId: string) => {
-        // Remove from dpsOperators
-        setDPSOperators((prevOperators) => prevOperators.filter((op) => op.operatorData.data.id !== operatorId));
+    const handleRemoveOperator = (instanceIdToRemove: string) => {
+        // Remove from selectedOperators first to trigger useEffect for dpsOperators and operatorParams
+        setSelectedOperators((prevOperators) => prevOperators.filter((op) => op.instanceId !== instanceIdToRemove));
 
-        // Remove from selectedOperators
-        setSelectedOperators((prevOperators) => prevOperators.filter((op) => op.id !== operatorId));
-
-        // Remove from operatorParams
-        setOperatorParams((prevParams) => {
-            const newParams = { ...prevParams };
-            delete newParams[operatorId];
-            return newParams;
+        // Remove from operatorDPSStats directly
+        setOperatorDPSStats((prevStats) => {
+            const newStats = { ...prevStats };
+            delete newStats[instanceIdToRemove];
+            return newStats;
         });
+    };
+
+    const handleDuplicateOperator = (instanceIdToDuplicate: string) => {
+        const operatorToDuplicate = selectedOperators.find((op) => op.instanceId === instanceIdToDuplicate);
+        if (!operatorToDuplicate) return;
+
+        // Create a new base operator object by stripping instance-specific fields
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { instanceId: _i, displayName: _d, ...baseOperatorData } = operatorToDuplicate;
+        const baseOp = baseOperatorData as Operator;
+
+        const existingInstancesOfThisType = selectedOperators.filter((op) => op.id === baseOp.id);
+        const newInstanceNumber = existingInstancesOfThisType.length + 1;
+
+        const newInstanceId = `${baseOp.id}_${Date.now()}`;
+        const newDisplayName = `${baseOp.name} (${newInstanceNumber})`;
+
+        const duplicatedOp: SelectedOperator = {
+            ...baseOp, // Spread the original base operator data
+            instanceId: newInstanceId,
+            displayName: newDisplayName,
+        };
+
+        setSelectedOperators((prev) => [...prev, duplicatedOp]);
+
+        // Optionally, copy parameters from the duplicated operator
+        const paramsToCopy = operatorParams[instanceIdToDuplicate];
+        if (paramsToCopy) {
+            setOperatorParams((prev) => ({
+                ...prev,
+                [newInstanceId]: { ...paramsToCopy },
+            }));
+        }
     };
 
     return (
@@ -305,7 +384,13 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
                                 Add Operators
                             </Button>
                         </div>
-                        <OperatorSelector operators={data} selectedOperators={selectedOperators} isOpen={isOperatorSelectorOpen} onClose={() => setIsOperatorSelectorOpen(false)} onSelect={handleOperatorSelectionChange} />
+                        <OperatorSelector
+                            operators={data}
+                            selectedOperators={selectedOperators} // Pass SelectedOperator[]
+                            isOpen={isOperatorSelectorOpen}
+                            onClose={() => setIsOperatorSelectorOpen(false)}
+                            onSelect={handleOperatorSelectionChange}
+                        />
 
                         {/* Collapsible Chart settings card */}
                         <Card className={`mb-4 w-full ${isChartSettingsOpen ? "" : "transition-all duration-150 hover:bg-primary-foreground"}`}>
@@ -353,12 +438,12 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
                                                 {(chartSettings.showAverage || chartSettings.showTotal) && Object.keys(operatorDPSStats).length > 0 ? (
                                                     <div className="mt-2 space-y-2 rounded-md bg-secondary p-2 text-sm">
                                                         {selectedOperators.map((operator) => {
-                                                            const stats = operatorDPSStats[operator.id ?? ""];
+                                                            const stats = operatorDPSStats[operator.instanceId];
                                                             if (!stats) return null;
 
                                                             return (
-                                                                <div key={operator.id} className="flex justify-between">
-                                                                    <span className="font-medium">{operator.name}:</span>
+                                                                <div key={operator.instanceId} className="flex justify-between">
+                                                                    <span className="font-medium">{operator.displayName}:</span>
                                                                     <div className="space-x-4">
                                                                         {chartSettings.showAverage && <span>Avg: {stats.averageDPS.toLocaleString()}</span>}
                                                                         {chartSettings.showTotal && <span>Total: {stats.totalDPS.toLocaleString()}</span>}
@@ -430,7 +515,7 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
 
                         <div className="space-y-4">
                             {dpsOperators.map((operator) => (
-                                <OperatorListItem key={operator.operatorData.data.id} operator={operator} onParamsChange={(params) => handleOperatorParamsChange(operator.operatorData.data.id ?? "", params)} onRemove={handleRemoveOperator} />
+                                <OperatorListItem key={operator.instanceId} operator={operator} onParamsChange={(params) => handleOperatorParamsChange(operator.instanceId, params)} onRemove={handleRemoveOperator} onDuplicate={handleDuplicateOperator} />
                             ))}
                         </div>
                     </div>
@@ -443,10 +528,22 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
                                 </TabsList>
                             </div>
                             <TabsContent value="defense" className="mt-0">
-                                <DPSChart operators={selectedOperators} generateChartData={generateChartData} xAxisLabel="Defense" chartType="defense" chartSettings={chartSettings} />
+                                <DPSChart
+                                    operators={selectedOperators} // Pass SelectedOperator[]
+                                    generateChartData={generateChartData}
+                                    xAxisLabel="Defense"
+                                    chartType="defense"
+                                    chartSettings={chartSettings}
+                                />
                             </TabsContent>
                             <TabsContent value="resistance" className="mt-0">
-                                <DPSChart operators={selectedOperators} generateChartData={generateChartData} xAxisLabel="Resistance" chartType="resistance" chartSettings={chartSettings} />
+                                <DPSChart
+                                    operators={selectedOperators} // Pass SelectedOperator[]
+                                    generateChartData={generateChartData}
+                                    xAxisLabel="Resistance"
+                                    chartType="resistance"
+                                    chartSettings={chartSettings}
+                                />
                             </TabsContent>
                         </Tabs>
                     </div>

@@ -17,6 +17,13 @@ import type { DPSOperator } from "~/types/impl/api/impl/dps-calculator";
 
 type OperatorOrDPSOperator = Operator | DPSOperator;
 
+// Define SelectedOperator locally if not imported, just for prop type check
+interface SelectedOperator extends Operator {
+    instanceId: string;
+    displayName: string;
+}
+type OperatorSelectorInput = Operator | DPSOperator | SelectedOperator;
+
 function OperatorSelector({ operators, selectedOperators, isOpen, onClose, onSelect }: OperatorSelectorProps) {
     const [search, setSearch] = useState("");
     const [searchSubclass, setSearchSubclass] = useState("");
@@ -30,7 +37,11 @@ function OperatorSelector({ operators, selectedOperators, isOpen, onClose, onSel
     const [selectedSubclasses, setSelectedSubclasses] = useState<string[]>([]);
 
     // Helper function to safely access operator properties
-    const getOperatorProperty = (operator: OperatorOrDPSOperator, property: string): string | null => {
+    const getOperatorProperty = (operator: OperatorSelectorInput, property: string): string | null => {
+        // Check if it's a SelectedOperator (which includes Operator properties)
+        if ("instanceId" in operator && "displayName" in operator) {
+            return (operator[property as keyof SelectedOperator] as string) || null;
+        }
         // If the operator is a DPSOperator (has operatorData.data structure)
         if ("operatorData" in operator && operator.operatorData?.data) {
             return (operator.operatorData.data[property as keyof Operator] as string) || null;
@@ -94,14 +105,18 @@ function OperatorSelector({ operators, selectedOperators, isOpen, onClose, onSel
 
         let newSelection: Operator[]; // Ensure we always call onSelect with Operator[]
 
-        // Helper to safely extract Operator from OperatorOrDPSOperator
-        const getBaseOperator = (opInput: OperatorOrDPSOperator): Operator | null => {
+        // Helper to safely extract Operator from various possible input types
+        const getBaseOperator = (opInput: OperatorSelectorInput | undefined): Operator | null => {
+            if (!opInput) return null; // Handle undefined input
+
+            // If it's SelectedOperator, extract the base Operator part
+            if ("instanceId" in opInput && "displayName" in opInput) {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { instanceId, displayName, ...baseOp } = opInput; // Ensure no 'as SelectedOperator' here
+                return baseOp;
+            }
             if ("operatorData" in opInput && opInput.operatorData?.data) {
                 return opInput.operatorData.data;
-            }
-            // Check if it's already an Operator (basic check)
-            if (typeof opInput === "object" && opInput !== null && "profession" in opInput && "id" in opInput) {
-                return opInput;
             }
             console.warn("Could not extract base Operator from:", opInput); // Add warning for unexpected types
             return null; // Return null if extraction fails
@@ -110,7 +125,7 @@ function OperatorSelector({ operators, selectedOperators, isOpen, onClose, onSel
         if (isSelected) {
             newSelection = selectedOperators
                 .filter((op) => getOperatorProperty(op, "id") !== operatorId)
-                .map(getBaseOperator) // Use helper
+                .map((op) => getBaseOperator(op)) // Use helper
                 .filter((op): op is Operator => op !== null); // Filter out nulls and assert type
         } else {
             const operatorToAdd = getBaseOperator(operator); // Use helper
@@ -121,7 +136,7 @@ function OperatorSelector({ operators, selectedOperators, isOpen, onClose, onSel
             }
 
             const currentOperators = selectedOperators
-                .map(getBaseOperator) // Use helper
+                .map((op) => getBaseOperator(op)) // Use helper
                 .filter((op): op is Operator => op !== null); // Filter out nulls and assert type
 
             newSelection = [...currentOperators, operatorToAdd];
@@ -232,7 +247,7 @@ function OperatorSelector({ operators, selectedOperators, isOpen, onClose, onSel
                                                                         const id = getOperatorProperty(operator, "id");
                                                                         const name = getOperatorProperty(operator, "name");
                                                                         return (
-                                                                            <div key={id} className="flex items-center space-x-2">
+                                                                            <div key={id ?? name} className="flex items-center space-x-2">
                                                                                 <Checkbox id={id ?? ""} checked={selectedOperators.some((op) => getOperatorProperty(op, "id") === id)} onCheckedChange={() => handleToggleOperator(operator)} />
                                                                                 <Label htmlFor={id ?? ""} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                                                                                     {name}
@@ -255,8 +270,9 @@ function OperatorSelector({ operators, selectedOperators, isOpen, onClose, onSel
                         {selectedOperators.map((operator) => {
                             const id = getOperatorProperty(operator, "id");
                             const name = getOperatorProperty(operator, "name");
+                            const instanceId = getOperatorProperty(operator, "instanceId");
                             return (
-                                <Badge key={id} variant="secondary">
+                                <Badge key={instanceId ?? id} variant="secondary">
                                     {name}
                                     <Button variant="ghost" size="sm" className="ml-2 h-4 w-4 p-0" onClick={() => handleToggleOperator(operator)}>
                                         <X className="h-3 w-3" />
