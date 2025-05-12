@@ -5,6 +5,7 @@ import { type Operator, OperatorProfession } from "~/types/impl/api/static/opera
 import { ChevronsUpDown, Search, X } from "lucide-react";
 import { Input } from "../ui/input";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "../ui/dropdown-menu";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "../ui/hover-card";
 import { Button } from "../ui/button";
 import { ScrollArea } from "../ui/scroll-area";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
@@ -18,6 +19,7 @@ type OperatorOrDPSOperator = Operator | DPSOperator;
 
 function OperatorSelector({ operators, selectedOperators, isOpen, onClose, onSelect }: OperatorSelectorProps) {
     const [search, setSearch] = useState("");
+    const [searchSubclass, setSearchSubclass] = useState("");
 
     const [selectedClasses, setSelectedClasses] = useState<OperatorProfession[]>(
         Object.keys(OperatorProfession).map((profession) => {
@@ -65,7 +67,11 @@ function OperatorSelector({ operators, selectedOperators, isOpen, onClose, onSel
                 if (selectedClasses.includes(className as OperatorProfession)) {
                     acc[className] = Object.entries(subclasses).reduce(
                         (subAcc, [subclassName, ops]) => {
-                            if (selectedSubclasses.length === 0 || selectedSubclasses.includes(subclassName)) {
+                            const formattedSubclassName = formatSubProfession(subclassName).toLowerCase();
+                            const passesSubclassFilter = selectedSubclasses.length === 0 || selectedSubclasses.includes(subclassName);
+                            const passesSearchFilter = searchSubclass === "" || formattedSubclassName.includes(searchSubclass.toLowerCase());
+
+                            if (passesSubclassFilter && passesSearchFilter) {
                                 subAcc[subclassName] = ops.filter((op) => {
                                     const name = getOperatorProperty(op, "name");
                                     return name?.toLowerCase().includes(search.toLowerCase());
@@ -80,27 +86,47 @@ function OperatorSelector({ operators, selectedOperators, isOpen, onClose, onSel
             },
             {} as Record<string, Record<string, OperatorOrDPSOperator[]>>,
         );
-    }, [groupedOperators, selectedClasses, selectedSubclasses, search]);
+    }, [groupedOperators, selectedClasses, selectedSubclasses, search, searchSubclass]);
 
     const handleToggleOperator = (operator: OperatorOrDPSOperator) => {
         const operatorId = getOperatorProperty(operator, "id");
-
-        // Check if the operator is already selected
         const isSelected = selectedOperators.some((op) => getOperatorProperty(op, "id") === operatorId);
 
-        if (isSelected) {
-            // Remove the operator from selection
-            onSelect(selectedOperators.filter((op) => getOperatorProperty(op, "id") !== operatorId));
-        } else {
-            // Add the operator to selection, ensuring it's the correct type
-            // If it's a DPSOperator, use the underlying operator data
-            if ("operatorData" in operator && operator.operatorData?.data) {
-                onSelect([...selectedOperators, operator.operatorData.data]);
-            } else {
-                // It's already an Operator
-                onSelect([...selectedOperators, operator as Operator]);
+        let newSelection: Operator[]; // Ensure we always call onSelect with Operator[]
+
+        // Helper to safely extract Operator from OperatorOrDPSOperator
+        const getBaseOperator = (opInput: OperatorOrDPSOperator): Operator | null => {
+            if ("operatorData" in opInput && opInput.operatorData?.data) {
+                return opInput.operatorData.data;
             }
+            // Check if it's already an Operator (basic check)
+            if (typeof opInput === "object" && opInput !== null && "profession" in opInput && "id" in opInput) {
+                return opInput;
+            }
+            console.warn("Could not extract base Operator from:", opInput); // Add warning for unexpected types
+            return null; // Return null if extraction fails
+        };
+
+        if (isSelected) {
+            newSelection = selectedOperators
+                .filter((op) => getOperatorProperty(op, "id") !== operatorId)
+                .map(getBaseOperator) // Use helper
+                .filter((op): op is Operator => op !== null); // Filter out nulls and assert type
+        } else {
+            const operatorToAdd = getBaseOperator(operator); // Use helper
+
+            if (!operatorToAdd) {
+                console.error("Failed to add operator, could not extract base data from:", operator);
+                return; // Don't proceed if we couldn't get the base operator
+            }
+
+            const currentOperators = selectedOperators
+                .map(getBaseOperator) // Use helper
+                .filter((op): op is Operator => op !== null); // Filter out nulls and assert type
+
+            newSelection = [...currentOperators, operatorToAdd];
         }
+        onSelect(newSelection); // Consistently call onSelect with Operator[]
     };
 
     const handleClassToggle = (className: OperatorProfession) => {
@@ -114,6 +140,13 @@ function OperatorSelector({ operators, selectedOperators, isOpen, onClose, onSel
     const allSubclasses = useMemo(() => {
         return Array.from(new Set(Object.values(groupedOperators).flatMap((subclasses) => Object.keys(subclasses))));
     }, [groupedOperators]);
+
+    const filteredAllSubclasses = useMemo(() => {
+        if (!searchSubclass) {
+            return allSubclasses;
+        }
+        return allSubclasses.filter((subclass) => formatSubProfession(subclass).toLowerCase().includes(searchSubclass.toLowerCase()));
+    }, [allSubclasses, searchSubclass]);
 
     const hasOperators = useMemo(() => {
         return Object.values(filteredOperators).some((subclasses) => Object.values(subclasses).some((ops) => ops.length > 0));
@@ -149,21 +182,31 @@ function OperatorSelector({ operators, selectedOperators, isOpen, onClose, onSel
                                 })}
                             </DropdownMenuContent>
                         </DropdownMenu>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
+                        <HoverCard>
+                            <HoverCardTrigger asChild>
                                 <Button variant="outline">
                                     <span className="mr-2 max-w-32 truncate">{selectedSubclasses.length === 0 ? <span className="font-normal">Filter Subclasses</span> : selectedSubclasses.map((v) => formatSubProfession(v)).join(", ")}</span>
                                     <ChevronsUpDown className="ml-2 h-4 w-4" />
                                 </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="max-h-72 overflow-y-scroll">
-                                {allSubclasses.map((subclass) => (
-                                    <DropdownMenuCheckboxItem key={subclass} checked={selectedSubclasses.includes(subclass)} onCheckedChange={() => handleSubclassToggle(subclass)}>
-                                        {formatSubProfession(subclass)}
-                                    </DropdownMenuCheckboxItem>
-                                ))}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                            </HoverCardTrigger>
+                            <HoverCardContent align="end" className="w-[300px] p-2">
+                                <div className="mb-2 flex items-center space-x-2">
+                                    <Search className="h-4 w-4 text-muted-foreground" />
+                                    <Input placeholder="Search subclasses..." value={searchSubclass} onChange={(e) => setSearchSubclass(e.target.value)} className="flex-1" />
+                                </div>
+                                <ScrollArea className="h-48">
+                                    {filteredAllSubclasses.map((subclass) => (
+                                        <div key={subclass} className="flex items-center space-x-2 p-1">
+                                            <Checkbox id={`subclass-${subclass}`} checked={selectedSubclasses.includes(subclass)} onCheckedChange={() => handleSubclassToggle(subclass)} />
+                                            <Label htmlFor={`subclass-${subclass}`} className="text-sm font-normal">
+                                                {formatSubProfession(subclass)}
+                                            </Label>
+                                        </div>
+                                    ))}
+                                    {filteredAllSubclasses.length === 0 && <p className="p-2 text-center text-sm text-muted-foreground">No subclasses found.</p>}
+                                </ScrollArea>
+                            </HoverCardContent>
+                        </HoverCard>
                     </div>
                     <ScrollArea className="h-[300px] pr-4">
                         {!hasOperators && (

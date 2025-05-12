@@ -58,6 +58,36 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
     const [operatorDPSStats, setOperatorDPSStats] = useState<Record<string, OperatorDPSStats>>({});
     const [isChartSettingsOpen, setIsChartSettingsOpen] = useState(true);
 
+    const handleOperatorSelectionChange = (newSelectedOps: Operator[]) => {
+        const newSelectedIds = new Set(newSelectedOps.map((op) => op.id).filter((id) => id !== null && id !== undefined));
+
+        // Update selectedOperators state
+        setSelectedOperators(newSelectedOps);
+
+        // Filter dpsOperators based on new selection
+        setDPSOperators((prevDpsOps) => prevDpsOps.filter((dpsOp) => newSelectedIds.has(dpsOp.operatorData.data.id ?? "")));
+
+        // Filter operatorParams based on new selection
+        setOperatorParams((prevParams) => {
+            const updatedParams: Record<string, OperatorParams> = {};
+
+            // Keep params for operators that are still selected
+            for (const opId in prevParams) {
+                if (newSelectedIds.has(opId)) {
+                    const params = prevParams[opId];
+                    // This check should ideally not be needed if prevParams is correctly typed
+                    // and its keys guarantee non-undefined values.
+                    if (params !== undefined) {
+                        updatedParams[opId] = params;
+                    }
+                }
+            }
+            // Note: This logic doesn't add default params for newly selected operators.
+            // That might be handled when getDPSOperators fetches/adds them to dpsOperators.
+            return updatedParams;
+        });
+    };
+
     const getDPSOperators = useCallback(async () => {
         for (const operator of selectedOperators) {
             // Check if this operator is already in dpsOperators
@@ -275,7 +305,7 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
                                 Add Operators
                             </Button>
                         </div>
-                        <OperatorSelector operators={data} selectedOperators={selectedOperators} isOpen={isOperatorSelectorOpen} onClose={() => setIsOperatorSelectorOpen(false)} onSelect={setSelectedOperators} />
+                        <OperatorSelector operators={data} selectedOperators={selectedOperators} isOpen={isOperatorSelectorOpen} onClose={() => setIsOperatorSelectorOpen(false)} onSelect={handleOperatorSelectionChange} />
 
                         {/* Collapsible Chart settings card */}
                         <Card className={`mb-4 w-full ${isChartSettingsOpen ? "" : "transition-all duration-150 hover:bg-primary-foreground"}`}>
