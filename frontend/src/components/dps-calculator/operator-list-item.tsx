@@ -27,7 +27,7 @@ export default function OperatorListItem({ operator, onParamsChange, onRemove, o
         if (!initializedRef.current) {
             const defaultParams: OperatorParams = {
                 skillIndex: operator.defaultSkillIndex,
-                masteryLevel: operator.operatorData.data.rarity === OperatorRarity.threeStar ? 7 : 9,
+                masteryLevel: operator.operatorData.data.rarity === OperatorRarity.threeStar ? 6 : 9,
                 moduleIndex: operator.defaultModuleIndex,
                 moduleLevel: 3,
                 buffs: {},
@@ -100,7 +100,7 @@ export default function OperatorListItem({ operator, onParamsChange, onRemove, o
                                 <div className="grid grid-cols-2 gap-4">
                                     {operator.operatorData.data.rarity !== OperatorRarity.twoStar && operator.operatorData.data.rarity !== OperatorRarity.oneStar ? (
                                         <>
-                                            <Select onValueChange={(value) => handleParamChange("skillIndex", parseInt(value))} defaultValue={String(operator.defaultSkillIndex)}>
+                                            <Select onValueChange={(value) => handleParamChange("skillIndex", parseInt(value))} value={String(params.skillIndex)}>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Select skill" />
                                                 </SelectTrigger>
@@ -112,7 +112,7 @@ export default function OperatorListItem({ operator, onParamsChange, onRemove, o
                                                     ))}
                                                 </SelectContent>
                                             </Select>
-                                            <Select onValueChange={(value) => handleParamChange("masteryLevel", parseInt(value))} defaultValue={operator.operatorData.data.rarity === OperatorRarity.threeStar ? "7" : "9"}>
+                                            <Select onValueChange={(value) => handleParamChange("masteryLevel", parseInt(value))} value={String(params.masteryLevel)}>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Skill level" />
                                                 </SelectTrigger>
@@ -128,7 +128,7 @@ export default function OperatorListItem({ operator, onParamsChange, onRemove, o
                                             </Select>
                                             {operator.operatorData.data.rarity !== OperatorRarity.threeStar ? (
                                                 <>
-                                                    <Select onValueChange={(value) => handleParamChange("moduleIndex", parseInt(value))} defaultValue={String(operator.defaultModuleIndex)}>
+                                                    <Select onValueChange={(value) => handleParamChange("moduleIndex", parseInt(value))} value={String(params.moduleIndex)}>
                                                         <SelectTrigger>
                                                             <SelectValue placeholder="Select module" />
                                                         </SelectTrigger>
@@ -140,7 +140,7 @@ export default function OperatorListItem({ operator, onParamsChange, onRemove, o
                                                             ))}
                                                         </SelectContent>
                                                     </Select>
-                                                    <Select onValueChange={(value) => handleParamChange("moduleLevel", parseInt(value))} defaultValue={"3"}>
+                                                    <Select onValueChange={(value) => handleParamChange("moduleLevel", parseInt(value))} value={String(params.moduleLevel)}>
                                                         <SelectTrigger>
                                                             <SelectValue placeholder="Module level" />
                                                         </SelectTrigger>
