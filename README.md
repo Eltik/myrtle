@@ -2,6 +2,9 @@
 
 A comprehensive Arknights game information and calculation platform with an elegant, modern interface.
 
+## Notice:
+There will be a pause of development as I am working on recoding the entire project from TypeScript to Rust. However, due to the fact that I don't know Rust very well, it will take a bit of time. I will update the entire README.md file once everything is finished.
+
 [![GitHub license](https://img.shields.io/github/license/Eltik/myrtle.moe)](https://github.com/Eltik/myrtle.moe/blob/main/LICENSE)
 [![Frontend](https://img.shields.io/badge/Frontend-Next.js-blue)](frontend/)
 [![Backend](https://img.shields.io/badge/Backend-Bun-black)](backend/)

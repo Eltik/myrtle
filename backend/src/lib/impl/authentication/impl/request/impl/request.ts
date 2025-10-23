@@ -80,6 +80,7 @@ export const request = async (domain: AKDomain, assignHeaders: boolean = true, e
         // Use the stringified body for the fetch call, matching the signature calculation
         const fetchOptions = { ...args, body: bodyStringForSign }; // Use bodyStringForSign
 
+        console.log(url);
         const data = await fetch(url, fetchOptions as RequestInit); // Pass the modified options
         clearTimeout(timeoutId);
         return data;
