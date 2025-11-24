@@ -15,3 +15,14 @@ pub enum Endian {
     /// Big-endian byte order (most significant byte first)
     Big,
 }
+
+impl std::ops::Not for Endian {
+    type Output = Self;
+
+    fn not(self) -> Self::Output {
+        match self {
+            Endian::Little => Endian::Big,
+            Endian::Big => Endian::Little,
+        }
+    }
+}

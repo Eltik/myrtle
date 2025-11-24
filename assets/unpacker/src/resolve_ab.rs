@@ -582,6 +582,14 @@ fn ab_resolve(
     // Debug: log all object types in this bundle
     {
         let env = env_rc.borrow();
+
+        // Debug: Check what files are loaded
+        log::debug!("Environment has {} files", env.files.len());
+        for (name, file_rc) in &env.files {
+            let file_ref = file_rc.borrow();
+            log::debug!("  File: {} -> {:?}", name, file_ref);
+        }
+
         let mut type_counts: std::collections::HashMap<ClassIDType, usize> =
             std::collections::HashMap::new();
         for obj in env.objects() {
@@ -1283,7 +1291,21 @@ pub fn main(
     do_spine: bool,
     separate: bool,
     force: bool,
+    threads: usize,
 ) -> Result<()> {
+    // Configure thread pool based on user preference
+    // threads=1: Sequential processing (lowest memory, slowest)
+    // threads=2-4: Moderate parallelism (balanced)
+    // threads=8+: High parallelism (fastest, highest memory)
+    if threads > 0 {
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(threads)
+            .build_global()
+            .ok(); // Ignore error if already initialized
+
+        log::info!("Using {} thread(s) for extraction", threads);
+    }
+
     log::info!("Retrieving file paths...");
 
     // Collect all AB files
@@ -1359,42 +1381,93 @@ pub fn main(
 
     let total_saved = AtomicUsize::new(0);
     let src_path = src.to_path_buf();
+    let save_counter = AtomicUsize::new(0);
 
-    // Process files in parallel using rayon
-    files_to_process.par_iter().for_each(|file| {
-        let (upk_subdestdir, cmb_subdestdir) = if separate {
-            let rel_path = file.strip_prefix(&src_path).unwrap_or(file);
-            let parent = rel_path.parent().unwrap_or(Path::new(""));
-            let stem = file.file_stem().unwrap_or_default();
-            (
-                upk_dir.join(parent).join(stem),
-                cmb_dir.join(parent).join(stem),
-            )
-        } else {
-            (upk_dir.clone(), cmb_dir.clone())
-        };
+    if threads == 1 {
+        // Sequential processing for minimal memory usage
+        for file in &files_to_process {
+            let (upk_subdestdir, cmb_subdestdir) = if separate {
+                let rel_path = file.strip_prefix(&src_path).unwrap_or(file);
+                let parent = rel_path.parent().unwrap_or(Path::new(""));
+                let stem = file.file_stem().unwrap_or_default();
+                (
+                    upk_dir.join(parent).join(stem),
+                    cmb_dir.join(parent).join(stem),
+                )
+            } else {
+                (upk_dir.clone(), cmb_dir.clone())
+            };
 
-        match ab_resolve(
-            file,
-            &upk_subdestdir,
-            &cmb_subdestdir,
-            do_img,
-            do_txt,
-            do_aud,
-            do_spine,
-        ) {
-            Ok(count) => {
-                total_saved.fetch_add(count, Ordering::Relaxed);
-                // update manifest
-                manifest.lock().unwrap().update(file, count);
+            match ab_resolve(
+                file,
+                &upk_subdestdir,
+                &cmb_subdestdir,
+                do_img,
+                do_txt,
+                do_aud,
+                do_spine,
+            ) {
+                Ok(count) => {
+                    total_saved.fetch_add(count, Ordering::Relaxed);
+                    manifest.lock().unwrap().update(file, count);
+
+                    // Save manifest every 100 files
+                    if save_counter.fetch_add(1, Ordering::Relaxed) % 100 == 0 {
+                        if let Err(e) = manifest.lock().unwrap().save(&manifest_path) {
+                            log::warn!("Failed to save incremental manifest: {}", e);
+                        }
+                    }
+                }
+                Err(e) => {
+                    log::error!("Failed to process {:?}: {}", file, e);
+                }
             }
-            Err(e) => {
-                log::error!("Failed to process {:?}: {}", file, e);
-            }
+
+            pb.inc(1);
         }
+    } else {
+        // Parallel processing for better performance
+        files_to_process.par_iter().for_each(|file| {
+            let (upk_subdestdir, cmb_subdestdir) = if separate {
+                let rel_path = file.strip_prefix(&src_path).unwrap_or(file);
+                let parent = rel_path.parent().unwrap_or(Path::new(""));
+                let stem = file.file_stem().unwrap_or_default();
+                (
+                    upk_dir.join(parent).join(stem),
+                    cmb_dir.join(parent).join(stem),
+                )
+            } else {
+                (upk_dir.clone(), cmb_dir.clone())
+            };
 
-        pb.inc(1);
-    });
+            match ab_resolve(
+                file,
+                &upk_subdestdir,
+                &cmb_subdestdir,
+                do_img,
+                do_txt,
+                do_aud,
+                do_spine,
+            ) {
+                Ok(count) => {
+                    total_saved.fetch_add(count, Ordering::Relaxed);
+                    manifest.lock().unwrap().update(file, count);
+
+                    // Save manifest every 100 files
+                    if save_counter.fetch_add(1, Ordering::Relaxed) % 100 == 0 {
+                        if let Err(e) = manifest.lock().unwrap().save(&manifest_path) {
+                            log::warn!("Failed to save incremental manifest: {}", e);
+                        }
+                    }
+                }
+                Err(e) => {
+                    log::error!("Failed to process {:?}: {}", file, e);
+                }
+            }
+
+            pb.inc(1);
+        });
+    }
 
     pb.finish_with_message("Done!");
 
