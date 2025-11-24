@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(brew list:*)",
+      "Bash(chmod:*)",
+      "Bash(./build.sh:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
