@@ -3,7 +3,27 @@
     "allow": [
       "Bash(brew list:*)",
       "Bash(chmod:*)",
-      "Bash(./build.sh:*)"
+      "Bash(./build.sh:*)",
+      "Bash(RUST_LOG=debug ./target/release/assets-unpacker:*)",
+      "Bash(python3:*)",
+      "Bash(cargo build:*)",
+      "Bash(RUST_LOG=error ./target/release/assets-unpacker:*)",
+      "Bash(otool:*)",
+      "Bash(DYLD_LIBRARY_PATH=/Users/eltik/Documents/Coding/myrtle.moe/assets/unity-rs/src/resources/FMOD/Darwin:$DYLD_LIBRARY_PATH RUST_LOG=error ./target/release/assets-unpacker:*)",
+      "Bash(DYLD_LIBRARY_PATH=/Users/eltik/Documents/Coding/myrtle.moe/assets/unity-rs/src/resources/FMOD/Darwin:$DYLD_LIBRARY_PATH RUST_LOG=debug ./target/release/assets-unpacker:*)",
+      "Bash(DYLD_LIBRARY_PATH=/Users/eltik/Documents/Coding/myrtle.moe/assets/unity-rs/src/resources/FMOD/Darwin:$DYLD_LIBRARY_PATH RUST_LOG=assets_unpacker=debug ./target/release/assets-unpacker:*)",
+      "Bash(/tmp/test_unpack.sh)",
+      "Bash(export DYLD_LIBRARY_PATH=/Users/eltik/Documents/Coding/myrtle.moe/assets/unity-rs/src/resources/FMOD/Darwin:$DYLD_LIBRARY_PATH:*)",
+      "Bash(./target/release/assets-unpacker extract:*)",
+      "Bash(/tmp/test_debug.sh)",
+      "Bash(export RUST_LOG=unity_rs::helpers::import_helper=debug)",
+      "Bash(export RUST_LOG=unity_rs::files::bundle_file=debug,unity_rs::helpers::import_helper=debug)",
+      "Bash(export RUST_LOG=debug:*)",
+      "Bash(export RUST_LOG=unity_rs::files::bundle_file=debug)",
+      "Bash(cat:*)",
+      "Bash(timeout 30 python3:*)",
+      "Bash(export RUST_BACKTRACE=1)",
+      "Bash(export RUST_LOG=info)"
     ],
     "deny": [],
     "ask": []

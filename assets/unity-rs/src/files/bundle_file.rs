@@ -848,6 +848,16 @@ impl BundleFile {
         for node in m_directory_info {
             blocks_reader.set_position(node.offset as usize);
             let file_data = blocks_reader.read(node.size as usize)?;
+
+            // Debug: log first 64 bytes of extracted file data
+            if node.path.starts_with("CAB-") && !node.path.ends_with(".resS") {
+                let preview_len = file_data.len().min(64);
+                log::debug!(
+                    "bundle_file: Extracted '{}' - size: {}, first {} bytes: {:02x?}",
+                    node.path, file_data.len(), preview_len, &file_data[..preview_len]
+                );
+            }
+
             let file_reader = MemoryReader::new(
                 file_data,
                 blocks_reader.endian(),

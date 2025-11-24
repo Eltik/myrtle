@@ -1062,22 +1062,35 @@ impl SerializedFile {
     }
 
     pub fn load_dependencies(&mut self, possible_dependencies: Vec<String>) -> Result<(), String> {
+        // Clone the Rc to avoid borrow conflicts
+        let environment = self.environment.as_ref()
+            .ok_or("No environment available for loading depedencies")?
+            .clone();
+
+        // Collect all files to load
+        let mut files_to_load = Vec::new();
+
+        // PART 1: Collect externals
         for file_id in &self.externals {
-            let file_source = FileSource::Path(file_id.path.clone());
-            self.environment
-                .as_ref()
-                .ok_or("No environment available for loading depedencies")?
-                .borrow_mut()
-                .load_file(file_source, None, true);
+            files_to_load.push(file_id.path.clone());
         }
 
-        // PART 2: Load possible_dependencies
-        // Loop through possible_dependencies
-        for dependency in possible_dependencies {
-            let file_source = FileSource::Path(dependency.clone());
+        // PART 2: Collect possible_dependencies
+        files_to_load.extend(possible_dependencies);
 
-            if let Some(env) = &self.environment {
-                let _ = env.borrow_mut().load_file(file_source, None, true);
+        // Try to load all files
+        // Use try_borrow_mut to avoid panic if environment is already borrowed
+        match environment.try_borrow_mut() {
+            Ok(mut env) => {
+                for path in files_to_load {
+                    let file_source = FileSource::Path(path);
+                    env.load_file(file_source, None, true);
+                }
+            }
+            Err(_) => {
+                // Environment is already borrowed, skip loading dependencies
+                // This can happen when processing objects that reference external resources
+                log::debug!("Skipping dependency loading - environment already borrowed");
             }
         }
 

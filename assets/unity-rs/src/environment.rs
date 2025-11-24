@@ -766,7 +766,13 @@ impl Environment {
                 // Check if this is a split file (line 110-115)
                 if let Some(captures) = re_split.captures(&path_str) {
                     let basepath = captures.get(1).unwrap().as_str();
-                    let data = self.load_split_file(basepath).ok()?;
+                    let data = match self.load_split_file(basepath) {
+                        Ok(d) => d,
+                        Err(e) => {
+                            log::error!("Failed to load split file '{}': {}", basepath, e);
+                            return None;
+                        }
+                    };
                     (data, name.unwrap_or_else(|| basepath.to_string()))
                 } else {
                     let mut final_path = path_str.clone();
@@ -787,7 +793,13 @@ impl Environment {
                         // Check for .split0 file (line 123-124)
                         let split0_path = format!("{}.split0", final_path);
                         if Path::new(&split0_path).exists() {
-                            let data = self.load_split_file(&final_path).ok()?;
+                            let data = match self.load_split_file(&final_path) {
+                                Ok(d) => d,
+                                Err(e) => {
+                                    log::error!("Failed to load split0 file '{}': {}", final_path, e);
+                                    return None;
+                                }
+                            };
                             return self.load_file(
                                 FileSource::Bytes(data),
                                 Some(file_name),
@@ -797,14 +809,24 @@ impl Environment {
 
                         // File doesn't exist (line 129-130)
                         if !Path::new(&final_path).exists() {
+                            log::error!("File does not exist: {}", final_path);
                             return None;
                         }
                     }
 
                     // Read file bytes (line 131-132)
-                    let mut file = fs::File::open(&final_path).ok()?;
+                    let mut file = match fs::File::open(&final_path) {
+                        Ok(f) => f,
+                        Err(e) => {
+                            log::error!("Failed to open file '{}': {}", final_path, e);
+                            return None;
+                        }
+                    };
                     let mut bytes = Vec::new();
-                    file.read_to_end(&mut bytes).ok()?;
+                    if let Err(e) = file.read_to_end(&mut bytes) {
+                        log::error!("Failed to read file '{}': {}", final_path, e);
+                        return None;
+                    }
 
                     (bytes, file_name)
                 }
@@ -818,22 +840,34 @@ impl Environment {
 
         let file_data_clone = file_data.clone();
         let mut reader = MemoryReader::new(file_data, Endian::Little, 0);
-        let file_type = check_file_type(&mut reader).ok()?;
+        let file_type = match check_file_type(&mut reader) {
+            Ok(ft) => ft,
+            Err(e) => {
+                log::error!("Failed to check file type for '{}': {}", file_name, e);
+                return None;
+            }
+        };
 
         if file_type == crate::enums::file_type::FileType::ZIP {
-            self.load_zip_file(FileSource::Bytes(file_data_clone))
-                .ok()?;
+            if let Err(e) = self.load_zip_file(FileSource::Bytes(file_data_clone)) {
+                log::error!("Failed to load ZIP file '{}': {}", file_name, e);
+            }
             return None;
         }
 
-        let parsed_file = parse_file(
+        let parsed_file = match parse_file(
             reader,
             file_name.clone(),
             Some(file_type),
             is_dependency,
             None,
-        )
-        .ok()?;
+        ) {
+            Ok(pf) => pf,
+            Err(e) => {
+                log::error!("Failed to parse file '{}': {}", file_name, e);
+                return None;
+            }
+        };
 
         let file_rc = Rc::new(RefCell::new(parsed_file));
         self.register_cab(file_name.clone(), file_rc.clone());

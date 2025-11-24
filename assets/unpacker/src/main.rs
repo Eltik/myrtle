@@ -49,6 +49,10 @@ enum Commands {
 
         #[arg(long, default_value = "false")]
         force: bool,
+
+        /// Number of parallel threads (1=sequential, 2-4=moderate, 8+=fast but high memory)
+        #[arg(short = 'j', long, default_value = "1")]
+        threads: usize,
     },
 
     /// Combine RGB and Alpha images
@@ -111,9 +115,10 @@ fn main() -> Result<()> {
             spine,
             group,
             force,
+            threads,
         } => {
             assets_unpacker::resolve_ab::main(
-                &input, &output, delete, image, text, audio, spine, group, force,
+                &input, &output, delete, image, text, audio, spine, group, force, threads,
             )?;
         }
         Commands::Combine {

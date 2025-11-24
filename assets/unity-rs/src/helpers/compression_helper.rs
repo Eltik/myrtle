@@ -155,6 +155,94 @@ pub fn compress_lz4(data: &[u8]) -> io::Result<Vec<u8>> {
     Ok(compressed)
 }
 
+/// Helper function to read extra length in LZ4AK format
+fn read_extra_length(data: &[u8], mut cur_pos: usize, max_pos: usize) -> (usize, usize) {
+    let mut l = 0usize;
+    while cur_pos < max_pos {
+        let b = data[cur_pos];
+        l += b as usize;
+        cur_pos += 1;
+        if b != 0xFF {
+            break;
+        }
+    }
+    (l, cur_pos)
+}
+
+/// Decompresses LZ4AK-compressed data (Unity's modified LZ4 format)
+///
+/// This is a custom variant of LZ4 used by Unity where the literal/match length
+/// encoding is inverted. Files labeled as "LZHAM" (compression type 4) in newer
+/// Unity versions actually use this LZ4AK format.
+///
+/// Algorithm adapted from MooncellWiki:UnityPy
+/// Special thanks to Kengxxiao (https://github.com/Kengxxiao)
+///
+/// # Arguments
+///
+/// * `compressed_data` - Compressed data in LZ4AK format
+/// * `uncompressed_size` - Size of the decompressed output
+///
+/// # Returns
+///
+/// Decompressed data
+///
+/// # Errors
+///
+/// Returns an error if decompression fails
+pub fn decompress_lz4ak(compressed_data: &[u8], uncompressed_size: usize) -> io::Result<Vec<u8>> {
+    let mut ip = 0;
+    let mut op = 0;
+    let mut fixed_compressed_data = compressed_data.to_vec();
+    let compressed_size = compressed_data.len();
+
+    while ip < compressed_size {
+        // Sequence token - swap nibbles
+        let token = fixed_compressed_data[ip];
+        let literal_length = token & 0xF;
+        let match_length = (token >> 4) & 0xF;
+        fixed_compressed_data[ip] = (literal_length << 4) | match_length;
+        ip += 1;
+
+        // Literals
+        let mut literal_length = literal_length as usize;
+        if literal_length == 0xF {
+            let (extra_len, new_pos) = read_extra_length(&fixed_compressed_data, ip, compressed_size);
+            literal_length += extra_len;
+            ip = new_pos;
+        }
+        ip += literal_length;
+        op += literal_length;
+
+        if op >= uncompressed_size {
+            break; // End of block
+        }
+
+        // Match copy - swap endianness
+        if ip + 1 >= compressed_size {
+            break;
+        }
+
+        let offset = ((fixed_compressed_data[ip] as u16) << 8) | (fixed_compressed_data[ip + 1] as u16);
+        fixed_compressed_data[ip] = (offset & 0xFF) as u8;
+        fixed_compressed_data[ip + 1] = ((offset >> 8) & 0xFF) as u8;
+        ip += 2;
+
+        let mut match_length = match_length as usize;
+        if match_length == 0xF {
+            let (extra_len, new_pos) = read_extra_length(&fixed_compressed_data, ip, compressed_size);
+            match_length += extra_len;
+            ip = new_pos;
+        }
+        match_length += 4; // Min match
+        op += match_length;
+    }
+
+    // Now decompress with standard LZ4
+    lz4_decompress(&fixed_compressed_data, Some(uncompressed_size as i32))
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, format!("LZ4AK decompression failed: {}", e)))
+}
+
 /// Decompresses LZMA-compressed data (Unity-specific format)
 ///
 /// Unity uses raw LZMA1 with a custom 5 or 13-byte header
@@ -422,13 +510,10 @@ pub fn decompress(
     compression_type: u32,
 ) -> io::Result<Vec<u8>> {
     match compression_type {
-        0 => Ok(data.to_vec()),                           // NONE
-        1 => decompress_lzma(data, false),                // LZMA
-        2 | 3 => decompress_lz4(data, uncompressed_size), // LZ4/LZ4HC
-        4 => Err(io::Error::new(
-            io::ErrorKind::Unsupported,
-            "LZHAM compression not supported (removed by Unity)",
-        )),
+        0 => Ok(data.to_vec()),                             // NONE
+        1 => decompress_lzma(data, false),                  // LZMA
+        2 | 3 => decompress_lz4(data, uncompressed_size),   // LZ4/LZ4HC
+        4 => decompress_lz4ak(data, uncompressed_size),     // LZ4AK (mislabeled as "LZHAM")
         _ => Err(io::Error::new(
             io::ErrorKind::Unsupported,
             format!("Unknown compression type: {}", compression_type),

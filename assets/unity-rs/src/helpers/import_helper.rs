@@ -259,56 +259,86 @@ pub fn check_file_type<R: BinaryReader>(reader: &mut R) -> Result<FileTypeEnum, 
     // Check if it's an AssetsFile by validating header
     reader.set_position(0);
 
-    // Save original endian (Python line 94)
-    let old_endian = reader.endian();
+    // Try with current endianness first, then try opposite if it fails
+    let endianness_to_try = [reader.endian(), !reader.endian()];
 
-    // Read header fields
-    let mut metadata_size = reader.read_u32()? as u64;
-    let mut file_size = reader.read_u32()? as u64;
-    let version = reader.read_u32()?;
-    let mut data_offset = reader.read_u32()? as u64;
+    for try_endian in &endianness_to_try {
+        reader.set_position(0);
+        reader.set_endian(*try_endian);
 
-    // For version >= 22, read extended header (Python lines 99-110)
-    if version >= 22 {
-        // Read and apply endianness (Python lines 104-105)
-        let raw_endian = reader.read_u8()?;
-        let new_endian = if raw_endian == 0 {
-            Endian::Little // 0 = little-endian
-        } else {
-            Endian::Big // 1 = big-endian
-        };
-        reader.set_endian(new_endian);
+        // Read header fields
+        let mut metadata_size = reader.read_u32()? as u64;
+        let mut file_size = reader.read_u32()? as u64;
+        let version = reader.read_u32()?;
+        let mut data_offset = reader.read_u32()? as u64;
 
-        // Continue reading with correct endianness - these REPLACE the old values!
-        let _reserved = reader.read_bytes(3)?;
-        metadata_size = reader.read_u32()? as u64;
-        file_size = reader.read_u64()?;
-        data_offset = reader.read_u64()?;
-        let _unknown = reader.read_i64()?;
+        log::debug!(
+            "check_file_type: Checking AssetsFile header with {:?} - version={}, metadata_size={}, file_size={}, data_offset={}, reader_len={}",
+            try_endian, version, metadata_size, file_size, data_offset, reader.len()
+        );
+
+        // For version >= 22, read extended header (Python lines 99-110)
+        if version >= 22 {
+            // Read endianness byte but DON'T apply it yet (matches SerializedFile::new)
+            let raw_endian = reader.read_u8()?;
+            let _endian_value = if raw_endian == 0 {
+                Endian::Little
+            } else {
+                Endian::Big
+            };
+
+            // Read 3 reserved bytes
+            let _reserved = reader.read_bytes(3)?;
+
+            // Read extended header with SAME endianness as initial header
+            // (SerializedFile::new doesn't call set_endian until line 624, after reading extended header)
+            metadata_size = reader.read_u32()? as u64;
+            file_size = reader.read_u64()?;
+            data_offset = reader.read_u64()?;
+            let _unknown = reader.read_i64()?;
+
+            log::debug!(
+                "check_file_type: Extended header (v>=22) - metadata_size={}, file_size={}, data_offset={}",
+                metadata_size, file_size, data_offset
+            );
+        }
+
+        // Validate header sanity (Python lines 115-125)
+        // Python checks: version < 0, version > 100, each value in range [0, reader.Length],
+        // file_size >= metadata_size, file_size >= data_offset
+        //
+        // NOTE: For Unity files with external resources (.resS files), file_size and data_offset
+        // can be larger than reader_len. Only validate that metadata_size is reasonable and
+        // that the fields are internally consistent.
+        let reader_len = reader.len() as u64;
+        let is_invalid = version > 100
+            || metadata_size > reader_len
+            || file_size < metadata_size
+            || file_size < data_offset;
+
+        log::debug!(
+            "check_file_type: Validation result - is_invalid={} (version>100:{}, metadata_size>len:{}, file_size<metadata:{}, file_size<data:{})",
+            is_invalid,
+            version > 100,
+            metadata_size > reader_len,
+            file_size < metadata_size,
+            file_size < data_offset
+        );
+
+        if !is_invalid {
+            // Valid AssetsFile found! Reset and return
+            reader.set_position(0);
+            reader.set_endian(*try_endian);
+            return Ok(FileTypeEnum::AssetsFile);
+        }
+
+        // Invalid, try next endianness
+        log::debug!("check_file_type: Invalid with {:?}, trying next endianness", try_endian);
     }
 
-    // Reset position
+    // Neither endianness worked, return ResourceFile
     reader.set_position(0);
-
-    // Restore original endian (Python line 113)
-    reader.set_endian(old_endian);
-
-    // Validate header sanity (Python lines 115-125)
-    // Python checks: version < 0, version > 100, each value in range [0, reader.Length],
-    // file_size >= metadata_size, file_size >= data_offset
-    let reader_len = reader.len() as u64;
-    let is_invalid = version > 100
-        || metadata_size > reader_len
-        || file_size > reader_len
-        || data_offset > reader_len
-        || file_size < metadata_size
-        || file_size < data_offset;
-
-    if is_invalid {
-        Ok(FileTypeEnum::ResourceFile)
-    } else {
-        Ok(FileTypeEnum::AssetsFile)
-    }
+    Ok(FileTypeEnum::ResourceFile)
 }
 
 /// Parses a file and creates the appropriate file object
@@ -339,6 +369,8 @@ pub fn parse_file<R: BinaryReader + 'static>(
     } else {
         check_file_type(&mut reader)?
     };
+
+    log::debug!("parse_file: '{}' detected as {:?} (len: {})", name, file_type, reader.len());
 
     // Skip parsing for certain file extensions (even if detected as AssetsFile)
     let skip_extensions = [".resS", ".resource", ".config", ".xml", ".dat"];
