@@ -23,7 +23,10 @@
       "Bash(cat:*)",
       "Bash(timeout 30 python3:*)",
       "Bash(export RUST_BACKTRACE=1)",
-      "Bash(export RUST_LOG=info)"
+      "Bash(export RUST_LOG=info)",
+      "Bash(export RUST_LOG=warn)",
+      "Bash(ps:*)",
+      "Bash(kill:*)"
     ],
     "deny": [],
     "ask": []
