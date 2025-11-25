@@ -11,6 +11,7 @@ cargo run --release -- --server official --savedir ../ArkAssets
 3. Extract assets using:
 ```bash
 cd assets/unpacker
-./target/release/assets-unpacker extract --input ../ArkAssets --output ../Unpacked
-  ```
+
+./run_unpacker.sh
+```
 You will need approximately ~100GB

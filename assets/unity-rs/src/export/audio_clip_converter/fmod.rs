@@ -16,22 +16,12 @@ lazy_static! {
         { Mutex::new(HashMap::new()) };
 }
 
-/// Get or create a cached FMOD system instance
+/// Create a new FMOD system instance (no caching to avoid resource limits)
 ///
 /// Python: get_pyfmodex_system_instance(channels, flags)
 /// Python lines: 118-129
-fn get_fmod_system(channels: i32, flags: Init) -> UnityResult<Arc<Mutex<System>>> {
-    let mut instances = SYSTEM_INSTANCES
-        .lock()
-        .map_err(|e| UnityError::Other(format!("Failed to lock SYSTEM_INSTANCES: {}", e)))?;
-
-    let key = (channels, flags);
-
-    if let Some(system) = instances.get(&key) {
-        return Ok(Arc::clone(system));
-    }
-
-    // Create new FMOD system
+fn get_fmod_system(channels: i32, flags: Init) -> UnityResult<System> {
+    // Create new FMOD system without caching to avoid hitting FMOD's system instance limit
     // Python lines 125-126: system = pyfmodex.System(); system.init(channels, flags, None)
     let system = System::create()
         .map_err(|e| UnityError::Other(format!("Failed to create FMOD System: {:?}", e)))?;
@@ -40,10 +30,7 @@ fn get_fmod_system(channels: i32, flags: Init) -> UnityResult<Arc<Mutex<System>>
         .init(channels, flags, None)
         .map_err(|e| UnityError::Other(format!("Failed to initialize FMOD System: {:?}", e)))?;
 
-    let system_arc = Arc::new(Mutex::new(system));
-    instances.insert(key, Arc::clone(&system_arc));
-
-    Ok(system_arc)
+    Ok(system)
 }
 
 /// Decode compressed audio using FMOD
@@ -61,11 +48,8 @@ pub fn dump_samples(
     let channels = clip.m_Channels.unwrap_or(2);
     let frequency = clip.m_Frequency.unwrap_or(44100);
 
-    // Python lines 141-143: Get FMOD system
-    let system_arc = get_fmod_system(channels, Init::NORMAL)?;
-    let system = system_arc
-        .lock()
-        .map_err(|e| UnityError::Other(format!("Failed to lock FMOD system: {}", e)))?;
+    // Python lines 141-143: Create FMOD system (no caching to avoid resource limits)
+    let system = get_fmod_system(channels, Init::NORMAL)?;
 
     // Python lines 145-153: Create sound from memory
     let exinfo = CreateSoundexInfo {
@@ -104,12 +88,15 @@ pub fn dump_samples(
         let wav_data = subsound_to_wav(&subsound, convert_pcm_float)?;
         samples.insert(filename, wav_data);
 
-        // Python line 164: Release subsound
-        // Note: libfmod handles this via Drop trait
+        // Python line 164: Release subsound explicitly
+        let _ = subsound.release();
     }
 
-    // Python line 166: Release sound
-    // Note: libfmod handles this via Drop trait
+    // Python line 166: Release sound explicitly before system
+    let _ = sound.release();
+
+    // Explicitly release FMOD system to avoid resource exhaustion
+    let _ = system.release();
 
     Ok(samples)
 }
@@ -218,4 +205,11 @@ fn subsound_to_wav(subsound: &Sound, convert_pcm_float: bool) -> UnityResult<Vec
 
     // Python line 239: Return bytes
     Ok(w.to_bytes())
+}
+
+/// Clears the FMOD system instance cache to release memory
+/// Note: Cache is no longer used to avoid FMOD resource limits
+pub fn clear_fmod_cache() {
+    // No-op since we no longer cache FMOD systems
+    // Systems are created and released per audio clip to avoid resource limits
 }

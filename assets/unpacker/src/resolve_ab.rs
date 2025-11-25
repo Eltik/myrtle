@@ -10,6 +10,7 @@ use std::rc::Rc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Mutex;
 use std::time::SystemTime;
+use sysinfo::{Pid, ProcessRefreshKind, RefreshKind, System};
 use unity_rs::export::texture_2d_converter::parse_image_data;
 use unity_rs::{BuildTarget, TextureFormat};
 use unity_rs::{ClassIDType, Environment};
@@ -794,6 +795,59 @@ fn ab_resolve(
         }
     }
 
+    // CRITICAL: Clear environment references to break Rc cycles and free memory
+    // Without this, Environment and all loaded files remain in memory indefinitely
+    {
+        let env = env_rc.borrow();
+        for file_rc in env.files.values() {
+            let file_ref = file_rc.borrow();
+            match &*file_ref {
+                unity_rs::files::bundle_file::FileType::SerializedFile(sf_rc) => {
+                    if let Ok(mut sf) = sf_rc.try_borrow_mut() {
+                        sf.environment = None;
+                    }
+                }
+                unity_rs::files::bundle_file::FileType::BundleFile(bundle) => {
+                    for inner_file_rc in bundle.files.values() {
+                        if let unity_rs::files::bundle_file::FileType::SerializedFile(sf_rc) =
+                            &*inner_file_rc.borrow()
+                        {
+                            if let Ok(mut sf) = sf_rc.try_borrow_mut() {
+                                sf.environment = None;
+                            }
+                        }
+                    }
+                }
+                unity_rs::files::bundle_file::FileType::WebFile(web) => {
+                    for inner_file_rc in web.files.values() {
+                        if let unity_rs::files::bundle_file::FileType::SerializedFile(sf_rc) =
+                            &*inner_file_rc.borrow()
+                        {
+                            if let Ok(mut sf) = sf_rc.try_borrow_mut() {
+                                sf.environment = None;
+                            }
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+
+    // Aggressively clear Environment data structures to release memory immediately
+    {
+        let mut env = env_rc.borrow_mut();
+        env.files.clear();
+        env.cabs.clear();
+        env.local_files.clear();
+    }
+
+    // Explicitly drop the Environment to ensure memory is released
+    drop(env_rc);
+
+    // Clear FMOD audio cache to prevent memory accumulation
+    unity_rs::export::audio_clip_converter::fmod::clear_fmod_cache();
+
     Ok(saved_count)
 }
 
@@ -1242,6 +1296,11 @@ fn extract_images_with_combination(
         }
     }
 
+    // CRITICAL: Explicitly drop large image data structures to free memory immediately
+    // Without this, GBs of decoded texture data remain in memory
+    // Note: sprite_groups and sprites are already moved/consumed by the for loops above
+    drop(textures);
+
     Ok(saved_count)
 }
 
@@ -1369,7 +1428,7 @@ pub fn main(
     }
 
     // Progress bar
-    let pb = ProgressBar::new(files.len() as u64);
+    let pb = ProgressBar::new(files_to_process.len() as u64);
     pb.set_style(
         ProgressStyle::default_bar()
             .template(
@@ -1382,6 +1441,21 @@ pub fn main(
     let total_saved = AtomicUsize::new(0);
     let src_path = src.to_path_buf();
     let save_counter = AtomicUsize::new(0);
+
+    // Initialize memory tracking
+    let mut sys = System::new_all();
+    let pid = Pid::from_u32(std::process::id());
+    sys.refresh_all();
+
+    let start_memory = if let Some(process) = sys.process(pid) {
+        process.memory()
+    } else {
+        0
+    };
+    log::info!(
+        "Starting extraction with {} MB memory",
+        start_memory / 1024 / 1024
+    );
 
     if threads == 1 {
         // Sequential processing for minimal memory usage
@@ -1398,6 +1472,12 @@ pub fn main(
                 (upk_dir.clone(), cmb_dir.clone())
             };
 
+            // Track memory before processing this file
+            let mem_before = {
+                sys.refresh_all();
+                sys.process(pid).map(|p| p.memory()).unwrap_or(0)
+            };
+
             match ab_resolve(
                 file,
                 &upk_subdestdir,
@@ -1411,10 +1491,44 @@ pub fn main(
                     total_saved.fetch_add(count, Ordering::Relaxed);
                     manifest.lock().unwrap().update(file, count);
 
-                    // Save manifest every 100 files
-                    if save_counter.fetch_add(1, Ordering::Relaxed) % 100 == 0 {
+                    let file_count = save_counter.fetch_add(1, Ordering::Relaxed) + 1;
+
+                    // Track memory after processing this file
+                    sys.refresh_all();
+                    if let Some(process) = sys.process(pid) {
+                        let mem_after = process.memory();
+                        let file_growth_mb = (mem_after as i64 - mem_before as i64) / 1024 / 1024;
+                        if file_growth_mb.abs() > 50 {
+                            log::error!(
+                                "Large memory change for file #{} '{}': {} MB",
+                                file_count,
+                                file.file_name().unwrap_or_default().to_string_lossy(),
+                                file_growth_mb
+                            );
+                        }
+                    }
+
+                    // Save manifest every 50 files (more frequent for safety)
+                    if file_count % 50 == 0 {
                         if let Err(e) = manifest.lock().unwrap().save(&manifest_path) {
                             log::warn!("Failed to save incremental manifest: {}", e);
+                        }
+                    }
+
+                    // Log memory usage every 10 files to track leaks
+                    if file_count % 10 == 0 {
+                        sys.refresh_all();
+                        if let Some(process) = sys.process(pid) {
+                            let current_memory = process.memory();
+                            let memory_mb = current_memory / 1024 / 1024;
+                            let growth_mb =
+                                (current_memory as i64 - start_memory as i64) / 1024 / 1024;
+                            log::warn!(
+                                "Memory after {} files: {} MB (growth: {} MB)",
+                                file_count,
+                                memory_mb,
+                                growth_mb
+                            );
                         }
                     }
                 }
@@ -1453,8 +1567,8 @@ pub fn main(
                     total_saved.fetch_add(count, Ordering::Relaxed);
                     manifest.lock().unwrap().update(file, count);
 
-                    // Save manifest every 100 files
-                    if save_counter.fetch_add(1, Ordering::Relaxed) % 100 == 0 {
+                    // Save manifest every 50 files (more frequent for safety)
+                    if save_counter.fetch_add(1, Ordering::Relaxed) % 50 == 0 {
                         if let Err(e) = manifest.lock().unwrap().save(&manifest_path) {
                             log::warn!("Failed to save incremental manifest: {}", e);
                         }

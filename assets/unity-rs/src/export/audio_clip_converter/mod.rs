@@ -2,7 +2,7 @@
 //!
 //! Python equivalent: UnityPy/export/AudioClipConverter.py (239 lines)
 
-mod fmod;
+pub mod fmod;
 
 use crate::classes::generated::AudioClip;
 use crate::helpers::resource_reader::get_resource_data;

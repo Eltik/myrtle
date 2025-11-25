@@ -38,6 +38,7 @@ walkdir = "2.4"
 regex = "1.10"
 thiserror = "1.0"
 anyhow = "1.0"
+sysinfo = "0.31"
 
 # AES decryption for encrypted assets
 aes = "0.8"
