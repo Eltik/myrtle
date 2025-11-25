@@ -333,7 +333,10 @@ pub fn check_file_type<R: BinaryReader>(reader: &mut R) -> Result<FileTypeEnum, 
         }
 
         // Invalid, try next endianness
-        log::debug!("check_file_type: Invalid with {:?}, trying next endianness", try_endian);
+        log::debug!(
+            "check_file_type: Invalid with {:?}, trying next endianness",
+            try_endian
+        );
     }
 
     // Neither endianness worked, return ResourceFile
@@ -370,7 +373,12 @@ pub fn parse_file<R: BinaryReader + 'static>(
         check_file_type(&mut reader)?
     };
 
-    log::debug!("parse_file: '{}' detected as {:?} (len: {})", name, file_type, reader.len());
+    log::debug!(
+        "parse_file: '{}' detected as {:?} (len: {})",
+        name,
+        file_type,
+        reader.len()
+    );
 
     // Skip parsing for certain file extensions (even if detected as AssetsFile)
     let skip_extensions = [".resS", ".resource", ".config", ".xml", ".dat"];

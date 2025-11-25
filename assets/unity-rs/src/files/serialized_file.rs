@@ -1063,7 +1063,9 @@ impl SerializedFile {
 
     pub fn load_dependencies(&mut self, possible_dependencies: Vec<String>) -> Result<(), String> {
         // Clone the Rc to avoid borrow conflicts
-        let environment = self.environment.as_ref()
+        let environment = self
+            .environment
+            .as_ref()
             .ok_or("No environment available for loading depedencies")?
             .clone();
 

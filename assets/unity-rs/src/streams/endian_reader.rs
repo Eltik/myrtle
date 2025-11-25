@@ -189,7 +189,7 @@ pub trait BinaryReader {
     }
 
     fn read_aligned_string(&mut self) -> Result<String, io::Error> {
-        use base64::{Engine as _, engine::general_purpose::STANDARD};
+        use base64::{engine::general_purpose::STANDARD, Engine as _};
         let length = self.read_i32()?;
         let bytes = self.read(length as usize)?;
         self.align_stream(4);

@@ -497,35 +497,35 @@ fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Re
                     None
                 };
 
-                // Combine or save as-is
-                let final_image = match (rgb_image, alpha_image) {
-                    (Some(rgb), Some(alpha)) => {
-                        // Combine RGB with alpha channel
-                        log::debug!("Combining RGB+Alpha for spine texture: {}", base);
-                        Some(combine_spine_rgba_with_alpha(&rgb, &alpha))
-                    }
-                    (Some(rgb), None) => {
-                        // No alpha, use RGB as-is
-                        Some(rgb)
-                    }
-                    (None, Some(alpha)) => {
-                        // Only alpha exists (unusual), save it
-                        log::warn!("Spine texture '{}' has alpha but no RGB", base);
-                        Some(alpha)
-                    }
-                    (None, None) => {
-                        log::warn!("Spine texture '{}' not found", base);
-                        None
-                    }
-                };
+                // Save RGB and alpha SEPARATELY (like Python does)
+                // This matches Python output structure with separate [alpha].png files
 
-                // Save the final image
-                if let Some(img) = final_image {
+                // Save RGB texture
+                if let Some(ref rgb) = rgb_image {
                     let tex_path = asset_dir.join(tex_name);
-                    if img.save(&tex_path).is_ok() {
+                    if rgb.save(&tex_path).is_ok() {
                         saved_count += 1;
-                        log::debug!("Saved spine texture: {:?}", tex_path);
+                        log::debug!("Saved spine RGB texture: {:?}", tex_path);
                     }
+                }
+
+                // Save alpha texture separately (for BattleFront/BattleBack only, not Building)
+                if let Some(ref alpha) = alpha_image {
+                    // Only save alpha for battle-type assets, not Building
+                    if asset.asset_type == SpineAssetType::BattleFront
+                        || asset.asset_type == SpineAssetType::BattleBack
+                    {
+                        let alpha_path = asset_dir.join(format!("{}[alpha].png", base));
+                        if alpha.save(&alpha_path).is_ok() {
+                            saved_count += 1;
+                            log::debug!("Saved spine alpha texture: {:?}", alpha_path);
+                        }
+                    }
+                }
+
+                // Log warning if neither exists
+                if rgb_image.is_none() && alpha_image.is_none() {
+                    log::warn!("Spine texture '{}' not found", base);
                 }
             }
         }
@@ -556,6 +556,70 @@ fn find_rgb_texture_name(alpha_name: &str) -> Option<String> {
     }
 }
 
+/// Collect names of textures that should be excluded from root extraction
+/// Excludes: alpha textures, building textures, and base spine textures (same name as atlas/skel)
+fn collect_spine_texture_names(
+    env_rc: &Rc<RefCell<Environment>>,
+) -> std::collections::HashSet<String> {
+    let env = env_rc.borrow();
+    let mut excluded_textures = std::collections::HashSet::new();
+
+    // Collect texture names from atlas/skel files
+    for mut obj in env.objects() {
+        if obj.obj_type == ClassIDType::TextAsset {
+            if let Ok(data) = obj.read(false) {
+                if let Some(name) = data.get("m_Name").and_then(|v| v.as_str()) {
+                    if name.ends_with(".atlas") {
+                        let base_name = name.trim_end_matches(".atlas");
+
+                        // Exclude base spine texture from root (it goes to BattleFront/BattleBack subdirs only)
+                        // This prevents chibi-sized sprites from appearing at root
+                        excluded_textures.insert(base_name.to_string());
+
+                        // Exclude alpha for atlas base name
+                        excluded_textures.insert(format!("{}[alpha]", base_name));
+
+                        // Building textures go ONLY to Building/ subdirectory, not root
+                        if base_name.starts_with("build_") {
+                            excluded_textures.insert(base_name.to_string());
+                        }
+
+                        // Get atlas content and extract texture names (for multi-texture atlases)
+                        if let Some(script) = data.get("m_Script").and_then(|v| v.as_str()) {
+                            let textures = parse_atlas_textures(script);
+                            for tex_name in textures {
+                                let base = tex_name.trim_end_matches(".png");
+                                // Exclude alpha textures from root
+                                excluded_textures.insert(format!("{}[alpha]", base));
+                            }
+                        }
+                    }
+
+                    // Also track skel files for building variants
+                    if name.ends_with(".skel") {
+                        let base_name = name.trim_end_matches(".skel");
+                        // Exclude base spine texture from root
+                        excluded_textures.insert(base_name.to_string());
+                        // Exclude alpha textures
+                        excluded_textures.insert(format!("{}[alpha]", base_name));
+                        // Exclude building variant from root
+                        if !base_name.starts_with("build_") {
+                            excluded_textures.insert(format!("build_{}", base_name));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    log::debug!(
+        "Collected {} texture names to exclude from root: {:?}",
+        excluded_textures.len(),
+        excluded_textures
+    );
+    excluded_textures
+}
+
 /// Extract a single AB file
 fn ab_resolve(
     abfile: &Path,
@@ -565,6 +629,7 @@ fn ab_resolve(
     do_txt: bool,
     do_aud: bool,
     do_spine: bool,
+    merge_alpha: bool,
 ) -> Result<usize> {
     let mut env = Environment::new();
 
@@ -613,9 +678,22 @@ fn ab_resolve(
     let mut saved_count = 0;
     std::fs::create_dir_all(destdir)?;
 
+    // If spine extraction is enabled, first collect spine texture names to exclude from root
+    let spine_texture_names: std::collections::HashSet<String> = if do_spine {
+        collect_spine_texture_names(&env_rc)
+    } else {
+        std::collections::HashSet::new()
+    };
+
     // Extract images (Texture2D and Sprite) with alpha/RGB combination
     if do_img {
-        saved_count += extract_images_with_combination(&env_rc, destdir, cmb_destdir)?;
+        saved_count += extract_images_with_combination(
+            &env_rc,
+            destdir,
+            cmb_destdir,
+            merge_alpha,
+            &spine_texture_names,
+        )?;
         saved_count += extract_sprite_atlases(&env_rc, destdir)?;
     }
 
@@ -1070,6 +1148,8 @@ fn extract_images_with_combination(
     env_rc: &Rc<RefCell<Environment>>,
     destdir: &Path,
     cmb_destdir: &Path,
+    merge_alpha: bool,
+    spine_texture_names: &std::collections::HashSet<String>,
 ) -> Result<usize> {
     let env = env_rc.borrow();
     let mut saved_count = 0;
@@ -1160,19 +1240,85 @@ fn extract_images_with_combination(
         log::debug!("All texture names: {:?}", texture_names);
     }
 
-    // Save all textures separately (including alpha textures)
-    for (name, tex_data) in &textures {
-        if let Some(ref img) = tex_data.image {
-            let output_path = destdir.join(format!("{}.png", name));
-            if img.save(&output_path).is_ok() {
-                saved_count += 1;
-                log::debug!("Saved texture: {:?}", output_path);
+    // Handle alpha textures based on merge_alpha setting
+    // Skip textures that belong to spine assets (they will be handled by spine extraction)
+    if merge_alpha {
+        // Merge alpha into RGBA images
+        // Find RGB+Alpha pairs first
+        let mut processed_names: std::collections::HashSet<String> =
+            std::collections::HashSet::new();
+
+        for name in textures.keys() {
+            // Skip spine textures
+            if spine_texture_names.contains(name) {
+                continue;
+            }
+            if name.contains("[alpha]") {
+                let rgb_name = name.replace("[alpha]", "");
+                // Skip if RGB is a spine texture
+                if spine_texture_names.contains(&rgb_name) {
+                    continue;
+                }
+                if textures.contains_key(&rgb_name) {
+                    processed_names.insert(rgb_name.clone());
+                    processed_names.insert(name.clone());
+
+                    let rgb_data = &textures[&rgb_name];
+                    let alpha_data = &textures[name];
+
+                    if let (Some(rgb_img), Some(alpha_img)) = (&rgb_data.image, &alpha_data.image) {
+                        // Combine RGB with alpha channel
+                        let combined = combine_rgba_with_alpha(rgb_img, alpha_img);
+
+                        // Save combined image with RGB name
+                        let output_path = destdir.join(format!("{}.png", rgb_name));
+                        if combined.save(&output_path).is_ok() {
+                            saved_count += 1;
+                            log::debug!("Saved merged texture: {:?}", output_path);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Save remaining textures that weren't part of pairs
+        for (name, tex_data) in &textures {
+            // Skip spine textures
+            if spine_texture_names.contains(name) {
+                log::debug!("Skipping spine texture from root: {}", name);
+                continue;
+            }
+            if !processed_names.contains(name) {
+                if let Some(ref img) = tex_data.image {
+                    let output_path = destdir.join(format!("{}.png", name));
+                    if img.save(&output_path).is_ok() {
+                        saved_count += 1;
+                        log::debug!("Saved texture: {:?}", output_path);
+                    }
+                }
+            }
+        }
+    } else {
+        // Default: Save all textures separately (including alpha textures) - matches Python behavior
+        // Skip textures that belong to spine assets
+        for (name, tex_data) in &textures {
+            // Skip spine textures - they will be handled by spine extraction
+            if spine_texture_names.contains(name) {
+                log::debug!("Skipping spine texture from root: {}", name);
+                continue;
+            }
+            if let Some(ref img) = tex_data.image {
+                let output_path = destdir.join(format!("{}.png", name));
+                if img.save(&output_path).is_ok() {
+                    saved_count += 1;
+                    log::debug!("Saved texture: {:?}", output_path);
+                }
             }
         }
     }
 
-    // Create combined $0.png images for RGB+Alpha pairs
-    // Find all alpha textures and combine them with their RGB counterparts
+    // Create combined images in cmb directory for convenience (always, regardless of merge_alpha)
+    // This creates $0.png files that have RGB+Alpha merged for downstream use
     let mut combined_pairs: Vec<(String, String)> = Vec::new(); // (rgb_name, alpha_name)
 
     for name in textures.keys() {
@@ -1348,6 +1494,7 @@ pub fn main(
     do_txt: bool,
     do_aud: bool,
     do_spine: bool,
+    merge_alpha: bool,
     separate: bool,
     force: bool,
     threads: usize,
@@ -1486,6 +1633,7 @@ pub fn main(
                 do_txt,
                 do_aud,
                 do_spine,
+                merge_alpha,
             ) {
                 Ok(count) => {
                     total_saved.fetch_add(count, Ordering::Relaxed);
@@ -1562,6 +1710,7 @@ pub fn main(
                 do_txt,
                 do_aud,
                 do_spine,
+                merge_alpha,
             ) {
                 Ok(count) => {
                     total_saved.fetch_add(count, Ordering::Relaxed);
