@@ -43,6 +43,10 @@ enum Commands {
         #[arg(long, default_value = "true")]
         spine: bool,
 
+        /// Merge alpha textures into RGBA instead of saving separately
+        #[arg(long, default_value = "false")]
+        merge_alpha: bool,
+
         /// Group by source file
         #[arg(long, default_value = "true")]
         group: bool,
@@ -113,12 +117,23 @@ fn main() -> Result<()> {
             text,
             audio,
             spine,
+            merge_alpha,
             group,
             force,
             threads,
         } => {
             assets_unpacker::resolve_ab::main(
-                &input, &output, delete, image, text, audio, spine, group, force, threads,
+                &input,
+                &output,
+                delete,
+                image,
+                text,
+                audio,
+                spine,
+                merge_alpha,
+                group,
+                force,
+                threads,
             )?;
         }
         Commands::Combine {

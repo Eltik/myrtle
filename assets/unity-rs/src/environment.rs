@@ -796,7 +796,11 @@ impl Environment {
                             let data = match self.load_split_file(&final_path) {
                                 Ok(d) => d,
                                 Err(e) => {
-                                    log::error!("Failed to load split0 file '{}': {}", final_path, e);
+                                    log::error!(
+                                        "Failed to load split0 file '{}': {}",
+                                        final_path,
+                                        e
+                                    );
                                     return None;
                                 }
                             };

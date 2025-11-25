@@ -207,7 +207,8 @@ pub fn decompress_lz4ak(compressed_data: &[u8], uncompressed_size: usize) -> io:
         // Literals
         let mut literal_length = literal_length as usize;
         if literal_length == 0xF {
-            let (extra_len, new_pos) = read_extra_length(&fixed_compressed_data, ip, compressed_size);
+            let (extra_len, new_pos) =
+                read_extra_length(&fixed_compressed_data, ip, compressed_size);
             literal_length += extra_len;
             ip = new_pos;
         }
@@ -223,14 +224,16 @@ pub fn decompress_lz4ak(compressed_data: &[u8], uncompressed_size: usize) -> io:
             break;
         }
 
-        let offset = ((fixed_compressed_data[ip] as u16) << 8) | (fixed_compressed_data[ip + 1] as u16);
+        let offset =
+            ((fixed_compressed_data[ip] as u16) << 8) | (fixed_compressed_data[ip + 1] as u16);
         fixed_compressed_data[ip] = (offset & 0xFF) as u8;
         fixed_compressed_data[ip + 1] = ((offset >> 8) & 0xFF) as u8;
         ip += 2;
 
         let mut match_length = match_length as usize;
         if match_length == 0xF {
-            let (extra_len, new_pos) = read_extra_length(&fixed_compressed_data, ip, compressed_size);
+            let (extra_len, new_pos) =
+                read_extra_length(&fixed_compressed_data, ip, compressed_size);
             match_length += extra_len;
             ip = new_pos;
         }
@@ -239,8 +242,12 @@ pub fn decompress_lz4ak(compressed_data: &[u8], uncompressed_size: usize) -> io:
     }
 
     // Now decompress with standard LZ4
-    lz4_decompress(&fixed_compressed_data, Some(uncompressed_size as i32))
-        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, format!("LZ4AK decompression failed: {}", e)))
+    lz4_decompress(&fixed_compressed_data, Some(uncompressed_size as i32)).map_err(|e| {
+        io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!("LZ4AK decompression failed: {}", e),
+        )
+    })
 }
 
 /// Decompresses LZMA-compressed data (Unity-specific format)
@@ -510,10 +517,10 @@ pub fn decompress(
     compression_type: u32,
 ) -> io::Result<Vec<u8>> {
     match compression_type {
-        0 => Ok(data.to_vec()),                             // NONE
-        1 => decompress_lzma(data, false),                  // LZMA
-        2 | 3 => decompress_lz4(data, uncompressed_size),   // LZ4/LZ4HC
-        4 => decompress_lz4ak(data, uncompressed_size),     // LZ4AK (mislabeled as "LZHAM")
+        0 => Ok(data.to_vec()),                           // NONE
+        1 => decompress_lzma(data, false),                // LZMA
+        2 | 3 => decompress_lz4(data, uncompressed_size), // LZ4/LZ4HC
+        4 => decompress_lz4ak(data, uncompressed_size),   // LZ4AK (mislabeled as "LZHAM")
         _ => Err(io::Error::new(
             io::ErrorKind::Unsupported,
             format!("Unknown compression type: {}", compression_type),

@@ -26,7 +26,13 @@
       "Bash(export RUST_LOG=info)",
       "Bash(export RUST_LOG=warn)",
       "Bash(ps:*)",
-      "Bash(kill:*)"
+      "Bash(kill:*)",
+      "Bash(tree:*)",
+      "Bash(xargs:*)",
+      "Bash(cargo clean:*)",
+      "Bash(DYLD_LIBRARY_PATH=/Users/eltik/Documents/Coding/myrtle.moe/assets/unity-rs/src/resources/FMOD/Darwin ./target/release/assets-unpacker:*)",
+      "Bash(DYLD_LIBRARY_PATH=/Users/eltik/Documents/Coding/myrtle.moe/assets/unity-rs/src/resources/FMOD/Darwin RUST_LOG=info /Users/eltik/Documents/Coding/myrtle.moe/assets/unpacker/target/release/assets-unpacker:*)",
+      "Bash(/Users/eltik/Documents/Coding/myrtle.moe/assets/unpacker/target/release/assets-unpacker:*)"
     ],
     "deny": [],
     "ask": []

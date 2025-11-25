@@ -854,7 +854,10 @@ impl BundleFile {
                 let preview_len = file_data.len().min(64);
                 log::debug!(
                     "bundle_file: Extracted '{}' - size: {}, first {} bytes: {:02x?}",
-                    node.path, file_data.len(), preview_len, &file_data[..preview_len]
+                    node.path,
+                    file_data.len(),
+                    preview_len,
+                    &file_data[..preview_len]
                 );
             }
 
