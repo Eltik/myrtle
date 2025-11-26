@@ -1,6 +1,4 @@
-mod app;
-
 #[tokio::main]
 async fn main() {
-    app::server::run().await;
+    backend::app::server::run().await;
 }
