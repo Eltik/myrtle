@@ -33,7 +33,8 @@
       "Bash(DYLD_LIBRARY_PATH=/Users/eltik/Documents/Coding/myrtle.moe/assets/unity-rs/src/resources/FMOD/Darwin ./target/release/assets-unpacker:*)",
       "Bash(DYLD_LIBRARY_PATH=/Users/eltik/Documents/Coding/myrtle.moe/assets/unity-rs/src/resources/FMOD/Darwin RUST_LOG=info /Users/eltik/Documents/Coding/myrtle.moe/assets/unpacker/target/release/assets-unpacker:*)",
       "Bash(/Users/eltik/Documents/Coding/myrtle.moe/assets/unpacker/target/release/assets-unpacker:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(cargo check:*)"
     ],
     "deny": [],
     "ask": []

@@ -10,7 +10,7 @@ pub enum Distributor {
     Longcheng,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Server {
     EN,
@@ -20,6 +20,20 @@ pub enum Server {
     #[serde(rename = "bili")]
     Bilibili,
     TW,
+}
+
+impl Server {
+    /// Returns all server variants for iteration
+    pub fn all() -> &'static [Server] {
+        &[
+            Server::EN,
+            Server::JP,
+            Server::KR,
+            Server::CN,
+            Server::Bilibili,
+            Server::TW,
+        ]
+    }
 }
 
 impl Server {
@@ -49,7 +63,7 @@ impl Server {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Domain {
     GS,
