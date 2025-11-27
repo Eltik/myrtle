@@ -116,23 +116,19 @@ pub fn generate_headers(
         time,
     };
 
-    // Serialize to JSON (compact, no spaces)
     let json_string = serde_json::to_string(&headers_inner).unwrap();
 
-    // Create MD5 hash
     let mut hasher = Md5::new();
     hasher.update(format!("{}{}{}", json_string, body, SECRET));
     let hash = hasher.finalize();
-    let sign = format!("{:X}", hash); // Uppercase hex
+    let sign = format!("{:X}", hash);
 
-    // Create authorization header
     let header_auth = HeaderAuth {
         head: headers_inner,
         sign,
     };
     let authorization = serde_json::to_string(&header_auth).unwrap();
 
-    // Return final headers
     HashMap::from([
         ("X-Unity-Version", "2017.4.39f1".to_string()),
         (
@@ -146,22 +142,18 @@ pub fn generate_headers(
 }
 
 pub fn generate_u8_sign(data: &HashMap<String, String>) -> String {
-    // Sort entries by key
     let mut entries: Vec<_> = data.iter().collect();
     entries.sort_by(|(a, _), (b, _)| a.cmp(b));
 
-    // Create URL query string
     let query: String = entries
         .iter()
         .map(|(k, v)| format!("{}={}", urlencoding::encode(k), urlencoding::encode(v)))
         .collect::<Vec<_>>()
         .join("&");
 
-    // Create HMAC-SHA1 hash
     let mut mac = HmacSha1::new_from_slice(U8_SECRET).unwrap();
     mac.update(query.as_bytes());
     let result = mac.finalize();
 
-    // Return lowercase hex
     hex::encode(result.into_bytes())
 }

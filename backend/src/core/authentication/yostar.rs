@@ -1,4 +1,4 @@
-use crate::core::authentication::{FetchError, constants::Server, fetch};
+use crate::core::authentication::{FetchError, constants::Server, fetch_url};
 use reqwest::Client;
 use serde::Serialize;
 
@@ -23,7 +23,7 @@ pub async fn send_code(
 
     let base_url = server.yostar_domain().expect("Server not supported");
 
-    let response = fetch(
+    let response = fetch_url(
         client,
         base_url,
         Some("yostar/send-code"),
