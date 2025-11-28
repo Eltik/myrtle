@@ -9,7 +9,7 @@ use tokio::sync::RwLock;
 
 use crate::core::authentication::{
     config::GlobalConfig,
-    constants::{Domain, Server},
+    constants::{AuthSession, Domain, Server},
     fetch,
     generate::generate_u8_sign,
     loaders,
@@ -66,7 +66,7 @@ pub async fn get_secret(
         Server::TW => return Err("TW server not supported".into()),
     };
 
-    let (body, gs_url) = {
+    let body = {
         let config = config.read().await;
 
         let version_info = config
@@ -74,14 +74,7 @@ pub async fn get_secret(
             .get(&server)
             .ok_or("Version info not found")?;
 
-        let gs_url = config
-            .domains
-            .get(&server)
-            .and_then(|d| d.get(&Domain::GS))
-            .ok_or("GS domain not found")?
-            .clone();
-
-        let body = GetSecretBody {
+        GetSecretBody {
             platform: 1,
             network_version,
             assets_version: version_info.res_version.clone(),
@@ -91,20 +84,25 @@ pub async fn get_secret(
             device_id: config.device_ids.device_id.clone(),
             device_id2: config.device_ids.device_id2.clone(),
             device_id3: config.device_ids.device_id3.clone(),
-        };
-
-        (body, gs_url)
+        }
     };
 
-    let url = format!("{}/account/login", gs_url);
-    let response = client
-        .post(&url)
-        .json(&body)
-        .header("secret", "")
-        .header("seqnum", "1")
-        .header("uid", uid)
-        .send()
-        .await?;
+    // Create a session with uid, empty secret, and seqnum=1 for headers
+    let session = AuthSession::new(Some(uid), Some(""), Some(1), None);
+
+    let body_json = serde_json::to_value(&body)?;
+    let response = fetch(
+        client,
+        config,
+        Domain::GS,
+        server,
+        Some("account/login"),
+        Some(body_json),
+        Some(&session),
+        true, // assign_headers for Authorization
+    )
+    .await
+    .map_err(|e| format!("Fetch error: {:?}", e))?;
 
     let data: GetSecretResponse = response.json().await?;
     if data.result != 0 {
@@ -186,7 +184,7 @@ pub async fn get_u8_token(
         Some("user/v1/getToken"),
         Some(body_json),
         None,
-        false,
+        true,
     )
     .await
     .map_err(|e| format!("Fetch error: {:?}", e))?;
