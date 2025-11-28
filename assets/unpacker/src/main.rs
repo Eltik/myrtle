@@ -83,6 +83,11 @@ enum Commands {
         /// Delete existing output directory
         #[arg(short, long, default_value = "false")]
         delete: bool,
+
+        /// Path to resource manifest (.idx file) for proper output paths
+        /// If not specified, will try to find it in ArkAssets folder
+        #[arg(short, long)]
+        manifest: Option<PathBuf>,
     },
 
     /// ArkModels workflow (extract Spine models)
@@ -147,8 +152,9 @@ fn main() -> Result<()> {
             input,
             output,
             delete,
+            manifest,
         } => {
-            assets_unpacker::decode_textasset::main(&input, &output, delete)?;
+            assets_unpacker::decode_textasset::main(&input, &output, delete, manifest.as_deref())?;
         }
         Commands::Models { input, output } => {
             // TODO: Implement properly
