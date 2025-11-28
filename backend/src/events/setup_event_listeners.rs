@@ -22,6 +22,12 @@ pub fn setup_event_listeners(events: &Arc<EventEmitter>) {
                 ConfigEvent::DeviceIdsGenerated => {
                     println!("Device IDs generated!");
                 }
+                ConfigEvent::AuthLoginSuccess(session) => {
+                    println!("Login successful for uid: {}", session.uid);
+                }
+                ConfigEvent::AuthLoginError(error) => {
+                    eprintln!("Login failed: {}", error);
+                }
             }
         }
     });

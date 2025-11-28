@@ -3,6 +3,7 @@ pub mod constants;
 pub mod generate;
 pub mod get;
 pub mod loaders;
+pub mod login;
 pub mod yostar;
 
 use std::{sync::Arc, time::Duration};
