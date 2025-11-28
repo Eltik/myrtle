@@ -1,30 +1,6 @@
 use anyhow::{Context, Result};
 use serde_json::{json, Value};
-use std::panic;
 use std::path::Path;
-
-use crate::generated_fbs::character_table_generated;
-use crate::generated_fbs::enemy_database_generated;
-
-/// Helper function to suppress panic output during catch_unwind
-fn decode_with_panic_suppression<F>(f: F) -> Result<String>
-where
-    F: FnOnce() -> String + std::panic::UnwindSafe,
-{
-    // Set a custom panic hook that does nothing to suppress output
-    let prev_hook = panic::take_hook();
-    panic::set_hook(Box::new(|_| {}));
-
-    let result = panic::catch_unwind(f);
-
-    // Restore previous panic hook
-    panic::set_hook(prev_hook);
-
-    match result {
-        Ok(s) => Ok(s),
-        Err(_) => anyhow::bail!("Panic during decoding"),
-    }
-}
 
 /// Check if data is likely a FlatBuffer
 pub fn is_flatbuffer(data: &[u8]) -> bool {
@@ -88,36 +64,16 @@ fn guess_root_type(filename: &str) -> &'static str {
     }
 }
 
-/// Decode enemy database to Debug string and convert to JSON
+/// Decode enemy database to clean JSON using direct field access
 fn decode_enemy_database(data: &[u8]) -> Result<Value> {
-    let data_vec = data.to_vec();
-    let debug_str = decode_with_panic_suppression(move || {
-        let root = unsafe {
-            enemy_database_generated::root_as_clz_torappu_enemy_database_unchecked(&data_vec)
-        };
-        format!("{:#?}", root)
-    })?;
-
-    Ok(json!({
-        "type": "enemy_database",
-        "data": debug_str
-    }))
+    // Use the new macro-based implementation for fast, clean JSON output
+    crate::fb_json_impl_enemy::decode_enemy_database_json(data)
 }
 
-/// Decode character table to Debug string and convert to JSON
+/// Decode character table to clean JSON using direct field access
 fn decode_character_table(data: &[u8]) -> Result<Value> {
-    let data_vec = data.to_vec();
-    let debug_str = decode_with_panic_suppression(move || {
-        let root = unsafe {
-            character_table_generated::root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_unchecked(&data_vec)
-        };
-        format!("{:#?}", root)
-    })?;
-
-    Ok(json!({
-        "type": "character_table",
-        "data": debug_str
-    }))
+    // Use the new macro-based implementation for fast, clean JSON output
+    crate::fb_json_impl_character::decode_character_table_json(data)
 }
 
 /// Decode FlatBuffer with schema-based decoding
@@ -133,7 +89,7 @@ pub fn decode_flatbuffer(data: &[u8], filename: &str) -> Result<Value> {
 
     let schema_type = guess_root_type(filename);
 
-    // Try the matched schema first, fall back to string extraction on failure
+    // Only try matching schemas to avoid slow FlatBuffer parsing on mismatched data
     let result = match schema_type {
         "enemy_database" => decode_enemy_database(data),
         "character_table" => decode_character_table(data),
@@ -144,19 +100,7 @@ pub fn decode_flatbuffer(data: &[u8], filename: &str) -> Result<Value> {
         return Ok(value);
     }
 
-    // If matched schema failed, try other common schemas
-    if schema_type != "enemy_database" {
-        if let Ok(result) = decode_enemy_database(data) {
-            return Ok(result);
-        }
-    }
-    if schema_type != "character_table" {
-        if let Ok(result) = decode_character_table(data) {
-            return Ok(result);
-        }
-    }
-
-    // Last resort: extract strings
+    // For unknown schemas, just extract strings (fast fallback)
     Ok(json!({
         "type": "unknown",
         "strings": extract_strings(data)

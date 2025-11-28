@@ -62,6 +62,15 @@ pub fn is_ab_file(path: &Path) -> bool {
     }
 
     // Check file signature
+    is_unity_bundle(path)
+}
+
+/// Check if file is a Unity bundle by signature only (not extension)
+pub fn is_unity_bundle(path: &Path) -> bool {
+    if !path.is_file() {
+        return false;
+    }
+
     if let Ok(mut file) = fs::File::open(path) {
         let mut header = [0u8; 8];
         if file.read_exact(&mut header).is_ok() {
