@@ -13,6 +13,7 @@ struct ErrorBody {
 pub enum ApiError {
     NotFound(String),
     Internal(String),
+    BadRequest(String),
 }
 
 impl IntoResponse for ApiError {
@@ -20,6 +21,7 @@ impl IntoResponse for ApiError {
         let (status, message) = match self {
             ApiError::NotFound(msg) => (StatusCode::NOT_FOUND, msg),
             ApiError::Internal(msg) => (StatusCode::INTERNAL_SERVER_ERROR, msg),
+            ApiError::BadRequest(msg) => (StatusCode::BAD_REQUEST, msg), // Add this
         };
         (status, Json(ErrorBody { error: message })).into_response()
     }

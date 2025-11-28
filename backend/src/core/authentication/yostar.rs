@@ -31,6 +31,8 @@ pub async fn send_code(
         Some("yostar/send-code"),
         Some(serde_json::to_value(&body).unwrap()),
         None,
+        server,
+        true, // assign_headers for Authorization
     )
     .await?;
 
@@ -76,6 +78,7 @@ struct TokenUserInfo {
     reg_channel: String,
     trans_code: String,
     state: i64,
+    #[serde(rename = "DeviceID")]
     device_id: String,
     created_at: i64,
 }
@@ -145,6 +148,8 @@ pub async fn request_token(
         Some("user/login"),
         Some(serde_json::to_value(&body).unwrap()),
         None,
+        server,
+        true, // assign_headers for Authorization
     )
     .await?;
 
@@ -178,7 +183,7 @@ struct AuthFetchData {
 #[serde(rename_all = "PascalCase")]
 struct AuthFetchResponse {
     code: i64,
-    data: AuthFetchData,
+    data: Option<AuthFetchData>,
     msg: String,
 }
 
@@ -205,15 +210,24 @@ pub async fn submit_auth(
         Some("yostar/get-auth"),
         Some(serde_json::to_value(&body).unwrap()),
         None,
+        server,
+        true, // assign_headers for Authorization
     )
     .await?;
 
     let auth_response: AuthFetchResponse =
         response.json().await.map_err(FetchError::RequestFailed)?;
 
-    let data = AuthResponse {
-        token: auth_response.data.token,
-    };
+    if auth_response.code != 200 {
+        return Err(FetchError::ParseError(format!(
+            "Auth failed: {} (code: {})",
+            auth_response.msg, auth_response.code
+        )));
+    }
 
-    Ok(data)
+    let data = auth_response
+        .data
+        .ok_or(FetchError::ParseError("Missing data".into()))?;
+
+    Ok(AuthResponse { token: data.token })
 }

@@ -1,5 +1,6 @@
 use std::sync::{Arc, OnceLock};
 
+use reqwest::Client;
 use sqlx::PgPool;
 use tokio::sync::RwLock;
 
@@ -10,6 +11,7 @@ pub struct AppState {
     pub db: PgPool,
     pub config: Arc<RwLock<GlobalConfig>>,
     pub events: Arc<EventEmitter>,
+    pub client: Client,
 }
 
 static GLOBAL_CONFIG: OnceLock<Arc<RwLock<GlobalConfig>>> = OnceLock::new();

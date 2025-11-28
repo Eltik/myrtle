@@ -1,3 +1,4 @@
+use axum::routing::post;
 use axum::{Router, response::Json, routing::get};
 use reqwest::Client;
 use serde::Serialize;
@@ -5,7 +6,11 @@ use std::sync::Arc;
 use tokio::net::TcpListener;
 use tokio::sync::RwLock;
 
-use crate::app::routes::get_user::get_user;
+use crate::app::routes::get_user::{get_user_by_path, get_user_by_query};
+use crate::app::routes::yostar::login::{login_by_query, login_by_server, login_no_server};
+use crate::app::routes::yostar::send_code::{
+    send_code_by_email, send_code_by_email_and_server, send_code_by_query,
+};
 use crate::app::state::{AppState, get_global_config, init_global_config};
 use crate::core::authentication::{config::GlobalConfig, loaders};
 use crate::database::pool::{create_pool, init_tables};
@@ -29,7 +34,17 @@ fn create_router(state: AppState) -> Router {
     Router::new()
         .route("/", get(root))
         .route("/health", get(health))
-        .route("/get-user/{uid}", get(get_user))
+        .route("/get-user", get(get_user_by_query))
+        .route("/get-user/{uid}", get(get_user_by_path))
+        .route("/send-code", post(send_code_by_query))
+        .route("/send-code/{email}", post(send_code_by_email))
+        .route(
+            "/send-code/{email}/{server}",
+            post(send_code_by_email_and_server),
+        )
+        .route("/login", post(login_by_query))
+        .route("/login/{email}/{code}", post(login_no_server))
+        .route("/login/{email}/{code}/{server}", post(login_by_server))
         .with_state(state)
 }
 
@@ -70,10 +85,11 @@ pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
         db,
         config,
         events: events.clone(),
+        client,
     };
 
     // Start cron jobs
-    spawn_reload_job(client, events, 3600);
+    spawn_reload_job(state.client.clone(), events, 3600);
 
     // Create TCP listener
     let listener = TcpListener::bind("0.0.0.0:3060").await?;

@@ -94,7 +94,7 @@ pub static DEFAULT_HEADERS: LazyLock<HashMap<&'static str, &'static str>> = Lazy
     ])
 });
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize)]
 pub struct AuthSession {
     pub uid: String,
     pub secret: String,

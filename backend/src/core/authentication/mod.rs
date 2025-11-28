@@ -105,6 +105,8 @@ pub async fn fetch_url(
     endpoint: Option<&str>,
     body: Option<serde_json::Value>,
     session: Option<&AuthSession>,
+    server: Server,
+    assign_headers: bool,
 ) -> Result<Response, FetchError> {
     let full_url = match endpoint {
         Some(ep) => format!("{}/{}", url, ep),
@@ -126,6 +128,25 @@ pub async fn fetch_url(
             .header("uid", &sess.uid)
             .header("seqnum", sess.seqnum.to_string())
             .header("secret", &sess.secret);
+    }
+
+    if assign_headers {
+        let body_str = body
+            .as_ref()
+            .map(|b| serde_json::to_string(b).unwrap_or_default())
+            .unwrap_or_default();
+
+        let headers = generate_headers(
+            &body_str,
+            server,
+            session.map(|s| s.uid.as_str()),
+            session.map(|s| s.secret.as_str()),
+            None, // device_id - will generate random UUID
+        );
+
+        for (key, value) in headers {
+            request = request.header(key, value);
+        }
     }
 
     if let Some(b) = body {
