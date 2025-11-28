@@ -125,6 +125,7 @@ fn convert_serialized_shader(shader: &Shader) -> UnityResult<String> {
         array.get(index)?.first().copied()
     }
 
+    #[allow(dead_code)] // May be useful for future shader formats
     fn get_entry_u32_2d(array: &[Vec<u32>], index: usize, sub_index: usize) -> Option<u32> {
         array.get(index)?.get(sub_index).copied()
     }
@@ -983,6 +984,7 @@ impl ShaderProgram {
 ///
 /// Python: lines 612-737
 struct ShaderSubProgram {
+    #[allow(dead_code)] // Stored for version-dependent parsing
     version: i32,
     program_type: ShaderGpuProgramType,
     keywords: Vec<String>,

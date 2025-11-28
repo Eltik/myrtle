@@ -207,6 +207,7 @@ pub fn brute_force_key(
 /// using a custom encryption scheme.
 #[derive(Debug)]
 pub struct ArchiveStorageDecryptor {
+    #[allow(dead_code)] // Reserved field from Unity format
     unknown_1: u32,
     index: [u8; 16],
     substitute: [u8; 16],

@@ -3,7 +3,7 @@
 //! This module provides declarative macros to convert FlatBuffer types to clean JSON,
 //! matching the Python FBOHandler._to_json_dict() output format.
 
-use serde_json::{json, Map, Value};
+use serde_json::Value;
 
 /// Trait for FlatBuffer types that can be serialized to JSON
 pub trait FlatBufferToJson {

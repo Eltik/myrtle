@@ -13,7 +13,7 @@ use std::sync::{Arc, Mutex};
 // Python: SYSTEM_INSTANCES = {}  # (channels, flags) -> (pyfmodex_system_instance, lock)
 lazy_static! {
     static ref SYSTEM_INSTANCES: Mutex<HashMap<(i32, Init), Arc<Mutex<System>>>> =
-        { Mutex::new(HashMap::new()) };
+        Mutex::new(HashMap::new());
 }
 
 /// Create a new FMOD system instance (no caching to avoid resource limits)

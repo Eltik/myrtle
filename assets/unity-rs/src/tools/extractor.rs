@@ -292,7 +292,7 @@ pub static MONOBEHAVIOUR_TYPETREES: once_cell::sync::Lazy<
 // ============================================================================
 
 /// Collected objects from a Unity environment for Spine sorting
-struct CollectedObjects {
+pub struct CollectedObjects {
     monobehaviors: Vec<crate::files::object_reader::ObjectReader<()>>,
     textassets: Vec<crate::files::object_reader::ObjectReader<()>>,
     materials: Vec<crate::files::object_reader::ObjectReader<()>>,
@@ -1075,7 +1075,7 @@ pub fn extract_assets_with_spine<P: AsRef<Path>, S: AsRef<Path>>(
         // (they were already exported to subdirectories)
         if obj.obj_type == ClassIDType::TextAsset {
             // Check if this TextAsset is part of a Spine asset
-            let is_spine_text = spines.iter().any(|spine| {
+            let is_spine_text = spines.iter().any(|_spine| {
                 // Check by comparing content or name would be needed here
                 // For now, skip all TextAssets when do_spine is true as they're handled
                 false
@@ -1563,7 +1563,7 @@ fn export_spriteatlas(
     obj: &crate::files::object_reader::ObjectReader<()>,
     path: &Path,
 ) -> io::Result<Option<PathBuf>> {
-    use crate::generated::{SpriteAtlas, Texture2D};
+    use crate::generated::SpriteAtlas;
 
     let mut obj_clone = obj.clone();
     let data = obj_clone

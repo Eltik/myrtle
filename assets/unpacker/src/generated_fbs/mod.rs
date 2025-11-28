@@ -5,6 +5,7 @@
 #![allow(unused_imports)]
 #![allow(non_snake_case)]
 #![allow(non_camel_case_types)]
+#![allow(unreachable_patterns)]
 #![allow(clippy::all)]
 
 pub mod activity_table_generated;

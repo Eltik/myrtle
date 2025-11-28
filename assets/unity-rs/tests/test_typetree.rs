@@ -35,7 +35,6 @@ fn test_typetreenode() {
 /// This test verifies that TypeTree reading works for all sample files
 #[test]
 fn test_read_typetree_samples() {
-    use std::fs;
     use unity_rs::files::bundle_file::FileType;
     use unity_rs::Environment;
 

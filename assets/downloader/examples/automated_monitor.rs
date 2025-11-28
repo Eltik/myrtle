@@ -22,8 +22,7 @@ fn main() {
         _ => Servers::OFFICIAL, // Default to official
     };
 
-    let savedir = std::env::var("ARK_SAVEDIR")
-        .unwrap_or_else(|_| "./ArkAssets".to_string());
+    let savedir = std::env::var("ARK_SAVEDIR").unwrap_or_else(|_| "./ArkAssets".to_string());
 
     let auto_download = std::env::var("ARK_AUTO_DOWNLOAD")
         .map(|v| v.to_lowercase() == "true")
@@ -49,7 +48,10 @@ fn main() {
                     process::exit(2); // Exit code 2 = first check
                 }
 
-                UpdateStatus::ResourceUpdate { old_version, new_version } => {
+                UpdateStatus::ResourceUpdate {
+                    old_version,
+                    new_version,
+                } => {
                     println!("[Monitor] ⚠️  RESOURCE UPDATE DETECTED!");
                     println!("[Monitor]   Old: {}", old_version);
                     println!("[Monitor]   New: {}", new_version);
@@ -58,13 +60,18 @@ fn main() {
                         println!("[Monitor] Auto-download enabled - starting download...");
                         trigger_download(server, &savedir);
                     } else {
-                        println!("[Monitor] Auto-download disabled - manual intervention required.");
+                        println!(
+                            "[Monitor] Auto-download disabled - manual intervention required."
+                        );
                     }
 
                     process::exit(10); // Exit code 10 = resource update
                 }
 
-                UpdateStatus::ClientUpdate { old_version, new_version } => {
+                UpdateStatus::ClientUpdate {
+                    old_version,
+                    new_version,
+                } => {
                     println!("[Monitor] ⚠️  CLIENT UPDATE DETECTED!");
                     println!("[Monitor]   Old: {}", old_version);
                     println!("[Monitor]   New: {}", new_version);
@@ -72,15 +79,24 @@ fn main() {
                     process::exit(11); // Exit code 11 = client update
                 }
 
-                UpdateStatus::BothUpdated { old_res_version, new_res_version, .. } => {
+                UpdateStatus::BothUpdated {
+                    old_res_version,
+                    new_res_version,
+                    ..
+                } => {
                     println!("[Monitor] ⚠️  MAJOR UPDATE DETECTED (Client + Resources)!");
-                    println!("[Monitor]   Resource: {} -> {}", old_res_version, new_res_version);
+                    println!(
+                        "[Monitor]   Resource: {} -> {}",
+                        old_res_version, new_res_version
+                    );
 
                     if auto_download {
                         println!("[Monitor] Auto-download enabled - starting full download...");
                         trigger_download(server, &savedir);
                     } else {
-                        println!("[Monitor] Auto-download disabled - manual intervention required.");
+                        println!(
+                            "[Monitor] Auto-download disabled - manual intervention required."
+                        );
                     }
 
                     process::exit(12); // Exit code 12 = both updated
@@ -103,11 +119,7 @@ fn trigger_download(server: Servers, savedir: &str) {
 
             // Download all packages automatically
             // In production, you might want to download specific packages only
-            let all_keys: Vec<String> = assets
-                .hot_update_list
-                .keys()
-                .cloned()
-                .collect();
+            let all_keys: Vec<String> = assets.hot_update_list.keys().cloned().collect();
 
             match assets.download_fromlist(&all_keys, savedir, 6) {
                 Ok(_) => {

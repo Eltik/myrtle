@@ -42,7 +42,8 @@
       "Bash(DYLD_LIBRARY_PATH=/Users/eltik/Documents/Coding/myrtle.moe/assets/unity-rs/src/resources/FMOD/Darwin RUST_LOG=debug ./target/release/assets-unpacker:*)",
       "Bash(cut:*)",
       "WebFetch(domain:github.com)",
-      "Bash(cargo run:*)"
+      "Bash(cargo run:*)",
+      "Bash(cargo test:*)"
     ],
     "deny": [],
     "ask": []

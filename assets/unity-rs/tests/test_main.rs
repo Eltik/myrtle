@@ -118,7 +118,7 @@ fn test_read_typetree() {
 #[ignore]
 fn test_mesh() {
     let samples = samples_dir();
-    let mesh_file = samples.join("xinzexi_2_n_tex");
+    let _mesh_file = samples.join("xinzexi_2_n_tex");
     let expected_obj_file = samples.join("xinzexi_2_n_tex_mesh");
 
     // Load expected OBJ output

@@ -12,7 +12,6 @@
 //! Python equivalent: helpers/MeshHelper.py (734 lines)
 
 use crate::classes::generated::*;
-use crate::classes::object::Object;
 use crate::enums::mesh_topology::MeshTopology;
 use crate::helpers::packed_bit_vector::{unpack_floats, unpack_ints, ReshapedData};
 use crate::math::{Vector2, Vector3, Vector4};
@@ -338,7 +337,7 @@ impl MeshHandler {
         }
 
         // Process index buffer (Python lines 177-189)
-        if let Some(ref mut index_buffer) = self.m_index_buffer {
+        if let Some(ref mut _index_buffer) = self.m_index_buffer {
             // Convert raw bytes to indices
             // Note: In Python this is done with struct.unpack
             // In Rust, we keep it as bytes and process in get_triangles()
