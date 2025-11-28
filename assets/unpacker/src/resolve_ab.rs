@@ -10,7 +10,7 @@ use std::rc::Rc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Mutex;
 use std::time::SystemTime;
-use sysinfo::{Pid, ProcessRefreshKind, RefreshKind, System};
+use sysinfo::{Pid, System};
 use unity_rs::export::texture_2d_converter::parse_image_data;
 use unity_rs::{BuildTarget, TextureFormat};
 use unity_rs::{ClassIDType, Environment};
@@ -540,22 +540,6 @@ fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Re
     Ok(saved_count)
 }
 
-/// Check if texture name indicates alpha channel
-fn is_alpha_texture(name: &str) -> bool {
-    name.contains("[alpha]") || name.ends_with("_alpha") || name.ends_with("a")
-}
-
-/// Find matching RGB texture for alpha
-fn find_rgb_texture_name(alpha_name: &str) -> Option<String> {
-    if alpha_name.contains("[alpha]") {
-        Some(alpha_name.replace("[alpha]", ""))
-    } else if alpha_name.ends_with("_alpha") {
-        Some(alpha_name.trim_end_matches("_alpha").to_string())
-    } else {
-        None
-    }
-}
-
 /// Collect names of textures that should be excluded from root extraction
 /// Excludes: alpha textures, building textures, and base spine textures (same name as atlas/skel)
 fn collect_spine_texture_names(
@@ -927,41 +911,6 @@ fn ab_resolve(
     unity_rs::export::audio_clip_converter::fmod::clear_fmod_cache();
 
     Ok(saved_count)
-}
-
-/// Combine RGB image with alpha channel for Spine textures
-fn combine_spine_rgba_with_alpha(rgb: &RgbaImage, alpha: &RgbaImage) -> RgbaImage {
-    let (width, height) = rgb.dimensions();
-
-    // Convert alpha to grayscale for alpha channel
-    let alpha_gray = image::DynamicImage::ImageRgba8(alpha.clone()).to_luma8();
-
-    // Resize alpha if dimensions don't match
-    let alpha_resized = if alpha_gray.dimensions() != (width, height) {
-        image::imageops::resize(
-            &alpha_gray,
-            width,
-            height,
-            image::imageops::FilterType::Triangle,
-        )
-    } else {
-        alpha_gray
-    };
-
-    // Combine
-    let mut result = ImageBuffer::new(width, height);
-    for (x, y, pixel) in result.enumerate_pixels_mut() {
-        let rgb_pixel = rgb.get_pixel(x, y);
-        let alpha_value = alpha_resized.get_pixel(x, y).0[0];
-
-        if alpha_value == 0 {
-            *pixel = Rgba([0, 0, 0, 0]);
-        } else {
-            *pixel = Rgba([rgb_pixel[0], rgb_pixel[1], rgb_pixel[2], alpha_value]);
-        }
-    }
-
-    result
 }
 
 /// Texture data with decoded image

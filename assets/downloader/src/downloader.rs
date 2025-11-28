@@ -53,13 +53,19 @@ pub struct VersionInfo {
 #[derive(Debug, PartialEq)]
 pub enum UpdateStatus {
     NoUpdate,
-    ResourceUpdate { old_version: String, new_version: String },
-    ClientUpdate { old_version: String, new_version: String },
+    ResourceUpdate {
+        old_version: String,
+        new_version: String,
+    },
+    ClientUpdate {
+        old_version: String,
+        new_version: String,
+    },
     BothUpdated {
         old_res_version: String,
         new_res_version: String,
         old_client_version: String,
-        new_client_version: String
+        new_client_version: String,
     },
     FirstCheck, // No cached version exists
 }
@@ -273,7 +279,12 @@ impl ArkAssets {
 
                 // Update cache if anything changed
                 if res_changed || client_changed {
-                    Self::save_version_cache(server, savedir, &new_res_version, &new_client_version)?;
+                    Self::save_version_cache(
+                        server,
+                        savedir,
+                        &new_res_version,
+                        &new_client_version,
+                    )?;
                 }
 
                 Ok(status)

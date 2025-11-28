@@ -79,7 +79,7 @@ impl TypeTreeNode {
         let mut parent: *mut TypeTreeNode = &mut fake_root;
         let mut prev: *mut TypeTreeNode = &mut fake_root;
 
-        for mut node in nodes {
+        for node in nodes {
             unsafe {
                 // Determine parent based on level changes
                 if node.m_level > (*prev).m_level {
@@ -98,7 +98,7 @@ impl TypeTreeNode {
 
                 // Update prev to point to the last child we just added
                 let children_len = (*parent).m_children.len();
-                prev = &mut (*parent).m_children[children_len - 1] as *mut TypeTreeNode;
+                prev = &mut (&mut (*parent).m_children)[children_len - 1] as *mut TypeTreeNode;
             }
         }
 
@@ -142,7 +142,7 @@ impl TypeTreeNode {
         for (i, child) in self.m_children.iter().enumerate() {
             if child.m_name == "m_Name" || child.m_name == "name" {
                 // Create peek node with only children up to (and including) this one
-                let mut peek_node = TypeTreeNode {
+                let peek_node = TypeTreeNode {
                     m_level: self.m_level,
                     m_type: self.m_type.clone(),
                     m_name: self.m_name.clone(),
@@ -734,7 +734,7 @@ pub fn get_common_strings(version: Option<UnityVersion>) -> Result<HashMap<usize
 /// # Returns
 ///
 /// A tuple of (field_names, total_size_bytes)
-pub fn get_blob_node_struct(endian: Endian, version: i32) -> (Vec<&'static str>, usize) {
+pub fn get_blob_node_struct(_endian: Endian, version: i32) -> (Vec<&'static str>, usize) {
     let base_fields = vec![
         "m_Version",       // i16 (2 bytes)
         "m_Level",         // u8  (1 byte)

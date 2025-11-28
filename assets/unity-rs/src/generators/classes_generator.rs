@@ -712,12 +712,12 @@ fn main() {
     let mut main_classes: HashSet<String> = HashSet::new();
     let mut deps: HashMap<String, Vec<String>> = HashMap::new();
 
-    for (&class_id, class_info) in &tpk.class_information {
+    for (&_class_id, class_info) in &tpk.class_information {
         let mut abstract_class = true;
         let mut base: Option<String> = None;
         let mut cls_name: Option<String> = None;
 
-        for (version, unity_class_opt) in &class_info.classes {
+        for (_version, unity_class_opt) in &class_info.classes {
             if let Some(unity_class) = unity_class_opt {
                 cls_name = Some(strings[unity_class.name as usize].clone());
                 base = Some(strings[unity_class.base as usize].clone());
@@ -725,7 +725,7 @@ fn main() {
                 // If release_root_node exists, it's not abstract
                 if let Some(release_root_node) = unity_class.release_root_node {
                     abstract_class = false;
-                    let cls = implement_node_class(
+                    let _cls = implement_node_class(
                         release_root_node as usize,
                         None,
                         cls_name.as_deref(),

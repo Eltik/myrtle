@@ -11,6 +11,7 @@ use crate::enums::texture_format::TextureFormat;
 const GOB_X_TEXEL_COUNT: usize = 4;
 const GOB_Y_TEXEL_COUNT: usize = 8;
 const TEXEL_BYTE_SIZE: usize = 16;
+#[allow(dead_code)] // Reference constant
 const TEXELS_IN_GOB: usize = GOB_X_TEXEL_COUNT * GOB_Y_TEXEL_COUNT; // 32
 
 // Pre-calculated GOB coordinate mapping for 32 texels

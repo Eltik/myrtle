@@ -34,7 +34,10 @@ fn main() {
 
                 UpdateStatus::FirstCheck => {
                     println!("✓ First version check - baseline established!");
-                    println!("  Version cache created at: {}/version_cache_official.json", savedir);
+                    println!(
+                        "  Version cache created at: {}/version_cache_official.json",
+                        savedir
+                    );
                     println!("  Run this again later to detect updates.");
 
                     if let Some(cached) = ArkAssets::load_version_cache(server, savedir) {
@@ -44,18 +47,26 @@ fn main() {
                     }
                 }
 
-                UpdateStatus::ResourceUpdate { old_version, new_version } => {
+                UpdateStatus::ResourceUpdate {
+                    old_version,
+                    new_version,
+                } => {
                     println!("🔄 Resource Update Detected!");
                     println!("  Old Resource Version: {}", old_version);
                     println!("  New Resource Version: {}", new_version);
-                    println!("\n⚠️  Asset files have been updated - you should re-download assets.");
+                    println!(
+                        "\n⚠️  Asset files have been updated - you should re-download assets."
+                    );
 
                     // Automatically download
                     let assets = ArkAssets::new(server).unwrap();
                     assets.download(savedir).unwrap();
                 }
 
-                UpdateStatus::ClientUpdate { old_version, new_version } => {
+                UpdateStatus::ClientUpdate {
+                    old_version,
+                    new_version,
+                } => {
                     println!("🔄 Client Update Detected!");
                     println!("  Old Client Version: {}", old_version);
                     println!("  New Client Version: {}", new_version);

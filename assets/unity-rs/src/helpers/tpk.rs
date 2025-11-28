@@ -970,7 +970,6 @@ fn generate_node(class: &TpkUnityClass, tree: &TpkTypeTreeBlob) -> Result<TypeTr
     // Build flat list of nodes using BFS
     let mut nodes_list = Vec::new();
     let mut queue: Vec<(u16, i32)> = vec![(root_node_idx, 0)]; // (node_id, level)
-    let mut index = 0;
 
     while let Some((node_id, level)) = queue.first().copied() {
         queue.remove(0); // Pop front (BFS)
@@ -997,8 +996,6 @@ fn generate_node(class: &TpkUnityClass, tree: &TpkTypeTreeBlob) -> Result<TypeTr
         for &sub_node_id in &tpk_node.sub_nodes {
             queue.push((sub_node_id, level + 1));
         }
-
-        index += 1;
     }
 
     // Build tree from flat list

@@ -22,7 +22,6 @@ use crate::helpers::resource_reader::get_resource_data;
 use crate::helpers::texture_swizzler;
 use crate::{BuildTarget, TextureFormat, UnityError}; // Re-exported from crate::enums::*
 use bcdec_rs;
-use half::f16;
 use image::imageops;
 use image::{ImageBuffer, RgbaImage};
 use std::path::Path;

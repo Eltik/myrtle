@@ -31,6 +31,7 @@ trait TypeTreeGeneratorBase {
     fn load_il2cpp(&mut self, il2cpp: Vec<u8>, metadata: Vec<u8>) -> Result<(), io::Error>;
 
     /// Get type tree nodes as JSON string
+    #[allow(dead_code)] // Part of trait interface
     fn get_nodes_as_json(&self, assembly: &str, fullname: &str) -> Result<String, io::Error>;
 
     /// Get type tree nodes as TypeTreeNode list
@@ -46,7 +47,7 @@ struct PyTypeTreeGeneratorBase {
 
 impl TypeTreeGeneratorBase for PyTypeTreeGeneratorBase {
     fn new(unity_version: &str) -> Result<Self, io::Error> {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             // Import TypeTreeGeneratorAPI module
             let module = PyModule::import(py, "TypeTreeGeneratorAPI").map_err(|e| {
                 io::Error::new(
@@ -78,7 +79,7 @@ impl TypeTreeGeneratorBase for PyTypeTreeGeneratorBase {
     }
 
     fn load_dll(&mut self, dll: Vec<u8>) -> Result<(), io::Error> {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             // Convert Rust Vec<u8> to Python bytes
             let py_bytes = PyBytes::new(py, &dll);
 
@@ -135,7 +136,7 @@ impl TypeTreeGeneratorBase for PyTypeTreeGeneratorBase {
     }
 
     fn get_nodes(&self, assembly: &str, fullname: &str) -> Result<Vec<TypeTreeNode>, io::Error> {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             // Call Python: generator.get_nodes_as_json(assembly, fullname)
             let json_str: String = self
                 .py_generator
@@ -172,6 +173,7 @@ impl TypeTreeGeneratorBase for PyTypeTreeGeneratorBase {
 pub struct TypeTreeGenerator {
     base: PyTypeTreeGeneratorBase,
     cache: HashMap<(String, String), TypeTreeNode>,
+    #[allow(dead_code)] // Stored for potential future use
     unity_version: String,
 }
 
@@ -424,7 +426,7 @@ impl TypeTreeGenerator {
 
                 // Update prev to point to the node we just added
                 let children_len = (*parent).m_children.len();
-                prev = &mut (*parent).m_children[children_len - 1] as *mut TypeTreeNode;
+                prev = &mut (&mut (*parent).m_children)[children_len - 1] as *mut TypeTreeNode;
             }
         }
 
