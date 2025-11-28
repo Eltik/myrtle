@@ -46,6 +46,8 @@ async fn load_single_server(client: &Client, config: &Arc<RwLock<GlobalConfig>>,
         return;
     };
 
+    let url = url.replace("{0}", "Android");
+
     let result = timeout(CONFIG_TIMEOUT, async {
         let response = client.get(&url).timeout(CONFIG_TIMEOUT).send().await?;
 
