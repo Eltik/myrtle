@@ -3,11 +3,14 @@ use anyhow::{Context, Result};
 use cbc::cipher::{BlockDecryptMut, KeyIvInit};
 use indicatif::{ProgressBar, ProgressStyle};
 use rayon::prelude::*;
+use regex::Regex;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
 use walkdir::WalkDir;
 
 use crate::flatbuffers_decode;
+use crate::resource_manifest::ResourceManifest;
 use crate::utils::{is_binary_file, is_known_asset_file, is_unity_bundle, mkdir};
 
 type Aes128CbcDec = cbc::Decryptor<Aes128>;
@@ -97,15 +100,38 @@ fn is_up_to_date(input: &Path, output: &Path) -> bool {
     output_time >= input_time
 }
 
+/// Strip hash suffix from filename (6 hex chars at the end)
+fn strip_hash_suffix(filename: &str) -> String {
+    let hash_suffix_re = Regex::new(r"[a-f0-9]{6}$").unwrap();
+    hash_suffix_re.replace(filename, "").to_string()
+}
+
+/// Get output path for a file, using manifest if available
+fn get_output_path(filename: &str, destdir: &Path, manifest: Option<&ResourceManifest>) -> PathBuf {
+    if let Some(m) = manifest {
+        if let Some(path) = m.get_output_path(filename) {
+            // Use manifest path with .json extension
+            return destdir.join(format!("{}.json", path));
+        }
+    }
+    // Fallback: strip hash suffix and output directly to destdir
+    let clean_name = strip_hash_suffix(filename);
+    destdir.join(format!("{}.json", clean_name))
+}
+
 /// Process a single text asset file
-fn text_asset_resolve(fp: &Path, destdir: &Path) -> Result<bool> {
+fn text_asset_resolve(
+    fp: &Path,
+    destdir: &Path,
+    manifest: Option<&ResourceManifest>,
+) -> Result<bool> {
     // Skip if not a binary file
     if !fp.is_file() || !is_binary_file(fp) {
         return Ok(false);
     }
 
     let filename = fp.file_name().unwrap_or_default().to_string_lossy();
-    let output_path = destdir.join(format!("{}.json", filename));
+    let output_path = get_output_path(&filename, destdir, manifest);
 
     // Skip if output is already up-to-date
     if is_up_to_date(fp, &output_path) {
@@ -122,9 +148,11 @@ fn text_asset_resolve(fp: &Path, destdir: &Path) -> Result<bool> {
             match flatbuffers_decode::decode_flatbuffer(fbo_data, &filename) {
                 Ok(json) => {
                     let json_str = serde_json::to_string_pretty(&json)?;
-                    let output_path = destdir.join(format!("{}.json", filename));
 
-                    mkdir(destdir)?;
+                    // Create parent directories
+                    if let Some(parent) = output_path.parent() {
+                        mkdir(parent)?;
+                    }
                     std::fs::write(&output_path, json_str)?;
 
                     log::debug!("Decoded FlatBuffer: {:?} -> {:?}", fp, output_path);
@@ -141,9 +169,11 @@ fn text_asset_resolve(fp: &Path, destdir: &Path) -> Result<bool> {
     match decode_aes_file(fp) {
         Ok(json) => {
             let json_str = serde_json::to_string_pretty(&json)?;
-            let output_path = destdir.join(format!("{}.json", filename));
 
-            mkdir(destdir)?;
+            // Create parent directories
+            if let Some(parent) = output_path.parent() {
+                mkdir(parent)?;
+            }
             std::fs::write(&output_path, json_str)?;
 
             log::debug!("Decoded AES: {:?} -> {:?}", fp, output_path);
@@ -157,9 +187,76 @@ fn text_asset_resolve(fp: &Path, destdir: &Path) -> Result<bool> {
     Ok(false)
 }
 
+/// Try to find the .idx manifest file automatically
+fn find_manifest(rootdir: &Path) -> Option<PathBuf> {
+    // Look for .idx files in parent directories (up to 3 levels)
+    let mut current = rootdir.to_path_buf();
+    for _ in 0..5 {
+        // Check for any .idx file in this directory
+        if let Ok(entries) = std::fs::read_dir(&current) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.extension().map_or(false, |ext| ext == "idx") {
+                    log::info!("Found manifest: {:?}", path);
+                    return Some(path);
+                }
+            }
+        }
+
+        // Move to parent
+        if let Some(parent) = current.parent() {
+            current = parent.to_path_buf();
+        } else {
+            break;
+        }
+    }
+    None
+}
+
 /// Main entry point for TextAsset decoding
-pub fn main(rootdir: &Path, destdir: &Path, do_del: bool) -> Result<()> {
+pub fn main(
+    rootdir: &Path,
+    destdir: &Path,
+    do_del: bool,
+    manifest_path: Option<&Path>,
+) -> Result<()> {
     log::info!("Retrieving file paths...");
+
+    // Try to load manifest
+    let manifest = if let Some(path) = manifest_path {
+        match ResourceManifest::load(path) {
+            Ok(m) => {
+                println!(
+                    "Loaded manifest from {:?} with {} entries",
+                    path,
+                    m.filename_to_path.len()
+                );
+                Some(Arc::new(m))
+            }
+            Err(e) => {
+                log::warn!("Failed to load manifest from {:?}: {}", path, e);
+                None
+            }
+        }
+    } else if let Some(found_path) = find_manifest(rootdir) {
+        match ResourceManifest::load(&found_path) {
+            Ok(m) => {
+                println!(
+                    "Auto-detected manifest from {:?} with {} entries",
+                    found_path,
+                    m.filename_to_path.len()
+                );
+                Some(Arc::new(m))
+            }
+            Err(e) => {
+                log::warn!("Failed to load auto-detected manifest: {}", e);
+                None
+            }
+        }
+    } else {
+        log::info!("No manifest found, using fallback filename stripping");
+        None
+    };
 
     // Collect files to process (exclude known assets and AB files)
     let files: Vec<PathBuf> = WalkDir::new(rootdir)
@@ -196,20 +293,18 @@ pub fn main(rootdir: &Path, destdir: &Path, do_del: bool) -> Result<()> {
 
     let decoded_count = AtomicUsize::new(0);
     let skipped_count = AtomicUsize::new(0);
+    let manifest_ref = manifest.as_deref();
 
     // Process files in parallel
     files.par_iter().for_each(|file| {
-        let rel_path = file.strip_prefix(rootdir).unwrap_or(file);
-        let subdestdir = destdir.join(rel_path.parent().unwrap_or(Path::new("")));
-
-        match text_asset_resolve(file, &subdestdir) {
+        match text_asset_resolve(file, destdir, manifest_ref) {
             Ok(true) => {
                 decoded_count.fetch_add(1, Ordering::Relaxed);
             }
             Ok(false) => {
                 // Check if it was skipped due to being up-to-date
                 let filename = file.file_name().unwrap_or_default().to_string_lossy();
-                let output_path = subdestdir.join(format!("{}.json", filename));
+                let output_path = get_output_path(&filename, destdir, manifest_ref);
                 if output_path.exists() {
                     skipped_count.fetch_add(1, Ordering::Relaxed);
                 }
