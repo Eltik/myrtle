@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use std::sync::Arc;
 
 use reqwest::Client;
@@ -115,10 +117,10 @@ pub async fn get_secret(
 
 #[derive(Deserialize)]
 pub struct U8TokenResponse {
-    result: i32,
-    error: Option<String>,
-    uid: String,
-    token: String,
+    pub result: i32,
+    pub error: Option<String>,
+    pub uid: String,
+    pub token: String,
 }
 
 pub async fn get_u8_token(
@@ -148,7 +150,7 @@ pub async fn get_u8_token(
         }))
     };
 
-    let (device_ids, u8_url) = {
+    let (device_ids, _u8_url) = {
         let config = config.read().await;
         let device_ids = config.device_ids.clone();
         let u8_url = config

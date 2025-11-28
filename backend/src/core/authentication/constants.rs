@@ -99,6 +99,23 @@ pub struct AuthSession {
     pub uid: String,
     pub secret: String,
     pub seqnum: u32,
+    pub token: String,
+}
+
+impl AuthSession {
+    pub fn new(
+        uid: Option<&str>,
+        secret: Option<&str>,
+        seqnum: Option<u32>,
+        token: Option<&str>,
+    ) -> Self {
+        Self {
+            uid: uid.unwrap_or_default().to_string(),
+            secret: secret.unwrap_or_default().to_string(),
+            seqnum: seqnum.unwrap_or(1),
+            token: token.unwrap_or_default().to_string(),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -106,4 +123,5 @@ pub enum FetchError {
     InvalidServer(Server),
     RequestFailed(reqwest::Error),
     Timeout,
+    ParseError(String),
 }

@@ -1,6 +1,6 @@
 use tokio::sync::broadcast;
 
-use crate::core::authentication::constants::Server;
+use crate::core::authentication::constants::{AuthSession, Server};
 
 pub mod setup_event_listeners;
 
@@ -11,6 +11,8 @@ pub enum ConfigEvent {
     VersionLoaded(Server),
     VersionInitiated,
     DeviceIdsGenerated,
+    AuthLoginSuccess(AuthSession),
+    AuthLoginError(String),
 }
 
 pub struct EventEmitter {
