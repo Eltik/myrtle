@@ -5,9 +5,10 @@ use std::sync::Arc;
 use tokio::net::TcpListener;
 use tokio::sync::RwLock;
 
+use crate::app::routes::get_user::get_user;
 use crate::app::state::{AppState, get_global_config, init_global_config};
 use crate::core::authentication::{config::GlobalConfig, loaders};
-use crate::database::pool::create_pool;
+use crate::database::pool::{create_pool, init_tables};
 use crate::events::EventEmitter;
 use crate::events::setup_event_listeners::setup_event_listeners;
 
@@ -28,10 +29,13 @@ fn create_router(state: AppState) -> Router {
     Router::new()
         .route("/", get(root))
         .route("/health", get(health))
+        .route("/get-user/{uid}", get(get_user))
         .with_state(state)
 }
 
 pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
+    dotenvy::dotenv().ok();
+
     // Get database URL from environment
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
@@ -57,6 +61,9 @@ pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
 
     // Create database pool
     let db = create_pool(&database_url).await?;
+
+    // Initialize database tables
+    init_tables(&db).await?;
 
     // Create app state
     let state = AppState {

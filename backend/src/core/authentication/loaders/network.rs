@@ -1,5 +1,6 @@
 use reqwest::Client;
 use serde::Deserialize;
+use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
@@ -19,7 +20,7 @@ struct NetworkConfigResponse {
 
 #[derive(Deserialize)]
 struct NetworkConfigContent {
-    configs: HashMap<String, HashMap<String, HashMap<String, String>>>,
+    configs: HashMap<String, HashMap<String, Value>>,
     #[serde(rename = "funcVer")]
     func_ver: String,
 }
@@ -71,7 +72,12 @@ async fn load_single_server(client: &Client, config: &Arc<RwLock<GlobalConfig>>,
             .configs
             .get(&inner.func_ver)
             .and_then(|c| c.get("network"))
-            .cloned()
+            .and_then(|v| v.as_object())
+            .map(|obj| {
+                obj.iter()
+                    .filter_map(|(k, v)| v.as_str().map(|s| (k.clone(), s.to_string())))
+                    .collect::<HashMap<String, String>>()
+            })
             .unwrap_or_default();
 
         Ok::<_, Box<dyn std::error::Error + Send + Sync>>(network)
