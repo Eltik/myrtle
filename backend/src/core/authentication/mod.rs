@@ -99,6 +99,38 @@ pub async fn fetch(
     Ok(response)
 }
 
+/// Authenticated request to the game server (GS domain).
+/// Automatically increments session seqnum before each request.
+pub async fn auth_request(
+    client: &Client,
+    config: &Arc<RwLock<GlobalConfig>>,
+    endpoint: &str,
+    body: Option<serde_json::Value>,
+    session: &mut AuthSession,
+    server: Server,
+) -> Result<Response, FetchError> {
+    // Validate session
+    if session.uid.is_empty() {
+        return Err(FetchError::ParseError("Not logged in.".into()));
+    }
+
+    // Increment seqnum before request
+    session.seqnum += 1;
+
+    // Use fetch with GS domain, no Authorization headers (assign_headers = false)
+    fetch(
+        client,
+        config,
+        Domain::GS,
+        server,
+        Some(endpoint),
+        body,
+        Some(session),
+        false, // Don't generate Authorization header, just use session headers
+    )
+    .await
+}
+
 pub async fn fetch_url(
     client: &Client,
     url: &str,
