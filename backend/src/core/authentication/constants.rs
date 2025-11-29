@@ -37,6 +37,17 @@ impl Server {
 }
 
 impl Server {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Server::EN => "en",
+            Server::JP => "jp",
+            Server::KR => "kr",
+            Server::CN => "cn",
+            Server::Bilibili => "bili",
+            Server::TW => "tw",
+        }
+    }
+
     pub fn yostar_domain(&self) -> Option<&'static str> {
         match self {
             Server::EN => Some("https://en-sdk-api.yostarplat.com"),
