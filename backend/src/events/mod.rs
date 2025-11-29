@@ -13,6 +13,8 @@ pub enum ConfigEvent {
     DeviceIdsGenerated,
     AuthLoginSuccess(AuthSession),
     AuthLoginError(String),
+    DatabaseUserCreated { uid: String, server: String },
+    DatabaseUserUpdated { uid: String, server: String },
 }
 
 pub struct EventEmitter {

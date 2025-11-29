@@ -28,6 +28,12 @@ pub fn setup_event_listeners(events: &Arc<EventEmitter>) {
                 ConfigEvent::AuthLoginError(error) => {
                     eprintln!("Login failed: {}", error);
                 }
+                ConfigEvent::DatabaseUserCreated { uid, server } => {
+                    println!("User created: {} ({})", uid, server);
+                }
+                ConfigEvent::DatabaseUserUpdated { uid, server } => {
+                    println!("User updated: {} ({})", uid, server);
+                }
             }
         }
     });
