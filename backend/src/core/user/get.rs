@@ -28,7 +28,13 @@ pub async fn get(
     )
     .await?;
 
+    // DEBUG
+    //let text = response.text().await.map_err(FetchError::RequestFailed)?;
+    //eprintln!("Raw response: {}", text);
+
     let data: UserResponse = response.json().await.map_err(FetchError::RequestFailed)?;
+
+    //let data: UserResponse = serde_json::from_str(&text).map_err(|e| FetchError::ParseError(format!("JSON parse error: {}", e)))?;
 
     Ok(data.user.map(format_user))
 }

@@ -8,6 +8,7 @@ use tokio::sync::RwLock;
 
 use crate::app::routes::get_user::{get_user_by_path, get_user_by_query};
 use crate::app::routes::yostar::login::{login_by_query, login_by_server, login_no_server};
+use crate::app::routes::yostar::refresh::{refresh_by_query, refresh_by_server, refresh_no_server};
 use crate::app::routes::yostar::send_code::{
     send_code_by_email, send_code_by_email_and_server, send_code_by_query,
 };
@@ -45,6 +46,12 @@ fn create_router(state: AppState) -> Router {
         .route("/login", post(login_by_query))
         .route("/login/{email}/{code}", post(login_no_server))
         .route("/login/{email}/{code}/{server}", post(login_by_server))
+        .route("/refresh", post(refresh_by_query))
+        .route("/refresh/{uid}/{secret}/{seqnum}", post(refresh_no_server))
+        .route(
+            "/refresh/{uid}/{secret}/{seqnum}/{server}",
+            post(refresh_by_server),
+        )
         .with_state(state)
 }
 

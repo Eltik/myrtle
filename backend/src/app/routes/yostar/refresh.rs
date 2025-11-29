@@ -5,6 +5,7 @@ use crate::{
         user::{self},
     },
     database::models::user::{CreateUser, User},
+    events::ConfigEvent,
 };
 use axum::{
     Json,
@@ -83,6 +84,11 @@ async fn refresh_impl(
         User::update_data(&state.db, existing_user.id, user_json.clone())
             .await
             .map_err(|_| ApiError::Internal("Failed to update user.".into()))?;
+
+        state.events.emit(ConfigEvent::DatabaseUserUpdated {
+            uid: uid.to_string(),
+            server: server.as_str().to_string(),
+        });
     } else {
         User::create(
             &state.db,
@@ -94,6 +100,11 @@ async fn refresh_impl(
         )
         .await
         .map_err(|_| ApiError::Internal("Failed to create user.".into()))?;
+
+        state.events.emit(ConfigEvent::DatabaseUserCreated {
+            uid: uid.to_string(),
+            server: server.as_str().to_string(),
+        });
     }
 
     Ok(Json(user_json))
