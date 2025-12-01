@@ -53,12 +53,7 @@ pub fn format_user(
         format_character(character, game_data);
     }
 
-    // TODO: Enrich inventory when materials are added to GameData
-    // for (item_id, amount) in user.inventory.iter_mut() {
-    //     if let Some(material) = game_data.materials.get(item_id) {
-    //         // Add material data
-    //     }
-    // }
+    format_inventory(user, game_data);
 }
 
 /// Enriches a single character with static data
@@ -133,4 +128,21 @@ fn calculate_trust(favor_point: i32, _game_data: &GameData) -> i32 {
     // Placeholder: rough approximation
     // In reality, you'd binary search through favor_table frames
     (favor_point / 100).min(200)
+}
+
+fn format_inventory(user: &mut User, game_data: &GameData) {
+    let raw_inventory = std::mem::take(&mut user.inventory);
+
+    user.inventory = raw_inventory
+        .into_iter()
+        .filter_map(|(item_id, count)| {
+            game_data.materials.items.get(&item_id).map(|material| {
+                let mut enriched = serde_json::to_value(material).unwrap_or_default();
+                if let serde_json::Value::Object(ref mut map) = enriched {
+                    map.insert("amount".to_string(), serde_json::json!(count));
+                }
+                (item_id, enriched)
+            })
+        })
+        .collect();
 }

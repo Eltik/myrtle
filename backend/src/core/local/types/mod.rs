@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
-use crate::core::local::types::{operator::Operator, skill::Skill};
+use crate::core::local::types::{material::Materials, operator::Operator, skill::Skill};
 
+pub mod enemy;
 pub mod handbook;
 pub mod material;
 pub mod module;
@@ -14,6 +15,7 @@ pub mod voice;
 pub struct GameData {
     pub operators: HashMap<String, Operator>,
     pub skills: HashMap<String, Skill>,
+    pub materials: Materials,
     // TODO: Etc.
 }
 
