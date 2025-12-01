@@ -1,14 +1,14 @@
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use reqwest::Client;
 use tokio::sync::RwLock;
 
 use super::types::{User, UserResponse};
-use crate::core::authentication::{
+use crate::core::{authentication::{
     auth_request,
     config::GlobalConfig,
     constants::{AuthSession, FetchError, Server},
-};
+}, local::types::GameData};
 
 pub async fn get(
     client: &Client,
@@ -40,7 +40,41 @@ pub async fn get(
 }
 
 // TODO: When local data is processed, add formatting logic here
-fn format_user(user: User) -> User {
-    // Future: Add operator static data, trust calculations, etc.
-    user
+pub fn format_user(
+    user: User,
+    game_data: &GameData,  // Pre-loaded reference
+) -> FormattedUser {
+    // O(1) inventory enrichment
+    let enriched_inventory: HashMap<String, EnrichedItem> = user.inventory
+        .into_iter()
+        .filter_map(|(id, amount)| {
+            game_data.materials.get(&id).map(|item| {
+                (id, EnrichedItem {
+                    base: item.clone(),
+                    amount,
+                })
+            })
+        })
+        .collect();
+
+    // O(1) character enrichment (already pre-computed!)
+    let enriched_chars: HashMap<String, EnrichedCharacter> = user.troop.chars
+        .into_iter()
+        .map(|(inst_id, char)| {
+            let static_data = game_data.operators.get(&char.char_id).cloned();
+            let trust = game_data.calculate_trust(char.favor_point);
+
+            (inst_id, EnrichedCharacter {
+                base: char,
+                static_data,
+                trust,
+            })
+        })
+        .collect();
+
+    FormattedUser {
+        inventory: enriched_inventory,
+        troop: EnrichedTroop { chars: enriched_chars, ..user.troop },
+        ..user
+    }
 }
