@@ -1,24 +1,34 @@
+use rayon::prelude::*;
 use std::collections::HashMap;
 
-use crate::core::local::types::{operator::{EnrichedOperator, RawOperator}, skill::{EnrichedSkill, RawSkill}};
+use crate::core::local::{
+    gamedata::{
+        handbook::get_handbook_and_profile, modules::get_operator_modules, skills::enrich_skills,
+        skins::get_artists,
+    },
+    types::{
+        handbook::Handbook,
+        module::{BattleEquip, RawModules},
+        operator::{Operator, RawOperator},
+        skill::Skill,
+        skin::SkinData,
+    },
+};
 
 /// Pre-enriches all operators once at startup (instead of per-request)
 pub fn enrich_all_operators(
-    characters: &HashMap<String, RawOperator>,
-    skills: &HashMap<String, RawSkill>,
-    modules: &ModuleData,
-    battle_equip: &HashMap<String, BattleEquip>,
-    handbook: &HashMap<String, HandbookItem>,
-    voices: &VoiceData,
+    raw_operators: &HashMap<String, RawOperator>,
+    skills: &HashMap<String, Skill>,
+    modules: &RawModules,
+    battle_equip: &BattleEquip,
+    handbook: &Handbook,
     skins: &SkinData,
-) -> HashMap<String, EnrichedOperatorr> {
-    characters
-        .par_iter()  // Parallel iteration with rayon
+) -> HashMap<String, Operator> {
+    raw_operators
+        .par_iter()
         .filter(|(id, _)| id.starts_with("char_"))
-        .map(|(id, op)| {
-            let enriched = enrich_operator(
-                id, op, skills, modules, battle_equip, handbook, voices, skins
-            );
+        .map(|(id, raw)| {
+            let enriched = enrich_operator(id, raw, skills, modules, battle_equip, handbook, skins);
             (id.clone(), enriched)
         })
         .collect()
@@ -26,43 +36,54 @@ pub fn enrich_all_operators(
 
 fn enrich_operator(
     id: &str,
-    op: &RawOperator,
-    skills: &HashMap<String, RawSkill>,
-    // ... other tables
-) -> EnrichedOperator {
-    // Skills: O(1) lookup per skill
-    let enriched_skills: Vec<EnrichedSkill> = op.skills
-        .iter()
-        .filter_map(|s| {
-            skills.get(&s.skill_id).map(|static_data| {
-                EnrichedSkill {
-                    base: s.clone(),
-                    static_data: static_data.clone(),
-                }
-            })
-        })
-        .collect();
+    raw: &RawOperator,
+    skills: &HashMap<String, Skill>,
+    modules: &RawModules,
+    battle_equip: &BattleEquip,
+    handbook: &Handbook,
+    skins: &SkinData,
+) -> Operator {
+    let enriched_skills = enrich_skills(&raw.skills, skills);
+    let operator_modules = get_operator_modules(id, modules, battle_equip);
+    let (handbook_item, profile) = get_handbook_and_profile(id, handbook);
+    let artists = get_artists(id, skins);
 
-    // Modules: Pre-indexed by char_id
-    let char_modules = modules.equip_dict
-        .values()
-        .filter(|m| m.char_id == id)
-        .map(|m| {
-            let details = battle_equip.get(&m.uni_equip_id);
-            EnrichedModule { base: m.clone(), data: details.cloned() }
-        })
-        .collect();
-
-    // Profile parsing
-    let profile = handbook.get(id)
-        .and_then(|h| parse_operator_profile(&h.story_text_audio).ok());
-
-    EnrichedOperator {
-        id: id.to_string(),
-        base: op.clone(),
+    Operator {
+        id: Some(id.to_string()),
+        name: raw.name.clone(),
+        description: raw.description.clone(),
+        can_use_general_potential_item: raw.can_use_general_potential_item,
+        can_use_activity_potential_item: raw.can_use_activity_potential_item,
+        potential_item_id: raw.potential_item_id.clone(),
+        activity_potential_item_id: raw.activity_potential_item_id.clone(),
+        classic_potential_item_id: raw.classic_potential_item_id.clone(),
+        nation_id: raw.nation_id.clone(),
+        group_id: raw.group_id.clone(),
+        team_id: raw.team_id.clone(),
+        display_number: raw.display_number.clone(),
+        appellation: raw.appellation.clone(),
+        position: raw.position.clone(),
+        tag_list: raw.tag_list.clone(),
+        item_usage: raw.item_usage.clone(),
+        item_desc: raw.item_desc.clone(),
+        item_obtain_approach: raw.item_obtain_approach.clone(),
+        is_not_obtainable: raw.is_not_obtainable,
+        is_sp_char: raw.is_sp_char,
+        max_potential_level: raw.max_potential_level,
+        rarity: raw.rarity.clone(),
+        profession: raw.profession.clone(),
+        sub_profession_id: raw.sub_profession_id.clone(),
+        trait_data: raw.trait_data.clone(),
+        phases: raw.phases.clone(),
         skills: enriched_skills,
-        modules: char_modules,
+        display_token_dict: raw.display_token_dict.clone(),
+        talents: raw.talents.clone(),
+        potential_ranks: raw.potential_ranks.clone(),
+        favor_key_frames: raw.favor_key_frames.clone(),
+        all_skill_level_up: raw.all_skill_lvlup.clone(),
+        modules: operator_modules,
+        handbook: handbook_item,
         profile,
-        // ...
+        artists,
     }
 }

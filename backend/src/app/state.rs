@@ -4,7 +4,10 @@ use reqwest::Client;
 use sqlx::PgPool;
 use tokio::sync::RwLock;
 
-use crate::{core::{authentication::config::GlobalConfig, local::types::GameData}, events::EventEmitter};
+use crate::{
+    core::{authentication::config::GlobalConfig, local::types::GameData},
+    events::EventEmitter,
+};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -12,7 +15,7 @@ pub struct AppState {
     pub config: Arc<RwLock<GlobalConfig>>,
     pub events: Arc<EventEmitter>,
     pub client: Client,
-    pub game_data: Arc<GameData>
+    pub game_data: Arc<GameData>,
 }
 
 static GLOBAL_CONFIG: OnceLock<Arc<RwLock<GlobalConfig>>> = OnceLock::new();

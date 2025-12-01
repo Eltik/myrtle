@@ -98,7 +98,8 @@ pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let game_data = Arc::new(init_game_data_or_default(&data_dir));
 
     if game_data.is_loaded() {
-        println!("Game data loaded: {} operators, {} skills",
+        println!(
+            "Game data loaded: {} operators, {} skills",
             game_data.operators.len(),
             game_data.skills.len()
         );
@@ -112,7 +113,7 @@ pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
         config,
         events: events.clone(),
         client,
-        game_data
+        game_data,
     };
 
     // Start cron jobs
