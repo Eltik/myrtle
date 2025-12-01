@@ -29,24 +29,25 @@ pub fn enrich_skills(
 ) -> Vec<EnrichedSkill> {
     raw_skills
         .iter()
-        .map(|skill_ref| {
-            let static_data = skill_table
-                .get(&skill_ref.skill_id)
-                .map(|skill| SkillStatic {
-                    levels: skill.levels.clone(),
-                    skill_id: skill.skill_id.clone(),
-                    icon_id: skill.icon_id.clone(),
-                    hidden: skill.hidden,
-                    image: skill.image.clone(),
-                });
+        .filter_map(|skill_ref| {
+            // Skip skills without skill_id
+            let skill_id = skill_ref.skill_id.as_ref()?;
 
-            EnrichedSkill {
-                skill_id: skill_ref.skill_id.clone(),
+            let static_data = skill_table.get(skill_id).map(|skill| SkillStatic {
+                levels: skill.levels.clone(),
+                skill_id: skill.skill_id.clone(),
+                icon_id: skill.icon_id.clone(),
+                hidden: skill.hidden,
+                image: skill.image.clone(),
+            });
+
+            Some(EnrichedSkill {
+                skill_id: skill_id.clone(),
                 override_prefab_key: skill_ref.override_prefab_key.clone(),
                 override_token_key: skill_ref.override_token_key.clone(),
                 level_up_cost_cond: skill_ref.level_up_cost_cond.clone(),
                 static_data,
-            }
+            })
         })
         .collect()
 }

@@ -16,6 +16,7 @@ pub enum OperatorPosition {
     Ranged,
     Melee,
     All,
+    None,
 }
 
 impl Default for OperatorPosition {
@@ -80,6 +81,10 @@ pub enum OperatorProfession {
     Supporter,
     #[serde(rename = "TANK")]
     Defender,
+    #[serde(rename = "TOKEN")]
+    Token,
+    #[serde(rename = "TRAP")]
+    Trap,
 }
 
 impl Default for OperatorProfession {
@@ -93,14 +98,14 @@ impl Default for OperatorProfession {
 // ============================================================================
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "PascalCase")]
 pub struct UnlockCondition {
     pub phase: OperatorPhase,
     pub level: i32,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "PascalCase")]
 pub struct Blackboard {
     pub key: String,
     pub value: f64,
@@ -108,7 +113,7 @@ pub struct Blackboard {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "PascalCase")]
 pub struct TraitCandidate {
     pub unlock_condition: UnlockCondition,
     pub required_potential_rank: i32,
@@ -119,13 +124,13 @@ pub struct TraitCandidate {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "PascalCase")]
 pub struct Trait {
     pub candidates: Vec<TraitCandidate>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "PascalCase")]
 pub struct AttributeData {
     pub max_hp: i32,
     pub atk: i32,
@@ -153,50 +158,54 @@ pub struct AttributeData {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "PascalCase")]
 pub struct AttributeKeyFrame {
     pub level: i32,
     pub data: AttributeData,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "PascalCase")]
 pub struct EvolveCost {
     pub id: String,
     pub count: i32,
-    #[serde(rename = "type")]
+    #[serde(rename = "Type_")]
     pub item_type: ItemType,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "PascalCase")]
 pub struct Phase {
     pub character_prefab_key: String,
-    pub range_id: String,
+    #[serde(default)]
+    pub range_id: Option<String>,
     pub max_level: i32,
+    #[serde(default)]
     pub attributes_key_frames: Vec<AttributeKeyFrame>,
+    #[serde(default)]
     pub evolve_cost: Option<Vec<EvolveCost>>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "PascalCase")]
 pub struct LevelUpCostItem {
     pub id: String,
     pub count: i32,
-    #[serde(rename = "type")]
+    #[serde(rename = "Type_")]
     pub item_type: String,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "PascalCase")]
 pub struct LevelUpCostCond {
     pub unlock_cond: UnlockCondition,
     pub lvl_up_time: i32,
+    #[serde(default)]
     pub level_up_cost: Vec<LevelUpCostItem>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "PascalCase")]
 pub struct SpData {
     pub sp_type: String,
     pub level_up_cost: Vec<()>, // Empty array in source
@@ -207,7 +216,7 @@ pub struct SpData {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "PascalCase")]
 pub struct SkillStatic {
     pub levels: Vec<SkillLevel>,
     pub skill_id: String,
@@ -217,35 +226,51 @@ pub struct SkillStatic {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "PascalCase")]
 pub struct OperatorSkillRef {
-    pub skill_id: String,
+    #[serde(default)]
+    pub skill_id: Option<String>,
+    #[serde(default)]
     pub override_prefab_key: Option<String>,
+    #[serde(default)]
     pub override_token_key: Option<String>,
+    #[serde(default)]
     pub level_up_cost_cond: Vec<LevelUpCostCond>,
+    #[serde(default)]
+    pub unlock_cond: Option<UnlockCondition>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "PascalCase")]
 pub struct TalentCandidate {
     pub unlock_condition: UnlockCondition,
+    #[serde(default)]
     pub required_potential_rank: i32,
+    #[serde(default)]
     pub prefab_key: Option<String>,
-    pub name: String,
-    pub description: String,
+    #[serde(default)]
+    pub name: Option<String>,
+    #[serde(default)]
+    pub description: Option<String>,
+    #[serde(default)]
     pub range_id: Option<String>,
+    #[serde(default)]
     pub blackboard: Vec<Blackboard>,
+    #[serde(default)]
     pub token_key: Option<String>,
+    #[serde(default)]
+    pub is_hide_talent: Option<bool>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "PascalCase")]
 pub struct Talent {
+    #[serde(default)]
     pub candidates: Vec<TalentCandidate>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "PascalCase")]
 pub struct AttributeModifier {
     pub attribute_type: String,
     pub formula_item: String,
@@ -255,7 +280,7 @@ pub struct AttributeModifier {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "PascalCase")]
 pub struct PotentialBuffAttributes {
     pub abnormal_flags: Option<()>,
     pub abnormal_immunes: Option<()>,
@@ -266,61 +291,104 @@ pub struct PotentialBuffAttributes {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "PascalCase")]
 pub struct PotentialBuff {
     pub attributes: PotentialBuffAttributes,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "PascalCase")]
 pub struct PotentialRank {
-    #[serde(rename = "type")]
+    #[serde(rename = "Type_")]
     pub potential_type: String,
     pub description: String,
-    pub buff: PotentialBuff,
+    #[serde(default)]
+    pub buff: Option<PotentialBuff>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "PascalCase")]
 pub struct AllSkillLevelUp {
     pub unlock_cond: UnlockCondition,
+    #[serde(default)]
     pub lvl_up_cost: Vec<LevelUpCostItem>,
 }
 
+/// Wrapper for character_table.json
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct CharacterTable {
+    pub characters: HashMap<String, RawOperator>,
+}
+
 #[derive(Debug, Clone, Default, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "PascalCase")]
 pub struct RawOperator {
     pub name: String,
-    pub description: String,
+    #[serde(default)]
+    pub description: Option<String>,
+    #[serde(default)]
     pub can_use_general_potential_item: bool,
+    #[serde(default)]
     pub can_use_activity_potential_item: bool,
-    pub potential_item_id: String,
+    #[serde(default)]
+    pub potential_item_id: Option<String>,
+    #[serde(default)]
     pub activity_potential_item_id: Option<String>,
+    #[serde(default)]
     pub classic_potential_item_id: Option<String>,
-    pub nation_id: String,
+    #[serde(default)]
+    pub nation_id: Option<String>,
+    #[serde(default)]
     pub group_id: Option<String>,
+    #[serde(default)]
     pub team_id: Option<String>,
-    pub display_number: String,
+    #[serde(default)]
+    pub display_number: Option<String>,
     pub appellation: String,
+    #[serde(default)]
     pub position: OperatorPosition,
-    pub tag_list: Vec<String>,
-    pub item_usage: String,
-    pub item_desc: String,
-    pub item_obtain_approach: String,
+    #[serde(default)]
+    pub tag_list: Option<Vec<String>>,
+    #[serde(default)]
+    pub item_usage: Option<String>,
+    #[serde(default)]
+    pub item_desc: Option<String>,
+    #[serde(default)]
+    pub item_obtain_approach: Option<String>,
+    #[serde(default)]
     pub is_not_obtainable: bool,
+    #[serde(default)]
     pub is_sp_char: bool,
+    #[serde(default)]
     pub max_potential_level: i32,
+    #[serde(default)]
     pub rarity: OperatorRarity,
+    #[serde(default)]
     pub profession: OperatorProfession,
-    pub sub_profession_id: String,
-    pub trait_data: Option<Trait>, // renamed from "trait" which is a Rust keyword
+    #[serde(default)]
+    pub sub_profession_id: Option<String>,
+    #[serde(default, rename = "Trait_")]
+    pub trait_data: Option<Trait>,
+    #[serde(default)]
     pub phases: Vec<Phase>,
+    #[serde(default)]
     pub skills: Vec<OperatorSkillRef>,
+    #[serde(default)]
     pub display_token_dict: Option<HashMap<String, bool>>,
-    pub talents: Vec<Talent>,
+    #[serde(default)]
+    pub talents: Option<Vec<Talent>>,
+    #[serde(default)]
     pub potential_ranks: Vec<PotentialRank>,
-    pub favor_key_frames: Vec<AttributeKeyFrame>,
+    #[serde(default)]
+    pub favor_key_frames: Option<Vec<AttributeKeyFrame>>,
+    #[serde(default)]
     pub all_skill_lvlup: Vec<AllSkillLevelUp>,
+    // Extra fields in unpacked data
+    #[serde(default)]
+    pub sort_index: Option<i32>,
+    #[serde(default)]
+    pub sp_target_type: Option<String>,
 }
 
 // ============================================================================

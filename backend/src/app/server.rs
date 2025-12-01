@@ -90,10 +90,11 @@ pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
     init_tables(&db).await?;
 
     // Load game data.
-    println!("Loading game data...");
     let data_dir = std::env::var("DATA_DIR")
         .map(PathBuf::from)
         .unwrap_or_else(|_| PathBuf::from("data"));
+
+    println!("Loading game data from: {:?}", data_dir);
 
     let game_data = Arc::new(init_game_data_or_default(&data_dir));
 

@@ -2,16 +2,16 @@ use std::collections::HashMap;
 use std::fmt;
 use std::path::{Path, PathBuf};
 
-use rayon;
 use serde::de::DeserializeOwned;
 
 use crate::core::local::gamedata::operators::enrich_all_operators;
 use crate::core::local::gamedata::skills::enrich_all_skills;
 use crate::core::local::types::handbook::Handbook;
+use crate::core::local::types::material::Materials;
 use crate::core::local::types::module::{BattleEquip, RawModules};
 use crate::core::local::types::skill::RawSkill;
 use crate::core::local::types::skin::SkinData;
-use crate::core::local::types::{GameData, operator::RawOperator};
+use crate::core::local::types::{GameData, operator::CharacterTable};
 
 #[derive(Debug)]
 pub enum DataError {
@@ -85,41 +85,18 @@ impl DataHandler {
 pub fn init_game_data(data_dir: &Path) -> Result<GameData, DataError> {
     let handler = DataHandler::new(data_dir);
 
-    let (((raw_operators, raw_skills), (raw_modules, battle_equip)), (handbook, skins)) =
-        rayon::join(
-            || {
-                rayon::join(
-                    || {
-                        rayon::join(
-                            || {
-                                handler
-                                    .load_table::<HashMap<String, RawOperator>>("character_table")
-                            },
-                            || handler.load_table::<HashMap<String, RawSkill>>("skill_table"),
-                        )
-                    },
-                    || {
-                        rayon::join(
-                            || handler.load_table::<RawModules>("uniequip_table"),
-                            || handler.load_table::<BattleEquip>("battle_equip_table"),
-                        )
-                    },
-                )
-            },
-            || {
-                rayon::join(
-                    || handler.load_table::<Handbook>("handbook_info_table"),
-                    || handler.load_table::<SkinData>("skin_table"),
-                )
-            },
-        );
+    // Load character_table with wrapper struct
+    let character_table = handler.load_table::<CharacterTable>("character_table")?;
+    let raw_operators = character_table.characters;
 
-    let raw_operators = raw_operators?;
-    let raw_skills = raw_skills?;
-    let raw_modules = raw_modules?;
-    let battle_equip = battle_equip?;
-    let handbook = handbook?;
-    let skins = skins?;
+    // TODO: Load other tables once they're decoded by the unpacker
+    // For now, use empty defaults since only character_table is decoded
+    let raw_skills: HashMap<String, RawSkill> = HashMap::new();
+    let raw_modules = RawModules::default();
+    let battle_equip = BattleEquip::default();
+    let handbook = Handbook::default();
+    let skins = SkinData::default();
+    let materials = Materials::default();
 
     let skills = enrich_all_skills(raw_skills);
 
@@ -132,7 +109,11 @@ pub fn init_game_data(data_dir: &Path) -> Result<GameData, DataError> {
         &skins,
     );
 
-    Ok(GameData { operators, skills })
+    Ok(GameData {
+        operators,
+        skills,
+        materials,
+    })
 }
 
 pub fn init_game_data_or_default(data_dir: &Path) -> GameData {

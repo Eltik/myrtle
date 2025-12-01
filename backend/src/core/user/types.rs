@@ -53,7 +53,7 @@ pub struct User {
     pub car: Car,
     pub open_server: OpenServer,
     pub campaigns_v2: CampaignsV2,
-    pub inventory: HashMap<String, i64>,
+    pub inventory: HashMap<String, serde_json::Value>,
     pub limited_buff: LimitedBuff,
     pub ticket: serde_json::Value,
 }

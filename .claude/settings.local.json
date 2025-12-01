@@ -45,7 +45,17 @@
       "Bash(cargo run:*)",
       "Bash(cargo test:*)",
       "WebFetch(domain:ak-conf.arknights.global)",
-      "WebFetch(domain:ark-us-static-online.yo-star.com)"
+      "WebFetch(domain:ark-us-static-online.yo-star.com)",
+      "Bash(curl:*)",
+      "Bash(for file in skill_table uniequip_table battle_equip_table handbook_info_table skin_table item_table)",
+      "Bash(do)",
+      "Bash(filepath=\"/Users/eltik/Documents/Coding/myrtle.moe/assets/Unpacked/decoded/gamedata/excel/$file.json\")",
+      "Bash(if [ -f \"$filepath\" ])",
+      "Bash(then)",
+      "Bash(echo:*)",
+      "Bash(else)",
+      "Bash(fi)",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []
