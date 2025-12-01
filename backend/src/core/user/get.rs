@@ -1,20 +1,25 @@
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
 use reqwest::Client;
 use tokio::sync::RwLock;
 
 use super::types::{User, UserResponse};
-use crate::core::{authentication::{
-    auth_request,
-    config::GlobalConfig,
-    constants::{AuthSession, FetchError, Server},
-}, local::types::GameData};
+use crate::core::{
+    authentication::{
+        auth_request,
+        config::GlobalConfig,
+        constants::{AuthSession, FetchError, Server},
+    },
+    local::types::GameData,
+    user::{CharacterData, CharacterSkill},
+};
 
 pub async fn get(
     client: &Client,
     config: &Arc<RwLock<GlobalConfig>>,
     session: &mut AuthSession,
     server: Server,
+    game_data: &GameData,
 ) -> Result<Option<User>, FetchError> {
     let body = serde_json::json!({ "platform": 1 });
 
@@ -27,54 +32,105 @@ pub async fn get(
         server,
     )
     .await?;
-
-    // DEBUG
-    //let text = response.text().await.map_err(FetchError::RequestFailed)?;
-    //eprintln!("Raw response: {}", text);
-
     let data: UserResponse = response.json().await.map_err(FetchError::RequestFailed)?;
 
-    //let data: UserResponse = serde_json::from_str(&text).map_err(|e| FetchError::ParseError(format!("JSON parse error: {}", e)))?;
-
-    Ok(data.user.map(format_user))
+    Ok(data.user.map(|mut user| {
+        format_user(&mut user, game_data);
+        user
+    }))
 }
 
-// TODO: When local data is processed, add formatting logic here
+/// Enriches user data in-place with static game data
+///
+/// This function is O(n) where n is the number of characters,
+/// but each lookup is O(1) thanks to HashMap-based GameData.
 pub fn format_user(
-    user: User,
-    game_data: &GameData,  // Pre-loaded reference
-) -> FormattedUser {
-    // O(1) inventory enrichment
-    let enriched_inventory: HashMap<String, EnrichedItem> = user.inventory
-        .into_iter()
-        .filter_map(|(id, amount)| {
-            game_data.materials.get(&id).map(|item| {
-                (id, EnrichedItem {
-                    base: item.clone(),
-                    amount,
-                })
-            })
-        })
-        .collect();
-
-    // O(1) character enrichment (already pre-computed!)
-    let enriched_chars: HashMap<String, EnrichedCharacter> = user.troop.chars
-        .into_iter()
-        .map(|(inst_id, char)| {
-            let static_data = game_data.operators.get(&char.char_id).cloned();
-            let trust = game_data.calculate_trust(char.favor_point);
-
-            (inst_id, EnrichedCharacter {
-                base: char,
-                static_data,
-                trust,
-            })
-        })
-        .collect();
-
-    FormattedUser {
-        inventory: enriched_inventory,
-        troop: EnrichedTroop { chars: enriched_chars, ..user.troop },
-        ..user
+    user: &mut User,
+    game_data: &GameData, // Pre-loaded reference
+) {
+    // Enrich characters with static operator data
+    for character in user.troop.chars.values_mut() {
+        format_character(character, game_data);
     }
+
+    // TODO: Enrich inventory when materials are added to GameData
+    // for (item_id, amount) in user.inventory.iter_mut() {
+    //     if let Some(material) = game_data.materials.get(item_id) {
+    //         // Add material data
+    //     }
+    // }
+}
+
+/// Enriches a single character with static data
+fn format_character(character: &mut CharacterData, game_data: &GameData) {
+    // Look up operator static data (O(1) HashMap lookup)
+    if let Some(operator) = game_data.operators.get(&character.char_id) {
+        // Calculate trust
+        let trust = calculate_trust(character.favor_point, game_data);
+
+        // Build static data JSON
+        let mut static_data = serde_json::to_value(operator).unwrap_or_default();
+        if let serde_json::Value::Object(ref mut map) = static_data {
+            map.insert("trust".to_string(), serde_json::json!(trust));
+        }
+
+        character.r#static = Some(static_data);
+
+        // Enrich skills
+        for skill in &mut character.skills {
+            format_skill(skill, character.main_skill_lvl, game_data);
+        }
+    }
+}
+
+/// Enriches a single skill with static data at the correct level
+fn format_skill(skill: &mut CharacterSkill, main_skill_lvl: i32, game_data: &GameData) {
+    if let Some(skill_data) = game_data.skills.get(&skill.skill_id) {
+        // Calculate the correct level index
+        // mainSkillLvl is 1-7, specializeLevel is 0-3
+        // Level index = (mainSkillLvl - 1) + specializeLevel
+        // But skill levels array is 0-indexed with 7 base levels + 3 mastery = 10 total
+        let level_index = (main_skill_lvl - 1 + skill.specialize_level) as usize;
+
+        // Get the specific level data if it exists
+        let level_data = skill_data.levels.get(level_index);
+
+        // Build skill static data
+        let mut static_data = serde_json::json!({
+            "skillId": skill_data.skill_id,
+            "iconId": skill_data.icon_id,
+            "hidden": skill_data.hidden,
+            "image": skill_data.image,
+        });
+
+        // Add level-specific data if available
+        if let Some(level) = level_data {
+            if let serde_json::Value::Object(ref mut map) = static_data {
+                map.insert("name".to_string(), serde_json::json!(level.name));
+                map.insert(
+                    "description".to_string(),
+                    serde_json::json!(level.description),
+                );
+                map.insert("duration".to_string(), serde_json::json!(level.duration));
+                map.insert(
+                    "spData".to_string(),
+                    serde_json::to_value(&level.sp_data).unwrap_or_default(),
+                );
+            }
+        }
+
+        skill.r#static = Some(static_data);
+    }
+}
+
+/// Calculate trust level from favor points
+/// TODO: Implement properly when favor_table is loaded
+fn calculate_trust(favor_point: i32, _game_data: &GameData) -> i32 {
+    // Simplified trust calculation
+    // Real implementation would use favor_table to find the correct trust level
+    // Trust ranges from 0-200, favor_point threshold varies
+
+    // Placeholder: rough approximation
+    // In reality, you'd binary search through favor_table frames
+    (favor_point / 100).min(200)
 }

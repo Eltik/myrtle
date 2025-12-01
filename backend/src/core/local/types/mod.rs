@@ -2,8 +2,13 @@ use std::collections::HashMap;
 
 use crate::core::local::types::{operator::Operator, skill::Skill};
 
+pub mod handbook;
+pub mod material;
+pub mod module;
 pub mod operator;
 pub mod skill;
+pub mod skin;
+pub mod voice;
 
 #[derive(Debug, Clone, Default)]
 pub struct GameData {

@@ -64,12 +64,18 @@ async fn refresh_impl(
 ) -> Result<Json<serde_json::Value>, ApiError> {
     let mut session = AuthSession::new(Some(uid), Some(secret), Some(*seqnum), None);
 
-    let data = user::get::get(&state.client, &state.config, &mut session, server)
-        .await
-        .map_err(|e| {
-            eprintln!("Fetch error: {:?}", e);
-            ApiError::Internal("Internal server error.".into())
-        })?;
+    let data = user::get::get(
+        &state.client,
+        &state.config,
+        &mut session,
+        server,
+        &state.game_data,
+    )
+    .await
+    .map_err(|e| {
+        eprintln!("Fetch error: {:?}", e);
+        ApiError::Internal("Internal server error.".into())
+    })?;
 
     let user_data = data.ok_or(ApiError::NotFound("User not found.".into()))?;
 

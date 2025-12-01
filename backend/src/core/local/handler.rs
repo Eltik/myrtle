@@ -1,19 +1,28 @@
+use std::collections::HashMap;
 use std::fmt;
 use std::path::{Path, PathBuf};
-use std::collections::HashMap;
 
 use rayon;
 use serde::de::DeserializeOwned;
 
 use crate::core::local::gamedata::operators::enrich_all_operators;
+use crate::core::local::gamedata::skills::enrich_all_skills;
+use crate::core::local::types::handbook::Handbook;
+use crate::core::local::types::module::{BattleEquip, RawModules};
 use crate::core::local::types::skill::RawSkill;
-use crate::core::local::types::{GameData, operator::RawOperator, skill::Skill};
+use crate::core::local::types::skin::SkinData;
+use crate::core::local::types::{GameData, operator::RawOperator};
 
 #[derive(Debug)]
 pub enum DataError {
     Io(std::io::Error),
-    Parse { table: String, error: serde_json::Error },
-    Missing { table: String },
+    Parse {
+        table: String,
+        error: serde_json::Error,
+    },
+    Missing {
+        table: String,
+    },
 }
 
 impl fmt::Display for DataError {
@@ -40,14 +49,18 @@ pub struct DataHandler {
 
 impl DataHandler {
     pub fn new(data_dir: impl Into<PathBuf>) -> Self {
-        Self { data_dir: data_dir.into() }
+        Self {
+            data_dir: data_dir.into(),
+        }
     }
 
     pub fn load_table<T: DeserializeOwned>(&self, table_name: &str) -> Result<T, DataError> {
         let path = self.data_dir.join(format!("{}.json", table_name));
         let file = std::fs::File::open(&path).map_err(|e| {
             if e.kind() == std::io::ErrorKind::NotFound {
-                DataError::Missing { table: table_name.to_string() }
+                DataError::Missing {
+                    table: table_name.to_string(),
+                }
             } else {
                 DataError::Io(e)
             }
@@ -72,30 +85,54 @@ impl DataHandler {
 pub fn init_game_data(data_dir: &Path) -> Result<GameData, DataError> {
     let handler = DataHandler::new(data_dir);
 
-    let (operators_result, skills_result) = rayon::join(
-        || handler.load_table::<HashMap<String, RawOperator>>("character_table"),
-        || handler.load_table::<HashMap<String, RawSkill>>("skill_table"),
+    let (((raw_operators, raw_skills), (raw_modules, battle_equip)), (handbook, skins)) =
+        rayon::join(
+            || {
+                rayon::join(
+                    || {
+                        rayon::join(
+                            || {
+                                handler
+                                    .load_table::<HashMap<String, RawOperator>>("character_table")
+                            },
+                            || handler.load_table::<HashMap<String, RawSkill>>("skill_table"),
+                        )
+                    },
+                    || {
+                        rayon::join(
+                            || handler.load_table::<RawModules>("uniequip_table"),
+                            || handler.load_table::<BattleEquip>("battle_equip_table"),
+                        )
+                    },
+                )
+            },
+            || {
+                rayon::join(
+                    || handler.load_table::<Handbook>("handbook_info_table"),
+                    || handler.load_table::<SkinData>("skin_table"),
+                )
+            },
+        );
+
+    let raw_operators = raw_operators?;
+    let raw_skills = raw_skills?;
+    let raw_modules = raw_modules?;
+    let battle_equip = battle_equip?;
+    let handbook = handbook?;
+    let skins = skins?;
+
+    let skills = enrich_all_skills(raw_skills);
+
+    let operators = enrich_all_operators(
+        &raw_operators,
+        &skills,
+        &raw_modules,
+        &battle_equip,
+        &handbook,
+        &skins,
     );
 
-    // When you have more tables, nest the joins:
-    // let ((operators, skills), (materials, modules)) = rayon::join(
-    //     || rayon::join(
-    //         || handler.load_table::<HashMap<String, Operator>>("character_table"),
-    //         || handler.load_table::<HashMap<String, Skill>>("skill_table"),
-    //     ),
-    //     || rayon::join(
-    //         || handler.load_table::<HashMap<String, Material>>("item_table"),
-    //         || handler.load_table::<HashMap<String, Module>>("uniequip_table"),
-    //     ),
-    // );
-
-    let operators = enrich_all_operators(&operators_result, &skills_result);
-    // etc.
-
-    Ok(GameData {
-        operators,
-        skills: skills_result?,
-    })
+    Ok(GameData { operators, skills })
 }
 
 pub fn init_game_data_or_default(data_dir: &Path) -> GameData {
