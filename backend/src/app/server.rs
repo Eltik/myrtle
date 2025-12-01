@@ -2,6 +2,7 @@ use axum::routing::post;
 use axum::{Router, response::Json, routing::get};
 use reqwest::Client;
 use serde::Serialize;
+use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::net::TcpListener;
 use tokio::sync::RwLock;
@@ -14,6 +15,7 @@ use crate::app::routes::yostar::send_code::{
 };
 use crate::app::state::{AppState, get_global_config, init_global_config};
 use crate::core::authentication::{config::GlobalConfig, loaders};
+use crate::core::local::handler::init_game_data_or_default;
 use crate::database::pool::{create_pool, init_tables};
 use crate::events::EventEmitter;
 use crate::events::setup_event_listeners::setup_event_listeners;
@@ -87,12 +89,30 @@ pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize database tables
     init_tables(&db).await?;
 
+    // Load game data.
+    println!("Loading game data...");
+    let data_dir = std::env::var("DATA_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| PathBuf::from("data"));
+
+    let game_data = Arc::new(init_game_data_or_default(&data_dir));
+
+    if game_data.is_loaded() {
+        println!("Game data loaded: {} operators, {} skills",
+            game_data.operators.len(),
+            game_data.skills.len()
+        );
+    } else {
+        println!("Warning: Running with empty game data");
+    }
+
     // Create app state
     let state = AppState {
         db,
         config,
         events: events.clone(),
         client,
+        game_data
     };
 
     // Start cron jobs

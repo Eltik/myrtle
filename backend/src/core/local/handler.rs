@@ -1,1 +1,110 @@
+use std::fmt;
+use std::path::{Path, PathBuf};
+use std::collections::HashMap;
 
+use rayon;
+use serde::de::DeserializeOwned;
+
+use crate::core::local::gamedata::operators::enrich_all_operators;
+use crate::core::local::types::skill::RawSkill;
+use crate::core::local::types::{GameData, operator::RawOperator, skill::Skill};
+
+#[derive(Debug)]
+pub enum DataError {
+    Io(std::io::Error),
+    Parse { table: String, error: serde_json::Error },
+    Missing { table: String },
+}
+
+impl fmt::Display for DataError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            DataError::Io(e) => write!(f, "IO error: {}", e),
+            DataError::Parse { table, error } => write!(f, "Failed to parse {}: {}", table, error),
+            DataError::Missing { table } => write!(f, "Missing table file: {}", table),
+        }
+    }
+}
+
+impl From<std::io::Error> for DataError {
+    fn from(e: std::io::Error) -> Self {
+        DataError::Io(e)
+    }
+}
+
+impl std::error::Error for DataError {}
+
+pub struct DataHandler {
+    data_dir: PathBuf,
+}
+
+impl DataHandler {
+    pub fn new(data_dir: impl Into<PathBuf>) -> Self {
+        Self { data_dir: data_dir.into() }
+    }
+
+    pub fn load_table<T: DeserializeOwned>(&self, table_name: &str) -> Result<T, DataError> {
+        let path = self.data_dir.join(format!("{}.json", table_name));
+        let file = std::fs::File::open(&path).map_err(|e| {
+            if e.kind() == std::io::ErrorKind::NotFound {
+                DataError::Missing { table: table_name.to_string() }
+            } else {
+                DataError::Io(e)
+            }
+        })?;
+        let reader = std::io::BufReader::new(file);
+        serde_json::from_reader(reader).map_err(|e| DataError::Parse {
+            table: table_name.to_string(),
+            error: e,
+        })
+    }
+
+    pub fn load_table_or_empty<K, V>(&self, table_name: &str) -> HashMap<K, V>
+    where
+        K: std::hash::Hash + Eq,
+        V: DeserializeOwned,
+        HashMap<K, V>: DeserializeOwned,
+    {
+        self.load_table(table_name).unwrap_or_default()
+    }
+}
+
+pub fn init_game_data(data_dir: &Path) -> Result<GameData, DataError> {
+    let handler = DataHandler::new(data_dir);
+
+    let (operators_result, skills_result) = rayon::join(
+        || handler.load_table::<HashMap<String, RawOperator>>("character_table"),
+        || handler.load_table::<HashMap<String, RawSkill>>("skill_table"),
+    );
+
+    // When you have more tables, nest the joins:
+    // let ((operators, skills), (materials, modules)) = rayon::join(
+    //     || rayon::join(
+    //         || handler.load_table::<HashMap<String, Operator>>("character_table"),
+    //         || handler.load_table::<HashMap<String, Skill>>("skill_table"),
+    //     ),
+    //     || rayon::join(
+    //         || handler.load_table::<HashMap<String, Material>>("item_table"),
+    //         || handler.load_table::<HashMap<String, Module>>("uniequip_table"),
+    //     ),
+    // );
+
+    let operators = enrich_all_operators(&operators_result, &skills_result);
+    // etc.
+
+    Ok(GameData {
+        operators,
+        skills: skills_result?,
+    })
+}
+
+pub fn init_game_data_or_default(data_dir: &Path) -> GameData {
+    match init_game_data(data_dir) {
+        Ok(data) => data,
+        Err(e) => {
+            eprintln!("Warning: Failed to load game data: {}", e);
+            eprintln!("Starting with empty game data");
+            GameData::default()
+        }
+    }
+}
