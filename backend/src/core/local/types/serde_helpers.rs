@@ -11,7 +11,9 @@ use std::collections::HashMap;
 /// Key-value pair structure used by FlatBuffer JSON output
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FbKeyValue<K, V> {
+    #[serde(alias = "Key")]
     pub key: K,
+    #[serde(alias = "Value")]
     pub value: V,
 }
 
@@ -63,4 +65,17 @@ where
             (outer.key, inner_map)
         })
         .collect())
+}
+
+/// Deserialize FlatBuffer's [{key, value}] array format into Option<HashMap>
+pub fn deserialize_fb_map_option<'de, D, K, V>(
+    deserializer: D,
+) -> Result<Option<HashMap<K, V>>, D::Error>
+where
+    D: Deserializer<'de>,
+    K: Deserialize<'de> + std::hash::Hash + Eq,
+    V: Deserialize<'de>,
+{
+    let items: Option<Vec<FbKeyValue<K, V>>> = Option::deserialize(deserializer)?;
+    Ok(items.map(|v| v.into_iter().map(|kv| (kv.key, kv.value)).collect()))
 }

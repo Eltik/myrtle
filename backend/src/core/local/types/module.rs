@@ -25,8 +25,13 @@ impl Default for ModuleType {
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum ModuleTarget {
     Trait,
+    TraitDataOnly,
     TalentDataOnly,
     Talent,
+    Display,
+    OverwriteBattleData,
+    #[serde(other)]
+    Unknown,
 }
 
 impl Default for ModuleTarget {
@@ -101,9 +106,9 @@ pub struct Mission {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ModuleBlackboard {
-    #[serde(alias = "Key")]
+    #[serde(alias = "Key", alias = "key")]
     pub key: String,
-    #[serde(alias = "Value")]
+    #[serde(alias = "Value", alias = "value", default)]
     pub value: f64,
 }
 
@@ -119,25 +124,25 @@ pub struct ModuleUnlockCondition {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AddModuleCandidates {
-    #[serde(alias = "DisplayRangeId")]
+    #[serde(alias = "DisplayRangeId", default)]
     pub display_range_id: bool,
-    #[serde(alias = "UpgradeDescription")]
+    #[serde(alias = "UpgradeDescription", default)]
     pub upgrade_description: String,
-    #[serde(alias = "TalentIndex")]
+    #[serde(alias = "TalentIndex", default)]
     pub talent_index: i32,
-    #[serde(alias = "UnlockCondition")]
+    #[serde(alias = "UnlockCondition", default)]
     pub unlock_condition: ModuleUnlockCondition,
-    #[serde(alias = "RequiredPotentialRank")]
+    #[serde(alias = "RequiredPotentialRank", default)]
     pub required_potential_rank: i32,
     #[serde(alias = "PrefabKey")]
     pub prefab_key: Option<String>,
-    #[serde(alias = "Name")]
+    #[serde(alias = "Name", default)]
     pub name: String,
     #[serde(alias = "Description")]
     pub description: Option<String>,
     #[serde(alias = "RangeId")]
     pub range_id: Option<String>,
-    #[serde(alias = "Blackboard")]
+    #[serde(alias = "Blackboard", default)]
     pub blackboard: Vec<ModuleBlackboard>,
     #[serde(alias = "TokenKey")]
     pub token_key: Option<String>,
@@ -148,13 +153,13 @@ pub struct AddModuleCandidates {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ModuleCandidates {
-    #[serde(alias = "AdditionalDescription")]
+    #[serde(alias = "AdditionalDescription", default)]
     pub additional_description: String,
-    #[serde(alias = "UnlockCondition")]
+    #[serde(alias = "UnlockCondition", default)]
     pub unlock_condition: ModuleUnlockCondition,
-    #[serde(alias = "RequiredPotentialRank")]
+    #[serde(alias = "RequiredPotentialRank", default)]
     pub required_potential_rank: i32,
-    #[serde(alias = "Blackboard")]
+    #[serde(alias = "Blackboard", default)]
     pub blackboard: Vec<ModuleBlackboard>,
     #[serde(alias = "OverrideDescription", alias = "OverrideDescripton")]
     pub override_description: Option<String>,
@@ -307,7 +312,8 @@ pub struct RawModules {
     pub mission_list: HashMap<String, Mission>,
     pub sub_prof_dict: HashMap<String, SubProfession>,
     pub char_equip: HashMap<String, Vec<String>>,
-    pub equip_track_dict: HashMap<String, EquipTrack>,
+    // equip_track_dict has complex nested structure, stored as raw JSON for now
+    pub equip_track_dict: Vec<serde_json::Value>,
 }
 
 /// BattleEquip is a map of module IDs to their battle data
@@ -328,8 +334,8 @@ pub struct UniequipTableFile {
     pub sub_prof_dict: HashMap<String, SubProfession>,
     #[serde(deserialize_with = "deserialize_fb_map", default)]
     pub char_equip: HashMap<String, Vec<String>>,
-    #[serde(deserialize_with = "deserialize_fb_map", default)]
-    pub equip_track_dict: HashMap<String, EquipTrack>,
+    #[serde(default)]
+    pub equip_track_dict: Vec<serde_json::Value>, // Complex nested structure
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]

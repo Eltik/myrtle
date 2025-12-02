@@ -133,6 +133,7 @@ pub enum ItemOccPer {
     Almost,
     Always,
     Sometimes,
+    Often,
 }
 
 impl Default for ItemOccPer {
@@ -314,31 +315,31 @@ pub struct CharVoucherItem {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Item {
-    #[serde(alias = "ItemId")]
+    #[serde(alias = "ItemId", default)]
     pub item_id: String,
-    #[serde(alias = "Name")]
+    #[serde(alias = "Name", default)]
     pub name: String,
-    #[serde(alias = "Description")]
+    #[serde(alias = "Description", default)]
     pub description: String,
-    #[serde(alias = "Rarity")]
+    #[serde(alias = "Rarity", default)]
     pub rarity: ItemRarity,
-    #[serde(alias = "IconId")]
+    #[serde(alias = "IconId", default)]
     pub icon_id: String,
     #[serde(alias = "OverrideBkg")]
     pub override_bkg: Option<String>,
     #[serde(alias = "StackIconId")]
     pub stack_icon_id: Option<String>,
-    #[serde(alias = "SortId")]
+    #[serde(alias = "SortId", default)]
     pub sort_id: i32,
-    #[serde(alias = "Usage")]
+    #[serde(alias = "Usage", default)]
     pub usage: String,
     #[serde(alias = "ObtainApproach")]
     pub obtain_approach: Option<String>,
-    #[serde(alias = "HideInItemGet")]
+    #[serde(alias = "HideInItemGet", default)]
     pub hide_in_item_get: bool,
-    #[serde(alias = "ClassifyType")]
+    #[serde(alias = "ClassifyType", default)]
     pub classify_type: ItemClass,
-    #[serde(alias = "ItemType")]
+    #[serde(alias = "ItemType", default)]
     pub item_type: ItemType,
     #[serde(alias = "StageDropList", default)]
     pub stage_drop_list: Vec<StageDrop>,
@@ -373,8 +374,8 @@ pub struct ItemTableFile {
     pub items: HashMap<String, Item>,
     #[serde(deserialize_with = "deserialize_fb_map", default)]
     pub exp_items: HashMap<String, ExpItem>,
-    #[serde(deserialize_with = "deserialize_fb_map", default)]
-    pub potential_items: HashMap<String, serde_json::Value>,
+    #[serde(default)]
+    pub potential_items: Vec<serde_json::Value>, // Complex nested structure with integer keys
     #[serde(deserialize_with = "deserialize_fb_map", default)]
     pub ap_supply_out_of_date_dict: HashMap<String, ApSupply>,
     #[serde(deserialize_with = "deserialize_fb_map", default)]

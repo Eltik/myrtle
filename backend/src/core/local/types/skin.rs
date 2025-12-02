@@ -19,9 +19,9 @@ pub struct TokenSkinMapEntry {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BattleSkin {
-    #[serde(alias = "OverwritePrefab")]
+    #[serde(alias = "OverwritePrefab", default)]
     pub overwrite_prefab: bool,
-    #[serde(alias = "SkinOrPrefabId")]
+    #[serde(alias = "SkinOrPrefabId", default)]
     pub skin_or_prefab_id: String,
 }
 
@@ -30,23 +30,23 @@ pub struct BattleSkin {
 pub struct DisplaySkin {
     #[serde(alias = "SkinName")]
     pub skin_name: Option<String>,
-    #[serde(alias = "ColorList")]
+    #[serde(alias = "ColorList", default)]
     pub color_list: Vec<String>,
-    #[serde(alias = "TitleList")]
+    #[serde(alias = "TitleList", default)]
     pub title_list: Vec<String>,
-    #[serde(alias = "ModelName")]
+    #[serde(alias = "ModelName", default)]
     pub model_name: String,
-    #[serde(alias = "DrawerList")]
+    #[serde(alias = "DrawerList", default)]
     pub drawer_list: Vec<String>,
     #[serde(alias = "DesignerList")]
     pub designer_list: Option<Vec<String>>,
-    #[serde(alias = "SkinGroupId")]
+    #[serde(alias = "SkinGroupId", default)]
     pub skin_group_id: String,
-    #[serde(alias = "SkinGroupName")]
+    #[serde(alias = "SkinGroupName", default)]
     pub skin_group_name: String,
-    #[serde(alias = "SkinGroupSortIndex")]
+    #[serde(alias = "SkinGroupSortIndex", default)]
     pub skin_group_sort_index: i32,
-    #[serde(alias = "Content")]
+    #[serde(alias = "Content", default)]
     pub content: String,
     #[serde(alias = "Dialog")]
     pub dialog: Option<String>,
@@ -125,19 +125,19 @@ pub struct SpecialSkinInfo {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Skin {
-    #[serde(alias = "SkinId")]
+    #[serde(alias = "SkinId", default)]
     pub skin_id: String,
-    #[serde(alias = "CharId")]
+    #[serde(alias = "CharId", default)]
     pub char_id: String,
     #[serde(alias = "TokenSkinMap")]
     pub token_skin_map: Option<Vec<TokenSkinMapEntry>>,
-    #[serde(alias = "IllustId")]
+    #[serde(alias = "IllustId", default)]
     pub illust_id: String,
     #[serde(alias = "DynIllustId")]
     pub dyn_illust_id: Option<String>,
-    #[serde(alias = "AvatarId")]
+    #[serde(alias = "AvatarId", default)]
     pub avatar_id: String,
-    #[serde(alias = "PortraitId")]
+    #[serde(alias = "PortraitId", default)]
     pub portrait_id: String,
     #[serde(alias = "DynPortraitId")]
     pub dyn_portrait_id: Option<String>,
@@ -145,17 +145,17 @@ pub struct Skin {
     pub dyn_entrance_id: Option<String>,
     #[serde(alias = "BuildingId")]
     pub building_id: Option<String>,
-    #[serde(alias = "BattleSkin")]
+    #[serde(alias = "BattleSkin", default)]
     pub battle_skin: BattleSkin,
-    #[serde(alias = "IsBuySkin")]
+    #[serde(alias = "IsBuySkin", default)]
     pub is_buy_skin: bool,
     #[serde(alias = "TmplId")]
     pub tmpl_id: Option<String>,
     #[serde(alias = "VoiceId")]
     pub voice_id: Option<String>,
-    #[serde(alias = "VoiceType")]
+    #[serde(alias = "VoiceType", default)]
     pub voice_type: String,
-    #[serde(alias = "DisplaySkin")]
+    #[serde(alias = "DisplaySkin", default)]
     pub display_skin: DisplaySkin,
 }
 

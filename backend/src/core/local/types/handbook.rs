@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use super::material::ItemType;
-use super::serde_helpers::deserialize_fb_map;
+use super::serde_helpers::{deserialize_fb_map, deserialize_fb_map_or_default};
 
 // ============================================================================
 // Enums
@@ -362,40 +362,44 @@ pub struct HandbookNPCItem {
     pub res_type: String,
     #[serde(alias = "NpcShowAudioInfoFlag")]
     pub npc_show_audio_info_flag: bool,
-    #[serde(alias = "UnlockDict", default)]
+    #[serde(
+        alias = "UnlockDict",
+        deserialize_with = "deserialize_fb_map_or_default",
+        default
+    )]
     pub unlock_dict: HashMap<String, NPCUnlockInfo>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct HandbookStageData {
-    #[serde(alias = "CharId")]
+    #[serde(alias = "CharId", default)]
     pub char_id: String,
-    #[serde(alias = "StageId")]
+    #[serde(alias = "StageId", default)]
     pub stage_id: String,
-    #[serde(alias = "LevelId")]
+    #[serde(alias = "LevelId", default)]
     pub level_id: String,
-    #[serde(alias = "ZoneId")]
+    #[serde(alias = "ZoneId", default)]
     pub zone_id: String,
-    #[serde(alias = "Code")]
+    #[serde(alias = "Code", default)]
     pub code: String,
-    #[serde(alias = "Name")]
+    #[serde(alias = "Name", default)]
     pub name: String,
-    #[serde(alias = "LoadingPicId")]
+    #[serde(alias = "LoadingPicId", default)]
     pub loading_pic_id: String,
-    #[serde(alias = "Description")]
+    #[serde(alias = "Description", default)]
     pub description: String,
-    #[serde(alias = "UnlockParam")]
+    #[serde(alias = "UnlockParam", default)]
     pub unlock_param: Vec<HandbookUnlockParam>,
-    #[serde(alias = "RewardItem")]
+    #[serde(alias = "RewardItem", default)]
     pub reward_item: Vec<HandbookRewardItem>,
-    #[serde(alias = "StageNameForShow")]
+    #[serde(alias = "StageNameForShow", default)]
     pub stage_name_for_show: String,
-    #[serde(alias = "ZoneNameForShow")]
+    #[serde(alias = "ZoneNameForShow", default)]
     pub zone_name_for_show: String,
-    #[serde(alias = "PicId")]
+    #[serde(alias = "PicId", default)]
     pub pic_id: String,
-    #[serde(alias = "StageGetTime")]
+    #[serde(alias = "StageGetTime", default)]
     pub stage_get_time: i64,
 }
 

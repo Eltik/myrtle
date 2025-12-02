@@ -100,9 +100,13 @@ pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
 
     if game_data.is_loaded() {
         println!(
-            "Game data loaded: {} operators, {} skills",
+            "Game data loaded: {} operators, {} skills, {} modules, {} skins, {} items, {} handbook entries",
             game_data.operators.len(),
-            game_data.skills.len()
+            game_data.skills.len(),
+            game_data.modules.equip_dict.len(),
+            game_data.skins.char_skins.len(),
+            game_data.materials.items.len(),
+            game_data.handbook.handbook_dict.len()
         );
     } else {
         println!("Warning: Running with empty game data");

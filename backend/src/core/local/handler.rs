@@ -9,7 +9,7 @@ use crate::core::local::gamedata::skills::enrich_all_skills;
 use crate::core::local::types::handbook::{Handbook, HandbookTableFile};
 use crate::core::local::types::material::{ItemTableFile, Materials};
 use crate::core::local::types::module::{
-    BattleEquip, BattleEquipTableFile, RawModules, UniequipTableFile,
+    BattleEquip, BattleEquipTableFile, Modules, RawModules, UniequipTableFile,
 };
 use crate::core::local::types::skill::{RawSkill, SkillTableFile};
 use crate::core::local::types::skin::{SkinData, SkinTableFile};
@@ -179,10 +179,54 @@ pub fn init_game_data(data_dir: &Path) -> Result<GameData, DataError> {
         &skins,
     );
 
+    // Convert raw modules to enriched modules
+    let modules = Modules {
+        equip_dict: raw_modules
+            .equip_dict
+            .into_iter()
+            .map(|(k, v)| {
+                (
+                    k.clone(),
+                    crate::core::local::types::module::Module {
+                        id: Some(k),
+                        uni_equip_id: v.uni_equip_id,
+                        uni_equip_name: v.uni_equip_name,
+                        uni_equip_icon: v.uni_equip_icon,
+                        image: None,
+                        uni_equip_desc: v.uni_equip_desc,
+                        type_icon: v.type_icon,
+                        type_name1: v.type_name1,
+                        type_name2: v.type_name2,
+                        equip_shining_color: v.equip_shining_color,
+                        show_evolve_phase: v.show_evolve_phase,
+                        unlock_evolve_phase: v.unlock_evolve_phase,
+                        char_id: v.char_id,
+                        tmpl_id: v.tmpl_id,
+                        show_level: v.show_level,
+                        unlock_level: v.unlock_level,
+                        unlock_favor_point: v.unlock_favor_point,
+                        mission_list: v.mission_list,
+                        item_cost: None,
+                        module_type: v.module_type,
+                        uni_equip_get_time: v.uni_equip_get_time,
+                        char_equip_order: v.char_equip_order,
+                    },
+                )
+            })
+            .collect(),
+        mission_list: raw_modules.mission_list,
+        sub_prof_dict: raw_modules.sub_prof_dict,
+        char_equip: raw_modules.char_equip,
+        equip_track_dict: std::collections::HashMap::new(),
+    };
+
     Ok(GameData {
         operators,
         skills,
         materials,
+        modules,
+        skins,
+        handbook,
     })
 }
 
