@@ -5,6 +5,9 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+use self::serde::ser::{Serialize, SerializeStruct, Serializer};
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
@@ -61,11 +64,24 @@ impl core::fmt::Debug for enum__Torappu_RecommendItemTagTips {
         }
     }
 }
+impl Serialize for enum__Torappu_RecommendItemTagTips {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_RecommendItemTagTips",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_RecommendItemTagTips {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -74,7 +90,9 @@ impl flatbuffers::Push for enum__Torappu_RecommendItemTagTips {
     type Output = enum__Torappu_RecommendItemTagTips;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -204,11 +222,24 @@ impl core::fmt::Debug for enum__Torappu_ShopRouteTarget {
         }
     }
 }
+impl Serialize for enum__Torappu_ShopRouteTarget {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_ShopRouteTarget",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ShopRouteTarget {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -217,7 +248,9 @@ impl flatbuffers::Push for enum__Torappu_ShopRouteTarget {
     type Output = enum__Torappu_ShopRouteTarget;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -312,11 +345,24 @@ impl core::fmt::Debug for enum__Torappu_ShopRecommendTemplateType {
         }
     }
 }
+impl Serialize for enum__Torappu_ShopRecommendTemplateType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_ShopRecommendTemplateType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ShopRecommendTemplateType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -325,7 +371,9 @@ impl flatbuffers::Push for enum__Torappu_ShopRecommendTemplateType {
     type Output = enum__Torappu_ShopRecommendTemplateType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -415,11 +463,24 @@ impl core::fmt::Debug for enum__Torappu_ShopUnlockType {
         }
     }
 }
+impl Serialize for enum__Torappu_ShopUnlockType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_ShopUnlockType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ShopUnlockType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -428,7 +489,9 @@ impl flatbuffers::Push for enum__Torappu_ShopUnlockType {
     type Output = enum__Torappu_ShopUnlockType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -519,11 +582,24 @@ impl core::fmt::Debug for enum__Torappu_ShopCondTrigPackageType {
         }
     }
 }
+impl Serialize for enum__Torappu_ShopCondTrigPackageType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_ShopCondTrigPackageType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ShopCondTrigPackageType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -532,7 +608,9 @@ impl flatbuffers::Push for enum__Torappu_ShopCondTrigPackageType {
     type Output = enum__Torappu_ShopCondTrigPackageType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -634,11 +712,24 @@ impl core::fmt::Debug for enum__Torappu_ShopGPTabType {
         }
     }
 }
+impl Serialize for enum__Torappu_ShopGPTabType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_ShopGPTabType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ShopGPTabType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -647,7 +738,9 @@ impl flatbuffers::Push for enum__Torappu_ShopGPTabType {
     type Output = enum__Torappu_ShopGPTabType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -689,7 +782,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ShopRecommendData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -727,6 +820,23 @@ impl<'a> clz_Torappu_ShopRecommendData<'a> {
             builder.add_imgId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ShopRecommendDataT {
+        let imgId = self.imgId().map(|x| x.to_string());
+        let slotIndex = self.slotIndex();
+        let cmd = self.cmd();
+        let param1 = self.param1().map(|x| x.to_string());
+        let param2 = self.param2().map(|x| x.to_string());
+        let skinId = self.skinId().map(|x| x.to_string());
+        clz_Torappu_ShopRecommendDataT {
+            imgId,
+            slotIndex,
+            cmd,
+            param1,
+            param2,
+            skinId,
+        }
     }
 
     #[inline]
@@ -844,6 +954,38 @@ impl<'a> Default for clz_Torappu_ShopRecommendDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ShopRecommendData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ShopRecommendData", 6)?;
+        if let Some(f) = self.imgId() {
+            s.serialize_field("imgId", &f)?;
+        } else {
+            s.skip_field("imgId")?;
+        }
+        s.serialize_field("slotIndex", &self.slotIndex())?;
+        s.serialize_field("cmd", &self.cmd())?;
+        if let Some(f) = self.param1() {
+            s.serialize_field("param1", &f)?;
+        } else {
+            s.skip_field("param1")?;
+        }
+        if let Some(f) = self.param2() {
+            s.serialize_field("param2", &f)?;
+        } else {
+            s.skip_field("param2")?;
+        }
+        if let Some(f) = self.skinId() {
+            s.serialize_field("skinId", &f)?;
+        } else {
+            s.skip_field("skinId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ShopRecommendDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -919,6 +1061,52 @@ impl core::fmt::Debug for clz_Torappu_ShopRecommendData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ShopRecommendDataT {
+    pub imgId: Option<String>,
+    pub slotIndex: i32,
+    pub cmd: enum__Torappu_ShopRouteTarget,
+    pub param1: Option<String>,
+    pub param2: Option<String>,
+    pub skinId: Option<String>,
+}
+impl Default for clz_Torappu_ShopRecommendDataT {
+    fn default() -> Self {
+        Self {
+            imgId: None,
+            slotIndex: 0,
+            cmd: enum__Torappu_ShopRouteTarget::RECOMMENDSHOP,
+            param1: None,
+            param2: None,
+            skinId: None,
+        }
+    }
+}
+impl clz_Torappu_ShopRecommendDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ShopRecommendData<'b>> {
+        let imgId = self.imgId.as_ref().map(|x| _fbb.create_string(x));
+        let slotIndex = self.slotIndex;
+        let cmd = self.cmd;
+        let param1 = self.param1.as_ref().map(|x| _fbb.create_string(x));
+        let param2 = self.param2.as_ref().map(|x| _fbb.create_string(x));
+        let skinId = self.skinId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_ShopRecommendData::create(
+            _fbb,
+            &clz_Torappu_ShopRecommendDataArgs {
+                imgId,
+                slotIndex,
+                cmd,
+                param1,
+                param2,
+                skinId,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ShopRecommendGroupOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -931,7 +1119,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ShopRecommendGroup<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -957,6 +1145,17 @@ impl<'a> clz_Torappu_ShopRecommendGroup<'a> {
             builder.add_recommendGroup(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ShopRecommendGroupT {
+        let recommendGroup = self.recommendGroup().map(|x| x.into_iter().collect());
+        let dataList = self
+            .dataList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_ShopRecommendGroupT {
+            recommendGroup,
+            dataList,
+        }
     }
 
     #[inline]
@@ -1036,6 +1235,26 @@ impl<'a> Default for clz_Torappu_ShopRecommendGroupArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ShopRecommendGroup<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ShopRecommendGroup", 2)?;
+        if let Some(f) = self.recommendGroup() {
+            s.serialize_field("recommendGroup", &f)?;
+        } else {
+            s.skip_field("recommendGroup")?;
+        }
+        if let Some(f) = self.dataList() {
+            s.serialize_field("dataList", &f)?;
+        } else {
+            s.skip_field("dataList")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ShopRecommendGroupBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1091,6 +1310,39 @@ impl core::fmt::Debug for clz_Torappu_ShopRecommendGroup<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ShopRecommendGroupT {
+    pub recommendGroup: Option<Vec<i32>>,
+    pub dataList: Option<Vec<clz_Torappu_ShopRecommendDataT>>,
+}
+impl Default for clz_Torappu_ShopRecommendGroupT {
+    fn default() -> Self {
+        Self {
+            recommendGroup: None,
+            dataList: None,
+        }
+    }
+}
+impl clz_Torappu_ShopRecommendGroupT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ShopRecommendGroup<'b>> {
+        let recommendGroup = self.recommendGroup.as_ref().map(|x| _fbb.create_vector(x));
+        let dataList = self.dataList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_ShopRecommendGroup::create(
+            _fbb,
+            &clz_Torappu_ShopRecommendGroupArgs {
+                recommendGroup,
+                dataList,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ShopKeeperWordOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1103,7 +1355,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ShopKeeperWord<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1129,6 +1381,12 @@ impl<'a> clz_Torappu_ShopKeeperWord<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ShopKeeperWordT {
+        let id = self.id().map(|x| x.to_string());
+        let text = self.text().map(|x| x.to_string());
+        clz_Torappu_ShopKeeperWordT { id, text }
     }
 
     #[inline]
@@ -1183,6 +1441,26 @@ impl<'a> Default for clz_Torappu_ShopKeeperWordArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ShopKeeperWord<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ShopKeeperWord", 2)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        if let Some(f) = self.text() {
+            s.serialize_field("text", &f)?;
+        } else {
+            s.skip_field("text")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ShopKeeperWordBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1225,6 +1503,30 @@ impl core::fmt::Debug for clz_Torappu_ShopKeeperWord<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ShopKeeperWordT {
+    pub id: Option<String>,
+    pub text: Option<String>,
+}
+impl Default for clz_Torappu_ShopKeeperWordT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            text: None,
+        }
+    }
+}
+impl clz_Torappu_ShopKeeperWordT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ShopKeeperWord<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let text = self.text.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_ShopKeeperWord::create(_fbb, &clz_Torappu_ShopKeeperWordArgs { id, text })
+    }
+}
 pub enum clz_Torappu_ShopRecommendTemplateNormalGiftParamOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1237,7 +1539,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ShopRecommendTemplateNormalGift
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1281,6 +1583,29 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalGiftParam<'a> {
         }
         builder.add_haveMark(args.haveMark);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ShopRecommendTemplateNormalGiftParamT {
+        let showStartTs = self.showStartTs();
+        let showEndTs = self.showEndTs();
+        let goodId = self.goodId().map(|x| x.to_string());
+        let giftPackageName = self.giftPackageName().map(|x| x.to_string());
+        let price = self.price();
+        let logoId = self.logoId().map(|x| x.to_string());
+        let color = self.color().map(|x| x.to_string());
+        let haveMark = self.haveMark();
+        let availCount = self.availCount();
+        clz_Torappu_ShopRecommendTemplateNormalGiftParamT {
+            showStartTs,
+            showEndTs,
+            goodId,
+            giftPackageName,
+            price,
+            logoId,
+            color,
+            haveMark,
+            availCount,
+        }
     }
 
     #[inline]
@@ -1456,6 +1781,42 @@ impl<'a> Default for clz_Torappu_ShopRecommendTemplateNormalGiftParamArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ShopRecommendTemplateNormalGiftParam<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_ShopRecommendTemplateNormalGiftParam", 9)?;
+        s.serialize_field("showStartTs", &self.showStartTs())?;
+        s.serialize_field("showEndTs", &self.showEndTs())?;
+        if let Some(f) = self.goodId() {
+            s.serialize_field("goodId", &f)?;
+        } else {
+            s.skip_field("goodId")?;
+        }
+        if let Some(f) = self.giftPackageName() {
+            s.serialize_field("giftPackageName", &f)?;
+        } else {
+            s.skip_field("giftPackageName")?;
+        }
+        s.serialize_field("price", &self.price())?;
+        if let Some(f) = self.logoId() {
+            s.serialize_field("logoId", &f)?;
+        } else {
+            s.skip_field("logoId")?;
+        }
+        if let Some(f) = self.color() {
+            s.serialize_field("color", &f)?;
+        } else {
+            s.skip_field("color")?;
+        }
+        s.serialize_field("haveMark", &self.haveMark())?;
+        s.serialize_field("availCount", &self.availCount())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ShopRecommendTemplateNormalGiftParamBuilder<
     'a: 'b,
     'b,
@@ -1569,6 +1930,64 @@ impl core::fmt::Debug for clz_Torappu_ShopRecommendTemplateNormalGiftParam<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ShopRecommendTemplateNormalGiftParamT {
+    pub showStartTs: i64,
+    pub showEndTs: i64,
+    pub goodId: Option<String>,
+    pub giftPackageName: Option<String>,
+    pub price: i32,
+    pub logoId: Option<String>,
+    pub color: Option<String>,
+    pub haveMark: bool,
+    pub availCount: i32,
+}
+impl Default for clz_Torappu_ShopRecommendTemplateNormalGiftParamT {
+    fn default() -> Self {
+        Self {
+            showStartTs: 0,
+            showEndTs: 0,
+            goodId: None,
+            giftPackageName: None,
+            price: 0,
+            logoId: None,
+            color: None,
+            haveMark: false,
+            availCount: 0,
+        }
+    }
+}
+impl clz_Torappu_ShopRecommendTemplateNormalGiftParamT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ShopRecommendTemplateNormalGiftParam<'b>> {
+        let showStartTs = self.showStartTs;
+        let showEndTs = self.showEndTs;
+        let goodId = self.goodId.as_ref().map(|x| _fbb.create_string(x));
+        let giftPackageName = self.giftPackageName.as_ref().map(|x| _fbb.create_string(x));
+        let price = self.price;
+        let logoId = self.logoId.as_ref().map(|x| _fbb.create_string(x));
+        let color = self.color.as_ref().map(|x| _fbb.create_string(x));
+        let haveMark = self.haveMark;
+        let availCount = self.availCount;
+        clz_Torappu_ShopRecommendTemplateNormalGiftParam::create(
+            _fbb,
+            &clz_Torappu_ShopRecommendTemplateNormalGiftParamArgs {
+                showStartTs,
+                showEndTs,
+                goodId,
+                giftPackageName,
+                price,
+                logoId,
+                color,
+                haveMark,
+                availCount,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ShopRecommendTemplateNormalSkinParamOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1581,7 +2000,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ShopRecommendTemplateNormalSkin
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1627,6 +2046,29 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalSkinParam<'a> {
             builder.add_skinIds(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ShopRecommendTemplateNormalSkinParamT {
+        let showStartTs = self.showStartTs();
+        let showEndTs = self.showEndTs();
+        let skinIds = self
+            .skinIds()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let skinGroupName = self.skinGroupName().map(|x| x.to_string());
+        let brandIconId = self.brandIconId().map(|x| x.to_string());
+        let colorBack = self.colorBack().map(|x| x.to_string());
+        let colorText = self.colorText().map(|x| x.to_string());
+        let text = self.text().map(|x| x.to_string());
+        clz_Torappu_ShopRecommendTemplateNormalSkinParamT {
+            showStartTs,
+            showEndTs,
+            skinIds,
+            skinGroupName,
+            brandIconId,
+            colorBack,
+            colorText,
+            text,
+        }
     }
 
     #[inline]
@@ -1801,6 +2243,49 @@ impl<'a> Default for clz_Torappu_ShopRecommendTemplateNormalSkinParamArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ShopRecommendTemplateNormalSkinParam<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_ShopRecommendTemplateNormalSkinParam", 8)?;
+        s.serialize_field("showStartTs", &self.showStartTs())?;
+        s.serialize_field("showEndTs", &self.showEndTs())?;
+        if let Some(f) = self.skinIds() {
+            s.serialize_field("skinIds", &f)?;
+        } else {
+            s.skip_field("skinIds")?;
+        }
+        if let Some(f) = self.skinGroupName() {
+            s.serialize_field("skinGroupName", &f)?;
+        } else {
+            s.skip_field("skinGroupName")?;
+        }
+        if let Some(f) = self.brandIconId() {
+            s.serialize_field("brandIconId", &f)?;
+        } else {
+            s.skip_field("brandIconId")?;
+        }
+        if let Some(f) = self.colorBack() {
+            s.serialize_field("colorBack", &f)?;
+        } else {
+            s.skip_field("colorBack")?;
+        }
+        if let Some(f) = self.colorText() {
+            s.serialize_field("colorText", &f)?;
+        } else {
+            s.skip_field("colorText")?;
+        }
+        if let Some(f) = self.text() {
+            s.serialize_field("text", &f)?;
+        } else {
+            s.skip_field("text")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ShopRecommendTemplateNormalSkinParamBuilder<
     'a: 'b,
     'b,
@@ -1908,6 +2393,63 @@ impl core::fmt::Debug for clz_Torappu_ShopRecommendTemplateNormalSkinParam<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ShopRecommendTemplateNormalSkinParamT {
+    pub showStartTs: i64,
+    pub showEndTs: i64,
+    pub skinIds: Option<Vec<String>>,
+    pub skinGroupName: Option<String>,
+    pub brandIconId: Option<String>,
+    pub colorBack: Option<String>,
+    pub colorText: Option<String>,
+    pub text: Option<String>,
+}
+impl Default for clz_Torappu_ShopRecommendTemplateNormalSkinParamT {
+    fn default() -> Self {
+        Self {
+            showStartTs: 0,
+            showEndTs: 0,
+            skinIds: None,
+            skinGroupName: None,
+            brandIconId: None,
+            colorBack: None,
+            colorText: None,
+            text: None,
+        }
+    }
+}
+impl clz_Torappu_ShopRecommendTemplateNormalSkinParamT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ShopRecommendTemplateNormalSkinParam<'b>> {
+        let showStartTs = self.showStartTs;
+        let showEndTs = self.showEndTs;
+        let skinIds = self.skinIds.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let skinGroupName = self.skinGroupName.as_ref().map(|x| _fbb.create_string(x));
+        let brandIconId = self.brandIconId.as_ref().map(|x| _fbb.create_string(x));
+        let colorBack = self.colorBack.as_ref().map(|x| _fbb.create_string(x));
+        let colorText = self.colorText.as_ref().map(|x| _fbb.create_string(x));
+        let text = self.text.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_ShopRecommendTemplateNormalSkinParam::create(
+            _fbb,
+            &clz_Torappu_ShopRecommendTemplateNormalSkinParamArgs {
+                showStartTs,
+                showEndTs,
+                skinIds,
+                skinGroupName,
+                brandIconId,
+                colorBack,
+                colorText,
+                text,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ShopRecommendTemplateNormalFurnParamOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1920,7 +2462,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ShopRecommendTemplateNormalFurn
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1964,6 +2506,29 @@ impl<'a> clz_Torappu_ShopRecommendTemplateNormalFurnParam<'a> {
         builder.add_isPackSell(args.isPackSell);
         builder.add_isNew(args.isNew);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ShopRecommendTemplateNormalFurnParamT {
+        let showStartTs = self.showStartTs();
+        let showEndTs = self.showEndTs();
+        let furnPackId = self.furnPackId().map(|x| x.to_string());
+        let isNew = self.isNew();
+        let isPackSell = self.isPackSell();
+        let count = self.count();
+        let colorBack = self.colorBack().map(|x| x.to_string());
+        let colorText = self.colorText().map(|x| x.to_string());
+        let actId = self.actId().map(|x| x.to_string());
+        clz_Torappu_ShopRecommendTemplateNormalFurnParamT {
+            showStartTs,
+            showEndTs,
+            furnPackId,
+            isNew,
+            isPackSell,
+            count,
+            colorBack,
+            colorText,
+            actId,
+        }
     }
 
     #[inline]
@@ -2147,6 +2712,42 @@ impl<'a> Default for clz_Torappu_ShopRecommendTemplateNormalFurnParamArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ShopRecommendTemplateNormalFurnParam<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_ShopRecommendTemplateNormalFurnParam", 9)?;
+        s.serialize_field("showStartTs", &self.showStartTs())?;
+        s.serialize_field("showEndTs", &self.showEndTs())?;
+        if let Some(f) = self.furnPackId() {
+            s.serialize_field("furnPackId", &f)?;
+        } else {
+            s.skip_field("furnPackId")?;
+        }
+        s.serialize_field("isNew", &self.isNew())?;
+        s.serialize_field("isPackSell", &self.isPackSell())?;
+        s.serialize_field("count", &self.count())?;
+        if let Some(f) = self.colorBack() {
+            s.serialize_field("colorBack", &f)?;
+        } else {
+            s.skip_field("colorBack")?;
+        }
+        if let Some(f) = self.colorText() {
+            s.serialize_field("colorText", &f)?;
+        } else {
+            s.skip_field("colorText")?;
+        }
+        if let Some(f) = self.actId() {
+            s.serialize_field("actId", &f)?;
+        } else {
+            s.skip_field("actId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ShopRecommendTemplateNormalFurnParamBuilder<
     'a: 'b,
     'b,
@@ -2260,6 +2861,64 @@ impl core::fmt::Debug for clz_Torappu_ShopRecommendTemplateNormalFurnParam<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ShopRecommendTemplateNormalFurnParamT {
+    pub showStartTs: i64,
+    pub showEndTs: i64,
+    pub furnPackId: Option<String>,
+    pub isNew: bool,
+    pub isPackSell: bool,
+    pub count: i32,
+    pub colorBack: Option<String>,
+    pub colorText: Option<String>,
+    pub actId: Option<String>,
+}
+impl Default for clz_Torappu_ShopRecommendTemplateNormalFurnParamT {
+    fn default() -> Self {
+        Self {
+            showStartTs: 0,
+            showEndTs: 0,
+            furnPackId: None,
+            isNew: false,
+            isPackSell: false,
+            count: 0,
+            colorBack: None,
+            colorText: None,
+            actId: None,
+        }
+    }
+}
+impl clz_Torappu_ShopRecommendTemplateNormalFurnParamT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ShopRecommendTemplateNormalFurnParam<'b>> {
+        let showStartTs = self.showStartTs;
+        let showEndTs = self.showEndTs;
+        let furnPackId = self.furnPackId.as_ref().map(|x| _fbb.create_string(x));
+        let isNew = self.isNew;
+        let isPackSell = self.isPackSell;
+        let count = self.count;
+        let colorBack = self.colorBack.as_ref().map(|x| _fbb.create_string(x));
+        let colorText = self.colorText.as_ref().map(|x| _fbb.create_string(x));
+        let actId = self.actId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_ShopRecommendTemplateNormalFurnParam::create(
+            _fbb,
+            &clz_Torappu_ShopRecommendTemplateNormalFurnParamArgs {
+                showStartTs,
+                showEndTs,
+                furnPackId,
+                isNew,
+                isPackSell,
+                count,
+                colorBack,
+                colorText,
+                actId,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ShopRecommendTemplateReturnSkinParamOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2272,7 +2931,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ShopRecommendTemplateReturnSkin
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2294,6 +2953,15 @@ impl<'a> clz_Torappu_ShopRecommendTemplateReturnSkinParam<'a> {
         builder.add_showEndTs(args.showEndTs);
         builder.add_showStartTs(args.showStartTs);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ShopRecommendTemplateReturnSkinParamT {
+        let showStartTs = self.showStartTs();
+        let showEndTs = self.showEndTs();
+        clz_Torappu_ShopRecommendTemplateReturnSkinParamT {
+            showStartTs,
+            showEndTs,
+        }
     }
 
     #[inline]
@@ -2354,6 +3022,19 @@ impl<'a> Default for clz_Torappu_ShopRecommendTemplateReturnSkinParamArgs {
     }
 }
 
+impl Serialize for clz_Torappu_ShopRecommendTemplateReturnSkinParam<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_ShopRecommendTemplateReturnSkinParam", 2)?;
+        s.serialize_field("showStartTs", &self.showStartTs())?;
+        s.serialize_field("showEndTs", &self.showEndTs())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ShopRecommendTemplateReturnSkinParamBuilder<
     'a: 'b,
     'b,
@@ -2408,6 +3089,36 @@ impl core::fmt::Debug for clz_Torappu_ShopRecommendTemplateReturnSkinParam<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ShopRecommendTemplateReturnSkinParamT {
+    pub showStartTs: i64,
+    pub showEndTs: i64,
+}
+impl Default for clz_Torappu_ShopRecommendTemplateReturnSkinParamT {
+    fn default() -> Self {
+        Self {
+            showStartTs: 0,
+            showEndTs: 0,
+        }
+    }
+}
+impl clz_Torappu_ShopRecommendTemplateReturnSkinParamT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ShopRecommendTemplateReturnSkinParam<'b>> {
+        let showStartTs = self.showStartTs;
+        let showEndTs = self.showEndTs;
+        clz_Torappu_ShopRecommendTemplateReturnSkinParam::create(
+            _fbb,
+            &clz_Torappu_ShopRecommendTemplateReturnSkinParamArgs {
+                showStartTs,
+                showEndTs,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ShopRecommendTemplateParamOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2420,7 +3131,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ShopRecommendTemplateParam<'a> 
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2454,6 +3165,19 @@ impl<'a> clz_Torappu_ShopRecommendTemplateParam<'a> {
             builder.add_normalGiftParam(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ShopRecommendTemplateParamT {
+        let normalGiftParam = self.normalGiftParam().map(|x| Box::new(x.unpack()));
+        let normalSkinParam = self.normalSkinParam().map(|x| Box::new(x.unpack()));
+        let normalFurnParam = self.normalFurnParam().map(|x| Box::new(x.unpack()));
+        let returnSkinParam = self.returnSkinParam().map(|x| Box::new(x.unpack()));
+        clz_Torappu_ShopRecommendTemplateParamT {
+            normalGiftParam,
+            normalSkinParam,
+            normalFurnParam,
+            returnSkinParam,
+        }
     }
 
     #[inline]
@@ -2532,6 +3256,36 @@ impl<'a> Default for clz_Torappu_ShopRecommendTemplateParamArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ShopRecommendTemplateParam<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ShopRecommendTemplateParam", 4)?;
+        if let Some(f) = self.normalGiftParam() {
+            s.serialize_field("normalGiftParam", &f)?;
+        } else {
+            s.skip_field("normalGiftParam")?;
+        }
+        if let Some(f) = self.normalSkinParam() {
+            s.serialize_field("normalSkinParam", &f)?;
+        } else {
+            s.skip_field("normalSkinParam")?;
+        }
+        if let Some(f) = self.normalFurnParam() {
+            s.serialize_field("normalFurnParam", &f)?;
+        } else {
+            s.skip_field("normalFurnParam")?;
+        }
+        if let Some(f) = self.returnSkinParam() {
+            s.serialize_field("returnSkinParam", &f)?;
+        } else {
+            s.skip_field("returnSkinParam")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ShopRecommendTemplateParamBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -2603,6 +3357,44 @@ impl core::fmt::Debug for clz_Torappu_ShopRecommendTemplateParam<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ShopRecommendTemplateParamT {
+    pub normalGiftParam: Option<Box<clz_Torappu_ShopRecommendTemplateNormalGiftParamT>>,
+    pub normalSkinParam: Option<Box<clz_Torappu_ShopRecommendTemplateNormalSkinParamT>>,
+    pub normalFurnParam: Option<Box<clz_Torappu_ShopRecommendTemplateNormalFurnParamT>>,
+    pub returnSkinParam: Option<Box<clz_Torappu_ShopRecommendTemplateReturnSkinParamT>>,
+}
+impl Default for clz_Torappu_ShopRecommendTemplateParamT {
+    fn default() -> Self {
+        Self {
+            normalGiftParam: None,
+            normalSkinParam: None,
+            normalFurnParam: None,
+            returnSkinParam: None,
+        }
+    }
+}
+impl clz_Torappu_ShopRecommendTemplateParamT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ShopRecommendTemplateParam<'b>> {
+        let normalGiftParam = self.normalGiftParam.as_ref().map(|x| x.pack(_fbb));
+        let normalSkinParam = self.normalSkinParam.as_ref().map(|x| x.pack(_fbb));
+        let normalFurnParam = self.normalFurnParam.as_ref().map(|x| x.pack(_fbb));
+        let returnSkinParam = self.returnSkinParam.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_ShopRecommendTemplateParam::create(
+            _fbb,
+            &clz_Torappu_ShopRecommendTemplateParamArgs {
+                normalGiftParam,
+                normalSkinParam,
+                normalFurnParam,
+                returnSkinParam,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ShopRecommendItemOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2615,7 +3407,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ShopRecommendItem<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2667,6 +3459,35 @@ impl<'a> clz_Torappu_ShopRecommendItem<'a> {
             builder.add_tagId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ShopRecommendItemT {
+        let tagId = self.tagId().map(|x| x.to_string());
+        let displayType = self.displayType().map(|x| x.to_string());
+        let tagName = self.tagName().map(|x| x.to_string());
+        let itemTag = self.itemTag();
+        let orderNum = self.orderNum();
+        let startDatetime = self.startDatetime();
+        let endDatetime = self.endDatetime();
+        let groupList = self
+            .groupList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let tagWord = self.tagWord().map(|x| Box::new(x.unpack()));
+        let templateType = self.templateType();
+        let templateParam = self.templateParam().map(|x| Box::new(x.unpack()));
+        clz_Torappu_ShopRecommendItemT {
+            tagId,
+            displayType,
+            tagName,
+            itemTag,
+            orderNum,
+            startDatetime,
+            endDatetime,
+            groupList,
+            tagWord,
+            templateType,
+            templateParam,
+        }
     }
 
     #[inline]
@@ -2895,6 +3716,51 @@ impl<'a> Default for clz_Torappu_ShopRecommendItemArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ShopRecommendItem<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ShopRecommendItem", 11)?;
+        if let Some(f) = self.tagId() {
+            s.serialize_field("tagId", &f)?;
+        } else {
+            s.skip_field("tagId")?;
+        }
+        if let Some(f) = self.displayType() {
+            s.serialize_field("displayType", &f)?;
+        } else {
+            s.skip_field("displayType")?;
+        }
+        if let Some(f) = self.tagName() {
+            s.serialize_field("tagName", &f)?;
+        } else {
+            s.skip_field("tagName")?;
+        }
+        s.serialize_field("itemTag", &self.itemTag())?;
+        s.serialize_field("orderNum", &self.orderNum())?;
+        s.serialize_field("startDatetime", &self.startDatetime())?;
+        s.serialize_field("endDatetime", &self.endDatetime())?;
+        if let Some(f) = self.groupList() {
+            s.serialize_field("groupList", &f)?;
+        } else {
+            s.skip_field("groupList")?;
+        }
+        if let Some(f) = self.tagWord() {
+            s.serialize_field("tagWord", &f)?;
+        } else {
+            s.skip_field("tagWord")?;
+        }
+        s.serialize_field("templateType", &self.templateType())?;
+        if let Some(f) = self.templateParam() {
+            s.serialize_field("templateParam", &f)?;
+        } else {
+            s.skip_field("templateParam")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ShopRecommendItemBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3027,6 +3893,75 @@ impl core::fmt::Debug for clz_Torappu_ShopRecommendItem<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ShopRecommendItemT {
+    pub tagId: Option<String>,
+    pub displayType: Option<String>,
+    pub tagName: Option<String>,
+    pub itemTag: enum__Torappu_RecommendItemTagTips,
+    pub orderNum: i32,
+    pub startDatetime: i64,
+    pub endDatetime: i64,
+    pub groupList: Option<Vec<clz_Torappu_ShopRecommendGroupT>>,
+    pub tagWord: Option<Box<clz_Torappu_ShopKeeperWordT>>,
+    pub templateType: enum__Torappu_ShopRecommendTemplateType,
+    pub templateParam: Option<Box<clz_Torappu_ShopRecommendTemplateParamT>>,
+}
+impl Default for clz_Torappu_ShopRecommendItemT {
+    fn default() -> Self {
+        Self {
+            tagId: None,
+            displayType: None,
+            tagName: None,
+            itemTag: enum__Torappu_RecommendItemTagTips::ONSALE,
+            orderNum: 0,
+            startDatetime: 0,
+            endDatetime: 0,
+            groupList: None,
+            tagWord: None,
+            templateType: enum__Torappu_ShopRecommendTemplateType::DEFAULT,
+            templateParam: None,
+        }
+    }
+}
+impl clz_Torappu_ShopRecommendItemT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ShopRecommendItem<'b>> {
+        let tagId = self.tagId.as_ref().map(|x| _fbb.create_string(x));
+        let displayType = self.displayType.as_ref().map(|x| _fbb.create_string(x));
+        let tagName = self.tagName.as_ref().map(|x| _fbb.create_string(x));
+        let itemTag = self.itemTag;
+        let orderNum = self.orderNum;
+        let startDatetime = self.startDatetime;
+        let endDatetime = self.endDatetime;
+        let groupList = self.groupList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let tagWord = self.tagWord.as_ref().map(|x| x.pack(_fbb));
+        let templateType = self.templateType;
+        let templateParam = self.templateParam.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_ShopRecommendItem::create(
+            _fbb,
+            &clz_Torappu_ShopRecommendItemArgs {
+                tagId,
+                displayType,
+                tagName,
+                itemTag,
+                orderNum,
+                startDatetime,
+                endDatetime,
+                groupList,
+                tagWord,
+                templateType,
+                templateParam,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ShopCreditUnlockItemOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3039,7 +3974,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ShopCreditUnlockItem<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3065,6 +4000,17 @@ impl<'a> clz_Torappu_ShopCreditUnlockItem<'a> {
         builder.add_unlockNum(args.unlockNum);
         builder.add_sortId(args.sortId);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ShopCreditUnlockItemT {
+        let sortId = self.sortId();
+        let unlockNum = self.unlockNum();
+        let charId = self.charId().map(|x| x.to_string());
+        clz_Torappu_ShopCreditUnlockItemT {
+            sortId,
+            unlockNum,
+            charId,
+        }
     }
 
     #[inline]
@@ -3134,6 +4080,23 @@ impl<'a> Default for clz_Torappu_ShopCreditUnlockItemArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ShopCreditUnlockItem<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ShopCreditUnlockItem", 3)?;
+        s.serialize_field("sortId", &self.sortId())?;
+        s.serialize_field("unlockNum", &self.unlockNum())?;
+        if let Some(f) = self.charId() {
+            s.serialize_field("charId", &f)?;
+        } else {
+            s.skip_field("charId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ShopCreditUnlockItemBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3184,6 +4147,40 @@ impl core::fmt::Debug for clz_Torappu_ShopCreditUnlockItem<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ShopCreditUnlockItemT {
+    pub sortId: i32,
+    pub unlockNum: i32,
+    pub charId: Option<String>,
+}
+impl Default for clz_Torappu_ShopCreditUnlockItemT {
+    fn default() -> Self {
+        Self {
+            sortId: 0,
+            unlockNum: 0,
+            charId: None,
+        }
+    }
+}
+impl clz_Torappu_ShopCreditUnlockItemT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ShopCreditUnlockItem<'b>> {
+        let sortId = self.sortId;
+        let unlockNum = self.unlockNum;
+        let charId = self.charId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_ShopCreditUnlockItem::create(
+            _fbb,
+            &clz_Torappu_ShopCreditUnlockItemArgs {
+                sortId,
+                unlockNum,
+                charId,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ShopCreditUnlockGroupOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3196,7 +4193,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ShopCreditUnlockGroup<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3228,6 +4225,21 @@ impl<'a> clz_Torappu_ShopCreditUnlockGroup<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ShopCreditUnlockGroupT {
+        let id = self.id().map(|x| x.to_string());
+        let index = self.index().map(|x| x.to_string());
+        let startDateTime = self.startDateTime();
+        let charDict = self
+            .charDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_ShopCreditUnlockGroupT {
+            id,
+            index,
+            startDateTime,
+            charDict,
+        }
     }
 
     #[inline]
@@ -3331,6 +4343,32 @@ impl<'a> Default for clz_Torappu_ShopCreditUnlockGroupArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ShopCreditUnlockGroup<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ShopCreditUnlockGroup", 4)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        if let Some(f) = self.index() {
+            s.serialize_field("index", &f)?;
+        } else {
+            s.skip_field("index")?;
+        }
+        s.serialize_field("startDateTime", &self.startDateTime())?;
+        if let Some(f) = self.charDict() {
+            s.serialize_field("charDict", &f)?;
+        } else {
+            s.skip_field("charDict")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ShopCreditUnlockGroupBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3402,6 +4440,47 @@ impl core::fmt::Debug for clz_Torappu_ShopCreditUnlockGroup<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ShopCreditUnlockGroupT {
+    pub id: Option<String>,
+    pub index: Option<String>,
+    pub startDateTime: i64,
+    pub charDict: Option<Vec<clz_Torappu_ShopCreditUnlockItemT>>,
+}
+impl Default for clz_Torappu_ShopCreditUnlockGroupT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            index: None,
+            startDateTime: 0,
+            charDict: None,
+        }
+    }
+}
+impl clz_Torappu_ShopCreditUnlockGroupT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ShopCreditUnlockGroup<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let index = self.index.as_ref().map(|x| _fbb.create_string(x));
+        let startDateTime = self.startDateTime;
+        let charDict = self.charDict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_ShopCreditUnlockGroup::create(
+            _fbb,
+            &clz_Torappu_ShopCreditUnlockGroupArgs {
+                id,
+                index,
+                startDateTime,
+                charDict,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_ShopCreditUnlockGroupOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3414,7 +4493,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_ShopCreditUnlockG
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3440,6 +4519,15 @@ impl<'a> dict__string__clz_Torappu_ShopCreditUnlockGroup<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_ShopCreditUnlockGroupT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_ShopCreditUnlockGroupT { key, value }
     }
 
     #[inline]
@@ -3516,6 +4604,23 @@ impl<'a> Default for dict__string__clz_Torappu_ShopCreditUnlockGroupArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_ShopCreditUnlockGroup<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_ShopCreditUnlockGroup", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_ShopCreditUnlockGroupBuilder<
     'a: 'b,
     'b,
@@ -3577,6 +4682,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_ShopCreditUnlockGroup<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_ShopCreditUnlockGroupT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_ShopCreditUnlockGroupT>>,
+}
+impl Default for dict__string__clz_Torappu_ShopCreditUnlockGroupT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_ShopCreditUnlockGroupT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ShopCreditUnlockGroup<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_ShopCreditUnlockGroup::create(
+            _fbb,
+            &dict__string__clz_Torappu_ShopCreditUnlockGroupArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_ShopClientData_ShopKeeperDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3589,7 +4724,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ShopClientData_ShopKeeperData<'
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3615,6 +4750,19 @@ impl<'a> clz_Torappu_ShopClientData_ShopKeeperData<'a> {
             builder.add_welcomeWords(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ShopClientData_ShopKeeperDataT {
+        let welcomeWords = self
+            .welcomeWords()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let clickWords = self
+            .clickWords()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_ShopClientData_ShopKeeperDataT {
+            welcomeWords,
+            clickWords,
+        }
     }
 
     #[inline]
@@ -3693,6 +4841,26 @@ impl<'a> Default for clz_Torappu_ShopClientData_ShopKeeperDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ShopClientData_ShopKeeperData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ShopClientData_ShopKeeperData", 2)?;
+        if let Some(f) = self.welcomeWords() {
+            s.serialize_field("welcomeWords", &f)?;
+        } else {
+            s.skip_field("welcomeWords")?;
+        }
+        if let Some(f) = self.clickWords() {
+            s.serialize_field("clickWords", &f)?;
+        } else {
+            s.skip_field("clickWords")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ShopClientData_ShopKeeperDataBuilder<
     'a: 'b,
     'b,
@@ -3753,6 +4921,42 @@ impl core::fmt::Debug for clz_Torappu_ShopClientData_ShopKeeperData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ShopClientData_ShopKeeperDataT {
+    pub welcomeWords: Option<Vec<clz_Torappu_ShopKeeperWordT>>,
+    pub clickWords: Option<Vec<clz_Torappu_ShopKeeperWordT>>,
+}
+impl Default for clz_Torappu_ShopClientData_ShopKeeperDataT {
+    fn default() -> Self {
+        Self {
+            welcomeWords: None,
+            clickWords: None,
+        }
+    }
+}
+impl clz_Torappu_ShopClientData_ShopKeeperDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ShopClientData_ShopKeeperData<'b>> {
+        let welcomeWords = self.welcomeWords.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let clickWords = self.clickWords.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_ShopClientData_ShopKeeperData::create(
+            _fbb,
+            &clz_Torappu_ShopClientData_ShopKeeperDataArgs {
+                welcomeWords,
+                clickWords,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ShopCarouselData_ItemOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3765,7 +4969,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ShopCarouselData_Item<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3805,6 +5009,25 @@ impl<'a> clz_Torappu_ShopCarouselData_Item<'a> {
             builder.add_spriteId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ShopCarouselData_ItemT {
+        let spriteId = self.spriteId().map(|x| x.to_string());
+        let startTime = self.startTime();
+        let endTime = self.endTime();
+        let cmd = self.cmd();
+        let param1 = self.param1().map(|x| x.to_string());
+        let skinId = self.skinId().map(|x| x.to_string());
+        let furniId = self.furniId().map(|x| x.to_string());
+        clz_Torappu_ShopCarouselData_ItemT {
+            spriteId,
+            startTime,
+            endTime,
+            cmd,
+            param1,
+            skinId,
+            furniId,
+        }
     }
 
     #[inline]
@@ -3940,6 +5163,39 @@ impl<'a> Default for clz_Torappu_ShopCarouselData_ItemArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ShopCarouselData_Item<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ShopCarouselData_Item", 7)?;
+        if let Some(f) = self.spriteId() {
+            s.serialize_field("spriteId", &f)?;
+        } else {
+            s.skip_field("spriteId")?;
+        }
+        s.serialize_field("startTime", &self.startTime())?;
+        s.serialize_field("endTime", &self.endTime())?;
+        s.serialize_field("cmd", &self.cmd())?;
+        if let Some(f) = self.param1() {
+            s.serialize_field("param1", &f)?;
+        } else {
+            s.skip_field("param1")?;
+        }
+        if let Some(f) = self.skinId() {
+            s.serialize_field("skinId", &f)?;
+        } else {
+            s.skip_field("skinId")?;
+        }
+        if let Some(f) = self.furniId() {
+            s.serialize_field("furniId", &f)?;
+        } else {
+            s.skip_field("furniId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ShopCarouselData_ItemBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -4026,6 +5282,56 @@ impl core::fmt::Debug for clz_Torappu_ShopCarouselData_Item<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ShopCarouselData_ItemT {
+    pub spriteId: Option<String>,
+    pub startTime: i64,
+    pub endTime: i64,
+    pub cmd: enum__Torappu_ShopRouteTarget,
+    pub param1: Option<String>,
+    pub skinId: Option<String>,
+    pub furniId: Option<String>,
+}
+impl Default for clz_Torappu_ShopCarouselData_ItemT {
+    fn default() -> Self {
+        Self {
+            spriteId: None,
+            startTime: 0,
+            endTime: 0,
+            cmd: enum__Torappu_ShopRouteTarget::RECOMMENDSHOP,
+            param1: None,
+            skinId: None,
+            furniId: None,
+        }
+    }
+}
+impl clz_Torappu_ShopCarouselData_ItemT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ShopCarouselData_Item<'b>> {
+        let spriteId = self.spriteId.as_ref().map(|x| _fbb.create_string(x));
+        let startTime = self.startTime;
+        let endTime = self.endTime;
+        let cmd = self.cmd;
+        let param1 = self.param1.as_ref().map(|x| _fbb.create_string(x));
+        let skinId = self.skinId.as_ref().map(|x| _fbb.create_string(x));
+        let furniId = self.furniId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_ShopCarouselData_Item::create(
+            _fbb,
+            &clz_Torappu_ShopCarouselData_ItemArgs {
+                spriteId,
+                startTime,
+                endTime,
+                cmd,
+                param1,
+                skinId,
+                furniId,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ShopCarouselDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4038,7 +5344,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ShopCarouselData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4060,6 +5366,11 @@ impl<'a> clz_Torappu_ShopCarouselData<'a> {
             builder.add_items(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ShopCarouselDataT {
+        let items = self.items().map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_ShopCarouselDataT { items }
     }
 
     #[inline]
@@ -4120,6 +5431,21 @@ impl<'a> Default for clz_Torappu_ShopCarouselDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ShopCarouselData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ShopCarouselData", 1)?;
+        if let Some(f) = self.items() {
+            s.serialize_field("items", &f)?;
+        } else {
+            s.skip_field("items")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ShopCarouselDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -4164,6 +5490,28 @@ impl core::fmt::Debug for clz_Torappu_ShopCarouselData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ShopCarouselDataT {
+    pub items: Option<Vec<clz_Torappu_ShopCarouselData_ItemT>>,
+}
+impl Default for clz_Torappu_ShopCarouselDataT {
+    fn default() -> Self {
+        Self { items: None }
+    }
+}
+impl clz_Torappu_ShopCarouselDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ShopCarouselData<'b>> {
+        let items = self.items.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_ShopCarouselData::create(_fbb, &clz_Torappu_ShopCarouselDataArgs { items })
+    }
+}
 pub enum clz_Torappu_ChooseShopRelationOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4176,7 +5524,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ChooseShopRelation<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4202,6 +5550,14 @@ impl<'a> clz_Torappu_ChooseShopRelation<'a> {
             builder.add_goodId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ChooseShopRelationT {
+        let goodId = self.goodId().map(|x| x.to_string());
+        let optionList = self
+            .optionList()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        clz_Torappu_ChooseShopRelationT { goodId, optionList }
     }
 
     #[inline]
@@ -4263,6 +5619,26 @@ impl<'a> Default for clz_Torappu_ChooseShopRelationArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ChooseShopRelation<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ChooseShopRelation", 2)?;
+        if let Some(f) = self.goodId() {
+            s.serialize_field("goodId", &f)?;
+        } else {
+            s.skip_field("goodId")?;
+        }
+        if let Some(f) = self.optionList() {
+            s.serialize_field("optionList", &f)?;
+        } else {
+            s.skip_field("optionList")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ChooseShopRelationBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -4312,6 +5688,36 @@ impl core::fmt::Debug for clz_Torappu_ChooseShopRelation<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ChooseShopRelationT {
+    pub goodId: Option<String>,
+    pub optionList: Option<Vec<String>>,
+}
+impl Default for clz_Torappu_ChooseShopRelationT {
+    fn default() -> Self {
+        Self {
+            goodId: None,
+            optionList: None,
+        }
+    }
+}
+impl clz_Torappu_ChooseShopRelationT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ChooseShopRelation<'b>> {
+        let goodId = self.goodId.as_ref().map(|x| _fbb.create_string(x));
+        let optionList = self.optionList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_ChooseShopRelation::create(
+            _fbb,
+            &clz_Torappu_ChooseShopRelationArgs { goodId, optionList },
+        )
+    }
+}
 pub enum dict__string__enum__Torappu_ShopUnlockTypeOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4324,7 +5730,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__enum__Torappu_ShopUnlockType<
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4348,6 +5754,15 @@ impl<'a> dict__string__enum__Torappu_ShopUnlockType<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__enum__Torappu_ShopUnlockTypeT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value();
+        dict__string__enum__Torappu_ShopUnlockTypeT { key, value }
     }
 
     #[inline]
@@ -4418,6 +5833,18 @@ impl<'a> Default for dict__string__enum__Torappu_ShopUnlockTypeArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__enum__Torappu_ShopUnlockType<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__enum__Torappu_ShopUnlockType", 2)?;
+        s.serialize_field("key", &self.key())?;
+        s.serialize_field("value", &self.value())?;
+        s.end()
+    }
+}
+
 pub struct dict__string__enum__Torappu_ShopUnlockTypeBuilder<
     'a: 'b,
     'b,
@@ -4471,6 +5898,36 @@ impl core::fmt::Debug for dict__string__enum__Torappu_ShopUnlockType<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__enum__Torappu_ShopUnlockTypeT {
+    pub key: String,
+    pub value: enum__Torappu_ShopUnlockType,
+}
+impl Default for dict__string__enum__Torappu_ShopUnlockTypeT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: enum__Torappu_ShopUnlockType::ALWAYS_UNLOCK,
+        }
+    }
+}
+impl dict__string__enum__Torappu_ShopUnlockTypeT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__enum__Torappu_ShopUnlockType<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value;
+        dict__string__enum__Torappu_ShopUnlockType::create(
+            _fbb,
+            &dict__string__enum__Torappu_ShopUnlockTypeArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_ShopClientGPDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4483,7 +5940,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ShopClientGPData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4511,6 +5968,17 @@ impl<'a> clz_Torappu_ShopClientGPData<'a> {
             builder.add_goodId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ShopClientGPDataT {
+        let goodId = self.goodId().map(|x| x.to_string());
+        let displayName = self.displayName().map(|x| x.to_string());
+        let condTrigPackageType = self.condTrigPackageType();
+        clz_Torappu_ShopClientGPDataT {
+            goodId,
+            displayName,
+            condTrigPackageType,
+        }
     }
 
     #[inline]
@@ -4592,6 +6060,27 @@ impl<'a> Default for clz_Torappu_ShopClientGPDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ShopClientGPData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ShopClientGPData", 3)?;
+        if let Some(f) = self.goodId() {
+            s.serialize_field("goodId", &f)?;
+        } else {
+            s.skip_field("goodId")?;
+        }
+        if let Some(f) = self.displayName() {
+            s.serialize_field("displayName", &f)?;
+        } else {
+            s.skip_field("displayName")?;
+        }
+        s.serialize_field("condTrigPackageType", &self.condTrigPackageType())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ShopClientGPDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -4649,6 +6138,40 @@ impl core::fmt::Debug for clz_Torappu_ShopClientGPData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ShopClientGPDataT {
+    pub goodId: Option<String>,
+    pub displayName: Option<String>,
+    pub condTrigPackageType: enum__Torappu_ShopCondTrigPackageType,
+}
+impl Default for clz_Torappu_ShopClientGPDataT {
+    fn default() -> Self {
+        Self {
+            goodId: None,
+            displayName: None,
+            condTrigPackageType: enum__Torappu_ShopCondTrigPackageType::NONE,
+        }
+    }
+}
+impl clz_Torappu_ShopClientGPDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ShopClientGPData<'b>> {
+        let goodId = self.goodId.as_ref().map(|x| _fbb.create_string(x));
+        let displayName = self.displayName.as_ref().map(|x| _fbb.create_string(x));
+        let condTrigPackageType = self.condTrigPackageType;
+        clz_Torappu_ShopClientGPData::create(
+            _fbb,
+            &clz_Torappu_ShopClientGPDataArgs {
+                goodId,
+                displayName,
+                condTrigPackageType,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_ShopClientGPDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4661,7 +6184,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_ShopClientGPData<
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4687,6 +6210,15 @@ impl<'a> dict__string__clz_Torappu_ShopClientGPData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_ShopClientGPDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_ShopClientGPDataT { key, value }
     }
 
     #[inline]
@@ -4760,6 +6292,22 @@ impl<'a> Default for dict__string__clz_Torappu_ShopClientGPDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_ShopClientGPData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_ShopClientGPData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_ShopClientGPDataBuilder<
     'a: 'b,
     'b,
@@ -4813,6 +6361,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_ShopClientGPData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_ShopClientGPDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_ShopClientGPDataT>>,
+}
+impl Default for dict__string__clz_Torappu_ShopClientGPDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_ShopClientGPDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ShopClientGPData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_ShopClientGPData::create(
+            _fbb,
+            &dict__string__clz_Torappu_ShopClientGPDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_ShopGPTabDisplayDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4825,7 +6403,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ShopGPTabDisplayData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4877,6 +6455,33 @@ impl<'a> clz_Torappu_ShopGPTabDisplayData<'a> {
             builder.add_tabId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ShopGPTabDisplayDataT {
+        let tabId = self.tabId().map(|x| x.to_string());
+        let tabName = self.tabName().map(|x| x.to_string());
+        let tabType = self.tabType();
+        let recomDisplayNum = self.recomDisplayNum();
+        let tabPicId = self.tabPicId().map(|x| x.to_string());
+        let tabPicOnColor = self.tabPicOnColor().map(|x| x.to_string());
+        let tabPicOffColor = self.tabPicOffColor().map(|x| x.to_string());
+        let sortId = self.sortId();
+        let tabStartTime = self.tabStartTime();
+        let tabEndTime = self.tabEndTime();
+        let markerPicId = self.markerPicId().map(|x| x.to_string());
+        clz_Torappu_ShopGPTabDisplayDataT {
+            tabId,
+            tabName,
+            tabType,
+            recomDisplayNum,
+            tabPicId,
+            tabPicOnColor,
+            tabPicOffColor,
+            sortId,
+            tabStartTime,
+            tabEndTime,
+            markerPicId,
+        }
     }
 
     #[inline]
@@ -5085,6 +6690,51 @@ impl<'a> Default for clz_Torappu_ShopGPTabDisplayDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ShopGPTabDisplayData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ShopGPTabDisplayData", 11)?;
+        if let Some(f) = self.tabId() {
+            s.serialize_field("tabId", &f)?;
+        } else {
+            s.skip_field("tabId")?;
+        }
+        if let Some(f) = self.tabName() {
+            s.serialize_field("tabName", &f)?;
+        } else {
+            s.skip_field("tabName")?;
+        }
+        s.serialize_field("tabType", &self.tabType())?;
+        s.serialize_field("recomDisplayNum", &self.recomDisplayNum())?;
+        if let Some(f) = self.tabPicId() {
+            s.serialize_field("tabPicId", &f)?;
+        } else {
+            s.skip_field("tabPicId")?;
+        }
+        if let Some(f) = self.tabPicOnColor() {
+            s.serialize_field("tabPicOnColor", &f)?;
+        } else {
+            s.skip_field("tabPicOnColor")?;
+        }
+        if let Some(f) = self.tabPicOffColor() {
+            s.serialize_field("tabPicOffColor", &f)?;
+        } else {
+            s.skip_field("tabPicOffColor")?;
+        }
+        s.serialize_field("sortId", &self.sortId())?;
+        s.serialize_field("tabStartTime", &self.tabStartTime())?;
+        s.serialize_field("tabEndTime", &self.tabEndTime())?;
+        if let Some(f) = self.markerPicId() {
+            s.serialize_field("markerPicId", &f)?;
+        } else {
+            s.skip_field("markerPicId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ShopGPTabDisplayDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -5205,6 +6855,72 @@ impl core::fmt::Debug for clz_Torappu_ShopGPTabDisplayData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ShopGPTabDisplayDataT {
+    pub tabId: Option<String>,
+    pub tabName: Option<String>,
+    pub tabType: enum__Torappu_ShopGPTabType,
+    pub recomDisplayNum: i32,
+    pub tabPicId: Option<String>,
+    pub tabPicOnColor: Option<String>,
+    pub tabPicOffColor: Option<String>,
+    pub sortId: i32,
+    pub tabStartTime: i64,
+    pub tabEndTime: i64,
+    pub markerPicId: Option<String>,
+}
+impl Default for clz_Torappu_ShopGPTabDisplayDataT {
+    fn default() -> Self {
+        Self {
+            tabId: None,
+            tabName: None,
+            tabType: enum__Torappu_ShopGPTabType::DEFAULT_ALL,
+            recomDisplayNum: 0,
+            tabPicId: None,
+            tabPicOnColor: None,
+            tabPicOffColor: None,
+            sortId: 0,
+            tabStartTime: 0,
+            tabEndTime: 0,
+            markerPicId: None,
+        }
+    }
+}
+impl clz_Torappu_ShopGPTabDisplayDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ShopGPTabDisplayData<'b>> {
+        let tabId = self.tabId.as_ref().map(|x| _fbb.create_string(x));
+        let tabName = self.tabName.as_ref().map(|x| _fbb.create_string(x));
+        let tabType = self.tabType;
+        let recomDisplayNum = self.recomDisplayNum;
+        let tabPicId = self.tabPicId.as_ref().map(|x| _fbb.create_string(x));
+        let tabPicOnColor = self.tabPicOnColor.as_ref().map(|x| _fbb.create_string(x));
+        let tabPicOffColor = self.tabPicOffColor.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        let tabStartTime = self.tabStartTime;
+        let tabEndTime = self.tabEndTime;
+        let markerPicId = self.markerPicId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_ShopGPTabDisplayData::create(
+            _fbb,
+            &clz_Torappu_ShopGPTabDisplayDataArgs {
+                tabId,
+                tabName,
+                tabType,
+                recomDisplayNum,
+                tabPicId,
+                tabPicOnColor,
+                tabPicOffColor,
+                sortId,
+                tabStartTime,
+                tabEndTime,
+                markerPicId,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_ShopGPTabDisplayDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -5217,7 +6933,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_ShopGPTabDisplayD
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -5243,6 +6959,15 @@ impl<'a> dict__string__clz_Torappu_ShopGPTabDisplayData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_ShopGPTabDisplayDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_ShopGPTabDisplayDataT { key, value }
     }
 
     #[inline]
@@ -5319,6 +7044,23 @@ impl<'a> Default for dict__string__clz_Torappu_ShopGPTabDisplayDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_ShopGPTabDisplayData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_ShopGPTabDisplayData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_ShopGPTabDisplayDataBuilder<
     'a: 'b,
     'b,
@@ -5380,6 +7122,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_ShopGPTabDisplayData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_ShopGPTabDisplayDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_ShopGPTabDisplayDataT>>,
+}
+impl Default for dict__string__clz_Torappu_ShopGPTabDisplayDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_ShopGPTabDisplayDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ShopGPTabDisplayData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_ShopGPTabDisplayData::create(
+            _fbb,
+            &dict__string__clz_Torappu_ShopGPTabDisplayDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_LMTGSShopScheduleOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -5392,7 +7164,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_LMTGSShopSchedule<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -5434,6 +7206,25 @@ impl<'a> clz_Torappu_LMTGSShopSchedule<'a> {
             builder.add_gachaPoolId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_LMTGSShopScheduleT {
+        let gachaPoolId = self.gachaPoolId().map(|x| x.to_string());
+        let LMTGSId = self.LMTGSId().map(|x| x.to_string());
+        let iconColor = self.iconColor().map(|x| x.to_string());
+        let iconBackColor = self.iconBackColor().map(|x| x.to_string());
+        let storeTextColor = self.storeTextColor().map(|x| x.to_string());
+        let startTime = self.startTime();
+        let endTime = self.endTime();
+        clz_Torappu_LMTGSShopScheduleT {
+            gachaPoolId,
+            LMTGSId,
+            iconColor,
+            iconBackColor,
+            storeTextColor,
+            startTime,
+            endTime,
+        }
     }
 
     #[inline]
@@ -5579,6 +7370,43 @@ impl<'a> Default for clz_Torappu_LMTGSShopScheduleArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_LMTGSShopSchedule<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_LMTGSShopSchedule", 7)?;
+        if let Some(f) = self.gachaPoolId() {
+            s.serialize_field("gachaPoolId", &f)?;
+        } else {
+            s.skip_field("gachaPoolId")?;
+        }
+        if let Some(f) = self.LMTGSId() {
+            s.serialize_field("LMTGSId", &f)?;
+        } else {
+            s.skip_field("LMTGSId")?;
+        }
+        if let Some(f) = self.iconColor() {
+            s.serialize_field("iconColor", &f)?;
+        } else {
+            s.skip_field("iconColor")?;
+        }
+        if let Some(f) = self.iconBackColor() {
+            s.serialize_field("iconBackColor", &f)?;
+        } else {
+            s.skip_field("iconBackColor")?;
+        }
+        if let Some(f) = self.storeTextColor() {
+            s.serialize_field("storeTextColor", &f)?;
+        } else {
+            s.skip_field("storeTextColor")?;
+        }
+        s.serialize_field("startTime", &self.startTime())?;
+        s.serialize_field("endTime", &self.endTime())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_LMTGSShopScheduleBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -5659,6 +7487,56 @@ impl core::fmt::Debug for clz_Torappu_LMTGSShopSchedule<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_LMTGSShopScheduleT {
+    pub gachaPoolId: Option<String>,
+    pub LMTGSId: Option<String>,
+    pub iconColor: Option<String>,
+    pub iconBackColor: Option<String>,
+    pub storeTextColor: Option<String>,
+    pub startTime: i64,
+    pub endTime: i64,
+}
+impl Default for clz_Torappu_LMTGSShopScheduleT {
+    fn default() -> Self {
+        Self {
+            gachaPoolId: None,
+            LMTGSId: None,
+            iconColor: None,
+            iconBackColor: None,
+            storeTextColor: None,
+            startTime: 0,
+            endTime: 0,
+        }
+    }
+}
+impl clz_Torappu_LMTGSShopScheduleT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_LMTGSShopSchedule<'b>> {
+        let gachaPoolId = self.gachaPoolId.as_ref().map(|x| _fbb.create_string(x));
+        let LMTGSId = self.LMTGSId.as_ref().map(|x| _fbb.create_string(x));
+        let iconColor = self.iconColor.as_ref().map(|x| _fbb.create_string(x));
+        let iconBackColor = self.iconBackColor.as_ref().map(|x| _fbb.create_string(x));
+        let storeTextColor = self.storeTextColor.as_ref().map(|x| _fbb.create_string(x));
+        let startTime = self.startTime;
+        let endTime = self.endTime;
+        clz_Torappu_LMTGSShopSchedule::create(
+            _fbb,
+            &clz_Torappu_LMTGSShopScheduleArgs {
+                gachaPoolId,
+                LMTGSId,
+                iconColor,
+                iconBackColor,
+                storeTextColor,
+                startTime,
+                endTime,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_LMTGSShopOverlayScheduleOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -5671,7 +7549,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_LMTGSShopOverlaySchedule<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -5701,6 +7579,17 @@ impl<'a> clz_Torappu_LMTGSShopOverlaySchedule<'a> {
             builder.add_gachaPoolId1(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_LMTGSShopOverlayScheduleT {
+        let gachaPoolId1 = self.gachaPoolId1().map(|x| x.to_string());
+        let gachaPoolId2 = self.gachaPoolId2().map(|x| x.to_string());
+        let picId = self.picId().map(|x| x.to_string());
+        clz_Torappu_LMTGSShopOverlayScheduleT {
+            gachaPoolId1,
+            gachaPoolId2,
+            picId,
+        }
     }
 
     #[inline]
@@ -5780,6 +7669,31 @@ impl<'a> Default for clz_Torappu_LMTGSShopOverlayScheduleArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_LMTGSShopOverlaySchedule<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_LMTGSShopOverlaySchedule", 3)?;
+        if let Some(f) = self.gachaPoolId1() {
+            s.serialize_field("gachaPoolId1", &f)?;
+        } else {
+            s.skip_field("gachaPoolId1")?;
+        }
+        if let Some(f) = self.gachaPoolId2() {
+            s.serialize_field("gachaPoolId2", &f)?;
+        } else {
+            s.skip_field("gachaPoolId2")?;
+        }
+        if let Some(f) = self.picId() {
+            s.serialize_field("picId", &f)?;
+        } else {
+            s.skip_field("picId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_LMTGSShopOverlayScheduleBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -5834,6 +7748,40 @@ impl core::fmt::Debug for clz_Torappu_LMTGSShopOverlaySchedule<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_LMTGSShopOverlayScheduleT {
+    pub gachaPoolId1: Option<String>,
+    pub gachaPoolId2: Option<String>,
+    pub picId: Option<String>,
+}
+impl Default for clz_Torappu_LMTGSShopOverlayScheduleT {
+    fn default() -> Self {
+        Self {
+            gachaPoolId1: None,
+            gachaPoolId2: None,
+            picId: None,
+        }
+    }
+}
+impl clz_Torappu_LMTGSShopOverlayScheduleT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_LMTGSShopOverlaySchedule<'b>> {
+        let gachaPoolId1 = self.gachaPoolId1.as_ref().map(|x| _fbb.create_string(x));
+        let gachaPoolId2 = self.gachaPoolId2.as_ref().map(|x| _fbb.create_string(x));
+        let picId = self.picId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_LMTGSShopOverlaySchedule::create(
+            _fbb,
+            &clz_Torappu_LMTGSShopOverlayScheduleArgs {
+                gachaPoolId1,
+                gachaPoolId2,
+                picId,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ShopClientDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -5846,7 +7794,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ShopClientData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -5916,6 +7864,55 @@ impl<'a> clz_Torappu_ShopClientData<'a> {
             builder.add_recommendList(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ShopClientDataT {
+        let recommendList = self
+            .recommendList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let creditUnlockGroup = self
+            .creditUnlockGroup()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let shopKeeperData = self.shopKeeperData().map(|x| Box::new(x.unpack()));
+        let carousels = self
+            .carousels()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let chooseShopRelations = self
+            .chooseShopRelations()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let shopUnlockDict = self
+            .shopUnlockDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let extraQCShopRule = self
+            .extraQCShopRule()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let repQCShopRule = self
+            .repQCShopRule()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let shopGPDataDict = self
+            .shopGPDataDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let tabDisplayData = self
+            .tabDisplayData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let shopMonthlySubGoodId = self.shopMonthlySubGoodId().map(|x| x.to_string());
+        let ls = self.ls().map(|x| x.iter().map(|t| t.unpack()).collect());
+        let os = self.os().map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_ShopClientDataT {
+            recommendList,
+            creditUnlockGroup,
+            shopKeeperData,
+            carousels,
+            chooseShopRelations,
+            shopUnlockDict,
+            extraQCShopRule,
+            repQCShopRule,
+            shopGPDataDict,
+            tabDisplayData,
+            shopMonthlySubGoodId,
+            ls,
+            os,
+        }
     }
 
     #[inline]
@@ -6325,6 +8322,81 @@ impl<'a> Default for clz_Torappu_ShopClientDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ShopClientData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ShopClientData", 13)?;
+        if let Some(f) = self.recommendList() {
+            s.serialize_field("recommendList", &f)?;
+        } else {
+            s.skip_field("recommendList")?;
+        }
+        if let Some(f) = self.creditUnlockGroup() {
+            s.serialize_field("creditUnlockGroup", &f)?;
+        } else {
+            s.skip_field("creditUnlockGroup")?;
+        }
+        if let Some(f) = self.shopKeeperData() {
+            s.serialize_field("shopKeeperData", &f)?;
+        } else {
+            s.skip_field("shopKeeperData")?;
+        }
+        if let Some(f) = self.carousels() {
+            s.serialize_field("carousels", &f)?;
+        } else {
+            s.skip_field("carousels")?;
+        }
+        if let Some(f) = self.chooseShopRelations() {
+            s.serialize_field("chooseShopRelations", &f)?;
+        } else {
+            s.skip_field("chooseShopRelations")?;
+        }
+        if let Some(f) = self.shopUnlockDict() {
+            s.serialize_field("shopUnlockDict", &f)?;
+        } else {
+            s.skip_field("shopUnlockDict")?;
+        }
+        if let Some(f) = self.extraQCShopRule() {
+            s.serialize_field("extraQCShopRule", &f)?;
+        } else {
+            s.skip_field("extraQCShopRule")?;
+        }
+        if let Some(f) = self.repQCShopRule() {
+            s.serialize_field("repQCShopRule", &f)?;
+        } else {
+            s.skip_field("repQCShopRule")?;
+        }
+        if let Some(f) = self.shopGPDataDict() {
+            s.serialize_field("shopGPDataDict", &f)?;
+        } else {
+            s.skip_field("shopGPDataDict")?;
+        }
+        if let Some(f) = self.tabDisplayData() {
+            s.serialize_field("tabDisplayData", &f)?;
+        } else {
+            s.skip_field("tabDisplayData")?;
+        }
+        if let Some(f) = self.shopMonthlySubGoodId() {
+            s.serialize_field("shopMonthlySubGoodId", &f)?;
+        } else {
+            s.skip_field("shopMonthlySubGoodId")?;
+        }
+        if let Some(f) = self.ls() {
+            s.serialize_field("ls", &f)?;
+        } else {
+            s.skip_field("ls")?;
+        }
+        if let Some(f) = self.os() {
+            s.serialize_field("os", &f)?;
+        } else {
+            s.skip_field("os")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ShopClientDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -6539,6 +8611,116 @@ impl core::fmt::Debug for clz_Torappu_ShopClientData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ShopClientDataT {
+    pub recommendList: Option<Vec<clz_Torappu_ShopRecommendItemT>>,
+    pub creditUnlockGroup: Option<Vec<dict__string__clz_Torappu_ShopCreditUnlockGroupT>>,
+    pub shopKeeperData: Option<Box<clz_Torappu_ShopClientData_ShopKeeperDataT>>,
+    pub carousels: Option<Vec<clz_Torappu_ShopCarouselDataT>>,
+    pub chooseShopRelations: Option<Vec<clz_Torappu_ChooseShopRelationT>>,
+    pub shopUnlockDict: Option<Vec<dict__string__enum__Torappu_ShopUnlockTypeT>>,
+    pub extraQCShopRule: Option<Vec<String>>,
+    pub repQCShopRule: Option<Vec<String>>,
+    pub shopGPDataDict: Option<Vec<dict__string__clz_Torappu_ShopClientGPDataT>>,
+    pub tabDisplayData: Option<Vec<dict__string__clz_Torappu_ShopGPTabDisplayDataT>>,
+    pub shopMonthlySubGoodId: Option<String>,
+    pub ls: Option<Vec<clz_Torappu_LMTGSShopScheduleT>>,
+    pub os: Option<Vec<clz_Torappu_LMTGSShopOverlayScheduleT>>,
+}
+impl Default for clz_Torappu_ShopClientDataT {
+    fn default() -> Self {
+        Self {
+            recommendList: None,
+            creditUnlockGroup: None,
+            shopKeeperData: None,
+            carousels: None,
+            chooseShopRelations: None,
+            shopUnlockDict: None,
+            extraQCShopRule: None,
+            repQCShopRule: None,
+            shopGPDataDict: None,
+            tabDisplayData: None,
+            shopMonthlySubGoodId: None,
+            ls: None,
+            os: None,
+        }
+    }
+}
+impl clz_Torappu_ShopClientDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ShopClientData<'b>> {
+        let recommendList = self.recommendList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let creditUnlockGroup = self.creditUnlockGroup.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let shopKeeperData = self.shopKeeperData.as_ref().map(|x| x.pack(_fbb));
+        let carousels = self.carousels.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let chooseShopRelations = self.chooseShopRelations.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let shopUnlockDict = self.shopUnlockDict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let extraQCShopRule = self.extraQCShopRule.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let repQCShopRule = self.repQCShopRule.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let shopGPDataDict = self.shopGPDataDict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let tabDisplayData = self.tabDisplayData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let shopMonthlySubGoodId = self
+            .shopMonthlySubGoodId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let ls = self.ls.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let os = self.os.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_ShopClientData::create(
+            _fbb,
+            &clz_Torappu_ShopClientDataArgs {
+                recommendList,
+                creditUnlockGroup,
+                shopKeeperData,
+                carousels,
+                chooseShopRelations,
+                shopUnlockDict,
+                extraQCShopRule,
+                repQCShopRule,
+                shopGPDataDict,
+                tabDisplayData,
+                shopMonthlySubGoodId,
+                ls,
+                os,
+            },
+        )
+    }
+}
 #[inline]
 /// Verifies that a buffer of bytes contains a `clz_Torappu_ShopClientData`
 /// and returns it.
@@ -6596,7 +8778,7 @@ pub fn size_prefixed_root_as_clz_torappu_shop_client_data_with_opts<'b, 'o>(
 pub unsafe fn root_as_clz_torappu_shop_client_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_ShopClientData {
-    flatbuffers::root_unchecked::<clz_Torappu_ShopClientData>(buf)
+    unsafe { flatbuffers::root_unchecked::<clz_Torappu_ShopClientData>(buf) }
 }
 #[inline]
 /// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_ShopClientData and returns it.
@@ -6605,7 +8787,7 @@ pub unsafe fn root_as_clz_torappu_shop_client_data_unchecked(
 pub unsafe fn size_prefixed_root_as_clz_torappu_shop_client_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_ShopClientData {
-    flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_ShopClientData>(buf)
+    unsafe { flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_ShopClientData>(buf) }
 }
 #[inline]
 pub fn finish_clz_torappu_shop_client_data_buffer<'a, 'b, A: flatbuffers::Allocator + 'a>(

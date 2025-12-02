@@ -5,6 +5,9 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+use self::serde::ser::{Serialize, SerializeStruct, Serializer};
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
@@ -20,7 +23,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_Resource_ResourceManifest_Bundl
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -50,6 +53,19 @@ impl<'a> clz_Torappu_Resource_ResourceManifest_BundleMeta<'a> {
             builder.add_name(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Resource_ResourceManifest_BundleMetaT {
+        let name = self.name().map(|x| x.to_string());
+        let props = self.props();
+        let sccIndex = self.sccIndex();
+        let allDependencies = self.allDependencies().map(|x| x.into_iter().collect());
+        clz_Torappu_Resource_ResourceManifest_BundleMetaT {
+            name,
+            props,
+            sccIndex,
+            allDependencies,
+        }
     }
 
     #[inline]
@@ -145,6 +161,29 @@ impl<'a> Default for clz_Torappu_Resource_ResourceManifest_BundleMetaArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_Resource_ResourceManifest_BundleMeta<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_Resource_ResourceManifest_BundleMeta", 4)?;
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        s.serialize_field("props", &self.props())?;
+        s.serialize_field("sccIndex", &self.sccIndex())?;
+        if let Some(f) = self.allDependencies() {
+            s.serialize_field("allDependencies", &f)?;
+        } else {
+            s.skip_field("allDependencies")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_Resource_ResourceManifest_BundleMetaBuilder<
     'a: 'b,
     'b,
@@ -218,6 +257,44 @@ impl core::fmt::Debug for clz_Torappu_Resource_ResourceManifest_BundleMeta<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Resource_ResourceManifest_BundleMetaT {
+    pub name: Option<String>,
+    pub props: i32,
+    pub sccIndex: i32,
+    pub allDependencies: Option<Vec<i32>>,
+}
+impl Default for clz_Torappu_Resource_ResourceManifest_BundleMetaT {
+    fn default() -> Self {
+        Self {
+            name: None,
+            props: 0,
+            sccIndex: 0,
+            allDependencies: None,
+        }
+    }
+}
+impl clz_Torappu_Resource_ResourceManifest_BundleMetaT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_Resource_ResourceManifest_BundleMeta<'b>> {
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        let props = self.props;
+        let sccIndex = self.sccIndex;
+        let allDependencies = self.allDependencies.as_ref().map(|x| _fbb.create_vector(x));
+        clz_Torappu_Resource_ResourceManifest_BundleMeta::create(
+            _fbb,
+            &clz_Torappu_Resource_ResourceManifest_BundleMetaArgs {
+                name,
+                props,
+                sccIndex,
+                allDependencies,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_Resource_ResourceManifest_AssetToBundleMetaOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -230,7 +307,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_Resource_ResourceManifest_Asset
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -263,6 +340,19 @@ impl<'a> clz_Torappu_Resource_ResourceManifest_AssetToBundleMeta<'a> {
             builder.add_assetName(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Resource_ResourceManifest_AssetToBundleMetaT {
+        let assetName = self.assetName().map(|x| x.to_string());
+        let bundleIndex = self.bundleIndex();
+        let name = self.name().map(|x| x.to_string());
+        let path = self.path().map(|x| x.to_string());
+        clz_Torappu_Resource_ResourceManifest_AssetToBundleMetaT {
+            assetName,
+            bundleIndex,
+            name,
+            path,
+        }
     }
 
     #[inline]
@@ -355,6 +445,33 @@ impl<'a> Default for clz_Torappu_Resource_ResourceManifest_AssetToBundleMetaArgs
     }
 }
 
+impl Serialize for clz_Torappu_Resource_ResourceManifest_AssetToBundleMeta<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("clz_Torappu_Resource_ResourceManifest_AssetToBundleMeta", 4)?;
+        if let Some(f) = self.assetName() {
+            s.serialize_field("assetName", &f)?;
+        } else {
+            s.skip_field("assetName")?;
+        }
+        s.serialize_field("bundleIndex", &self.bundleIndex())?;
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        if let Some(f) = self.path() {
+            s.serialize_field("path", &f)?;
+        } else {
+            s.skip_field("path")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_Resource_ResourceManifest_AssetToBundleMetaBuilder<
     'a: 'b,
     'b,
@@ -424,6 +541,44 @@ impl core::fmt::Debug for clz_Torappu_Resource_ResourceManifest_AssetToBundleMet
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Resource_ResourceManifest_AssetToBundleMetaT {
+    pub assetName: Option<String>,
+    pub bundleIndex: i32,
+    pub name: Option<String>,
+    pub path: Option<String>,
+}
+impl Default for clz_Torappu_Resource_ResourceManifest_AssetToBundleMetaT {
+    fn default() -> Self {
+        Self {
+            assetName: None,
+            bundleIndex: 0,
+            name: None,
+            path: None,
+        }
+    }
+}
+impl clz_Torappu_Resource_ResourceManifest_AssetToBundleMetaT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_Resource_ResourceManifest_AssetToBundleMeta<'b>> {
+        let assetName = self.assetName.as_ref().map(|x| _fbb.create_string(x));
+        let bundleIndex = self.bundleIndex;
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        let path = self.path.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_Resource_ResourceManifest_AssetToBundleMeta::create(
+            _fbb,
+            &clz_Torappu_Resource_ResourceManifest_AssetToBundleMetaArgs {
+                assetName,
+                bundleIndex,
+                name,
+                path,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_Resource_ResourceManifestOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -436,7 +591,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_Resource_ResourceManifest<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -464,6 +619,21 @@ impl<'a> clz_Torappu_Resource_ResourceManifest<'a> {
         }
         builder.add_rawCount(args.rawCount);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Resource_ResourceManifestT {
+        let rawCount = self.rawCount();
+        let bundles = self
+            .bundles()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let assetToBundleList = self
+            .assetToBundleList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_Resource_ResourceManifestT {
+            rawCount,
+            bundles,
+            assetToBundleList,
+        }
     }
 
     #[inline]
@@ -587,6 +757,27 @@ impl<'a> Default for clz_Torappu_Resource_ResourceManifestArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_Resource_ResourceManifest<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_Resource_ResourceManifest", 3)?;
+        s.serialize_field("rawCount", &self.rawCount())?;
+        if let Some(f) = self.bundles() {
+            s.serialize_field("bundles", &f)?;
+        } else {
+            s.skip_field("bundles")?;
+        }
+        if let Some(f) = self.assetToBundleList() {
+            s.serialize_field("assetToBundleList", &f)?;
+        } else {
+            s.skip_field("assetToBundleList")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_Resource_ResourceManifestBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -661,6 +852,46 @@ impl core::fmt::Debug for clz_Torappu_Resource_ResourceManifest<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Resource_ResourceManifestT {
+    pub rawCount: i32,
+    pub bundles: Option<Vec<clz_Torappu_Resource_ResourceManifest_BundleMetaT>>,
+    pub assetToBundleList: Option<Vec<clz_Torappu_Resource_ResourceManifest_AssetToBundleMetaT>>,
+}
+impl Default for clz_Torappu_Resource_ResourceManifestT {
+    fn default() -> Self {
+        Self {
+            rawCount: 0,
+            bundles: None,
+            assetToBundleList: None,
+        }
+    }
+}
+impl clz_Torappu_Resource_ResourceManifestT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_Resource_ResourceManifest<'b>> {
+        let rawCount = self.rawCount;
+        let bundles = self.bundles.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let assetToBundleList = self.assetToBundleList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_Resource_ResourceManifest::create(
+            _fbb,
+            &clz_Torappu_Resource_ResourceManifestArgs {
+                rawCount,
+                bundles,
+                assetToBundleList,
+            },
+        )
+    }
+}
 #[inline]
 /// Verifies that a buffer of bytes contains a `clz_Torappu_Resource_ResourceManifest`
 /// and returns it.
@@ -720,7 +951,7 @@ pub fn size_prefixed_root_as_clz_torappu_resource_resource_manifest_with_opts<'b
 pub unsafe fn root_as_clz_torappu_resource_resource_manifest_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_Resource_ResourceManifest {
-    flatbuffers::root_unchecked::<clz_Torappu_Resource_ResourceManifest>(buf)
+    unsafe { flatbuffers::root_unchecked::<clz_Torappu_Resource_ResourceManifest>(buf) }
 }
 #[inline]
 /// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_Resource_ResourceManifest and returns it.
@@ -729,7 +960,9 @@ pub unsafe fn root_as_clz_torappu_resource_resource_manifest_unchecked(
 pub unsafe fn size_prefixed_root_as_clz_torappu_resource_resource_manifest_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_Resource_ResourceManifest {
-    flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_Resource_ResourceManifest>(buf)
+    unsafe {
+        flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_Resource_ResourceManifest>(buf)
+    }
 }
 #[inline]
 pub fn finish_clz_torappu_resource_resource_manifest_buffer<

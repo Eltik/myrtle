@@ -5,6 +5,9 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+use self::serde::ser::{Serialize, SerializeStruct, Serializer};
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
@@ -20,7 +23,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_HandbookTeamData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -62,6 +65,27 @@ impl<'a> clz_Torappu_HandbookTeamData<'a> {
         builder.add_isRaw(args.isRaw);
         builder.add_isLimited(args.isLimited);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_HandbookTeamDataT {
+        let powerId = self.powerId().map(|x| x.to_string());
+        let orderNum = self.orderNum();
+        let powerLevel = self.powerLevel();
+        let powerName = self.powerName().map(|x| x.to_string());
+        let powerCode = self.powerCode().map(|x| x.to_string());
+        let color = self.color().map(|x| x.to_string());
+        let isLimited = self.isLimited();
+        let isRaw = self.isRaw();
+        clz_Torappu_HandbookTeamDataT {
+            powerId,
+            orderNum,
+            powerLevel,
+            powerName,
+            powerCode,
+            color,
+            isLimited,
+            isRaw,
+        }
     }
 
     #[inline]
@@ -212,6 +236,40 @@ impl<'a> Default for clz_Torappu_HandbookTeamDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_HandbookTeamData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_HandbookTeamData", 8)?;
+        if let Some(f) = self.powerId() {
+            s.serialize_field("powerId", &f)?;
+        } else {
+            s.skip_field("powerId")?;
+        }
+        s.serialize_field("orderNum", &self.orderNum())?;
+        s.serialize_field("powerLevel", &self.powerLevel())?;
+        if let Some(f) = self.powerName() {
+            s.serialize_field("powerName", &f)?;
+        } else {
+            s.skip_field("powerName")?;
+        }
+        if let Some(f) = self.powerCode() {
+            s.serialize_field("powerCode", &f)?;
+        } else {
+            s.skip_field("powerCode")?;
+        }
+        if let Some(f) = self.color() {
+            s.serialize_field("color", &f)?;
+        } else {
+            s.skip_field("color")?;
+        }
+        s.serialize_field("isLimited", &self.isLimited())?;
+        s.serialize_field("isRaw", &self.isRaw())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_HandbookTeamDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -296,6 +354,60 @@ impl core::fmt::Debug for clz_Torappu_HandbookTeamData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_HandbookTeamDataT {
+    pub powerId: Option<String>,
+    pub orderNum: i32,
+    pub powerLevel: i32,
+    pub powerName: Option<String>,
+    pub powerCode: Option<String>,
+    pub color: Option<String>,
+    pub isLimited: bool,
+    pub isRaw: bool,
+}
+impl Default for clz_Torappu_HandbookTeamDataT {
+    fn default() -> Self {
+        Self {
+            powerId: None,
+            orderNum: 0,
+            powerLevel: 0,
+            powerName: None,
+            powerCode: None,
+            color: None,
+            isLimited: false,
+            isRaw: false,
+        }
+    }
+}
+impl clz_Torappu_HandbookTeamDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_HandbookTeamData<'b>> {
+        let powerId = self.powerId.as_ref().map(|x| _fbb.create_string(x));
+        let orderNum = self.orderNum;
+        let powerLevel = self.powerLevel;
+        let powerName = self.powerName.as_ref().map(|x| _fbb.create_string(x));
+        let powerCode = self.powerCode.as_ref().map(|x| _fbb.create_string(x));
+        let color = self.color.as_ref().map(|x| _fbb.create_string(x));
+        let isLimited = self.isLimited;
+        let isRaw = self.isRaw;
+        clz_Torappu_HandbookTeamData::create(
+            _fbb,
+            &clz_Torappu_HandbookTeamDataArgs {
+                powerId,
+                orderNum,
+                powerLevel,
+                powerName,
+                powerCode,
+                color,
+                isLimited,
+                isRaw,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_HandbookTeamDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -308,7 +420,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_HandbookTeamData<
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -334,6 +446,15 @@ impl<'a> dict__string__clz_Torappu_HandbookTeamData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_HandbookTeamDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_HandbookTeamDataT { key, value }
     }
 
     #[inline]
@@ -407,6 +528,22 @@ impl<'a> Default for dict__string__clz_Torappu_HandbookTeamDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_HandbookTeamData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_HandbookTeamData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_HandbookTeamDataBuilder<
     'a: 'b,
     'b,
@@ -460,6 +597,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_HandbookTeamData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_HandbookTeamDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_HandbookTeamDataT>>,
+}
+impl Default for dict__string__clz_Torappu_HandbookTeamDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_HandbookTeamDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_HandbookTeamData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_HandbookTeamData::create(
+            _fbb,
+            &dict__string__clz_Torappu_HandbookTeamDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -472,7 +639,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SimpleKVTable_clz_Torappu_Handb
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -494,6 +661,13 @@ impl<'a> clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'a> {
             builder.add_handbook_teams(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataT {
+        let handbook_teams = self
+            .handbook_teams()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataT { handbook_teams }
     }
 
     #[inline]
@@ -559,6 +733,22 @@ impl<'a> Default for clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataArgs<
     }
 }
 
+impl Serialize for clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData", 1)?;
+        if let Some(f) = self.handbook_teams() {
+            s.serialize_field("handbook_teams", &f)?;
+        } else {
+            s.skip_field("handbook_teams")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataBuilder<
     'a: 'b,
     'b,
@@ -609,6 +799,33 @@ impl core::fmt::Debug for clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData
         let mut ds = f.debug_struct("clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData");
         ds.field("handbook_teams", &self.handbook_teams());
         ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataT {
+    pub handbook_teams: Option<Vec<dict__string__clz_Torappu_HandbookTeamDataT>>,
+}
+impl Default for clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataT {
+    fn default() -> Self {
+        Self {
+            handbook_teams: None,
+        }
+    }
+}
+impl clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'b>> {
+        let handbook_teams = self.handbook_teams.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData::create(
+            _fbb,
+            &clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataArgs { handbook_teams },
+        )
     }
 }
 #[inline]
@@ -683,7 +900,9 @@ pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_handbook_tea
 pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_handbook_team_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData {
-    flatbuffers::root_unchecked::<clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData>(buf)
+    unsafe {
+        flatbuffers::root_unchecked::<clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData>(buf)
+    }
 }
 #[inline]
 /// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData and returns it.
@@ -692,9 +911,11 @@ pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_handbook_team_data_
 pub unsafe fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_handbook_team_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData {
-    flatbuffers::size_prefixed_root_unchecked::<
-        clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData,
-    >(buf)
+    unsafe {
+        flatbuffers::size_prefixed_root_unchecked::<
+            clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData,
+        >(buf)
+    }
 }
 #[inline]
 pub fn finish_clz_torappu_simple_kvtable_clz_torappu_handbook_team_data_buffer<

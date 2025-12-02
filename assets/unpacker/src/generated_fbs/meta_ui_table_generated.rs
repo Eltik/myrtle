@@ -5,6 +5,9 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+use self::serde::ser::{Serialize, SerializeStruct, Serializer};
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
@@ -60,11 +63,24 @@ impl core::fmt::Debug for enum__Torappu_CommonUnlockType {
         }
     }
 }
+impl Serialize for enum__Torappu_CommonUnlockType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_CommonUnlockType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_CommonUnlockType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -73,7 +89,9 @@ impl flatbuffers::Push for enum__Torappu_CommonUnlockType {
     type Output = enum__Torappu_CommonUnlockType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -175,11 +193,24 @@ impl core::fmt::Debug for enum__Torappu_TipData_Category {
         }
     }
 }
+impl Serialize for enum__Torappu_TipData_Category {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_TipData_Category",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_TipData_Category {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -188,7 +219,9 @@ impl flatbuffers::Push for enum__Torappu_TipData_Category {
     type Output = enum__Torappu_TipData_Category;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -230,7 +263,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StageUnlockParam<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -252,6 +285,11 @@ impl<'a> clz_Torappu_StageUnlockParam<'a> {
             builder.add_stageId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StageUnlockParamT {
+        let stageId = self.stageId().map(|x| x.to_string());
+        clz_Torappu_StageUnlockParamT { stageId }
     }
 
     #[inline]
@@ -291,6 +329,21 @@ impl<'a> Default for clz_Torappu_StageUnlockParamArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_StageUnlockParam<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_StageUnlockParam", 1)?;
+        if let Some(f) = self.stageId() {
+            s.serialize_field("stageId", &f)?;
+        } else {
+            s.skip_field("stageId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StageUnlockParamBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -327,6 +380,25 @@ impl core::fmt::Debug for clz_Torappu_StageUnlockParam<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StageUnlockParamT {
+    pub stageId: Option<String>,
+}
+impl Default for clz_Torappu_StageUnlockParamT {
+    fn default() -> Self {
+        Self { stageId: None }
+    }
+}
+impl clz_Torappu_StageUnlockParamT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StageUnlockParam<'b>> {
+        let stageId = self.stageId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_StageUnlockParam::create(_fbb, &clz_Torappu_StageUnlockParamArgs { stageId })
+    }
+}
 pub enum clz_Torappu_CharUnlockParamOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -339,7 +411,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_CharUnlockParam<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -361,6 +433,11 @@ impl<'a> clz_Torappu_CharUnlockParam<'a> {
             builder.add_charId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_CharUnlockParamT {
+        let charId = self.charId().map(|x| x.to_string());
+        clz_Torappu_CharUnlockParamT { charId }
     }
 
     #[inline]
@@ -400,6 +477,21 @@ impl<'a> Default for clz_Torappu_CharUnlockParamArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_CharUnlockParam<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_CharUnlockParam", 1)?;
+        if let Some(f) = self.charId() {
+            s.serialize_field("charId", &f)?;
+        } else {
+            s.skip_field("charId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_CharUnlockParamBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -436,6 +528,25 @@ impl core::fmt::Debug for clz_Torappu_CharUnlockParam<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_CharUnlockParamT {
+    pub charId: Option<String>,
+}
+impl Default for clz_Torappu_CharUnlockParamT {
+    fn default() -> Self {
+        Self { charId: None }
+    }
+}
+impl clz_Torappu_CharUnlockParamT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_CharUnlockParam<'b>> {
+        let charId = self.charId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_CharUnlockParam::create(_fbb, &clz_Torappu_CharUnlockParamArgs { charId })
+    }
+}
 pub enum clz_Torappu_CommonAvailCheckOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -448,7 +559,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_CommonAvailCheck<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -482,6 +593,23 @@ impl<'a> clz_Torappu_CommonAvailCheck<'a> {
         builder.add_rate(args.rate);
         builder.add_type_(args.type_);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_CommonAvailCheckT {
+        let startTs = self.startTs();
+        let endTs = self.endTs();
+        let type_ = self.type_();
+        let rate = self.rate();
+        let stageUnlockParam = self.stageUnlockParam().map(|x| Box::new(x.unpack()));
+        let charUnlockParam = self.charUnlockParam().map(|x| Box::new(x.unpack()));
+        clz_Torappu_CommonAvailCheckT {
+            startTs,
+            endTs,
+            type_,
+            rate,
+            stageUnlockParam,
+            charUnlockParam,
+        }
     }
 
     #[inline]
@@ -607,6 +735,30 @@ impl<'a> Default for clz_Torappu_CommonAvailCheckArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_CommonAvailCheck<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_CommonAvailCheck", 6)?;
+        s.serialize_field("startTs", &self.startTs())?;
+        s.serialize_field("endTs", &self.endTs())?;
+        s.serialize_field("type_", &self.type_())?;
+        s.serialize_field("rate", &self.rate())?;
+        if let Some(f) = self.stageUnlockParam() {
+            s.serialize_field("stageUnlockParam", &f)?;
+        } else {
+            s.skip_field("stageUnlockParam")?;
+        }
+        if let Some(f) = self.charUnlockParam() {
+            s.serialize_field("charUnlockParam", &f)?;
+        } else {
+            s.skip_field("charUnlockParam")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_CommonAvailCheckBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -686,6 +838,52 @@ impl core::fmt::Debug for clz_Torappu_CommonAvailCheck<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_CommonAvailCheckT {
+    pub startTs: i64,
+    pub endTs: i64,
+    pub type_: enum__Torappu_CommonUnlockType,
+    pub rate: f32,
+    pub stageUnlockParam: Option<Box<clz_Torappu_StageUnlockParamT>>,
+    pub charUnlockParam: Option<Box<clz_Torappu_CharUnlockParamT>>,
+}
+impl Default for clz_Torappu_CommonAvailCheckT {
+    fn default() -> Self {
+        Self {
+            startTs: 0,
+            endTs: 0,
+            type_: enum__Torappu_CommonUnlockType::STAGECLEAR,
+            rate: 0.0,
+            stageUnlockParam: None,
+            charUnlockParam: None,
+        }
+    }
+}
+impl clz_Torappu_CommonAvailCheckT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_CommonAvailCheck<'b>> {
+        let startTs = self.startTs;
+        let endTs = self.endTs;
+        let type_ = self.type_;
+        let rate = self.rate;
+        let stageUnlockParam = self.stageUnlockParam.as_ref().map(|x| x.pack(_fbb));
+        let charUnlockParam = self.charUnlockParam.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_CommonAvailCheck::create(
+            _fbb,
+            &clz_Torappu_CommonAvailCheckArgs {
+                startTs,
+                endTs,
+                type_,
+                rate,
+                stageUnlockParam,
+                charUnlockParam,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_TipDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -698,7 +896,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_TipData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -724,6 +922,17 @@ impl<'a> clz_Torappu_TipData<'a> {
             builder.add_tip(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_TipDataT {
+        let tip = self.tip().map(|x| x.to_string());
+        let weight = self.weight();
+        let category = self.category();
+        clz_Torappu_TipDataT {
+            tip,
+            weight,
+            category,
+        }
     }
 
     #[inline]
@@ -794,6 +1003,23 @@ impl<'a> Default for clz_Torappu_TipDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_TipData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_TipData", 3)?;
+        if let Some(f) = self.tip() {
+            s.serialize_field("tip", &f)?;
+        } else {
+            s.skip_field("tip")?;
+        }
+        s.serialize_field("weight", &self.weight())?;
+        s.serialize_field("category", &self.category())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_TipDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -843,6 +1069,40 @@ impl core::fmt::Debug for clz_Torappu_TipData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_TipDataT {
+    pub tip: Option<String>,
+    pub weight: f32,
+    pub category: enum__Torappu_TipData_Category,
+}
+impl Default for clz_Torappu_TipDataT {
+    fn default() -> Self {
+        Self {
+            tip: None,
+            weight: 0.0,
+            category: enum__Torappu_TipData_Category::NONE,
+        }
+    }
+}
+impl clz_Torappu_TipDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_TipData<'b>> {
+        let tip = self.tip.as_ref().map(|x| _fbb.create_string(x));
+        let weight = self.weight;
+        let category = self.category;
+        clz_Torappu_TipData::create(
+            _fbb,
+            &clz_Torappu_TipDataArgs {
+                tip,
+                weight,
+                category,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_TipsMetaDisplayItemOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -855,7 +1115,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_TipsMetaDisplayItem<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -903,6 +1163,31 @@ impl<'a> clz_Torappu_TipsMetaDisplayItem<'a> {
         }
         builder.add_isAllStageActive(args.isAllStageActive);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_TipsMetaDisplayItemT {
+        let tipsId = self.tipsId().map(|x| x.to_string());
+        let loadingPic = self.loadingPic().map(|x| x.to_string());
+        let availCheck = self.availCheck().map(|x| Box::new(x.unpack()));
+        let relateActId = self.relateActId().map(|x| x.to_string());
+        let isAllStageActive = self.isAllStageActive();
+        let stageIdList = self
+            .stageIdList()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let zoneIdList = self
+            .zoneIdList()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let tips = self.tips().map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_TipsMetaDisplayItemT {
+            tipsId,
+            loadingPic,
+            availCheck,
+            relateActId,
+            isAllStageActive,
+            stageIdList,
+            zoneIdList,
+            tips,
+        }
     }
 
     #[inline]
@@ -1082,6 +1367,52 @@ impl<'a> Default for clz_Torappu_TipsMetaDisplayItemArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_TipsMetaDisplayItem<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_TipsMetaDisplayItem", 8)?;
+        if let Some(f) = self.tipsId() {
+            s.serialize_field("tipsId", &f)?;
+        } else {
+            s.skip_field("tipsId")?;
+        }
+        if let Some(f) = self.loadingPic() {
+            s.serialize_field("loadingPic", &f)?;
+        } else {
+            s.skip_field("loadingPic")?;
+        }
+        if let Some(f) = self.availCheck() {
+            s.serialize_field("availCheck", &f)?;
+        } else {
+            s.skip_field("availCheck")?;
+        }
+        if let Some(f) = self.relateActId() {
+            s.serialize_field("relateActId", &f)?;
+        } else {
+            s.skip_field("relateActId")?;
+        }
+        s.serialize_field("isAllStageActive", &self.isAllStageActive())?;
+        if let Some(f) = self.stageIdList() {
+            s.serialize_field("stageIdList", &f)?;
+        } else {
+            s.skip_field("stageIdList")?;
+        }
+        if let Some(f) = self.zoneIdList() {
+            s.serialize_field("zoneIdList", &f)?;
+        } else {
+            s.skip_field("zoneIdList")?;
+        }
+        if let Some(f) = self.tips() {
+            s.serialize_field("tips", &f)?;
+        } else {
+            s.skip_field("tips")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_TipsMetaDisplayItemBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1194,6 +1525,69 @@ impl core::fmt::Debug for clz_Torappu_TipsMetaDisplayItem<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_TipsMetaDisplayItemT {
+    pub tipsId: Option<String>,
+    pub loadingPic: Option<String>,
+    pub availCheck: Option<Box<clz_Torappu_CommonAvailCheckT>>,
+    pub relateActId: Option<String>,
+    pub isAllStageActive: bool,
+    pub stageIdList: Option<Vec<String>>,
+    pub zoneIdList: Option<Vec<String>>,
+    pub tips: Option<Vec<clz_Torappu_TipDataT>>,
+}
+impl Default for clz_Torappu_TipsMetaDisplayItemT {
+    fn default() -> Self {
+        Self {
+            tipsId: None,
+            loadingPic: None,
+            availCheck: None,
+            relateActId: None,
+            isAllStageActive: false,
+            stageIdList: None,
+            zoneIdList: None,
+            tips: None,
+        }
+    }
+}
+impl clz_Torappu_TipsMetaDisplayItemT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_TipsMetaDisplayItem<'b>> {
+        let tipsId = self.tipsId.as_ref().map(|x| _fbb.create_string(x));
+        let loadingPic = self.loadingPic.as_ref().map(|x| _fbb.create_string(x));
+        let availCheck = self.availCheck.as_ref().map(|x| x.pack(_fbb));
+        let relateActId = self.relateActId.as_ref().map(|x| _fbb.create_string(x));
+        let isAllStageActive = self.isAllStageActive;
+        let stageIdList = self.stageIdList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let zoneIdList = self.zoneIdList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let tips = self.tips.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_TipsMetaDisplayItem::create(
+            _fbb,
+            &clz_Torappu_TipsMetaDisplayItemArgs {
+                tipsId,
+                loadingPic,
+                availCheck,
+                relateActId,
+                isAllStageActive,
+                stageIdList,
+                zoneIdList,
+                tips,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_FlashAlertAfterStageDisplayMetaItemOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1206,7 +1600,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_FlashAlertAfterStageDisplayMeta
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1250,6 +1644,29 @@ impl<'a> clz_Torappu_FlashAlertAfterStageDisplayMetaItem<'a> {
         builder.add_isBasicInfo(args.isBasicInfo);
         builder.add_isAllStageActive(args.isAllStageActive);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_FlashAlertAfterStageDisplayMetaItemT {
+        let flashAlertId = self.flashAlertId().map(|x| x.to_string());
+        let availCheck = self.availCheck().map(|x| Box::new(x.unpack()));
+        let isAllStageActive = self.isAllStageActive();
+        let stageIdList = self
+            .stageIdList()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let relateActId = self.relateActId().map(|x| x.to_string());
+        let detailText = self.detailText().map(|x| x.to_string());
+        let isBasicInfo = self.isBasicInfo();
+        let times = self.times();
+        clz_Torappu_FlashAlertAfterStageDisplayMetaItemT {
+            flashAlertId,
+            availCheck,
+            isAllStageActive,
+            stageIdList,
+            relateActId,
+            detailText,
+            isBasicInfo,
+            times,
+        }
     }
 
     #[inline]
@@ -1427,6 +1844,45 @@ impl<'a> Default for clz_Torappu_FlashAlertAfterStageDisplayMetaItemArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_FlashAlertAfterStageDisplayMetaItem<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_FlashAlertAfterStageDisplayMetaItem", 8)?;
+        if let Some(f) = self.flashAlertId() {
+            s.serialize_field("flashAlertId", &f)?;
+        } else {
+            s.skip_field("flashAlertId")?;
+        }
+        if let Some(f) = self.availCheck() {
+            s.serialize_field("availCheck", &f)?;
+        } else {
+            s.skip_field("availCheck")?;
+        }
+        s.serialize_field("isAllStageActive", &self.isAllStageActive())?;
+        if let Some(f) = self.stageIdList() {
+            s.serialize_field("stageIdList", &f)?;
+        } else {
+            s.skip_field("stageIdList")?;
+        }
+        if let Some(f) = self.relateActId() {
+            s.serialize_field("relateActId", &f)?;
+        } else {
+            s.skip_field("relateActId")?;
+        }
+        if let Some(f) = self.detailText() {
+            s.serialize_field("detailText", &f)?;
+        } else {
+            s.skip_field("detailText")?;
+        }
+        s.serialize_field("isBasicInfo", &self.isBasicInfo())?;
+        s.serialize_field("times", &self.times())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_FlashAlertAfterStageDisplayMetaItemBuilder<
     'a: 'b,
     'b,
@@ -1539,6 +1995,63 @@ impl core::fmt::Debug for clz_Torappu_FlashAlertAfterStageDisplayMetaItem<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_FlashAlertAfterStageDisplayMetaItemT {
+    pub flashAlertId: Option<String>,
+    pub availCheck: Option<Box<clz_Torappu_CommonAvailCheckT>>,
+    pub isAllStageActive: bool,
+    pub stageIdList: Option<Vec<String>>,
+    pub relateActId: Option<String>,
+    pub detailText: Option<String>,
+    pub isBasicInfo: bool,
+    pub times: i32,
+}
+impl Default for clz_Torappu_FlashAlertAfterStageDisplayMetaItemT {
+    fn default() -> Self {
+        Self {
+            flashAlertId: None,
+            availCheck: None,
+            isAllStageActive: false,
+            stageIdList: None,
+            relateActId: None,
+            detailText: None,
+            isBasicInfo: false,
+            times: 0,
+        }
+    }
+}
+impl clz_Torappu_FlashAlertAfterStageDisplayMetaItemT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_FlashAlertAfterStageDisplayMetaItem<'b>> {
+        let flashAlertId = self.flashAlertId.as_ref().map(|x| _fbb.create_string(x));
+        let availCheck = self.availCheck.as_ref().map(|x| x.pack(_fbb));
+        let isAllStageActive = self.isAllStageActive;
+        let stageIdList = self.stageIdList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let relateActId = self.relateActId.as_ref().map(|x| _fbb.create_string(x));
+        let detailText = self.detailText.as_ref().map(|x| _fbb.create_string(x));
+        let isBasicInfo = self.isBasicInfo;
+        let times = self.times;
+        clz_Torappu_FlashAlertAfterStageDisplayMetaItem::create(
+            _fbb,
+            &clz_Torappu_FlashAlertAfterStageDisplayMetaItemArgs {
+                flashAlertId,
+                availCheck,
+                isAllStageActive,
+                stageIdList,
+                relateActId,
+                detailText,
+                isBasicInfo,
+                times,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_MapPreviewDisplayMetaItemOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1551,7 +2064,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_MapPreviewDisplayMetaItem<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1587,6 +2100,23 @@ impl<'a> clz_Torappu_MapPreviewDisplayMetaItem<'a> {
         }
         builder.add_isAllStageActive(args.isAllStageActive);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_MapPreviewDisplayMetaItemT {
+        let mapPreviewPicId = self.mapPreviewPicId().map(|x| x.to_string());
+        let availCheck = self.availCheck().map(|x| Box::new(x.unpack()));
+        let relateActId = self.relateActId().map(|x| x.to_string());
+        let isAllStageActive = self.isAllStageActive();
+        let stageIdList = self
+            .stageIdList()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        clz_Torappu_MapPreviewDisplayMetaItemT {
+            mapPreviewPicId,
+            availCheck,
+            relateActId,
+            isAllStageActive,
+            stageIdList,
+        }
     }
 
     #[inline]
@@ -1708,6 +2238,37 @@ impl<'a> Default for clz_Torappu_MapPreviewDisplayMetaItemArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_MapPreviewDisplayMetaItem<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_MapPreviewDisplayMetaItem", 5)?;
+        if let Some(f) = self.mapPreviewPicId() {
+            s.serialize_field("mapPreviewPicId", &f)?;
+        } else {
+            s.skip_field("mapPreviewPicId")?;
+        }
+        if let Some(f) = self.availCheck() {
+            s.serialize_field("availCheck", &f)?;
+        } else {
+            s.skip_field("availCheck")?;
+        }
+        if let Some(f) = self.relateActId() {
+            s.serialize_field("relateActId", &f)?;
+        } else {
+            s.skip_field("relateActId")?;
+        }
+        s.serialize_field("isAllStageActive", &self.isAllStageActive())?;
+        if let Some(f) = self.stageIdList() {
+            s.serialize_field("stageIdList", &f)?;
+        } else {
+            s.skip_field("stageIdList")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_MapPreviewDisplayMetaItemBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -1789,6 +2350,51 @@ impl core::fmt::Debug for clz_Torappu_MapPreviewDisplayMetaItem<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_MapPreviewDisplayMetaItemT {
+    pub mapPreviewPicId: Option<String>,
+    pub availCheck: Option<Box<clz_Torappu_CommonAvailCheckT>>,
+    pub relateActId: Option<String>,
+    pub isAllStageActive: bool,
+    pub stageIdList: Option<Vec<String>>,
+}
+impl Default for clz_Torappu_MapPreviewDisplayMetaItemT {
+    fn default() -> Self {
+        Self {
+            mapPreviewPicId: None,
+            availCheck: None,
+            relateActId: None,
+            isAllStageActive: false,
+            stageIdList: None,
+        }
+    }
+}
+impl clz_Torappu_MapPreviewDisplayMetaItemT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_MapPreviewDisplayMetaItem<'b>> {
+        let mapPreviewPicId = self.mapPreviewPicId.as_ref().map(|x| _fbb.create_string(x));
+        let availCheck = self.availCheck.as_ref().map(|x| x.pack(_fbb));
+        let relateActId = self.relateActId.as_ref().map(|x| _fbb.create_string(x));
+        let isAllStageActive = self.isAllStageActive;
+        let stageIdList = self.stageIdList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_MapPreviewDisplayMetaItem::create(
+            _fbb,
+            &clz_Torappu_MapPreviewDisplayMetaItemArgs {
+                mapPreviewPicId,
+                availCheck,
+                relateActId,
+                isAllStageActive,
+                stageIdList,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_BattleFinishDisplayMetaItemOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1801,7 +2407,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_BattleFinishDisplayMetaItem<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1849,6 +2455,29 @@ impl<'a> clz_Torappu_BattleFinishDisplayMetaItem<'a> {
         }
         builder.add_isAllStageActive(args.isAllStageActive);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_BattleFinishDisplayMetaItemT {
+        let battleFinishDisplayKey = self.battleFinishDisplayKey().map(|x| x.to_string());
+        let isAllStageActive = self.isAllStageActive();
+        let stageIdList = self
+            .stageIdList()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let availCheck = self.availCheck().map(|x| Box::new(x.unpack()));
+        let relateActId = self.relateActId().map(|x| x.to_string());
+        let overrideStageName = self.overrideStageName().map(|x| x.to_string());
+        let signal = self.signal().map(|x| x.to_string());
+        let overrideCharWord = self.overrideCharWord().map(|x| x.to_string());
+        clz_Torappu_BattleFinishDisplayMetaItemT {
+            battleFinishDisplayKey,
+            isAllStageActive,
+            stageIdList,
+            availCheck,
+            relateActId,
+            overrideStageName,
+            signal,
+            overrideCharWord,
+        }
     }
 
     #[inline]
@@ -2026,6 +2655,52 @@ impl<'a> Default for clz_Torappu_BattleFinishDisplayMetaItemArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_BattleFinishDisplayMetaItem<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_BattleFinishDisplayMetaItem", 8)?;
+        if let Some(f) = self.battleFinishDisplayKey() {
+            s.serialize_field("battleFinishDisplayKey", &f)?;
+        } else {
+            s.skip_field("battleFinishDisplayKey")?;
+        }
+        s.serialize_field("isAllStageActive", &self.isAllStageActive())?;
+        if let Some(f) = self.stageIdList() {
+            s.serialize_field("stageIdList", &f)?;
+        } else {
+            s.skip_field("stageIdList")?;
+        }
+        if let Some(f) = self.availCheck() {
+            s.serialize_field("availCheck", &f)?;
+        } else {
+            s.skip_field("availCheck")?;
+        }
+        if let Some(f) = self.relateActId() {
+            s.serialize_field("relateActId", &f)?;
+        } else {
+            s.skip_field("relateActId")?;
+        }
+        if let Some(f) = self.overrideStageName() {
+            s.serialize_field("overrideStageName", &f)?;
+        } else {
+            s.skip_field("overrideStageName")?;
+        }
+        if let Some(f) = self.signal() {
+            s.serialize_field("signal", &f)?;
+        } else {
+            s.skip_field("signal")?;
+        }
+        if let Some(f) = self.overrideCharWord() {
+            s.serialize_field("overrideCharWord", &f)?;
+        } else {
+            s.skip_field("overrideCharWord")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_BattleFinishDisplayMetaItemBuilder<
     'a: 'b,
     'b,
@@ -2137,6 +2812,72 @@ impl core::fmt::Debug for clz_Torappu_BattleFinishDisplayMetaItem<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_BattleFinishDisplayMetaItemT {
+    pub battleFinishDisplayKey: Option<String>,
+    pub isAllStageActive: bool,
+    pub stageIdList: Option<Vec<String>>,
+    pub availCheck: Option<Box<clz_Torappu_CommonAvailCheckT>>,
+    pub relateActId: Option<String>,
+    pub overrideStageName: Option<String>,
+    pub signal: Option<String>,
+    pub overrideCharWord: Option<String>,
+}
+impl Default for clz_Torappu_BattleFinishDisplayMetaItemT {
+    fn default() -> Self {
+        Self {
+            battleFinishDisplayKey: None,
+            isAllStageActive: false,
+            stageIdList: None,
+            availCheck: None,
+            relateActId: None,
+            overrideStageName: None,
+            signal: None,
+            overrideCharWord: None,
+        }
+    }
+}
+impl clz_Torappu_BattleFinishDisplayMetaItemT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_BattleFinishDisplayMetaItem<'b>> {
+        let battleFinishDisplayKey = self
+            .battleFinishDisplayKey
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let isAllStageActive = self.isAllStageActive;
+        let stageIdList = self.stageIdList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let availCheck = self.availCheck.as_ref().map(|x| x.pack(_fbb));
+        let relateActId = self.relateActId.as_ref().map(|x| _fbb.create_string(x));
+        let overrideStageName = self
+            .overrideStageName
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let signal = self.signal.as_ref().map(|x| _fbb.create_string(x));
+        let overrideCharWord = self
+            .overrideCharWord
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        clz_Torappu_BattleFinishDisplayMetaItem::create(
+            _fbb,
+            &clz_Torappu_BattleFinishDisplayMetaItemArgs {
+                battleFinishDisplayKey,
+                isAllStageActive,
+                stageIdList,
+                availCheck,
+                relateActId,
+                overrideStageName,
+                signal,
+                overrideCharWord,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_BattleLoadingDisplayMetaItemOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2149,7 +2890,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_BattleLoadingDisplayMetaItem<'a
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2185,6 +2926,23 @@ impl<'a> clz_Torappu_BattleLoadingDisplayMetaItem<'a> {
         }
         builder.add_isAllStageActive(args.isAllStageActive);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_BattleLoadingDisplayMetaItemT {
+        let isAllStageActive = self.isAllStageActive();
+        let stageIdList = self
+            .stageIdList()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let battleLoadingPicId = self.battleLoadingPicId().map(|x| x.to_string());
+        let relateActId = self.relateActId().map(|x| x.to_string());
+        let availCheck = self.availCheck().map(|x| Box::new(x.unpack()));
+        clz_Torappu_BattleLoadingDisplayMetaItemT {
+            isAllStageActive,
+            stageIdList,
+            battleLoadingPicId,
+            relateActId,
+            availCheck,
+        }
     }
 
     #[inline]
@@ -2309,6 +3067,37 @@ impl<'a> Default for clz_Torappu_BattleLoadingDisplayMetaItemArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_BattleLoadingDisplayMetaItem<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_BattleLoadingDisplayMetaItem", 5)?;
+        s.serialize_field("isAllStageActive", &self.isAllStageActive())?;
+        if let Some(f) = self.stageIdList() {
+            s.serialize_field("stageIdList", &f)?;
+        } else {
+            s.skip_field("stageIdList")?;
+        }
+        if let Some(f) = self.battleLoadingPicId() {
+            s.serialize_field("battleLoadingPicId", &f)?;
+        } else {
+            s.skip_field("battleLoadingPicId")?;
+        }
+        if let Some(f) = self.relateActId() {
+            s.serialize_field("relateActId", &f)?;
+        } else {
+            s.skip_field("relateActId")?;
+        }
+        if let Some(f) = self.availCheck() {
+            s.serialize_field("availCheck", &f)?;
+        } else {
+            s.skip_field("availCheck")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_BattleLoadingDisplayMetaItemBuilder<
     'a: 'b,
     'b,
@@ -2393,6 +3182,54 @@ impl core::fmt::Debug for clz_Torappu_BattleLoadingDisplayMetaItem<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_BattleLoadingDisplayMetaItemT {
+    pub isAllStageActive: bool,
+    pub stageIdList: Option<Vec<String>>,
+    pub battleLoadingPicId: Option<String>,
+    pub relateActId: Option<String>,
+    pub availCheck: Option<Box<clz_Torappu_CommonAvailCheckT>>,
+}
+impl Default for clz_Torappu_BattleLoadingDisplayMetaItemT {
+    fn default() -> Self {
+        Self {
+            isAllStageActive: false,
+            stageIdList: None,
+            battleLoadingPicId: None,
+            relateActId: None,
+            availCheck: None,
+        }
+    }
+}
+impl clz_Torappu_BattleLoadingDisplayMetaItemT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_BattleLoadingDisplayMetaItem<'b>> {
+        let isAllStageActive = self.isAllStageActive;
+        let stageIdList = self.stageIdList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let battleLoadingPicId = self
+            .battleLoadingPicId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let relateActId = self.relateActId.as_ref().map(|x| _fbb.create_string(x));
+        let availCheck = self.availCheck.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_BattleLoadingDisplayMetaItem::create(
+            _fbb,
+            &clz_Torappu_BattleLoadingDisplayMetaItemArgs {
+                isAllStageActive,
+                stageIdList,
+                battleLoadingPicId,
+                relateActId,
+                availCheck,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_BattleAutoBattleMetaItemOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2405,7 +3242,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_BattleAutoBattleMetaItem<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2441,6 +3278,23 @@ impl<'a> clz_Torappu_BattleAutoBattleMetaItem<'a> {
         }
         builder.add_isAllStageActive(args.isAllStageActive);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_BattleAutoBattleMetaItemT {
+        let battleAutoBattleDisplayKey = self.battleAutoBattleDisplayKey().map(|x| x.to_string());
+        let isAllStageActive = self.isAllStageActive();
+        let relateActId = self.relateActId().map(|x| x.to_string());
+        let stageIdList = self
+            .stageIdList()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let availCheck = self.availCheck().map(|x| Box::new(x.unpack()));
+        clz_Torappu_BattleAutoBattleMetaItemT {
+            battleAutoBattleDisplayKey,
+            isAllStageActive,
+            relateActId,
+            stageIdList,
+            availCheck,
+        }
     }
 
     #[inline]
@@ -2562,6 +3416,37 @@ impl<'a> Default for clz_Torappu_BattleAutoBattleMetaItemArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_BattleAutoBattleMetaItem<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_BattleAutoBattleMetaItem", 5)?;
+        if let Some(f) = self.battleAutoBattleDisplayKey() {
+            s.serialize_field("battleAutoBattleDisplayKey", &f)?;
+        } else {
+            s.skip_field("battleAutoBattleDisplayKey")?;
+        }
+        s.serialize_field("isAllStageActive", &self.isAllStageActive())?;
+        if let Some(f) = self.relateActId() {
+            s.serialize_field("relateActId", &f)?;
+        } else {
+            s.skip_field("relateActId")?;
+        }
+        if let Some(f) = self.stageIdList() {
+            s.serialize_field("stageIdList", &f)?;
+        } else {
+            s.skip_field("stageIdList")?;
+        }
+        if let Some(f) = self.availCheck() {
+            s.serialize_field("availCheck", &f)?;
+        } else {
+            s.skip_field("availCheck")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_BattleAutoBattleMetaItemBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2648,6 +3533,54 @@ impl core::fmt::Debug for clz_Torappu_BattleAutoBattleMetaItem<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_BattleAutoBattleMetaItemT {
+    pub battleAutoBattleDisplayKey: Option<String>,
+    pub isAllStageActive: bool,
+    pub relateActId: Option<String>,
+    pub stageIdList: Option<Vec<String>>,
+    pub availCheck: Option<Box<clz_Torappu_CommonAvailCheckT>>,
+}
+impl Default for clz_Torappu_BattleAutoBattleMetaItemT {
+    fn default() -> Self {
+        Self {
+            battleAutoBattleDisplayKey: None,
+            isAllStageActive: false,
+            relateActId: None,
+            stageIdList: None,
+            availCheck: None,
+        }
+    }
+}
+impl clz_Torappu_BattleAutoBattleMetaItemT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_BattleAutoBattleMetaItem<'b>> {
+        let battleAutoBattleDisplayKey = self
+            .battleAutoBattleDisplayKey
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let isAllStageActive = self.isAllStageActive;
+        let relateActId = self.relateActId.as_ref().map(|x| _fbb.create_string(x));
+        let stageIdList = self.stageIdList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let availCheck = self.availCheck.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_BattleAutoBattleMetaItem::create(
+            _fbb,
+            &clz_Torappu_BattleAutoBattleMetaItemArgs {
+                battleAutoBattleDisplayKey,
+                isAllStageActive,
+                relateActId,
+                stageIdList,
+                availCheck,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_MetaUIDisplayTableOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2660,7 +3593,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_MetaUIDisplayTable<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2702,6 +3635,35 @@ impl<'a> clz_Torappu_MetaUIDisplayTable<'a> {
             builder.add_tipsMetaList(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_MetaUIDisplayTableT {
+        let tipsMetaList = self
+            .tipsMetaList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let flashAlertAfterStageItemList = self
+            .flashAlertAfterStageItemList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let mapPreviewDisplayMetaItemList = self
+            .mapPreviewDisplayMetaItemList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let battleFinishDisplayMetaItemList = self
+            .battleFinishDisplayMetaItemList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let battleLoadingDisplayMetaItemList = self
+            .battleLoadingDisplayMetaItemList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let battleAutoBattleMetaItemList = self
+            .battleAutoBattleMetaItemList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_MetaUIDisplayTableT {
+            tipsMetaList,
+            flashAlertAfterStageItemList,
+            mapPreviewDisplayMetaItemList,
+            battleFinishDisplayMetaItemList,
+            battleLoadingDisplayMetaItemList,
+            battleAutoBattleMetaItemList,
+        }
     }
 
     #[inline]
@@ -2976,6 +3938,46 @@ impl<'a> Default for clz_Torappu_MetaUIDisplayTableArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_MetaUIDisplayTable<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_MetaUIDisplayTable", 6)?;
+        if let Some(f) = self.tipsMetaList() {
+            s.serialize_field("tipsMetaList", &f)?;
+        } else {
+            s.skip_field("tipsMetaList")?;
+        }
+        if let Some(f) = self.flashAlertAfterStageItemList() {
+            s.serialize_field("flashAlertAfterStageItemList", &f)?;
+        } else {
+            s.skip_field("flashAlertAfterStageItemList")?;
+        }
+        if let Some(f) = self.mapPreviewDisplayMetaItemList() {
+            s.serialize_field("mapPreviewDisplayMetaItemList", &f)?;
+        } else {
+            s.skip_field("mapPreviewDisplayMetaItemList")?;
+        }
+        if let Some(f) = self.battleFinishDisplayMetaItemList() {
+            s.serialize_field("battleFinishDisplayMetaItemList", &f)?;
+        } else {
+            s.skip_field("battleFinishDisplayMetaItemList")?;
+        }
+        if let Some(f) = self.battleLoadingDisplayMetaItemList() {
+            s.serialize_field("battleLoadingDisplayMetaItemList", &f)?;
+        } else {
+            s.skip_field("battleLoadingDisplayMetaItemList")?;
+        }
+        if let Some(f) = self.battleAutoBattleMetaItemList() {
+            s.serialize_field("battleAutoBattleMetaItemList", &f)?;
+        } else {
+            s.skip_field("battleAutoBattleMetaItemList")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_MetaUIDisplayTableBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3115,6 +4117,72 @@ impl core::fmt::Debug for clz_Torappu_MetaUIDisplayTable<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_MetaUIDisplayTableT {
+    pub tipsMetaList: Option<Vec<clz_Torappu_TipsMetaDisplayItemT>>,
+    pub flashAlertAfterStageItemList: Option<Vec<clz_Torappu_FlashAlertAfterStageDisplayMetaItemT>>,
+    pub mapPreviewDisplayMetaItemList: Option<Vec<clz_Torappu_MapPreviewDisplayMetaItemT>>,
+    pub battleFinishDisplayMetaItemList: Option<Vec<clz_Torappu_BattleFinishDisplayMetaItemT>>,
+    pub battleLoadingDisplayMetaItemList: Option<Vec<clz_Torappu_BattleLoadingDisplayMetaItemT>>,
+    pub battleAutoBattleMetaItemList: Option<Vec<clz_Torappu_BattleAutoBattleMetaItemT>>,
+}
+impl Default for clz_Torappu_MetaUIDisplayTableT {
+    fn default() -> Self {
+        Self {
+            tipsMetaList: None,
+            flashAlertAfterStageItemList: None,
+            mapPreviewDisplayMetaItemList: None,
+            battleFinishDisplayMetaItemList: None,
+            battleLoadingDisplayMetaItemList: None,
+            battleAutoBattleMetaItemList: None,
+        }
+    }
+}
+impl clz_Torappu_MetaUIDisplayTableT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_MetaUIDisplayTable<'b>> {
+        let tipsMetaList = self.tipsMetaList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let flashAlertAfterStageItemList = self.flashAlertAfterStageItemList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let mapPreviewDisplayMetaItemList = self.mapPreviewDisplayMetaItemList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let battleFinishDisplayMetaItemList =
+            self.battleFinishDisplayMetaItemList.as_ref().map(|x| {
+                let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+                _fbb.create_vector(&w)
+            });
+        let battleLoadingDisplayMetaItemList =
+            self.battleLoadingDisplayMetaItemList.as_ref().map(|x| {
+                let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+                _fbb.create_vector(&w)
+            });
+        let battleAutoBattleMetaItemList = self.battleAutoBattleMetaItemList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_MetaUIDisplayTable::create(
+            _fbb,
+            &clz_Torappu_MetaUIDisplayTableArgs {
+                tipsMetaList,
+                flashAlertAfterStageItemList,
+                mapPreviewDisplayMetaItemList,
+                battleFinishDisplayMetaItemList,
+                battleLoadingDisplayMetaItemList,
+                battleAutoBattleMetaItemList,
+            },
+        )
+    }
+}
 #[inline]
 /// Verifies that a buffer of bytes contains a `clz_Torappu_MetaUIDisplayTable`
 /// and returns it.
@@ -3172,7 +4240,7 @@ pub fn size_prefixed_root_as_clz_torappu_meta_uidisplay_table_with_opts<'b, 'o>(
 pub unsafe fn root_as_clz_torappu_meta_uidisplay_table_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_MetaUIDisplayTable {
-    flatbuffers::root_unchecked::<clz_Torappu_MetaUIDisplayTable>(buf)
+    unsafe { flatbuffers::root_unchecked::<clz_Torappu_MetaUIDisplayTable>(buf) }
 }
 #[inline]
 /// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_MetaUIDisplayTable and returns it.
@@ -3181,7 +4249,7 @@ pub unsafe fn root_as_clz_torappu_meta_uidisplay_table_unchecked(
 pub unsafe fn size_prefixed_root_as_clz_torappu_meta_uidisplay_table_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_MetaUIDisplayTable {
-    flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_MetaUIDisplayTable>(buf)
+    unsafe { flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_MetaUIDisplayTable>(buf) }
 }
 #[inline]
 pub fn finish_clz_torappu_meta_uidisplay_table_buffer<'a, 'b, A: flatbuffers::Allocator + 'a>(

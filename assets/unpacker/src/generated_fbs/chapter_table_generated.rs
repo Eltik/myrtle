@@ -5,6 +5,9 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+use self::serde::ser::{Serialize, SerializeStruct, Serializer};
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
@@ -20,7 +23,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ChapterData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -68,6 +71,27 @@ impl<'a> clz_Torappu_ChapterData<'a> {
             builder.add_chapterId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ChapterDataT {
+        let chapterId = self.chapterId().map(|x| x.to_string());
+        let chapterName = self.chapterName().map(|x| x.to_string());
+        let chapterName2 = self.chapterName2().map(|x| x.to_string());
+        let chapterIndex = self.chapterIndex();
+        let preposedChapterId = self.preposedChapterId().map(|x| x.to_string());
+        let startZoneId = self.startZoneId().map(|x| x.to_string());
+        let endZoneId = self.endZoneId().map(|x| x.to_string());
+        let chapterEndStageId = self.chapterEndStageId().map(|x| x.to_string());
+        clz_Torappu_ChapterDataT {
+            chapterId,
+            chapterName,
+            chapterName2,
+            chapterIndex,
+            preposedChapterId,
+            startZoneId,
+            endZoneId,
+            chapterEndStageId,
+        }
     }
 
     #[inline]
@@ -241,6 +265,52 @@ impl<'a> Default for clz_Torappu_ChapterDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ChapterData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ChapterData", 8)?;
+        if let Some(f) = self.chapterId() {
+            s.serialize_field("chapterId", &f)?;
+        } else {
+            s.skip_field("chapterId")?;
+        }
+        if let Some(f) = self.chapterName() {
+            s.serialize_field("chapterName", &f)?;
+        } else {
+            s.skip_field("chapterName")?;
+        }
+        if let Some(f) = self.chapterName2() {
+            s.serialize_field("chapterName2", &f)?;
+        } else {
+            s.skip_field("chapterName2")?;
+        }
+        s.serialize_field("chapterIndex", &self.chapterIndex())?;
+        if let Some(f) = self.preposedChapterId() {
+            s.serialize_field("preposedChapterId", &f)?;
+        } else {
+            s.skip_field("preposedChapterId")?;
+        }
+        if let Some(f) = self.startZoneId() {
+            s.serialize_field("startZoneId", &f)?;
+        } else {
+            s.skip_field("startZoneId")?;
+        }
+        if let Some(f) = self.endZoneId() {
+            s.serialize_field("endZoneId", &f)?;
+        } else {
+            s.skip_field("endZoneId")?;
+        }
+        if let Some(f) = self.chapterEndStageId() {
+            s.serialize_field("chapterEndStageId", &f)?;
+        } else {
+            s.skip_field("chapterEndStageId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ChapterDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -331,6 +401,66 @@ impl core::fmt::Debug for clz_Torappu_ChapterData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ChapterDataT {
+    pub chapterId: Option<String>,
+    pub chapterName: Option<String>,
+    pub chapterName2: Option<String>,
+    pub chapterIndex: i32,
+    pub preposedChapterId: Option<String>,
+    pub startZoneId: Option<String>,
+    pub endZoneId: Option<String>,
+    pub chapterEndStageId: Option<String>,
+}
+impl Default for clz_Torappu_ChapterDataT {
+    fn default() -> Self {
+        Self {
+            chapterId: None,
+            chapterName: None,
+            chapterName2: None,
+            chapterIndex: 0,
+            preposedChapterId: None,
+            startZoneId: None,
+            endZoneId: None,
+            chapterEndStageId: None,
+        }
+    }
+}
+impl clz_Torappu_ChapterDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ChapterData<'b>> {
+        let chapterId = self.chapterId.as_ref().map(|x| _fbb.create_string(x));
+        let chapterName = self.chapterName.as_ref().map(|x| _fbb.create_string(x));
+        let chapterName2 = self.chapterName2.as_ref().map(|x| _fbb.create_string(x));
+        let chapterIndex = self.chapterIndex;
+        let preposedChapterId = self
+            .preposedChapterId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let startZoneId = self.startZoneId.as_ref().map(|x| _fbb.create_string(x));
+        let endZoneId = self.endZoneId.as_ref().map(|x| _fbb.create_string(x));
+        let chapterEndStageId = self
+            .chapterEndStageId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        clz_Torappu_ChapterData::create(
+            _fbb,
+            &clz_Torappu_ChapterDataArgs {
+                chapterId,
+                chapterName,
+                chapterName2,
+                chapterIndex,
+                preposedChapterId,
+                startZoneId,
+                endZoneId,
+                chapterEndStageId,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_ChapterDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -343,7 +473,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_ChapterData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -369,6 +499,15 @@ impl<'a> dict__string__clz_Torappu_ChapterData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_ChapterDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_ChapterDataT { key, value }
     }
 
     #[inline]
@@ -442,6 +581,22 @@ impl<'a> Default for dict__string__clz_Torappu_ChapterDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_ChapterData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_ChapterData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_ChapterDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -492,6 +647,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_ChapterData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_ChapterDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_ChapterDataT>>,
+}
+impl Default for dict__string__clz_Torappu_ChapterDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_ChapterDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ChapterData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_ChapterData::create(
+            _fbb,
+            &dict__string__clz_Torappu_ChapterDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SimpleKVTable_clz_Torappu_ChapterDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -504,7 +689,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SimpleKVTable_clz_Torappu_Chapt
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -526,6 +711,13 @@ impl<'a> clz_Torappu_SimpleKVTable_clz_Torappu_ChapterData<'a> {
             builder.add_chapters(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SimpleKVTable_clz_Torappu_ChapterDataT {
+        let chapters = self
+            .chapters()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_SimpleKVTable_clz_Torappu_ChapterDataT { chapters }
     }
 
     #[inline]
@@ -589,6 +781,22 @@ impl<'a> Default for clz_Torappu_SimpleKVTable_clz_Torappu_ChapterDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SimpleKVTable_clz_Torappu_ChapterData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_SimpleKVTable_clz_Torappu_ChapterData", 1)?;
+        if let Some(f) = self.chapters() {
+            s.serialize_field("chapters", &f)?;
+        } else {
+            s.skip_field("chapters")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SimpleKVTable_clz_Torappu_ChapterDataBuilder<
     'a: 'b,
     'b,
@@ -639,6 +847,31 @@ impl core::fmt::Debug for clz_Torappu_SimpleKVTable_clz_Torappu_ChapterData<'_> 
         let mut ds = f.debug_struct("clz_Torappu_SimpleKVTable_clz_Torappu_ChapterData");
         ds.field("chapters", &self.chapters());
         ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SimpleKVTable_clz_Torappu_ChapterDataT {
+    pub chapters: Option<Vec<dict__string__clz_Torappu_ChapterDataT>>,
+}
+impl Default for clz_Torappu_SimpleKVTable_clz_Torappu_ChapterDataT {
+    fn default() -> Self {
+        Self { chapters: None }
+    }
+}
+impl clz_Torappu_SimpleKVTable_clz_Torappu_ChapterDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SimpleKVTable_clz_Torappu_ChapterData<'b>> {
+        let chapters = self.chapters.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SimpleKVTable_clz_Torappu_ChapterData::create(
+            _fbb,
+            &clz_Torappu_SimpleKVTable_clz_Torappu_ChapterDataArgs { chapters },
+        )
     }
 }
 #[inline]
@@ -703,7 +936,7 @@ pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_chapter_data
 pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_chapter_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SimpleKVTable_clz_Torappu_ChapterData {
-    flatbuffers::root_unchecked::<clz_Torappu_SimpleKVTable_clz_Torappu_ChapterData>(buf)
+    unsafe { flatbuffers::root_unchecked::<clz_Torappu_SimpleKVTable_clz_Torappu_ChapterData>(buf) }
 }
 #[inline]
 /// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_SimpleKVTable_clz_Torappu_ChapterData and returns it.
@@ -712,9 +945,11 @@ pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_chapter_data_unchec
 pub unsafe fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_chapter_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SimpleKVTable_clz_Torappu_ChapterData {
-    flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_SimpleKVTable_clz_Torappu_ChapterData>(
-        buf,
-    )
+    unsafe {
+        flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_SimpleKVTable_clz_Torappu_ChapterData>(
+            buf,
+        )
+    }
 }
 #[inline]
 pub fn finish_clz_torappu_simple_kvtable_clz_torappu_chapter_data_buffer<

@@ -5,6 +5,9 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+use self::serde::ser::{Serialize, SerializeStruct, Serializer};
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
@@ -100,11 +103,24 @@ impl core::fmt::Debug for enum__Torappu_MissionType {
         }
     }
 }
+impl Serialize for enum__Torappu_MissionType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_MissionType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_MissionType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -113,7 +129,9 @@ impl flatbuffers::Push for enum__Torappu_MissionType {
     type Output = enum__Torappu_MissionType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -551,11 +569,24 @@ impl core::fmt::Debug for enum__Torappu_ItemType {
         }
     }
 }
+impl Serialize for enum__Torappu_ItemType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_ItemType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ItemType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -564,7 +595,9 @@ impl flatbuffers::Push for enum__Torappu_ItemType {
     type Output = enum__Torappu_ItemType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -646,11 +679,24 @@ impl core::fmt::Debug for enum__Torappu_MissionItemBgType {
         }
     }
 }
+impl Serialize for enum__Torappu_MissionItemBgType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_MissionItemBgType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_MissionItemBgType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -659,7 +705,9 @@ impl flatbuffers::Push for enum__Torappu_MissionItemBgType {
     type Output = enum__Torappu_MissionItemBgType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -769,11 +817,24 @@ impl core::fmt::Debug for enum__Torappu_ReturnV2JumpType {
         }
     }
 }
+impl Serialize for enum__Torappu_ReturnV2JumpType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_ReturnV2JumpType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ReturnV2JumpType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -782,7 +843,9 @@ impl flatbuffers::Push for enum__Torappu_ReturnV2JumpType {
     type Output = enum__Torappu_ReturnV2JumpType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -824,7 +887,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_OpenServerScheduleItem<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -866,6 +929,25 @@ impl<'a> clz_Torappu_OpenServerScheduleItem<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_OpenServerScheduleItemT {
+        let id = self.id().map(|x| x.to_string());
+        let versionId = self.versionId().map(|x| x.to_string());
+        let startTs = self.startTs();
+        let endTs = self.endTs();
+        let totalCheckinDescption = self.totalCheckinDescption().map(|x| x.to_string());
+        let chainLoginDescription = self.chainLoginDescription().map(|x| x.to_string());
+        let charImg = self.charImg().map(|x| x.to_string());
+        clz_Torappu_OpenServerScheduleItemT {
+            id,
+            versionId,
+            startTs,
+            endTs,
+            totalCheckinDescption,
+            chainLoginDescription,
+            charImg,
+        }
     }
 
     #[inline]
@@ -1007,6 +1089,43 @@ impl<'a> Default for clz_Torappu_OpenServerScheduleItemArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_OpenServerScheduleItem<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_OpenServerScheduleItem", 7)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        if let Some(f) = self.versionId() {
+            s.serialize_field("versionId", &f)?;
+        } else {
+            s.skip_field("versionId")?;
+        }
+        s.serialize_field("startTs", &self.startTs())?;
+        s.serialize_field("endTs", &self.endTs())?;
+        if let Some(f) = self.totalCheckinDescption() {
+            s.serialize_field("totalCheckinDescption", &f)?;
+        } else {
+            s.skip_field("totalCheckinDescption")?;
+        }
+        if let Some(f) = self.chainLoginDescription() {
+            s.serialize_field("chainLoginDescription", &f)?;
+        } else {
+            s.skip_field("chainLoginDescription")?;
+        }
+        if let Some(f) = self.charImg() {
+            s.serialize_field("charImg", &f)?;
+        } else {
+            s.skip_field("charImg")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_OpenServerScheduleItemBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1095,6 +1214,62 @@ impl core::fmt::Debug for clz_Torappu_OpenServerScheduleItem<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_OpenServerScheduleItemT {
+    pub id: Option<String>,
+    pub versionId: Option<String>,
+    pub startTs: i32,
+    pub endTs: i32,
+    pub totalCheckinDescption: Option<String>,
+    pub chainLoginDescription: Option<String>,
+    pub charImg: Option<String>,
+}
+impl Default for clz_Torappu_OpenServerScheduleItemT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            versionId: None,
+            startTs: 0,
+            endTs: 0,
+            totalCheckinDescption: None,
+            chainLoginDescription: None,
+            charImg: None,
+        }
+    }
+}
+impl clz_Torappu_OpenServerScheduleItemT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_OpenServerScheduleItem<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let versionId = self.versionId.as_ref().map(|x| _fbb.create_string(x));
+        let startTs = self.startTs;
+        let endTs = self.endTs;
+        let totalCheckinDescption = self
+            .totalCheckinDescption
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let chainLoginDescription = self
+            .chainLoginDescription
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let charImg = self.charImg.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_OpenServerScheduleItem::create(
+            _fbb,
+            &clz_Torappu_OpenServerScheduleItemArgs {
+                id,
+                versionId,
+                startTs,
+                endTs,
+                totalCheckinDescption,
+                chainLoginDescription,
+                charImg,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_MissionDisplayRewardsOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1107,7 +1282,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_MissionDisplayRewards<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1133,6 +1308,13 @@ impl<'a> clz_Torappu_MissionDisplayRewards<'a> {
         }
         builder.add_type_(args.type_);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_MissionDisplayRewardsT {
+        let type_ = self.type_();
+        let id = self.id().map(|x| x.to_string());
+        let count = self.count();
+        clz_Torappu_MissionDisplayRewardsT { type_, id, count }
     }
 
     #[inline]
@@ -1205,6 +1387,23 @@ impl<'a> Default for clz_Torappu_MissionDisplayRewardsArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_MissionDisplayRewards<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_MissionDisplayRewards", 3)?;
+        s.serialize_field("type_", &self.type_())?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        s.serialize_field("count", &self.count())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_MissionDisplayRewardsBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1258,6 +1457,36 @@ impl core::fmt::Debug for clz_Torappu_MissionDisplayRewards<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_MissionDisplayRewardsT {
+    pub type_: enum__Torappu_ItemType,
+    pub id: Option<String>,
+    pub count: i32,
+}
+impl Default for clz_Torappu_MissionDisplayRewardsT {
+    fn default() -> Self {
+        Self {
+            type_: enum__Torappu_ItemType::NONE,
+            id: None,
+            count: 0,
+        }
+    }
+}
+impl clz_Torappu_MissionDisplayRewardsT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_MissionDisplayRewards<'b>> {
+        let type_ = self.type_;
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let count = self.count;
+        clz_Torappu_MissionDisplayRewards::create(
+            _fbb,
+            &clz_Torappu_MissionDisplayRewardsArgs { type_, id, count },
+        )
+    }
+}
 pub enum clz_Torappu_MissionGroupOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1270,7 +1499,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_MissionGroup<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1318,6 +1547,33 @@ impl<'a> clz_Torappu_MissionGroup<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_MissionGroupT {
+        let id = self.id().map(|x| x.to_string());
+        let title = self.title().map(|x| x.to_string());
+        let type_ = self.type_();
+        let preMissionGroup = self.preMissionGroup().map(|x| x.to_string());
+        let period = self.period().map(|x| x.into_iter().collect());
+        let rewards = self
+            .rewards()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let missionIds = self
+            .missionIds()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let startTs = self.startTs();
+        let endTs = self.endTs();
+        clz_Torappu_MissionGroupT {
+            id,
+            title,
+            type_,
+            preMissionGroup,
+            period,
+            rewards,
+            missionIds,
+            startTs,
+            endTs,
+        }
     }
 
     #[inline]
@@ -1510,6 +1766,49 @@ impl<'a> Default for clz_Torappu_MissionGroupArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_MissionGroup<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_MissionGroup", 9)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        if let Some(f) = self.title() {
+            s.serialize_field("title", &f)?;
+        } else {
+            s.skip_field("title")?;
+        }
+        s.serialize_field("type_", &self.type_())?;
+        if let Some(f) = self.preMissionGroup() {
+            s.serialize_field("preMissionGroup", &f)?;
+        } else {
+            s.skip_field("preMissionGroup")?;
+        }
+        if let Some(f) = self.period() {
+            s.serialize_field("period", &f)?;
+        } else {
+            s.skip_field("period")?;
+        }
+        if let Some(f) = self.rewards() {
+            s.serialize_field("rewards", &f)?;
+        } else {
+            s.skip_field("rewards")?;
+        }
+        if let Some(f) = self.missionIds() {
+            s.serialize_field("missionIds", &f)?;
+        } else {
+            s.skip_field("missionIds")?;
+        }
+        s.serialize_field("startTs", &self.startTs())?;
+        s.serialize_field("endTs", &self.endTs())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_MissionGroupBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1618,6 +1917,70 @@ impl core::fmt::Debug for clz_Torappu_MissionGroup<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_MissionGroupT {
+    pub id: Option<String>,
+    pub title: Option<String>,
+    pub type_: enum__Torappu_MissionType,
+    pub preMissionGroup: Option<String>,
+    pub period: Option<Vec<i32>>,
+    pub rewards: Option<Vec<clz_Torappu_MissionDisplayRewardsT>>,
+    pub missionIds: Option<Vec<String>>,
+    pub startTs: i64,
+    pub endTs: i64,
+}
+impl Default for clz_Torappu_MissionGroupT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            title: None,
+            type_: enum__Torappu_MissionType::UNKNOWN,
+            preMissionGroup: None,
+            period: None,
+            rewards: None,
+            missionIds: None,
+            startTs: 0,
+            endTs: 0,
+        }
+    }
+}
+impl clz_Torappu_MissionGroupT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_MissionGroup<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let title = self.title.as_ref().map(|x| _fbb.create_string(x));
+        let type_ = self.type_;
+        let preMissionGroup = self.preMissionGroup.as_ref().map(|x| _fbb.create_string(x));
+        let period = self.period.as_ref().map(|x| _fbb.create_vector(x));
+        let rewards = self.rewards.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let missionIds = self.missionIds.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let startTs = self.startTs;
+        let endTs = self.endTs;
+        clz_Torappu_MissionGroup::create(
+            _fbb,
+            &clz_Torappu_MissionGroupArgs {
+                id,
+                title,
+                type_,
+                preMissionGroup,
+                period,
+                rewards,
+                missionIds,
+                startTs,
+                endTs,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_MissionDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1630,7 +1993,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_MissionData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1712,6 +2075,57 @@ impl<'a> clz_Torappu_MissionData<'a> {
         }
         builder.add_haveSubMissionToUnlock(args.haveSubMissionToUnlock);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_MissionDataT {
+        let id = self.id().map(|x| x.to_string());
+        let sortId = self.sortId();
+        let description = self.description().map(|x| x.to_string());
+        let type_ = self.type_();
+        let itemBgType = self.itemBgType();
+        let preMissionIds = self
+            .preMissionIds()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let template = self.template().map(|x| x.to_string());
+        let templateType = self.templateType().map(|x| x.to_string());
+        let param = self
+            .param()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let unlockCondition = self.unlockCondition().map(|x| x.to_string());
+        let unlockParam = self
+            .unlockParam()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let missionGroup = self.missionGroup().map(|x| x.to_string());
+        let toPage = self.toPage().map(|x| x.to_string());
+        let periodicalPoint = self.periodicalPoint();
+        let rewards = self
+            .rewards()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let backImagePath = self.backImagePath().map(|x| x.to_string());
+        let foldId = self.foldId().map(|x| x.to_string());
+        let haveSubMissionToUnlock = self.haveSubMissionToUnlock();
+        let countEndTs = self.countEndTs();
+        clz_Torappu_MissionDataT {
+            id,
+            sortId,
+            description,
+            type_,
+            itemBgType,
+            preMissionIds,
+            template,
+            templateType,
+            param,
+            unlockCondition,
+            unlockParam,
+            missionGroup,
+            toPage,
+            periodicalPoint,
+            rewards,
+            backImagePath,
+            foldId,
+            haveSubMissionToUnlock,
+            countEndTs,
+        }
     }
 
     #[inline]
@@ -2086,6 +2500,87 @@ impl<'a> Default for clz_Torappu_MissionDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_MissionData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_MissionData", 19)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        s.serialize_field("sortId", &self.sortId())?;
+        if let Some(f) = self.description() {
+            s.serialize_field("description", &f)?;
+        } else {
+            s.skip_field("description")?;
+        }
+        s.serialize_field("type_", &self.type_())?;
+        s.serialize_field("itemBgType", &self.itemBgType())?;
+        if let Some(f) = self.preMissionIds() {
+            s.serialize_field("preMissionIds", &f)?;
+        } else {
+            s.skip_field("preMissionIds")?;
+        }
+        if let Some(f) = self.template() {
+            s.serialize_field("template", &f)?;
+        } else {
+            s.skip_field("template")?;
+        }
+        if let Some(f) = self.templateType() {
+            s.serialize_field("templateType", &f)?;
+        } else {
+            s.skip_field("templateType")?;
+        }
+        if let Some(f) = self.param() {
+            s.serialize_field("param", &f)?;
+        } else {
+            s.skip_field("param")?;
+        }
+        if let Some(f) = self.unlockCondition() {
+            s.serialize_field("unlockCondition", &f)?;
+        } else {
+            s.skip_field("unlockCondition")?;
+        }
+        if let Some(f) = self.unlockParam() {
+            s.serialize_field("unlockParam", &f)?;
+        } else {
+            s.skip_field("unlockParam")?;
+        }
+        if let Some(f) = self.missionGroup() {
+            s.serialize_field("missionGroup", &f)?;
+        } else {
+            s.skip_field("missionGroup")?;
+        }
+        if let Some(f) = self.toPage() {
+            s.serialize_field("toPage", &f)?;
+        } else {
+            s.skip_field("toPage")?;
+        }
+        s.serialize_field("periodicalPoint", &self.periodicalPoint())?;
+        if let Some(f) = self.rewards() {
+            s.serialize_field("rewards", &f)?;
+        } else {
+            s.skip_field("rewards")?;
+        }
+        if let Some(f) = self.backImagePath() {
+            s.serialize_field("backImagePath", &f)?;
+        } else {
+            s.skip_field("backImagePath")?;
+        }
+        if let Some(f) = self.foldId() {
+            s.serialize_field("foldId", &f)?;
+        } else {
+            s.skip_field("foldId")?;
+        }
+        s.serialize_field("haveSubMissionToUnlock", &self.haveSubMissionToUnlock())?;
+        s.serialize_field("countEndTs", &self.countEndTs())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_MissionDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2287,6 +2782,116 @@ impl core::fmt::Debug for clz_Torappu_MissionData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_MissionDataT {
+    pub id: Option<String>,
+    pub sortId: i32,
+    pub description: Option<String>,
+    pub type_: enum__Torappu_MissionType,
+    pub itemBgType: enum__Torappu_MissionItemBgType,
+    pub preMissionIds: Option<Vec<String>>,
+    pub template: Option<String>,
+    pub templateType: Option<String>,
+    pub param: Option<Vec<String>>,
+    pub unlockCondition: Option<String>,
+    pub unlockParam: Option<Vec<String>>,
+    pub missionGroup: Option<String>,
+    pub toPage: Option<String>,
+    pub periodicalPoint: i32,
+    pub rewards: Option<Vec<clz_Torappu_MissionDisplayRewardsT>>,
+    pub backImagePath: Option<String>,
+    pub foldId: Option<String>,
+    pub haveSubMissionToUnlock: bool,
+    pub countEndTs: i64,
+}
+impl Default for clz_Torappu_MissionDataT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            sortId: 0,
+            description: None,
+            type_: enum__Torappu_MissionType::UNKNOWN,
+            itemBgType: enum__Torappu_MissionItemBgType::COMMON,
+            preMissionIds: None,
+            template: None,
+            templateType: None,
+            param: None,
+            unlockCondition: None,
+            unlockParam: None,
+            missionGroup: None,
+            toPage: None,
+            periodicalPoint: 0,
+            rewards: None,
+            backImagePath: None,
+            foldId: None,
+            haveSubMissionToUnlock: false,
+            countEndTs: 0,
+        }
+    }
+}
+impl clz_Torappu_MissionDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_MissionData<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        let description = self.description.as_ref().map(|x| _fbb.create_string(x));
+        let type_ = self.type_;
+        let itemBgType = self.itemBgType;
+        let preMissionIds = self.preMissionIds.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let template = self.template.as_ref().map(|x| _fbb.create_string(x));
+        let templateType = self.templateType.as_ref().map(|x| _fbb.create_string(x));
+        let param = self.param.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let unlockCondition = self.unlockCondition.as_ref().map(|x| _fbb.create_string(x));
+        let unlockParam = self.unlockParam.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let missionGroup = self.missionGroup.as_ref().map(|x| _fbb.create_string(x));
+        let toPage = self.toPage.as_ref().map(|x| _fbb.create_string(x));
+        let periodicalPoint = self.periodicalPoint;
+        let rewards = self.rewards.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let backImagePath = self.backImagePath.as_ref().map(|x| _fbb.create_string(x));
+        let foldId = self.foldId.as_ref().map(|x| _fbb.create_string(x));
+        let haveSubMissionToUnlock = self.haveSubMissionToUnlock;
+        let countEndTs = self.countEndTs;
+        clz_Torappu_MissionData::create(
+            _fbb,
+            &clz_Torappu_MissionDataArgs {
+                id,
+                sortId,
+                description,
+                type_,
+                itemBgType,
+                preMissionIds,
+                template,
+                templateType,
+                param,
+                unlockCondition,
+                unlockParam,
+                missionGroup,
+                toPage,
+                periodicalPoint,
+                rewards,
+                backImagePath,
+                foldId,
+                haveSubMissionToUnlock,
+                countEndTs,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_OpenServerItemDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2299,7 +2904,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_OpenServerItemData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2329,6 +2934,19 @@ impl<'a> clz_Torappu_OpenServerItemData<'a> {
             builder.add_itemId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_OpenServerItemDataT {
+        let itemId = self.itemId().map(|x| x.to_string());
+        let itemType = self.itemType();
+        let count = self.count();
+        let name = self.name().map(|x| x.to_string());
+        clz_Torappu_OpenServerItemDataT {
+            itemId,
+            itemType,
+            count,
+            name,
+        }
     }
 
     #[inline]
@@ -2416,6 +3034,28 @@ impl<'a> Default for clz_Torappu_OpenServerItemDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_OpenServerItemData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_OpenServerItemData", 4)?;
+        if let Some(f) = self.itemId() {
+            s.serialize_field("itemId", &f)?;
+        } else {
+            s.skip_field("itemId")?;
+        }
+        s.serialize_field("itemType", &self.itemType())?;
+        s.serialize_field("count", &self.count())?;
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_OpenServerItemDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2475,6 +3115,44 @@ impl core::fmt::Debug for clz_Torappu_OpenServerItemData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_OpenServerItemDataT {
+    pub itemId: Option<String>,
+    pub itemType: enum__Torappu_ItemType,
+    pub count: i32,
+    pub name: Option<String>,
+}
+impl Default for clz_Torappu_OpenServerItemDataT {
+    fn default() -> Self {
+        Self {
+            itemId: None,
+            itemType: enum__Torappu_ItemType::NONE,
+            count: 0,
+            name: None,
+        }
+    }
+}
+impl clz_Torappu_OpenServerItemDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_OpenServerItemData<'b>> {
+        let itemId = self.itemId.as_ref().map(|x| _fbb.create_string(x));
+        let itemType = self.itemType;
+        let count = self.count;
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_OpenServerItemData::create(
+            _fbb,
+            &clz_Torappu_OpenServerItemDataArgs {
+                itemId,
+                itemType,
+                count,
+                name,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_TotalCheckinDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2487,7 +3165,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_TotalCheckinData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2513,6 +3191,17 @@ impl<'a> clz_Torappu_TotalCheckinData<'a> {
         }
         builder.add_order(args.order);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_TotalCheckinDataT {
+        let order = self.order();
+        let item = self.item().map(|x| Box::new(x.unpack()));
+        let colorId = self.colorId();
+        clz_Torappu_TotalCheckinDataT {
+            order,
+            item,
+            colorId,
+        }
     }
 
     #[inline]
@@ -2587,6 +3276,23 @@ impl<'a> Default for clz_Torappu_TotalCheckinDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_TotalCheckinData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_TotalCheckinData", 3)?;
+        s.serialize_field("order", &self.order())?;
+        if let Some(f) = self.item() {
+            s.serialize_field("item", &f)?;
+        } else {
+            s.skip_field("item")?;
+        }
+        s.serialize_field("colorId", &self.colorId())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_TotalCheckinDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2636,6 +3342,40 @@ impl core::fmt::Debug for clz_Torappu_TotalCheckinData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_TotalCheckinDataT {
+    pub order: i32,
+    pub item: Option<Box<clz_Torappu_OpenServerItemDataT>>,
+    pub colorId: i32,
+}
+impl Default for clz_Torappu_TotalCheckinDataT {
+    fn default() -> Self {
+        Self {
+            order: 0,
+            item: None,
+            colorId: 0,
+        }
+    }
+}
+impl clz_Torappu_TotalCheckinDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_TotalCheckinData<'b>> {
+        let order = self.order;
+        let item = self.item.as_ref().map(|x| x.pack(_fbb));
+        let colorId = self.colorId;
+        clz_Torappu_TotalCheckinData::create(
+            _fbb,
+            &clz_Torappu_TotalCheckinDataArgs {
+                order,
+                item,
+                colorId,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ChainLoginDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2648,7 +3388,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ChainLoginData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2674,6 +3414,17 @@ impl<'a> clz_Torappu_ChainLoginData<'a> {
         }
         builder.add_order(args.order);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ChainLoginDataT {
+        let order = self.order();
+        let item = self.item().map(|x| Box::new(x.unpack()));
+        let colorId = self.colorId();
+        clz_Torappu_ChainLoginDataT {
+            order,
+            item,
+            colorId,
+        }
     }
 
     #[inline]
@@ -2748,6 +3499,23 @@ impl<'a> Default for clz_Torappu_ChainLoginDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ChainLoginData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ChainLoginData", 3)?;
+        s.serialize_field("order", &self.order())?;
+        if let Some(f) = self.item() {
+            s.serialize_field("item", &f)?;
+        } else {
+            s.skip_field("item")?;
+        }
+        s.serialize_field("colorId", &self.colorId())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ChainLoginDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2797,6 +3565,40 @@ impl core::fmt::Debug for clz_Torappu_ChainLoginData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ChainLoginDataT {
+    pub order: i32,
+    pub item: Option<Box<clz_Torappu_OpenServerItemDataT>>,
+    pub colorId: i32,
+}
+impl Default for clz_Torappu_ChainLoginDataT {
+    fn default() -> Self {
+        Self {
+            order: 0,
+            item: None,
+            colorId: 0,
+        }
+    }
+}
+impl clz_Torappu_ChainLoginDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ChainLoginData<'b>> {
+        let order = self.order;
+        let item = self.item.as_ref().map(|x| x.pack(_fbb));
+        let colorId = self.colorId;
+        clz_Torappu_ChainLoginData::create(
+            _fbb,
+            &clz_Torappu_ChainLoginDataArgs {
+                order,
+                item,
+                colorId,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_OpenServerDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2809,7 +3611,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_OpenServerData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2851,6 +3653,33 @@ impl<'a> clz_Torappu_OpenServerData<'a> {
             builder.add_openServerMissionGroup(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_OpenServerDataT {
+        let openServerMissionGroup = self.openServerMissionGroup().map(|x| Box::new(x.unpack()));
+        let openServerMissionData = self
+            .openServerMissionData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let checkInData = self
+            .checkInData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let chainLoginData = self
+            .chainLoginData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let totalCheckinCharData = self
+            .totalCheckinCharData()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let chainLoginCharData = self
+            .chainLoginCharData()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        clz_Torappu_OpenServerDataT {
+            openServerMissionGroup,
+            openServerMissionData,
+            checkInData,
+            chainLoginData,
+            totalCheckinCharData,
+            chainLoginCharData,
+        }
     }
 
     #[inline]
@@ -3011,6 +3840,46 @@ impl<'a> Default for clz_Torappu_OpenServerDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_OpenServerData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_OpenServerData", 6)?;
+        if let Some(f) = self.openServerMissionGroup() {
+            s.serialize_field("openServerMissionGroup", &f)?;
+        } else {
+            s.skip_field("openServerMissionGroup")?;
+        }
+        if let Some(f) = self.openServerMissionData() {
+            s.serialize_field("openServerMissionData", &f)?;
+        } else {
+            s.skip_field("openServerMissionData")?;
+        }
+        if let Some(f) = self.checkInData() {
+            s.serialize_field("checkInData", &f)?;
+        } else {
+            s.skip_field("checkInData")?;
+        }
+        if let Some(f) = self.chainLoginData() {
+            s.serialize_field("chainLoginData", &f)?;
+        } else {
+            s.skip_field("chainLoginData")?;
+        }
+        if let Some(f) = self.totalCheckinCharData() {
+            s.serialize_field("totalCheckinCharData", &f)?;
+        } else {
+            s.skip_field("totalCheckinCharData")?;
+        }
+        if let Some(f) = self.chainLoginCharData() {
+            s.serialize_field("chainLoginCharData", &f)?;
+        } else {
+            s.skip_field("chainLoginCharData")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_OpenServerDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3116,6 +3985,67 @@ impl core::fmt::Debug for clz_Torappu_OpenServerData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_OpenServerDataT {
+    pub openServerMissionGroup: Option<Box<clz_Torappu_MissionGroupT>>,
+    pub openServerMissionData: Option<Vec<clz_Torappu_MissionDataT>>,
+    pub checkInData: Option<Vec<clz_Torappu_TotalCheckinDataT>>,
+    pub chainLoginData: Option<Vec<clz_Torappu_ChainLoginDataT>>,
+    pub totalCheckinCharData: Option<Vec<String>>,
+    pub chainLoginCharData: Option<Vec<String>>,
+}
+impl Default for clz_Torappu_OpenServerDataT {
+    fn default() -> Self {
+        Self {
+            openServerMissionGroup: None,
+            openServerMissionData: None,
+            checkInData: None,
+            chainLoginData: None,
+            totalCheckinCharData: None,
+            chainLoginCharData: None,
+        }
+    }
+}
+impl clz_Torappu_OpenServerDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_OpenServerData<'b>> {
+        let openServerMissionGroup = self.openServerMissionGroup.as_ref().map(|x| x.pack(_fbb));
+        let openServerMissionData = self.openServerMissionData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let checkInData = self.checkInData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let chainLoginData = self.chainLoginData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let totalCheckinCharData = self.totalCheckinCharData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let chainLoginCharData = self.chainLoginCharData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_OpenServerData::create(
+            _fbb,
+            &clz_Torappu_OpenServerDataArgs {
+                openServerMissionGroup,
+                openServerMissionData,
+                checkInData,
+                chainLoginData,
+                totalCheckinCharData,
+                chainLoginCharData,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_OpenServerDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3128,7 +4058,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_OpenServerData<'a
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3154,6 +4084,15 @@ impl<'a> dict__string__clz_Torappu_OpenServerData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_OpenServerDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_OpenServerDataT { key, value }
     }
 
     #[inline]
@@ -3227,6 +4166,22 @@ impl<'a> Default for dict__string__clz_Torappu_OpenServerDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_OpenServerData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_OpenServerData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_OpenServerDataBuilder<
     'a: 'b,
     'b,
@@ -3280,6 +4235,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_OpenServerData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_OpenServerDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_OpenServerDataT>>,
+}
+impl Default for dict__string__clz_Torappu_OpenServerDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_OpenServerDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_OpenServerData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_OpenServerData::create(
+            _fbb,
+            &dict__string__clz_Torappu_OpenServerDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_OpenServerConstOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3292,7 +4277,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_OpenServerConst<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3334,6 +4319,28 @@ impl<'a> clz_Torappu_OpenServerConst<'a> {
         }
         builder.add_firstDiamondShardMailCount(args.firstDiamondShardMailCount);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_OpenServerConstT {
+        let firstDiamondShardMailCount = self.firstDiamondShardMailCount();
+        let initApMailEndTs = self.initApMailEndTs();
+        let resFullOpenUnlockStageId = self.resFullOpenUnlockStageId().map(|x| x.to_string());
+        let resFullOpenDuration = self.resFullOpenDuration();
+        let resFullOpenTitle = self.resFullOpenTitle().map(|x| x.to_string());
+        let resFullOpenDesc = self.resFullOpenDesc().map(|x| x.to_string());
+        let resFullOpenGuideGroupThreshold =
+            self.resFullOpenGuideGroupThreshold().map(|x| x.to_string());
+        let resFullOpenStartTime = self.resFullOpenStartTime();
+        clz_Torappu_OpenServerConstT {
+            firstDiamondShardMailCount,
+            initApMailEndTs,
+            resFullOpenUnlockStageId,
+            resFullOpenDuration,
+            resFullOpenTitle,
+            resFullOpenDesc,
+            resFullOpenGuideGroupThreshold,
+            resFullOpenStartTime,
+        }
     }
 
     #[inline]
@@ -3502,6 +4509,43 @@ impl<'a> Default for clz_Torappu_OpenServerConstArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_OpenServerConst<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_OpenServerConst", 8)?;
+        s.serialize_field(
+            "firstDiamondShardMailCount",
+            &self.firstDiamondShardMailCount(),
+        )?;
+        s.serialize_field("initApMailEndTs", &self.initApMailEndTs())?;
+        if let Some(f) = self.resFullOpenUnlockStageId() {
+            s.serialize_field("resFullOpenUnlockStageId", &f)?;
+        } else {
+            s.skip_field("resFullOpenUnlockStageId")?;
+        }
+        s.serialize_field("resFullOpenDuration", &self.resFullOpenDuration())?;
+        if let Some(f) = self.resFullOpenTitle() {
+            s.serialize_field("resFullOpenTitle", &f)?;
+        } else {
+            s.skip_field("resFullOpenTitle")?;
+        }
+        if let Some(f) = self.resFullOpenDesc() {
+            s.serialize_field("resFullOpenDesc", &f)?;
+        } else {
+            s.skip_field("resFullOpenDesc")?;
+        }
+        if let Some(f) = self.resFullOpenGuideGroupThreshold() {
+            s.serialize_field("resFullOpenGuideGroupThreshold", &f)?;
+        } else {
+            s.skip_field("resFullOpenGuideGroupThreshold")?;
+        }
+        s.serialize_field("resFullOpenStartTime", &self.resFullOpenStartTime())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_OpenServerConstBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3610,6 +4654,69 @@ impl core::fmt::Debug for clz_Torappu_OpenServerConst<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_OpenServerConstT {
+    pub firstDiamondShardMailCount: i32,
+    pub initApMailEndTs: i64,
+    pub resFullOpenUnlockStageId: Option<String>,
+    pub resFullOpenDuration: i32,
+    pub resFullOpenTitle: Option<String>,
+    pub resFullOpenDesc: Option<String>,
+    pub resFullOpenGuideGroupThreshold: Option<String>,
+    pub resFullOpenStartTime: i64,
+}
+impl Default for clz_Torappu_OpenServerConstT {
+    fn default() -> Self {
+        Self {
+            firstDiamondShardMailCount: 0,
+            initApMailEndTs: 0,
+            resFullOpenUnlockStageId: None,
+            resFullOpenDuration: 0,
+            resFullOpenTitle: None,
+            resFullOpenDesc: None,
+            resFullOpenGuideGroupThreshold: None,
+            resFullOpenStartTime: 0,
+        }
+    }
+}
+impl clz_Torappu_OpenServerConstT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_OpenServerConst<'b>> {
+        let firstDiamondShardMailCount = self.firstDiamondShardMailCount;
+        let initApMailEndTs = self.initApMailEndTs;
+        let resFullOpenUnlockStageId = self
+            .resFullOpenUnlockStageId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let resFullOpenDuration = self.resFullOpenDuration;
+        let resFullOpenTitle = self
+            .resFullOpenTitle
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let resFullOpenDesc = self.resFullOpenDesc.as_ref().map(|x| _fbb.create_string(x));
+        let resFullOpenGuideGroupThreshold = self
+            .resFullOpenGuideGroupThreshold
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let resFullOpenStartTime = self.resFullOpenStartTime;
+        clz_Torappu_OpenServerConst::create(
+            _fbb,
+            &clz_Torappu_OpenServerConstArgs {
+                firstDiamondShardMailCount,
+                initApMailEndTs,
+                resFullOpenUnlockStageId,
+                resFullOpenDuration,
+                resFullOpenTitle,
+                resFullOpenDesc,
+                resFullOpenGuideGroupThreshold,
+                resFullOpenStartTime,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ReturnConstOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3622,7 +4729,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnConst<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3668,6 +4775,33 @@ impl<'a> clz_Torappu_ReturnConst<'a> {
         builder.add_ifvisitor(args.ifvisitor);
         builder.add_juniorClear(args.juniorClear);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ReturnConstT {
+        let startTime = self.startTime();
+        let systemTab_time = self.systemTab_time();
+        let afkDays = self.afkDays();
+        let unlockLv = self.unlockLv();
+        let unlockLevel = self.unlockLevel().map(|x| x.to_string());
+        let juniorClear = self.juniorClear();
+        let ifvisitor = self.ifvisitor();
+        let permMission_time = self.permMission_time();
+        let needPoints = self.needPoints();
+        let defaultIntro = self.defaultIntro().map(|x| x.to_string());
+        let pointId = self.pointId().map(|x| x.to_string());
+        clz_Torappu_ReturnConstT {
+            startTime,
+            systemTab_time,
+            afkDays,
+            unlockLv,
+            unlockLevel,
+            juniorClear,
+            ifvisitor,
+            permMission_time,
+            needPoints,
+            defaultIntro,
+            pointId,
+        }
     }
 
     #[inline]
@@ -3859,6 +4993,39 @@ impl<'a> Default for clz_Torappu_ReturnConstArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ReturnConst<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ReturnConst", 11)?;
+        s.serialize_field("startTime", &self.startTime())?;
+        s.serialize_field("systemTab_time", &self.systemTab_time())?;
+        s.serialize_field("afkDays", &self.afkDays())?;
+        s.serialize_field("unlockLv", &self.unlockLv())?;
+        if let Some(f) = self.unlockLevel() {
+            s.serialize_field("unlockLevel", &f)?;
+        } else {
+            s.skip_field("unlockLevel")?;
+        }
+        s.serialize_field("juniorClear", &self.juniorClear())?;
+        s.serialize_field("ifvisitor", &self.ifvisitor())?;
+        s.serialize_field("permMission_time", &self.permMission_time())?;
+        s.serialize_field("needPoints", &self.needPoints())?;
+        if let Some(f) = self.defaultIntro() {
+            s.serialize_field("defaultIntro", &f)?;
+        } else {
+            s.skip_field("defaultIntro")?;
+        }
+        if let Some(f) = self.pointId() {
+            s.serialize_field("pointId", &f)?;
+        } else {
+            s.skip_field("pointId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ReturnConstBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3965,6 +5132,72 @@ impl core::fmt::Debug for clz_Torappu_ReturnConst<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ReturnConstT {
+    pub startTime: i64,
+    pub systemTab_time: i32,
+    pub afkDays: i32,
+    pub unlockLv: i32,
+    pub unlockLevel: Option<String>,
+    pub juniorClear: bool,
+    pub ifvisitor: bool,
+    pub permMission_time: i32,
+    pub needPoints: i32,
+    pub defaultIntro: Option<String>,
+    pub pointId: Option<String>,
+}
+impl Default for clz_Torappu_ReturnConstT {
+    fn default() -> Self {
+        Self {
+            startTime: 0,
+            systemTab_time: 0,
+            afkDays: 0,
+            unlockLv: 0,
+            unlockLevel: None,
+            juniorClear: false,
+            ifvisitor: false,
+            permMission_time: 0,
+            needPoints: 0,
+            defaultIntro: None,
+            pointId: None,
+        }
+    }
+}
+impl clz_Torappu_ReturnConstT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnConst<'b>> {
+        let startTime = self.startTime;
+        let systemTab_time = self.systemTab_time;
+        let afkDays = self.afkDays;
+        let unlockLv = self.unlockLv;
+        let unlockLevel = self.unlockLevel.as_ref().map(|x| _fbb.create_string(x));
+        let juniorClear = self.juniorClear;
+        let ifvisitor = self.ifvisitor;
+        let permMission_time = self.permMission_time;
+        let needPoints = self.needPoints;
+        let defaultIntro = self.defaultIntro.as_ref().map(|x| _fbb.create_string(x));
+        let pointId = self.pointId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_ReturnConst::create(
+            _fbb,
+            &clz_Torappu_ReturnConstArgs {
+                startTime,
+                systemTab_time,
+                afkDays,
+                unlockLv,
+                unlockLevel,
+                juniorClear,
+                ifvisitor,
+                permMission_time,
+                needPoints,
+                defaultIntro,
+                pointId,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ItemBundleOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3977,7 +5210,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ItemBundle<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4003,6 +5236,13 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ItemBundleT {
+        let id = self.id().map(|x| x.to_string());
+        let count = self.count();
+        let type_ = self.type_();
+        clz_Torappu_ItemBundleT { id, count, type_ }
     }
 
     #[inline]
@@ -4073,6 +5313,23 @@ impl<'a> Default for clz_Torappu_ItemBundleArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ItemBundle<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ItemBundle", 3)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        s.serialize_field("count", &self.count())?;
+        s.serialize_field("type_", &self.type_())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ItemBundleBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -4122,6 +5379,33 @@ impl core::fmt::Debug for clz_Torappu_ItemBundle<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ItemBundleT {
+    pub id: Option<String>,
+    pub count: i32,
+    pub type_: enum__Torappu_ItemType,
+}
+impl Default for clz_Torappu_ItemBundleT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            count: 0,
+            type_: enum__Torappu_ItemType::NONE,
+        }
+    }
+}
+impl clz_Torappu_ItemBundleT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ItemBundle<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let count = self.count;
+        let type_ = self.type_;
+        clz_Torappu_ItemBundle::create(_fbb, &clz_Torappu_ItemBundleArgs { id, count, type_ })
+    }
+}
 pub enum clz_Torappu_ReturnIntroDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4134,7 +5418,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnIntroData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4160,6 +5444,17 @@ impl<'a> clz_Torappu_ReturnIntroData<'a> {
         }
         builder.add_sort(args.sort);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ReturnIntroDataT {
+        let sort = self.sort();
+        let pubTime = self.pubTime();
+        let image = self.image().map(|x| x.to_string());
+        clz_Torappu_ReturnIntroDataT {
+            sort,
+            pubTime,
+            image,
+        }
     }
 
     #[inline]
@@ -4229,6 +5524,23 @@ impl<'a> Default for clz_Torappu_ReturnIntroDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ReturnIntroData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ReturnIntroData", 3)?;
+        s.serialize_field("sort", &self.sort())?;
+        s.serialize_field("pubTime", &self.pubTime())?;
+        if let Some(f) = self.image() {
+            s.serialize_field("image", &f)?;
+        } else {
+            s.skip_field("image")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ReturnIntroDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -4277,6 +5589,40 @@ impl core::fmt::Debug for clz_Torappu_ReturnIntroData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ReturnIntroDataT {
+    pub sort: i32,
+    pub pubTime: i64,
+    pub image: Option<String>,
+}
+impl Default for clz_Torappu_ReturnIntroDataT {
+    fn default() -> Self {
+        Self {
+            sort: 0,
+            pubTime: 0,
+            image: None,
+        }
+    }
+}
+impl clz_Torappu_ReturnIntroDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnIntroData<'b>> {
+        let sort = self.sort;
+        let pubTime = self.pubTime;
+        let image = self.image.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_ReturnIntroData::create(
+            _fbb,
+            &clz_Torappu_ReturnIntroDataArgs {
+                sort,
+                pubTime,
+                image,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ReturnDailyTaskDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4289,7 +5635,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnDailyTaskData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4337,6 +5683,33 @@ impl<'a> clz_Torappu_ReturnDailyTaskData<'a> {
             builder.add_groupId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ReturnDailyTaskDataT {
+        let groupId = self.groupId().map(|x| x.to_string());
+        let id = self.id().map(|x| x.to_string());
+        let groupSortId = self.groupSortId();
+        let taskSortId = self.taskSortId();
+        let template = self.template().map(|x| x.to_string());
+        let param = self
+            .param()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let desc = self.desc().map(|x| x.to_string());
+        let rewards = self
+            .rewards()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let playPoint = self.playPoint();
+        clz_Torappu_ReturnDailyTaskDataT {
+            groupId,
+            id,
+            groupSortId,
+            taskSortId,
+            template,
+            param,
+            desc,
+            rewards,
+            playPoint,
+        }
     }
 
     #[inline]
@@ -4523,6 +5896,49 @@ impl<'a> Default for clz_Torappu_ReturnDailyTaskDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ReturnDailyTaskData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ReturnDailyTaskData", 9)?;
+        if let Some(f) = self.groupId() {
+            s.serialize_field("groupId", &f)?;
+        } else {
+            s.skip_field("groupId")?;
+        }
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        s.serialize_field("groupSortId", &self.groupSortId())?;
+        s.serialize_field("taskSortId", &self.taskSortId())?;
+        if let Some(f) = self.template() {
+            s.serialize_field("template", &f)?;
+        } else {
+            s.skip_field("template")?;
+        }
+        if let Some(f) = self.param() {
+            s.serialize_field("param", &f)?;
+        } else {
+            s.skip_field("param")?;
+        }
+        if let Some(f) = self.desc() {
+            s.serialize_field("desc", &f)?;
+        } else {
+            s.skip_field("desc")?;
+        }
+        if let Some(f) = self.rewards() {
+            s.serialize_field("rewards", &f)?;
+        } else {
+            s.skip_field("rewards")?;
+        }
+        s.serialize_field("playPoint", &self.playPoint())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ReturnDailyTaskDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -4636,6 +6052,70 @@ impl core::fmt::Debug for clz_Torappu_ReturnDailyTaskData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ReturnDailyTaskDataT {
+    pub groupId: Option<String>,
+    pub id: Option<String>,
+    pub groupSortId: i32,
+    pub taskSortId: i32,
+    pub template: Option<String>,
+    pub param: Option<Vec<String>>,
+    pub desc: Option<String>,
+    pub rewards: Option<Vec<clz_Torappu_MissionDisplayRewardsT>>,
+    pub playPoint: i32,
+}
+impl Default for clz_Torappu_ReturnDailyTaskDataT {
+    fn default() -> Self {
+        Self {
+            groupId: None,
+            id: None,
+            groupSortId: 0,
+            taskSortId: 0,
+            template: None,
+            param: None,
+            desc: None,
+            rewards: None,
+            playPoint: 0,
+        }
+    }
+}
+impl clz_Torappu_ReturnDailyTaskDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnDailyTaskData<'b>> {
+        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let groupSortId = self.groupSortId;
+        let taskSortId = self.taskSortId;
+        let template = self.template.as_ref().map(|x| _fbb.create_string(x));
+        let param = self.param.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
+        let rewards = self.rewards.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let playPoint = self.playPoint;
+        clz_Torappu_ReturnDailyTaskData::create(
+            _fbb,
+            &clz_Torappu_ReturnDailyTaskDataArgs {
+                groupId,
+                id,
+                groupSortId,
+                taskSortId,
+                template,
+                param,
+                desc,
+                rewards,
+                playPoint,
+            },
+        )
+    }
+}
 pub enum dict__string__list_clz_Torappu_ReturnDailyTaskDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4648,7 +6128,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__list_clz_Torappu_ReturnDailyT
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4674,6 +6154,15 @@ impl<'a> dict__string__list_clz_Torappu_ReturnDailyTaskData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__list_clz_Torappu_ReturnDailyTaskDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| x.iter().map(|t| t.unpack()).collect());
+        dict__string__list_clz_Torappu_ReturnDailyTaskDataT { key, value }
     }
 
     #[inline]
@@ -4766,6 +6255,23 @@ impl<'a> Default for dict__string__list_clz_Torappu_ReturnDailyTaskDataArgs<'a> 
     }
 }
 
+impl Serialize for dict__string__list_clz_Torappu_ReturnDailyTaskData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__list_clz_Torappu_ReturnDailyTaskData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__list_clz_Torappu_ReturnDailyTaskDataBuilder<
     'a: 'b,
     'b,
@@ -4831,6 +6337,39 @@ impl core::fmt::Debug for dict__string__list_clz_Torappu_ReturnDailyTaskData<'_>
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__list_clz_Torappu_ReturnDailyTaskDataT {
+    pub key: String,
+    pub value: Option<Vec<clz_Torappu_ReturnDailyTaskDataT>>,
+}
+impl Default for dict__string__list_clz_Torappu_ReturnDailyTaskDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__list_clz_Torappu_ReturnDailyTaskDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__list_clz_Torappu_ReturnDailyTaskData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        dict__string__list_clz_Torappu_ReturnDailyTaskData::create(
+            _fbb,
+            &dict__string__list_clz_Torappu_ReturnDailyTaskDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_ReturnLongTermTaskDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4843,7 +6382,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnLongTermTaskData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4885,6 +6424,29 @@ impl<'a> clz_Torappu_ReturnLongTermTaskData<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ReturnLongTermTaskDataT {
+        let id = self.id().map(|x| x.to_string());
+        let sortId = self.sortId();
+        let template = self.template().map(|x| x.to_string());
+        let param = self
+            .param()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let desc = self.desc().map(|x| x.to_string());
+        let rewards = self
+            .rewards()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let playPoint = self.playPoint();
+        clz_Torappu_ReturnLongTermTaskDataT {
+            id,
+            sortId,
+            template,
+            param,
+            desc,
+            rewards,
+            playPoint,
+        }
     }
 
     #[inline]
@@ -5042,6 +6604,43 @@ impl<'a> Default for clz_Torappu_ReturnLongTermTaskDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ReturnLongTermTaskData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ReturnLongTermTaskData", 7)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        s.serialize_field("sortId", &self.sortId())?;
+        if let Some(f) = self.template() {
+            s.serialize_field("template", &f)?;
+        } else {
+            s.skip_field("template")?;
+        }
+        if let Some(f) = self.param() {
+            s.serialize_field("param", &f)?;
+        } else {
+            s.skip_field("param")?;
+        }
+        if let Some(f) = self.desc() {
+            s.serialize_field("desc", &f)?;
+        } else {
+            s.skip_field("desc")?;
+        }
+        if let Some(f) = self.rewards() {
+            s.serialize_field("rewards", &f)?;
+        } else {
+            s.skip_field("rewards")?;
+        }
+        s.serialize_field("playPoint", &self.playPoint())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ReturnLongTermTaskDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -5140,6 +6739,62 @@ impl core::fmt::Debug for clz_Torappu_ReturnLongTermTaskData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ReturnLongTermTaskDataT {
+    pub id: Option<String>,
+    pub sortId: i32,
+    pub template: Option<String>,
+    pub param: Option<Vec<String>>,
+    pub desc: Option<String>,
+    pub rewards: Option<Vec<clz_Torappu_MissionDisplayRewardsT>>,
+    pub playPoint: i32,
+}
+impl Default for clz_Torappu_ReturnLongTermTaskDataT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            sortId: 0,
+            template: None,
+            param: None,
+            desc: None,
+            rewards: None,
+            playPoint: 0,
+        }
+    }
+}
+impl clz_Torappu_ReturnLongTermTaskDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnLongTermTaskData<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        let template = self.template.as_ref().map(|x| _fbb.create_string(x));
+        let param = self.param.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
+        let rewards = self.rewards.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let playPoint = self.playPoint;
+        clz_Torappu_ReturnLongTermTaskData::create(
+            _fbb,
+            &clz_Torappu_ReturnLongTermTaskDataArgs {
+                id,
+                sortId,
+                template,
+                param,
+                desc,
+                rewards,
+                playPoint,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ReturnCheckinDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -5152,7 +6807,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnCheckinData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -5176,6 +6831,17 @@ impl<'a> clz_Torappu_ReturnCheckinData<'a> {
         }
         builder.add_isImportant(args.isImportant);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ReturnCheckinDataT {
+        let isImportant = self.isImportant();
+        let checkinRewardItems = self
+            .checkinRewardItems()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_ReturnCheckinDataT {
+            isImportant,
+            checkinRewardItems,
+        }
     }
 
     #[inline]
@@ -5239,6 +6905,22 @@ impl<'a> Default for clz_Torappu_ReturnCheckinDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ReturnCheckinData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ReturnCheckinData", 2)?;
+        s.serialize_field("isImportant", &self.isImportant())?;
+        if let Some(f) = self.checkinRewardItems() {
+            s.serialize_field("checkinRewardItems", &f)?;
+        } else {
+            s.skip_field("checkinRewardItems")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ReturnCheckinDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -5289,6 +6971,39 @@ impl core::fmt::Debug for clz_Torappu_ReturnCheckinData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ReturnCheckinDataT {
+    pub isImportant: bool,
+    pub checkinRewardItems: Option<Vec<clz_Torappu_ItemBundleT>>,
+}
+impl Default for clz_Torappu_ReturnCheckinDataT {
+    fn default() -> Self {
+        Self {
+            isImportant: false,
+            checkinRewardItems: None,
+        }
+    }
+}
+impl clz_Torappu_ReturnCheckinDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnCheckinData<'b>> {
+        let isImportant = self.isImportant;
+        let checkinRewardItems = self.checkinRewardItems.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_ReturnCheckinData::create(
+            _fbb,
+            &clz_Torappu_ReturnCheckinDataArgs {
+                isImportant,
+                checkinRewardItems,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ReturnDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -5301,7 +7016,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -5347,6 +7062,35 @@ impl<'a> clz_Torappu_ReturnData<'a> {
             builder.add_constData(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ReturnDataT {
+        let constData = self.constData().map(|x| Box::new(x.unpack()));
+        let onceRewards = self
+            .onceRewards()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let intro = self.intro().map(|x| x.iter().map(|t| t.unpack()).collect());
+        let returnDailyTaskDic = self
+            .returnDailyTaskDic()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let returnLongTermTaskList = self
+            .returnLongTermTaskList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let creditsList = self
+            .creditsList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let checkinRewardList = self
+            .checkinRewardList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_ReturnDataT {
+            constData,
+            onceRewards,
+            intro,
+            returnDailyTaskDic,
+            returnLongTermTaskList,
+            creditsList,
+            checkinRewardList,
+        }
     }
 
     #[inline]
@@ -5578,6 +7322,51 @@ impl<'a> Default for clz_Torappu_ReturnDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ReturnData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ReturnData", 7)?;
+        if let Some(f) = self.constData() {
+            s.serialize_field("constData", &f)?;
+        } else {
+            s.skip_field("constData")?;
+        }
+        if let Some(f) = self.onceRewards() {
+            s.serialize_field("onceRewards", &f)?;
+        } else {
+            s.skip_field("onceRewards")?;
+        }
+        if let Some(f) = self.intro() {
+            s.serialize_field("intro", &f)?;
+        } else {
+            s.skip_field("intro")?;
+        }
+        if let Some(f) = self.returnDailyTaskDic() {
+            s.serialize_field("returnDailyTaskDic", &f)?;
+        } else {
+            s.skip_field("returnDailyTaskDic")?;
+        }
+        if let Some(f) = self.returnLongTermTaskList() {
+            s.serialize_field("returnLongTermTaskList", &f)?;
+        } else {
+            s.skip_field("returnLongTermTaskList")?;
+        }
+        if let Some(f) = self.creditsList() {
+            s.serialize_field("creditsList", &f)?;
+        } else {
+            s.skip_field("creditsList")?;
+        }
+        if let Some(f) = self.checkinRewardList() {
+            s.serialize_field("checkinRewardList", &f)?;
+        } else {
+            s.skip_field("checkinRewardList")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ReturnDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -5705,6 +7494,74 @@ impl core::fmt::Debug for clz_Torappu_ReturnData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ReturnDataT {
+    pub constData: Option<Box<clz_Torappu_ReturnConstT>>,
+    pub onceRewards: Option<Vec<clz_Torappu_ItemBundleT>>,
+    pub intro: Option<Vec<clz_Torappu_ReturnIntroDataT>>,
+    pub returnDailyTaskDic: Option<Vec<dict__string__list_clz_Torappu_ReturnDailyTaskDataT>>,
+    pub returnLongTermTaskList: Option<Vec<clz_Torappu_ReturnLongTermTaskDataT>>,
+    pub creditsList: Option<Vec<clz_Torappu_ItemBundleT>>,
+    pub checkinRewardList: Option<Vec<clz_Torappu_ReturnCheckinDataT>>,
+}
+impl Default for clz_Torappu_ReturnDataT {
+    fn default() -> Self {
+        Self {
+            constData: None,
+            onceRewards: None,
+            intro: None,
+            returnDailyTaskDic: None,
+            returnLongTermTaskList: None,
+            creditsList: None,
+            checkinRewardList: None,
+        }
+    }
+}
+impl clz_Torappu_ReturnDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnData<'b>> {
+        let constData = self.constData.as_ref().map(|x| x.pack(_fbb));
+        let onceRewards = self.onceRewards.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let intro = self.intro.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let returnDailyTaskDic = self.returnDailyTaskDic.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let returnLongTermTaskList = self.returnLongTermTaskList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let creditsList = self.creditsList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let checkinRewardList = self.checkinRewardList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_ReturnData::create(
+            _fbb,
+            &clz_Torappu_ReturnDataArgs {
+                constData,
+                onceRewards,
+                intro,
+                returnDailyTaskDic,
+                returnLongTermTaskList,
+                creditsList,
+                checkinRewardList,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ReturnV2ConstOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -5717,7 +7574,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnV2Const<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -5761,6 +7618,27 @@ impl<'a> clz_Torappu_ReturnV2Const<'a> {
         }
         builder.add_unlockLv(args.unlockLv);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ReturnV2ConstT {
+        let startTime = self.startTime();
+        let unlockLv = self.unlockLv();
+        let unlockStage = self.unlockStage().map(|x| x.to_string());
+        let permMissionTime = self.permMissionTime();
+        let pointId = self.pointId().map(|x| x.to_string());
+        let returnPriceDesc = self.returnPriceDesc().map(|x| x.to_string());
+        let dailySupplyDesc = self.dailySupplyDesc().map(|x| x.to_string());
+        let oldGPId = self.oldGPId().map(|x| x.to_string());
+        clz_Torappu_ReturnV2ConstT {
+            startTime,
+            unlockLv,
+            unlockStage,
+            permMissionTime,
+            pointId,
+            returnPriceDesc,
+            dailySupplyDesc,
+            oldGPId,
+        }
     }
 
     #[inline]
@@ -5916,6 +7794,44 @@ impl<'a> Default for clz_Torappu_ReturnV2ConstArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ReturnV2Const<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ReturnV2Const", 8)?;
+        s.serialize_field("startTime", &self.startTime())?;
+        s.serialize_field("unlockLv", &self.unlockLv())?;
+        if let Some(f) = self.unlockStage() {
+            s.serialize_field("unlockStage", &f)?;
+        } else {
+            s.skip_field("unlockStage")?;
+        }
+        s.serialize_field("permMissionTime", &self.permMissionTime())?;
+        if let Some(f) = self.pointId() {
+            s.serialize_field("pointId", &f)?;
+        } else {
+            s.skip_field("pointId")?;
+        }
+        if let Some(f) = self.returnPriceDesc() {
+            s.serialize_field("returnPriceDesc", &f)?;
+        } else {
+            s.skip_field("returnPriceDesc")?;
+        }
+        if let Some(f) = self.dailySupplyDesc() {
+            s.serialize_field("dailySupplyDesc", &f)?;
+        } else {
+            s.skip_field("dailySupplyDesc")?;
+        }
+        if let Some(f) = self.oldGPId() {
+            s.serialize_field("oldGPId", &f)?;
+        } else {
+            s.skip_field("oldGPId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ReturnV2ConstBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -6005,6 +7921,60 @@ impl core::fmt::Debug for clz_Torappu_ReturnV2Const<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ReturnV2ConstT {
+    pub startTime: i64,
+    pub unlockLv: i32,
+    pub unlockStage: Option<String>,
+    pub permMissionTime: i32,
+    pub pointId: Option<String>,
+    pub returnPriceDesc: Option<String>,
+    pub dailySupplyDesc: Option<String>,
+    pub oldGPId: Option<String>,
+}
+impl Default for clz_Torappu_ReturnV2ConstT {
+    fn default() -> Self {
+        Self {
+            startTime: 0,
+            unlockLv: 0,
+            unlockStage: None,
+            permMissionTime: 0,
+            pointId: None,
+            returnPriceDesc: None,
+            dailySupplyDesc: None,
+            oldGPId: None,
+        }
+    }
+}
+impl clz_Torappu_ReturnV2ConstT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2Const<'b>> {
+        let startTime = self.startTime;
+        let unlockLv = self.unlockLv;
+        let unlockStage = self.unlockStage.as_ref().map(|x| _fbb.create_string(x));
+        let permMissionTime = self.permMissionTime;
+        let pointId = self.pointId.as_ref().map(|x| _fbb.create_string(x));
+        let returnPriceDesc = self.returnPriceDesc.as_ref().map(|x| _fbb.create_string(x));
+        let dailySupplyDesc = self.dailySupplyDesc.as_ref().map(|x| _fbb.create_string(x));
+        let oldGPId = self.oldGPId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_ReturnV2Const::create(
+            _fbb,
+            &clz_Torappu_ReturnV2ConstArgs {
+                startTime,
+                unlockLv,
+                unlockStage,
+                permMissionTime,
+                pointId,
+                returnPriceDesc,
+                dailySupplyDesc,
+                oldGPId,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ReturnV2ItemDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -6017,7 +7987,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnV2ItemData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -6045,6 +8015,19 @@ impl<'a> clz_Torappu_ReturnV2ItemData<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ReturnV2ItemDataT {
+        let id = self.id().map(|x| x.to_string());
+        let type_ = self.type_();
+        let count = self.count();
+        let sortId = self.sortId();
+        clz_Torappu_ReturnV2ItemDataT {
+            id,
+            type_,
+            count,
+            sortId,
+        }
     }
 
     #[inline]
@@ -6131,6 +8114,24 @@ impl<'a> Default for clz_Torappu_ReturnV2ItemDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ReturnV2ItemData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ReturnV2ItemData", 4)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        s.serialize_field("type_", &self.type_())?;
+        s.serialize_field("count", &self.count())?;
+        s.serialize_field("sortId", &self.sortId())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ReturnV2ItemDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -6186,6 +8187,44 @@ impl core::fmt::Debug for clz_Torappu_ReturnV2ItemData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ReturnV2ItemDataT {
+    pub id: Option<String>,
+    pub type_: enum__Torappu_ItemType,
+    pub count: i32,
+    pub sortId: i32,
+}
+impl Default for clz_Torappu_ReturnV2ItemDataT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            type_: enum__Torappu_ItemType::NONE,
+            count: 0,
+            sortId: 0,
+        }
+    }
+}
+impl clz_Torappu_ReturnV2ItemDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2ItemData<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let type_ = self.type_;
+        let count = self.count;
+        let sortId = self.sortId;
+        clz_Torappu_ReturnV2ItemData::create(
+            _fbb,
+            &clz_Torappu_ReturnV2ItemDataArgs {
+                id,
+                type_,
+                count,
+                sortId,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ReturnV2OnceRewardDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -6198,7 +8237,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnV2OnceRewardData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -6228,6 +8267,21 @@ impl<'a> clz_Torappu_ReturnV2OnceRewardData<'a> {
             builder.add_groupId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ReturnV2OnceRewardDataT {
+        let groupId = self.groupId().map(|x| x.to_string());
+        let startTime = self.startTime();
+        let endTime = self.endTime();
+        let rewardList = self
+            .rewardList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_ReturnV2OnceRewardDataT {
+            groupId,
+            startTime,
+            endTime,
+            rewardList,
+        }
     }
 
     #[inline]
@@ -6321,6 +8375,28 @@ impl<'a> Default for clz_Torappu_ReturnV2OnceRewardDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ReturnV2OnceRewardData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ReturnV2OnceRewardData", 4)?;
+        if let Some(f) = self.groupId() {
+            s.serialize_field("groupId", &f)?;
+        } else {
+            s.skip_field("groupId")?;
+        }
+        s.serialize_field("startTime", &self.startTime())?;
+        s.serialize_field("endTime", &self.endTime())?;
+        if let Some(f) = self.rewardList() {
+            s.serialize_field("rewardList", &f)?;
+        } else {
+            s.skip_field("rewardList")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ReturnV2OnceRewardDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -6387,6 +8463,47 @@ impl core::fmt::Debug for clz_Torappu_ReturnV2OnceRewardData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ReturnV2OnceRewardDataT {
+    pub groupId: Option<String>,
+    pub startTime: i64,
+    pub endTime: i64,
+    pub rewardList: Option<Vec<clz_Torappu_ReturnV2ItemDataT>>,
+}
+impl Default for clz_Torappu_ReturnV2OnceRewardDataT {
+    fn default() -> Self {
+        Self {
+            groupId: None,
+            startTime: 0,
+            endTime: 0,
+            rewardList: None,
+        }
+    }
+}
+impl clz_Torappu_ReturnV2OnceRewardDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2OnceRewardData<'b>> {
+        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
+        let startTime = self.startTime;
+        let endTime = self.endTime;
+        let rewardList = self.rewardList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_ReturnV2OnceRewardData::create(
+            _fbb,
+            &clz_Torappu_ReturnV2OnceRewardDataArgs {
+                groupId,
+                startTime,
+                endTime,
+                rewardList,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ReturnV2CheckInRewardItemDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -6399,7 +8516,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnV2CheckInRewardItemData<'
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -6425,6 +8542,19 @@ impl<'a> clz_Torappu_ReturnV2CheckInRewardItemData<'a> {
         builder.add_sortId(args.sortId);
         builder.add_isImportant(args.isImportant);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ReturnV2CheckInRewardItemDataT {
+        let sortId = self.sortId();
+        let isImportant = self.isImportant();
+        let rewardList = self
+            .rewardList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_ReturnV2CheckInRewardItemDataT {
+            sortId,
+            isImportant,
+            rewardList,
+        }
     }
 
     #[inline]
@@ -6511,6 +8641,23 @@ impl<'a> Default for clz_Torappu_ReturnV2CheckInRewardItemDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ReturnV2CheckInRewardItemData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ReturnV2CheckInRewardItemData", 3)?;
+        s.serialize_field("sortId", &self.sortId())?;
+        s.serialize_field("isImportant", &self.isImportant())?;
+        if let Some(f) = self.rewardList() {
+            s.serialize_field("rewardList", &f)?;
+        } else {
+            s.skip_field("rewardList")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ReturnV2CheckInRewardItemDataBuilder<
     'a: 'b,
     'b,
@@ -6576,6 +8723,43 @@ impl core::fmt::Debug for clz_Torappu_ReturnV2CheckInRewardItemData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ReturnV2CheckInRewardItemDataT {
+    pub sortId: i32,
+    pub isImportant: bool,
+    pub rewardList: Option<Vec<clz_Torappu_ItemBundleT>>,
+}
+impl Default for clz_Torappu_ReturnV2CheckInRewardItemDataT {
+    fn default() -> Self {
+        Self {
+            sortId: 0,
+            isImportant: false,
+            rewardList: None,
+        }
+    }
+}
+impl clz_Torappu_ReturnV2CheckInRewardItemDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2CheckInRewardItemData<'b>> {
+        let sortId = self.sortId;
+        let isImportant = self.isImportant;
+        let rewardList = self.rewardList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_ReturnV2CheckInRewardItemData::create(
+            _fbb,
+            &clz_Torappu_ReturnV2CheckInRewardItemDataArgs {
+                sortId,
+                isImportant,
+                rewardList,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ReturnV2CheckInRewardDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -6588,7 +8772,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnV2CheckInRewardData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -6618,6 +8802,21 @@ impl<'a> clz_Torappu_ReturnV2CheckInRewardData<'a> {
             builder.add_groupId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ReturnV2CheckInRewardDataT {
+        let groupId = self.groupId().map(|x| x.to_string());
+        let startTime = self.startTime();
+        let endTime = self.endTime();
+        let rewardList = self
+            .rewardList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_ReturnV2CheckInRewardDataT {
+            groupId,
+            startTime,
+            endTime,
+            rewardList,
+        }
     }
 
     #[inline]
@@ -6723,6 +8922,28 @@ impl<'a> Default for clz_Torappu_ReturnV2CheckInRewardDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ReturnV2CheckInRewardData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ReturnV2CheckInRewardData", 4)?;
+        if let Some(f) = self.groupId() {
+            s.serialize_field("groupId", &f)?;
+        } else {
+            s.skip_field("groupId")?;
+        }
+        s.serialize_field("startTime", &self.startTime())?;
+        s.serialize_field("endTime", &self.endTime())?;
+        if let Some(f) = self.rewardList() {
+            s.serialize_field("rewardList", &f)?;
+        } else {
+            s.skip_field("rewardList")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ReturnV2CheckInRewardDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -6796,6 +9017,47 @@ impl core::fmt::Debug for clz_Torappu_ReturnV2CheckInRewardData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ReturnV2CheckInRewardDataT {
+    pub groupId: Option<String>,
+    pub startTime: i64,
+    pub endTime: i64,
+    pub rewardList: Option<Vec<clz_Torappu_ReturnV2CheckInRewardItemDataT>>,
+}
+impl Default for clz_Torappu_ReturnV2CheckInRewardDataT {
+    fn default() -> Self {
+        Self {
+            groupId: None,
+            startTime: 0,
+            endTime: 0,
+            rewardList: None,
+        }
+    }
+}
+impl clz_Torappu_ReturnV2CheckInRewardDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2CheckInRewardData<'b>> {
+        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
+        let startTime = self.startTime;
+        let endTime = self.endTime;
+        let rewardList = self.rewardList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_ReturnV2CheckInRewardData::create(
+            _fbb,
+            &clz_Torappu_ReturnV2CheckInRewardDataArgs {
+                groupId,
+                startTime,
+                endTime,
+                rewardList,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ReturnV2PriceRewardDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -6808,7 +9070,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnV2PriceRewardData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -6850,6 +9112,27 @@ impl<'a> clz_Torappu_ReturnV2PriceRewardData<'a> {
             builder.add_contentId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ReturnV2PriceRewardDataT {
+        let contentId = self.contentId().map(|x| x.to_string());
+        let sortId = self.sortId();
+        let pointRequire = self.pointRequire();
+        let desc = self.desc().map(|x| x.to_string());
+        let iconId = self.iconId().map(|x| x.to_string());
+        let topIconId = self.topIconId().map(|x| x.to_string());
+        let rewardList = self
+            .rewardList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_ReturnV2PriceRewardDataT {
+            contentId,
+            sortId,
+            pointRequire,
+            desc,
+            iconId,
+            topIconId,
+            rewardList,
+        }
     }
 
     #[inline]
@@ -6999,6 +9282,43 @@ impl<'a> Default for clz_Torappu_ReturnV2PriceRewardDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ReturnV2PriceRewardData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ReturnV2PriceRewardData", 7)?;
+        if let Some(f) = self.contentId() {
+            s.serialize_field("contentId", &f)?;
+        } else {
+            s.skip_field("contentId")?;
+        }
+        s.serialize_field("sortId", &self.sortId())?;
+        s.serialize_field("pointRequire", &self.pointRequire())?;
+        if let Some(f) = self.desc() {
+            s.serialize_field("desc", &f)?;
+        } else {
+            s.skip_field("desc")?;
+        }
+        if let Some(f) = self.iconId() {
+            s.serialize_field("iconId", &f)?;
+        } else {
+            s.skip_field("iconId")?;
+        }
+        if let Some(f) = self.topIconId() {
+            s.serialize_field("topIconId", &f)?;
+        } else {
+            s.skip_field("topIconId")?;
+        }
+        if let Some(f) = self.rewardList() {
+            s.serialize_field("rewardList", &f)?;
+        } else {
+            s.skip_field("rewardList")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ReturnV2PriceRewardDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -7089,6 +9409,59 @@ impl core::fmt::Debug for clz_Torappu_ReturnV2PriceRewardData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ReturnV2PriceRewardDataT {
+    pub contentId: Option<String>,
+    pub sortId: i32,
+    pub pointRequire: i32,
+    pub desc: Option<String>,
+    pub iconId: Option<String>,
+    pub topIconId: Option<String>,
+    pub rewardList: Option<Vec<clz_Torappu_ReturnV2ItemDataT>>,
+}
+impl Default for clz_Torappu_ReturnV2PriceRewardDataT {
+    fn default() -> Self {
+        Self {
+            contentId: None,
+            sortId: 0,
+            pointRequire: 0,
+            desc: None,
+            iconId: None,
+            topIconId: None,
+            rewardList: None,
+        }
+    }
+}
+impl clz_Torappu_ReturnV2PriceRewardDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2PriceRewardData<'b>> {
+        let contentId = self.contentId.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        let pointRequire = self.pointRequire;
+        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
+        let iconId = self.iconId.as_ref().map(|x| _fbb.create_string(x));
+        let topIconId = self.topIconId.as_ref().map(|x| _fbb.create_string(x));
+        let rewardList = self.rewardList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_ReturnV2PriceRewardData::create(
+            _fbb,
+            &clz_Torappu_ReturnV2PriceRewardDataArgs {
+                contentId,
+                sortId,
+                pointRequire,
+                desc,
+                iconId,
+                topIconId,
+                rewardList,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ReturnV2PriceRewardGroupDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -7101,7 +9474,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnV2PriceRewardGroupData<'a
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -7131,6 +9504,21 @@ impl<'a> clz_Torappu_ReturnV2PriceRewardGroupData<'a> {
             builder.add_groupId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ReturnV2PriceRewardGroupDataT {
+        let groupId = self.groupId().map(|x| x.to_string());
+        let startTime = self.startTime();
+        let endTime = self.endTime();
+        let contentList = self
+            .contentList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_ReturnV2PriceRewardGroupDataT {
+            groupId,
+            startTime,
+            endTime,
+            contentList,
+        }
     }
 
     #[inline]
@@ -7245,6 +9633,28 @@ impl<'a> Default for clz_Torappu_ReturnV2PriceRewardGroupDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ReturnV2PriceRewardGroupData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ReturnV2PriceRewardGroupData", 4)?;
+        if let Some(f) = self.groupId() {
+            s.serialize_field("groupId", &f)?;
+        } else {
+            s.skip_field("groupId")?;
+        }
+        s.serialize_field("startTime", &self.startTime())?;
+        s.serialize_field("endTime", &self.endTime())?;
+        if let Some(f) = self.contentList() {
+            s.serialize_field("contentList", &f)?;
+        } else {
+            s.skip_field("contentList")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ReturnV2PriceRewardGroupDataBuilder<
     'a: 'b,
     'b,
@@ -7321,6 +9731,47 @@ impl core::fmt::Debug for clz_Torappu_ReturnV2PriceRewardGroupData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ReturnV2PriceRewardGroupDataT {
+    pub groupId: Option<String>,
+    pub startTime: i64,
+    pub endTime: i64,
+    pub contentList: Option<Vec<clz_Torappu_ReturnV2PriceRewardDataT>>,
+}
+impl Default for clz_Torappu_ReturnV2PriceRewardGroupDataT {
+    fn default() -> Self {
+        Self {
+            groupId: None,
+            startTime: 0,
+            endTime: 0,
+            contentList: None,
+        }
+    }
+}
+impl clz_Torappu_ReturnV2PriceRewardGroupDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2PriceRewardGroupData<'b>> {
+        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
+        let startTime = self.startTime;
+        let endTime = self.endTime;
+        let contentList = self.contentList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_ReturnV2PriceRewardGroupData::create(
+            _fbb,
+            &clz_Torappu_ReturnV2PriceRewardGroupDataArgs {
+                groupId,
+                startTime,
+                endTime,
+                contentList,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ReturnV2MissionItemDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -7333,7 +9784,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnV2MissionItemData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -7375,6 +9826,27 @@ impl<'a> clz_Torappu_ReturnV2MissionItemData<'a> {
             builder.add_missionId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ReturnV2MissionItemDataT {
+        let missionId = self.missionId().map(|x| x.to_string());
+        let groupId = self.groupId().map(|x| x.to_string());
+        let sortId = self.sortId();
+        let jumpType = self.jumpType();
+        let jumpParam = self.jumpParam().map(|x| x.to_string());
+        let desc = self.desc().map(|x| x.to_string());
+        let rewardList = self
+            .rewardList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_ReturnV2MissionItemDataT {
+            missionId,
+            groupId,
+            sortId,
+            jumpType,
+            jumpParam,
+            desc,
+            rewardList,
+        }
     }
 
     #[inline]
@@ -7523,6 +9995,43 @@ impl<'a> Default for clz_Torappu_ReturnV2MissionItemDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ReturnV2MissionItemData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ReturnV2MissionItemData", 7)?;
+        if let Some(f) = self.missionId() {
+            s.serialize_field("missionId", &f)?;
+        } else {
+            s.skip_field("missionId")?;
+        }
+        if let Some(f) = self.groupId() {
+            s.serialize_field("groupId", &f)?;
+        } else {
+            s.skip_field("groupId")?;
+        }
+        s.serialize_field("sortId", &self.sortId())?;
+        s.serialize_field("jumpType", &self.jumpType())?;
+        if let Some(f) = self.jumpParam() {
+            s.serialize_field("jumpParam", &f)?;
+        } else {
+            s.skip_field("jumpParam")?;
+        }
+        if let Some(f) = self.desc() {
+            s.serialize_field("desc", &f)?;
+        } else {
+            s.skip_field("desc")?;
+        }
+        if let Some(f) = self.rewardList() {
+            s.serialize_field("rewardList", &f)?;
+        } else {
+            s.skip_field("rewardList")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ReturnV2MissionItemDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -7613,6 +10122,59 @@ impl core::fmt::Debug for clz_Torappu_ReturnV2MissionItemData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ReturnV2MissionItemDataT {
+    pub missionId: Option<String>,
+    pub groupId: Option<String>,
+    pub sortId: i32,
+    pub jumpType: enum__Torappu_ReturnV2JumpType,
+    pub jumpParam: Option<String>,
+    pub desc: Option<String>,
+    pub rewardList: Option<Vec<clz_Torappu_ItemBundleT>>,
+}
+impl Default for clz_Torappu_ReturnV2MissionItemDataT {
+    fn default() -> Self {
+        Self {
+            missionId: None,
+            groupId: None,
+            sortId: 0,
+            jumpType: enum__Torappu_ReturnV2JumpType::NONE,
+            jumpParam: None,
+            desc: None,
+            rewardList: None,
+        }
+    }
+}
+impl clz_Torappu_ReturnV2MissionItemDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2MissionItemData<'b>> {
+        let missionId = self.missionId.as_ref().map(|x| _fbb.create_string(x));
+        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        let jumpType = self.jumpType;
+        let jumpParam = self.jumpParam.as_ref().map(|x| _fbb.create_string(x));
+        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
+        let rewardList = self.rewardList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_ReturnV2MissionItemData::create(
+            _fbb,
+            &clz_Torappu_ReturnV2MissionItemDataArgs {
+                missionId,
+                groupId,
+                sortId,
+                jumpType,
+                jumpParam,
+                desc,
+                rewardList,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ReturnV2MissionGroupDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -7625,7 +10187,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnV2MissionGroupData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -7679,6 +10241,35 @@ impl<'a> clz_Torappu_ReturnV2MissionGroupData<'a> {
             builder.add_groupId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ReturnV2MissionGroupDataT {
+        let groupId = self.groupId().map(|x| x.to_string());
+        let sortId = self.sortId();
+        let tabTitle = self.tabTitle().map(|x| x.to_string());
+        let title = self.title().map(|x| x.to_string());
+        let desc = self.desc().map(|x| x.to_string());
+        let diffMissionCount = self.diffMissionCount();
+        let startTime = self.startTime();
+        let endTime = self.endTime();
+        let imageId = self.imageId().map(|x| x.to_string());
+        let iconId = self.iconId().map(|x| x.to_string());
+        let missionList = self
+            .missionList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_ReturnV2MissionGroupDataT {
+            groupId,
+            sortId,
+            tabTitle,
+            title,
+            desc,
+            diffMissionCount,
+            startTime,
+            endTime,
+            imageId,
+            iconId,
+            missionList,
+        }
     }
 
     #[inline]
@@ -7894,6 +10485,55 @@ impl<'a> Default for clz_Torappu_ReturnV2MissionGroupDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ReturnV2MissionGroupData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ReturnV2MissionGroupData", 11)?;
+        if let Some(f) = self.groupId() {
+            s.serialize_field("groupId", &f)?;
+        } else {
+            s.skip_field("groupId")?;
+        }
+        s.serialize_field("sortId", &self.sortId())?;
+        if let Some(f) = self.tabTitle() {
+            s.serialize_field("tabTitle", &f)?;
+        } else {
+            s.skip_field("tabTitle")?;
+        }
+        if let Some(f) = self.title() {
+            s.serialize_field("title", &f)?;
+        } else {
+            s.skip_field("title")?;
+        }
+        if let Some(f) = self.desc() {
+            s.serialize_field("desc", &f)?;
+        } else {
+            s.skip_field("desc")?;
+        }
+        s.serialize_field("diffMissionCount", &self.diffMissionCount())?;
+        s.serialize_field("startTime", &self.startTime())?;
+        s.serialize_field("endTime", &self.endTime())?;
+        if let Some(f) = self.imageId() {
+            s.serialize_field("imageId", &f)?;
+        } else {
+            s.skip_field("imageId")?;
+        }
+        if let Some(f) = self.iconId() {
+            s.serialize_field("iconId", &f)?;
+        } else {
+            s.skip_field("iconId")?;
+        }
+        if let Some(f) = self.missionList() {
+            s.serialize_field("missionList", &f)?;
+        } else {
+            s.skip_field("missionList")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ReturnV2MissionGroupDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -8018,6 +10658,75 @@ impl core::fmt::Debug for clz_Torappu_ReturnV2MissionGroupData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ReturnV2MissionGroupDataT {
+    pub groupId: Option<String>,
+    pub sortId: i32,
+    pub tabTitle: Option<String>,
+    pub title: Option<String>,
+    pub desc: Option<String>,
+    pub diffMissionCount: i32,
+    pub startTime: i64,
+    pub endTime: i64,
+    pub imageId: Option<String>,
+    pub iconId: Option<String>,
+    pub missionList: Option<Vec<clz_Torappu_ReturnV2MissionItemDataT>>,
+}
+impl Default for clz_Torappu_ReturnV2MissionGroupDataT {
+    fn default() -> Self {
+        Self {
+            groupId: None,
+            sortId: 0,
+            tabTitle: None,
+            title: None,
+            desc: None,
+            diffMissionCount: 0,
+            startTime: 0,
+            endTime: 0,
+            imageId: None,
+            iconId: None,
+            missionList: None,
+        }
+    }
+}
+impl clz_Torappu_ReturnV2MissionGroupDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2MissionGroupData<'b>> {
+        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        let tabTitle = self.tabTitle.as_ref().map(|x| _fbb.create_string(x));
+        let title = self.title.as_ref().map(|x| _fbb.create_string(x));
+        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
+        let diffMissionCount = self.diffMissionCount;
+        let startTime = self.startTime;
+        let endTime = self.endTime;
+        let imageId = self.imageId.as_ref().map(|x| _fbb.create_string(x));
+        let iconId = self.iconId.as_ref().map(|x| _fbb.create_string(x));
+        let missionList = self.missionList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_ReturnV2MissionGroupData::create(
+            _fbb,
+            &clz_Torappu_ReturnV2MissionGroupDataArgs {
+                groupId,
+                sortId,
+                tabTitle,
+                title,
+                desc,
+                diffMissionCount,
+                startTime,
+                endTime,
+                imageId,
+                iconId,
+                missionList,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ReturnV2DailySupplyDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -8030,7 +10739,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnV2DailySupplyData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -8060,6 +10769,21 @@ impl<'a> clz_Torappu_ReturnV2DailySupplyData<'a> {
             builder.add_groupId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ReturnV2DailySupplyDataT {
+        let groupId = self.groupId().map(|x| x.to_string());
+        let startTime = self.startTime();
+        let endTime = self.endTime();
+        let rewardList = self
+            .rewardList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_ReturnV2DailySupplyDataT {
+            groupId,
+            startTime,
+            endTime,
+            rewardList,
+        }
     }
 
     #[inline]
@@ -8152,6 +10876,28 @@ impl<'a> Default for clz_Torappu_ReturnV2DailySupplyDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ReturnV2DailySupplyData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ReturnV2DailySupplyData", 4)?;
+        if let Some(f) = self.groupId() {
+            s.serialize_field("groupId", &f)?;
+        } else {
+            s.skip_field("groupId")?;
+        }
+        s.serialize_field("startTime", &self.startTime())?;
+        s.serialize_field("endTime", &self.endTime())?;
+        if let Some(f) = self.rewardList() {
+            s.serialize_field("rewardList", &f)?;
+        } else {
+            s.skip_field("rewardList")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ReturnV2DailySupplyDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -8218,6 +10964,47 @@ impl core::fmt::Debug for clz_Torappu_ReturnV2DailySupplyData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ReturnV2DailySupplyDataT {
+    pub groupId: Option<String>,
+    pub startTime: i64,
+    pub endTime: i64,
+    pub rewardList: Option<Vec<clz_Torappu_ItemBundleT>>,
+}
+impl Default for clz_Torappu_ReturnV2DailySupplyDataT {
+    fn default() -> Self {
+        Self {
+            groupId: None,
+            startTime: 0,
+            endTime: 0,
+            rewardList: None,
+        }
+    }
+}
+impl clz_Torappu_ReturnV2DailySupplyDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2DailySupplyData<'b>> {
+        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
+        let startTime = self.startTime;
+        let endTime = self.endTime;
+        let rewardList = self.rewardList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_ReturnV2DailySupplyData::create(
+            _fbb,
+            &clz_Torappu_ReturnV2DailySupplyDataArgs {
+                groupId,
+                startTime,
+                endTime,
+                rewardList,
+            },
+        )
+    }
+}
 pub enum dict__int__list_clz_Torappu_ReturnV2ItemDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -8230,7 +11017,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__int__list_clz_Torappu_ReturnV2ItemDat
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -8254,6 +11041,12 @@ impl<'a> dict__int__list_clz_Torappu_ReturnV2ItemData<'a> {
         }
         builder.add_key(args.key);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__int__list_clz_Torappu_ReturnV2ItemDataT {
+        let key = self.key();
+        let value = self.value().map(|x| x.iter().map(|t| t.unpack()).collect());
+        dict__int__list_clz_Torappu_ReturnV2ItemDataT { key, value }
     }
 
     #[inline]
@@ -8331,6 +11124,23 @@ impl<'a> Default for dict__int__list_clz_Torappu_ReturnV2ItemDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__int__list_clz_Torappu_ReturnV2ItemData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__int__list_clz_Torappu_ReturnV2ItemData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__int__list_clz_Torappu_ReturnV2ItemDataBuilder<
     'a: 'b,
     'b,
@@ -8386,6 +11196,36 @@ impl core::fmt::Debug for dict__int__list_clz_Torappu_ReturnV2ItemData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__int__list_clz_Torappu_ReturnV2ItemDataT {
+    pub key: i32,
+    pub value: Option<Vec<clz_Torappu_ReturnV2ItemDataT>>,
+}
+impl Default for dict__int__list_clz_Torappu_ReturnV2ItemDataT {
+    fn default() -> Self {
+        Self {
+            key: 0,
+            value: None,
+        }
+    }
+}
+impl dict__int__list_clz_Torappu_ReturnV2ItemDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__int__list_clz_Torappu_ReturnV2ItemData<'b>> {
+        let key = self.key;
+        let value = self.value.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        dict__int__list_clz_Torappu_ReturnV2ItemData::create(
+            _fbb,
+            &dict__int__list_clz_Torappu_ReturnV2ItemDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_ReturnV2PackageCheckInRewardDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -8398,7 +11238,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnV2PackageCheckInRewardDat
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -8440,6 +11280,29 @@ impl<'a> clz_Torappu_ReturnV2PackageCheckInRewardData<'a> {
             builder.add_groupId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ReturnV2PackageCheckInRewardDataT {
+        let groupId = self.groupId().map(|x| x.to_string());
+        let startTime = self.startTime();
+        let endTime = self.endTime();
+        let getTime = self.getTime();
+        let bindGPGoodId = self.bindGPGoodId().map(|x| x.to_string());
+        let totalCheckInDay = self.totalCheckInDay();
+        let iconId = self.iconId().map(|x| x.to_string());
+        let rewardDict = self
+            .rewardDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_ReturnV2PackageCheckInRewardDataT {
+            groupId,
+            startTime,
+            endTime,
+            getTime,
+            bindGPGoodId,
+            totalCheckInDay,
+            iconId,
+            rewardDict,
+        }
     }
 
     #[inline]
@@ -8622,6 +11485,41 @@ impl<'a> Default for clz_Torappu_ReturnV2PackageCheckInRewardDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ReturnV2PackageCheckInRewardData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_ReturnV2PackageCheckInRewardData", 8)?;
+        if let Some(f) = self.groupId() {
+            s.serialize_field("groupId", &f)?;
+        } else {
+            s.skip_field("groupId")?;
+        }
+        s.serialize_field("startTime", &self.startTime())?;
+        s.serialize_field("endTime", &self.endTime())?;
+        s.serialize_field("getTime", &self.getTime())?;
+        if let Some(f) = self.bindGPGoodId() {
+            s.serialize_field("bindGPGoodId", &f)?;
+        } else {
+            s.skip_field("bindGPGoodId")?;
+        }
+        s.serialize_field("totalCheckInDay", &self.totalCheckInDay())?;
+        if let Some(f) = self.iconId() {
+            s.serialize_field("iconId", &f)?;
+        } else {
+            s.skip_field("iconId")?;
+        }
+        if let Some(f) = self.rewardDict() {
+            s.serialize_field("rewardDict", &f)?;
+        } else {
+            s.skip_field("rewardDict")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ReturnV2PackageCheckInRewardDataBuilder<
     'a: 'b,
     'b,
@@ -8734,6 +11632,63 @@ impl core::fmt::Debug for clz_Torappu_ReturnV2PackageCheckInRewardData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ReturnV2PackageCheckInRewardDataT {
+    pub groupId: Option<String>,
+    pub startTime: i64,
+    pub endTime: i64,
+    pub getTime: i32,
+    pub bindGPGoodId: Option<String>,
+    pub totalCheckInDay: i32,
+    pub iconId: Option<String>,
+    pub rewardDict: Option<Vec<dict__int__list_clz_Torappu_ReturnV2ItemDataT>>,
+}
+impl Default for clz_Torappu_ReturnV2PackageCheckInRewardDataT {
+    fn default() -> Self {
+        Self {
+            groupId: None,
+            startTime: 0,
+            endTime: 0,
+            getTime: 0,
+            bindGPGoodId: None,
+            totalCheckInDay: 0,
+            iconId: None,
+            rewardDict: None,
+        }
+    }
+}
+impl clz_Torappu_ReturnV2PackageCheckInRewardDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2PackageCheckInRewardData<'b>> {
+        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
+        let startTime = self.startTime;
+        let endTime = self.endTime;
+        let getTime = self.getTime;
+        let bindGPGoodId = self.bindGPGoodId.as_ref().map(|x| _fbb.create_string(x));
+        let totalCheckInDay = self.totalCheckInDay;
+        let iconId = self.iconId.as_ref().map(|x| _fbb.create_string(x));
+        let rewardDict = self.rewardDict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_ReturnV2PackageCheckInRewardData::create(
+            _fbb,
+            &clz_Torappu_ReturnV2PackageCheckInRewardDataArgs {
+                groupId,
+                startTime,
+                endTime,
+                getTime,
+                bindGPGoodId,
+                totalCheckInDay,
+                iconId,
+                rewardDict,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ReturnV2DataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -8746,7 +11701,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnV2Data<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -8792,6 +11747,37 @@ impl<'a> clz_Torappu_ReturnV2Data<'a> {
             builder.add_constData(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ReturnV2DataT {
+        let constData = self.constData().map(|x| Box::new(x.unpack()));
+        let onceRewardData = self
+            .onceRewardData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let checkInRewardData = self
+            .checkInRewardData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let priceRewardData = self
+            .priceRewardData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let missionGroupData = self
+            .missionGroupData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let dailySupplyData = self
+            .dailySupplyData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let packageCheckInRewardData = self
+            .packageCheckInRewardData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_ReturnV2DataT {
+            constData,
+            onceRewardData,
+            checkInRewardData,
+            priceRewardData,
+            missionGroupData,
+            dailySupplyData,
+            packageCheckInRewardData,
+        }
     }
 
     #[inline]
@@ -9058,6 +12044,51 @@ impl<'a> Default for clz_Torappu_ReturnV2DataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ReturnV2Data<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ReturnV2Data", 7)?;
+        if let Some(f) = self.constData() {
+            s.serialize_field("constData", &f)?;
+        } else {
+            s.skip_field("constData")?;
+        }
+        if let Some(f) = self.onceRewardData() {
+            s.serialize_field("onceRewardData", &f)?;
+        } else {
+            s.skip_field("onceRewardData")?;
+        }
+        if let Some(f) = self.checkInRewardData() {
+            s.serialize_field("checkInRewardData", &f)?;
+        } else {
+            s.skip_field("checkInRewardData")?;
+        }
+        if let Some(f) = self.priceRewardData() {
+            s.serialize_field("priceRewardData", &f)?;
+        } else {
+            s.skip_field("priceRewardData")?;
+        }
+        if let Some(f) = self.missionGroupData() {
+            s.serialize_field("missionGroupData", &f)?;
+        } else {
+            s.skip_field("missionGroupData")?;
+        }
+        if let Some(f) = self.dailySupplyData() {
+            s.serialize_field("dailySupplyData", &f)?;
+        } else {
+            s.skip_field("dailySupplyData")?;
+        }
+        if let Some(f) = self.packageCheckInRewardData() {
+            s.serialize_field("packageCheckInRewardData", &f)?;
+        } else {
+            s.skip_field("packageCheckInRewardData")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ReturnV2DataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -9194,6 +12225,74 @@ impl core::fmt::Debug for clz_Torappu_ReturnV2Data<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ReturnV2DataT {
+    pub constData: Option<Box<clz_Torappu_ReturnV2ConstT>>,
+    pub onceRewardData: Option<Vec<clz_Torappu_ReturnV2OnceRewardDataT>>,
+    pub checkInRewardData: Option<Vec<clz_Torappu_ReturnV2CheckInRewardDataT>>,
+    pub priceRewardData: Option<Vec<clz_Torappu_ReturnV2PriceRewardGroupDataT>>,
+    pub missionGroupData: Option<Vec<clz_Torappu_ReturnV2MissionGroupDataT>>,
+    pub dailySupplyData: Option<Vec<clz_Torappu_ReturnV2DailySupplyDataT>>,
+    pub packageCheckInRewardData: Option<Vec<clz_Torappu_ReturnV2PackageCheckInRewardDataT>>,
+}
+impl Default for clz_Torappu_ReturnV2DataT {
+    fn default() -> Self {
+        Self {
+            constData: None,
+            onceRewardData: None,
+            checkInRewardData: None,
+            priceRewardData: None,
+            missionGroupData: None,
+            dailySupplyData: None,
+            packageCheckInRewardData: None,
+        }
+    }
+}
+impl clz_Torappu_ReturnV2DataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2Data<'b>> {
+        let constData = self.constData.as_ref().map(|x| x.pack(_fbb));
+        let onceRewardData = self.onceRewardData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let checkInRewardData = self.checkInRewardData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let priceRewardData = self.priceRewardData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let missionGroupData = self.missionGroupData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let dailySupplyData = self.dailySupplyData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let packageCheckInRewardData = self.packageCheckInRewardData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_ReturnV2Data::create(
+            _fbb,
+            &clz_Torappu_ReturnV2DataArgs {
+                constData,
+                onceRewardData,
+                checkInRewardData,
+                priceRewardData,
+                missionGroupData,
+                dailySupplyData,
+                packageCheckInRewardData,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_NewbieCheckInPackageRewardDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -9206,7 +12305,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_NewbieCheckInPackageRewardData<
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -9230,6 +12329,15 @@ impl<'a> clz_Torappu_NewbieCheckInPackageRewardData<'a> {
         }
         builder.add_orderNum(args.orderNum);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_NewbieCheckInPackageRewardDataT {
+        let orderNum = self.orderNum();
+        let itemBundle = self.itemBundle().map(|x| Box::new(x.unpack()));
+        clz_Torappu_NewbieCheckInPackageRewardDataT {
+            orderNum,
+            itemBundle,
+        }
     }
 
     #[inline]
@@ -9293,6 +12401,22 @@ impl<'a> Default for clz_Torappu_NewbieCheckInPackageRewardDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_NewbieCheckInPackageRewardData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_NewbieCheckInPackageRewardData", 2)?;
+        s.serialize_field("orderNum", &self.orderNum())?;
+        if let Some(f) = self.itemBundle() {
+            s.serialize_field("itemBundle", &f)?;
+        } else {
+            s.skip_field("itemBundle")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_NewbieCheckInPackageRewardDataBuilder<
     'a: 'b,
     'b,
@@ -9348,6 +12472,36 @@ impl core::fmt::Debug for clz_Torappu_NewbieCheckInPackageRewardData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_NewbieCheckInPackageRewardDataT {
+    pub orderNum: i32,
+    pub itemBundle: Option<Box<clz_Torappu_ItemBundleT>>,
+}
+impl Default for clz_Torappu_NewbieCheckInPackageRewardDataT {
+    fn default() -> Self {
+        Self {
+            orderNum: 0,
+            itemBundle: None,
+        }
+    }
+}
+impl clz_Torappu_NewbieCheckInPackageRewardDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_NewbieCheckInPackageRewardData<'b>> {
+        let orderNum = self.orderNum;
+        let itemBundle = self.itemBundle.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_NewbieCheckInPackageRewardData::create(
+            _fbb,
+            &clz_Torappu_NewbieCheckInPackageRewardDataArgs {
+                orderNum,
+                itemBundle,
+            },
+        )
+    }
+}
 pub enum dict__int__list_clz_Torappu_NewbieCheckInPackageRewardDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -9362,7 +12516,7 @@ impl<'a> flatbuffers::Follow<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -9388,6 +12542,12 @@ impl<'a> dict__int__list_clz_Torappu_NewbieCheckInPackageRewardData<'a> {
         }
         builder.add_key(args.key);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__int__list_clz_Torappu_NewbieCheckInPackageRewardDataT {
+        let key = self.key();
+        let value = self.value().map(|x| x.iter().map(|t| t.unpack()).collect());
+        dict__int__list_clz_Torappu_NewbieCheckInPackageRewardDataT { key, value }
     }
 
     #[inline]
@@ -9483,6 +12643,25 @@ impl<'a> Default for dict__int__list_clz_Torappu_NewbieCheckInPackageRewardDataA
     }
 }
 
+impl Serialize for dict__int__list_clz_Torappu_NewbieCheckInPackageRewardData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "dict__int__list_clz_Torappu_NewbieCheckInPackageRewardData",
+            2,
+        )?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__int__list_clz_Torappu_NewbieCheckInPackageRewardDataBuilder<
     'a: 'b,
     'b,
@@ -9545,6 +12724,37 @@ impl core::fmt::Debug for dict__int__list_clz_Torappu_NewbieCheckInPackageReward
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__int__list_clz_Torappu_NewbieCheckInPackageRewardDataT {
+    pub key: i32,
+    pub value: Option<Vec<clz_Torappu_NewbieCheckInPackageRewardDataT>>,
+}
+impl Default for dict__int__list_clz_Torappu_NewbieCheckInPackageRewardDataT {
+    fn default() -> Self {
+        Self {
+            key: 0,
+            value: None,
+        }
+    }
+}
+impl dict__int__list_clz_Torappu_NewbieCheckInPackageRewardDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__int__list_clz_Torappu_NewbieCheckInPackageRewardData<'b>>
+    {
+        let key = self.key;
+        let value = self.value.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        dict__int__list_clz_Torappu_NewbieCheckInPackageRewardData::create(
+            _fbb,
+            &dict__int__list_clz_Torappu_NewbieCheckInPackageRewardDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_NewbieCheckInPackageDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -9557,7 +12767,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_NewbieCheckInPackageData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -9599,6 +12809,29 @@ impl<'a> clz_Torappu_NewbieCheckInPackageData<'a> {
             builder.add_groupId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_NewbieCheckInPackageDataT {
+        let groupId = self.groupId().map(|x| x.to_string());
+        let startTime = self.startTime();
+        let endTime = self.endTime();
+        let bindGPGoodId = self.bindGPGoodId().map(|x| x.to_string());
+        let checkInDuration = self.checkInDuration();
+        let totalCheckInDay = self.totalCheckInDay();
+        let iconId = self.iconId().map(|x| x.to_string());
+        let checkInRewardDict = self
+            .checkInRewardDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_NewbieCheckInPackageDataT {
+            groupId,
+            startTime,
+            endTime,
+            bindGPGoodId,
+            checkInDuration,
+            totalCheckInDay,
+            iconId,
+            checkInRewardDict,
+        }
     }
 
     #[inline]
@@ -9783,6 +13016,40 @@ impl<'a> Default for clz_Torappu_NewbieCheckInPackageDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_NewbieCheckInPackageData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_NewbieCheckInPackageData", 8)?;
+        if let Some(f) = self.groupId() {
+            s.serialize_field("groupId", &f)?;
+        } else {
+            s.skip_field("groupId")?;
+        }
+        s.serialize_field("startTime", &self.startTime())?;
+        s.serialize_field("endTime", &self.endTime())?;
+        if let Some(f) = self.bindGPGoodId() {
+            s.serialize_field("bindGPGoodId", &f)?;
+        } else {
+            s.skip_field("bindGPGoodId")?;
+        }
+        s.serialize_field("checkInDuration", &self.checkInDuration())?;
+        s.serialize_field("totalCheckInDay", &self.totalCheckInDay())?;
+        if let Some(f) = self.iconId() {
+            s.serialize_field("iconId", &f)?;
+        } else {
+            s.skip_field("iconId")?;
+        }
+        if let Some(f) = self.checkInRewardDict() {
+            s.serialize_field("checkInRewardDict", &f)?;
+        } else {
+            s.skip_field("checkInRewardDict")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_NewbieCheckInPackageDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -9888,6 +13155,63 @@ impl core::fmt::Debug for clz_Torappu_NewbieCheckInPackageData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_NewbieCheckInPackageDataT {
+    pub groupId: Option<String>,
+    pub startTime: i64,
+    pub endTime: i64,
+    pub bindGPGoodId: Option<String>,
+    pub checkInDuration: i32,
+    pub totalCheckInDay: i32,
+    pub iconId: Option<String>,
+    pub checkInRewardDict: Option<Vec<dict__int__list_clz_Torappu_NewbieCheckInPackageRewardDataT>>,
+}
+impl Default for clz_Torappu_NewbieCheckInPackageDataT {
+    fn default() -> Self {
+        Self {
+            groupId: None,
+            startTime: 0,
+            endTime: 0,
+            bindGPGoodId: None,
+            checkInDuration: 0,
+            totalCheckInDay: 0,
+            iconId: None,
+            checkInRewardDict: None,
+        }
+    }
+}
+impl clz_Torappu_NewbieCheckInPackageDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_NewbieCheckInPackageData<'b>> {
+        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
+        let startTime = self.startTime;
+        let endTime = self.endTime;
+        let bindGPGoodId = self.bindGPGoodId.as_ref().map(|x| _fbb.create_string(x));
+        let checkInDuration = self.checkInDuration;
+        let totalCheckInDay = self.totalCheckInDay;
+        let iconId = self.iconId.as_ref().map(|x| _fbb.create_string(x));
+        let checkInRewardDict = self.checkInRewardDict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_NewbieCheckInPackageData::create(
+            _fbb,
+            &clz_Torappu_NewbieCheckInPackageDataArgs {
+                groupId,
+                startTime,
+                endTime,
+                bindGPGoodId,
+                checkInDuration,
+                totalCheckInDay,
+                iconId,
+                checkInRewardDict,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_LongTermCheckInGroupDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -9900,7 +13224,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_LongTermCheckInGroupData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -9950,6 +13274,33 @@ impl<'a> clz_Torappu_LongTermCheckInGroupData<'a> {
             builder.add_groupId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_LongTermCheckInGroupDataT {
+        let groupId = self.groupId().map(|x| x.to_string());
+        let sortId = self.sortId();
+        let startTs = self.startTs();
+        let level = self.level();
+        let days = self.days();
+        let bkgImgId = self.bkgImgId().map(|x| x.to_string());
+        let titleImgId = self.titleImgId().map(|x| x.to_string());
+        let tipText = self.tipText().map(|x| x.to_string());
+        let bottomText = self.bottomText().map(|x| x.to_string());
+        let rewardList = self
+            .rewardList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_LongTermCheckInGroupDataT {
+            groupId,
+            sortId,
+            startTs,
+            level,
+            days,
+            bkgImgId,
+            titleImgId,
+            tipText,
+            bottomText,
+            rewardList,
+        }
     }
 
     #[inline]
@@ -10142,6 +13493,50 @@ impl<'a> Default for clz_Torappu_LongTermCheckInGroupDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_LongTermCheckInGroupData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_LongTermCheckInGroupData", 10)?;
+        if let Some(f) = self.groupId() {
+            s.serialize_field("groupId", &f)?;
+        } else {
+            s.skip_field("groupId")?;
+        }
+        s.serialize_field("sortId", &self.sortId())?;
+        s.serialize_field("startTs", &self.startTs())?;
+        s.serialize_field("level", &self.level())?;
+        s.serialize_field("days", &self.days())?;
+        if let Some(f) = self.bkgImgId() {
+            s.serialize_field("bkgImgId", &f)?;
+        } else {
+            s.skip_field("bkgImgId")?;
+        }
+        if let Some(f) = self.titleImgId() {
+            s.serialize_field("titleImgId", &f)?;
+        } else {
+            s.skip_field("titleImgId")?;
+        }
+        if let Some(f) = self.tipText() {
+            s.serialize_field("tipText", &f)?;
+        } else {
+            s.skip_field("tipText")?;
+        }
+        if let Some(f) = self.bottomText() {
+            s.serialize_field("bottomText", &f)?;
+        } else {
+            s.skip_field("bottomText")?;
+        }
+        if let Some(f) = self.rewardList() {
+            s.serialize_field("rewardList", &f)?;
+        } else {
+            s.skip_field("rewardList")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_LongTermCheckInGroupDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -10249,6 +13644,71 @@ impl core::fmt::Debug for clz_Torappu_LongTermCheckInGroupData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_LongTermCheckInGroupDataT {
+    pub groupId: Option<String>,
+    pub sortId: i32,
+    pub startTs: i64,
+    pub level: i32,
+    pub days: i32,
+    pub bkgImgId: Option<String>,
+    pub titleImgId: Option<String>,
+    pub tipText: Option<String>,
+    pub bottomText: Option<String>,
+    pub rewardList: Option<Vec<clz_Torappu_ItemBundleT>>,
+}
+impl Default for clz_Torappu_LongTermCheckInGroupDataT {
+    fn default() -> Self {
+        Self {
+            groupId: None,
+            sortId: 0,
+            startTs: 0,
+            level: 0,
+            days: 0,
+            bkgImgId: None,
+            titleImgId: None,
+            tipText: None,
+            bottomText: None,
+            rewardList: None,
+        }
+    }
+}
+impl clz_Torappu_LongTermCheckInGroupDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_LongTermCheckInGroupData<'b>> {
+        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        let startTs = self.startTs;
+        let level = self.level;
+        let days = self.days;
+        let bkgImgId = self.bkgImgId.as_ref().map(|x| _fbb.create_string(x));
+        let titleImgId = self.titleImgId.as_ref().map(|x| _fbb.create_string(x));
+        let tipText = self.tipText.as_ref().map(|x| _fbb.create_string(x));
+        let bottomText = self.bottomText.as_ref().map(|x| _fbb.create_string(x));
+        let rewardList = self.rewardList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_LongTermCheckInGroupData::create(
+            _fbb,
+            &clz_Torappu_LongTermCheckInGroupDataArgs {
+                groupId,
+                sortId,
+                startTs,
+                level,
+                days,
+                bkgImgId,
+                titleImgId,
+                tipText,
+                bottomText,
+                rewardList,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_LongTermCheckInConstDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -10261,7 +13721,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_LongTermCheckInConstData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -10289,6 +13749,17 @@ impl<'a> clz_Torappu_LongTermCheckInConstData<'a> {
             builder.add_detailTitle(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_LongTermCheckInConstDataT {
+        let startTs = self.startTs();
+        let detailTitle = self.detailTitle().map(|x| x.to_string());
+        let detailDesc = self.detailDesc().map(|x| x.to_string());
+        clz_Torappu_LongTermCheckInConstDataT {
+            startTs,
+            detailTitle,
+            detailDesc,
+        }
     }
 
     #[inline]
@@ -10367,6 +13838,27 @@ impl<'a> Default for clz_Torappu_LongTermCheckInConstDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_LongTermCheckInConstData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_LongTermCheckInConstData", 3)?;
+        s.serialize_field("startTs", &self.startTs())?;
+        if let Some(f) = self.detailTitle() {
+            s.serialize_field("detailTitle", &f)?;
+        } else {
+            s.skip_field("detailTitle")?;
+        }
+        if let Some(f) = self.detailDesc() {
+            s.serialize_field("detailDesc", &f)?;
+        } else {
+            s.skip_field("detailDesc")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_LongTermCheckInConstDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -10419,6 +13911,40 @@ impl core::fmt::Debug for clz_Torappu_LongTermCheckInConstData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_LongTermCheckInConstDataT {
+    pub startTs: i64,
+    pub detailTitle: Option<String>,
+    pub detailDesc: Option<String>,
+}
+impl Default for clz_Torappu_LongTermCheckInConstDataT {
+    fn default() -> Self {
+        Self {
+            startTs: 0,
+            detailTitle: None,
+            detailDesc: None,
+        }
+    }
+}
+impl clz_Torappu_LongTermCheckInConstDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_LongTermCheckInConstData<'b>> {
+        let startTs = self.startTs;
+        let detailTitle = self.detailTitle.as_ref().map(|x| _fbb.create_string(x));
+        let detailDesc = self.detailDesc.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_LongTermCheckInConstData::create(
+            _fbb,
+            &clz_Torappu_LongTermCheckInConstDataArgs {
+                startTs,
+                detailTitle,
+                detailDesc,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_LongTermCheckInDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -10431,7 +13957,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_LongTermCheckInData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -10457,6 +13983,17 @@ impl<'a> clz_Torappu_LongTermCheckInData<'a> {
             builder.add_groupList(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_LongTermCheckInDataT {
+        let groupList = self
+            .groupList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let constData = self.constData().map(|x| Box::new(x.unpack()));
+        clz_Torappu_LongTermCheckInDataT {
+            groupList,
+            constData,
+        }
     }
 
     #[inline]
@@ -10539,6 +14076,26 @@ impl<'a> Default for clz_Torappu_LongTermCheckInDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_LongTermCheckInData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_LongTermCheckInData", 2)?;
+        if let Some(f) = self.groupList() {
+            s.serialize_field("groupList", &f)?;
+        } else {
+            s.skip_field("groupList")?;
+        }
+        if let Some(f) = self.constData() {
+            s.serialize_field("constData", &f)?;
+        } else {
+            s.skip_field("constData")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_LongTermCheckInDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -10595,6 +14152,39 @@ impl core::fmt::Debug for clz_Torappu_LongTermCheckInData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_LongTermCheckInDataT {
+    pub groupList: Option<Vec<clz_Torappu_LongTermCheckInGroupDataT>>,
+    pub constData: Option<Box<clz_Torappu_LongTermCheckInConstDataT>>,
+}
+impl Default for clz_Torappu_LongTermCheckInDataT {
+    fn default() -> Self {
+        Self {
+            groupList: None,
+            constData: None,
+        }
+    }
+}
+impl clz_Torappu_LongTermCheckInDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_LongTermCheckInData<'b>> {
+        let groupList = self.groupList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let constData = self.constData.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_LongTermCheckInData::create(
+            _fbb,
+            &clz_Torappu_LongTermCheckInDataArgs {
+                groupList,
+                constData,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_OpenServerScheduleOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -10607,7 +14197,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_OpenServerSchedule<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -10653,6 +14243,31 @@ impl<'a> clz_Torappu_OpenServerSchedule<'a> {
             builder.add_schedule(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_OpenServerScheduleT {
+        let schedule = self
+            .schedule()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let dataMap = self
+            .dataMap()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let constant = self.constant().map(|x| Box::new(x.unpack()));
+        let playerReturn = self.playerReturn().map(|x| Box::new(x.unpack()));
+        let playerReturnV2 = self.playerReturnV2().map(|x| Box::new(x.unpack()));
+        let newbieCheckInPackageList = self
+            .newbieCheckInPackageList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let longTermCheckInData = self.longTermCheckInData().map(|x| Box::new(x.unpack()));
+        clz_Torappu_OpenServerScheduleT {
+            schedule,
+            dataMap,
+            constant,
+            playerReturn,
+            playerReturnV2,
+            newbieCheckInPackageList,
+            longTermCheckInData,
+        }
     }
 
     #[inline]
@@ -10874,6 +14489,51 @@ impl<'a> Default for clz_Torappu_OpenServerScheduleArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_OpenServerSchedule<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_OpenServerSchedule", 7)?;
+        if let Some(f) = self.schedule() {
+            s.serialize_field("schedule", &f)?;
+        } else {
+            s.skip_field("schedule")?;
+        }
+        if let Some(f) = self.dataMap() {
+            s.serialize_field("dataMap", &f)?;
+        } else {
+            s.skip_field("dataMap")?;
+        }
+        if let Some(f) = self.constant() {
+            s.serialize_field("constant", &f)?;
+        } else {
+            s.skip_field("constant")?;
+        }
+        if let Some(f) = self.playerReturn() {
+            s.serialize_field("playerReturn", &f)?;
+        } else {
+            s.skip_field("playerReturn")?;
+        }
+        if let Some(f) = self.playerReturnV2() {
+            s.serialize_field("playerReturnV2", &f)?;
+        } else {
+            s.skip_field("playerReturnV2")?;
+        }
+        if let Some(f) = self.newbieCheckInPackageList() {
+            s.serialize_field("newbieCheckInPackageList", &f)?;
+        } else {
+            s.skip_field("newbieCheckInPackageList")?;
+        }
+        if let Some(f) = self.longTermCheckInData() {
+            s.serialize_field("longTermCheckInData", &f)?;
+        } else {
+            s.skip_field("longTermCheckInData")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_OpenServerScheduleBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -10998,6 +14658,65 @@ impl core::fmt::Debug for clz_Torappu_OpenServerSchedule<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_OpenServerScheduleT {
+    pub schedule: Option<Vec<clz_Torappu_OpenServerScheduleItemT>>,
+    pub dataMap: Option<Vec<dict__string__clz_Torappu_OpenServerDataT>>,
+    pub constant: Option<Box<clz_Torappu_OpenServerConstT>>,
+    pub playerReturn: Option<Box<clz_Torappu_ReturnDataT>>,
+    pub playerReturnV2: Option<Box<clz_Torappu_ReturnV2DataT>>,
+    pub newbieCheckInPackageList: Option<Vec<clz_Torappu_NewbieCheckInPackageDataT>>,
+    pub longTermCheckInData: Option<Box<clz_Torappu_LongTermCheckInDataT>>,
+}
+impl Default for clz_Torappu_OpenServerScheduleT {
+    fn default() -> Self {
+        Self {
+            schedule: None,
+            dataMap: None,
+            constant: None,
+            playerReturn: None,
+            playerReturnV2: None,
+            newbieCheckInPackageList: None,
+            longTermCheckInData: None,
+        }
+    }
+}
+impl clz_Torappu_OpenServerScheduleT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_OpenServerSchedule<'b>> {
+        let schedule = self.schedule.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let dataMap = self.dataMap.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let constant = self.constant.as_ref().map(|x| x.pack(_fbb));
+        let playerReturn = self.playerReturn.as_ref().map(|x| x.pack(_fbb));
+        let playerReturnV2 = self.playerReturnV2.as_ref().map(|x| x.pack(_fbb));
+        let newbieCheckInPackageList = self.newbieCheckInPackageList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let longTermCheckInData = self.longTermCheckInData.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_OpenServerSchedule::create(
+            _fbb,
+            &clz_Torappu_OpenServerScheduleArgs {
+                schedule,
+                dataMap,
+                constant,
+                playerReturn,
+                playerReturnV2,
+                newbieCheckInPackageList,
+                longTermCheckInData,
+            },
+        )
+    }
+}
 #[inline]
 /// Verifies that a buffer of bytes contains a `clz_Torappu_OpenServerSchedule`
 /// and returns it.
@@ -11055,7 +14774,7 @@ pub fn size_prefixed_root_as_clz_torappu_open_server_schedule_with_opts<'b, 'o>(
 pub unsafe fn root_as_clz_torappu_open_server_schedule_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_OpenServerSchedule {
-    flatbuffers::root_unchecked::<clz_Torappu_OpenServerSchedule>(buf)
+    unsafe { flatbuffers::root_unchecked::<clz_Torappu_OpenServerSchedule>(buf) }
 }
 #[inline]
 /// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_OpenServerSchedule and returns it.
@@ -11064,7 +14783,7 @@ pub unsafe fn root_as_clz_torappu_open_server_schedule_unchecked(
 pub unsafe fn size_prefixed_root_as_clz_torappu_open_server_schedule_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_OpenServerSchedule {
-    flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_OpenServerSchedule>(buf)
+    unsafe { flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_OpenServerSchedule>(buf) }
 }
 #[inline]
 pub fn finish_clz_torappu_open_server_schedule_buffer<'a, 'b, A: flatbuffers::Allocator + 'a>(

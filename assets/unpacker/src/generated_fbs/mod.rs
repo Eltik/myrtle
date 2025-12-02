@@ -1,5 +1,6 @@
 // Auto-generated FlatBuffer schemas for Arknights
-// These are generated from OpenArknightsFBS schemas using flatc
+// Generated with: flatc --rust --gen-object-api --rust-serialize
+// These types implement serde::Serialize for direct JSON conversion
 
 #![allow(dead_code)]
 #![allow(unused_imports)]

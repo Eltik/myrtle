@@ -5,6 +5,9 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+use self::serde::ser::{Serialize, SerializeStruct, Serializer};
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
@@ -58,11 +61,24 @@ impl core::fmt::Debug for enum__Torappu_SpecialOperatorTargetType {
         }
     }
 }
+impl Serialize for enum__Torappu_SpecialOperatorTargetType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SpecialOperatorTargetType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SpecialOperatorTargetType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -71,7 +87,9 @@ impl flatbuffers::Push for enum__Torappu_SpecialOperatorTargetType {
     type Output = enum__Torappu_SpecialOperatorTargetType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -170,11 +188,24 @@ impl core::fmt::Debug for enum__Torappu_SpecialOperatorDetailNodeType {
         }
     }
 }
+impl Serialize for enum__Torappu_SpecialOperatorDetailNodeType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SpecialOperatorDetailNodeType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SpecialOperatorDetailNodeType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -183,7 +214,9 @@ impl flatbuffers::Push for enum__Torappu_SpecialOperatorDetailNodeType {
     type Output = enum__Torappu_SpecialOperatorDetailNodeType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -277,11 +310,24 @@ impl core::fmt::Debug for enum__Torappu_EvolvePhase {
         }
     }
 }
+impl Serialize for enum__Torappu_EvolvePhase {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_EvolvePhase",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_EvolvePhase {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -290,7 +336,9 @@ impl flatbuffers::Push for enum__Torappu_EvolvePhase {
     type Output = enum__Torappu_EvolvePhase;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -370,11 +418,24 @@ impl core::fmt::Debug for enum__Torappu_SpecialOperatorConditionViewType {
         }
     }
 }
+impl Serialize for enum__Torappu_SpecialOperatorConditionViewType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SpecialOperatorConditionViewType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SpecialOperatorConditionViewType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -383,7 +444,9 @@ impl flatbuffers::Push for enum__Torappu_SpecialOperatorConditionViewType {
     type Output = enum__Torappu_SpecialOperatorConditionViewType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -505,11 +568,24 @@ impl core::fmt::Debug for enum__Torappu_MissionType {
         }
     }
 }
+impl Serialize for enum__Torappu_MissionType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_MissionType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_MissionType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -518,7 +594,9 @@ impl flatbuffers::Push for enum__Torappu_MissionType {
     type Output = enum__Torappu_MissionType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -600,11 +678,24 @@ impl core::fmt::Debug for enum__Torappu_MissionItemBgType {
         }
     }
 }
+impl Serialize for enum__Torappu_MissionItemBgType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_MissionItemBgType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_MissionItemBgType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -613,7 +704,9 @@ impl flatbuffers::Push for enum__Torappu_MissionItemBgType {
     type Output = enum__Torappu_MissionItemBgType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -1051,11 +1144,24 @@ impl core::fmt::Debug for enum__Torappu_ItemType {
         }
     }
 }
+impl Serialize for enum__Torappu_ItemType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_ItemType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ItemType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -1064,7 +1170,9 @@ impl flatbuffers::Push for enum__Torappu_ItemType {
     type Output = enum__Torappu_ItemType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -1106,7 +1214,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SpecialOperatorBasicData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1156,6 +1264,29 @@ impl<'a> clz_Torappu_SpecialOperatorBasicData<'a> {
             builder.add_soCharId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SpecialOperatorBasicDataT {
+        let soCharId = self.soCharId().map(|x| x.to_string());
+        let sortId = self.sortId();
+        let targetType = self.targetType();
+        let targetId = self.targetId().map(|x| x.to_string());
+        let targetTopicName = self.targetTopicName().map(|x| x.to_string());
+        let bgId = self.bgId().map(|x| x.to_string());
+        let bgEffectId = self.bgEffectId().map(|x| x.to_string());
+        let charEffectId = self.charEffectId().map(|x| x.to_string());
+        let typeIconId = self.typeIconId().map(|x| x.to_string());
+        clz_Torappu_SpecialOperatorBasicDataT {
+            soCharId,
+            sortId,
+            targetType,
+            targetId,
+            targetTopicName,
+            bgId,
+            bgEffectId,
+            charEffectId,
+            typeIconId,
+        }
     }
 
     #[inline]
@@ -1346,6 +1477,53 @@ impl<'a> Default for clz_Torappu_SpecialOperatorBasicDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SpecialOperatorBasicData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SpecialOperatorBasicData", 9)?;
+        if let Some(f) = self.soCharId() {
+            s.serialize_field("soCharId", &f)?;
+        } else {
+            s.skip_field("soCharId")?;
+        }
+        s.serialize_field("sortId", &self.sortId())?;
+        s.serialize_field("targetType", &self.targetType())?;
+        if let Some(f) = self.targetId() {
+            s.serialize_field("targetId", &f)?;
+        } else {
+            s.skip_field("targetId")?;
+        }
+        if let Some(f) = self.targetTopicName() {
+            s.serialize_field("targetTopicName", &f)?;
+        } else {
+            s.skip_field("targetTopicName")?;
+        }
+        if let Some(f) = self.bgId() {
+            s.serialize_field("bgId", &f)?;
+        } else {
+            s.skip_field("bgId")?;
+        }
+        if let Some(f) = self.bgEffectId() {
+            s.serialize_field("bgEffectId", &f)?;
+        } else {
+            s.skip_field("bgEffectId")?;
+        }
+        if let Some(f) = self.charEffectId() {
+            s.serialize_field("charEffectId", &f)?;
+        } else {
+            s.skip_field("charEffectId")?;
+        }
+        if let Some(f) = self.typeIconId() {
+            s.serialize_field("typeIconId", &f)?;
+        } else {
+            s.skip_field("typeIconId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SpecialOperatorBasicDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1448,6 +1626,64 @@ impl core::fmt::Debug for clz_Torappu_SpecialOperatorBasicData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SpecialOperatorBasicDataT {
+    pub soCharId: Option<String>,
+    pub sortId: i32,
+    pub targetType: enum__Torappu_SpecialOperatorTargetType,
+    pub targetId: Option<String>,
+    pub targetTopicName: Option<String>,
+    pub bgId: Option<String>,
+    pub bgEffectId: Option<String>,
+    pub charEffectId: Option<String>,
+    pub typeIconId: Option<String>,
+}
+impl Default for clz_Torappu_SpecialOperatorBasicDataT {
+    fn default() -> Self {
+        Self {
+            soCharId: None,
+            sortId: 0,
+            targetType: enum__Torappu_SpecialOperatorTargetType::NONE,
+            targetId: None,
+            targetTopicName: None,
+            bgId: None,
+            bgEffectId: None,
+            charEffectId: None,
+            typeIconId: None,
+        }
+    }
+}
+impl clz_Torappu_SpecialOperatorBasicDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SpecialOperatorBasicData<'b>> {
+        let soCharId = self.soCharId.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        let targetType = self.targetType;
+        let targetId = self.targetId.as_ref().map(|x| _fbb.create_string(x));
+        let targetTopicName = self.targetTopicName.as_ref().map(|x| _fbb.create_string(x));
+        let bgId = self.bgId.as_ref().map(|x| _fbb.create_string(x));
+        let bgEffectId = self.bgEffectId.as_ref().map(|x| _fbb.create_string(x));
+        let charEffectId = self.charEffectId.as_ref().map(|x| _fbb.create_string(x));
+        let typeIconId = self.typeIconId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SpecialOperatorBasicData::create(
+            _fbb,
+            &clz_Torappu_SpecialOperatorBasicDataArgs {
+                soCharId,
+                sortId,
+                targetType,
+                targetId,
+                targetTopicName,
+                bgId,
+                bgEffectId,
+                charEffectId,
+                typeIconId,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SpecialOperatorBasicDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1460,7 +1696,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SpecialOperatorBa
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1486,6 +1722,15 @@ impl<'a> dict__string__clz_Torappu_SpecialOperatorBasicData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SpecialOperatorBasicDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SpecialOperatorBasicDataT { key, value }
     }
 
     #[inline]
@@ -1562,6 +1807,23 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorBasicDataArgs<'a> 
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SpecialOperatorBasicData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SpecialOperatorBasicData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SpecialOperatorBasicDataBuilder<
     'a: 'b,
     'b,
@@ -1623,6 +1885,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SpecialOperatorBasicData<'_>
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SpecialOperatorBasicDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SpecialOperatorBasicDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SpecialOperatorBasicDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SpecialOperatorBasicDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SpecialOperatorBasicData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SpecialOperatorBasicData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SpecialOperatorBasicDataArgs { key, value },
+        )
+    }
+}
 pub enum list_intOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1635,7 +1927,7 @@ impl<'a> flatbuffers::Follow<'a> for list_int<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1657,6 +1949,11 @@ impl<'a> list_int<'a> {
             builder.add_values(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> list_intT {
+        let values = self.values().map(|x| x.into_iter().collect());
+        list_intT { values }
     }
 
     #[inline]
@@ -1701,6 +1998,21 @@ impl<'a> Default for list_intArgs<'a> {
     }
 }
 
+impl Serialize for list_int<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("list_int", 1)?;
+        if let Some(f) = self.values() {
+            s.serialize_field("values", &f)?;
+        } else {
+            s.skip_field("values")?;
+        }
+        s.end()
+    }
+}
+
 pub struct list_intBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1733,6 +2045,25 @@ impl core::fmt::Debug for list_int<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct list_intT {
+    pub values: Option<Vec<i32>>,
+}
+impl Default for list_intT {
+    fn default() -> Self {
+        Self { values: None }
+    }
+}
+impl list_intT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<list_int<'b>> {
+        let values = self.values.as_ref().map(|x| _fbb.create_vector(x));
+        list_int::create(_fbb, &list_intArgs { values })
+    }
+}
 pub enum clz_Torappu_SpecialOperatorDetailConstDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1745,7 +2076,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SpecialOperatorDetailConstData<
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1767,6 +2098,11 @@ impl<'a> clz_Torappu_SpecialOperatorDetailConstData<'a> {
             builder.add_nextRoundBuffToast(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SpecialOperatorDetailConstDataT {
+        let nextRoundBuffToast = self.nextRoundBuffToast().map(|x| x.to_string());
+        clz_Torappu_SpecialOperatorDetailConstDataT { nextRoundBuffToast }
     }
 
     #[inline]
@@ -1812,6 +2148,21 @@ impl<'a> Default for clz_Torappu_SpecialOperatorDetailConstDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SpecialOperatorDetailConstData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SpecialOperatorDetailConstData", 1)?;
+        if let Some(f) = self.nextRoundBuffToast() {
+            s.serialize_field("nextRoundBuffToast", &f)?;
+        } else {
+            s.skip_field("nextRoundBuffToast")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SpecialOperatorDetailConstDataBuilder<
     'a: 'b,
     'b,
@@ -1854,6 +2205,33 @@ impl core::fmt::Debug for clz_Torappu_SpecialOperatorDetailConstData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SpecialOperatorDetailConstDataT {
+    pub nextRoundBuffToast: Option<String>,
+}
+impl Default for clz_Torappu_SpecialOperatorDetailConstDataT {
+    fn default() -> Self {
+        Self {
+            nextRoundBuffToast: None,
+        }
+    }
+}
+impl clz_Torappu_SpecialOperatorDetailConstDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SpecialOperatorDetailConstData<'b>> {
+        let nextRoundBuffToast = self
+            .nextRoundBuffToast
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        clz_Torappu_SpecialOperatorDetailConstData::create(
+            _fbb,
+            &clz_Torappu_SpecialOperatorDetailConstDataArgs { nextRoundBuffToast },
+        )
+    }
+}
 pub enum clz_Torappu_SpecialOperatorDetailTabDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1866,7 +2244,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SpecialOperatorDetailTabData<'a
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1896,6 +2274,19 @@ impl<'a> clz_Torappu_SpecialOperatorDetailTabData<'a> {
             builder.add_soTabId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SpecialOperatorDetailTabDataT {
+        let soTabId = self.soTabId().map(|x| x.to_string());
+        let soTabName = self.soTabName().map(|x| x.to_string());
+        let soTabSortId = self.soTabSortId();
+        let nodeType = self.nodeType();
+        clz_Torappu_SpecialOperatorDetailTabDataT {
+            soTabId,
+            soTabName,
+            soTabSortId,
+            nodeType,
+        }
     }
 
     #[inline]
@@ -1994,6 +2385,28 @@ impl<'a> Default for clz_Torappu_SpecialOperatorDetailTabDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SpecialOperatorDetailTabData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SpecialOperatorDetailTabData", 4)?;
+        if let Some(f) = self.soTabId() {
+            s.serialize_field("soTabId", &f)?;
+        } else {
+            s.skip_field("soTabId")?;
+        }
+        if let Some(f) = self.soTabName() {
+            s.serialize_field("soTabName", &f)?;
+        } else {
+            s.skip_field("soTabName")?;
+        }
+        s.serialize_field("soTabSortId", &self.soTabSortId())?;
+        s.serialize_field("nodeType", &self.nodeType())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SpecialOperatorDetailTabDataBuilder<
     'a: 'b,
     'b,
@@ -2063,6 +2476,44 @@ impl core::fmt::Debug for clz_Torappu_SpecialOperatorDetailTabData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SpecialOperatorDetailTabDataT {
+    pub soTabId: Option<String>,
+    pub soTabName: Option<String>,
+    pub soTabSortId: i32,
+    pub nodeType: enum__Torappu_SpecialOperatorDetailNodeType,
+}
+impl Default for clz_Torappu_SpecialOperatorDetailTabDataT {
+    fn default() -> Self {
+        Self {
+            soTabId: None,
+            soTabName: None,
+            soTabSortId: 0,
+            nodeType: enum__Torappu_SpecialOperatorDetailNodeType::NONE,
+        }
+    }
+}
+impl clz_Torappu_SpecialOperatorDetailTabDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SpecialOperatorDetailTabData<'b>> {
+        let soTabId = self.soTabId.as_ref().map(|x| _fbb.create_string(x));
+        let soTabName = self.soTabName.as_ref().map(|x| _fbb.create_string(x));
+        let soTabSortId = self.soTabSortId;
+        let nodeType = self.nodeType;
+        clz_Torappu_SpecialOperatorDetailTabData::create(
+            _fbb,
+            &clz_Torappu_SpecialOperatorDetailTabDataArgs {
+                soTabId,
+                soTabName,
+                soTabSortId,
+                nodeType,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SpecialOperatorDetailTabDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2075,7 +2526,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SpecialOperatorDe
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2101,6 +2552,15 @@ impl<'a> dict__string__clz_Torappu_SpecialOperatorDetailTabData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SpecialOperatorDetailTabDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SpecialOperatorDetailTabDataT { key, value }
     }
 
     #[inline]
@@ -2177,6 +2637,23 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorDetailTabDataArgs<
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SpecialOperatorDetailTabData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("dict__string__clz_Torappu_SpecialOperatorDetailTabData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SpecialOperatorDetailTabDataBuilder<
     'a: 'b,
     'b,
@@ -2238,6 +2715,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SpecialOperatorDetailTabData
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SpecialOperatorDetailTabDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SpecialOperatorDetailTabDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SpecialOperatorDetailTabDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SpecialOperatorDetailTabDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SpecialOperatorDetailTabData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SpecialOperatorDetailTabData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SpecialOperatorDetailTabDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SpecialOperatorDetailNodeUnlockDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2250,7 +2757,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SpecialOperatorDetailNodeUnlock
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2294,6 +2801,31 @@ impl<'a> clz_Torappu_SpecialOperatorDetailNodeUnlockData<'a> {
         builder.add_ifAutoUnlock(args.ifAutoUnlock);
         builder.add_isInGameMechanics(args.isInGameMechanics);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SpecialOperatorDetailNodeUnlockDataT {
+        let nodeId = self.nodeId().map(|x| x.to_string());
+        let nodeType = self.nodeType();
+        let isInGameMechanics = self.isInGameMechanics();
+        let unlockEvolvePhase = self.unlockEvolvePhase();
+        let unlockLevel = self.unlockLevel();
+        let unlockTaskId = self.unlockTaskId().map(|x| x.to_string());
+        let frontNodeId = self.frontNodeId().map(|x| x.to_string());
+        let ifAutoUnlock = self.ifAutoUnlock();
+        let conditionViewType = self.conditionViewType();
+        let topoOrder = self.topoOrder();
+        clz_Torappu_SpecialOperatorDetailNodeUnlockDataT {
+            nodeId,
+            nodeType,
+            isInGameMechanics,
+            unlockEvolvePhase,
+            unlockLevel,
+            unlockTaskId,
+            frontNodeId,
+            ifAutoUnlock,
+            conditionViewType,
+            topoOrder,
+        }
     }
 
     #[inline]
@@ -2504,6 +3036,39 @@ impl<'a> Default for clz_Torappu_SpecialOperatorDetailNodeUnlockDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SpecialOperatorDetailNodeUnlockData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_SpecialOperatorDetailNodeUnlockData", 10)?;
+        if let Some(f) = self.nodeId() {
+            s.serialize_field("nodeId", &f)?;
+        } else {
+            s.skip_field("nodeId")?;
+        }
+        s.serialize_field("nodeType", &self.nodeType())?;
+        s.serialize_field("isInGameMechanics", &self.isInGameMechanics())?;
+        s.serialize_field("unlockEvolvePhase", &self.unlockEvolvePhase())?;
+        s.serialize_field("unlockLevel", &self.unlockLevel())?;
+        if let Some(f) = self.unlockTaskId() {
+            s.serialize_field("unlockTaskId", &f)?;
+        } else {
+            s.skip_field("unlockTaskId")?;
+        }
+        if let Some(f) = self.frontNodeId() {
+            s.serialize_field("frontNodeId", &f)?;
+        } else {
+            s.skip_field("frontNodeId")?;
+        }
+        s.serialize_field("ifAutoUnlock", &self.ifAutoUnlock())?;
+        s.serialize_field("conditionViewType", &self.conditionViewType())?;
+        s.serialize_field("topoOrder", &self.topoOrder())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SpecialOperatorDetailNodeUnlockDataBuilder<
     'a: 'b,
     'b,
@@ -2632,6 +3197,68 @@ impl core::fmt::Debug for clz_Torappu_SpecialOperatorDetailNodeUnlockData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SpecialOperatorDetailNodeUnlockDataT {
+    pub nodeId: Option<String>,
+    pub nodeType: enum__Torappu_SpecialOperatorDetailNodeType,
+    pub isInGameMechanics: bool,
+    pub unlockEvolvePhase: enum__Torappu_EvolvePhase,
+    pub unlockLevel: i32,
+    pub unlockTaskId: Option<String>,
+    pub frontNodeId: Option<String>,
+    pub ifAutoUnlock: bool,
+    pub conditionViewType: enum__Torappu_SpecialOperatorConditionViewType,
+    pub topoOrder: i32,
+}
+impl Default for clz_Torappu_SpecialOperatorDetailNodeUnlockDataT {
+    fn default() -> Self {
+        Self {
+            nodeId: None,
+            nodeType: enum__Torappu_SpecialOperatorDetailNodeType::NONE,
+            isInGameMechanics: false,
+            unlockEvolvePhase: enum__Torappu_EvolvePhase::PHASE_0,
+            unlockLevel: 0,
+            unlockTaskId: None,
+            frontNodeId: None,
+            ifAutoUnlock: false,
+            conditionViewType: enum__Torappu_SpecialOperatorConditionViewType::TASK,
+            topoOrder: 0,
+        }
+    }
+}
+impl clz_Torappu_SpecialOperatorDetailNodeUnlockDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SpecialOperatorDetailNodeUnlockData<'b>> {
+        let nodeId = self.nodeId.as_ref().map(|x| _fbb.create_string(x));
+        let nodeType = self.nodeType;
+        let isInGameMechanics = self.isInGameMechanics;
+        let unlockEvolvePhase = self.unlockEvolvePhase;
+        let unlockLevel = self.unlockLevel;
+        let unlockTaskId = self.unlockTaskId.as_ref().map(|x| _fbb.create_string(x));
+        let frontNodeId = self.frontNodeId.as_ref().map(|x| _fbb.create_string(x));
+        let ifAutoUnlock = self.ifAutoUnlock;
+        let conditionViewType = self.conditionViewType;
+        let topoOrder = self.topoOrder;
+        clz_Torappu_SpecialOperatorDetailNodeUnlockData::create(
+            _fbb,
+            &clz_Torappu_SpecialOperatorDetailNodeUnlockDataArgs {
+                nodeId,
+                nodeType,
+                isInGameMechanics,
+                unlockEvolvePhase,
+                unlockLevel,
+                unlockTaskId,
+                frontNodeId,
+                ifAutoUnlock,
+                conditionViewType,
+                topoOrder,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SpecialOperatorDetailNodeUnlockDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2646,7 +3273,7 @@ impl<'a> flatbuffers::Follow<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2674,6 +3301,15 @@ impl<'a> dict__string__clz_Torappu_SpecialOperatorDetailNodeUnlockData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SpecialOperatorDetailNodeUnlockDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SpecialOperatorDetailNodeUnlockDataT { key, value }
     }
 
     #[inline]
@@ -2742,6 +3378,25 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorDetailNodeUnlockDa
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SpecialOperatorDetailNodeUnlockData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "dict__string__clz_Torappu_SpecialOperatorDetailNodeUnlockData",
+            2,
+        )?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SpecialOperatorDetailNodeUnlockDataBuilder<
     'a: 'b,
     'b,
@@ -2801,6 +3456,37 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SpecialOperatorDetailNodeUnl
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SpecialOperatorDetailNodeUnlockDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SpecialOperatorDetailNodeUnlockDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SpecialOperatorDetailNodeUnlockDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SpecialOperatorDetailNodeUnlockDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SpecialOperatorDetailNodeUnlockData<'b>>
+    {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SpecialOperatorDetailNodeUnlockData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SpecialOperatorDetailNodeUnlockDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SpecialOperatorDetailEvolveNodeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2813,7 +3499,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SpecialOperatorDetailEvolveNode
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2837,6 +3523,15 @@ impl<'a> clz_Torappu_SpecialOperatorDetailEvolveNodeData<'a> {
             builder.add_nodeId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SpecialOperatorDetailEvolveNodeDataT {
+        let nodeId = self.nodeId().map(|x| x.to_string());
+        let toEvolvePhase = self.toEvolvePhase();
+        clz_Torappu_SpecialOperatorDetailEvolveNodeDataT {
+            nodeId,
+            toEvolvePhase,
+        }
     }
 
     #[inline]
@@ -2899,6 +3594,23 @@ impl<'a> Default for clz_Torappu_SpecialOperatorDetailEvolveNodeDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SpecialOperatorDetailEvolveNodeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_SpecialOperatorDetailEvolveNodeData", 2)?;
+        if let Some(f) = self.nodeId() {
+            s.serialize_field("nodeId", &f)?;
+        } else {
+            s.skip_field("nodeId")?;
+        }
+        s.serialize_field("toEvolvePhase", &self.toEvolvePhase())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SpecialOperatorDetailEvolveNodeDataBuilder<
     'a: 'b,
     'b,
@@ -2952,6 +3664,36 @@ impl core::fmt::Debug for clz_Torappu_SpecialOperatorDetailEvolveNodeData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SpecialOperatorDetailEvolveNodeDataT {
+    pub nodeId: Option<String>,
+    pub toEvolvePhase: enum__Torappu_EvolvePhase,
+}
+impl Default for clz_Torappu_SpecialOperatorDetailEvolveNodeDataT {
+    fn default() -> Self {
+        Self {
+            nodeId: None,
+            toEvolvePhase: enum__Torappu_EvolvePhase::PHASE_0,
+        }
+    }
+}
+impl clz_Torappu_SpecialOperatorDetailEvolveNodeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SpecialOperatorDetailEvolveNodeData<'b>> {
+        let nodeId = self.nodeId.as_ref().map(|x| _fbb.create_string(x));
+        let toEvolvePhase = self.toEvolvePhase;
+        clz_Torappu_SpecialOperatorDetailEvolveNodeData::create(
+            _fbb,
+            &clz_Torappu_SpecialOperatorDetailEvolveNodeDataArgs {
+                nodeId,
+                toEvolvePhase,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SpecialOperatorDetailEvolveNodeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2966,7 +3708,7 @@ impl<'a> flatbuffers::Follow<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2994,6 +3736,15 @@ impl<'a> dict__string__clz_Torappu_SpecialOperatorDetailEvolveNodeData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SpecialOperatorDetailEvolveNodeDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SpecialOperatorDetailEvolveNodeDataT { key, value }
     }
 
     #[inline]
@@ -3062,6 +3813,25 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorDetailEvolveNodeDa
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SpecialOperatorDetailEvolveNodeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "dict__string__clz_Torappu_SpecialOperatorDetailEvolveNodeData",
+            2,
+        )?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SpecialOperatorDetailEvolveNodeDataBuilder<
     'a: 'b,
     'b,
@@ -3121,6 +3891,37 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SpecialOperatorDetailEvolveN
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SpecialOperatorDetailEvolveNodeDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SpecialOperatorDetailEvolveNodeDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SpecialOperatorDetailEvolveNodeDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SpecialOperatorDetailEvolveNodeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SpecialOperatorDetailEvolveNodeData<'b>>
+    {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SpecialOperatorDetailEvolveNodeData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SpecialOperatorDetailEvolveNodeDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SpecialOperatorDetailSkillNodeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3133,7 +3934,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SpecialOperatorDetailSkillNodeD
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3163,6 +3964,19 @@ impl<'a> clz_Torappu_SpecialOperatorDetailSkillNodeData<'a> {
             builder.add_nodeId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SpecialOperatorDetailSkillNodeDataT {
+        let nodeId = self.nodeId().map(|x| x.to_string());
+        let skillKey = self.skillKey().map(|x| x.to_string());
+        let skillLevel = self.skillLevel();
+        let skillSpLevel = self.skillSpLevel();
+        clz_Torappu_SpecialOperatorDetailSkillNodeDataT {
+            nodeId,
+            skillKey,
+            skillLevel,
+            skillSpLevel,
+        }
     }
 
     #[inline]
@@ -3257,6 +4071,29 @@ impl<'a> Default for clz_Torappu_SpecialOperatorDetailSkillNodeDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SpecialOperatorDetailSkillNodeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_SpecialOperatorDetailSkillNodeData", 4)?;
+        if let Some(f) = self.nodeId() {
+            s.serialize_field("nodeId", &f)?;
+        } else {
+            s.skip_field("nodeId")?;
+        }
+        if let Some(f) = self.skillKey() {
+            s.serialize_field("skillKey", &f)?;
+        } else {
+            s.skip_field("skillKey")?;
+        }
+        s.serialize_field("skillLevel", &self.skillLevel())?;
+        s.serialize_field("skillSpLevel", &self.skillSpLevel())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SpecialOperatorDetailSkillNodeDataBuilder<
     'a: 'b,
     'b,
@@ -3327,6 +4164,44 @@ impl core::fmt::Debug for clz_Torappu_SpecialOperatorDetailSkillNodeData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SpecialOperatorDetailSkillNodeDataT {
+    pub nodeId: Option<String>,
+    pub skillKey: Option<String>,
+    pub skillLevel: i32,
+    pub skillSpLevel: i32,
+}
+impl Default for clz_Torappu_SpecialOperatorDetailSkillNodeDataT {
+    fn default() -> Self {
+        Self {
+            nodeId: None,
+            skillKey: None,
+            skillLevel: 0,
+            skillSpLevel: 0,
+        }
+    }
+}
+impl clz_Torappu_SpecialOperatorDetailSkillNodeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SpecialOperatorDetailSkillNodeData<'b>> {
+        let nodeId = self.nodeId.as_ref().map(|x| _fbb.create_string(x));
+        let skillKey = self.skillKey.as_ref().map(|x| _fbb.create_string(x));
+        let skillLevel = self.skillLevel;
+        let skillSpLevel = self.skillSpLevel;
+        clz_Torappu_SpecialOperatorDetailSkillNodeData::create(
+            _fbb,
+            &clz_Torappu_SpecialOperatorDetailSkillNodeDataArgs {
+                nodeId,
+                skillKey,
+                skillLevel,
+                skillSpLevel,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SpecialOperatorDetailSkillNodeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3341,7 +4216,7 @@ impl<'a> flatbuffers::Follow<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3369,6 +4244,15 @@ impl<'a> dict__string__clz_Torappu_SpecialOperatorDetailSkillNodeData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SpecialOperatorDetailSkillNodeDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SpecialOperatorDetailSkillNodeDataT { key, value }
     }
 
     #[inline]
@@ -3437,6 +4321,25 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorDetailSkillNodeDat
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SpecialOperatorDetailSkillNodeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "dict__string__clz_Torappu_SpecialOperatorDetailSkillNodeData",
+            2,
+        )?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SpecialOperatorDetailSkillNodeDataBuilder<
     'a: 'b,
     'b,
@@ -3495,6 +4398,37 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SpecialOperatorDetailSkillNo
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SpecialOperatorDetailSkillNodeDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SpecialOperatorDetailSkillNodeDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SpecialOperatorDetailSkillNodeDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SpecialOperatorDetailSkillNodeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SpecialOperatorDetailSkillNodeData<'b>>
+    {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SpecialOperatorDetailSkillNodeData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SpecialOperatorDetailSkillNodeDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SpecialOperatorDetailTalentNodeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3507,7 +4441,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SpecialOperatorDetailTalentNode
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3533,6 +4467,17 @@ impl<'a> clz_Torappu_SpecialOperatorDetailTalentNodeData<'a> {
             builder.add_nodeId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SpecialOperatorDetailTalentNodeDataT {
+        let nodeId = self.nodeId().map(|x| x.to_string());
+        let talentIndex = self.talentIndex();
+        let updateCount = self.updateCount();
+        clz_Torappu_SpecialOperatorDetailTalentNodeDataT {
+            nodeId,
+            talentIndex,
+            updateCount,
+        }
     }
 
     #[inline]
@@ -3608,6 +4553,24 @@ impl<'a> Default for clz_Torappu_SpecialOperatorDetailTalentNodeDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SpecialOperatorDetailTalentNodeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_SpecialOperatorDetailTalentNodeData", 3)?;
+        if let Some(f) = self.nodeId() {
+            s.serialize_field("nodeId", &f)?;
+        } else {
+            s.skip_field("nodeId")?;
+        }
+        s.serialize_field("talentIndex", &self.talentIndex())?;
+        s.serialize_field("updateCount", &self.updateCount())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SpecialOperatorDetailTalentNodeDataBuilder<
     'a: 'b,
     'b,
@@ -3670,6 +4633,40 @@ impl core::fmt::Debug for clz_Torappu_SpecialOperatorDetailTalentNodeData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SpecialOperatorDetailTalentNodeDataT {
+    pub nodeId: Option<String>,
+    pub talentIndex: i32,
+    pub updateCount: i32,
+}
+impl Default for clz_Torappu_SpecialOperatorDetailTalentNodeDataT {
+    fn default() -> Self {
+        Self {
+            nodeId: None,
+            talentIndex: 0,
+            updateCount: 0,
+        }
+    }
+}
+impl clz_Torappu_SpecialOperatorDetailTalentNodeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SpecialOperatorDetailTalentNodeData<'b>> {
+        let nodeId = self.nodeId.as_ref().map(|x| _fbb.create_string(x));
+        let talentIndex = self.talentIndex;
+        let updateCount = self.updateCount;
+        clz_Torappu_SpecialOperatorDetailTalentNodeData::create(
+            _fbb,
+            &clz_Torappu_SpecialOperatorDetailTalentNodeDataArgs {
+                nodeId,
+                talentIndex,
+                updateCount,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SpecialOperatorDetailTalentNodeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3684,7 +4681,7 @@ impl<'a> flatbuffers::Follow<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3712,6 +4709,15 @@ impl<'a> dict__string__clz_Torappu_SpecialOperatorDetailTalentNodeData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SpecialOperatorDetailTalentNodeDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SpecialOperatorDetailTalentNodeDataT { key, value }
     }
 
     #[inline]
@@ -3780,6 +4786,25 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorDetailTalentNodeDa
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SpecialOperatorDetailTalentNodeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "dict__string__clz_Torappu_SpecialOperatorDetailTalentNodeData",
+            2,
+        )?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SpecialOperatorDetailTalentNodeDataBuilder<
     'a: 'b,
     'b,
@@ -3839,6 +4864,37 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SpecialOperatorDetailTalentN
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SpecialOperatorDetailTalentNodeDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SpecialOperatorDetailTalentNodeDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SpecialOperatorDetailTalentNodeDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SpecialOperatorDetailTalentNodeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SpecialOperatorDetailTalentNodeData<'b>>
+    {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SpecialOperatorDetailTalentNodeData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SpecialOperatorDetailTalentNodeDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SpecialOperatorDetailMasterNodeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3851,7 +4907,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SpecialOperatorDetailMasterNode
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3879,6 +4935,17 @@ impl<'a> clz_Torappu_SpecialOperatorDetailMasterNodeData<'a> {
             builder.add_nodeId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SpecialOperatorDetailMasterNodeDataT {
+        let nodeId = self.nodeId().map(|x| x.to_string());
+        let masterId = self.masterId().map(|x| x.to_string());
+        let level = self.level();
+        clz_Torappu_SpecialOperatorDetailMasterNodeDataT {
+            nodeId,
+            masterId,
+            level,
+        }
     }
 
     #[inline]
@@ -3956,6 +5023,28 @@ impl<'a> Default for clz_Torappu_SpecialOperatorDetailMasterNodeDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SpecialOperatorDetailMasterNodeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_SpecialOperatorDetailMasterNodeData", 3)?;
+        if let Some(f) = self.nodeId() {
+            s.serialize_field("nodeId", &f)?;
+        } else {
+            s.skip_field("nodeId")?;
+        }
+        if let Some(f) = self.masterId() {
+            s.serialize_field("masterId", &f)?;
+        } else {
+            s.skip_field("masterId")?;
+        }
+        s.serialize_field("level", &self.level())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SpecialOperatorDetailMasterNodeDataBuilder<
     'a: 'b,
     'b,
@@ -4017,6 +5106,40 @@ impl core::fmt::Debug for clz_Torappu_SpecialOperatorDetailMasterNodeData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SpecialOperatorDetailMasterNodeDataT {
+    pub nodeId: Option<String>,
+    pub masterId: Option<String>,
+    pub level: i32,
+}
+impl Default for clz_Torappu_SpecialOperatorDetailMasterNodeDataT {
+    fn default() -> Self {
+        Self {
+            nodeId: None,
+            masterId: None,
+            level: 0,
+        }
+    }
+}
+impl clz_Torappu_SpecialOperatorDetailMasterNodeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SpecialOperatorDetailMasterNodeData<'b>> {
+        let nodeId = self.nodeId.as_ref().map(|x| _fbb.create_string(x));
+        let masterId = self.masterId.as_ref().map(|x| _fbb.create_string(x));
+        let level = self.level;
+        clz_Torappu_SpecialOperatorDetailMasterNodeData::create(
+            _fbb,
+            &clz_Torappu_SpecialOperatorDetailMasterNodeDataArgs {
+                nodeId,
+                masterId,
+                level,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SpecialOperatorDetailMasterNodeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4031,7 +5154,7 @@ impl<'a> flatbuffers::Follow<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4059,6 +5182,15 @@ impl<'a> dict__string__clz_Torappu_SpecialOperatorDetailMasterNodeData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SpecialOperatorDetailMasterNodeDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SpecialOperatorDetailMasterNodeDataT { key, value }
     }
 
     #[inline]
@@ -4127,6 +5259,25 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorDetailMasterNodeDa
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SpecialOperatorDetailMasterNodeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "dict__string__clz_Torappu_SpecialOperatorDetailMasterNodeData",
+            2,
+        )?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SpecialOperatorDetailMasterNodeDataBuilder<
     'a: 'b,
     'b,
@@ -4186,6 +5337,37 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SpecialOperatorDetailMasterN
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SpecialOperatorDetailMasterNodeDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SpecialOperatorDetailMasterNodeDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SpecialOperatorDetailMasterNodeDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SpecialOperatorDetailMasterNodeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SpecialOperatorDetailMasterNodeData<'b>>
+    {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SpecialOperatorDetailMasterNodeData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SpecialOperatorDetailMasterNodeDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SpecialOperatorDetailUniEquipNodeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4198,7 +5380,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SpecialOperatorDetailUniEquipNo
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4226,6 +5408,17 @@ impl<'a> clz_Torappu_SpecialOperatorDetailUniEquipNodeData<'a> {
             builder.add_nodeId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SpecialOperatorDetailUniEquipNodeDataT {
+        let nodeId = self.nodeId().map(|x| x.to_string());
+        let uniEquipId = self.uniEquipId().map(|x| x.to_string());
+        let equipLevel = self.equipLevel();
+        clz_Torappu_SpecialOperatorDetailUniEquipNodeDataT {
+            nodeId,
+            uniEquipId,
+            equipLevel,
+        }
     }
 
     #[inline]
@@ -4303,6 +5496,28 @@ impl<'a> Default for clz_Torappu_SpecialOperatorDetailUniEquipNodeDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SpecialOperatorDetailUniEquipNodeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_SpecialOperatorDetailUniEquipNodeData", 3)?;
+        if let Some(f) = self.nodeId() {
+            s.serialize_field("nodeId", &f)?;
+        } else {
+            s.skip_field("nodeId")?;
+        }
+        if let Some(f) = self.uniEquipId() {
+            s.serialize_field("uniEquipId", &f)?;
+        } else {
+            s.skip_field("uniEquipId")?;
+        }
+        s.serialize_field("equipLevel", &self.equipLevel())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SpecialOperatorDetailUniEquipNodeDataBuilder<
     'a: 'b,
     'b,
@@ -4364,6 +5579,40 @@ impl core::fmt::Debug for clz_Torappu_SpecialOperatorDetailUniEquipNodeData<'_> 
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SpecialOperatorDetailUniEquipNodeDataT {
+    pub nodeId: Option<String>,
+    pub uniEquipId: Option<String>,
+    pub equipLevel: i32,
+}
+impl Default for clz_Torappu_SpecialOperatorDetailUniEquipNodeDataT {
+    fn default() -> Self {
+        Self {
+            nodeId: None,
+            uniEquipId: None,
+            equipLevel: 0,
+        }
+    }
+}
+impl clz_Torappu_SpecialOperatorDetailUniEquipNodeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SpecialOperatorDetailUniEquipNodeData<'b>> {
+        let nodeId = self.nodeId.as_ref().map(|x| _fbb.create_string(x));
+        let uniEquipId = self.uniEquipId.as_ref().map(|x| _fbb.create_string(x));
+        let equipLevel = self.equipLevel;
+        clz_Torappu_SpecialOperatorDetailUniEquipNodeData::create(
+            _fbb,
+            &clz_Torappu_SpecialOperatorDetailUniEquipNodeDataArgs {
+                nodeId,
+                uniEquipId,
+                equipLevel,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SpecialOperatorDetailUniEquipNodeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4378,7 +5627,7 @@ impl<'a> flatbuffers::Follow<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4407,6 +5656,15 @@ impl<'a> dict__string__clz_Torappu_SpecialOperatorDetailUniEquipNodeData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SpecialOperatorDetailUniEquipNodeDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SpecialOperatorDetailUniEquipNodeDataT { key, value }
     }
 
     #[inline]
@@ -4478,6 +5736,25 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorDetailUniEquipNode
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SpecialOperatorDetailUniEquipNodeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "dict__string__clz_Torappu_SpecialOperatorDetailUniEquipNodeData",
+            2,
+        )?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SpecialOperatorDetailUniEquipNodeDataBuilder<
     'a: 'b,
     'b,
@@ -4537,6 +5814,37 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SpecialOperatorDetailUniEqui
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SpecialOperatorDetailUniEquipNodeDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SpecialOperatorDetailUniEquipNodeDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SpecialOperatorDetailUniEquipNodeDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SpecialOperatorDetailUniEquipNodeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SpecialOperatorDetailUniEquipNodeData<'b>>
+    {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SpecialOperatorDetailUniEquipNodeData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SpecialOperatorDetailUniEquipNodeDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_UnityEngine_Vector2Offset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4549,7 +5857,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_UnityEngine_Vector2<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4571,6 +5879,12 @@ impl<'a> clz_UnityEngine_Vector2<'a> {
         builder.add_y(args.y);
         builder.add_x(args.x);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_UnityEngine_Vector2T {
+        let x = self.x();
+        let y = self.y();
+        clz_UnityEngine_Vector2T { x, y }
     }
 
     #[inline]
@@ -4622,6 +5936,18 @@ impl<'a> Default for clz_UnityEngine_Vector2Args {
     }
 }
 
+impl Serialize for clz_UnityEngine_Vector2<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_UnityEngine_Vector2", 2)?;
+        s.serialize_field("x", &self.x())?;
+        s.serialize_field("y", &self.y())?;
+        s.end()
+    }
+}
+
 pub struct clz_UnityEngine_Vector2Builder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -4662,6 +5988,27 @@ impl core::fmt::Debug for clz_UnityEngine_Vector2<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_UnityEngine_Vector2T {
+    pub x: f32,
+    pub y: f32,
+}
+impl Default for clz_UnityEngine_Vector2T {
+    fn default() -> Self {
+        Self { x: 0.0, y: 0.0 }
+    }
+}
+impl clz_UnityEngine_Vector2T {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_UnityEngine_Vector2<'b>> {
+        let x = self.x;
+        let y = self.y;
+        clz_UnityEngine_Vector2::create(_fbb, &clz_UnityEngine_Vector2Args { x, y })
+    }
+}
 pub enum clz_Torappu_SpecialOperatorPointPosDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4674,7 +6021,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SpecialOperatorPointPosData<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4696,6 +6043,11 @@ impl<'a> clz_Torappu_SpecialOperatorPointPosData<'a> {
             builder.add_pos(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SpecialOperatorPointPosDataT {
+        let pos = self.pos().map(|x| Box::new(x.unpack()));
+        clz_Torappu_SpecialOperatorPointPosDataT { pos }
     }
 
     #[inline]
@@ -4737,6 +6089,21 @@ impl<'a> Default for clz_Torappu_SpecialOperatorPointPosDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_SpecialOperatorPointPosDataArgs { pos: None }
+    }
+}
+
+impl Serialize for clz_Torappu_SpecialOperatorPointPosData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SpecialOperatorPointPosData", 1)?;
+        if let Some(f) = self.pos() {
+            s.serialize_field("pos", &f)?;
+        } else {
+            s.skip_field("pos")?;
+        }
+        s.end()
     }
 }
 
@@ -4783,6 +6150,28 @@ impl core::fmt::Debug for clz_Torappu_SpecialOperatorPointPosData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SpecialOperatorPointPosDataT {
+    pub pos: Option<Box<clz_UnityEngine_Vector2T>>,
+}
+impl Default for clz_Torappu_SpecialOperatorPointPosDataT {
+    fn default() -> Self {
+        Self { pos: None }
+    }
+}
+impl clz_Torappu_SpecialOperatorPointPosDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SpecialOperatorPointPosData<'b>> {
+        let pos = self.pos.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_SpecialOperatorPointPosData::create(
+            _fbb,
+            &clz_Torappu_SpecialOperatorPointPosDataArgs { pos },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SpecialOperatorPointPosDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4795,7 +6184,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SpecialOperatorPo
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4821,6 +6210,15 @@ impl<'a> dict__string__clz_Torappu_SpecialOperatorPointPosData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SpecialOperatorPointPosDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SpecialOperatorPointPosDataT { key, value }
     }
 
     #[inline]
@@ -4897,6 +6295,23 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorPointPosDataArgs<'
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SpecialOperatorPointPosData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("dict__string__clz_Torappu_SpecialOperatorPointPosData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SpecialOperatorPointPosDataBuilder<
     'a: 'b,
     'b,
@@ -4958,6 +6373,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SpecialOperatorPointPosData<
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SpecialOperatorPointPosDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SpecialOperatorPointPosDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SpecialOperatorPointPosDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SpecialOperatorPointPosDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SpecialOperatorPointPosData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SpecialOperatorPointPosData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SpecialOperatorPointPosDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SpecialOperatorNodePointDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4970,7 +6415,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SpecialOperatorNodePointData<'a
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4992,6 +6437,11 @@ impl<'a> clz_Torappu_SpecialOperatorNodePointData<'a> {
             builder.add_nodeId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SpecialOperatorNodePointDataT {
+        let nodeId = self.nodeId().map(|x| x.to_string());
+        clz_Torappu_SpecialOperatorNodePointDataT { nodeId }
     }
 
     #[inline]
@@ -5028,6 +6478,21 @@ impl<'a> Default for clz_Torappu_SpecialOperatorNodePointDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_SpecialOperatorNodePointDataArgs { nodeId: None }
+    }
+}
+
+impl Serialize for clz_Torappu_SpecialOperatorNodePointData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SpecialOperatorNodePointData", 1)?;
+        if let Some(f) = self.nodeId() {
+            s.serialize_field("nodeId", &f)?;
+        } else {
+            s.skip_field("nodeId")?;
+        }
+        s.end()
     }
 }
 
@@ -5073,6 +6538,28 @@ impl core::fmt::Debug for clz_Torappu_SpecialOperatorNodePointData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SpecialOperatorNodePointDataT {
+    pub nodeId: Option<String>,
+}
+impl Default for clz_Torappu_SpecialOperatorNodePointDataT {
+    fn default() -> Self {
+        Self { nodeId: None }
+    }
+}
+impl clz_Torappu_SpecialOperatorNodePointDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SpecialOperatorNodePointData<'b>> {
+        let nodeId = self.nodeId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SpecialOperatorNodePointData::create(
+            _fbb,
+            &clz_Torappu_SpecialOperatorNodePointDataArgs { nodeId },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SpecialOperatorNodePointDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -5085,7 +6572,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SpecialOperatorNo
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -5111,6 +6598,15 @@ impl<'a> dict__string__clz_Torappu_SpecialOperatorNodePointData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SpecialOperatorNodePointDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SpecialOperatorNodePointDataT { key, value }
     }
 
     #[inline]
@@ -5187,6 +6683,23 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorNodePointDataArgs<
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SpecialOperatorNodePointData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("dict__string__clz_Torappu_SpecialOperatorNodePointData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SpecialOperatorNodePointDataBuilder<
     'a: 'b,
     'b,
@@ -5248,6 +6761,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SpecialOperatorNodePointData
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SpecialOperatorNodePointDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SpecialOperatorNodePointDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SpecialOperatorNodePointDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SpecialOperatorNodePointDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SpecialOperatorNodePointData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SpecialOperatorNodePointData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SpecialOperatorNodePointDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SpecialOperatorElitePointDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -5260,7 +6803,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SpecialOperatorElitePointData<'
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -5280,6 +6823,11 @@ impl<'a> clz_Torappu_SpecialOperatorElitePointData<'a> {
         let mut builder = clz_Torappu_SpecialOperatorElitePointDataBuilder::new(_fbb);
         builder.add_evolvePhase(args.evolvePhase);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SpecialOperatorElitePointDataT {
+        let evolvePhase = self.evolvePhase();
+        clz_Torappu_SpecialOperatorElitePointDataT { evolvePhase }
     }
 
     #[inline]
@@ -5320,6 +6868,17 @@ impl<'a> Default for clz_Torappu_SpecialOperatorElitePointDataArgs {
         clz_Torappu_SpecialOperatorElitePointDataArgs {
             evolvePhase: enum__Torappu_EvolvePhase::PHASE_0,
         }
+    }
+}
+
+impl Serialize for clz_Torappu_SpecialOperatorElitePointData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SpecialOperatorElitePointData", 1)?;
+        s.serialize_field("evolvePhase", &self.evolvePhase())?;
+        s.end()
     }
 }
 
@@ -5366,6 +6925,30 @@ impl core::fmt::Debug for clz_Torappu_SpecialOperatorElitePointData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SpecialOperatorElitePointDataT {
+    pub evolvePhase: enum__Torappu_EvolvePhase,
+}
+impl Default for clz_Torappu_SpecialOperatorElitePointDataT {
+    fn default() -> Self {
+        Self {
+            evolvePhase: enum__Torappu_EvolvePhase::PHASE_0,
+        }
+    }
+}
+impl clz_Torappu_SpecialOperatorElitePointDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SpecialOperatorElitePointData<'b>> {
+        let evolvePhase = self.evolvePhase;
+        clz_Torappu_SpecialOperatorElitePointData::create(
+            _fbb,
+            &clz_Torappu_SpecialOperatorElitePointDataArgs { evolvePhase },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SpecialOperatorElitePointDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -5378,7 +6961,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SpecialOperatorEl
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -5405,6 +6988,15 @@ impl<'a> dict__string__clz_Torappu_SpecialOperatorElitePointData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SpecialOperatorElitePointDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SpecialOperatorElitePointDataT { key, value }
     }
 
     #[inline]
@@ -5481,6 +7073,23 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorElitePointDataArgs
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SpecialOperatorElitePointData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("dict__string__clz_Torappu_SpecialOperatorElitePointData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SpecialOperatorElitePointDataBuilder<
     'a: 'b,
     'b,
@@ -5542,6 +7151,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SpecialOperatorElitePointDat
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SpecialOperatorElitePointDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SpecialOperatorElitePointDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SpecialOperatorElitePointDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SpecialOperatorElitePointDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SpecialOperatorElitePointData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SpecialOperatorElitePointData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SpecialOperatorElitePointDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SpecialOperatorLevelPointDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -5554,7 +7193,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SpecialOperatorLevelPointData<'
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -5576,6 +7215,12 @@ impl<'a> clz_Torappu_SpecialOperatorLevelPointData<'a> {
         builder.add_level(args.level);
         builder.add_evolvePhase(args.evolvePhase);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SpecialOperatorLevelPointDataT {
+        let evolvePhase = self.evolvePhase();
+        let level = self.level();
+        clz_Torappu_SpecialOperatorLevelPointDataT { evolvePhase, level }
     }
 
     #[inline]
@@ -5633,6 +7278,18 @@ impl<'a> Default for clz_Torappu_SpecialOperatorLevelPointDataArgs {
     }
 }
 
+impl Serialize for clz_Torappu_SpecialOperatorLevelPointData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SpecialOperatorLevelPointData", 2)?;
+        s.serialize_field("evolvePhase", &self.evolvePhase())?;
+        s.serialize_field("level", &self.level())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SpecialOperatorLevelPointDataBuilder<
     'a: 'b,
     'b,
@@ -5685,6 +7342,33 @@ impl core::fmt::Debug for clz_Torappu_SpecialOperatorLevelPointData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SpecialOperatorLevelPointDataT {
+    pub evolvePhase: enum__Torappu_EvolvePhase,
+    pub level: i32,
+}
+impl Default for clz_Torappu_SpecialOperatorLevelPointDataT {
+    fn default() -> Self {
+        Self {
+            evolvePhase: enum__Torappu_EvolvePhase::PHASE_0,
+            level: 0,
+        }
+    }
+}
+impl clz_Torappu_SpecialOperatorLevelPointDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SpecialOperatorLevelPointData<'b>> {
+        let evolvePhase = self.evolvePhase;
+        let level = self.level;
+        clz_Torappu_SpecialOperatorLevelPointData::create(
+            _fbb,
+            &clz_Torappu_SpecialOperatorLevelPointDataArgs { evolvePhase, level },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SpecialOperatorLevelPointDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -5697,7 +7381,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SpecialOperatorLe
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -5724,6 +7408,15 @@ impl<'a> dict__string__clz_Torappu_SpecialOperatorLevelPointData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SpecialOperatorLevelPointDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SpecialOperatorLevelPointDataT { key, value }
     }
 
     #[inline]
@@ -5800,6 +7493,23 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorLevelPointDataArgs
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SpecialOperatorLevelPointData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("dict__string__clz_Torappu_SpecialOperatorLevelPointData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SpecialOperatorLevelPointDataBuilder<
     'a: 'b,
     'b,
@@ -5861,6 +7571,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SpecialOperatorLevelPointDat
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SpecialOperatorLevelPointDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SpecialOperatorLevelPointDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SpecialOperatorLevelPointDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SpecialOperatorLevelPointDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SpecialOperatorLevelPointData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SpecialOperatorLevelPointData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SpecialOperatorLevelPointDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SpecialOperatorLinePosDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -5873,7 +7613,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SpecialOperatorLinePosData<'a> 
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -5899,6 +7639,12 @@ impl<'a> clz_Torappu_SpecialOperatorLinePosData<'a> {
             builder.add_startPos(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SpecialOperatorLinePosDataT {
+        let startPos = self.startPos().map(|x| Box::new(x.unpack()));
+        let endPos = self.endPos().map(|x| Box::new(x.unpack()));
+        clz_Torappu_SpecialOperatorLinePosDataT { startPos, endPos }
     }
 
     #[inline]
@@ -5965,6 +7711,26 @@ impl<'a> Default for clz_Torappu_SpecialOperatorLinePosDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SpecialOperatorLinePosData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SpecialOperatorLinePosData", 2)?;
+        if let Some(f) = self.startPos() {
+            s.serialize_field("startPos", &f)?;
+        } else {
+            s.skip_field("startPos")?;
+        }
+        if let Some(f) = self.endPos() {
+            s.serialize_field("endPos", &f)?;
+        } else {
+            s.skip_field("endPos")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SpecialOperatorLinePosDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -6014,6 +7780,33 @@ impl core::fmt::Debug for clz_Torappu_SpecialOperatorLinePosData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SpecialOperatorLinePosDataT {
+    pub startPos: Option<Box<clz_UnityEngine_Vector2T>>,
+    pub endPos: Option<Box<clz_UnityEngine_Vector2T>>,
+}
+impl Default for clz_Torappu_SpecialOperatorLinePosDataT {
+    fn default() -> Self {
+        Self {
+            startPos: None,
+            endPos: None,
+        }
+    }
+}
+impl clz_Torappu_SpecialOperatorLinePosDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SpecialOperatorLinePosData<'b>> {
+        let startPos = self.startPos.as_ref().map(|x| x.pack(_fbb));
+        let endPos = self.endPos.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_SpecialOperatorLinePosData::create(
+            _fbb,
+            &clz_Torappu_SpecialOperatorLinePosDataArgs { startPos, endPos },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SpecialOperatorLinePosDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -6026,7 +7819,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SpecialOperatorLi
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -6052,6 +7845,15 @@ impl<'a> dict__string__clz_Torappu_SpecialOperatorLinePosData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SpecialOperatorLinePosDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SpecialOperatorLinePosDataT { key, value }
     }
 
     #[inline]
@@ -6128,6 +7930,23 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorLinePosDataArgs<'a
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SpecialOperatorLinePosData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("dict__string__clz_Torappu_SpecialOperatorLinePosData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SpecialOperatorLinePosDataBuilder<
     'a: 'b,
     'b,
@@ -6189,6 +8008,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SpecialOperatorLinePosData<'
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SpecialOperatorLinePosDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SpecialOperatorLinePosDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SpecialOperatorLinePosDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SpecialOperatorLinePosDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SpecialOperatorLinePosData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SpecialOperatorLinePosData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SpecialOperatorLinePosDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SpecialOperatorLineRelationDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -6201,7 +8050,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SpecialOperatorLineRelationData
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -6227,6 +8076,19 @@ impl<'a> clz_Torappu_SpecialOperatorLineRelationData<'a> {
             builder.add_startPointList(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SpecialOperatorLineRelationDataT {
+        let startPointList = self
+            .startPointList()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let endPointList = self
+            .endPointList()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        clz_Torappu_SpecialOperatorLineRelationDataT {
+            startPointList,
+            endPointList,
+        }
     }
 
     #[inline]
@@ -6299,6 +8161,27 @@ impl<'a> Default for clz_Torappu_SpecialOperatorLineRelationDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SpecialOperatorLineRelationData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_SpecialOperatorLineRelationData", 2)?;
+        if let Some(f) = self.startPointList() {
+            s.serialize_field("startPointList", &f)?;
+        } else {
+            s.skip_field("startPointList")?;
+        }
+        if let Some(f) = self.endPointList() {
+            s.serialize_field("endPointList", &f)?;
+        } else {
+            s.skip_field("endPointList")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SpecialOperatorLineRelationDataBuilder<
     'a: 'b,
     'b,
@@ -6359,6 +8242,42 @@ impl core::fmt::Debug for clz_Torappu_SpecialOperatorLineRelationData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SpecialOperatorLineRelationDataT {
+    pub startPointList: Option<Vec<String>>,
+    pub endPointList: Option<Vec<String>>,
+}
+impl Default for clz_Torappu_SpecialOperatorLineRelationDataT {
+    fn default() -> Self {
+        Self {
+            startPointList: None,
+            endPointList: None,
+        }
+    }
+}
+impl clz_Torappu_SpecialOperatorLineRelationDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SpecialOperatorLineRelationData<'b>> {
+        let startPointList = self.startPointList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let endPointList = self.endPointList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SpecialOperatorLineRelationData::create(
+            _fbb,
+            &clz_Torappu_SpecialOperatorLineRelationDataArgs {
+                startPointList,
+                endPointList,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SpecialOperatorLineRelationDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -6371,7 +8290,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SpecialOperatorLi
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -6399,6 +8318,15 @@ impl<'a> dict__string__clz_Torappu_SpecialOperatorLineRelationData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SpecialOperatorLineRelationDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SpecialOperatorLineRelationDataT { key, value }
     }
 
     #[inline]
@@ -6471,6 +8399,25 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorLineRelationDataAr
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SpecialOperatorLineRelationData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "dict__string__clz_Torappu_SpecialOperatorLineRelationData",
+            2,
+        )?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SpecialOperatorLineRelationDataBuilder<
     'a: 'b,
     'b,
@@ -6528,6 +8475,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SpecialOperatorLineRelationD
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SpecialOperatorLineRelationDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SpecialOperatorLineRelationDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SpecialOperatorLineRelationDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SpecialOperatorLineRelationDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SpecialOperatorLineRelationData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SpecialOperatorLineRelationData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SpecialOperatorLineRelationDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SpecialOperatorDiagramDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -6540,7 +8517,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SpecialOperatorDiagramData<'a> 
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -6586,6 +8563,39 @@ impl<'a> clz_Torappu_SpecialOperatorDiagramData<'a> {
         builder.add_height(args.height);
         builder.add_width(args.width);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SpecialOperatorDiagramDataT {
+        let width = self.width();
+        let height = self.height();
+        let pointPosDataMap = self
+            .pointPosDataMap()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let nodePointDataMap = self
+            .nodePointDataMap()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let elitePointDataMap = self
+            .elitePointDataMap()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let levelPointDataMap = self
+            .levelPointDataMap()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let linePosDataMap = self
+            .linePosDataMap()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let lineRelationDataMap = self
+            .lineRelationDataMap()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_SpecialOperatorDiagramDataT {
+            width,
+            height,
+            pointPosDataMap,
+            nodePointDataMap,
+            elitePointDataMap,
+            levelPointDataMap,
+            linePosDataMap,
+            lineRelationDataMap,
+        }
     }
 
     #[inline]
@@ -6918,6 +8928,48 @@ impl<'a> Default for clz_Torappu_SpecialOperatorDiagramDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SpecialOperatorDiagramData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SpecialOperatorDiagramData", 8)?;
+        s.serialize_field("width", &self.width())?;
+        s.serialize_field("height", &self.height())?;
+        if let Some(f) = self.pointPosDataMap() {
+            s.serialize_field("pointPosDataMap", &f)?;
+        } else {
+            s.skip_field("pointPosDataMap")?;
+        }
+        if let Some(f) = self.nodePointDataMap() {
+            s.serialize_field("nodePointDataMap", &f)?;
+        } else {
+            s.skip_field("nodePointDataMap")?;
+        }
+        if let Some(f) = self.elitePointDataMap() {
+            s.serialize_field("elitePointDataMap", &f)?;
+        } else {
+            s.skip_field("elitePointDataMap")?;
+        }
+        if let Some(f) = self.levelPointDataMap() {
+            s.serialize_field("levelPointDataMap", &f)?;
+        } else {
+            s.skip_field("levelPointDataMap")?;
+        }
+        if let Some(f) = self.linePosDataMap() {
+            s.serialize_field("linePosDataMap", &f)?;
+        } else {
+            s.skip_field("linePosDataMap")?;
+        }
+        if let Some(f) = self.lineRelationDataMap() {
+            s.serialize_field("lineRelationDataMap", &f)?;
+        } else {
+            s.skip_field("lineRelationDataMap")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SpecialOperatorDiagramDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -7072,6 +9124,79 @@ impl core::fmt::Debug for clz_Torappu_SpecialOperatorDiagramData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SpecialOperatorDiagramDataT {
+    pub width: f32,
+    pub height: f32,
+    pub pointPosDataMap: Option<Vec<dict__string__clz_Torappu_SpecialOperatorPointPosDataT>>,
+    pub nodePointDataMap: Option<Vec<dict__string__clz_Torappu_SpecialOperatorNodePointDataT>>,
+    pub elitePointDataMap: Option<Vec<dict__string__clz_Torappu_SpecialOperatorElitePointDataT>>,
+    pub levelPointDataMap: Option<Vec<dict__string__clz_Torappu_SpecialOperatorLevelPointDataT>>,
+    pub linePosDataMap: Option<Vec<dict__string__clz_Torappu_SpecialOperatorLinePosDataT>>,
+    pub lineRelationDataMap:
+        Option<Vec<dict__string__clz_Torappu_SpecialOperatorLineRelationDataT>>,
+}
+impl Default for clz_Torappu_SpecialOperatorDiagramDataT {
+    fn default() -> Self {
+        Self {
+            width: 0.0,
+            height: 0.0,
+            pointPosDataMap: None,
+            nodePointDataMap: None,
+            elitePointDataMap: None,
+            levelPointDataMap: None,
+            linePosDataMap: None,
+            lineRelationDataMap: None,
+        }
+    }
+}
+impl clz_Torappu_SpecialOperatorDiagramDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SpecialOperatorDiagramData<'b>> {
+        let width = self.width;
+        let height = self.height;
+        let pointPosDataMap = self.pointPosDataMap.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let nodePointDataMap = self.nodePointDataMap.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let elitePointDataMap = self.elitePointDataMap.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let levelPointDataMap = self.levelPointDataMap.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let linePosDataMap = self.linePosDataMap.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let lineRelationDataMap = self.lineRelationDataMap.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SpecialOperatorDiagramData::create(
+            _fbb,
+            &clz_Torappu_SpecialOperatorDiagramDataArgs {
+                width,
+                height,
+                pointPosDataMap,
+                nodePointDataMap,
+                elitePointDataMap,
+                levelPointDataMap,
+                linePosDataMap,
+                lineRelationDataMap,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SpecialOperatorDiagramDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -7084,7 +9209,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SpecialOperatorDi
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -7110,6 +9235,15 @@ impl<'a> dict__string__clz_Torappu_SpecialOperatorDiagramData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SpecialOperatorDiagramDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SpecialOperatorDiagramDataT { key, value }
     }
 
     #[inline]
@@ -7186,6 +9320,23 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorDiagramDataArgs<'a
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SpecialOperatorDiagramData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("dict__string__clz_Torappu_SpecialOperatorDiagramData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SpecialOperatorDiagramDataBuilder<
     'a: 'b,
     'b,
@@ -7247,6 +9398,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SpecialOperatorDiagramData<'
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SpecialOperatorDiagramDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SpecialOperatorDiagramDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SpecialOperatorDiagramDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SpecialOperatorDiagramDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SpecialOperatorDiagramData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SpecialOperatorDiagramData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SpecialOperatorDiagramDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SpecialOperatorDetailDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -7259,7 +9440,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SpecialOperatorDetailData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -7317,6 +9498,49 @@ impl<'a> clz_Torappu_SpecialOperatorDetailData<'a> {
             builder.add_specialOperatorExpMap(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SpecialOperatorDetailDataT {
+        let specialOperatorExpMap = self
+            .specialOperatorExpMap()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let detailConstData = self.detailConstData().map(|x| Box::new(x.unpack()));
+        let tabData = self
+            .tabData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let nodeUnlockData = self
+            .nodeUnlockData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let evolveNodeData = self
+            .evolveNodeData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let skillNodeData = self
+            .skillNodeData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let talentNodeData = self
+            .talentNodeData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let masterNodeData = self
+            .masterNodeData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let uniEquipNodeData = self
+            .uniEquipNodeData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let nodeDiagramMap = self
+            .nodeDiagramMap()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_SpecialOperatorDetailDataT {
+            specialOperatorExpMap,
+            detailConstData,
+            tabData,
+            nodeUnlockData,
+            evolveNodeData,
+            skillNodeData,
+            talentNodeData,
+            masterNodeData,
+            uniEquipNodeData,
+            nodeDiagramMap,
+        }
     }
 
     #[inline]
@@ -7696,6 +9920,66 @@ impl<'a> Default for clz_Torappu_SpecialOperatorDetailDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SpecialOperatorDetailData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SpecialOperatorDetailData", 10)?;
+        if let Some(f) = self.specialOperatorExpMap() {
+            s.serialize_field("specialOperatorExpMap", &f)?;
+        } else {
+            s.skip_field("specialOperatorExpMap")?;
+        }
+        if let Some(f) = self.detailConstData() {
+            s.serialize_field("detailConstData", &f)?;
+        } else {
+            s.skip_field("detailConstData")?;
+        }
+        if let Some(f) = self.tabData() {
+            s.serialize_field("tabData", &f)?;
+        } else {
+            s.skip_field("tabData")?;
+        }
+        if let Some(f) = self.nodeUnlockData() {
+            s.serialize_field("nodeUnlockData", &f)?;
+        } else {
+            s.skip_field("nodeUnlockData")?;
+        }
+        if let Some(f) = self.evolveNodeData() {
+            s.serialize_field("evolveNodeData", &f)?;
+        } else {
+            s.skip_field("evolveNodeData")?;
+        }
+        if let Some(f) = self.skillNodeData() {
+            s.serialize_field("skillNodeData", &f)?;
+        } else {
+            s.skip_field("skillNodeData")?;
+        }
+        if let Some(f) = self.talentNodeData() {
+            s.serialize_field("talentNodeData", &f)?;
+        } else {
+            s.skip_field("talentNodeData")?;
+        }
+        if let Some(f) = self.masterNodeData() {
+            s.serialize_field("masterNodeData", &f)?;
+        } else {
+            s.skip_field("masterNodeData")?;
+        }
+        if let Some(f) = self.uniEquipNodeData() {
+            s.serialize_field("uniEquipNodeData", &f)?;
+        } else {
+            s.skip_field("uniEquipNodeData")?;
+        }
+        if let Some(f) = self.nodeDiagramMap() {
+            s.serialize_field("nodeDiagramMap", &f)?;
+        } else {
+            s.skip_field("nodeDiagramMap")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SpecialOperatorDetailDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -7896,6 +10180,96 @@ impl core::fmt::Debug for clz_Torappu_SpecialOperatorDetailData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SpecialOperatorDetailDataT {
+    pub specialOperatorExpMap: Option<Vec<list_intT>>,
+    pub detailConstData: Option<Box<clz_Torappu_SpecialOperatorDetailConstDataT>>,
+    pub tabData: Option<Vec<dict__string__clz_Torappu_SpecialOperatorDetailTabDataT>>,
+    pub nodeUnlockData: Option<Vec<dict__string__clz_Torappu_SpecialOperatorDetailNodeUnlockDataT>>,
+    pub evolveNodeData: Option<Vec<dict__string__clz_Torappu_SpecialOperatorDetailEvolveNodeDataT>>,
+    pub skillNodeData: Option<Vec<dict__string__clz_Torappu_SpecialOperatorDetailSkillNodeDataT>>,
+    pub talentNodeData: Option<Vec<dict__string__clz_Torappu_SpecialOperatorDetailTalentNodeDataT>>,
+    pub masterNodeData: Option<Vec<dict__string__clz_Torappu_SpecialOperatorDetailMasterNodeDataT>>,
+    pub uniEquipNodeData:
+        Option<Vec<dict__string__clz_Torappu_SpecialOperatorDetailUniEquipNodeDataT>>,
+    pub nodeDiagramMap: Option<Vec<dict__string__clz_Torappu_SpecialOperatorDiagramDataT>>,
+}
+impl Default for clz_Torappu_SpecialOperatorDetailDataT {
+    fn default() -> Self {
+        Self {
+            specialOperatorExpMap: None,
+            detailConstData: None,
+            tabData: None,
+            nodeUnlockData: None,
+            evolveNodeData: None,
+            skillNodeData: None,
+            talentNodeData: None,
+            masterNodeData: None,
+            uniEquipNodeData: None,
+            nodeDiagramMap: None,
+        }
+    }
+}
+impl clz_Torappu_SpecialOperatorDetailDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SpecialOperatorDetailData<'b>> {
+        let specialOperatorExpMap = self.specialOperatorExpMap.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let detailConstData = self.detailConstData.as_ref().map(|x| x.pack(_fbb));
+        let tabData = self.tabData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let nodeUnlockData = self.nodeUnlockData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let evolveNodeData = self.evolveNodeData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let skillNodeData = self.skillNodeData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let talentNodeData = self.talentNodeData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let masterNodeData = self.masterNodeData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let uniEquipNodeData = self.uniEquipNodeData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let nodeDiagramMap = self.nodeDiagramMap.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SpecialOperatorDetailData::create(
+            _fbb,
+            &clz_Torappu_SpecialOperatorDetailDataArgs {
+                specialOperatorExpMap,
+                detailConstData,
+                tabData,
+                nodeUnlockData,
+                evolveNodeData,
+                skillNodeData,
+                talentNodeData,
+                masterNodeData,
+                uniEquipNodeData,
+                nodeDiagramMap,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SpecialOperatorDetailDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -7908,7 +10282,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SpecialOperatorDe
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -7934,6 +10308,15 @@ impl<'a> dict__string__clz_Torappu_SpecialOperatorDetailData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SpecialOperatorDetailDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SpecialOperatorDetailDataT { key, value }
     }
 
     #[inline]
@@ -8010,6 +10393,23 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorDetailDataArgs<'a>
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SpecialOperatorDetailData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("dict__string__clz_Torappu_SpecialOperatorDetailData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SpecialOperatorDetailDataBuilder<
     'a: 'b,
     'b,
@@ -8071,6 +10471,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SpecialOperatorDetailData<'_
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SpecialOperatorDetailDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SpecialOperatorDetailDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SpecialOperatorDetailDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SpecialOperatorDetailDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SpecialOperatorDetailData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SpecialOperatorDetailData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SpecialOperatorDetailDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SpecialOperatorModeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -8083,7 +10513,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SpecialOperatorModeData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -8107,6 +10537,12 @@ impl<'a> clz_Torappu_SpecialOperatorModeData<'a> {
         }
         builder.add_type_(args.type_);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SpecialOperatorModeDataT {
+        let type_ = self.type_();
+        let typeName = self.typeName().map(|x| x.to_string());
+        clz_Torappu_SpecialOperatorModeDataT { type_, typeName }
     }
 
     #[inline]
@@ -8169,6 +10605,22 @@ impl<'a> Default for clz_Torappu_SpecialOperatorModeDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SpecialOperatorModeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SpecialOperatorModeData", 2)?;
+        s.serialize_field("type_", &self.type_())?;
+        if let Some(f) = self.typeName() {
+            s.serialize_field("typeName", &f)?;
+        } else {
+            s.skip_field("typeName")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SpecialOperatorModeDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -8217,6 +10669,33 @@ impl core::fmt::Debug for clz_Torappu_SpecialOperatorModeData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SpecialOperatorModeDataT {
+    pub type_: enum__Torappu_SpecialOperatorTargetType,
+    pub typeName: Option<String>,
+}
+impl Default for clz_Torappu_SpecialOperatorModeDataT {
+    fn default() -> Self {
+        Self {
+            type_: enum__Torappu_SpecialOperatorTargetType::NONE,
+            typeName: None,
+        }
+    }
+}
+impl clz_Torappu_SpecialOperatorModeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SpecialOperatorModeData<'b>> {
+        let type_ = self.type_;
+        let typeName = self.typeName.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SpecialOperatorModeData::create(
+            _fbb,
+            &clz_Torappu_SpecialOperatorModeDataArgs { type_, typeName },
+        )
+    }
+}
 pub enum clz_Torappu_MissionDisplayRewardsOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -8229,7 +10708,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_MissionDisplayRewards<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -8255,6 +10734,13 @@ impl<'a> clz_Torappu_MissionDisplayRewards<'a> {
         }
         builder.add_type_(args.type_);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_MissionDisplayRewardsT {
+        let type_ = self.type_();
+        let id = self.id().map(|x| x.to_string());
+        let count = self.count();
+        clz_Torappu_MissionDisplayRewardsT { type_, id, count }
     }
 
     #[inline]
@@ -8327,6 +10813,23 @@ impl<'a> Default for clz_Torappu_MissionDisplayRewardsArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_MissionDisplayRewards<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_MissionDisplayRewards", 3)?;
+        s.serialize_field("type_", &self.type_())?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        s.serialize_field("count", &self.count())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_MissionDisplayRewardsBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -8380,6 +10883,36 @@ impl core::fmt::Debug for clz_Torappu_MissionDisplayRewards<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_MissionDisplayRewardsT {
+    pub type_: enum__Torappu_ItemType,
+    pub id: Option<String>,
+    pub count: i32,
+}
+impl Default for clz_Torappu_MissionDisplayRewardsT {
+    fn default() -> Self {
+        Self {
+            type_: enum__Torappu_ItemType::NONE,
+            id: None,
+            count: 0,
+        }
+    }
+}
+impl clz_Torappu_MissionDisplayRewardsT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_MissionDisplayRewards<'b>> {
+        let type_ = self.type_;
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let count = self.count;
+        clz_Torappu_MissionDisplayRewards::create(
+            _fbb,
+            &clz_Torappu_MissionDisplayRewardsArgs { type_, id, count },
+        )
+    }
+}
 pub enum clz_Torappu_MissionDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -8392,7 +10925,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_MissionData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -8474,6 +11007,57 @@ impl<'a> clz_Torappu_MissionData<'a> {
         }
         builder.add_haveSubMissionToUnlock(args.haveSubMissionToUnlock);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_MissionDataT {
+        let id = self.id().map(|x| x.to_string());
+        let sortId = self.sortId();
+        let description = self.description().map(|x| x.to_string());
+        let type_ = self.type_();
+        let itemBgType = self.itemBgType();
+        let preMissionIds = self
+            .preMissionIds()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let template = self.template().map(|x| x.to_string());
+        let templateType = self.templateType().map(|x| x.to_string());
+        let param = self
+            .param()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let unlockCondition = self.unlockCondition().map(|x| x.to_string());
+        let unlockParam = self
+            .unlockParam()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let missionGroup = self.missionGroup().map(|x| x.to_string());
+        let toPage = self.toPage().map(|x| x.to_string());
+        let periodicalPoint = self.periodicalPoint();
+        let rewards = self
+            .rewards()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let backImagePath = self.backImagePath().map(|x| x.to_string());
+        let foldId = self.foldId().map(|x| x.to_string());
+        let haveSubMissionToUnlock = self.haveSubMissionToUnlock();
+        let countEndTs = self.countEndTs();
+        clz_Torappu_MissionDataT {
+            id,
+            sortId,
+            description,
+            type_,
+            itemBgType,
+            preMissionIds,
+            template,
+            templateType,
+            param,
+            unlockCondition,
+            unlockParam,
+            missionGroup,
+            toPage,
+            periodicalPoint,
+            rewards,
+            backImagePath,
+            foldId,
+            haveSubMissionToUnlock,
+            countEndTs,
+        }
     }
 
     #[inline]
@@ -8848,6 +11432,87 @@ impl<'a> Default for clz_Torappu_MissionDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_MissionData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_MissionData", 19)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        s.serialize_field("sortId", &self.sortId())?;
+        if let Some(f) = self.description() {
+            s.serialize_field("description", &f)?;
+        } else {
+            s.skip_field("description")?;
+        }
+        s.serialize_field("type_", &self.type_())?;
+        s.serialize_field("itemBgType", &self.itemBgType())?;
+        if let Some(f) = self.preMissionIds() {
+            s.serialize_field("preMissionIds", &f)?;
+        } else {
+            s.skip_field("preMissionIds")?;
+        }
+        if let Some(f) = self.template() {
+            s.serialize_field("template", &f)?;
+        } else {
+            s.skip_field("template")?;
+        }
+        if let Some(f) = self.templateType() {
+            s.serialize_field("templateType", &f)?;
+        } else {
+            s.skip_field("templateType")?;
+        }
+        if let Some(f) = self.param() {
+            s.serialize_field("param", &f)?;
+        } else {
+            s.skip_field("param")?;
+        }
+        if let Some(f) = self.unlockCondition() {
+            s.serialize_field("unlockCondition", &f)?;
+        } else {
+            s.skip_field("unlockCondition")?;
+        }
+        if let Some(f) = self.unlockParam() {
+            s.serialize_field("unlockParam", &f)?;
+        } else {
+            s.skip_field("unlockParam")?;
+        }
+        if let Some(f) = self.missionGroup() {
+            s.serialize_field("missionGroup", &f)?;
+        } else {
+            s.skip_field("missionGroup")?;
+        }
+        if let Some(f) = self.toPage() {
+            s.serialize_field("toPage", &f)?;
+        } else {
+            s.skip_field("toPage")?;
+        }
+        s.serialize_field("periodicalPoint", &self.periodicalPoint())?;
+        if let Some(f) = self.rewards() {
+            s.serialize_field("rewards", &f)?;
+        } else {
+            s.skip_field("rewards")?;
+        }
+        if let Some(f) = self.backImagePath() {
+            s.serialize_field("backImagePath", &f)?;
+        } else {
+            s.skip_field("backImagePath")?;
+        }
+        if let Some(f) = self.foldId() {
+            s.serialize_field("foldId", &f)?;
+        } else {
+            s.skip_field("foldId")?;
+        }
+        s.serialize_field("haveSubMissionToUnlock", &self.haveSubMissionToUnlock())?;
+        s.serialize_field("countEndTs", &self.countEndTs())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_MissionDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -9049,6 +11714,116 @@ impl core::fmt::Debug for clz_Torappu_MissionData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_MissionDataT {
+    pub id: Option<String>,
+    pub sortId: i32,
+    pub description: Option<String>,
+    pub type_: enum__Torappu_MissionType,
+    pub itemBgType: enum__Torappu_MissionItemBgType,
+    pub preMissionIds: Option<Vec<String>>,
+    pub template: Option<String>,
+    pub templateType: Option<String>,
+    pub param: Option<Vec<String>>,
+    pub unlockCondition: Option<String>,
+    pub unlockParam: Option<Vec<String>>,
+    pub missionGroup: Option<String>,
+    pub toPage: Option<String>,
+    pub periodicalPoint: i32,
+    pub rewards: Option<Vec<clz_Torappu_MissionDisplayRewardsT>>,
+    pub backImagePath: Option<String>,
+    pub foldId: Option<String>,
+    pub haveSubMissionToUnlock: bool,
+    pub countEndTs: i64,
+}
+impl Default for clz_Torappu_MissionDataT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            sortId: 0,
+            description: None,
+            type_: enum__Torappu_MissionType::UNKNOWN,
+            itemBgType: enum__Torappu_MissionItemBgType::COMMON,
+            preMissionIds: None,
+            template: None,
+            templateType: None,
+            param: None,
+            unlockCondition: None,
+            unlockParam: None,
+            missionGroup: None,
+            toPage: None,
+            periodicalPoint: 0,
+            rewards: None,
+            backImagePath: None,
+            foldId: None,
+            haveSubMissionToUnlock: false,
+            countEndTs: 0,
+        }
+    }
+}
+impl clz_Torappu_MissionDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_MissionData<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        let description = self.description.as_ref().map(|x| _fbb.create_string(x));
+        let type_ = self.type_;
+        let itemBgType = self.itemBgType;
+        let preMissionIds = self.preMissionIds.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let template = self.template.as_ref().map(|x| _fbb.create_string(x));
+        let templateType = self.templateType.as_ref().map(|x| _fbb.create_string(x));
+        let param = self.param.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let unlockCondition = self.unlockCondition.as_ref().map(|x| _fbb.create_string(x));
+        let unlockParam = self.unlockParam.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let missionGroup = self.missionGroup.as_ref().map(|x| _fbb.create_string(x));
+        let toPage = self.toPage.as_ref().map(|x| _fbb.create_string(x));
+        let periodicalPoint = self.periodicalPoint;
+        let rewards = self.rewards.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let backImagePath = self.backImagePath.as_ref().map(|x| _fbb.create_string(x));
+        let foldId = self.foldId.as_ref().map(|x| _fbb.create_string(x));
+        let haveSubMissionToUnlock = self.haveSubMissionToUnlock;
+        let countEndTs = self.countEndTs;
+        clz_Torappu_MissionData::create(
+            _fbb,
+            &clz_Torappu_MissionDataArgs {
+                id,
+                sortId,
+                description,
+                type_,
+                itemBgType,
+                preMissionIds,
+                template,
+                templateType,
+                param,
+                unlockCondition,
+                unlockParam,
+                missionGroup,
+                toPage,
+                periodicalPoint,
+                rewards,
+                backImagePath,
+                foldId,
+                haveSubMissionToUnlock,
+                countEndTs,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_MissionDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -9061,7 +11836,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_MissionData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -9087,6 +11862,15 @@ impl<'a> dict__string__clz_Torappu_MissionData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_MissionDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_MissionDataT { key, value }
     }
 
     #[inline]
@@ -9160,6 +11944,22 @@ impl<'a> Default for dict__string__clz_Torappu_MissionDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_MissionData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_MissionData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_MissionDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -9210,6 +12010,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_MissionData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_MissionDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_MissionDataT>>,
+}
+impl Default for dict__string__clz_Torappu_MissionDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_MissionDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_MissionData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_MissionData::create(
+            _fbb,
+            &dict__string__clz_Torappu_MissionDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_MissionGroupOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -9222,7 +12052,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_MissionGroup<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -9270,6 +12100,33 @@ impl<'a> clz_Torappu_MissionGroup<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_MissionGroupT {
+        let id = self.id().map(|x| x.to_string());
+        let title = self.title().map(|x| x.to_string());
+        let type_ = self.type_();
+        let preMissionGroup = self.preMissionGroup().map(|x| x.to_string());
+        let period = self.period().map(|x| x.into_iter().collect());
+        let rewards = self
+            .rewards()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let missionIds = self
+            .missionIds()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let startTs = self.startTs();
+        let endTs = self.endTs();
+        clz_Torappu_MissionGroupT {
+            id,
+            title,
+            type_,
+            preMissionGroup,
+            period,
+            rewards,
+            missionIds,
+            startTs,
+            endTs,
+        }
     }
 
     #[inline]
@@ -9462,6 +12319,49 @@ impl<'a> Default for clz_Torappu_MissionGroupArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_MissionGroup<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_MissionGroup", 9)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        if let Some(f) = self.title() {
+            s.serialize_field("title", &f)?;
+        } else {
+            s.skip_field("title")?;
+        }
+        s.serialize_field("type_", &self.type_())?;
+        if let Some(f) = self.preMissionGroup() {
+            s.serialize_field("preMissionGroup", &f)?;
+        } else {
+            s.skip_field("preMissionGroup")?;
+        }
+        if let Some(f) = self.period() {
+            s.serialize_field("period", &f)?;
+        } else {
+            s.skip_field("period")?;
+        }
+        if let Some(f) = self.rewards() {
+            s.serialize_field("rewards", &f)?;
+        } else {
+            s.skip_field("rewards")?;
+        }
+        if let Some(f) = self.missionIds() {
+            s.serialize_field("missionIds", &f)?;
+        } else {
+            s.skip_field("missionIds")?;
+        }
+        s.serialize_field("startTs", &self.startTs())?;
+        s.serialize_field("endTs", &self.endTs())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_MissionGroupBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -9570,6 +12470,70 @@ impl core::fmt::Debug for clz_Torappu_MissionGroup<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_MissionGroupT {
+    pub id: Option<String>,
+    pub title: Option<String>,
+    pub type_: enum__Torappu_MissionType,
+    pub preMissionGroup: Option<String>,
+    pub period: Option<Vec<i32>>,
+    pub rewards: Option<Vec<clz_Torappu_MissionDisplayRewardsT>>,
+    pub missionIds: Option<Vec<String>>,
+    pub startTs: i64,
+    pub endTs: i64,
+}
+impl Default for clz_Torappu_MissionGroupT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            title: None,
+            type_: enum__Torappu_MissionType::UNKNOWN,
+            preMissionGroup: None,
+            period: None,
+            rewards: None,
+            missionIds: None,
+            startTs: 0,
+            endTs: 0,
+        }
+    }
+}
+impl clz_Torappu_MissionGroupT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_MissionGroup<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let title = self.title.as_ref().map(|x| _fbb.create_string(x));
+        let type_ = self.type_;
+        let preMissionGroup = self.preMissionGroup.as_ref().map(|x| _fbb.create_string(x));
+        let period = self.period.as_ref().map(|x| _fbb.create_vector(x));
+        let rewards = self.rewards.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let missionIds = self.missionIds.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let startTs = self.startTs;
+        let endTs = self.endTs;
+        clz_Torappu_MissionGroup::create(
+            _fbb,
+            &clz_Torappu_MissionGroupArgs {
+                id,
+                title,
+                type_,
+                preMissionGroup,
+                period,
+                rewards,
+                missionIds,
+                startTs,
+                endTs,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_MissionGroupOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -9582,7 +12546,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_MissionGroup<'a> 
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -9608,6 +12572,15 @@ impl<'a> dict__string__clz_Torappu_MissionGroup<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_MissionGroupT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_MissionGroupT { key, value }
     }
 
     #[inline]
@@ -9681,6 +12654,22 @@ impl<'a> Default for dict__string__clz_Torappu_MissionGroupArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_MissionGroup<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_MissionGroup", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_MissionGroupBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -9731,6 +12720,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_MissionGroup<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_MissionGroupT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_MissionGroupT>>,
+}
+impl Default for dict__string__clz_Torappu_MissionGroupT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_MissionGroupT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_MissionGroup<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_MissionGroup::create(
+            _fbb,
+            &dict__string__clz_Torappu_MissionGroupArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SpecialOperatorConstDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -9743,7 +12762,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SpecialOperatorConstData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -9789,6 +12808,25 @@ impl<'a> clz_Torappu_SpecialOperatorConstData<'a> {
             builder.add_weeklyTaskBoardUnlock(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SpecialOperatorConstDataT {
+        let weeklyTaskBoardUnlock = self.weeklyTaskBoardUnlock().map(|x| x.to_string());
+        let taskPinOnToast = self.taskPinOnToast().map(|x| x.to_string());
+        let noFrontNodeToast = self.noFrontNodeToast().map(|x| x.to_string());
+        let noFrontTaskToast = self.noFrontTaskToast().map(|x| x.to_string());
+        let skillGotoToast = self.skillGotoToast().map(|x| x.to_string());
+        let evolveTabExpNotice = self.evolveTabExpNotice().map(|x| x.to_string());
+        let pinnedSpecialOperator = self.pinnedSpecialOperator().map(|x| x.to_string());
+        clz_Torappu_SpecialOperatorConstDataT {
+            weeklyTaskBoardUnlock,
+            taskPinOnToast,
+            noFrontNodeToast,
+            noFrontTaskToast,
+            skillGotoToast,
+            evolveTabExpNotice,
+            pinnedSpecialOperator,
+        }
     }
 
     #[inline]
@@ -9948,6 +12986,51 @@ impl<'a> Default for clz_Torappu_SpecialOperatorConstDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SpecialOperatorConstData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SpecialOperatorConstData", 7)?;
+        if let Some(f) = self.weeklyTaskBoardUnlock() {
+            s.serialize_field("weeklyTaskBoardUnlock", &f)?;
+        } else {
+            s.skip_field("weeklyTaskBoardUnlock")?;
+        }
+        if let Some(f) = self.taskPinOnToast() {
+            s.serialize_field("taskPinOnToast", &f)?;
+        } else {
+            s.skip_field("taskPinOnToast")?;
+        }
+        if let Some(f) = self.noFrontNodeToast() {
+            s.serialize_field("noFrontNodeToast", &f)?;
+        } else {
+            s.skip_field("noFrontNodeToast")?;
+        }
+        if let Some(f) = self.noFrontTaskToast() {
+            s.serialize_field("noFrontTaskToast", &f)?;
+        } else {
+            s.skip_field("noFrontTaskToast")?;
+        }
+        if let Some(f) = self.skillGotoToast() {
+            s.serialize_field("skillGotoToast", &f)?;
+        } else {
+            s.skip_field("skillGotoToast")?;
+        }
+        if let Some(f) = self.evolveTabExpNotice() {
+            s.serialize_field("evolveTabExpNotice", &f)?;
+        } else {
+            s.skip_field("evolveTabExpNotice")?;
+        }
+        if let Some(f) = self.pinnedSpecialOperator() {
+            s.serialize_field("pinnedSpecialOperator", &f)?;
+        } else {
+            s.skip_field("pinnedSpecialOperator")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SpecialOperatorConstDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -10040,6 +13123,71 @@ impl core::fmt::Debug for clz_Torappu_SpecialOperatorConstData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SpecialOperatorConstDataT {
+    pub weeklyTaskBoardUnlock: Option<String>,
+    pub taskPinOnToast: Option<String>,
+    pub noFrontNodeToast: Option<String>,
+    pub noFrontTaskToast: Option<String>,
+    pub skillGotoToast: Option<String>,
+    pub evolveTabExpNotice: Option<String>,
+    pub pinnedSpecialOperator: Option<String>,
+}
+impl Default for clz_Torappu_SpecialOperatorConstDataT {
+    fn default() -> Self {
+        Self {
+            weeklyTaskBoardUnlock: None,
+            taskPinOnToast: None,
+            noFrontNodeToast: None,
+            noFrontTaskToast: None,
+            skillGotoToast: None,
+            evolveTabExpNotice: None,
+            pinnedSpecialOperator: None,
+        }
+    }
+}
+impl clz_Torappu_SpecialOperatorConstDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SpecialOperatorConstData<'b>> {
+        let weeklyTaskBoardUnlock = self
+            .weeklyTaskBoardUnlock
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let taskPinOnToast = self.taskPinOnToast.as_ref().map(|x| _fbb.create_string(x));
+        let noFrontNodeToast = self
+            .noFrontNodeToast
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let noFrontTaskToast = self
+            .noFrontTaskToast
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let skillGotoToast = self.skillGotoToast.as_ref().map(|x| _fbb.create_string(x));
+        let evolveTabExpNotice = self
+            .evolveTabExpNotice
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let pinnedSpecialOperator = self
+            .pinnedSpecialOperator
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        clz_Torappu_SpecialOperatorConstData::create(
+            _fbb,
+            &clz_Torappu_SpecialOperatorConstDataArgs {
+                weeklyTaskBoardUnlock,
+                taskPinOnToast,
+                noFrontNodeToast,
+                noFrontTaskToast,
+                skillGotoToast,
+                evolveTabExpNotice,
+                pinnedSpecialOperator,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_SpecialOperatorTableOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -10052,7 +13200,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SpecialOperatorTable<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -10094,6 +13242,33 @@ impl<'a> clz_Torappu_SpecialOperatorTable<'a> {
             builder.add_operatorBasicData(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SpecialOperatorTableT {
+        let operatorBasicData = self
+            .operatorBasicData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let operatorDetailData = self
+            .operatorDetailData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let modeData = self
+            .modeData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let nodeUnlockMissionData = self
+            .nodeUnlockMissionData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let nodeUnlockMissionGroup = self
+            .nodeUnlockMissionGroup()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let constData = self.constData().map(|x| Box::new(x.unpack()));
+        clz_Torappu_SpecialOperatorTableT {
+            operatorBasicData,
+            operatorDetailData,
+            modeData,
+            nodeUnlockMissionData,
+            nodeUnlockMissionGroup,
+            constData,
+        }
     }
 
     #[inline]
@@ -10349,6 +13524,46 @@ impl<'a> Default for clz_Torappu_SpecialOperatorTableArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SpecialOperatorTable<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SpecialOperatorTable", 6)?;
+        if let Some(f) = self.operatorBasicData() {
+            s.serialize_field("operatorBasicData", &f)?;
+        } else {
+            s.skip_field("operatorBasicData")?;
+        }
+        if let Some(f) = self.operatorDetailData() {
+            s.serialize_field("operatorDetailData", &f)?;
+        } else {
+            s.skip_field("operatorDetailData")?;
+        }
+        if let Some(f) = self.modeData() {
+            s.serialize_field("modeData", &f)?;
+        } else {
+            s.skip_field("modeData")?;
+        }
+        if let Some(f) = self.nodeUnlockMissionData() {
+            s.serialize_field("nodeUnlockMissionData", &f)?;
+        } else {
+            s.skip_field("nodeUnlockMissionData")?;
+        }
+        if let Some(f) = self.nodeUnlockMissionGroup() {
+            s.serialize_field("nodeUnlockMissionGroup", &f)?;
+        } else {
+            s.skip_field("nodeUnlockMissionGroup")?;
+        }
+        if let Some(f) = self.constData() {
+            s.serialize_field("constData", &f)?;
+        } else {
+            s.skip_field("constData")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SpecialOperatorTableBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -10475,6 +13690,67 @@ impl core::fmt::Debug for clz_Torappu_SpecialOperatorTable<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SpecialOperatorTableT {
+    pub operatorBasicData: Option<Vec<dict__string__clz_Torappu_SpecialOperatorBasicDataT>>,
+    pub operatorDetailData: Option<Vec<dict__string__clz_Torappu_SpecialOperatorDetailDataT>>,
+    pub modeData: Option<Vec<clz_Torappu_SpecialOperatorModeDataT>>,
+    pub nodeUnlockMissionData: Option<Vec<dict__string__clz_Torappu_MissionDataT>>,
+    pub nodeUnlockMissionGroup: Option<Vec<dict__string__clz_Torappu_MissionGroupT>>,
+    pub constData: Option<Box<clz_Torappu_SpecialOperatorConstDataT>>,
+}
+impl Default for clz_Torappu_SpecialOperatorTableT {
+    fn default() -> Self {
+        Self {
+            operatorBasicData: None,
+            operatorDetailData: None,
+            modeData: None,
+            nodeUnlockMissionData: None,
+            nodeUnlockMissionGroup: None,
+            constData: None,
+        }
+    }
+}
+impl clz_Torappu_SpecialOperatorTableT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SpecialOperatorTable<'b>> {
+        let operatorBasicData = self.operatorBasicData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let operatorDetailData = self.operatorDetailData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let modeData = self.modeData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let nodeUnlockMissionData = self.nodeUnlockMissionData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let nodeUnlockMissionGroup = self.nodeUnlockMissionGroup.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let constData = self.constData.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_SpecialOperatorTable::create(
+            _fbb,
+            &clz_Torappu_SpecialOperatorTableArgs {
+                operatorBasicData,
+                operatorDetailData,
+                modeData,
+                nodeUnlockMissionData,
+                nodeUnlockMissionGroup,
+                constData,
+            },
+        )
+    }
+}
 #[inline]
 /// Verifies that a buffer of bytes contains a `clz_Torappu_SpecialOperatorTable`
 /// and returns it.
@@ -10532,7 +13808,7 @@ pub fn size_prefixed_root_as_clz_torappu_special_operator_table_with_opts<'b, 'o
 pub unsafe fn root_as_clz_torappu_special_operator_table_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SpecialOperatorTable {
-    flatbuffers::root_unchecked::<clz_Torappu_SpecialOperatorTable>(buf)
+    unsafe { flatbuffers::root_unchecked::<clz_Torappu_SpecialOperatorTable>(buf) }
 }
 #[inline]
 /// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_SpecialOperatorTable and returns it.
@@ -10541,7 +13817,7 @@ pub unsafe fn root_as_clz_torappu_special_operator_table_unchecked(
 pub unsafe fn size_prefixed_root_as_clz_torappu_special_operator_table_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SpecialOperatorTable {
-    flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_SpecialOperatorTable>(buf)
+    unsafe { flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_SpecialOperatorTable>(buf) }
 }
 #[inline]
 pub fn finish_clz_torappu_special_operator_table_buffer<'a, 'b, A: flatbuffers::Allocator + 'a>(

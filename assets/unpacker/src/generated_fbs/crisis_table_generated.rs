@@ -5,6 +5,9 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+use self::serde::ser::{Serialize, SerializeStruct, Serializer};
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
@@ -416,11 +419,24 @@ impl core::fmt::Debug for enum__Torappu_ItemType {
         }
     }
 }
+impl Serialize for enum__Torappu_ItemType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_ItemType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ItemType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -429,7 +445,9 @@ impl flatbuffers::Push for enum__Torappu_ItemType {
     type Output = enum__Torappu_ItemType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -471,7 +489,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ItemBundle<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -497,6 +515,13 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ItemBundleT {
+        let id = self.id().map(|x| x.to_string());
+        let count = self.count();
+        let type_ = self.type_();
+        clz_Torappu_ItemBundleT { id, count, type_ }
     }
 
     #[inline]
@@ -567,6 +592,23 @@ impl<'a> Default for clz_Torappu_ItemBundleArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ItemBundle<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ItemBundle", 3)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        s.serialize_field("count", &self.count())?;
+        s.serialize_field("type_", &self.type_())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ItemBundleBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -616,6 +658,33 @@ impl core::fmt::Debug for clz_Torappu_ItemBundle<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ItemBundleT {
+    pub id: Option<String>,
+    pub count: i32,
+    pub type_: enum__Torappu_ItemType,
+}
+impl Default for clz_Torappu_ItemBundleT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            count: 0,
+            type_: enum__Torappu_ItemType::NONE,
+        }
+    }
+}
+impl clz_Torappu_ItemBundleT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ItemBundle<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let count = self.count;
+        let type_ = self.type_;
+        clz_Torappu_ItemBundle::create(_fbb, &clz_Torappu_ItemBundleArgs { id, count, type_ })
+    }
+}
 pub enum clz_Torappu_CrisisClientData_SeasonInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -628,7 +697,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_CrisisClientData_SeasonInfo<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -676,6 +745,31 @@ impl<'a> clz_Torappu_CrisisClientData_SeasonInfo<'a> {
             builder.add_seasonId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_CrisisClientData_SeasonInfoT {
+        let seasonId = self.seasonId().map(|x| x.to_string());
+        let startTs = self.startTs();
+        let endTs = self.endTs();
+        let name = self.name().map(|x| x.to_string());
+        let crisisRuneCoinUnlockItem = self
+            .crisisRuneCoinUnlockItem()
+            .map(|x| Box::new(x.unpack()));
+        let permBgm = self.permBgm().map(|x| x.to_string());
+        let medalGroupId = self.medalGroupId().map(|x| x.to_string());
+        let bgmHardPoint = self.bgmHardPoint();
+        let permBgmHard = self.permBgmHard().map(|x| x.to_string());
+        clz_Torappu_CrisisClientData_SeasonInfoT {
+            seasonId,
+            startTs,
+            endTs,
+            name,
+            crisisRuneCoinUnlockItem,
+            permBgm,
+            medalGroupId,
+            bgmHardPoint,
+            permBgmHard,
+        }
     }
 
     #[inline]
@@ -854,6 +948,49 @@ impl<'a> Default for clz_Torappu_CrisisClientData_SeasonInfoArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_CrisisClientData_SeasonInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_CrisisClientData_SeasonInfo", 9)?;
+        if let Some(f) = self.seasonId() {
+            s.serialize_field("seasonId", &f)?;
+        } else {
+            s.skip_field("seasonId")?;
+        }
+        s.serialize_field("startTs", &self.startTs())?;
+        s.serialize_field("endTs", &self.endTs())?;
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        if let Some(f) = self.crisisRuneCoinUnlockItem() {
+            s.serialize_field("crisisRuneCoinUnlockItem", &f)?;
+        } else {
+            s.skip_field("crisisRuneCoinUnlockItem")?;
+        }
+        if let Some(f) = self.permBgm() {
+            s.serialize_field("permBgm", &f)?;
+        } else {
+            s.skip_field("permBgm")?;
+        }
+        if let Some(f) = self.medalGroupId() {
+            s.serialize_field("medalGroupId", &f)?;
+        } else {
+            s.skip_field("medalGroupId")?;
+        }
+        s.serialize_field("bgmHardPoint", &self.bgmHardPoint())?;
+        if let Some(f) = self.permBgmHard() {
+            s.serialize_field("permBgmHard", &f)?;
+        } else {
+            s.skip_field("permBgmHard")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_CrisisClientData_SeasonInfoBuilder<
     'a: 'b,
     'b,
@@ -964,6 +1101,64 @@ impl core::fmt::Debug for clz_Torappu_CrisisClientData_SeasonInfo<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_CrisisClientData_SeasonInfoT {
+    pub seasonId: Option<String>,
+    pub startTs: i64,
+    pub endTs: i64,
+    pub name: Option<String>,
+    pub crisisRuneCoinUnlockItem: Option<Box<clz_Torappu_ItemBundleT>>,
+    pub permBgm: Option<String>,
+    pub medalGroupId: Option<String>,
+    pub bgmHardPoint: i32,
+    pub permBgmHard: Option<String>,
+}
+impl Default for clz_Torappu_CrisisClientData_SeasonInfoT {
+    fn default() -> Self {
+        Self {
+            seasonId: None,
+            startTs: 0,
+            endTs: 0,
+            name: None,
+            crisisRuneCoinUnlockItem: None,
+            permBgm: None,
+            medalGroupId: None,
+            bgmHardPoint: 0,
+            permBgmHard: None,
+        }
+    }
+}
+impl clz_Torappu_CrisisClientData_SeasonInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_CrisisClientData_SeasonInfo<'b>> {
+        let seasonId = self.seasonId.as_ref().map(|x| _fbb.create_string(x));
+        let startTs = self.startTs;
+        let endTs = self.endTs;
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        let crisisRuneCoinUnlockItem = self.crisisRuneCoinUnlockItem.as_ref().map(|x| x.pack(_fbb));
+        let permBgm = self.permBgm.as_ref().map(|x| _fbb.create_string(x));
+        let medalGroupId = self.medalGroupId.as_ref().map(|x| _fbb.create_string(x));
+        let bgmHardPoint = self.bgmHardPoint;
+        let permBgmHard = self.permBgmHard.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_CrisisClientData_SeasonInfo::create(
+            _fbb,
+            &clz_Torappu_CrisisClientData_SeasonInfoArgs {
+                seasonId,
+                startTs,
+                endTs,
+                name,
+                crisisRuneCoinUnlockItem,
+                permBgm,
+                medalGroupId,
+                bgmHardPoint,
+                permBgmHard,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_CrisisClientDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -976,7 +1171,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_CrisisClientData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1018,6 +1213,31 @@ impl<'a> clz_Torappu_CrisisClientData<'a> {
             builder.add_seasonInfo(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_CrisisClientDataT {
+        let seasonInfo = self
+            .seasonInfo()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let meta = self.meta().map(|x| x.to_string());
+        let unlockCoinLv3 = self.unlockCoinLv3();
+        let hardPointPerm = self.hardPointPerm();
+        let hardPointTemp = self.hardPointTemp();
+        let voiceGrade = self.voiceGrade();
+        let crisisRuneCoinUnlockItemTitle =
+            self.crisisRuneCoinUnlockItemTitle().map(|x| x.to_string());
+        let crisisRuneCoinUnlockItemDesc =
+            self.crisisRuneCoinUnlockItemDesc().map(|x| x.to_string());
+        clz_Torappu_CrisisClientDataT {
+            seasonInfo,
+            meta,
+            unlockCoinLv3,
+            hardPointPerm,
+            hardPointTemp,
+            voiceGrade,
+            crisisRuneCoinUnlockItemTitle,
+            crisisRuneCoinUnlockItemDesc,
+        }
     }
 
     #[inline]
@@ -1189,6 +1409,40 @@ impl<'a> Default for clz_Torappu_CrisisClientDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_CrisisClientData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_CrisisClientData", 8)?;
+        if let Some(f) = self.seasonInfo() {
+            s.serialize_field("seasonInfo", &f)?;
+        } else {
+            s.skip_field("seasonInfo")?;
+        }
+        if let Some(f) = self.meta() {
+            s.serialize_field("meta", &f)?;
+        } else {
+            s.skip_field("meta")?;
+        }
+        s.serialize_field("unlockCoinLv3", &self.unlockCoinLv3())?;
+        s.serialize_field("hardPointPerm", &self.hardPointPerm())?;
+        s.serialize_field("hardPointTemp", &self.hardPointTemp())?;
+        s.serialize_field("voiceGrade", &self.voiceGrade())?;
+        if let Some(f) = self.crisisRuneCoinUnlockItemTitle() {
+            s.serialize_field("crisisRuneCoinUnlockItemTitle", &f)?;
+        } else {
+            s.skip_field("crisisRuneCoinUnlockItemTitle")?;
+        }
+        if let Some(f) = self.crisisRuneCoinUnlockItemDesc() {
+            s.serialize_field("crisisRuneCoinUnlockItemDesc", &f)?;
+        } else {
+            s.skip_field("crisisRuneCoinUnlockItemDesc")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_CrisisClientDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1302,6 +1556,69 @@ impl core::fmt::Debug for clz_Torappu_CrisisClientData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_CrisisClientDataT {
+    pub seasonInfo: Option<Vec<clz_Torappu_CrisisClientData_SeasonInfoT>>,
+    pub meta: Option<String>,
+    pub unlockCoinLv3: i32,
+    pub hardPointPerm: i32,
+    pub hardPointTemp: i32,
+    pub voiceGrade: i32,
+    pub crisisRuneCoinUnlockItemTitle: Option<String>,
+    pub crisisRuneCoinUnlockItemDesc: Option<String>,
+}
+impl Default for clz_Torappu_CrisisClientDataT {
+    fn default() -> Self {
+        Self {
+            seasonInfo: None,
+            meta: None,
+            unlockCoinLv3: 0,
+            hardPointPerm: 0,
+            hardPointTemp: 0,
+            voiceGrade: 0,
+            crisisRuneCoinUnlockItemTitle: None,
+            crisisRuneCoinUnlockItemDesc: None,
+        }
+    }
+}
+impl clz_Torappu_CrisisClientDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_CrisisClientData<'b>> {
+        let seasonInfo = self.seasonInfo.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let meta = self.meta.as_ref().map(|x| _fbb.create_string(x));
+        let unlockCoinLv3 = self.unlockCoinLv3;
+        let hardPointPerm = self.hardPointPerm;
+        let hardPointTemp = self.hardPointTemp;
+        let voiceGrade = self.voiceGrade;
+        let crisisRuneCoinUnlockItemTitle = self
+            .crisisRuneCoinUnlockItemTitle
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let crisisRuneCoinUnlockItemDesc = self
+            .crisisRuneCoinUnlockItemDesc
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        clz_Torappu_CrisisClientData::create(
+            _fbb,
+            &clz_Torappu_CrisisClientDataArgs {
+                seasonInfo,
+                meta,
+                unlockCoinLv3,
+                hardPointPerm,
+                hardPointTemp,
+                voiceGrade,
+                crisisRuneCoinUnlockItemTitle,
+                crisisRuneCoinUnlockItemDesc,
+            },
+        )
+    }
+}
 #[inline]
 /// Verifies that a buffer of bytes contains a `clz_Torappu_CrisisClientData`
 /// and returns it.
@@ -1359,7 +1676,7 @@ pub fn size_prefixed_root_as_clz_torappu_crisis_client_data_with_opts<'b, 'o>(
 pub unsafe fn root_as_clz_torappu_crisis_client_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_CrisisClientData {
-    flatbuffers::root_unchecked::<clz_Torappu_CrisisClientData>(buf)
+    unsafe { flatbuffers::root_unchecked::<clz_Torappu_CrisisClientData>(buf) }
 }
 #[inline]
 /// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_CrisisClientData and returns it.
@@ -1368,7 +1685,7 @@ pub unsafe fn root_as_clz_torappu_crisis_client_data_unchecked(
 pub unsafe fn size_prefixed_root_as_clz_torappu_crisis_client_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_CrisisClientData {
-    flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_CrisisClientData>(buf)
+    unsafe { flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_CrisisClientData>(buf) }
 }
 #[inline]
 pub fn finish_clz_torappu_crisis_client_data_buffer<'a, 'b, A: flatbuffers::Allocator + 'a>(

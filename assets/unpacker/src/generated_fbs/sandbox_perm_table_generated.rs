@@ -5,6 +5,9 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+use self::serde::ser::{Serialize, SerializeStruct, Serializer};
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
@@ -58,11 +61,24 @@ impl core::fmt::Debug for enum__Torappu_SandboxPermTemplateType {
         }
     }
 }
+impl Serialize for enum__Torappu_SandboxPermTemplateType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SandboxPermTemplateType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SandboxPermTemplateType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -71,7 +87,9 @@ impl flatbuffers::Push for enum__Torappu_SandboxPermTemplateType {
     type Output = enum__Torappu_SandboxPermTemplateType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -166,11 +184,24 @@ impl core::fmt::Debug for enum__Torappu_SandboxV2TrapItemType {
         }
     }
 }
+impl Serialize for enum__Torappu_SandboxV2TrapItemType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SandboxV2TrapItemType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SandboxV2TrapItemType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -179,7 +210,9 @@ impl flatbuffers::Push for enum__Torappu_SandboxV2TrapItemType {
     type Output = enum__Torappu_SandboxV2TrapItemType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -290,11 +323,24 @@ impl core::fmt::Debug for enum__Torappu_SandboxV2ItemTrapTag {
         }
     }
 }
+impl Serialize for enum__Torappu_SandboxV2ItemTrapTag {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SandboxV2ItemTrapTag",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SandboxV2ItemTrapTag {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -303,7 +349,9 @@ impl flatbuffers::Push for enum__Torappu_SandboxV2ItemTrapTag {
     type Output = enum__Torappu_SandboxV2ItemTrapTag;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -387,11 +435,24 @@ impl core::fmt::Debug for enum__Torappu_SandboxV2CraftItemType {
         }
     }
 }
+impl Serialize for enum__Torappu_SandboxV2CraftItemType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SandboxV2CraftItemType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SandboxV2CraftItemType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -400,7 +461,9 @@ impl flatbuffers::Push for enum__Torappu_SandboxV2CraftItemType {
     type Output = enum__Torappu_SandboxV2CraftItemType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -531,11 +594,24 @@ impl core::fmt::Debug for enum__Torappu_SandboxPermItemType {
         }
     }
 }
+impl Serialize for enum__Torappu_SandboxPermItemType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SandboxPermItemType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SandboxPermItemType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -544,7 +620,9 @@ impl flatbuffers::Push for enum__Torappu_SandboxPermItemType {
     type Output = enum__Torappu_SandboxPermItemType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -624,11 +702,24 @@ impl core::fmt::Debug for enum__Torappu_SandboxV2FoodMatType {
         }
     }
 }
+impl Serialize for enum__Torappu_SandboxV2FoodMatType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SandboxV2FoodMatType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SandboxV2FoodMatType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -637,7 +728,9 @@ impl flatbuffers::Push for enum__Torappu_SandboxV2FoodMatType {
     type Output = enum__Torappu_SandboxV2FoodMatType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -744,11 +837,24 @@ impl core::fmt::Debug for enum__Torappu_SandboxV2FoodAttribute {
         }
     }
 }
+impl Serialize for enum__Torappu_SandboxV2FoodAttribute {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SandboxV2FoodAttribute",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SandboxV2FoodAttribute {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -757,7 +863,9 @@ impl flatbuffers::Push for enum__Torappu_SandboxV2FoodAttribute {
     type Output = enum__Torappu_SandboxV2FoodAttribute;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -843,11 +951,24 @@ impl core::fmt::Debug for enum__Torappu_SandboxV2FoodVariantType {
         }
     }
 }
+impl Serialize for enum__Torappu_SandboxV2FoodVariantType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SandboxV2FoodVariantType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SandboxV2FoodVariantType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -856,7 +977,9 @@ impl flatbuffers::Push for enum__Torappu_SandboxV2FoodVariantType {
     type Output = enum__Torappu_SandboxV2FoodVariantType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -1002,11 +1125,24 @@ impl core::fmt::Debug for enum__Torappu_SandboxV2NodeType {
         }
     }
 }
+impl Serialize for enum__Torappu_SandboxV2NodeType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SandboxV2NodeType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SandboxV2NodeType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -1015,7 +1151,9 @@ impl flatbuffers::Push for enum__Torappu_SandboxV2NodeType {
     type Output = enum__Torappu_SandboxV2NodeType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -1102,11 +1240,24 @@ impl core::fmt::Debug for enum__Torappu_SandboxV2WeatherType {
         }
     }
 }
+impl Serialize for enum__Torappu_SandboxV2WeatherType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SandboxV2WeatherType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SandboxV2WeatherType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -1115,7 +1266,9 @@ impl flatbuffers::Push for enum__Torappu_SandboxV2WeatherType {
     type Output = enum__Torappu_SandboxV2WeatherType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -1222,11 +1375,24 @@ impl core::fmt::Debug for enum__Torappu_SandboxV2EnemyRushType {
         }
     }
 }
+impl Serialize for enum__Torappu_SandboxV2EnemyRushType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SandboxV2EnemyRushType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SandboxV2EnemyRushType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -1235,7 +1401,9 @@ impl flatbuffers::Push for enum__Torappu_SandboxV2EnemyRushType {
     type Output = enum__Torappu_SandboxV2EnemyRushType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -1321,11 +1489,24 @@ impl core::fmt::Debug for enum__Torappu_SandboxV2SeasonType {
         }
     }
 }
+impl Serialize for enum__Torappu_SandboxV2SeasonType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SandboxV2SeasonType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SandboxV2SeasonType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -1334,7 +1515,9 @@ impl flatbuffers::Push for enum__Torappu_SandboxV2SeasonType {
     type Output = enum__Torappu_SandboxV2SeasonType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -1772,11 +1955,24 @@ impl core::fmt::Debug for enum__Torappu_ItemType {
         }
     }
 }
+impl Serialize for enum__Torappu_ItemType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_ItemType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ItemType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -1785,7 +1981,9 @@ impl flatbuffers::Push for enum__Torappu_ItemType {
     type Output = enum__Torappu_ItemType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -1887,11 +2085,24 @@ impl core::fmt::Debug for enum__Torappu_TipData_Category {
         }
     }
 }
+impl Serialize for enum__Torappu_TipData_Category {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_TipData_Category",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_TipData_Category {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -1900,7 +2111,9 @@ impl flatbuffers::Push for enum__Torappu_TipData_Category {
     type Output = enum__Torappu_TipData_Category;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -2018,11 +2231,24 @@ impl core::fmt::Debug for enum__Torappu_ProfessionCategory {
         }
     }
 }
+impl Serialize for enum__Torappu_ProfessionCategory {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_ProfessionCategory",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ProfessionCategory {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -2031,7 +2257,9 @@ impl flatbuffers::Push for enum__Torappu_ProfessionCategory {
     type Output = enum__Torappu_ProfessionCategory;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -2116,11 +2344,24 @@ impl core::fmt::Debug for enum__Torappu_BuildableType {
         }
     }
 }
+impl Serialize for enum__Torappu_BuildableType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_BuildableType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_BuildableType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -2129,7 +2370,9 @@ impl flatbuffers::Push for enum__Torappu_BuildableType {
     type Output = enum__Torappu_BuildableType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -2214,11 +2457,24 @@ impl core::fmt::Debug for enum__Torappu_PlayerSideMask {
         }
     }
 }
+impl Serialize for enum__Torappu_PlayerSideMask {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_PlayerSideMask",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_PlayerSideMask {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<u8>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<u8>(buf, loc) };
         Self(b)
     }
 }
@@ -2227,7 +2483,9 @@ impl flatbuffers::Push for enum__Torappu_PlayerSideMask {
     type Output = enum__Torappu_PlayerSideMask;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<u8>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<u8>(dst, self.0);
+        }
     }
 }
 
@@ -2325,11 +2583,24 @@ impl core::fmt::Debug for enum__Torappu_Battle_SideType {
         }
     }
 }
+impl Serialize for enum__Torappu_Battle_SideType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_Battle_SideType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_Battle_SideType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -2338,7 +2609,9 @@ impl flatbuffers::Push for enum__Torappu_Battle_SideType {
     type Output = enum__Torappu_Battle_SideType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -2425,11 +2698,24 @@ impl core::fmt::Debug for enum__Torappu_TileData_HeightTypeMask {
         }
     }
 }
+impl Serialize for enum__Torappu_TileData_HeightTypeMask {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_TileData_HeightTypeMask",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_TileData_HeightTypeMask {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -2438,7 +2724,9 @@ impl flatbuffers::Push for enum__Torappu_TileData_HeightTypeMask {
     type Output = enum__Torappu_TileData_HeightTypeMask;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -2536,11 +2824,24 @@ impl core::fmt::Debug for enum__Torappu_LevelData_Difficulty {
         }
     }
 }
+impl Serialize for enum__Torappu_LevelData_Difficulty {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_LevelData_Difficulty",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_LevelData_Difficulty {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -2549,7 +2850,9 @@ impl flatbuffers::Push for enum__Torappu_LevelData_Difficulty {
     type Output = enum__Torappu_LevelData_Difficulty;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -2644,11 +2947,24 @@ impl core::fmt::Debug for enum__Torappu_SandboxV2QuestRouteType {
         }
     }
 }
+impl Serialize for enum__Torappu_SandboxV2QuestRouteType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SandboxV2QuestRouteType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SandboxV2QuestRouteType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -2657,7 +2973,9 @@ impl flatbuffers::Push for enum__Torappu_SandboxV2QuestRouteType {
     type Output = enum__Torappu_SandboxV2QuestRouteType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -2752,11 +3070,24 @@ impl core::fmt::Debug for enum__Torappu_SandboxV2QuestLineType {
         }
     }
 }
+impl Serialize for enum__Torappu_SandboxV2QuestLineType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SandboxV2QuestLineType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SandboxV2QuestLineType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -2765,7 +3096,9 @@ impl flatbuffers::Push for enum__Torappu_SandboxV2QuestLineType {
     type Output = enum__Torappu_SandboxV2QuestLineType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -2855,11 +3188,24 @@ impl core::fmt::Debug for enum__Torappu_SandboxV2NpcType {
         }
     }
 }
+impl Serialize for enum__Torappu_SandboxV2NpcType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SandboxV2NpcType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SandboxV2NpcType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -2868,7 +3214,9 @@ impl flatbuffers::Push for enum__Torappu_SandboxV2NpcType {
     type Output = enum__Torappu_SandboxV2NpcType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -2962,11 +3310,24 @@ impl core::fmt::Debug for enum__Torappu_BattleDialogType {
         }
     }
 }
+impl Serialize for enum__Torappu_BattleDialogType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_BattleDialogType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_BattleDialogType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -2975,7 +3336,9 @@ impl flatbuffers::Push for enum__Torappu_BattleDialogType {
     type Output = enum__Torappu_BattleDialogType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -3074,11 +3437,24 @@ impl core::fmt::Debug for enum__Torappu_SharedConsts_Direction {
         }
     }
 }
+impl Serialize for enum__Torappu_SharedConsts_Direction {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SharedConsts_Direction",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SharedConsts_Direction {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -3087,7 +3463,9 @@ impl flatbuffers::Push for enum__Torappu_SharedConsts_Direction {
     type Output = enum__Torappu_SharedConsts_Direction;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -3177,11 +3555,24 @@ impl core::fmt::Debug for enum__Torappu_SandboxV2QuestLineBadgeType {
         }
     }
 }
+impl Serialize for enum__Torappu_SandboxV2QuestLineBadgeType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SandboxV2QuestLineBadgeType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SandboxV2QuestLineBadgeType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -3190,7 +3581,9 @@ impl flatbuffers::Push for enum__Torappu_SandboxV2QuestLineBadgeType {
     type Output = enum__Torappu_SandboxV2QuestLineBadgeType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -3273,11 +3666,24 @@ impl core::fmt::Debug for enum__Torappu_SandboxV2QuestLineScopeType {
         }
     }
 }
+impl Serialize for enum__Torappu_SandboxV2QuestLineScopeType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SandboxV2QuestLineScopeType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SandboxV2QuestLineScopeType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -3286,7 +3692,9 @@ impl flatbuffers::Push for enum__Torappu_SandboxV2QuestLineScopeType {
     type Output = enum__Torappu_SandboxV2QuestLineScopeType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -3385,11 +3793,24 @@ impl core::fmt::Debug for enum__Torappu_SandboxV2DevelopmentType {
         }
     }
 }
+impl Serialize for enum__Torappu_SandboxV2DevelopmentType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SandboxV2DevelopmentType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SandboxV2DevelopmentType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -3398,7 +3819,9 @@ impl flatbuffers::Push for enum__Torappu_SandboxV2DevelopmentType {
     type Output = enum__Torappu_SandboxV2DevelopmentType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -3492,11 +3915,24 @@ impl core::fmt::Debug for enum__Torappu_SandboxV2EventType {
         }
     }
 }
+impl Serialize for enum__Torappu_SandboxV2EventType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SandboxV2EventType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SandboxV2EventType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -3505,7 +3941,9 @@ impl flatbuffers::Push for enum__Torappu_SandboxV2EventType {
     type Output = enum__Torappu_SandboxV2EventType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -3591,11 +4029,24 @@ impl core::fmt::Debug for enum__Torappu_SandboxV2EventChoiceType {
         }
     }
 }
+impl Serialize for enum__Torappu_SandboxV2EventChoiceType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SandboxV2EventChoiceType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SandboxV2EventChoiceType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -3604,7 +4055,9 @@ impl flatbuffers::Push for enum__Torappu_SandboxV2EventChoiceType {
     type Output = enum__Torappu_SandboxV2EventChoiceType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -3718,11 +4171,24 @@ impl core::fmt::Debug for enum__Torappu_ProfessionID {
         }
     }
 }
+impl Serialize for enum__Torappu_ProfessionID {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_ProfessionID",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ProfessionID {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -3731,7 +4197,9 @@ impl flatbuffers::Push for enum__Torappu_ProfessionID {
     type Output = enum__Torappu_ProfessionID;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -3810,11 +4278,24 @@ impl core::fmt::Debug for enum__Torappu_SandboxV2CoinType {
         }
     }
 }
+impl Serialize for enum__Torappu_SandboxV2CoinType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SandboxV2CoinType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SandboxV2CoinType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -3823,7 +4304,9 @@ impl flatbuffers::Push for enum__Torappu_SandboxV2CoinType {
     type Output = enum__Torappu_SandboxV2CoinType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -3930,11 +4413,24 @@ impl core::fmt::Debug for enum__Torappu_SandboxV2RiftMainTargetType {
         }
     }
 }
+impl Serialize for enum__Torappu_SandboxV2RiftMainTargetType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SandboxV2RiftMainTargetType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SandboxV2RiftMainTargetType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -3943,7 +4439,9 @@ impl flatbuffers::Push for enum__Torappu_SandboxV2RiftMainTargetType {
     type Output = enum__Torappu_SandboxV2RiftMainTargetType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -4026,11 +4524,24 @@ impl core::fmt::Debug for enum__Torappu_SandboxV2ArchiveQuestType {
         }
     }
 }
+impl Serialize for enum__Torappu_SandboxV2ArchiveQuestType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SandboxV2ArchiveQuestType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SandboxV2ArchiveQuestType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -4039,7 +4550,9 @@ impl flatbuffers::Push for enum__Torappu_SandboxV2ArchiveQuestType {
     type Output = enum__Torappu_SandboxV2ArchiveQuestType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -4150,11 +4663,24 @@ impl core::fmt::Debug for enum__Torappu_SandboxV2BaseUnlockFuncType {
         }
     }
 }
+impl Serialize for enum__Torappu_SandboxV2BaseUnlockFuncType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SandboxV2BaseUnlockFuncType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SandboxV2BaseUnlockFuncType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -4163,7 +4689,9 @@ impl flatbuffers::Push for enum__Torappu_SandboxV2BaseUnlockFuncType {
     type Output = enum__Torappu_SandboxV2BaseUnlockFuncType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -4249,11 +4777,24 @@ impl core::fmt::Debug for enum__Torappu_SandboxV2BaseUnlockFuncDisplayType {
         }
     }
 }
+impl Serialize for enum__Torappu_SandboxV2BaseUnlockFuncDisplayType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SandboxV2BaseUnlockFuncDisplayType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SandboxV2BaseUnlockFuncDisplayType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -4262,7 +4803,9 @@ impl flatbuffers::Push for enum__Torappu_SandboxV2BaseUnlockFuncDisplayType {
     type Output = enum__Torappu_SandboxV2BaseUnlockFuncDisplayType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -4345,11 +4888,24 @@ impl core::fmt::Debug for enum__Torappu_SandboxV2DevelopmentLineStyle {
         }
     }
 }
+impl Serialize for enum__Torappu_SandboxV2DevelopmentLineStyle {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SandboxV2DevelopmentLineStyle",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SandboxV2DevelopmentLineStyle {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -4358,7 +4914,9 @@ impl flatbuffers::Push for enum__Torappu_SandboxV2DevelopmentLineStyle {
     type Output = enum__Torappu_SandboxV2DevelopmentLineStyle;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -4477,11 +5035,24 @@ impl core::fmt::Debug for enum__Torappu_SandboxV2ConfirmIconType {
         }
     }
 }
+impl Serialize for enum__Torappu_SandboxV2ConfirmIconType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SandboxV2ConfirmIconType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SandboxV2ConfirmIconType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -4490,7 +5061,9 @@ impl flatbuffers::Push for enum__Torappu_SandboxV2ConfirmIconType {
     type Output = enum__Torappu_SandboxV2ConfirmIconType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -4584,11 +5157,24 @@ impl core::fmt::Debug for enum__Torappu_EvolvePhase {
         }
     }
 }
+impl Serialize for enum__Torappu_EvolvePhase {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_EvolvePhase",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_EvolvePhase {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -4597,7 +5183,9 @@ impl flatbuffers::Push for enum__Torappu_EvolvePhase {
     type Output = enum__Torappu_EvolvePhase;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -4677,11 +5265,24 @@ impl core::fmt::Debug for enum__Torappu_SandboxV2RacerTalentType {
         }
     }
 }
+impl Serialize for enum__Torappu_SandboxV2RacerTalentType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SandboxV2RacerTalentType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SandboxV2RacerTalentType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -4690,7 +5291,9 @@ impl flatbuffers::Push for enum__Torappu_SandboxV2RacerTalentType {
     type Output = enum__Torappu_SandboxV2RacerTalentType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -4770,11 +5373,24 @@ impl core::fmt::Debug for enum__Torappu_SandboxV2RacerNameType {
         }
     }
 }
+impl Serialize for enum__Torappu_SandboxV2RacerNameType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SandboxV2RacerNameType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SandboxV2RacerNameType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -4783,7 +5399,9 @@ impl flatbuffers::Push for enum__Torappu_SandboxV2RacerNameType {
     type Output = enum__Torappu_SandboxV2RacerNameType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -4825,7 +5443,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxPermBasicData_HomeEntryD
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4855,6 +5473,19 @@ impl<'a> clz_Torappu_SandboxPermBasicData_HomeEntryDisplayData<'a> {
             builder.add_displayId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxPermBasicData_HomeEntryDisplayDataT {
+        let displayId = self.displayId().map(|x| x.to_string());
+        let topicId = self.topicId().map(|x| x.to_string());
+        let startTs = self.startTs();
+        let endTs = self.endTs();
+        clz_Torappu_SandboxPermBasicData_HomeEntryDisplayDataT {
+            displayId,
+            topicId,
+            startTs,
+            endTs,
+        }
     }
 
     #[inline]
@@ -4949,6 +5580,29 @@ impl<'a> Default for clz_Torappu_SandboxPermBasicData_HomeEntryDisplayDataArgs<'
     }
 }
 
+impl Serialize for clz_Torappu_SandboxPermBasicData_HomeEntryDisplayData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("clz_Torappu_SandboxPermBasicData_HomeEntryDisplayData", 4)?;
+        if let Some(f) = self.displayId() {
+            s.serialize_field("displayId", &f)?;
+        } else {
+            s.skip_field("displayId")?;
+        }
+        if let Some(f) = self.topicId() {
+            s.serialize_field("topicId", &f)?;
+        } else {
+            s.skip_field("topicId")?;
+        }
+        s.serialize_field("startTs", &self.startTs())?;
+        s.serialize_field("endTs", &self.endTs())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxPermBasicData_HomeEntryDisplayDataBuilder<
     'a: 'b,
     'b,
@@ -5019,6 +5673,44 @@ impl core::fmt::Debug for clz_Torappu_SandboxPermBasicData_HomeEntryDisplayData<
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxPermBasicData_HomeEntryDisplayDataT {
+    pub displayId: Option<String>,
+    pub topicId: Option<String>,
+    pub startTs: i64,
+    pub endTs: i64,
+}
+impl Default for clz_Torappu_SandboxPermBasicData_HomeEntryDisplayDataT {
+    fn default() -> Self {
+        Self {
+            displayId: None,
+            topicId: None,
+            startTs: 0,
+            endTs: 0,
+        }
+    }
+}
+impl clz_Torappu_SandboxPermBasicData_HomeEntryDisplayDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxPermBasicData_HomeEntryDisplayData<'b>> {
+        let displayId = self.displayId.as_ref().map(|x| _fbb.create_string(x));
+        let topicId = self.topicId.as_ref().map(|x| _fbb.create_string(x));
+        let startTs = self.startTs;
+        let endTs = self.endTs;
+        clz_Torappu_SandboxPermBasicData_HomeEntryDisplayData::create(
+            _fbb,
+            &clz_Torappu_SandboxPermBasicData_HomeEntryDisplayDataArgs {
+                displayId,
+                topicId,
+                startTs,
+                endTs,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxPermBasicDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -5031,7 +5723,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxPermBasicData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -5085,6 +5777,35 @@ impl<'a> clz_Torappu_SandboxPermBasicData<'a> {
             builder.add_topicId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxPermBasicDataT {
+        let topicId = self.topicId().map(|x| x.to_string());
+        let topicTemplate = self.topicTemplate();
+        let topicName = self.topicName().map(|x| x.to_string());
+        let topicStartTime = self.topicStartTime();
+        let fullStoredTime = self.fullStoredTime();
+        let sortId = self.sortId();
+        let priceItemId = self.priceItemId().map(|x| x.to_string());
+        let templateShopId = self.templateShopId().map(|x| x.to_string());
+        let homeEntryDisplayData = self
+            .homeEntryDisplayData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let webBusType = self.webBusType().map(|x| x.to_string());
+        let medalGroupId = self.medalGroupId().map(|x| x.to_string());
+        clz_Torappu_SandboxPermBasicDataT {
+            topicId,
+            topicTemplate,
+            topicName,
+            topicStartTime,
+            fullStoredTime,
+            sortId,
+            priceItemId,
+            templateShopId,
+            homeEntryDisplayData,
+            webBusType,
+            medalGroupId,
+        }
     }
 
     #[inline]
@@ -5329,6 +6050,55 @@ impl<'a> Default for clz_Torappu_SandboxPermBasicDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxPermBasicData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxPermBasicData", 11)?;
+        if let Some(f) = self.topicId() {
+            s.serialize_field("topicId", &f)?;
+        } else {
+            s.skip_field("topicId")?;
+        }
+        s.serialize_field("topicTemplate", &self.topicTemplate())?;
+        if let Some(f) = self.topicName() {
+            s.serialize_field("topicName", &f)?;
+        } else {
+            s.skip_field("topicName")?;
+        }
+        s.serialize_field("topicStartTime", &self.topicStartTime())?;
+        s.serialize_field("fullStoredTime", &self.fullStoredTime())?;
+        s.serialize_field("sortId", &self.sortId())?;
+        if let Some(f) = self.priceItemId() {
+            s.serialize_field("priceItemId", &f)?;
+        } else {
+            s.skip_field("priceItemId")?;
+        }
+        if let Some(f) = self.templateShopId() {
+            s.serialize_field("templateShopId", &f)?;
+        } else {
+            s.skip_field("templateShopId")?;
+        }
+        if let Some(f) = self.homeEntryDisplayData() {
+            s.serialize_field("homeEntryDisplayData", &f)?;
+        } else {
+            s.skip_field("homeEntryDisplayData")?;
+        }
+        if let Some(f) = self.webBusType() {
+            s.serialize_field("webBusType", &f)?;
+        } else {
+            s.skip_field("webBusType")?;
+        }
+        if let Some(f) = self.medalGroupId() {
+            s.serialize_field("medalGroupId", &f)?;
+        } else {
+            s.skip_field("medalGroupId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxPermBasicDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -5459,6 +6229,75 @@ impl core::fmt::Debug for clz_Torappu_SandboxPermBasicData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxPermBasicDataT {
+    pub topicId: Option<String>,
+    pub topicTemplate: enum__Torappu_SandboxPermTemplateType,
+    pub topicName: Option<String>,
+    pub topicStartTime: i64,
+    pub fullStoredTime: i64,
+    pub sortId: i32,
+    pub priceItemId: Option<String>,
+    pub templateShopId: Option<String>,
+    pub homeEntryDisplayData: Option<Vec<clz_Torappu_SandboxPermBasicData_HomeEntryDisplayDataT>>,
+    pub webBusType: Option<String>,
+    pub medalGroupId: Option<String>,
+}
+impl Default for clz_Torappu_SandboxPermBasicDataT {
+    fn default() -> Self {
+        Self {
+            topicId: None,
+            topicTemplate: enum__Torappu_SandboxPermTemplateType::NONE,
+            topicName: None,
+            topicStartTime: 0,
+            fullStoredTime: 0,
+            sortId: 0,
+            priceItemId: None,
+            templateShopId: None,
+            homeEntryDisplayData: None,
+            webBusType: None,
+            medalGroupId: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxPermBasicDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxPermBasicData<'b>> {
+        let topicId = self.topicId.as_ref().map(|x| _fbb.create_string(x));
+        let topicTemplate = self.topicTemplate;
+        let topicName = self.topicName.as_ref().map(|x| _fbb.create_string(x));
+        let topicStartTime = self.topicStartTime;
+        let fullStoredTime = self.fullStoredTime;
+        let sortId = self.sortId;
+        let priceItemId = self.priceItemId.as_ref().map(|x| _fbb.create_string(x));
+        let templateShopId = self.templateShopId.as_ref().map(|x| _fbb.create_string(x));
+        let homeEntryDisplayData = self.homeEntryDisplayData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let webBusType = self.webBusType.as_ref().map(|x| _fbb.create_string(x));
+        let medalGroupId = self.medalGroupId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxPermBasicData::create(
+            _fbb,
+            &clz_Torappu_SandboxPermBasicDataArgs {
+                topicId,
+                topicTemplate,
+                topicName,
+                topicStartTime,
+                fullStoredTime,
+                sortId,
+                priceItemId,
+                templateShopId,
+                homeEntryDisplayData,
+                webBusType,
+                medalGroupId,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxPermBasicDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -5471,7 +6310,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxPermBasicD
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -5497,6 +6336,15 @@ impl<'a> dict__string__clz_Torappu_SandboxPermBasicData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxPermBasicDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxPermBasicDataT { key, value }
     }
 
     #[inline]
@@ -5573,6 +6421,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxPermBasicDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxPermBasicData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxPermBasicData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxPermBasicDataBuilder<
     'a: 'b,
     'b,
@@ -5634,6 +6499,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxPermBasicData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxPermBasicDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxPermBasicDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxPermBasicDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxPermBasicDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxPermBasicData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxPermBasicData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxPermBasicDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2NodeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -5646,7 +6541,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2NodeData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -5666,6 +6561,11 @@ impl<'a> clz_Torappu_SandboxV2NodeData<'a> {
         let mut builder = clz_Torappu_SandboxV2NodeDataBuilder::new(_fbb);
         builder.add_minDistance(args.minDistance);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2NodeDataT {
+        let minDistance = self.minDistance();
+        clz_Torappu_SandboxV2NodeDataT { minDistance }
     }
 
     #[inline]
@@ -5701,6 +6601,17 @@ impl<'a> Default for clz_Torappu_SandboxV2NodeDataArgs {
     #[inline]
     fn default() -> Self {
         clz_Torappu_SandboxV2NodeDataArgs { minDistance: 0.0 }
+    }
+}
+
+impl Serialize for clz_Torappu_SandboxV2NodeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2NodeData", 1)?;
+        s.serialize_field("minDistance", &self.minDistance())?;
+        s.end()
     }
 }
 
@@ -5741,6 +6652,28 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2NodeData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2NodeDataT {
+    pub minDistance: f32,
+}
+impl Default for clz_Torappu_SandboxV2NodeDataT {
+    fn default() -> Self {
+        Self { minDistance: 0.0 }
+    }
+}
+impl clz_Torappu_SandboxV2NodeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2NodeData<'b>> {
+        let minDistance = self.minDistance;
+        clz_Torappu_SandboxV2NodeData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2NodeDataArgs { minDistance },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2NodeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -5753,7 +6686,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2NodeData
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -5779,6 +6712,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2NodeData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2NodeDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2NodeDataT { key, value }
     }
 
     #[inline]
@@ -5852,6 +6794,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2NodeDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2NodeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2NodeData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2NodeDataBuilder<
     'a: 'b,
     'b,
@@ -5908,6 +6867,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2NodeData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2NodeDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2NodeDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2NodeDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2NodeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2NodeData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2NodeData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2NodeDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_UnityEngine_Vector2Offset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -5920,7 +6909,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_UnityEngine_Vector2<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -5942,6 +6931,12 @@ impl<'a> clz_UnityEngine_Vector2<'a> {
         builder.add_y(args.y);
         builder.add_x(args.x);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_UnityEngine_Vector2T {
+        let x = self.x();
+        let y = self.y();
+        clz_UnityEngine_Vector2T { x, y }
     }
 
     #[inline]
@@ -5993,6 +6988,18 @@ impl<'a> Default for clz_UnityEngine_Vector2Args {
     }
 }
 
+impl Serialize for clz_UnityEngine_Vector2<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_UnityEngine_Vector2", 2)?;
+        s.serialize_field("x", &self.x())?;
+        s.serialize_field("y", &self.y())?;
+        s.end()
+    }
+}
+
 pub struct clz_UnityEngine_Vector2Builder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -6033,6 +7040,27 @@ impl core::fmt::Debug for clz_UnityEngine_Vector2<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_UnityEngine_Vector2T {
+    pub x: f32,
+    pub y: f32,
+}
+impl Default for clz_UnityEngine_Vector2T {
+    fn default() -> Self {
+        Self { x: 0.0, y: 0.0 }
+    }
+}
+impl clz_UnityEngine_Vector2T {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_UnityEngine_Vector2<'b>> {
+        let x = self.x;
+        let y = self.y;
+        clz_UnityEngine_Vector2::create(_fbb, &clz_UnityEngine_Vector2Args { x, y })
+    }
+}
 pub enum list_intOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -6045,7 +7073,7 @@ impl<'a> flatbuffers::Follow<'a> for list_int<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -6067,6 +7095,11 @@ impl<'a> list_int<'a> {
             builder.add_values(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> list_intT {
+        let values = self.values().map(|x| x.into_iter().collect());
+        list_intT { values }
     }
 
     #[inline]
@@ -6111,6 +7144,21 @@ impl<'a> Default for list_intArgs<'a> {
     }
 }
 
+impl Serialize for list_int<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("list_int", 1)?;
+        if let Some(f) = self.values() {
+            s.serialize_field("values", &f)?;
+        } else {
+            s.skip_field("values")?;
+        }
+        s.end()
+    }
+}
+
 pub struct list_intBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -6143,6 +7191,25 @@ impl core::fmt::Debug for list_int<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct list_intT {
+    pub values: Option<Vec<i32>>,
+}
+impl Default for list_intT {
+    fn default() -> Self {
+        Self { values: None }
+    }
+}
+impl list_intT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<list_int<'b>> {
+        let values = self.values.as_ref().map(|x| _fbb.create_vector(x));
+        list_int::create(_fbb, &list_intArgs { values })
+    }
+}
 pub enum clz_Torappu_SandboxV2MapZoneDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -6155,7 +7222,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2MapZoneData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -6191,6 +7258,25 @@ impl<'a> clz_Torappu_SandboxV2MapZoneData<'a> {
         }
         builder.add_hasBorder(args.hasBorder);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2MapZoneDataT {
+        let zoneId = self.zoneId().map(|x| x.to_string());
+        let center = self.center().map(|x| Box::new(x.unpack()));
+        let vertices = self
+            .vertices()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let triangles = self
+            .triangles()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let hasBorder = self.hasBorder();
+        clz_Torappu_SandboxV2MapZoneDataT {
+            zoneId,
+            center,
+            vertices,
+            triangles,
+            hasBorder,
+        }
     }
 
     #[inline]
@@ -6309,6 +7395,37 @@ impl<'a> Default for clz_Torappu_SandboxV2MapZoneDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2MapZoneData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2MapZoneData", 5)?;
+        if let Some(f) = self.zoneId() {
+            s.serialize_field("zoneId", &f)?;
+        } else {
+            s.skip_field("zoneId")?;
+        }
+        if let Some(f) = self.center() {
+            s.serialize_field("center", &f)?;
+        } else {
+            s.skip_field("center")?;
+        }
+        if let Some(f) = self.vertices() {
+            s.serialize_field("vertices", &f)?;
+        } else {
+            s.skip_field("vertices")?;
+        }
+        if let Some(f) = self.triangles() {
+            s.serialize_field("triangles", &f)?;
+        } else {
+            s.skip_field("triangles")?;
+        }
+        s.serialize_field("hasBorder", &self.hasBorder())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2MapZoneDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -6391,6 +7508,54 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2MapZoneData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2MapZoneDataT {
+    pub zoneId: Option<String>,
+    pub center: Option<Box<clz_UnityEngine_Vector2T>>,
+    pub vertices: Option<Vec<clz_UnityEngine_Vector2T>>,
+    pub triangles: Option<Vec<list_intT>>,
+    pub hasBorder: bool,
+}
+impl Default for clz_Torappu_SandboxV2MapZoneDataT {
+    fn default() -> Self {
+        Self {
+            zoneId: None,
+            center: None,
+            vertices: None,
+            triangles: None,
+            hasBorder: false,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2MapZoneDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2MapZoneData<'b>> {
+        let zoneId = self.zoneId.as_ref().map(|x| _fbb.create_string(x));
+        let center = self.center.as_ref().map(|x| x.pack(_fbb));
+        let vertices = self.vertices.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let triangles = self.triangles.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let hasBorder = self.hasBorder;
+        clz_Torappu_SandboxV2MapZoneData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2MapZoneDataArgs {
+                zoneId,
+                center,
+                vertices,
+                triangles,
+                hasBorder,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2MapZoneDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -6403,7 +7568,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2MapZoneD
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -6429,6 +7594,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2MapZoneData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2MapZoneDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2MapZoneDataT { key, value }
     }
 
     #[inline]
@@ -6505,6 +7679,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2MapZoneDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2MapZoneData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2MapZoneData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2MapZoneDataBuilder<
     'a: 'b,
     'b,
@@ -6566,6 +7757,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2MapZoneData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2MapZoneDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2MapZoneDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2MapZoneDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2MapZoneDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2MapZoneData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2MapZoneData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2MapZoneDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2MapConfigOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -6578,7 +7799,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2MapConfig<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -6614,6 +7835,23 @@ impl<'a> clz_Torappu_SandboxV2MapConfig<'a> {
         builder.add_isGuide(args.isGuide);
         builder.add_isRift(args.isRift);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2MapConfigT {
+        let isRift = self.isRift();
+        let isGuide = self.isGuide();
+        let cameraBoundMin = self.cameraBoundMin().map(|x| Box::new(x.unpack()));
+        let cameraBoundMax = self.cameraBoundMax().map(|x| Box::new(x.unpack()));
+        let cameraMaxNormalizedZoom = self.cameraMaxNormalizedZoom();
+        let backgroundId = self.backgroundId().map(|x| x.to_string());
+        clz_Torappu_SandboxV2MapConfigT {
+            isRift,
+            isGuide,
+            cameraBoundMin,
+            cameraBoundMax,
+            cameraMaxNormalizedZoom,
+            backgroundId,
+        }
     }
 
     #[inline]
@@ -6748,6 +7986,34 @@ impl<'a> Default for clz_Torappu_SandboxV2MapConfigArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2MapConfig<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2MapConfig", 6)?;
+        s.serialize_field("isRift", &self.isRift())?;
+        s.serialize_field("isGuide", &self.isGuide())?;
+        if let Some(f) = self.cameraBoundMin() {
+            s.serialize_field("cameraBoundMin", &f)?;
+        } else {
+            s.skip_field("cameraBoundMin")?;
+        }
+        if let Some(f) = self.cameraBoundMax() {
+            s.serialize_field("cameraBoundMax", &f)?;
+        } else {
+            s.skip_field("cameraBoundMax")?;
+        }
+        s.serialize_field("cameraMaxNormalizedZoom", &self.cameraMaxNormalizedZoom())?;
+        if let Some(f) = self.backgroundId() {
+            s.serialize_field("backgroundId", &f)?;
+        } else {
+            s.skip_field("backgroundId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2MapConfigBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -6829,6 +8095,52 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2MapConfig<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2MapConfigT {
+    pub isRift: bool,
+    pub isGuide: bool,
+    pub cameraBoundMin: Option<Box<clz_UnityEngine_Vector2T>>,
+    pub cameraBoundMax: Option<Box<clz_UnityEngine_Vector2T>>,
+    pub cameraMaxNormalizedZoom: f32,
+    pub backgroundId: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2MapConfigT {
+    fn default() -> Self {
+        Self {
+            isRift: false,
+            isGuide: false,
+            cameraBoundMin: None,
+            cameraBoundMax: None,
+            cameraMaxNormalizedZoom: 0.0,
+            backgroundId: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2MapConfigT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2MapConfig<'b>> {
+        let isRift = self.isRift;
+        let isGuide = self.isGuide;
+        let cameraBoundMin = self.cameraBoundMin.as_ref().map(|x| x.pack(_fbb));
+        let cameraBoundMax = self.cameraBoundMax.as_ref().map(|x| x.pack(_fbb));
+        let cameraMaxNormalizedZoom = self.cameraMaxNormalizedZoom;
+        let backgroundId = self.backgroundId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2MapConfig::create(
+            _fbb,
+            &clz_Torappu_SandboxV2MapConfigArgs {
+                isRift,
+                isGuide,
+                cameraBoundMin,
+                cameraBoundMax,
+                cameraMaxNormalizedZoom,
+                backgroundId,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2MapDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -6841,7 +8153,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2MapData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -6879,6 +8191,21 @@ impl<'a> clz_Torappu_SandboxV2MapData<'a> {
             builder.add_nodes(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2MapDataT {
+        let nodes = self.nodes().map(|x| x.iter().map(|t| t.unpack()).collect());
+        let zones = self.zones().map(|x| x.iter().map(|t| t.unpack()).collect());
+        let mapConfig = self.mapConfig().map(|x| Box::new(x.unpack()));
+        let centerNodeId = self.centerNodeId().map(|x| x.to_string());
+        let monthModeNodeId = self.monthModeNodeId().map(|x| x.to_string());
+        clz_Torappu_SandboxV2MapDataT {
+            nodes,
+            zones,
+            mapConfig,
+            centerNodeId,
+            monthModeNodeId,
+        }
     }
 
     #[inline]
@@ -7035,6 +8362,41 @@ impl<'a> Default for clz_Torappu_SandboxV2MapDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2MapData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2MapData", 5)?;
+        if let Some(f) = self.nodes() {
+            s.serialize_field("nodes", &f)?;
+        } else {
+            s.skip_field("nodes")?;
+        }
+        if let Some(f) = self.zones() {
+            s.serialize_field("zones", &f)?;
+        } else {
+            s.skip_field("zones")?;
+        }
+        if let Some(f) = self.mapConfig() {
+            s.serialize_field("mapConfig", &f)?;
+        } else {
+            s.skip_field("mapConfig")?;
+        }
+        if let Some(f) = self.centerNodeId() {
+            s.serialize_field("centerNodeId", &f)?;
+        } else {
+            s.skip_field("centerNodeId")?;
+        }
+        if let Some(f) = self.monthModeNodeId() {
+            s.serialize_field("monthModeNodeId", &f)?;
+        } else {
+            s.skip_field("monthModeNodeId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2MapDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -7123,6 +8485,54 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2MapData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2MapDataT {
+    pub nodes: Option<Vec<dict__string__clz_Torappu_SandboxV2NodeDataT>>,
+    pub zones: Option<Vec<dict__string__clz_Torappu_SandboxV2MapZoneDataT>>,
+    pub mapConfig: Option<Box<clz_Torappu_SandboxV2MapConfigT>>,
+    pub centerNodeId: Option<String>,
+    pub monthModeNodeId: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2MapDataT {
+    fn default() -> Self {
+        Self {
+            nodes: None,
+            zones: None,
+            mapConfig: None,
+            centerNodeId: None,
+            monthModeNodeId: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2MapDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2MapData<'b>> {
+        let nodes = self.nodes.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let zones = self.zones.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let mapConfig = self.mapConfig.as_ref().map(|x| x.pack(_fbb));
+        let centerNodeId = self.centerNodeId.as_ref().map(|x| _fbb.create_string(x));
+        let monthModeNodeId = self.monthModeNodeId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2MapData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2MapDataArgs {
+                nodes,
+                zones,
+                mapConfig,
+                centerNodeId,
+                monthModeNodeId,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2MapDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -7135,7 +8545,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2MapData<
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -7161,6 +8571,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2MapData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2MapDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2MapDataT { key, value }
     }
 
     #[inline]
@@ -7234,6 +8653,22 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2MapDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2MapData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2MapData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2MapDataBuilder<
     'a: 'b,
     'b,
@@ -7287,6 +8722,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2MapData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2MapDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2MapDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2MapDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2MapDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2MapData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2MapData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2MapDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2ItemTrapDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -7299,7 +8764,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2ItemTrapData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -7355,6 +8820,37 @@ impl<'a> clz_Torappu_SandboxV2ItemTrapData<'a> {
             builder.add_itemId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2ItemTrapDataT {
+        let itemId = self.itemId().map(|x| x.to_string());
+        let trapId = self.trapId().map(|x| x.to_string());
+        let trapPhase = self.trapPhase();
+        let trapLevel = self.trapLevel();
+        let skillIndex = self.skillIndex();
+        let skillLevel = self.skillLevel();
+        let buildingLevel = self.buildingLevel();
+        let updatedItemId = self.updatedItemId().map(|x| x.to_string());
+        let minLevelItemId = self.minLevelItemId().map(|x| x.to_string());
+        let baseItemName = self.baseItemName().map(|x| x.to_string());
+        let itemType = self.itemType();
+        let itemTag = self.itemTag();
+        let buffId = self.buffId().map(|x| x.to_string());
+        clz_Torappu_SandboxV2ItemTrapDataT {
+            itemId,
+            trapId,
+            trapPhase,
+            trapLevel,
+            skillIndex,
+            skillLevel,
+            buildingLevel,
+            updatedItemId,
+            minLevelItemId,
+            baseItemName,
+            itemType,
+            itemTag,
+            buffId,
+        }
     }
 
     #[inline]
@@ -7591,6 +9087,53 @@ impl<'a> Default for clz_Torappu_SandboxV2ItemTrapDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2ItemTrapData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2ItemTrapData", 13)?;
+        if let Some(f) = self.itemId() {
+            s.serialize_field("itemId", &f)?;
+        } else {
+            s.skip_field("itemId")?;
+        }
+        if let Some(f) = self.trapId() {
+            s.serialize_field("trapId", &f)?;
+        } else {
+            s.skip_field("trapId")?;
+        }
+        s.serialize_field("trapPhase", &self.trapPhase())?;
+        s.serialize_field("trapLevel", &self.trapLevel())?;
+        s.serialize_field("skillIndex", &self.skillIndex())?;
+        s.serialize_field("skillLevel", &self.skillLevel())?;
+        s.serialize_field("buildingLevel", &self.buildingLevel())?;
+        if let Some(f) = self.updatedItemId() {
+            s.serialize_field("updatedItemId", &f)?;
+        } else {
+            s.skip_field("updatedItemId")?;
+        }
+        if let Some(f) = self.minLevelItemId() {
+            s.serialize_field("minLevelItemId", &f)?;
+        } else {
+            s.skip_field("minLevelItemId")?;
+        }
+        if let Some(f) = self.baseItemName() {
+            s.serialize_field("baseItemName", &f)?;
+        } else {
+            s.skip_field("baseItemName")?;
+        }
+        s.serialize_field("itemType", &self.itemType())?;
+        s.serialize_field("itemTag", &self.itemTag())?;
+        if let Some(f) = self.buffId() {
+            s.serialize_field("buffId", &f)?;
+        } else {
+            s.skip_field("buffId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2ItemTrapDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -7732,6 +9275,80 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2ItemTrapData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2ItemTrapDataT {
+    pub itemId: Option<String>,
+    pub trapId: Option<String>,
+    pub trapPhase: i32,
+    pub trapLevel: i32,
+    pub skillIndex: i32,
+    pub skillLevel: i32,
+    pub buildingLevel: i32,
+    pub updatedItemId: Option<String>,
+    pub minLevelItemId: Option<String>,
+    pub baseItemName: Option<String>,
+    pub itemType: enum__Torappu_SandboxV2TrapItemType,
+    pub itemTag: enum__Torappu_SandboxV2ItemTrapTag,
+    pub buffId: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2ItemTrapDataT {
+    fn default() -> Self {
+        Self {
+            itemId: None,
+            trapId: None,
+            trapPhase: 0,
+            trapLevel: 0,
+            skillIndex: 0,
+            skillLevel: 0,
+            buildingLevel: 0,
+            updatedItemId: None,
+            minLevelItemId: None,
+            baseItemName: None,
+            itemType: enum__Torappu_SandboxV2TrapItemType::NONE,
+            itemTag: enum__Torappu_SandboxV2ItemTrapTag::OUTPUT,
+            buffId: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2ItemTrapDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2ItemTrapData<'b>> {
+        let itemId = self.itemId.as_ref().map(|x| _fbb.create_string(x));
+        let trapId = self.trapId.as_ref().map(|x| _fbb.create_string(x));
+        let trapPhase = self.trapPhase;
+        let trapLevel = self.trapLevel;
+        let skillIndex = self.skillIndex;
+        let skillLevel = self.skillLevel;
+        let buildingLevel = self.buildingLevel;
+        let updatedItemId = self.updatedItemId.as_ref().map(|x| _fbb.create_string(x));
+        let minLevelItemId = self.minLevelItemId.as_ref().map(|x| _fbb.create_string(x));
+        let baseItemName = self.baseItemName.as_ref().map(|x| _fbb.create_string(x));
+        let itemType = self.itemType;
+        let itemTag = self.itemTag;
+        let buffId = self.buffId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2ItemTrapData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2ItemTrapDataArgs {
+                itemId,
+                trapId,
+                trapPhase,
+                trapLevel,
+                skillIndex,
+                skillLevel,
+                buildingLevel,
+                updatedItemId,
+                minLevelItemId,
+                baseItemName,
+                itemType,
+                itemTag,
+                buffId,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2ItemTrapDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -7744,7 +9361,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2ItemTrap
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -7770,6 +9387,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2ItemTrapData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2ItemTrapDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2ItemTrapDataT { key, value }
     }
 
     #[inline]
@@ -7846,6 +9472,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2ItemTrapDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2ItemTrapData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2ItemTrapData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2ItemTrapDataBuilder<
     'a: 'b,
     'b,
@@ -7907,6 +9550,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2ItemTrapData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2ItemTrapDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2ItemTrapDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2ItemTrapDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2ItemTrapDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2ItemTrapData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2ItemTrapData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2ItemTrapDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2ItemTrapTagDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -7919,7 +9592,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2ItemTrapTagData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -7949,6 +9622,19 @@ impl<'a> clz_Torappu_SandboxV2ItemTrapTagData<'a> {
         }
         builder.add_tag(args.tag);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2ItemTrapTagDataT {
+        let tag = self.tag();
+        let tagName = self.tagName().map(|x| x.to_string());
+        let tagPic = self.tagPic().map(|x| x.to_string());
+        let sortId = self.sortId();
+        clz_Torappu_SandboxV2ItemTrapTagDataT {
+            tag,
+            tagName,
+            tagPic,
+            sortId,
+        }
     }
 
     #[inline]
@@ -8036,6 +9722,28 @@ impl<'a> Default for clz_Torappu_SandboxV2ItemTrapTagDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2ItemTrapTagData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2ItemTrapTagData", 4)?;
+        s.serialize_field("tag", &self.tag())?;
+        if let Some(f) = self.tagName() {
+            s.serialize_field("tagName", &f)?;
+        } else {
+            s.skip_field("tagName")?;
+        }
+        if let Some(f) = self.tagPic() {
+            s.serialize_field("tagPic", &f)?;
+        } else {
+            s.skip_field("tagPic")?;
+        }
+        s.serialize_field("sortId", &self.sortId())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2ItemTrapTagDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -8097,6 +9805,44 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2ItemTrapTagData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2ItemTrapTagDataT {
+    pub tag: enum__Torappu_SandboxV2ItemTrapTag,
+    pub tagName: Option<String>,
+    pub tagPic: Option<String>,
+    pub sortId: i32,
+}
+impl Default for clz_Torappu_SandboxV2ItemTrapTagDataT {
+    fn default() -> Self {
+        Self {
+            tag: enum__Torappu_SandboxV2ItemTrapTag::OUTPUT,
+            tagName: None,
+            tagPic: None,
+            sortId: 0,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2ItemTrapTagDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2ItemTrapTagData<'b>> {
+        let tag = self.tag;
+        let tagName = self.tagName.as_ref().map(|x| _fbb.create_string(x));
+        let tagPic = self.tagPic.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        clz_Torappu_SandboxV2ItemTrapTagData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2ItemTrapTagDataArgs {
+                tag,
+                tagName,
+                tagPic,
+                sortId,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2ItemTrapTagDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -8109,7 +9855,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2ItemTrap
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -8135,6 +9881,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2ItemTrapTagData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2ItemTrapTagDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2ItemTrapTagDataT { key, value }
     }
 
     #[inline]
@@ -8211,6 +9966,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2ItemTrapTagDataArgs<'a> 
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2ItemTrapTagData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2ItemTrapTagData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2ItemTrapTagDataBuilder<
     'a: 'b,
     'b,
@@ -8272,6 +10044,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2ItemTrapTagData<'_>
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2ItemTrapTagDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2ItemTrapTagDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2ItemTrapTagDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2ItemTrapTagDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2ItemTrapTagData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2ItemTrapTagData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2ItemTrapTagDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2BuildingItemDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -8284,7 +10086,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2BuildingItemData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -8308,6 +10110,12 @@ impl<'a> clz_Torappu_SandboxV2BuildingItemData<'a> {
             builder.add_itemId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2BuildingItemDataT {
+        let itemId = self.itemId().map(|x| x.to_string());
+        let itemRarity = self.itemRarity();
+        clz_Torappu_SandboxV2BuildingItemDataT { itemId, itemRarity }
     }
 
     #[inline]
@@ -8366,6 +10174,22 @@ impl<'a> Default for clz_Torappu_SandboxV2BuildingItemDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2BuildingItemData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2BuildingItemData", 2)?;
+        if let Some(f) = self.itemId() {
+            s.serialize_field("itemId", &f)?;
+        } else {
+            s.skip_field("itemId")?;
+        }
+        s.serialize_field("itemRarity", &self.itemRarity())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2BuildingItemDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -8414,6 +10238,33 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2BuildingItemData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2BuildingItemDataT {
+    pub itemId: Option<String>,
+    pub itemRarity: i32,
+}
+impl Default for clz_Torappu_SandboxV2BuildingItemDataT {
+    fn default() -> Self {
+        Self {
+            itemId: None,
+            itemRarity: 0,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2BuildingItemDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2BuildingItemData<'b>> {
+        let itemId = self.itemId.as_ref().map(|x| _fbb.create_string(x));
+        let itemRarity = self.itemRarity;
+        clz_Torappu_SandboxV2BuildingItemData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2BuildingItemDataArgs { itemId, itemRarity },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2BuildingItemDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -8426,7 +10277,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2Building
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -8452,6 +10303,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2BuildingItemData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2BuildingItemDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2BuildingItemDataT { key, value }
     }
 
     #[inline]
@@ -8528,6 +10388,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2BuildingItemDataArgs<'a>
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2BuildingItemData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("dict__string__clz_Torappu_SandboxV2BuildingItemData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2BuildingItemDataBuilder<
     'a: 'b,
     'b,
@@ -8589,6 +10466,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2BuildingItemData<'_
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2BuildingItemDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2BuildingItemDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2BuildingItemDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2BuildingItemDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2BuildingItemData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2BuildingItemData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2BuildingItemDataArgs { key, value },
+        )
+    }
+}
 pub enum dict__string__intOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -8601,7 +10508,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__int<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -8625,6 +10532,15 @@ impl<'a> dict__string__int<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__intT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value();
+        dict__string__intT { key, value }
     }
 
     #[inline]
@@ -8689,6 +10605,18 @@ impl<'a> Default for dict__string__intArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__int<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__int", 2)?;
+        s.serialize_field("key", &self.key())?;
+        s.serialize_field("value", &self.value())?;
+        s.end()
+    }
+}
+
 pub struct dict__string__intBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -8730,6 +10658,33 @@ impl core::fmt::Debug for dict__string__int<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__intT {
+    pub key: String,
+    pub value: i32,
+}
+impl Default for dict__string__intT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: 0,
+        }
+    }
+}
+impl dict__string__intT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__int<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value;
+        dict__string__int::create(_fbb, &dict__string__intArgs { key, value })
+    }
+}
 pub enum clz_Torappu_SandboxV2CraftItemDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -8742,7 +10697,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2CraftItemData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -8792,6 +10747,37 @@ impl<'a> clz_Torappu_SandboxV2CraftItemData<'a> {
         }
         builder.add_isHidden(args.isHidden);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2CraftItemDataT {
+        let itemId = self.itemId().map(|x| x.to_string());
+        let type_ = self.type_();
+        let buildingUnlockDesc = self.buildingUnlockDesc().map(|x| x.to_string());
+        let materialItems = self
+            .materialItems()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let upgradeItems = self
+            .upgradeItems()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let outputRatio = self.outputRatio();
+        let withdrawRatio = self.withdrawRatio();
+        let repairCost = self.repairCost();
+        let isHidden = self.isHidden();
+        let craftGroupId = self.craftGroupId().map(|x| x.to_string());
+        let recipeLevel = self.recipeLevel();
+        clz_Torappu_SandboxV2CraftItemDataT {
+            itemId,
+            type_,
+            buildingUnlockDesc,
+            materialItems,
+            upgradeItems,
+            outputRatio,
+            withdrawRatio,
+            repairCost,
+            isHidden,
+            craftGroupId,
+            recipeLevel,
+        }
     }
 
     #[inline]
@@ -9005,6 +10991,47 @@ impl<'a> Default for clz_Torappu_SandboxV2CraftItemDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2CraftItemData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2CraftItemData", 11)?;
+        if let Some(f) = self.itemId() {
+            s.serialize_field("itemId", &f)?;
+        } else {
+            s.skip_field("itemId")?;
+        }
+        s.serialize_field("type_", &self.type_())?;
+        if let Some(f) = self.buildingUnlockDesc() {
+            s.serialize_field("buildingUnlockDesc", &f)?;
+        } else {
+            s.skip_field("buildingUnlockDesc")?;
+        }
+        if let Some(f) = self.materialItems() {
+            s.serialize_field("materialItems", &f)?;
+        } else {
+            s.skip_field("materialItems")?;
+        }
+        if let Some(f) = self.upgradeItems() {
+            s.serialize_field("upgradeItems", &f)?;
+        } else {
+            s.skip_field("upgradeItems")?;
+        }
+        s.serialize_field("outputRatio", &self.outputRatio())?;
+        s.serialize_field("withdrawRatio", &self.withdrawRatio())?;
+        s.serialize_field("repairCost", &self.repairCost())?;
+        s.serialize_field("isHidden", &self.isHidden())?;
+        if let Some(f) = self.craftGroupId() {
+            s.serialize_field("craftGroupId", &f)?;
+        } else {
+            s.skip_field("craftGroupId")?;
+        }
+        s.serialize_field("recipeLevel", &self.recipeLevel())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2CraftItemDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -9139,6 +11166,81 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2CraftItemData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2CraftItemDataT {
+    pub itemId: Option<String>,
+    pub type_: enum__Torappu_SandboxV2CraftItemType,
+    pub buildingUnlockDesc: Option<String>,
+    pub materialItems: Option<Vec<dict__string__intT>>,
+    pub upgradeItems: Option<Vec<dict__string__intT>>,
+    pub outputRatio: i32,
+    pub withdrawRatio: i32,
+    pub repairCost: i32,
+    pub isHidden: bool,
+    pub craftGroupId: Option<String>,
+    pub recipeLevel: i32,
+}
+impl Default for clz_Torappu_SandboxV2CraftItemDataT {
+    fn default() -> Self {
+        Self {
+            itemId: None,
+            type_: enum__Torappu_SandboxV2CraftItemType::BASE_BUILDING,
+            buildingUnlockDesc: None,
+            materialItems: None,
+            upgradeItems: None,
+            outputRatio: 0,
+            withdrawRatio: 0,
+            repairCost: 0,
+            isHidden: false,
+            craftGroupId: None,
+            recipeLevel: 0,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2CraftItemDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2CraftItemData<'b>> {
+        let itemId = self.itemId.as_ref().map(|x| _fbb.create_string(x));
+        let type_ = self.type_;
+        let buildingUnlockDesc = self
+            .buildingUnlockDesc
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let materialItems = self.materialItems.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let upgradeItems = self.upgradeItems.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let outputRatio = self.outputRatio;
+        let withdrawRatio = self.withdrawRatio;
+        let repairCost = self.repairCost;
+        let isHidden = self.isHidden;
+        let craftGroupId = self.craftGroupId.as_ref().map(|x| _fbb.create_string(x));
+        let recipeLevel = self.recipeLevel;
+        clz_Torappu_SandboxV2CraftItemData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2CraftItemDataArgs {
+                itemId,
+                type_,
+                buildingUnlockDesc,
+                materialItems,
+                upgradeItems,
+                outputRatio,
+                withdrawRatio,
+                repairCost,
+                isHidden,
+                craftGroupId,
+                recipeLevel,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2CraftItemDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -9151,7 +11253,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2CraftIte
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -9177,6 +11279,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2CraftItemData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2CraftItemDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2CraftItemDataT { key, value }
     }
 
     #[inline]
@@ -9253,6 +11364,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2CraftItemDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2CraftItemData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2CraftItemData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2CraftItemDataBuilder<
     'a: 'b,
     'b,
@@ -9314,6 +11442,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2CraftItemData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2CraftItemDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2CraftItemDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2CraftItemDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2CraftItemDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2CraftItemData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2CraftItemData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2CraftItemDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2LivestockDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -9326,7 +11484,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2LivestockData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -9360,6 +11518,19 @@ impl<'a> clz_Torappu_SandboxV2LivestockData<'a> {
             builder.add_livestockItemId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2LivestockDataT {
+        let livestockItemId = self.livestockItemId().map(|x| x.to_string());
+        let shinyLivestockItemId = self.shinyLivestockItemId().map(|x| x.to_string());
+        let livestockEnemyId = self.livestockEnemyId().map(|x| x.to_string());
+        let targetFenceId = self.targetFenceId().map(|x| x.to_string());
+        clz_Torappu_SandboxV2LivestockDataT {
+            livestockItemId,
+            shinyLivestockItemId,
+            livestockEnemyId,
+            targetFenceId,
+        }
     }
 
     #[inline]
@@ -9462,6 +11633,36 @@ impl<'a> Default for clz_Torappu_SandboxV2LivestockDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2LivestockData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2LivestockData", 4)?;
+        if let Some(f) = self.livestockItemId() {
+            s.serialize_field("livestockItemId", &f)?;
+        } else {
+            s.skip_field("livestockItemId")?;
+        }
+        if let Some(f) = self.shinyLivestockItemId() {
+            s.serialize_field("shinyLivestockItemId", &f)?;
+        } else {
+            s.skip_field("shinyLivestockItemId")?;
+        }
+        if let Some(f) = self.livestockEnemyId() {
+            s.serialize_field("livestockEnemyId", &f)?;
+        } else {
+            s.skip_field("livestockEnemyId")?;
+        }
+        if let Some(f) = self.targetFenceId() {
+            s.serialize_field("targetFenceId", &f)?;
+        } else {
+            s.skip_field("targetFenceId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2LivestockDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -9527,6 +11728,50 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2LivestockData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2LivestockDataT {
+    pub livestockItemId: Option<String>,
+    pub shinyLivestockItemId: Option<String>,
+    pub livestockEnemyId: Option<String>,
+    pub targetFenceId: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2LivestockDataT {
+    fn default() -> Self {
+        Self {
+            livestockItemId: None,
+            shinyLivestockItemId: None,
+            livestockEnemyId: None,
+            targetFenceId: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2LivestockDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2LivestockData<'b>> {
+        let livestockItemId = self.livestockItemId.as_ref().map(|x| _fbb.create_string(x));
+        let shinyLivestockItemId = self
+            .shinyLivestockItemId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let livestockEnemyId = self
+            .livestockEnemyId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let targetFenceId = self.targetFenceId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2LivestockData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2LivestockDataArgs {
+                livestockItemId,
+                shinyLivestockItemId,
+                livestockEnemyId,
+                targetFenceId,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2LivestockDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -9539,7 +11784,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2Livestoc
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -9565,6 +11810,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2LivestockData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2LivestockDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2LivestockDataT { key, value }
     }
 
     #[inline]
@@ -9641,6 +11895,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2LivestockDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2LivestockData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2LivestockData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2LivestockDataBuilder<
     'a: 'b,
     'b,
@@ -9702,6 +11973,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2LivestockData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2LivestockDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2LivestockDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2LivestockDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2LivestockDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2LivestockData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2LivestockData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2LivestockDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2CraftGroupDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -9714,7 +12015,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2CraftGroupData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -9736,6 +12037,13 @@ impl<'a> clz_Torappu_SandboxV2CraftGroupData<'a> {
             builder.add_items(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2CraftGroupDataT {
+        let items = self
+            .items()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        clz_Torappu_SandboxV2CraftGroupDataT { items }
     }
 
     #[inline]
@@ -9775,6 +12083,21 @@ impl<'a> Default for clz_Torappu_SandboxV2CraftGroupDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_SandboxV2CraftGroupDataArgs { items: None }
+    }
+}
+
+impl Serialize for clz_Torappu_SandboxV2CraftGroupData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2CraftGroupData", 1)?;
+        if let Some(f) = self.items() {
+            s.serialize_field("items", &f)?;
+        } else {
+            s.skip_field("items")?;
+        }
+        s.end()
     }
 }
 
@@ -9821,6 +12144,31 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2CraftGroupData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2CraftGroupDataT {
+    pub items: Option<Vec<String>>,
+}
+impl Default for clz_Torappu_SandboxV2CraftGroupDataT {
+    fn default() -> Self {
+        Self { items: None }
+    }
+}
+impl clz_Torappu_SandboxV2CraftGroupDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2CraftGroupData<'b>> {
+        let items = self.items.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SandboxV2CraftGroupData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2CraftGroupDataArgs { items },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2CraftGroupDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -9833,7 +12181,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2CraftGro
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -9859,6 +12207,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2CraftGroupData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2CraftGroupDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2CraftGroupDataT { key, value }
     }
 
     #[inline]
@@ -9935,6 +12292,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2CraftGroupDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2CraftGroupData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2CraftGroupData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2CraftGroupDataBuilder<
     'a: 'b,
     'b,
@@ -9996,6 +12370,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2CraftGroupData<'_> 
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2CraftGroupDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2CraftGroupDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2CraftGroupDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2CraftGroupDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2CraftGroupData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2CraftGroupData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2CraftGroupDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2AlchemyMaterialDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -10008,7 +12412,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2AlchemyMaterialData<'a
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -10032,6 +12436,12 @@ impl<'a> clz_Torappu_SandboxV2AlchemyMaterialData<'a> {
             builder.add_itemId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2AlchemyMaterialDataT {
+        let itemId = self.itemId().map(|x| x.to_string());
+        let count = self.count();
+        clz_Torappu_SandboxV2AlchemyMaterialDataT { itemId, count }
     }
 
     #[inline]
@@ -10087,6 +12497,22 @@ impl<'a> Default for clz_Torappu_SandboxV2AlchemyMaterialDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2AlchemyMaterialData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2AlchemyMaterialData", 2)?;
+        if let Some(f) = self.itemId() {
+            s.serialize_field("itemId", &f)?;
+        } else {
+            s.skip_field("itemId")?;
+        }
+        s.serialize_field("count", &self.count())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2AlchemyMaterialDataBuilder<
     'a: 'b,
     'b,
@@ -10135,6 +12561,33 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2AlchemyMaterialData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2AlchemyMaterialDataT {
+    pub itemId: Option<String>,
+    pub count: i32,
+}
+impl Default for clz_Torappu_SandboxV2AlchemyMaterialDataT {
+    fn default() -> Self {
+        Self {
+            itemId: None,
+            count: 0,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2AlchemyMaterialDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2AlchemyMaterialData<'b>> {
+        let itemId = self.itemId.as_ref().map(|x| _fbb.create_string(x));
+        let count = self.count;
+        clz_Torappu_SandboxV2AlchemyMaterialData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2AlchemyMaterialDataArgs { itemId, count },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2AlchemyRecipeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -10147,7 +12600,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2AlchemyRecipeData<'a> 
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -10185,6 +12638,25 @@ impl<'a> clz_Torappu_SandboxV2AlchemyRecipeData<'a> {
             builder.add_recipeId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2AlchemyRecipeDataT {
+        let recipeId = self.recipeId().map(|x| x.to_string());
+        let materials = self
+            .materials()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let itemId = self.itemId().map(|x| x.to_string());
+        let onceAlchemyRatio = self.onceAlchemyRatio();
+        let recipeLevel = self.recipeLevel();
+        let unlockDesc = self.unlockDesc().map(|x| x.to_string());
+        clz_Torappu_SandboxV2AlchemyRecipeDataT {
+            recipeId,
+            materials,
+            itemId,
+            onceAlchemyRatio,
+            recipeLevel,
+            unlockDesc,
+        }
     }
 
     #[inline]
@@ -10334,6 +12806,38 @@ impl<'a> Default for clz_Torappu_SandboxV2AlchemyRecipeDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2AlchemyRecipeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2AlchemyRecipeData", 6)?;
+        if let Some(f) = self.recipeId() {
+            s.serialize_field("recipeId", &f)?;
+        } else {
+            s.skip_field("recipeId")?;
+        }
+        if let Some(f) = self.materials() {
+            s.serialize_field("materials", &f)?;
+        } else {
+            s.skip_field("materials")?;
+        }
+        if let Some(f) = self.itemId() {
+            s.serialize_field("itemId", &f)?;
+        } else {
+            s.skip_field("itemId")?;
+        }
+        s.serialize_field("onceAlchemyRatio", &self.onceAlchemyRatio())?;
+        s.serialize_field("recipeLevel", &self.recipeLevel())?;
+        if let Some(f) = self.unlockDesc() {
+            s.serialize_field("unlockDesc", &f)?;
+        } else {
+            s.skip_field("unlockDesc")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2AlchemyRecipeDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -10423,6 +12927,55 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2AlchemyRecipeData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2AlchemyRecipeDataT {
+    pub recipeId: Option<String>,
+    pub materials: Option<Vec<clz_Torappu_SandboxV2AlchemyMaterialDataT>>,
+    pub itemId: Option<String>,
+    pub onceAlchemyRatio: i32,
+    pub recipeLevel: i32,
+    pub unlockDesc: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2AlchemyRecipeDataT {
+    fn default() -> Self {
+        Self {
+            recipeId: None,
+            materials: None,
+            itemId: None,
+            onceAlchemyRatio: 0,
+            recipeLevel: 0,
+            unlockDesc: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2AlchemyRecipeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2AlchemyRecipeData<'b>> {
+        let recipeId = self.recipeId.as_ref().map(|x| _fbb.create_string(x));
+        let materials = self.materials.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let itemId = self.itemId.as_ref().map(|x| _fbb.create_string(x));
+        let onceAlchemyRatio = self.onceAlchemyRatio;
+        let recipeLevel = self.recipeLevel;
+        let unlockDesc = self.unlockDesc.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2AlchemyRecipeData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2AlchemyRecipeDataArgs {
+                recipeId,
+                materials,
+                itemId,
+                onceAlchemyRatio,
+                recipeLevel,
+                unlockDesc,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2AlchemyRecipeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -10435,7 +12988,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2AlchemyR
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -10461,6 +13014,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2AlchemyRecipeData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2AlchemyRecipeDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2AlchemyRecipeDataT { key, value }
     }
 
     #[inline]
@@ -10537,6 +13099,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2AlchemyRecipeDataArgs<'a
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2AlchemyRecipeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("dict__string__clz_Torappu_SandboxV2AlchemyRecipeData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2AlchemyRecipeDataBuilder<
     'a: 'b,
     'b,
@@ -10598,6 +13177,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2AlchemyRecipeData<'
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2AlchemyRecipeDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2AlchemyRecipeDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2AlchemyRecipeDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2AlchemyRecipeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2AlchemyRecipeData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2AlchemyRecipeData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2AlchemyRecipeDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2DrinkMatDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -10610,7 +13219,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2DrinkMatData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -10636,6 +13245,13 @@ impl<'a> clz_Torappu_SandboxV2DrinkMatData<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2DrinkMatDataT {
+        let id = self.id().map(|x| x.to_string());
+        let type_ = self.type_();
+        let count = self.count();
+        clz_Torappu_SandboxV2DrinkMatDataT { id, type_, count }
     }
 
     #[inline]
@@ -10708,6 +13324,23 @@ impl<'a> Default for clz_Torappu_SandboxV2DrinkMatDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2DrinkMatData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2DrinkMatData", 3)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        s.serialize_field("type_", &self.type_())?;
+        s.serialize_field("count", &self.count())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2DrinkMatDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -10761,6 +13394,36 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2DrinkMatData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2DrinkMatDataT {
+    pub id: Option<String>,
+    pub type_: enum__Torappu_SandboxPermItemType,
+    pub count: i32,
+}
+impl Default for clz_Torappu_SandboxV2DrinkMatDataT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            type_: enum__Torappu_SandboxPermItemType::NONE,
+            count: 0,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2DrinkMatDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2DrinkMatData<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let type_ = self.type_;
+        let count = self.count;
+        clz_Torappu_SandboxV2DrinkMatData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2DrinkMatDataArgs { id, type_, count },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2DrinkMatDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -10773,7 +13436,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2DrinkMat
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -10799,6 +13462,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2DrinkMatData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2DrinkMatDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2DrinkMatDataT { key, value }
     }
 
     #[inline]
@@ -10875,6 +13547,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2DrinkMatDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2DrinkMatData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2DrinkMatData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2DrinkMatDataBuilder<
     'a: 'b,
     'b,
@@ -10936,6 +13625,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2DrinkMatData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2DrinkMatDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2DrinkMatDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2DrinkMatDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2DrinkMatDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2DrinkMatData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2DrinkMatData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2DrinkMatDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2FoodMatDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -10948,7 +13667,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2FoodMatData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -10984,6 +13703,25 @@ impl<'a> clz_Torappu_SandboxV2FoodMatData<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2FoodMatDataT {
+        let id = self.id().map(|x| x.to_string());
+        let type_ = self.type_();
+        let attribute = self.attribute();
+        let variantType = self.variantType();
+        let bonusDuration = self.bonusDuration();
+        let buffDesc = self.buffDesc().map(|x| x.to_string());
+        let sortId = self.sortId();
+        clz_Torappu_SandboxV2FoodMatDataT {
+            id,
+            type_,
+            attribute,
+            variantType,
+            bonusDuration,
+            buffDesc,
+            sortId,
+        }
     }
 
     #[inline]
@@ -11131,6 +13869,31 @@ impl<'a> Default for clz_Torappu_SandboxV2FoodMatDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2FoodMatData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2FoodMatData", 7)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        s.serialize_field("type_", &self.type_())?;
+        s.serialize_field("attribute", &self.attribute())?;
+        s.serialize_field("variantType", &self.variantType())?;
+        s.serialize_field("bonusDuration", &self.bonusDuration())?;
+        if let Some(f) = self.buffDesc() {
+            s.serialize_field("buffDesc", &f)?;
+        } else {
+            s.skip_field("buffDesc")?;
+        }
+        s.serialize_field("sortId", &self.sortId())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2FoodMatDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -11220,6 +13983,56 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2FoodMatData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2FoodMatDataT {
+    pub id: Option<String>,
+    pub type_: enum__Torappu_SandboxV2FoodMatType,
+    pub attribute: enum__Torappu_SandboxV2FoodAttribute,
+    pub variantType: enum__Torappu_SandboxV2FoodVariantType,
+    pub bonusDuration: i32,
+    pub buffDesc: Option<String>,
+    pub sortId: i32,
+}
+impl Default for clz_Torappu_SandboxV2FoodMatDataT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            type_: enum__Torappu_SandboxV2FoodMatType::MAIN,
+            attribute: enum__Torappu_SandboxV2FoodAttribute::NONE,
+            variantType: enum__Torappu_SandboxV2FoodVariantType::NONE,
+            bonusDuration: 0,
+            buffDesc: None,
+            sortId: 0,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2FoodMatDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2FoodMatData<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let type_ = self.type_;
+        let attribute = self.attribute;
+        let variantType = self.variantType;
+        let bonusDuration = self.bonusDuration;
+        let buffDesc = self.buffDesc.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        clz_Torappu_SandboxV2FoodMatData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2FoodMatDataArgs {
+                id,
+                type_,
+                attribute,
+                variantType,
+                bonusDuration,
+                buffDesc,
+                sortId,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2FoodMatDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -11232,7 +14045,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2FoodMatD
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -11258,6 +14071,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2FoodMatData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2FoodMatDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2FoodMatDataT { key, value }
     }
 
     #[inline]
@@ -11334,6 +14156,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2FoodMatDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2FoodMatData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2FoodMatData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2FoodMatDataBuilder<
     'a: 'b,
     'b,
@@ -11395,6 +14234,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2FoodMatData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2FoodMatDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2FoodMatDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2FoodMatDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2FoodMatDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2FoodMatData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2FoodMatData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2FoodMatDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2FoodRecipeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -11407,7 +14276,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2FoodRecipeData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -11433,6 +14302,14 @@ impl<'a> clz_Torappu_SandboxV2FoodRecipeData<'a> {
             builder.add_foodId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2FoodRecipeDataT {
+        let foodId = self.foodId().map(|x| x.to_string());
+        let mats = self
+            .mats()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        clz_Torappu_SandboxV2FoodRecipeDataT { foodId, mats }
     }
 
     #[inline]
@@ -11492,6 +14369,26 @@ impl<'a> Default for clz_Torappu_SandboxV2FoodRecipeDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2FoodRecipeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2FoodRecipeData", 2)?;
+        if let Some(f) = self.foodId() {
+            s.serialize_field("foodId", &f)?;
+        } else {
+            s.skip_field("foodId")?;
+        }
+        if let Some(f) = self.mats() {
+            s.serialize_field("mats", &f)?;
+        } else {
+            s.skip_field("mats")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2FoodRecipeDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -11543,6 +14440,36 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2FoodRecipeData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2FoodRecipeDataT {
+    pub foodId: Option<String>,
+    pub mats: Option<Vec<String>>,
+}
+impl Default for clz_Torappu_SandboxV2FoodRecipeDataT {
+    fn default() -> Self {
+        Self {
+            foodId: None,
+            mats: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2FoodRecipeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2FoodRecipeData<'b>> {
+        let foodId = self.foodId.as_ref().map(|x| _fbb.create_string(x));
+        let mats = self.mats.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SandboxV2FoodRecipeData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2FoodRecipeDataArgs { foodId, mats },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2FoodVariantDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -11555,7 +14482,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2FoodVariantData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -11583,6 +14510,13 @@ impl<'a> clz_Torappu_SandboxV2FoodVariantData<'a> {
         }
         builder.add_type_(args.type_);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2FoodVariantDataT {
+        let type_ = self.type_();
+        let name = self.name().map(|x| x.to_string());
+        let usage = self.usage().map(|x| x.to_string());
+        clz_Torappu_SandboxV2FoodVariantDataT { type_, name, usage }
     }
 
     #[inline]
@@ -11656,6 +14590,27 @@ impl<'a> Default for clz_Torappu_SandboxV2FoodVariantDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2FoodVariantData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2FoodVariantData", 3)?;
+        s.serialize_field("type_", &self.type_())?;
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        if let Some(f) = self.usage() {
+            s.serialize_field("usage", &f)?;
+        } else {
+            s.skip_field("usage")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2FoodVariantDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -11712,6 +14667,36 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2FoodVariantData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2FoodVariantDataT {
+    pub type_: enum__Torappu_SandboxV2FoodVariantType,
+    pub name: Option<String>,
+    pub usage: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2FoodVariantDataT {
+    fn default() -> Self {
+        Self {
+            type_: enum__Torappu_SandboxV2FoodVariantType::NONE,
+            name: None,
+            usage: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2FoodVariantDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2FoodVariantData<'b>> {
+        let type_ = self.type_;
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        let usage = self.usage.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2FoodVariantData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2FoodVariantDataArgs { type_, name, usage },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2FoodDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -11724,7 +14709,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2FoodData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -11762,6 +14747,27 @@ impl<'a> clz_Torappu_SandboxV2FoodData<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2FoodDataT {
+        let id = self.id().map(|x| x.to_string());
+        let attributes = self.attributes().map(|x| x.into_iter().collect());
+        let recipes = self
+            .recipes()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let variants = self
+            .variants()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let duration = self.duration();
+        let sortId = self.sortId();
+        clz_Torappu_SandboxV2FoodDataT {
+            id,
+            attributes,
+            recipes,
+            variants,
+            duration,
+            sortId,
+        }
     }
 
     #[inline]
@@ -11923,6 +14929,38 @@ impl<'a> Default for clz_Torappu_SandboxV2FoodDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2FoodData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2FoodData", 6)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        if let Some(f) = self.attributes() {
+            s.serialize_field("attributes", &f)?;
+        } else {
+            s.skip_field("attributes")?;
+        }
+        if let Some(f) = self.recipes() {
+            s.serialize_field("recipes", &f)?;
+        } else {
+            s.skip_field("recipes")?;
+        }
+        if let Some(f) = self.variants() {
+            s.serialize_field("variants", &f)?;
+        } else {
+            s.skip_field("variants")?;
+        }
+        s.serialize_field("duration", &self.duration())?;
+        s.serialize_field("sortId", &self.sortId())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2FoodDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -12016,6 +15054,58 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2FoodData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2FoodDataT {
+    pub id: Option<String>,
+    pub attributes: Option<Vec<enum__Torappu_SandboxV2FoodAttribute>>,
+    pub recipes: Option<Vec<clz_Torappu_SandboxV2FoodRecipeDataT>>,
+    pub variants: Option<Vec<clz_Torappu_SandboxV2FoodVariantDataT>>,
+    pub duration: i32,
+    pub sortId: i32,
+}
+impl Default for clz_Torappu_SandboxV2FoodDataT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            attributes: None,
+            recipes: None,
+            variants: None,
+            duration: 0,
+            sortId: 0,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2FoodDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2FoodData<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let attributes = self.attributes.as_ref().map(|x| _fbb.create_vector(x));
+        let recipes = self.recipes.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let variants = self.variants.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let duration = self.duration;
+        let sortId = self.sortId;
+        clz_Torappu_SandboxV2FoodData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2FoodDataArgs {
+                id,
+                attributes,
+                recipes,
+                variants,
+                duration,
+                sortId,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2FoodDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -12028,7 +15118,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2FoodData
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -12054,6 +15144,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2FoodData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2FoodDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2FoodDataT { key, value }
     }
 
     #[inline]
@@ -12127,6 +15226,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2FoodDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2FoodData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2FoodData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2FoodDataBuilder<
     'a: 'b,
     'b,
@@ -12183,6 +15299,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2FoodData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2FoodDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2FoodDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2FoodDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2FoodDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2FoodData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2FoodData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2FoodDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2NodeTypeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -12195,7 +15341,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2NodeTypeData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -12223,6 +15369,17 @@ impl<'a> clz_Torappu_SandboxV2NodeTypeData<'a> {
         }
         builder.add_nodeType(args.nodeType);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2NodeTypeDataT {
+        let nodeType = self.nodeType();
+        let name = self.name().map(|x| x.to_string());
+        let iconId = self.iconId().map(|x| x.to_string());
+        clz_Torappu_SandboxV2NodeTypeDataT {
+            nodeType,
+            name,
+            iconId,
+        }
     }
 
     #[inline]
@@ -12296,6 +15453,27 @@ impl<'a> Default for clz_Torappu_SandboxV2NodeTypeDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2NodeTypeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2NodeTypeData", 3)?;
+        s.serialize_field("nodeType", &self.nodeType())?;
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        if let Some(f) = self.iconId() {
+            s.serialize_field("iconId", &f)?;
+        } else {
+            s.skip_field("iconId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2NodeTypeDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -12351,6 +15529,40 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2NodeTypeData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2NodeTypeDataT {
+    pub nodeType: enum__Torappu_SandboxV2NodeType,
+    pub name: Option<String>,
+    pub iconId: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2NodeTypeDataT {
+    fn default() -> Self {
+        Self {
+            nodeType: enum__Torappu_SandboxV2NodeType::NONE,
+            name: None,
+            iconId: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2NodeTypeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2NodeTypeData<'b>> {
+        let nodeType = self.nodeType;
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        let iconId = self.iconId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2NodeTypeData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2NodeTypeDataArgs {
+                nodeType,
+                name,
+                iconId,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2NodeTypeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -12363,7 +15575,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2NodeType
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -12389,6 +15601,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2NodeTypeData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2NodeTypeDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2NodeTypeDataT { key, value }
     }
 
     #[inline]
@@ -12465,6 +15686,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2NodeTypeDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2NodeTypeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2NodeTypeData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2NodeTypeDataBuilder<
     'a: 'b,
     'b,
@@ -12526,6 +15764,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2NodeTypeData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2NodeTypeDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2NodeTypeDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2NodeTypeDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2NodeTypeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2NodeTypeData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2NodeTypeData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2NodeTypeDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2NodeUpgradeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -12538,7 +15806,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2NodeUpgradeData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -12584,6 +15852,29 @@ impl<'a> clz_Torappu_SandboxV2NodeUpgradeData<'a> {
             builder.add_nodeUpgradeId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2NodeUpgradeDataT {
+        let nodeUpgradeId = self.nodeUpgradeId().map(|x| x.to_string());
+        let name = self.name().map(|x| x.to_string());
+        let description = self.description().map(|x| x.to_string());
+        let upgradeDesc = self.upgradeDesc().map(|x| x.to_string());
+        let upgradeTips = self.upgradeTips().map(|x| x.to_string());
+        let itemType = self.itemType();
+        let itemTag = self.itemTag();
+        let itemCnt = self.itemCnt();
+        let itemRarity = self.itemRarity();
+        clz_Torappu_SandboxV2NodeUpgradeDataT {
+            nodeUpgradeId,
+            name,
+            description,
+            upgradeDesc,
+            upgradeTips,
+            itemType,
+            itemTag,
+            itemCnt,
+            itemRarity,
+        }
     }
 
     #[inline]
@@ -12763,6 +16054,45 @@ impl<'a> Default for clz_Torappu_SandboxV2NodeUpgradeDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2NodeUpgradeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2NodeUpgradeData", 9)?;
+        if let Some(f) = self.nodeUpgradeId() {
+            s.serialize_field("nodeUpgradeId", &f)?;
+        } else {
+            s.skip_field("nodeUpgradeId")?;
+        }
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        if let Some(f) = self.description() {
+            s.serialize_field("description", &f)?;
+        } else {
+            s.skip_field("description")?;
+        }
+        if let Some(f) = self.upgradeDesc() {
+            s.serialize_field("upgradeDesc", &f)?;
+        } else {
+            s.skip_field("upgradeDesc")?;
+        }
+        if let Some(f) = self.upgradeTips() {
+            s.serialize_field("upgradeTips", &f)?;
+        } else {
+            s.skip_field("upgradeTips")?;
+        }
+        s.serialize_field("itemType", &self.itemType())?;
+        s.serialize_field("itemTag", &self.itemTag())?;
+        s.serialize_field("itemCnt", &self.itemCnt())?;
+        s.serialize_field("itemRarity", &self.itemRarity())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2NodeUpgradeDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -12866,6 +16196,64 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2NodeUpgradeData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2NodeUpgradeDataT {
+    pub nodeUpgradeId: Option<String>,
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub upgradeDesc: Option<String>,
+    pub upgradeTips: Option<String>,
+    pub itemType: enum__Torappu_SandboxPermItemType,
+    pub itemTag: enum__Torappu_SandboxV2ItemTrapTag,
+    pub itemCnt: i32,
+    pub itemRarity: i32,
+}
+impl Default for clz_Torappu_SandboxV2NodeUpgradeDataT {
+    fn default() -> Self {
+        Self {
+            nodeUpgradeId: None,
+            name: None,
+            description: None,
+            upgradeDesc: None,
+            upgradeTips: None,
+            itemType: enum__Torappu_SandboxPermItemType::NONE,
+            itemTag: enum__Torappu_SandboxV2ItemTrapTag::OUTPUT,
+            itemCnt: 0,
+            itemRarity: 0,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2NodeUpgradeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2NodeUpgradeData<'b>> {
+        let nodeUpgradeId = self.nodeUpgradeId.as_ref().map(|x| _fbb.create_string(x));
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        let description = self.description.as_ref().map(|x| _fbb.create_string(x));
+        let upgradeDesc = self.upgradeDesc.as_ref().map(|x| _fbb.create_string(x));
+        let upgradeTips = self.upgradeTips.as_ref().map(|x| _fbb.create_string(x));
+        let itemType = self.itemType;
+        let itemTag = self.itemTag;
+        let itemCnt = self.itemCnt;
+        let itemRarity = self.itemRarity;
+        clz_Torappu_SandboxV2NodeUpgradeData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2NodeUpgradeDataArgs {
+                nodeUpgradeId,
+                name,
+                description,
+                upgradeDesc,
+                upgradeTips,
+                itemType,
+                itemTag,
+                itemCnt,
+                itemRarity,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2NodeUpgradeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -12878,7 +16266,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2NodeUpgr
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -12904,6 +16292,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2NodeUpgradeData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2NodeUpgradeDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2NodeUpgradeDataT { key, value }
     }
 
     #[inline]
@@ -12980,6 +16377,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2NodeUpgradeDataArgs<'a> 
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2NodeUpgradeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2NodeUpgradeData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2NodeUpgradeDataBuilder<
     'a: 'b,
     'b,
@@ -13041,6 +16455,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2NodeUpgradeData<'_>
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2NodeUpgradeDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2NodeUpgradeDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2NodeUpgradeDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2NodeUpgradeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2NodeUpgradeData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2NodeUpgradeData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2NodeUpgradeDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2WeatherDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -13053,7 +16497,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2WeatherData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -13103,6 +16547,29 @@ impl<'a> clz_Torappu_SandboxV2WeatherData<'a> {
             builder.add_weatherId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2WeatherDataT {
+        let weatherId = self.weatherId().map(|x| x.to_string());
+        let name = self.name().map(|x| x.to_string());
+        let weatherLevel = self.weatherLevel();
+        let weatherType = self.weatherType();
+        let weatherTypeName = self.weatherTypeName().map(|x| x.to_string());
+        let weatherIconId = self.weatherIconId().map(|x| x.to_string());
+        let functionDesc = self.functionDesc().map(|x| x.to_string());
+        let description = self.description().map(|x| x.to_string());
+        let buffId = self.buffId().map(|x| x.to_string());
+        clz_Torappu_SandboxV2WeatherDataT {
+            weatherId,
+            name,
+            weatherLevel,
+            weatherType,
+            weatherTypeName,
+            weatherIconId,
+            functionDesc,
+            description,
+            buffId,
+        }
     }
 
     #[inline]
@@ -13289,6 +16756,53 @@ impl<'a> Default for clz_Torappu_SandboxV2WeatherDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2WeatherData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2WeatherData", 9)?;
+        if let Some(f) = self.weatherId() {
+            s.serialize_field("weatherId", &f)?;
+        } else {
+            s.skip_field("weatherId")?;
+        }
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        s.serialize_field("weatherLevel", &self.weatherLevel())?;
+        s.serialize_field("weatherType", &self.weatherType())?;
+        if let Some(f) = self.weatherTypeName() {
+            s.serialize_field("weatherTypeName", &f)?;
+        } else {
+            s.skip_field("weatherTypeName")?;
+        }
+        if let Some(f) = self.weatherIconId() {
+            s.serialize_field("weatherIconId", &f)?;
+        } else {
+            s.skip_field("weatherIconId")?;
+        }
+        if let Some(f) = self.functionDesc() {
+            s.serialize_field("functionDesc", &f)?;
+        } else {
+            s.skip_field("functionDesc")?;
+        }
+        if let Some(f) = self.description() {
+            s.serialize_field("description", &f)?;
+        } else {
+            s.skip_field("description")?;
+        }
+        if let Some(f) = self.buffId() {
+            s.serialize_field("buffId", &f)?;
+        } else {
+            s.skip_field("buffId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2WeatherDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -13393,6 +16907,64 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2WeatherData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2WeatherDataT {
+    pub weatherId: Option<String>,
+    pub name: Option<String>,
+    pub weatherLevel: i32,
+    pub weatherType: enum__Torappu_SandboxV2WeatherType,
+    pub weatherTypeName: Option<String>,
+    pub weatherIconId: Option<String>,
+    pub functionDesc: Option<String>,
+    pub description: Option<String>,
+    pub buffId: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2WeatherDataT {
+    fn default() -> Self {
+        Self {
+            weatherId: None,
+            name: None,
+            weatherLevel: 0,
+            weatherType: enum__Torappu_SandboxV2WeatherType::NORMAL,
+            weatherTypeName: None,
+            weatherIconId: None,
+            functionDesc: None,
+            description: None,
+            buffId: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2WeatherDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2WeatherData<'b>> {
+        let weatherId = self.weatherId.as_ref().map(|x| _fbb.create_string(x));
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        let weatherLevel = self.weatherLevel;
+        let weatherType = self.weatherType;
+        let weatherTypeName = self.weatherTypeName.as_ref().map(|x| _fbb.create_string(x));
+        let weatherIconId = self.weatherIconId.as_ref().map(|x| _fbb.create_string(x));
+        let functionDesc = self.functionDesc.as_ref().map(|x| _fbb.create_string(x));
+        let description = self.description.as_ref().map(|x| _fbb.create_string(x));
+        let buffId = self.buffId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2WeatherData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2WeatherDataArgs {
+                weatherId,
+                name,
+                weatherLevel,
+                weatherType,
+                weatherTypeName,
+                weatherIconId,
+                functionDesc,
+                description,
+                buffId,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2WeatherDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -13405,7 +16977,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2WeatherD
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -13431,6 +17003,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2WeatherData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2WeatherDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2WeatherDataT { key, value }
     }
 
     #[inline]
@@ -13507,6 +17088,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2WeatherDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2WeatherData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2WeatherData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2WeatherDataBuilder<
     'a: 'b,
     'b,
@@ -13568,6 +17166,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2WeatherData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2WeatherDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2WeatherDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2WeatherDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2WeatherDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2WeatherData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2WeatherData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2WeatherDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2StageDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -13580,7 +17208,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2StageData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -13622,6 +17250,25 @@ impl<'a> clz_Torappu_SandboxV2StageData<'a> {
             builder.add_stageId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2StageDataT {
+        let stageId = self.stageId().map(|x| x.to_string());
+        let levelId = self.levelId().map(|x| x.to_string());
+        let code = self.code().map(|x| x.to_string());
+        let name = self.name().map(|x| x.to_string());
+        let description = self.description().map(|x| x.to_string());
+        let actionCost = self.actionCost();
+        let actionCostEnemyRush = self.actionCostEnemyRush();
+        clz_Torappu_SandboxV2StageDataT {
+            stageId,
+            levelId,
+            code,
+            name,
+            description,
+            actionCost,
+            actionCostEnemyRush,
+        }
     }
 
     #[inline]
@@ -13758,6 +17405,43 @@ impl<'a> Default for clz_Torappu_SandboxV2StageDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2StageData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2StageData", 7)?;
+        if let Some(f) = self.stageId() {
+            s.serialize_field("stageId", &f)?;
+        } else {
+            s.skip_field("stageId")?;
+        }
+        if let Some(f) = self.levelId() {
+            s.serialize_field("levelId", &f)?;
+        } else {
+            s.skip_field("levelId")?;
+        }
+        if let Some(f) = self.code() {
+            s.serialize_field("code", &f)?;
+        } else {
+            s.skip_field("code")?;
+        }
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        if let Some(f) = self.description() {
+            s.serialize_field("description", &f)?;
+        } else {
+            s.skip_field("description")?;
+        }
+        s.serialize_field("actionCost", &self.actionCost())?;
+        s.serialize_field("actionCostEnemyRush", &self.actionCostEnemyRush())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2StageDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -13841,6 +17525,56 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2StageData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2StageDataT {
+    pub stageId: Option<String>,
+    pub levelId: Option<String>,
+    pub code: Option<String>,
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub actionCost: i32,
+    pub actionCostEnemyRush: i32,
+}
+impl Default for clz_Torappu_SandboxV2StageDataT {
+    fn default() -> Self {
+        Self {
+            stageId: None,
+            levelId: None,
+            code: None,
+            name: None,
+            description: None,
+            actionCost: 0,
+            actionCostEnemyRush: 0,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2StageDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2StageData<'b>> {
+        let stageId = self.stageId.as_ref().map(|x| _fbb.create_string(x));
+        let levelId = self.levelId.as_ref().map(|x| _fbb.create_string(x));
+        let code = self.code.as_ref().map(|x| _fbb.create_string(x));
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        let description = self.description.as_ref().map(|x| _fbb.create_string(x));
+        let actionCost = self.actionCost;
+        let actionCostEnemyRush = self.actionCostEnemyRush;
+        clz_Torappu_SandboxV2StageData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2StageDataArgs {
+                stageId,
+                levelId,
+                code,
+                name,
+                description,
+                actionCost,
+                actionCostEnemyRush,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2StageDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -13853,7 +17587,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2StageDat
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -13879,6 +17613,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2StageData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2StageDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2StageDataT { key, value }
     }
 
     #[inline]
@@ -13952,6 +17695,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2StageDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2StageData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2StageData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2StageDataBuilder<
     'a: 'b,
     'b,
@@ -14010,6 +17770,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2StageData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2StageDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2StageDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2StageDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2StageDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2StageData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2StageData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2StageDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2ZoneDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -14022,7 +17812,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2ZoneData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -14054,6 +17844,19 @@ impl<'a> clz_Torappu_SandboxV2ZoneData<'a> {
         }
         builder.add_displayName(args.displayName);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2ZoneDataT {
+        let zoneId = self.zoneId().map(|x| x.to_string());
+        let zoneName = self.zoneName().map(|x| x.to_string());
+        let displayName = self.displayName();
+        let appellation = self.appellation().map(|x| x.to_string());
+        clz_Torappu_SandboxV2ZoneDataT {
+            zoneId,
+            zoneName,
+            displayName,
+            appellation,
+        }
     }
 
     #[inline]
@@ -14147,6 +17950,32 @@ impl<'a> Default for clz_Torappu_SandboxV2ZoneDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2ZoneData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2ZoneData", 4)?;
+        if let Some(f) = self.zoneId() {
+            s.serialize_field("zoneId", &f)?;
+        } else {
+            s.skip_field("zoneId")?;
+        }
+        if let Some(f) = self.zoneName() {
+            s.serialize_field("zoneName", &f)?;
+        } else {
+            s.skip_field("zoneName")?;
+        }
+        s.serialize_field("displayName", &self.displayName())?;
+        if let Some(f) = self.appellation() {
+            s.serialize_field("appellation", &f)?;
+        } else {
+            s.skip_field("appellation")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2ZoneDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -14208,6 +18037,44 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2ZoneData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2ZoneDataT {
+    pub zoneId: Option<String>,
+    pub zoneName: Option<String>,
+    pub displayName: bool,
+    pub appellation: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2ZoneDataT {
+    fn default() -> Self {
+        Self {
+            zoneId: None,
+            zoneName: None,
+            displayName: false,
+            appellation: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2ZoneDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2ZoneData<'b>> {
+        let zoneId = self.zoneId.as_ref().map(|x| _fbb.create_string(x));
+        let zoneName = self.zoneName.as_ref().map(|x| _fbb.create_string(x));
+        let displayName = self.displayName;
+        let appellation = self.appellation.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2ZoneData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2ZoneDataArgs {
+                zoneId,
+                zoneName,
+                displayName,
+                appellation,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2ZoneDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -14220,7 +18087,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2ZoneData
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -14246,6 +18113,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2ZoneData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2ZoneDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2ZoneDataT { key, value }
     }
 
     #[inline]
@@ -14319,6 +18195,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2ZoneDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2ZoneData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2ZoneData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2ZoneDataBuilder<
     'a: 'b,
     'b,
@@ -14375,6 +18268,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2ZoneData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2ZoneDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2ZoneDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2ZoneDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2ZoneDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2ZoneData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2ZoneData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2ZoneDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2NodeBuffDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -14387,7 +18310,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2NodeBuffData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -14425,6 +18348,21 @@ impl<'a> clz_Torappu_SandboxV2NodeBuffData<'a> {
             builder.add_runeId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2NodeBuffDataT {
+        let runeId = self.runeId().map(|x| x.to_string());
+        let name = self.name().map(|x| x.to_string());
+        let description = self.description().map(|x| x.to_string());
+        let extra = self.extra().map(|x| x.to_string());
+        let iconId = self.iconId().map(|x| x.to_string());
+        clz_Torappu_SandboxV2NodeBuffDataT {
+            runeId,
+            name,
+            description,
+            extra,
+            iconId,
+        }
     }
 
     #[inline]
@@ -14530,6 +18468,41 @@ impl<'a> Default for clz_Torappu_SandboxV2NodeBuffDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2NodeBuffData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2NodeBuffData", 5)?;
+        if let Some(f) = self.runeId() {
+            s.serialize_field("runeId", &f)?;
+        } else {
+            s.skip_field("runeId")?;
+        }
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        if let Some(f) = self.description() {
+            s.serialize_field("description", &f)?;
+        } else {
+            s.skip_field("description")?;
+        }
+        if let Some(f) = self.extra() {
+            s.serialize_field("extra", &f)?;
+        } else {
+            s.skip_field("extra")?;
+        }
+        if let Some(f) = self.iconId() {
+            s.serialize_field("iconId", &f)?;
+        } else {
+            s.skip_field("iconId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2NodeBuffDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -14600,6 +18573,48 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2NodeBuffData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2NodeBuffDataT {
+    pub runeId: Option<String>,
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub extra: Option<String>,
+    pub iconId: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2NodeBuffDataT {
+    fn default() -> Self {
+        Self {
+            runeId: None,
+            name: None,
+            description: None,
+            extra: None,
+            iconId: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2NodeBuffDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2NodeBuffData<'b>> {
+        let runeId = self.runeId.as_ref().map(|x| _fbb.create_string(x));
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        let description = self.description.as_ref().map(|x| _fbb.create_string(x));
+        let extra = self.extra.as_ref().map(|x| _fbb.create_string(x));
+        let iconId = self.iconId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2NodeBuffData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2NodeBuffDataArgs {
+                runeId,
+                name,
+                description,
+                extra,
+                iconId,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2NodeBuffDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -14612,7 +18627,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2NodeBuff
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -14638,6 +18653,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2NodeBuffData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2NodeBuffDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2NodeBuffDataT { key, value }
     }
 
     #[inline]
@@ -14714,6 +18738,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2NodeBuffDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2NodeBuffData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2NodeBuffData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2NodeBuffDataBuilder<
     'a: 'b,
     'b,
@@ -14775,6 +18816,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2NodeBuffData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2NodeBuffDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2NodeBuffDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2NodeBuffDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2NodeBuffDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2NodeBuffData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2NodeBuffData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2NodeBuffDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2RewardItemConfigDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -14787,7 +18858,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2RewardItemConfigData<'
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -14811,6 +18882,15 @@ impl<'a> clz_Torappu_SandboxV2RewardItemConfigData<'a> {
             builder.add_rewardItem(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2RewardItemConfigDataT {
+        let rewardItem = self.rewardItem().map(|x| x.to_string());
+        let rewardType = self.rewardType();
+        clz_Torappu_SandboxV2RewardItemConfigDataT {
+            rewardItem,
+            rewardType,
+        }
     }
 
     #[inline]
@@ -14877,6 +18957,22 @@ impl<'a> Default for clz_Torappu_SandboxV2RewardItemConfigDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2RewardItemConfigData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2RewardItemConfigData", 2)?;
+        if let Some(f) = self.rewardItem() {
+            s.serialize_field("rewardItem", &f)?;
+        } else {
+            s.skip_field("rewardItem")?;
+        }
+        s.serialize_field("rewardType", &self.rewardType())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2RewardItemConfigDataBuilder<
     'a: 'b,
     'b,
@@ -14928,6 +19024,36 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2RewardItemConfigData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2RewardItemConfigDataT {
+    pub rewardItem: Option<String>,
+    pub rewardType: enum__Torappu_SandboxPermItemType,
+}
+impl Default for clz_Torappu_SandboxV2RewardItemConfigDataT {
+    fn default() -> Self {
+        Self {
+            rewardItem: None,
+            rewardType: enum__Torappu_SandboxPermItemType::NONE,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2RewardItemConfigDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2RewardItemConfigData<'b>> {
+        let rewardItem = self.rewardItem.as_ref().map(|x| _fbb.create_string(x));
+        let rewardType = self.rewardType;
+        clz_Torappu_SandboxV2RewardItemConfigData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2RewardItemConfigDataArgs {
+                rewardItem,
+                rewardType,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2RewardDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -14940,7 +19066,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2RewardData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -14962,6 +19088,13 @@ impl<'a> clz_Torappu_SandboxV2RewardData<'a> {
             builder.add_rewardList(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2RewardDataT {
+        let rewardList = self
+            .rewardList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_SandboxV2RewardDataT { rewardList }
     }
 
     #[inline]
@@ -15022,6 +19155,21 @@ impl<'a> Default for clz_Torappu_SandboxV2RewardDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2RewardData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2RewardData", 1)?;
+        if let Some(f) = self.rewardList() {
+            s.serialize_field("rewardList", &f)?;
+        } else {
+            s.skip_field("rewardList")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2RewardDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -15066,6 +19214,31 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2RewardData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2RewardDataT {
+    pub rewardList: Option<Vec<clz_Torappu_SandboxV2RewardItemConfigDataT>>,
+}
+impl Default for clz_Torappu_SandboxV2RewardDataT {
+    fn default() -> Self {
+        Self { rewardList: None }
+    }
+}
+impl clz_Torappu_SandboxV2RewardDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2RewardData<'b>> {
+        let rewardList = self.rewardList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SandboxV2RewardData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2RewardDataArgs { rewardList },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2RewardDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -15078,7 +19251,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2RewardDa
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -15104,6 +19277,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2RewardData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2RewardDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2RewardDataT { key, value }
     }
 
     #[inline]
@@ -15177,6 +19359,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2RewardDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2RewardData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2RewardData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2RewardDataBuilder<
     'a: 'b,
     'b,
@@ -15238,6 +19437,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2RewardData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2RewardDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2RewardDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2RewardDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2RewardDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2RewardData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2RewardData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2RewardDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2RewardCommonConfigOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -15250,7 +19479,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2RewardCommonConfig<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -15276,6 +19505,17 @@ impl<'a> clz_Torappu_SandboxV2RewardCommonConfig<'a> {
             builder.add_rewardItemId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2RewardCommonConfigT {
+        let rewardItemId = self.rewardItemId().map(|x| x.to_string());
+        let rewardItemType = self.rewardItemType();
+        let count = self.count();
+        clz_Torappu_SandboxV2RewardCommonConfigT {
+            rewardItemId,
+            rewardItemType,
+            count,
+        }
     }
 
     #[inline]
@@ -15356,6 +19596,23 @@ impl<'a> Default for clz_Torappu_SandboxV2RewardCommonConfigArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2RewardCommonConfig<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2RewardCommonConfig", 3)?;
+        if let Some(f) = self.rewardItemId() {
+            s.serialize_field("rewardItemId", &f)?;
+        } else {
+            s.skip_field("rewardItemId")?;
+        }
+        s.serialize_field("rewardItemType", &self.rewardItemType())?;
+        s.serialize_field("count", &self.count())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2RewardCommonConfigBuilder<
     'a: 'b,
     'b,
@@ -15413,6 +19670,40 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2RewardCommonConfig<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2RewardCommonConfigT {
+    pub rewardItemId: Option<String>,
+    pub rewardItemType: enum__Torappu_SandboxPermItemType,
+    pub count: i32,
+}
+impl Default for clz_Torappu_SandboxV2RewardCommonConfigT {
+    fn default() -> Self {
+        Self {
+            rewardItemId: None,
+            rewardItemType: enum__Torappu_SandboxPermItemType::NONE,
+            count: 0,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2RewardCommonConfigT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2RewardCommonConfig<'b>> {
+        let rewardItemId = self.rewardItemId.as_ref().map(|x| _fbb.create_string(x));
+        let rewardItemType = self.rewardItemType;
+        let count = self.count;
+        clz_Torappu_SandboxV2RewardCommonConfig::create(
+            _fbb,
+            &clz_Torappu_SandboxV2RewardCommonConfigArgs {
+                rewardItemId,
+                rewardItemType,
+                count,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2RewardCommonConfigOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -15425,7 +19716,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2RewardCo
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -15451,6 +19742,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2RewardCommonConfig<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2RewardCommonConfigT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2RewardCommonConfigT { key, value }
     }
 
     #[inline]
@@ -15527,6 +19827,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2RewardCommonConfigArgs<'
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2RewardCommonConfig<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("dict__string__clz_Torappu_SandboxV2RewardCommonConfig", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2RewardCommonConfigBuilder<
     'a: 'b,
     'b,
@@ -15588,6 +19905,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2RewardCommonConfig<
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2RewardCommonConfigT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2RewardCommonConfigT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2RewardCommonConfigT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2RewardCommonConfigT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2RewardCommonConfig<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2RewardCommonConfig::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2RewardCommonConfigArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2RewardConfigGroupDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -15600,7 +19947,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2RewardConfigGroupData<
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -15646,6 +19993,39 @@ impl<'a> clz_Torappu_SandboxV2RewardConfigGroupData<'a> {
             builder.add_stageMapPreviewRewardDict(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2RewardConfigGroupDataT {
+        let stageMapPreviewRewardDict = self
+            .stageMapPreviewRewardDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let stageDetailPreviewRewardDict = self
+            .stageDetailPreviewRewardDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let trapRewardDict = self
+            .trapRewardDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let enemyRewardDict = self
+            .enemyRewardDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let unitPreviewRewardDict = self
+            .unitPreviewRewardDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let stageRewardDict = self
+            .stageRewardDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let rushPreviewRewardDict = self
+            .rushPreviewRewardDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_SandboxV2RewardConfigGroupDataT {
+            stageMapPreviewRewardDict,
+            stageDetailPreviewRewardDict,
+            trapRewardDict,
+            enemyRewardDict,
+            unitPreviewRewardDict,
+            stageRewardDict,
+            rushPreviewRewardDict,
+        }
     }
 
     #[inline]
@@ -15973,6 +20353,51 @@ impl<'a> Default for clz_Torappu_SandboxV2RewardConfigGroupDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2RewardConfigGroupData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2RewardConfigGroupData", 7)?;
+        if let Some(f) = self.stageMapPreviewRewardDict() {
+            s.serialize_field("stageMapPreviewRewardDict", &f)?;
+        } else {
+            s.skip_field("stageMapPreviewRewardDict")?;
+        }
+        if let Some(f) = self.stageDetailPreviewRewardDict() {
+            s.serialize_field("stageDetailPreviewRewardDict", &f)?;
+        } else {
+            s.skip_field("stageDetailPreviewRewardDict")?;
+        }
+        if let Some(f) = self.trapRewardDict() {
+            s.serialize_field("trapRewardDict", &f)?;
+        } else {
+            s.skip_field("trapRewardDict")?;
+        }
+        if let Some(f) = self.enemyRewardDict() {
+            s.serialize_field("enemyRewardDict", &f)?;
+        } else {
+            s.skip_field("enemyRewardDict")?;
+        }
+        if let Some(f) = self.unitPreviewRewardDict() {
+            s.serialize_field("unitPreviewRewardDict", &f)?;
+        } else {
+            s.skip_field("unitPreviewRewardDict")?;
+        }
+        if let Some(f) = self.stageRewardDict() {
+            s.serialize_field("stageRewardDict", &f)?;
+        } else {
+            s.skip_field("stageRewardDict")?;
+        }
+        if let Some(f) = self.rushPreviewRewardDict() {
+            s.serialize_field("rushPreviewRewardDict", &f)?;
+        } else {
+            s.skip_field("rushPreviewRewardDict")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2RewardConfigGroupDataBuilder<
     'a: 'b,
     'b,
@@ -16129,6 +20554,77 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2RewardConfigGroupData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2RewardConfigGroupDataT {
+    pub stageMapPreviewRewardDict: Option<Vec<dict__string__clz_Torappu_SandboxV2RewardDataT>>,
+    pub stageDetailPreviewRewardDict: Option<Vec<dict__string__clz_Torappu_SandboxV2RewardDataT>>,
+    pub trapRewardDict: Option<Vec<dict__string__clz_Torappu_SandboxV2RewardCommonConfigT>>,
+    pub enemyRewardDict: Option<Vec<dict__string__clz_Torappu_SandboxV2RewardCommonConfigT>>,
+    pub unitPreviewRewardDict: Option<Vec<dict__string__clz_Torappu_SandboxV2RewardDataT>>,
+    pub stageRewardDict: Option<Vec<dict__string__clz_Torappu_SandboxV2RewardDataT>>,
+    pub rushPreviewRewardDict: Option<Vec<dict__string__clz_Torappu_SandboxV2RewardDataT>>,
+}
+impl Default for clz_Torappu_SandboxV2RewardConfigGroupDataT {
+    fn default() -> Self {
+        Self {
+            stageMapPreviewRewardDict: None,
+            stageDetailPreviewRewardDict: None,
+            trapRewardDict: None,
+            enemyRewardDict: None,
+            unitPreviewRewardDict: None,
+            stageRewardDict: None,
+            rushPreviewRewardDict: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2RewardConfigGroupDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2RewardConfigGroupData<'b>> {
+        let stageMapPreviewRewardDict = self.stageMapPreviewRewardDict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let stageDetailPreviewRewardDict = self.stageDetailPreviewRewardDict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let trapRewardDict = self.trapRewardDict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let enemyRewardDict = self.enemyRewardDict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let unitPreviewRewardDict = self.unitPreviewRewardDict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let stageRewardDict = self.stageRewardDict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let rushPreviewRewardDict = self.rushPreviewRewardDict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SandboxV2RewardConfigGroupData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2RewardConfigGroupDataArgs {
+                stageMapPreviewRewardDict,
+                stageDetailPreviewRewardDict,
+                trapRewardDict,
+                enemyRewardDict,
+                unitPreviewRewardDict,
+                stageRewardDict,
+                rushPreviewRewardDict,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2FloatIconDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -16141,7 +20637,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2FloatIconData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -16167,6 +20663,12 @@ impl<'a> clz_Torappu_SandboxV2FloatIconData<'a> {
             builder.add_picId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2FloatIconDataT {
+        let picId = self.picId().map(|x| x.to_string());
+        let picName = self.picName().map(|x| x.to_string());
+        clz_Torappu_SandboxV2FloatIconDataT { picId, picName }
     }
 
     #[inline]
@@ -16223,6 +20725,26 @@ impl<'a> Default for clz_Torappu_SandboxV2FloatIconDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2FloatIconData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2FloatIconData", 2)?;
+        if let Some(f) = self.picId() {
+            s.serialize_field("picId", &f)?;
+        } else {
+            s.skip_field("picId")?;
+        }
+        if let Some(f) = self.picName() {
+            s.serialize_field("picName", &f)?;
+        } else {
+            s.skip_field("picName")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2FloatIconDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -16269,6 +20791,33 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2FloatIconData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2FloatIconDataT {
+    pub picId: Option<String>,
+    pub picName: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2FloatIconDataT {
+    fn default() -> Self {
+        Self {
+            picId: None,
+            picName: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2FloatIconDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2FloatIconData<'b>> {
+        let picId = self.picId.as_ref().map(|x| _fbb.create_string(x));
+        let picName = self.picName.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2FloatIconData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2FloatIconDataArgs { picId, picName },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2FloatIconDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -16281,7 +20830,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2FloatIco
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -16307,6 +20856,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2FloatIconData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2FloatIconDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2FloatIconDataT { key, value }
     }
 
     #[inline]
@@ -16383,6 +20941,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2FloatIconDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2FloatIconData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2FloatIconData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2FloatIconDataBuilder<
     'a: 'b,
     'b,
@@ -16444,6 +21019,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2FloatIconData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2FloatIconDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2FloatIconDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2FloatIconDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2FloatIconDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2FloatIconData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2FloatIconData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2FloatIconDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2EnemyRushTypeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -16456,7 +21061,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2EnemyRushTypeData<'a> 
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -16482,6 +21087,17 @@ impl<'a> clz_Torappu_SandboxV2EnemyRushTypeData<'a> {
         }
         builder.add_type_(args.type_);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2EnemyRushTypeDataT {
+        let type_ = self.type_();
+        let description = self.description().map(|x| x.to_string());
+        let sortId = self.sortId();
+        clz_Torappu_SandboxV2EnemyRushTypeDataT {
+            type_,
+            description,
+            sortId,
+        }
     }
 
     #[inline]
@@ -16558,6 +21174,23 @@ impl<'a> Default for clz_Torappu_SandboxV2EnemyRushTypeDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2EnemyRushTypeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2EnemyRushTypeData", 3)?;
+        s.serialize_field("type_", &self.type_())?;
+        if let Some(f) = self.description() {
+            s.serialize_field("description", &f)?;
+        } else {
+            s.skip_field("description")?;
+        }
+        s.serialize_field("sortId", &self.sortId())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2EnemyRushTypeDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -16612,6 +21245,40 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2EnemyRushTypeData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2EnemyRushTypeDataT {
+    pub type_: enum__Torappu_SandboxV2EnemyRushType,
+    pub description: Option<String>,
+    pub sortId: i32,
+}
+impl Default for clz_Torappu_SandboxV2EnemyRushTypeDataT {
+    fn default() -> Self {
+        Self {
+            type_: enum__Torappu_SandboxV2EnemyRushType::NORMAL,
+            description: None,
+            sortId: 0,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2EnemyRushTypeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2EnemyRushTypeData<'b>> {
+        let type_ = self.type_;
+        let description = self.description.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        clz_Torappu_SandboxV2EnemyRushTypeData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2EnemyRushTypeDataArgs {
+                type_,
+                description,
+                sortId,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2EnemyRushTypeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -16624,7 +21291,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2EnemyRus
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -16650,6 +21317,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2EnemyRushTypeData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2EnemyRushTypeDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2EnemyRushTypeDataT { key, value }
     }
 
     #[inline]
@@ -16726,6 +21402,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2EnemyRushTypeDataArgs<'a
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2EnemyRushTypeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("dict__string__clz_Torappu_SandboxV2EnemyRushTypeData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2EnemyRushTypeDataBuilder<
     'a: 'b,
     'b,
@@ -16787,6 +21480,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2EnemyRushTypeData<'
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2EnemyRushTypeDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2EnemyRushTypeDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2EnemyRushTypeDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2EnemyRushTypeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2EnemyRushTypeData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2EnemyRushTypeData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2EnemyRushTypeDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2BattleRushEnemyConfigOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -16799,7 +21522,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2BattleRushEnemyConfig<
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -16831,6 +21554,21 @@ impl<'a> clz_Torappu_SandboxV2BattleRushEnemyConfig<'a> {
             builder.add_enemyKey(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2BattleRushEnemyConfigT {
+        let enemyKey = self.enemyKey().map(|x| x.to_string());
+        let branchId = self.branchId().map(|x| x.to_string());
+        let count = self.count();
+        let interval = self.interval();
+        let preDelay = self.preDelay();
+        clz_Torappu_SandboxV2BattleRushEnemyConfigT {
+            enemyKey,
+            branchId,
+            count,
+            interval,
+            preDelay,
+        }
     }
 
     #[inline]
@@ -16946,6 +21684,29 @@ impl<'a> Default for clz_Torappu_SandboxV2BattleRushEnemyConfigArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2BattleRushEnemyConfig<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2BattleRushEnemyConfig", 5)?;
+        if let Some(f) = self.enemyKey() {
+            s.serialize_field("enemyKey", &f)?;
+        } else {
+            s.skip_field("enemyKey")?;
+        }
+        if let Some(f) = self.branchId() {
+            s.serialize_field("branchId", &f)?;
+        } else {
+            s.skip_field("branchId")?;
+        }
+        s.serialize_field("count", &self.count())?;
+        s.serialize_field("interval", &self.interval())?;
+        s.serialize_field("preDelay", &self.preDelay())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2BattleRushEnemyConfigBuilder<
     'a: 'b,
     'b,
@@ -17023,6 +21784,48 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2BattleRushEnemyConfig<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2BattleRushEnemyConfigT {
+    pub enemyKey: Option<String>,
+    pub branchId: Option<String>,
+    pub count: i32,
+    pub interval: f32,
+    pub preDelay: f32,
+}
+impl Default for clz_Torappu_SandboxV2BattleRushEnemyConfigT {
+    fn default() -> Self {
+        Self {
+            enemyKey: None,
+            branchId: None,
+            count: 0,
+            interval: 0.0,
+            preDelay: 0.0,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2BattleRushEnemyConfigT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2BattleRushEnemyConfig<'b>> {
+        let enemyKey = self.enemyKey.as_ref().map(|x| _fbb.create_string(x));
+        let branchId = self.branchId.as_ref().map(|x| _fbb.create_string(x));
+        let count = self.count;
+        let interval = self.interval;
+        let preDelay = self.preDelay;
+        clz_Torappu_SandboxV2BattleRushEnemyConfig::create(
+            _fbb,
+            &clz_Torappu_SandboxV2BattleRushEnemyConfigArgs {
+                enemyKey,
+                branchId,
+                count,
+                interval,
+                preDelay,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2BattleRushEnemyGroupConfigOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -17035,7 +21838,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2BattleRushEnemyGroupCo
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -17065,6 +21868,19 @@ impl<'a> clz_Torappu_SandboxV2BattleRushEnemyGroupConfig<'a> {
             builder.add_enemyGroupKey(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2BattleRushEnemyGroupConfigT {
+        let enemyGroupKey = self.enemyGroupKey().map(|x| x.to_string());
+        let enemy = self.enemy().map(|x| x.iter().map(|t| t.unpack()).collect());
+        let dynamicEnemy = self
+            .dynamicEnemy()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        clz_Torappu_SandboxV2BattleRushEnemyGroupConfigT {
+            enemyGroupKey,
+            enemy,
+            dynamicEnemy,
+        }
     }
 
     #[inline]
@@ -17172,6 +21988,32 @@ impl<'a> Default for clz_Torappu_SandboxV2BattleRushEnemyGroupConfigArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2BattleRushEnemyGroupConfig<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_SandboxV2BattleRushEnemyGroupConfig", 3)?;
+        if let Some(f) = self.enemyGroupKey() {
+            s.serialize_field("enemyGroupKey", &f)?;
+        } else {
+            s.skip_field("enemyGroupKey")?;
+        }
+        if let Some(f) = self.enemy() {
+            s.serialize_field("enemy", &f)?;
+        } else {
+            s.skip_field("enemy")?;
+        }
+        if let Some(f) = self.dynamicEnemy() {
+            s.serialize_field("dynamicEnemy", &f)?;
+        } else {
+            s.skip_field("dynamicEnemy")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2BattleRushEnemyGroupConfigBuilder<
     'a: 'b,
     'b,
@@ -17245,6 +22087,46 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2BattleRushEnemyGroupConfig<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2BattleRushEnemyGroupConfigT {
+    pub enemyGroupKey: Option<String>,
+    pub enemy: Option<Vec<clz_Torappu_SandboxV2BattleRushEnemyConfigT>>,
+    pub dynamicEnemy: Option<Vec<String>>,
+}
+impl Default for clz_Torappu_SandboxV2BattleRushEnemyGroupConfigT {
+    fn default() -> Self {
+        Self {
+            enemyGroupKey: None,
+            enemy: None,
+            dynamicEnemy: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2BattleRushEnemyGroupConfigT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2BattleRushEnemyGroupConfig<'b>> {
+        let enemyGroupKey = self.enemyGroupKey.as_ref().map(|x| _fbb.create_string(x));
+        let enemy = self.enemy.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let dynamicEnemy = self.dynamicEnemy.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SandboxV2BattleRushEnemyGroupConfig::create(
+            _fbb,
+            &clz_Torappu_SandboxV2BattleRushEnemyGroupConfigArgs {
+                enemyGroupKey,
+                enemy,
+                dynamicEnemy,
+            },
+        )
+    }
+}
 pub enum dict__enum__Torappu_SandboxV2EnemyRushType__list_clz_Torappu_SandboxV2BattleRushEnemyGroupConfigOffset
 {}
 #[derive(Copy, Clone, PartialEq)]
@@ -17259,7 +22141,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__enum__Torappu_SandboxV2EnemyRushType_
   type Inner = dict__enum__Torappu_SandboxV2EnemyRushType__list_clz_Torappu_SandboxV2BattleRushEnemyGroupConfig<'a>;
   #[inline]
   unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: flatbuffers::Table::new(buf, loc) }
+    Self { _tab: unsafe { flatbuffers::Table::new(buf, loc) } }
   }
 }
 
@@ -17286,6 +22168,15 @@ impl<'a>
         }
         builder.add_key(args.key);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__enum__Torappu_SandboxV2EnemyRushType__list_clz_Torappu_SandboxV2BattleRushEnemyGroupConfigT{
+        let key = self.key();
+        let value = self.value().map(|x| x.iter().map(|t| t.unpack()).collect());
+        dict__enum__Torappu_SandboxV2EnemyRushType__list_clz_Torappu_SandboxV2BattleRushEnemyGroupConfigT {
+      key,
+      value,
+    }
     }
 
     #[inline]
@@ -17367,6 +22258,22 @@ impl<'a> Default for dict__enum__Torappu_SandboxV2EnemyRushType__list_clz_Torapp
   }
 }
 
+impl Serialize for dict__enum__Torappu_SandboxV2EnemyRushType__list_clz_Torappu_SandboxV2BattleRushEnemyGroupConfig<'_> {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: Serializer,
+  {
+    let mut s = serializer.serialize_struct("dict__enum__Torappu_SandboxV2EnemyRushType__list_clz_Torappu_SandboxV2BattleRushEnemyGroupConfig", 2)?;
+      s.serialize_field("key", &self.key())?;
+      if let Some(f) = self.value() {
+        s.serialize_field("value", &f)?;
+      } else {
+        s.skip_field("value")?;
+      }
+    s.end()
+  }
+}
+
 pub struct dict__enum__Torappu_SandboxV2EnemyRushType__list_clz_Torappu_SandboxV2BattleRushEnemyGroupConfigBuilder<
     'a: 'b,
     'b,
@@ -17407,6 +22314,36 @@ impl core::fmt::Debug for dict__enum__Torappu_SandboxV2EnemyRushType__list_clz_T
       ds.finish()
   }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__enum__Torappu_SandboxV2EnemyRushType__list_clz_Torappu_SandboxV2BattleRushEnemyGroupConfigT
+{
+    pub key: enum__Torappu_SandboxV2EnemyRushType,
+    pub value: Option<Vec<clz_Torappu_SandboxV2BattleRushEnemyGroupConfigT>>,
+}
+impl Default for dict__enum__Torappu_SandboxV2EnemyRushType__list_clz_Torappu_SandboxV2BattleRushEnemyGroupConfigT {
+  fn default() -> Self {
+    Self {
+      key: enum__Torappu_SandboxV2EnemyRushType::NORMAL,
+      value: None,
+    }
+  }
+}
+impl dict__enum__Torappu_SandboxV2EnemyRushType__list_clz_Torappu_SandboxV2BattleRushEnemyGroupConfigT {
+  pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+    &self,
+    _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>
+  ) -> flatbuffers::WIPOffset<dict__enum__Torappu_SandboxV2EnemyRushType__list_clz_Torappu_SandboxV2BattleRushEnemyGroupConfig<'b>> {
+    let key = self.key;
+    let value = self.value.as_ref().map(|x|{
+      let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
+    });
+    dict__enum__Torappu_SandboxV2EnemyRushType__list_clz_Torappu_SandboxV2BattleRushEnemyGroupConfig::create(_fbb, &dict__enum__Torappu_SandboxV2EnemyRushType__list_clz_Torappu_SandboxV2BattleRushEnemyGroupConfigArgs{
+      key,
+      value,
+    })
+  }
+}
 pub enum clz_Torappu_SandboxV2BattleRushEnemyData_RushEnemyDBRefOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -17419,7 +22356,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2BattleRushEnemyData_Ru
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -17444,6 +22381,12 @@ impl<'a> clz_Torappu_SandboxV2BattleRushEnemyData_RushEnemyDBRef<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2BattleRushEnemyData_RushEnemyDBRefT {
+        let id = self.id().map(|x| x.to_string());
+        let level = self.level();
+        clz_Torappu_SandboxV2BattleRushEnemyData_RushEnemyDBRefT { id, level }
     }
 
     #[inline]
@@ -17496,6 +22439,23 @@ impl<'a> Default for clz_Torappu_SandboxV2BattleRushEnemyData_RushEnemyDBRefArgs
     #[inline]
     fn default() -> Self {
         clz_Torappu_SandboxV2BattleRushEnemyData_RushEnemyDBRefArgs { id: None, level: 0 }
+    }
+}
+
+impl Serialize for clz_Torappu_SandboxV2BattleRushEnemyData_RushEnemyDBRef<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("clz_Torappu_SandboxV2BattleRushEnemyData_RushEnemyDBRef", 2)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        s.serialize_field("level", &self.level())?;
+        s.end()
     }
 }
 
@@ -17552,6 +22512,30 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2BattleRushEnemyData_RushEnemyDBRe
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2BattleRushEnemyData_RushEnemyDBRefT {
+    pub id: Option<String>,
+    pub level: i32,
+}
+impl Default for clz_Torappu_SandboxV2BattleRushEnemyData_RushEnemyDBRefT {
+    fn default() -> Self {
+        Self { id: None, level: 0 }
+    }
+}
+impl clz_Torappu_SandboxV2BattleRushEnemyData_RushEnemyDBRefT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2BattleRushEnemyData_RushEnemyDBRef<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let level = self.level;
+        clz_Torappu_SandboxV2BattleRushEnemyData_RushEnemyDBRef::create(
+            _fbb,
+            &clz_Torappu_SandboxV2BattleRushEnemyData_RushEnemyDBRefArgs { id, level },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2BattleRushEnemyDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -17564,7 +22548,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2BattleRushEnemyData<'a
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -17590,6 +22574,19 @@ impl<'a> clz_Torappu_SandboxV2BattleRushEnemyData<'a> {
             builder.add_rushEnemyGroupConfigs(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2BattleRushEnemyDataT {
+        let rushEnemyGroupConfigs = self
+            .rushEnemyGroupConfigs()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let rushEnemyDbRef = self
+            .rushEnemyDbRef()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_SandboxV2BattleRushEnemyDataT {
+            rushEnemyGroupConfigs,
+            rushEnemyDbRef,
+        }
     }
 
     #[inline]
@@ -17659,6 +22656,26 @@ impl<'a> Default for clz_Torappu_SandboxV2BattleRushEnemyDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2BattleRushEnemyData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2BattleRushEnemyData", 2)?;
+        if let Some(f) = self.rushEnemyGroupConfigs() {
+            s.serialize_field("rushEnemyGroupConfigs", &f)?;
+        } else {
+            s.skip_field("rushEnemyGroupConfigs")?;
+        }
+        if let Some(f) = self.rushEnemyDbRef() {
+            s.serialize_field("rushEnemyDbRef", &f)?;
+        } else {
+            s.skip_field("rushEnemyDbRef")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2BattleRushEnemyDataBuilder<
     'a: 'b,
     'b,
@@ -17722,6 +22739,42 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2BattleRushEnemyData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2BattleRushEnemyDataT {
+  pub rushEnemyGroupConfigs: Option<Vec<dict__enum__Torappu_SandboxV2EnemyRushType__list_clz_Torappu_SandboxV2BattleRushEnemyGroupConfigT>>,
+  pub rushEnemyDbRef: Option<Vec<clz_Torappu_SandboxV2BattleRushEnemyData_RushEnemyDBRefT>>,
+}
+impl Default for clz_Torappu_SandboxV2BattleRushEnemyDataT {
+    fn default() -> Self {
+        Self {
+            rushEnemyGroupConfigs: None,
+            rushEnemyDbRef: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2BattleRushEnemyDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2BattleRushEnemyData<'b>> {
+        let rushEnemyGroupConfigs = self.rushEnemyGroupConfigs.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let rushEnemyDbRef = self.rushEnemyDbRef.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SandboxV2BattleRushEnemyData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2BattleRushEnemyDataArgs {
+                rushEnemyGroupConfigs,
+                rushEnemyDbRef,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2GameConstOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -17734,7 +22787,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2GameConst<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -17888,6 +22941,97 @@ impl<'a> clz_Torappu_SandboxV2GameConst<'a> {
             builder.add_mainMapId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2GameConstT {
+        let mainMapId = self.mainMapId().map(|x| x.to_string());
+        let baseTrapId = self.baseTrapId().map(|x| x.to_string());
+        let portableTrapId = self.portableTrapId().map(|x| x.to_string());
+        let doorTrapId = self.doorTrapId().map(|x| x.to_string());
+        let mineTrapId = self.mineTrapId().map(|x| x.to_string());
+        let neutralBossEnemyId = self
+            .neutralBossEnemyId()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let nestTrapId = self.nestTrapId().map(|x| x.to_string());
+        let shopNpcName = self.shopNpcName().map(|x| x.to_string());
+        let daysBetweenAssessment = self.daysBetweenAssessment();
+        let portableConstructUnlockLevel = self.portableConstructUnlockLevel();
+        let outpostConstructUnlockLevel = self.outpostConstructUnlockLevel();
+        let maxEnemyCountSameTimeInRush = self.maxEnemyCountSameTimeInRush();
+        let maxPreDelayTimeInRush = self.maxPreDelayTimeInRush();
+        let maxSaveCnt = self.maxSaveCnt();
+        let firstSeasonDuration = self.firstSeasonDuration();
+        let seasonTransitionLoop = self.seasonTransitionLoop().map(|x| x.into_iter().collect());
+        let seasonDurationLoop = self.seasonDurationLoop().map(|x| x.into_iter().collect());
+        let firstSeasonStartAngle = self.firstSeasonStartAngle();
+        let seasonTransitionAngleLoop = self
+            .seasonTransitionAngleLoop()
+            .map(|x| x.into_iter().collect());
+        let seasonAngle = self.seasonAngle();
+        let battleItemDesc = self.battleItemDesc().map(|x| x.to_string());
+        let foodDesc = self.foodDesc().map(|x| x.to_string());
+        let multipleSurvivalDayDesc = self.multipleSurvivalDayDesc().map(|x| x.to_string());
+        let multipleTips = self.multipleTips().map(|x| x.to_string());
+        let techProgressScore = self.techProgressScore();
+        let otherEnemyRushName = self.otherEnemyRushName().map(|x| x.to_string());
+        let surviveDayText = self.surviveDayText().map(|x| x.to_string());
+        let survivePeriodText = self.survivePeriodText().map(|x| x.to_string());
+        let surviveScoreText = self.surviveScoreText().map(|x| x.to_string());
+        let actionPointScoreText = self.actionPointScoreText().map(|x| x.to_string());
+        let nodeExploreDesc = self.nodeExploreDesc().map(|x| x.to_string());
+        let dungeonExploreDesc = self.dungeonExploreDesc().map(|x| x.to_string());
+        let nodeCompleteDesc = self.nodeCompleteDesc().map(|x| x.to_string());
+        let noRiftDungeonDesc = self.noRiftDungeonDesc().map(|x| x.to_string());
+        let baseRushedDesc = self.baseRushedDesc().map(|x| x.to_string());
+        let riftBaseDesc = self.riftBaseDesc().map(|x| x.to_string());
+        let riftBaseRushedDesc = self.riftBaseRushedDesc().map(|x| x.to_string());
+        let dungeonTriggeredGuideQuestList = self
+            .dungeonTriggeredGuideQuestList()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let noLogInEnemyStatsEnemyId = self
+            .noLogInEnemyStatsEnemyId()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        clz_Torappu_SandboxV2GameConstT {
+            mainMapId,
+            baseTrapId,
+            portableTrapId,
+            doorTrapId,
+            mineTrapId,
+            neutralBossEnemyId,
+            nestTrapId,
+            shopNpcName,
+            daysBetweenAssessment,
+            portableConstructUnlockLevel,
+            outpostConstructUnlockLevel,
+            maxEnemyCountSameTimeInRush,
+            maxPreDelayTimeInRush,
+            maxSaveCnt,
+            firstSeasonDuration,
+            seasonTransitionLoop,
+            seasonDurationLoop,
+            firstSeasonStartAngle,
+            seasonTransitionAngleLoop,
+            seasonAngle,
+            battleItemDesc,
+            foodDesc,
+            multipleSurvivalDayDesc,
+            multipleTips,
+            techProgressScore,
+            otherEnemyRushName,
+            surviveDayText,
+            survivePeriodText,
+            surviveScoreText,
+            actionPointScoreText,
+            nodeExploreDesc,
+            dungeonExploreDesc,
+            nodeCompleteDesc,
+            noRiftDungeonDesc,
+            baseRushedDesc,
+            riftBaseDesc,
+            riftBaseRushedDesc,
+            dungeonTriggeredGuideQuestList,
+            noLogInEnemyStatsEnemyId,
+        }
     }
 
     #[inline]
@@ -18675,6 +23819,180 @@ impl<'a> Default for clz_Torappu_SandboxV2GameConstArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2GameConst<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2GameConst", 39)?;
+        if let Some(f) = self.mainMapId() {
+            s.serialize_field("mainMapId", &f)?;
+        } else {
+            s.skip_field("mainMapId")?;
+        }
+        if let Some(f) = self.baseTrapId() {
+            s.serialize_field("baseTrapId", &f)?;
+        } else {
+            s.skip_field("baseTrapId")?;
+        }
+        if let Some(f) = self.portableTrapId() {
+            s.serialize_field("portableTrapId", &f)?;
+        } else {
+            s.skip_field("portableTrapId")?;
+        }
+        if let Some(f) = self.doorTrapId() {
+            s.serialize_field("doorTrapId", &f)?;
+        } else {
+            s.skip_field("doorTrapId")?;
+        }
+        if let Some(f) = self.mineTrapId() {
+            s.serialize_field("mineTrapId", &f)?;
+        } else {
+            s.skip_field("mineTrapId")?;
+        }
+        if let Some(f) = self.neutralBossEnemyId() {
+            s.serialize_field("neutralBossEnemyId", &f)?;
+        } else {
+            s.skip_field("neutralBossEnemyId")?;
+        }
+        if let Some(f) = self.nestTrapId() {
+            s.serialize_field("nestTrapId", &f)?;
+        } else {
+            s.skip_field("nestTrapId")?;
+        }
+        if let Some(f) = self.shopNpcName() {
+            s.serialize_field("shopNpcName", &f)?;
+        } else {
+            s.skip_field("shopNpcName")?;
+        }
+        s.serialize_field("daysBetweenAssessment", &self.daysBetweenAssessment())?;
+        s.serialize_field(
+            "portableConstructUnlockLevel",
+            &self.portableConstructUnlockLevel(),
+        )?;
+        s.serialize_field(
+            "outpostConstructUnlockLevel",
+            &self.outpostConstructUnlockLevel(),
+        )?;
+        s.serialize_field(
+            "maxEnemyCountSameTimeInRush",
+            &self.maxEnemyCountSameTimeInRush(),
+        )?;
+        s.serialize_field("maxPreDelayTimeInRush", &self.maxPreDelayTimeInRush())?;
+        s.serialize_field("maxSaveCnt", &self.maxSaveCnt())?;
+        s.serialize_field("firstSeasonDuration", &self.firstSeasonDuration())?;
+        if let Some(f) = self.seasonTransitionLoop() {
+            s.serialize_field("seasonTransitionLoop", &f)?;
+        } else {
+            s.skip_field("seasonTransitionLoop")?;
+        }
+        if let Some(f) = self.seasonDurationLoop() {
+            s.serialize_field("seasonDurationLoop", &f)?;
+        } else {
+            s.skip_field("seasonDurationLoop")?;
+        }
+        s.serialize_field("firstSeasonStartAngle", &self.firstSeasonStartAngle())?;
+        if let Some(f) = self.seasonTransitionAngleLoop() {
+            s.serialize_field("seasonTransitionAngleLoop", &f)?;
+        } else {
+            s.skip_field("seasonTransitionAngleLoop")?;
+        }
+        s.serialize_field("seasonAngle", &self.seasonAngle())?;
+        if let Some(f) = self.battleItemDesc() {
+            s.serialize_field("battleItemDesc", &f)?;
+        } else {
+            s.skip_field("battleItemDesc")?;
+        }
+        if let Some(f) = self.foodDesc() {
+            s.serialize_field("foodDesc", &f)?;
+        } else {
+            s.skip_field("foodDesc")?;
+        }
+        if let Some(f) = self.multipleSurvivalDayDesc() {
+            s.serialize_field("multipleSurvivalDayDesc", &f)?;
+        } else {
+            s.skip_field("multipleSurvivalDayDesc")?;
+        }
+        if let Some(f) = self.multipleTips() {
+            s.serialize_field("multipleTips", &f)?;
+        } else {
+            s.skip_field("multipleTips")?;
+        }
+        s.serialize_field("techProgressScore", &self.techProgressScore())?;
+        if let Some(f) = self.otherEnemyRushName() {
+            s.serialize_field("otherEnemyRushName", &f)?;
+        } else {
+            s.skip_field("otherEnemyRushName")?;
+        }
+        if let Some(f) = self.surviveDayText() {
+            s.serialize_field("surviveDayText", &f)?;
+        } else {
+            s.skip_field("surviveDayText")?;
+        }
+        if let Some(f) = self.survivePeriodText() {
+            s.serialize_field("survivePeriodText", &f)?;
+        } else {
+            s.skip_field("survivePeriodText")?;
+        }
+        if let Some(f) = self.surviveScoreText() {
+            s.serialize_field("surviveScoreText", &f)?;
+        } else {
+            s.skip_field("surviveScoreText")?;
+        }
+        if let Some(f) = self.actionPointScoreText() {
+            s.serialize_field("actionPointScoreText", &f)?;
+        } else {
+            s.skip_field("actionPointScoreText")?;
+        }
+        if let Some(f) = self.nodeExploreDesc() {
+            s.serialize_field("nodeExploreDesc", &f)?;
+        } else {
+            s.skip_field("nodeExploreDesc")?;
+        }
+        if let Some(f) = self.dungeonExploreDesc() {
+            s.serialize_field("dungeonExploreDesc", &f)?;
+        } else {
+            s.skip_field("dungeonExploreDesc")?;
+        }
+        if let Some(f) = self.nodeCompleteDesc() {
+            s.serialize_field("nodeCompleteDesc", &f)?;
+        } else {
+            s.skip_field("nodeCompleteDesc")?;
+        }
+        if let Some(f) = self.noRiftDungeonDesc() {
+            s.serialize_field("noRiftDungeonDesc", &f)?;
+        } else {
+            s.skip_field("noRiftDungeonDesc")?;
+        }
+        if let Some(f) = self.baseRushedDesc() {
+            s.serialize_field("baseRushedDesc", &f)?;
+        } else {
+            s.skip_field("baseRushedDesc")?;
+        }
+        if let Some(f) = self.riftBaseDesc() {
+            s.serialize_field("riftBaseDesc", &f)?;
+        } else {
+            s.skip_field("riftBaseDesc")?;
+        }
+        if let Some(f) = self.riftBaseRushedDesc() {
+            s.serialize_field("riftBaseRushedDesc", &f)?;
+        } else {
+            s.skip_field("riftBaseRushedDesc")?;
+        }
+        if let Some(f) = self.dungeonTriggeredGuideQuestList() {
+            s.serialize_field("dungeonTriggeredGuideQuestList", &f)?;
+        } else {
+            s.skip_field("dungeonTriggeredGuideQuestList")?;
+        }
+        if let Some(f) = self.noLogInEnemyStatsEnemyId() {
+            s.serialize_field("noLogInEnemyStatsEnemyId", &f)?;
+        } else {
+            s.skip_field("noLogInEnemyStatsEnemyId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2GameConstBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -19069,6 +24387,230 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2GameConst<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2GameConstT {
+    pub mainMapId: Option<String>,
+    pub baseTrapId: Option<String>,
+    pub portableTrapId: Option<String>,
+    pub doorTrapId: Option<String>,
+    pub mineTrapId: Option<String>,
+    pub neutralBossEnemyId: Option<Vec<String>>,
+    pub nestTrapId: Option<String>,
+    pub shopNpcName: Option<String>,
+    pub daysBetweenAssessment: i32,
+    pub portableConstructUnlockLevel: i32,
+    pub outpostConstructUnlockLevel: i32,
+    pub maxEnemyCountSameTimeInRush: i32,
+    pub maxPreDelayTimeInRush: f32,
+    pub maxSaveCnt: i32,
+    pub firstSeasonDuration: i32,
+    pub seasonTransitionLoop: Option<Vec<enum__Torappu_SandboxV2SeasonType>>,
+    pub seasonDurationLoop: Option<Vec<i32>>,
+    pub firstSeasonStartAngle: f32,
+    pub seasonTransitionAngleLoop: Option<Vec<f32>>,
+    pub seasonAngle: f32,
+    pub battleItemDesc: Option<String>,
+    pub foodDesc: Option<String>,
+    pub multipleSurvivalDayDesc: Option<String>,
+    pub multipleTips: Option<String>,
+    pub techProgressScore: i32,
+    pub otherEnemyRushName: Option<String>,
+    pub surviveDayText: Option<String>,
+    pub survivePeriodText: Option<String>,
+    pub surviveScoreText: Option<String>,
+    pub actionPointScoreText: Option<String>,
+    pub nodeExploreDesc: Option<String>,
+    pub dungeonExploreDesc: Option<String>,
+    pub nodeCompleteDesc: Option<String>,
+    pub noRiftDungeonDesc: Option<String>,
+    pub baseRushedDesc: Option<String>,
+    pub riftBaseDesc: Option<String>,
+    pub riftBaseRushedDesc: Option<String>,
+    pub dungeonTriggeredGuideQuestList: Option<Vec<String>>,
+    pub noLogInEnemyStatsEnemyId: Option<Vec<String>>,
+}
+impl Default for clz_Torappu_SandboxV2GameConstT {
+    fn default() -> Self {
+        Self {
+            mainMapId: None,
+            baseTrapId: None,
+            portableTrapId: None,
+            doorTrapId: None,
+            mineTrapId: None,
+            neutralBossEnemyId: None,
+            nestTrapId: None,
+            shopNpcName: None,
+            daysBetweenAssessment: 0,
+            portableConstructUnlockLevel: 0,
+            outpostConstructUnlockLevel: 0,
+            maxEnemyCountSameTimeInRush: 0,
+            maxPreDelayTimeInRush: 0.0,
+            maxSaveCnt: 0,
+            firstSeasonDuration: 0,
+            seasonTransitionLoop: None,
+            seasonDurationLoop: None,
+            firstSeasonStartAngle: 0.0,
+            seasonTransitionAngleLoop: None,
+            seasonAngle: 0.0,
+            battleItemDesc: None,
+            foodDesc: None,
+            multipleSurvivalDayDesc: None,
+            multipleTips: None,
+            techProgressScore: 0,
+            otherEnemyRushName: None,
+            surviveDayText: None,
+            survivePeriodText: None,
+            surviveScoreText: None,
+            actionPointScoreText: None,
+            nodeExploreDesc: None,
+            dungeonExploreDesc: None,
+            nodeCompleteDesc: None,
+            noRiftDungeonDesc: None,
+            baseRushedDesc: None,
+            riftBaseDesc: None,
+            riftBaseRushedDesc: None,
+            dungeonTriggeredGuideQuestList: None,
+            noLogInEnemyStatsEnemyId: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2GameConstT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2GameConst<'b>> {
+        let mainMapId = self.mainMapId.as_ref().map(|x| _fbb.create_string(x));
+        let baseTrapId = self.baseTrapId.as_ref().map(|x| _fbb.create_string(x));
+        let portableTrapId = self.portableTrapId.as_ref().map(|x| _fbb.create_string(x));
+        let doorTrapId = self.doorTrapId.as_ref().map(|x| _fbb.create_string(x));
+        let mineTrapId = self.mineTrapId.as_ref().map(|x| _fbb.create_string(x));
+        let neutralBossEnemyId = self.neutralBossEnemyId.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let nestTrapId = self.nestTrapId.as_ref().map(|x| _fbb.create_string(x));
+        let shopNpcName = self.shopNpcName.as_ref().map(|x| _fbb.create_string(x));
+        let daysBetweenAssessment = self.daysBetweenAssessment;
+        let portableConstructUnlockLevel = self.portableConstructUnlockLevel;
+        let outpostConstructUnlockLevel = self.outpostConstructUnlockLevel;
+        let maxEnemyCountSameTimeInRush = self.maxEnemyCountSameTimeInRush;
+        let maxPreDelayTimeInRush = self.maxPreDelayTimeInRush;
+        let maxSaveCnt = self.maxSaveCnt;
+        let firstSeasonDuration = self.firstSeasonDuration;
+        let seasonTransitionLoop = self
+            .seasonTransitionLoop
+            .as_ref()
+            .map(|x| _fbb.create_vector(x));
+        let seasonDurationLoop = self
+            .seasonDurationLoop
+            .as_ref()
+            .map(|x| _fbb.create_vector(x));
+        let firstSeasonStartAngle = self.firstSeasonStartAngle;
+        let seasonTransitionAngleLoop = self
+            .seasonTransitionAngleLoop
+            .as_ref()
+            .map(|x| _fbb.create_vector(x));
+        let seasonAngle = self.seasonAngle;
+        let battleItemDesc = self.battleItemDesc.as_ref().map(|x| _fbb.create_string(x));
+        let foodDesc = self.foodDesc.as_ref().map(|x| _fbb.create_string(x));
+        let multipleSurvivalDayDesc = self
+            .multipleSurvivalDayDesc
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let multipleTips = self.multipleTips.as_ref().map(|x| _fbb.create_string(x));
+        let techProgressScore = self.techProgressScore;
+        let otherEnemyRushName = self
+            .otherEnemyRushName
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let surviveDayText = self.surviveDayText.as_ref().map(|x| _fbb.create_string(x));
+        let survivePeriodText = self
+            .survivePeriodText
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let surviveScoreText = self
+            .surviveScoreText
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let actionPointScoreText = self
+            .actionPointScoreText
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let nodeExploreDesc = self.nodeExploreDesc.as_ref().map(|x| _fbb.create_string(x));
+        let dungeonExploreDesc = self
+            .dungeonExploreDesc
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let nodeCompleteDesc = self
+            .nodeCompleteDesc
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let noRiftDungeonDesc = self
+            .noRiftDungeonDesc
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let baseRushedDesc = self.baseRushedDesc.as_ref().map(|x| _fbb.create_string(x));
+        let riftBaseDesc = self.riftBaseDesc.as_ref().map(|x| _fbb.create_string(x));
+        let riftBaseRushedDesc = self
+            .riftBaseRushedDesc
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let dungeonTriggeredGuideQuestList =
+            self.dungeonTriggeredGuideQuestList.as_ref().map(|x| {
+                let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+                _fbb.create_vector(&w)
+            });
+        let noLogInEnemyStatsEnemyId = self.noLogInEnemyStatsEnemyId.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SandboxV2GameConst::create(
+            _fbb,
+            &clz_Torappu_SandboxV2GameConstArgs {
+                mainMapId,
+                baseTrapId,
+                portableTrapId,
+                doorTrapId,
+                mineTrapId,
+                neutralBossEnemyId,
+                nestTrapId,
+                shopNpcName,
+                daysBetweenAssessment,
+                portableConstructUnlockLevel,
+                outpostConstructUnlockLevel,
+                maxEnemyCountSameTimeInRush,
+                maxPreDelayTimeInRush,
+                maxSaveCnt,
+                firstSeasonDuration,
+                seasonTransitionLoop,
+                seasonDurationLoop,
+                firstSeasonStartAngle,
+                seasonTransitionAngleLoop,
+                seasonAngle,
+                battleItemDesc,
+                foodDesc,
+                multipleSurvivalDayDesc,
+                multipleTips,
+                techProgressScore,
+                otherEnemyRushName,
+                surviveDayText,
+                survivePeriodText,
+                surviveScoreText,
+                actionPointScoreText,
+                nodeExploreDesc,
+                dungeonExploreDesc,
+                nodeCompleteDesc,
+                noRiftDungeonDesc,
+                baseRushedDesc,
+                riftBaseDesc,
+                riftBaseRushedDesc,
+                dungeonTriggeredGuideQuestList,
+                noLogInEnemyStatsEnemyId,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ItemBundleOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -19081,7 +24623,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ItemBundle<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -19107,6 +24649,13 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ItemBundleT {
+        let id = self.id().map(|x| x.to_string());
+        let count = self.count();
+        let type_ = self.type_();
+        clz_Torappu_ItemBundleT { id, count, type_ }
     }
 
     #[inline]
@@ -19177,6 +24726,23 @@ impl<'a> Default for clz_Torappu_ItemBundleArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ItemBundle<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ItemBundle", 3)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        s.serialize_field("count", &self.count())?;
+        s.serialize_field("type_", &self.type_())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ItemBundleBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -19226,6 +24792,33 @@ impl core::fmt::Debug for clz_Torappu_ItemBundle<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ItemBundleT {
+    pub id: Option<String>,
+    pub count: i32,
+    pub type_: enum__Torappu_ItemType,
+}
+impl Default for clz_Torappu_ItemBundleT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            count: 0,
+            type_: enum__Torappu_ItemType::NONE,
+        }
+    }
+}
+impl clz_Torappu_ItemBundleT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ItemBundle<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let count = self.count;
+        let type_ = self.type_;
+        clz_Torappu_ItemBundle::create(_fbb, &clz_Torappu_ItemBundleArgs { id, count, type_ })
+    }
+}
 pub enum dict__string__stringOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -19238,7 +24831,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__string<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -19264,6 +24857,15 @@ impl<'a> dict__string__string<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__stringT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| x.to_string());
+        dict__string__stringT { key, value }
     }
 
     #[inline]
@@ -19327,6 +24929,22 @@ impl<'a> Default for dict__string__stringArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__string<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__string", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__stringBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -19368,6 +24986,33 @@ impl core::fmt::Debug for dict__string__string<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__stringT {
+    pub key: String,
+    pub value: Option<String>,
+}
+impl Default for dict__string__stringT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__stringT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__string<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| _fbb.create_string(x));
+        dict__string__string::create(_fbb, &dict__string__stringArgs { key, value })
+    }
+}
 pub enum clz_Torappu_SandboxV2DiffModeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -19380,7 +25025,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2DiffModeData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -19416,6 +25061,23 @@ impl<'a> clz_Torappu_SandboxV2DiffModeData<'a> {
             builder.add_title(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2DiffModeDataT {
+        let title = self.title().map(|x| x.to_string());
+        let desc = self.desc().map(|x| x.to_string());
+        let buffList = self
+            .buffList()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let detailList = self.detailList().map(|x| x.to_string());
+        let sortId = self.sortId();
+        clz_Torappu_SandboxV2DiffModeDataT {
+            title,
+            desc,
+            buffList,
+            detailList,
+            sortId,
+        }
     }
 
     #[inline]
@@ -19525,6 +25187,37 @@ impl<'a> Default for clz_Torappu_SandboxV2DiffModeDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2DiffModeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2DiffModeData", 5)?;
+        if let Some(f) = self.title() {
+            s.serialize_field("title", &f)?;
+        } else {
+            s.skip_field("title")?;
+        }
+        if let Some(f) = self.desc() {
+            s.serialize_field("desc", &f)?;
+        } else {
+            s.skip_field("desc")?;
+        }
+        if let Some(f) = self.buffList() {
+            s.serialize_field("buffList", &f)?;
+        } else {
+            s.skip_field("buffList")?;
+        }
+        if let Some(f) = self.detailList() {
+            s.serialize_field("detailList", &f)?;
+        } else {
+            s.skip_field("detailList")?;
+        }
+        s.serialize_field("sortId", &self.sortId())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2DiffModeDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -19598,6 +25291,51 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2DiffModeData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2DiffModeDataT {
+    pub title: Option<String>,
+    pub desc: Option<String>,
+    pub buffList: Option<Vec<String>>,
+    pub detailList: Option<String>,
+    pub sortId: i32,
+}
+impl Default for clz_Torappu_SandboxV2DiffModeDataT {
+    fn default() -> Self {
+        Self {
+            title: None,
+            desc: None,
+            buffList: None,
+            detailList: None,
+            sortId: 0,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2DiffModeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2DiffModeData<'b>> {
+        let title = self.title.as_ref().map(|x| _fbb.create_string(x));
+        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
+        let buffList = self.buffList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let detailList = self.detailList.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        clz_Torappu_SandboxV2DiffModeData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2DiffModeDataArgs {
+                title,
+                desc,
+                buffList,
+                detailList,
+                sortId,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2BasicConstOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -19610,7 +25348,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2BasicConst<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -19808,6 +25546,141 @@ impl<'a> clz_Torappu_SandboxV2BasicConst<'a> {
         builder.add_isRacingOpen(args.isRacingOpen);
         builder.add_isChallengeOpen(args.isChallengeOpen);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2BasicConstT {
+        let staminaItemId = self.staminaItemId().map(|x| x.to_string());
+        let goldItemId = self.goldItemId().map(|x| x.to_string());
+        let dimensioncoinItemId = self.dimensioncoinItemId().map(|x| x.to_string());
+        let alwaysShowItemIdsConstruct = self
+            .alwaysShowItemIdsConstruct()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let alwaysShowItemIds = self
+            .alwaysShowItemIds()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let bagBottomBarResType = self
+            .bagBottomBarResType()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let failedCookFood = self.failedCookFood().map(|x| x.to_string());
+        let maxFoodDuration = self.maxFoodDuration();
+        let drinkCostOnce = self.drinkCostOnce();
+        let drinkMakeLimit = self.drinkMakeLimit();
+        let specialMatWater = self.specialMatWater().map(|x| x.to_string());
+        let workbenchMakeLimit = self.workbenchMakeLimit();
+        let logisticsPosLimit = self.logisticsPosLimit();
+        let logisticsUnlockLevel = self.logisticsUnlockLevel();
+        let logisticsDrinkCost = self.logisticsDrinkCost();
+        let logisticsEvacuateTips = self.logisticsEvacuateTips().map(|x| x.to_string());
+        let logisticsEvacuateWarning = self.logisticsEvacuateWarning().map(|x| x.to_string());
+        let baseRepairCost = self.baseRepairCost();
+        let portRepairCost = self.portRepairCost();
+        let unitFenceLimit = self.unitFenceLimit();
+        let unitRareFenceLimit = self.unitRareFenceLimit();
+        let cageId = self.cageId().map(|x| x.to_string());
+        let fenceId = self.fenceId().map(|x| x.to_string());
+        let rareFenceId = self.rareFenceId().map(|x| x.to_string());
+        let monthlyRushEntryText1 = self.monthlyRushEntryText1().map(|x| x.to_string());
+        let monthlyEntryUnlockText = self.monthlyEntryUnlockText().map(|x| x.to_string());
+        let monthlyEntryRiftText = self.monthlyEntryRiftText().map(|x| x.to_string());
+        let monthlyRushIntro = self.monthlyRushIntro().map(|x| x.to_string());
+        let monthlyCoin = self.monthlyCoin().map(|x| Box::new(x.unpack()));
+        let charRarityColorList = self
+            .charRarityColorList()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let squadCharCapacity = self.squadCharCapacity();
+        let totalSquadCnt = self.totalSquadCnt();
+        let toolboxCapacity = self.toolboxCapacity();
+        let toolCntLimitInSquad = self.toolCntLimitInSquad();
+        let miniSquadCharCapacity = self.miniSquadCharCapacity();
+        let miniSquadDrinkCost = self.miniSquadDrinkCost();
+        let normalSquadDrinkCost = self.normalSquadDrinkCost();
+        let emptySquadDrinkCost = self.emptySquadDrinkCost();
+        let achieveTypeAll = self.achieveTypeAll().map(|x| x.to_string());
+        let constructModeBgmHome = self.constructModeBgmHome().map(|x| x.to_string());
+        let battleBgmCollect = self.battleBgmCollect().map(|x| x.to_string());
+        let battleBgmHunt = self.battleBgmHunt().map(|x| x.to_string());
+        let battleBgmEnemyRush = self.battleBgmEnemyRush().map(|x| x.to_string());
+        let battleBgmBossRush = self.battleBgmBossRush().map(|x| x.to_string());
+        let imgLoadingNormalName = self.imgLoadingNormalName().map(|x| x.to_string());
+        let imgLoadingBaseName = self.imgLoadingBaseName().map(|x| x.to_string());
+        let imgUnloadingBaseName = self.imgUnloadingBaseName().map(|x| x.to_string());
+        let isChallengeOpen = self.isChallengeOpen();
+        let isRacingOpen = self.isRacingOpen();
+        let hasExploreMode = self.hasExploreMode();
+        let exploreModeBuffDescs = self
+            .exploreModeBuffDescs()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let modeSelectTips = self.modeSelectTips().map(|x| x.to_string());
+        let stringRes = self
+            .stringRes()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let diffList = self
+            .diffList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let battlePreloadEnemies = self
+            .battlePreloadEnemies()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let battleExcludedTrapsInRush = self
+            .battleExcludedTrapsInRush()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        clz_Torappu_SandboxV2BasicConstT {
+            staminaItemId,
+            goldItemId,
+            dimensioncoinItemId,
+            alwaysShowItemIdsConstruct,
+            alwaysShowItemIds,
+            bagBottomBarResType,
+            failedCookFood,
+            maxFoodDuration,
+            drinkCostOnce,
+            drinkMakeLimit,
+            specialMatWater,
+            workbenchMakeLimit,
+            logisticsPosLimit,
+            logisticsUnlockLevel,
+            logisticsDrinkCost,
+            logisticsEvacuateTips,
+            logisticsEvacuateWarning,
+            baseRepairCost,
+            portRepairCost,
+            unitFenceLimit,
+            unitRareFenceLimit,
+            cageId,
+            fenceId,
+            rareFenceId,
+            monthlyRushEntryText1,
+            monthlyEntryUnlockText,
+            monthlyEntryRiftText,
+            monthlyRushIntro,
+            monthlyCoin,
+            charRarityColorList,
+            squadCharCapacity,
+            totalSquadCnt,
+            toolboxCapacity,
+            toolCntLimitInSquad,
+            miniSquadCharCapacity,
+            miniSquadDrinkCost,
+            normalSquadDrinkCost,
+            emptySquadDrinkCost,
+            achieveTypeAll,
+            constructModeBgmHome,
+            battleBgmCollect,
+            battleBgmHunt,
+            battleBgmEnemyRush,
+            battleBgmBossRush,
+            imgLoadingNormalName,
+            imgLoadingBaseName,
+            imgUnloadingBaseName,
+            isChallengeOpen,
+            isRacingOpen,
+            hasExploreMode,
+            exploreModeBuffDescs,
+            modeSelectTips,
+            stringRes,
+            diffList,
+            battlePreloadEnemies,
+            battleExcludedTrapsInRush,
+        }
     }
 
     #[inline]
@@ -20881,6 +26754,208 @@ impl<'a> Default for clz_Torappu_SandboxV2BasicConstArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2BasicConst<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2BasicConst", 56)?;
+        if let Some(f) = self.staminaItemId() {
+            s.serialize_field("staminaItemId", &f)?;
+        } else {
+            s.skip_field("staminaItemId")?;
+        }
+        if let Some(f) = self.goldItemId() {
+            s.serialize_field("goldItemId", &f)?;
+        } else {
+            s.skip_field("goldItemId")?;
+        }
+        if let Some(f) = self.dimensioncoinItemId() {
+            s.serialize_field("dimensioncoinItemId", &f)?;
+        } else {
+            s.skip_field("dimensioncoinItemId")?;
+        }
+        if let Some(f) = self.alwaysShowItemIdsConstruct() {
+            s.serialize_field("alwaysShowItemIdsConstruct", &f)?;
+        } else {
+            s.skip_field("alwaysShowItemIdsConstruct")?;
+        }
+        if let Some(f) = self.alwaysShowItemIds() {
+            s.serialize_field("alwaysShowItemIds", &f)?;
+        } else {
+            s.skip_field("alwaysShowItemIds")?;
+        }
+        if let Some(f) = self.bagBottomBarResType() {
+            s.serialize_field("bagBottomBarResType", &f)?;
+        } else {
+            s.skip_field("bagBottomBarResType")?;
+        }
+        if let Some(f) = self.failedCookFood() {
+            s.serialize_field("failedCookFood", &f)?;
+        } else {
+            s.skip_field("failedCookFood")?;
+        }
+        s.serialize_field("maxFoodDuration", &self.maxFoodDuration())?;
+        s.serialize_field("drinkCostOnce", &self.drinkCostOnce())?;
+        s.serialize_field("drinkMakeLimit", &self.drinkMakeLimit())?;
+        if let Some(f) = self.specialMatWater() {
+            s.serialize_field("specialMatWater", &f)?;
+        } else {
+            s.skip_field("specialMatWater")?;
+        }
+        s.serialize_field("workbenchMakeLimit", &self.workbenchMakeLimit())?;
+        s.serialize_field("logisticsPosLimit", &self.logisticsPosLimit())?;
+        s.serialize_field("logisticsUnlockLevel", &self.logisticsUnlockLevel())?;
+        s.serialize_field("logisticsDrinkCost", &self.logisticsDrinkCost())?;
+        if let Some(f) = self.logisticsEvacuateTips() {
+            s.serialize_field("logisticsEvacuateTips", &f)?;
+        } else {
+            s.skip_field("logisticsEvacuateTips")?;
+        }
+        if let Some(f) = self.logisticsEvacuateWarning() {
+            s.serialize_field("logisticsEvacuateWarning", &f)?;
+        } else {
+            s.skip_field("logisticsEvacuateWarning")?;
+        }
+        s.serialize_field("baseRepairCost", &self.baseRepairCost())?;
+        s.serialize_field("portRepairCost", &self.portRepairCost())?;
+        s.serialize_field("unitFenceLimit", &self.unitFenceLimit())?;
+        s.serialize_field("unitRareFenceLimit", &self.unitRareFenceLimit())?;
+        if let Some(f) = self.cageId() {
+            s.serialize_field("cageId", &f)?;
+        } else {
+            s.skip_field("cageId")?;
+        }
+        if let Some(f) = self.fenceId() {
+            s.serialize_field("fenceId", &f)?;
+        } else {
+            s.skip_field("fenceId")?;
+        }
+        if let Some(f) = self.rareFenceId() {
+            s.serialize_field("rareFenceId", &f)?;
+        } else {
+            s.skip_field("rareFenceId")?;
+        }
+        if let Some(f) = self.monthlyRushEntryText1() {
+            s.serialize_field("monthlyRushEntryText1", &f)?;
+        } else {
+            s.skip_field("monthlyRushEntryText1")?;
+        }
+        if let Some(f) = self.monthlyEntryUnlockText() {
+            s.serialize_field("monthlyEntryUnlockText", &f)?;
+        } else {
+            s.skip_field("monthlyEntryUnlockText")?;
+        }
+        if let Some(f) = self.monthlyEntryRiftText() {
+            s.serialize_field("monthlyEntryRiftText", &f)?;
+        } else {
+            s.skip_field("monthlyEntryRiftText")?;
+        }
+        if let Some(f) = self.monthlyRushIntro() {
+            s.serialize_field("monthlyRushIntro", &f)?;
+        } else {
+            s.skip_field("monthlyRushIntro")?;
+        }
+        if let Some(f) = self.monthlyCoin() {
+            s.serialize_field("monthlyCoin", &f)?;
+        } else {
+            s.skip_field("monthlyCoin")?;
+        }
+        if let Some(f) = self.charRarityColorList() {
+            s.serialize_field("charRarityColorList", &f)?;
+        } else {
+            s.skip_field("charRarityColorList")?;
+        }
+        s.serialize_field("squadCharCapacity", &self.squadCharCapacity())?;
+        s.serialize_field("totalSquadCnt", &self.totalSquadCnt())?;
+        s.serialize_field("toolboxCapacity", &self.toolboxCapacity())?;
+        s.serialize_field("toolCntLimitInSquad", &self.toolCntLimitInSquad())?;
+        s.serialize_field("miniSquadCharCapacity", &self.miniSquadCharCapacity())?;
+        s.serialize_field("miniSquadDrinkCost", &self.miniSquadDrinkCost())?;
+        s.serialize_field("normalSquadDrinkCost", &self.normalSquadDrinkCost())?;
+        s.serialize_field("emptySquadDrinkCost", &self.emptySquadDrinkCost())?;
+        if let Some(f) = self.achieveTypeAll() {
+            s.serialize_field("achieveTypeAll", &f)?;
+        } else {
+            s.skip_field("achieveTypeAll")?;
+        }
+        if let Some(f) = self.constructModeBgmHome() {
+            s.serialize_field("constructModeBgmHome", &f)?;
+        } else {
+            s.skip_field("constructModeBgmHome")?;
+        }
+        if let Some(f) = self.battleBgmCollect() {
+            s.serialize_field("battleBgmCollect", &f)?;
+        } else {
+            s.skip_field("battleBgmCollect")?;
+        }
+        if let Some(f) = self.battleBgmHunt() {
+            s.serialize_field("battleBgmHunt", &f)?;
+        } else {
+            s.skip_field("battleBgmHunt")?;
+        }
+        if let Some(f) = self.battleBgmEnemyRush() {
+            s.serialize_field("battleBgmEnemyRush", &f)?;
+        } else {
+            s.skip_field("battleBgmEnemyRush")?;
+        }
+        if let Some(f) = self.battleBgmBossRush() {
+            s.serialize_field("battleBgmBossRush", &f)?;
+        } else {
+            s.skip_field("battleBgmBossRush")?;
+        }
+        if let Some(f) = self.imgLoadingNormalName() {
+            s.serialize_field("imgLoadingNormalName", &f)?;
+        } else {
+            s.skip_field("imgLoadingNormalName")?;
+        }
+        if let Some(f) = self.imgLoadingBaseName() {
+            s.serialize_field("imgLoadingBaseName", &f)?;
+        } else {
+            s.skip_field("imgLoadingBaseName")?;
+        }
+        if let Some(f) = self.imgUnloadingBaseName() {
+            s.serialize_field("imgUnloadingBaseName", &f)?;
+        } else {
+            s.skip_field("imgUnloadingBaseName")?;
+        }
+        s.serialize_field("isChallengeOpen", &self.isChallengeOpen())?;
+        s.serialize_field("isRacingOpen", &self.isRacingOpen())?;
+        s.serialize_field("hasExploreMode", &self.hasExploreMode())?;
+        if let Some(f) = self.exploreModeBuffDescs() {
+            s.serialize_field("exploreModeBuffDescs", &f)?;
+        } else {
+            s.skip_field("exploreModeBuffDescs")?;
+        }
+        if let Some(f) = self.modeSelectTips() {
+            s.serialize_field("modeSelectTips", &f)?;
+        } else {
+            s.skip_field("modeSelectTips")?;
+        }
+        if let Some(f) = self.stringRes() {
+            s.serialize_field("stringRes", &f)?;
+        } else {
+            s.skip_field("stringRes")?;
+        }
+        if let Some(f) = self.diffList() {
+            s.serialize_field("diffList", &f)?;
+        } else {
+            s.skip_field("diffList")?;
+        }
+        if let Some(f) = self.battlePreloadEnemies() {
+            s.serialize_field("battlePreloadEnemies", &f)?;
+        } else {
+            s.skip_field("battlePreloadEnemies")?;
+        }
+        if let Some(f) = self.battleExcludedTrapsInRush() {
+            s.serialize_field("battleExcludedTrapsInRush", &f)?;
+        } else {
+            s.skip_field("battleExcludedTrapsInRush")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2BasicConstBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -21464,6 +27539,321 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2BasicConst<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2BasicConstT {
+    pub staminaItemId: Option<String>,
+    pub goldItemId: Option<String>,
+    pub dimensioncoinItemId: Option<String>,
+    pub alwaysShowItemIdsConstruct: Option<Vec<String>>,
+    pub alwaysShowItemIds: Option<Vec<String>>,
+    pub bagBottomBarResType: Option<Vec<String>>,
+    pub failedCookFood: Option<String>,
+    pub maxFoodDuration: i32,
+    pub drinkCostOnce: i32,
+    pub drinkMakeLimit: i32,
+    pub specialMatWater: Option<String>,
+    pub workbenchMakeLimit: i32,
+    pub logisticsPosLimit: i32,
+    pub logisticsUnlockLevel: i32,
+    pub logisticsDrinkCost: i32,
+    pub logisticsEvacuateTips: Option<String>,
+    pub logisticsEvacuateWarning: Option<String>,
+    pub baseRepairCost: i32,
+    pub portRepairCost: i32,
+    pub unitFenceLimit: i32,
+    pub unitRareFenceLimit: i32,
+    pub cageId: Option<String>,
+    pub fenceId: Option<String>,
+    pub rareFenceId: Option<String>,
+    pub monthlyRushEntryText1: Option<String>,
+    pub monthlyEntryUnlockText: Option<String>,
+    pub monthlyEntryRiftText: Option<String>,
+    pub monthlyRushIntro: Option<String>,
+    pub monthlyCoin: Option<Box<clz_Torappu_ItemBundleT>>,
+    pub charRarityColorList: Option<Vec<String>>,
+    pub squadCharCapacity: i32,
+    pub totalSquadCnt: i32,
+    pub toolboxCapacity: i32,
+    pub toolCntLimitInSquad: i32,
+    pub miniSquadCharCapacity: i32,
+    pub miniSquadDrinkCost: i32,
+    pub normalSquadDrinkCost: i32,
+    pub emptySquadDrinkCost: i32,
+    pub achieveTypeAll: Option<String>,
+    pub constructModeBgmHome: Option<String>,
+    pub battleBgmCollect: Option<String>,
+    pub battleBgmHunt: Option<String>,
+    pub battleBgmEnemyRush: Option<String>,
+    pub battleBgmBossRush: Option<String>,
+    pub imgLoadingNormalName: Option<String>,
+    pub imgLoadingBaseName: Option<String>,
+    pub imgUnloadingBaseName: Option<String>,
+    pub isChallengeOpen: bool,
+    pub isRacingOpen: bool,
+    pub hasExploreMode: bool,
+    pub exploreModeBuffDescs: Option<Vec<String>>,
+    pub modeSelectTips: Option<String>,
+    pub stringRes: Option<Vec<dict__string__stringT>>,
+    pub diffList: Option<Vec<clz_Torappu_SandboxV2DiffModeDataT>>,
+    pub battlePreloadEnemies: Option<Vec<String>>,
+    pub battleExcludedTrapsInRush: Option<Vec<String>>,
+}
+impl Default for clz_Torappu_SandboxV2BasicConstT {
+    fn default() -> Self {
+        Self {
+            staminaItemId: None,
+            goldItemId: None,
+            dimensioncoinItemId: None,
+            alwaysShowItemIdsConstruct: None,
+            alwaysShowItemIds: None,
+            bagBottomBarResType: None,
+            failedCookFood: None,
+            maxFoodDuration: 0,
+            drinkCostOnce: 0,
+            drinkMakeLimit: 0,
+            specialMatWater: None,
+            workbenchMakeLimit: 0,
+            logisticsPosLimit: 0,
+            logisticsUnlockLevel: 0,
+            logisticsDrinkCost: 0,
+            logisticsEvacuateTips: None,
+            logisticsEvacuateWarning: None,
+            baseRepairCost: 0,
+            portRepairCost: 0,
+            unitFenceLimit: 0,
+            unitRareFenceLimit: 0,
+            cageId: None,
+            fenceId: None,
+            rareFenceId: None,
+            monthlyRushEntryText1: None,
+            monthlyEntryUnlockText: None,
+            monthlyEntryRiftText: None,
+            monthlyRushIntro: None,
+            monthlyCoin: None,
+            charRarityColorList: None,
+            squadCharCapacity: 0,
+            totalSquadCnt: 0,
+            toolboxCapacity: 0,
+            toolCntLimitInSquad: 0,
+            miniSquadCharCapacity: 0,
+            miniSquadDrinkCost: 0,
+            normalSquadDrinkCost: 0,
+            emptySquadDrinkCost: 0,
+            achieveTypeAll: None,
+            constructModeBgmHome: None,
+            battleBgmCollect: None,
+            battleBgmHunt: None,
+            battleBgmEnemyRush: None,
+            battleBgmBossRush: None,
+            imgLoadingNormalName: None,
+            imgLoadingBaseName: None,
+            imgUnloadingBaseName: None,
+            isChallengeOpen: false,
+            isRacingOpen: false,
+            hasExploreMode: false,
+            exploreModeBuffDescs: None,
+            modeSelectTips: None,
+            stringRes: None,
+            diffList: None,
+            battlePreloadEnemies: None,
+            battleExcludedTrapsInRush: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2BasicConstT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2BasicConst<'b>> {
+        let staminaItemId = self.staminaItemId.as_ref().map(|x| _fbb.create_string(x));
+        let goldItemId = self.goldItemId.as_ref().map(|x| _fbb.create_string(x));
+        let dimensioncoinItemId = self
+            .dimensioncoinItemId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let alwaysShowItemIdsConstruct = self.alwaysShowItemIdsConstruct.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let alwaysShowItemIds = self.alwaysShowItemIds.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let bagBottomBarResType = self.bagBottomBarResType.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let failedCookFood = self.failedCookFood.as_ref().map(|x| _fbb.create_string(x));
+        let maxFoodDuration = self.maxFoodDuration;
+        let drinkCostOnce = self.drinkCostOnce;
+        let drinkMakeLimit = self.drinkMakeLimit;
+        let specialMatWater = self.specialMatWater.as_ref().map(|x| _fbb.create_string(x));
+        let workbenchMakeLimit = self.workbenchMakeLimit;
+        let logisticsPosLimit = self.logisticsPosLimit;
+        let logisticsUnlockLevel = self.logisticsUnlockLevel;
+        let logisticsDrinkCost = self.logisticsDrinkCost;
+        let logisticsEvacuateTips = self
+            .logisticsEvacuateTips
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let logisticsEvacuateWarning = self
+            .logisticsEvacuateWarning
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let baseRepairCost = self.baseRepairCost;
+        let portRepairCost = self.portRepairCost;
+        let unitFenceLimit = self.unitFenceLimit;
+        let unitRareFenceLimit = self.unitRareFenceLimit;
+        let cageId = self.cageId.as_ref().map(|x| _fbb.create_string(x));
+        let fenceId = self.fenceId.as_ref().map(|x| _fbb.create_string(x));
+        let rareFenceId = self.rareFenceId.as_ref().map(|x| _fbb.create_string(x));
+        let monthlyRushEntryText1 = self
+            .monthlyRushEntryText1
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let monthlyEntryUnlockText = self
+            .monthlyEntryUnlockText
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let monthlyEntryRiftText = self
+            .monthlyEntryRiftText
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let monthlyRushIntro = self
+            .monthlyRushIntro
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let monthlyCoin = self.monthlyCoin.as_ref().map(|x| x.pack(_fbb));
+        let charRarityColorList = self.charRarityColorList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let squadCharCapacity = self.squadCharCapacity;
+        let totalSquadCnt = self.totalSquadCnt;
+        let toolboxCapacity = self.toolboxCapacity;
+        let toolCntLimitInSquad = self.toolCntLimitInSquad;
+        let miniSquadCharCapacity = self.miniSquadCharCapacity;
+        let miniSquadDrinkCost = self.miniSquadDrinkCost;
+        let normalSquadDrinkCost = self.normalSquadDrinkCost;
+        let emptySquadDrinkCost = self.emptySquadDrinkCost;
+        let achieveTypeAll = self.achieveTypeAll.as_ref().map(|x| _fbb.create_string(x));
+        let constructModeBgmHome = self
+            .constructModeBgmHome
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let battleBgmCollect = self
+            .battleBgmCollect
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let battleBgmHunt = self.battleBgmHunt.as_ref().map(|x| _fbb.create_string(x));
+        let battleBgmEnemyRush = self
+            .battleBgmEnemyRush
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let battleBgmBossRush = self
+            .battleBgmBossRush
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let imgLoadingNormalName = self
+            .imgLoadingNormalName
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let imgLoadingBaseName = self
+            .imgLoadingBaseName
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let imgUnloadingBaseName = self
+            .imgUnloadingBaseName
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let isChallengeOpen = self.isChallengeOpen;
+        let isRacingOpen = self.isRacingOpen;
+        let hasExploreMode = self.hasExploreMode;
+        let exploreModeBuffDescs = self.exploreModeBuffDescs.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let modeSelectTips = self.modeSelectTips.as_ref().map(|x| _fbb.create_string(x));
+        let stringRes = self.stringRes.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let diffList = self.diffList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let battlePreloadEnemies = self.battlePreloadEnemies.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let battleExcludedTrapsInRush = self.battleExcludedTrapsInRush.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SandboxV2BasicConst::create(
+            _fbb,
+            &clz_Torappu_SandboxV2BasicConstArgs {
+                staminaItemId,
+                goldItemId,
+                dimensioncoinItemId,
+                alwaysShowItemIdsConstruct,
+                alwaysShowItemIds,
+                bagBottomBarResType,
+                failedCookFood,
+                maxFoodDuration,
+                drinkCostOnce,
+                drinkMakeLimit,
+                specialMatWater,
+                workbenchMakeLimit,
+                logisticsPosLimit,
+                logisticsUnlockLevel,
+                logisticsDrinkCost,
+                logisticsEvacuateTips,
+                logisticsEvacuateWarning,
+                baseRepairCost,
+                portRepairCost,
+                unitFenceLimit,
+                unitRareFenceLimit,
+                cageId,
+                fenceId,
+                rareFenceId,
+                monthlyRushEntryText1,
+                monthlyEntryUnlockText,
+                monthlyEntryRiftText,
+                monthlyRushIntro,
+                monthlyCoin,
+                charRarityColorList,
+                squadCharCapacity,
+                totalSquadCnt,
+                toolboxCapacity,
+                toolCntLimitInSquad,
+                miniSquadCharCapacity,
+                miniSquadDrinkCost,
+                normalSquadDrinkCost,
+                emptySquadDrinkCost,
+                achieveTypeAll,
+                constructModeBgmHome,
+                battleBgmCollect,
+                battleBgmHunt,
+                battleBgmEnemyRush,
+                battleBgmBossRush,
+                imgLoadingNormalName,
+                imgLoadingBaseName,
+                imgUnloadingBaseName,
+                isChallengeOpen,
+                isRacingOpen,
+                hasExploreMode,
+                exploreModeBuffDescs,
+                modeSelectTips,
+                stringRes,
+                diffList,
+                battlePreloadEnemies,
+                battleExcludedTrapsInRush,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2RiftConstOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -21476,7 +27866,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2RiftConst<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -21554,6 +27944,45 @@ impl<'a> clz_Torappu_SandboxV2RiftConst<'a> {
         }
         builder.add_refreshRate(args.refreshRate);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2RiftConstT {
+        let refreshRate = self.refreshRate();
+        let randomDungeonId = self.randomDungeonId().map(|x| x.to_string());
+        let huntDungeonId = self.huntDungeonId().map(|x| x.to_string());
+        let subTargetRewardId = self.subTargetRewardId().map(|x| x.to_string());
+        let preyQuestRewardId = self.preyQuestRewardId().map(|x| x.to_string());
+        let dungeonSeasonId = self.dungeonSeasonId();
+        let fixedDungeonTypeName = self.fixedDungeonTypeName().map(|x| x.to_string());
+        let randomDungeonTypeName = self.randomDungeonTypeName().map(|x| x.to_string());
+        let preyDungeonTypeName = self.preyDungeonTypeName().map(|x| x.to_string());
+        let noTeamDescription = self.noTeamDescription().map(|x| x.to_string());
+        let noTeamName = self.noTeamName().map(|x| x.to_string());
+        let noTeamBackgroundId = self.noTeamBackgroundId().map(|x| x.to_string());
+        let noTeamSmallIconId = self.noTeamSmallIconId().map(|x| x.to_string());
+        let noTeamBigIconId = self.noTeamBigIconId().map(|x| x.to_string());
+        let messengerEnemyId = self.messengerEnemyId().map(|x| x.to_string());
+        let riftRushEnemyGroupLimit = self.riftRushEnemyGroupLimit();
+        let riftRushSpawnCd = self.riftRushSpawnCd();
+        clz_Torappu_SandboxV2RiftConstT {
+            refreshRate,
+            randomDungeonId,
+            huntDungeonId,
+            subTargetRewardId,
+            preyQuestRewardId,
+            dungeonSeasonId,
+            fixedDungeonTypeName,
+            randomDungeonTypeName,
+            preyDungeonTypeName,
+            noTeamDescription,
+            noTeamName,
+            noTeamBackgroundId,
+            noTeamSmallIconId,
+            noTeamBigIconId,
+            messengerEnemyId,
+            riftRushEnemyGroupLimit,
+            riftRushSpawnCd,
+        }
     }
 
     #[inline]
@@ -21897,6 +28326,85 @@ impl<'a> Default for clz_Torappu_SandboxV2RiftConstArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2RiftConst<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2RiftConst", 17)?;
+        s.serialize_field("refreshRate", &self.refreshRate())?;
+        if let Some(f) = self.randomDungeonId() {
+            s.serialize_field("randomDungeonId", &f)?;
+        } else {
+            s.skip_field("randomDungeonId")?;
+        }
+        if let Some(f) = self.huntDungeonId() {
+            s.serialize_field("huntDungeonId", &f)?;
+        } else {
+            s.skip_field("huntDungeonId")?;
+        }
+        if let Some(f) = self.subTargetRewardId() {
+            s.serialize_field("subTargetRewardId", &f)?;
+        } else {
+            s.skip_field("subTargetRewardId")?;
+        }
+        if let Some(f) = self.preyQuestRewardId() {
+            s.serialize_field("preyQuestRewardId", &f)?;
+        } else {
+            s.skip_field("preyQuestRewardId")?;
+        }
+        s.serialize_field("dungeonSeasonId", &self.dungeonSeasonId())?;
+        if let Some(f) = self.fixedDungeonTypeName() {
+            s.serialize_field("fixedDungeonTypeName", &f)?;
+        } else {
+            s.skip_field("fixedDungeonTypeName")?;
+        }
+        if let Some(f) = self.randomDungeonTypeName() {
+            s.serialize_field("randomDungeonTypeName", &f)?;
+        } else {
+            s.skip_field("randomDungeonTypeName")?;
+        }
+        if let Some(f) = self.preyDungeonTypeName() {
+            s.serialize_field("preyDungeonTypeName", &f)?;
+        } else {
+            s.skip_field("preyDungeonTypeName")?;
+        }
+        if let Some(f) = self.noTeamDescription() {
+            s.serialize_field("noTeamDescription", &f)?;
+        } else {
+            s.skip_field("noTeamDescription")?;
+        }
+        if let Some(f) = self.noTeamName() {
+            s.serialize_field("noTeamName", &f)?;
+        } else {
+            s.skip_field("noTeamName")?;
+        }
+        if let Some(f) = self.noTeamBackgroundId() {
+            s.serialize_field("noTeamBackgroundId", &f)?;
+        } else {
+            s.skip_field("noTeamBackgroundId")?;
+        }
+        if let Some(f) = self.noTeamSmallIconId() {
+            s.serialize_field("noTeamSmallIconId", &f)?;
+        } else {
+            s.skip_field("noTeamSmallIconId")?;
+        }
+        if let Some(f) = self.noTeamBigIconId() {
+            s.serialize_field("noTeamBigIconId", &f)?;
+        } else {
+            s.skip_field("noTeamBigIconId")?;
+        }
+        if let Some(f) = self.messengerEnemyId() {
+            s.serialize_field("messengerEnemyId", &f)?;
+        } else {
+            s.skip_field("messengerEnemyId")?;
+        }
+        s.serialize_field("riftRushEnemyGroupLimit", &self.riftRushEnemyGroupLimit())?;
+        s.serialize_field("riftRushSpawnCd", &self.riftRushSpawnCd())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2RiftConstBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -22074,6 +28582,123 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2RiftConst<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2RiftConstT {
+    pub refreshRate: i32,
+    pub randomDungeonId: Option<String>,
+    pub huntDungeonId: Option<String>,
+    pub subTargetRewardId: Option<String>,
+    pub preyQuestRewardId: Option<String>,
+    pub dungeonSeasonId: enum__Torappu_SandboxV2SeasonType,
+    pub fixedDungeonTypeName: Option<String>,
+    pub randomDungeonTypeName: Option<String>,
+    pub preyDungeonTypeName: Option<String>,
+    pub noTeamDescription: Option<String>,
+    pub noTeamName: Option<String>,
+    pub noTeamBackgroundId: Option<String>,
+    pub noTeamSmallIconId: Option<String>,
+    pub noTeamBigIconId: Option<String>,
+    pub messengerEnemyId: Option<String>,
+    pub riftRushEnemyGroupLimit: i32,
+    pub riftRushSpawnCd: i32,
+}
+impl Default for clz_Torappu_SandboxV2RiftConstT {
+    fn default() -> Self {
+        Self {
+            refreshRate: 0,
+            randomDungeonId: None,
+            huntDungeonId: None,
+            subTargetRewardId: None,
+            preyQuestRewardId: None,
+            dungeonSeasonId: enum__Torappu_SandboxV2SeasonType::NONE,
+            fixedDungeonTypeName: None,
+            randomDungeonTypeName: None,
+            preyDungeonTypeName: None,
+            noTeamDescription: None,
+            noTeamName: None,
+            noTeamBackgroundId: None,
+            noTeamSmallIconId: None,
+            noTeamBigIconId: None,
+            messengerEnemyId: None,
+            riftRushEnemyGroupLimit: 0,
+            riftRushSpawnCd: 0,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2RiftConstT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2RiftConst<'b>> {
+        let refreshRate = self.refreshRate;
+        let randomDungeonId = self.randomDungeonId.as_ref().map(|x| _fbb.create_string(x));
+        let huntDungeonId = self.huntDungeonId.as_ref().map(|x| _fbb.create_string(x));
+        let subTargetRewardId = self
+            .subTargetRewardId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let preyQuestRewardId = self
+            .preyQuestRewardId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let dungeonSeasonId = self.dungeonSeasonId;
+        let fixedDungeonTypeName = self
+            .fixedDungeonTypeName
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let randomDungeonTypeName = self
+            .randomDungeonTypeName
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let preyDungeonTypeName = self
+            .preyDungeonTypeName
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let noTeamDescription = self
+            .noTeamDescription
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let noTeamName = self.noTeamName.as_ref().map(|x| _fbb.create_string(x));
+        let noTeamBackgroundId = self
+            .noTeamBackgroundId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let noTeamSmallIconId = self
+            .noTeamSmallIconId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let noTeamBigIconId = self.noTeamBigIconId.as_ref().map(|x| _fbb.create_string(x));
+        let messengerEnemyId = self
+            .messengerEnemyId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let riftRushEnemyGroupLimit = self.riftRushEnemyGroupLimit;
+        let riftRushSpawnCd = self.riftRushSpawnCd;
+        clz_Torappu_SandboxV2RiftConst::create(
+            _fbb,
+            &clz_Torappu_SandboxV2RiftConstArgs {
+                refreshRate,
+                randomDungeonId,
+                huntDungeonId,
+                subTargetRewardId,
+                preyQuestRewardId,
+                dungeonSeasonId,
+                fixedDungeonTypeName,
+                randomDungeonTypeName,
+                preyDungeonTypeName,
+                noTeamDescription,
+                noTeamName,
+                noTeamBackgroundId,
+                noTeamSmallIconId,
+                noTeamBigIconId,
+                messengerEnemyId,
+                riftRushEnemyGroupLimit,
+                riftRushSpawnCd,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2DevelopmentConstOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -22086,7 +28711,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2DevelopmentConst<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -22106,6 +28731,11 @@ impl<'a> clz_Torappu_SandboxV2DevelopmentConst<'a> {
         let mut builder = clz_Torappu_SandboxV2DevelopmentConstBuilder::new(_fbb);
         builder.add_techPointsTotal(args.techPointsTotal);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2DevelopmentConstT {
+        let techPointsTotal = self.techPointsTotal();
+        clz_Torappu_SandboxV2DevelopmentConstT { techPointsTotal }
     }
 
     #[inline]
@@ -22144,6 +28774,17 @@ impl<'a> Default for clz_Torappu_SandboxV2DevelopmentConstArgs {
     #[inline]
     fn default() -> Self {
         clz_Torappu_SandboxV2DevelopmentConstArgs { techPointsTotal: 0 }
+    }
+}
+
+impl Serialize for clz_Torappu_SandboxV2DevelopmentConst<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2DevelopmentConst", 1)?;
+        s.serialize_field("techPointsTotal", &self.techPointsTotal())?;
+        s.end()
     }
 }
 
@@ -22187,6 +28828,28 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2DevelopmentConst<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2DevelopmentConstT {
+    pub techPointsTotal: i32,
+}
+impl Default for clz_Torappu_SandboxV2DevelopmentConstT {
+    fn default() -> Self {
+        Self { techPointsTotal: 0 }
+    }
+}
+impl clz_Torappu_SandboxV2DevelopmentConstT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2DevelopmentConst<'b>> {
+        let techPointsTotal = self.techPointsTotal;
+        clz_Torappu_SandboxV2DevelopmentConst::create(
+            _fbb,
+            &clz_Torappu_SandboxV2DevelopmentConstArgs { techPointsTotal },
+        )
+    }
+}
 pub enum clz_Torappu_TipDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -22199,7 +28862,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_TipData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -22225,6 +28888,17 @@ impl<'a> clz_Torappu_TipData<'a> {
             builder.add_tip(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_TipDataT {
+        let tip = self.tip().map(|x| x.to_string());
+        let weight = self.weight();
+        let category = self.category();
+        clz_Torappu_TipDataT {
+            tip,
+            weight,
+            category,
+        }
     }
 
     #[inline]
@@ -22295,6 +28969,23 @@ impl<'a> Default for clz_Torappu_TipDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_TipData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_TipData", 3)?;
+        if let Some(f) = self.tip() {
+            s.serialize_field("tip", &f)?;
+        } else {
+            s.skip_field("tip")?;
+        }
+        s.serialize_field("weight", &self.weight())?;
+        s.serialize_field("category", &self.category())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_TipDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -22344,6 +29035,40 @@ impl core::fmt::Debug for clz_Torappu_TipData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_TipDataT {
+    pub tip: Option<String>,
+    pub weight: f32,
+    pub category: enum__Torappu_TipData_Category,
+}
+impl Default for clz_Torappu_TipDataT {
+    fn default() -> Self {
+        Self {
+            tip: None,
+            weight: 0.0,
+            category: enum__Torappu_TipData_Category::NONE,
+        }
+    }
+}
+impl clz_Torappu_TipDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_TipData<'b>> {
+        let tip = self.tip.as_ref().map(|x| _fbb.create_string(x));
+        let weight = self.weight;
+        let category = self.category;
+        clz_Torappu_TipData::create(
+            _fbb,
+            &clz_Torappu_TipDataArgs {
+                tip,
+                weight,
+                category,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_RuneData_SelectorOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -22356,7 +29081,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_RuneData_Selector<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -22432,6 +29157,69 @@ impl<'a> clz_Torappu_RuneData_Selector<'a> {
         builder.add_professionMask(args.professionMask);
         builder.add_playerSideMask(args.playerSideMask);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_RuneData_SelectorT {
+        let professionMask = self.professionMask();
+        let buildableMask = self.buildableMask();
+        let playerSideMask = self.playerSideMask();
+        let sideType = self.sideType();
+        let charIdFilter = self
+            .charIdFilter()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let enemyIdFilter = self
+            .enemyIdFilter()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let enemyIdExcludeFilter = self
+            .enemyIdExcludeFilter()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let enemyLevelTypeFilter = self
+            .enemyLevelTypeFilter()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let enemyActionHiddenGroupFilter = self
+            .enemyActionHiddenGroupFilter()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let skillIdFilter = self
+            .skillIdFilter()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let tileKeyFilter = self
+            .tileKeyFilter()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let groupTagFilter = self
+            .groupTagFilter()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let filterTagFilter = self
+            .filterTagFilter()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let filterTagExcludeFilter = self
+            .filterTagExcludeFilter()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let subProfessionExcludeFilter = self
+            .subProfessionExcludeFilter()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let mapTagFilter = self
+            .mapTagFilter()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let heightTypeMask = self.heightTypeMask();
+        clz_Torappu_RuneData_SelectorT {
+            professionMask,
+            buildableMask,
+            playerSideMask,
+            sideType,
+            charIdFilter,
+            enemyIdFilter,
+            enemyIdExcludeFilter,
+            enemyLevelTypeFilter,
+            enemyActionHiddenGroupFilter,
+            skillIdFilter,
+            tileKeyFilter,
+            groupTagFilter,
+            filterTagFilter,
+            filterTagExcludeFilter,
+            subProfessionExcludeFilter,
+            mapTagFilter,
+            heightTypeMask,
+        }
     }
 
     #[inline]
@@ -22820,6 +29608,81 @@ impl<'a> Default for clz_Torappu_RuneData_SelectorArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_RuneData_Selector<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_RuneData_Selector", 17)?;
+        s.serialize_field("professionMask", &self.professionMask())?;
+        s.serialize_field("buildableMask", &self.buildableMask())?;
+        s.serialize_field("playerSideMask", &self.playerSideMask())?;
+        s.serialize_field("sideType", &self.sideType())?;
+        if let Some(f) = self.charIdFilter() {
+            s.serialize_field("charIdFilter", &f)?;
+        } else {
+            s.skip_field("charIdFilter")?;
+        }
+        if let Some(f) = self.enemyIdFilter() {
+            s.serialize_field("enemyIdFilter", &f)?;
+        } else {
+            s.skip_field("enemyIdFilter")?;
+        }
+        if let Some(f) = self.enemyIdExcludeFilter() {
+            s.serialize_field("enemyIdExcludeFilter", &f)?;
+        } else {
+            s.skip_field("enemyIdExcludeFilter")?;
+        }
+        if let Some(f) = self.enemyLevelTypeFilter() {
+            s.serialize_field("enemyLevelTypeFilter", &f)?;
+        } else {
+            s.skip_field("enemyLevelTypeFilter")?;
+        }
+        if let Some(f) = self.enemyActionHiddenGroupFilter() {
+            s.serialize_field("enemyActionHiddenGroupFilter", &f)?;
+        } else {
+            s.skip_field("enemyActionHiddenGroupFilter")?;
+        }
+        if let Some(f) = self.skillIdFilter() {
+            s.serialize_field("skillIdFilter", &f)?;
+        } else {
+            s.skip_field("skillIdFilter")?;
+        }
+        if let Some(f) = self.tileKeyFilter() {
+            s.serialize_field("tileKeyFilter", &f)?;
+        } else {
+            s.skip_field("tileKeyFilter")?;
+        }
+        if let Some(f) = self.groupTagFilter() {
+            s.serialize_field("groupTagFilter", &f)?;
+        } else {
+            s.skip_field("groupTagFilter")?;
+        }
+        if let Some(f) = self.filterTagFilter() {
+            s.serialize_field("filterTagFilter", &f)?;
+        } else {
+            s.skip_field("filterTagFilter")?;
+        }
+        if let Some(f) = self.filterTagExcludeFilter() {
+            s.serialize_field("filterTagExcludeFilter", &f)?;
+        } else {
+            s.skip_field("filterTagExcludeFilter")?;
+        }
+        if let Some(f) = self.subProfessionExcludeFilter() {
+            s.serialize_field("subProfessionExcludeFilter", &f)?;
+        } else {
+            s.skip_field("subProfessionExcludeFilter")?;
+        }
+        if let Some(f) = self.mapTagFilter() {
+            s.serialize_field("mapTagFilter", &f)?;
+        } else {
+            s.skip_field("mapTagFilter")?;
+        }
+        s.serialize_field("heightTypeMask", &self.heightTypeMask())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_RuneData_SelectorBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -23056,6 +29919,132 @@ impl core::fmt::Debug for clz_Torappu_RuneData_Selector<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_RuneData_SelectorT {
+    pub professionMask: enum__Torappu_ProfessionCategory,
+    pub buildableMask: enum__Torappu_BuildableType,
+    pub playerSideMask: enum__Torappu_PlayerSideMask,
+    pub sideType: enum__Torappu_Battle_SideType,
+    pub charIdFilter: Option<Vec<String>>,
+    pub enemyIdFilter: Option<Vec<String>>,
+    pub enemyIdExcludeFilter: Option<Vec<String>>,
+    pub enemyLevelTypeFilter: Option<Vec<String>>,
+    pub enemyActionHiddenGroupFilter: Option<Vec<String>>,
+    pub skillIdFilter: Option<Vec<String>>,
+    pub tileKeyFilter: Option<Vec<String>>,
+    pub groupTagFilter: Option<Vec<String>>,
+    pub filterTagFilter: Option<Vec<String>>,
+    pub filterTagExcludeFilter: Option<Vec<String>>,
+    pub subProfessionExcludeFilter: Option<Vec<String>>,
+    pub mapTagFilter: Option<Vec<String>>,
+    pub heightTypeMask: enum__Torappu_TileData_HeightTypeMask,
+}
+impl Default for clz_Torappu_RuneData_SelectorT {
+    fn default() -> Self {
+        Self {
+            professionMask: enum__Torappu_ProfessionCategory::NONE,
+            buildableMask: enum__Torappu_BuildableType::NONE,
+            playerSideMask: enum__Torappu_PlayerSideMask::ALL,
+            sideType: enum__Torappu_Battle_SideType::NONE,
+            charIdFilter: None,
+            enemyIdFilter: None,
+            enemyIdExcludeFilter: None,
+            enemyLevelTypeFilter: None,
+            enemyActionHiddenGroupFilter: None,
+            skillIdFilter: None,
+            tileKeyFilter: None,
+            groupTagFilter: None,
+            filterTagFilter: None,
+            filterTagExcludeFilter: None,
+            subProfessionExcludeFilter: None,
+            mapTagFilter: None,
+            heightTypeMask: enum__Torappu_TileData_HeightTypeMask::NONE,
+        }
+    }
+}
+impl clz_Torappu_RuneData_SelectorT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_RuneData_Selector<'b>> {
+        let professionMask = self.professionMask;
+        let buildableMask = self.buildableMask;
+        let playerSideMask = self.playerSideMask;
+        let sideType = self.sideType;
+        let charIdFilter = self.charIdFilter.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let enemyIdFilter = self.enemyIdFilter.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let enemyIdExcludeFilter = self.enemyIdExcludeFilter.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let enemyLevelTypeFilter = self.enemyLevelTypeFilter.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let enemyActionHiddenGroupFilter = self.enemyActionHiddenGroupFilter.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let skillIdFilter = self.skillIdFilter.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let tileKeyFilter = self.tileKeyFilter.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let groupTagFilter = self.groupTagFilter.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let filterTagFilter = self.filterTagFilter.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let filterTagExcludeFilter = self.filterTagExcludeFilter.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let subProfessionExcludeFilter = self.subProfessionExcludeFilter.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let mapTagFilter = self.mapTagFilter.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let heightTypeMask = self.heightTypeMask;
+        clz_Torappu_RuneData_Selector::create(
+            _fbb,
+            &clz_Torappu_RuneData_SelectorArgs {
+                professionMask,
+                buildableMask,
+                playerSideMask,
+                sideType,
+                charIdFilter,
+                enemyIdFilter,
+                enemyIdExcludeFilter,
+                enemyLevelTypeFilter,
+                enemyActionHiddenGroupFilter,
+                skillIdFilter,
+                tileKeyFilter,
+                groupTagFilter,
+                filterTagFilter,
+                filterTagExcludeFilter,
+                subProfessionExcludeFilter,
+                mapTagFilter,
+                heightTypeMask,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_Blackboard_DataPairOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -23068,7 +30057,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_Blackboard_DataPair<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -23096,6 +30085,17 @@ impl<'a> clz_Torappu_Blackboard_DataPair<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Blackboard_DataPairT {
+        let key = self.key().map(|x| x.to_string());
+        let value = self.value();
+        let valueStr = self.valueStr().map(|x| x.to_string());
+        clz_Torappu_Blackboard_DataPairT {
+            key,
+            value,
+            valueStr,
+        }
     }
 
     #[inline]
@@ -23170,6 +30170,27 @@ impl<'a> Default for clz_Torappu_Blackboard_DataPairArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_Blackboard_DataPair<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_Blackboard_DataPair", 3)?;
+        if let Some(f) = self.key() {
+            s.serialize_field("key", &f)?;
+        } else {
+            s.skip_field("key")?;
+        }
+        s.serialize_field("value", &self.value())?;
+        if let Some(f) = self.valueStr() {
+            s.serialize_field("valueStr", &f)?;
+        } else {
+            s.skip_field("valueStr")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_Blackboard_DataPairBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -23220,6 +30241,40 @@ impl core::fmt::Debug for clz_Torappu_Blackboard_DataPair<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Blackboard_DataPairT {
+    pub key: Option<String>,
+    pub value: f32,
+    pub valueStr: Option<String>,
+}
+impl Default for clz_Torappu_Blackboard_DataPairT {
+    fn default() -> Self {
+        Self {
+            key: None,
+            value: 0.0,
+            valueStr: None,
+        }
+    }
+}
+impl clz_Torappu_Blackboard_DataPairT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_Blackboard_DataPair<'b>> {
+        let key = self.key.as_ref().map(|x| _fbb.create_string(x));
+        let value = self.value;
+        let valueStr = self.valueStr.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_Blackboard_DataPair::create(
+            _fbb,
+            &clz_Torappu_Blackboard_DataPairArgs {
+                key,
+                value,
+                valueStr,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_RuneDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -23232,7 +30287,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_RuneData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -23262,6 +30317,19 @@ impl<'a> clz_Torappu_RuneData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_RuneDataT {
+        let key = self.key().map(|x| x.to_string());
+        let selector = self.selector().map(|x| Box::new(x.unpack()));
+        let blackboard = self
+            .blackboard()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_RuneDataT {
+            key,
+            selector,
+            blackboard,
+        }
     }
 
     #[inline]
@@ -23354,6 +30422,31 @@ impl<'a> Default for clz_Torappu_RuneDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_RuneData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_RuneData", 3)?;
+        if let Some(f) = self.key() {
+            s.serialize_field("key", &f)?;
+        } else {
+            s.skip_field("key")?;
+        }
+        if let Some(f) = self.selector() {
+            s.serialize_field("selector", &f)?;
+        } else {
+            s.skip_field("selector")?;
+        }
+        if let Some(f) = self.blackboard() {
+            s.serialize_field("blackboard", &f)?;
+        } else {
+            s.skip_field("blackboard")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_RuneDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -23416,6 +30509,43 @@ impl core::fmt::Debug for clz_Torappu_RuneData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_RuneDataT {
+    pub key: Option<String>,
+    pub selector: Option<Box<clz_Torappu_RuneData_SelectorT>>,
+    pub blackboard: Option<Vec<clz_Torappu_Blackboard_DataPairT>>,
+}
+impl Default for clz_Torappu_RuneDataT {
+    fn default() -> Self {
+        Self {
+            key: None,
+            selector: None,
+            blackboard: None,
+        }
+    }
+}
+impl clz_Torappu_RuneDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_RuneData<'b>> {
+        let key = self.key.as_ref().map(|x| _fbb.create_string(x));
+        let selector = self.selector.as_ref().map(|x| x.pack(_fbb));
+        let blackboard = self.blackboard.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_RuneData::create(
+            _fbb,
+            &clz_Torappu_RuneDataArgs {
+                key,
+                selector,
+                blackboard,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_RuneTable_PackedRuneDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -23428,7 +30558,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_RuneTable_PackedRuneData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -23464,6 +30594,21 @@ impl<'a> clz_Torappu_RuneTable_PackedRuneData<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_RuneTable_PackedRuneDataT {
+        let id = self.id().map(|x| x.to_string());
+        let points = self.points();
+        let mutexGroupKey = self.mutexGroupKey().map(|x| x.to_string());
+        let description = self.description().map(|x| x.to_string());
+        let runes = self.runes().map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_RuneTable_PackedRuneDataT {
+            id,
+            points,
+            mutexGroupKey,
+            description,
+            runes,
+        }
     }
 
     #[inline]
@@ -23580,6 +30725,37 @@ impl<'a> Default for clz_Torappu_RuneTable_PackedRuneDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_RuneTable_PackedRuneData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_RuneTable_PackedRuneData", 5)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        s.serialize_field("points", &self.points())?;
+        if let Some(f) = self.mutexGroupKey() {
+            s.serialize_field("mutexGroupKey", &f)?;
+        } else {
+            s.skip_field("mutexGroupKey")?;
+        }
+        if let Some(f) = self.description() {
+            s.serialize_field("description", &f)?;
+        } else {
+            s.skip_field("description")?;
+        }
+        if let Some(f) = self.runes() {
+            s.serialize_field("runes", &f)?;
+        } else {
+            s.skip_field("runes")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_RuneTable_PackedRuneDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -23653,6 +30829,51 @@ impl core::fmt::Debug for clz_Torappu_RuneTable_PackedRuneData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_RuneTable_PackedRuneDataT {
+    pub id: Option<String>,
+    pub points: f32,
+    pub mutexGroupKey: Option<String>,
+    pub description: Option<String>,
+    pub runes: Option<Vec<clz_Torappu_RuneDataT>>,
+}
+impl Default for clz_Torappu_RuneTable_PackedRuneDataT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            points: 0.0,
+            mutexGroupKey: None,
+            description: None,
+            runes: None,
+        }
+    }
+}
+impl clz_Torappu_RuneTable_PackedRuneDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_RuneTable_PackedRuneData<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let points = self.points;
+        let mutexGroupKey = self.mutexGroupKey.as_ref().map(|x| _fbb.create_string(x));
+        let description = self.description.as_ref().map(|x| _fbb.create_string(x));
+        let runes = self.runes.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_RuneTable_PackedRuneData::create(
+            _fbb,
+            &clz_Torappu_RuneTable_PackedRuneDataArgs {
+                id,
+                points,
+                mutexGroupKey,
+                description,
+                runes,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_RuneTable_PackedRuneDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -23665,7 +30886,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_RuneTable_PackedR
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -23691,6 +30912,15 @@ impl<'a> dict__string__clz_Torappu_RuneTable_PackedRuneData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_RuneTable_PackedRuneDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_RuneTable_PackedRuneDataT { key, value }
     }
 
     #[inline]
@@ -23767,6 +30997,23 @@ impl<'a> Default for dict__string__clz_Torappu_RuneTable_PackedRuneDataArgs<'a> 
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_RuneTable_PackedRuneData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_RuneTable_PackedRuneData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_RuneTable_PackedRuneDataBuilder<
     'a: 'b,
     'b,
@@ -23828,6 +31075,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_RuneTable_PackedRuneData<'_>
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_RuneTable_PackedRuneDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_RuneTable_PackedRuneDataT>>,
+}
+impl Default for dict__string__clz_Torappu_RuneTable_PackedRuneDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_RuneTable_PackedRuneDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_RuneTable_PackedRuneData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_RuneTable_PackedRuneData::create(
+            _fbb,
+            &dict__string__clz_Torappu_RuneTable_PackedRuneDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_LegacyInLevelRuneDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -23840,7 +31117,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_LegacyInLevelRuneData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -23872,6 +31149,23 @@ impl<'a> clz_Torappu_LegacyInLevelRuneData<'a> {
         }
         builder.add_difficultyMask(args.difficultyMask);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_LegacyInLevelRuneDataT {
+        let difficultyMask = self.difficultyMask();
+        let key = self.key().map(|x| x.to_string());
+        let professionMask = self.professionMask();
+        let buildableMask = self.buildableMask();
+        let blackboard = self
+            .blackboard()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_LegacyInLevelRuneDataT {
+            difficultyMask,
+            key,
+            professionMask,
+            buildableMask,
+            blackboard,
+        }
     }
 
     #[inline]
@@ -24009,6 +31303,29 @@ impl<'a> Default for clz_Torappu_LegacyInLevelRuneDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_LegacyInLevelRuneData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_LegacyInLevelRuneData", 5)?;
+        s.serialize_field("difficultyMask", &self.difficultyMask())?;
+        if let Some(f) = self.key() {
+            s.serialize_field("key", &f)?;
+        } else {
+            s.skip_field("key")?;
+        }
+        s.serialize_field("professionMask", &self.professionMask())?;
+        s.serialize_field("buildableMask", &self.buildableMask())?;
+        if let Some(f) = self.blackboard() {
+            s.serialize_field("blackboard", &f)?;
+        } else {
+            s.skip_field("blackboard")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_LegacyInLevelRuneDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -24090,6 +31407,51 @@ impl core::fmt::Debug for clz_Torappu_LegacyInLevelRuneData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_LegacyInLevelRuneDataT {
+    pub difficultyMask: enum__Torappu_LevelData_Difficulty,
+    pub key: Option<String>,
+    pub professionMask: enum__Torappu_ProfessionCategory,
+    pub buildableMask: enum__Torappu_BuildableType,
+    pub blackboard: Option<Vec<clz_Torappu_Blackboard_DataPairT>>,
+}
+impl Default for clz_Torappu_LegacyInLevelRuneDataT {
+    fn default() -> Self {
+        Self {
+            difficultyMask: enum__Torappu_LevelData_Difficulty::NONE,
+            key: None,
+            professionMask: enum__Torappu_ProfessionCategory::NONE,
+            buildableMask: enum__Torappu_BuildableType::NONE,
+            blackboard: None,
+        }
+    }
+}
+impl clz_Torappu_LegacyInLevelRuneDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_LegacyInLevelRuneData<'b>> {
+        let difficultyMask = self.difficultyMask;
+        let key = self.key.as_ref().map(|x| _fbb.create_string(x));
+        let professionMask = self.professionMask;
+        let buildableMask = self.buildableMask;
+        let blackboard = self.blackboard.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_LegacyInLevelRuneData::create(
+            _fbb,
+            &clz_Torappu_LegacyInLevelRuneDataArgs {
+                difficultyMask,
+                key,
+                professionMask,
+                buildableMask,
+                blackboard,
+            },
+        )
+    }
+}
 pub enum dict__string__list_clz_Torappu_LegacyInLevelRuneDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -24102,7 +31464,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__list_clz_Torappu_LegacyInLeve
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -24128,6 +31490,15 @@ impl<'a> dict__string__list_clz_Torappu_LegacyInLevelRuneData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__list_clz_Torappu_LegacyInLevelRuneDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| x.iter().map(|t| t.unpack()).collect());
+        dict__string__list_clz_Torappu_LegacyInLevelRuneDataT { key, value }
     }
 
     #[inline]
@@ -24223,6 +31594,23 @@ impl<'a> Default for dict__string__list_clz_Torappu_LegacyInLevelRuneDataArgs<'a
     }
 }
 
+impl Serialize for dict__string__list_clz_Torappu_LegacyInLevelRuneData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("dict__string__list_clz_Torappu_LegacyInLevelRuneData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__list_clz_Torappu_LegacyInLevelRuneDataBuilder<
     'a: 'b,
     'b,
@@ -24288,6 +31676,39 @@ impl core::fmt::Debug for dict__string__list_clz_Torappu_LegacyInLevelRuneData<'
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__list_clz_Torappu_LegacyInLevelRuneDataT {
+    pub key: String,
+    pub value: Option<Vec<clz_Torappu_LegacyInLevelRuneDataT>>,
+}
+impl Default for dict__string__list_clz_Torappu_LegacyInLevelRuneDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__list_clz_Torappu_LegacyInLevelRuneDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__list_clz_Torappu_LegacyInLevelRuneData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        dict__string__list_clz_Torappu_LegacyInLevelRuneData::create(
+            _fbb,
+            &dict__string__list_clz_Torappu_LegacyInLevelRuneDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2QuestDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -24300,7 +31721,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2QuestData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -24350,6 +31771,31 @@ impl<'a> clz_Torappu_SandboxV2QuestData<'a> {
         }
         builder.add_isDisplay(args.isDisplay);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2QuestDataT {
+        let questId = self.questId().map(|x| x.to_string());
+        let questLine = self.questLine().map(|x| x.to_string());
+        let questTitle = self.questTitle().map(|x| x.to_string());
+        let questDesc = self.questDesc().map(|x| x.to_string());
+        let questTargetDesc = self.questTargetDesc().map(|x| x.to_string());
+        let isDisplay = self.isDisplay();
+        let questRouteType = self.questRouteType();
+        let questLineType = self.questLineType();
+        let questRouteParam = self.questRouteParam().map(|x| x.to_string());
+        let showProgressIndex = self.showProgressIndex();
+        clz_Torappu_SandboxV2QuestDataT {
+            questId,
+            questLine,
+            questTitle,
+            questDesc,
+            questTargetDesc,
+            isDisplay,
+            questRouteType,
+            questLineType,
+            questRouteParam,
+            showProgressIndex,
+        }
     }
 
     #[inline]
@@ -24559,6 +32005,50 @@ impl<'a> Default for clz_Torappu_SandboxV2QuestDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2QuestData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2QuestData", 10)?;
+        if let Some(f) = self.questId() {
+            s.serialize_field("questId", &f)?;
+        } else {
+            s.skip_field("questId")?;
+        }
+        if let Some(f) = self.questLine() {
+            s.serialize_field("questLine", &f)?;
+        } else {
+            s.skip_field("questLine")?;
+        }
+        if let Some(f) = self.questTitle() {
+            s.serialize_field("questTitle", &f)?;
+        } else {
+            s.skip_field("questTitle")?;
+        }
+        if let Some(f) = self.questDesc() {
+            s.serialize_field("questDesc", &f)?;
+        } else {
+            s.skip_field("questDesc")?;
+        }
+        if let Some(f) = self.questTargetDesc() {
+            s.serialize_field("questTargetDesc", &f)?;
+        } else {
+            s.skip_field("questTargetDesc")?;
+        }
+        s.serialize_field("isDisplay", &self.isDisplay())?;
+        s.serialize_field("questRouteType", &self.questRouteType())?;
+        s.serialize_field("questLineType", &self.questLineType())?;
+        if let Some(f) = self.questRouteParam() {
+            s.serialize_field("questRouteParam", &f)?;
+        } else {
+            s.skip_field("questRouteParam")?;
+        }
+        s.serialize_field("showProgressIndex", &self.showProgressIndex())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2QuestDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -24672,6 +32162,68 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2QuestData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2QuestDataT {
+    pub questId: Option<String>,
+    pub questLine: Option<String>,
+    pub questTitle: Option<String>,
+    pub questDesc: Option<String>,
+    pub questTargetDesc: Option<String>,
+    pub isDisplay: bool,
+    pub questRouteType: enum__Torappu_SandboxV2QuestRouteType,
+    pub questLineType: enum__Torappu_SandboxV2QuestLineType,
+    pub questRouteParam: Option<String>,
+    pub showProgressIndex: i32,
+}
+impl Default for clz_Torappu_SandboxV2QuestDataT {
+    fn default() -> Self {
+        Self {
+            questId: None,
+            questLine: None,
+            questTitle: None,
+            questDesc: None,
+            questTargetDesc: None,
+            isDisplay: false,
+            questRouteType: enum__Torappu_SandboxV2QuestRouteType::NONE,
+            questLineType: enum__Torappu_SandboxV2QuestLineType::NONE,
+            questRouteParam: None,
+            showProgressIndex: 0,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2QuestDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2QuestData<'b>> {
+        let questId = self.questId.as_ref().map(|x| _fbb.create_string(x));
+        let questLine = self.questLine.as_ref().map(|x| _fbb.create_string(x));
+        let questTitle = self.questTitle.as_ref().map(|x| _fbb.create_string(x));
+        let questDesc = self.questDesc.as_ref().map(|x| _fbb.create_string(x));
+        let questTargetDesc = self.questTargetDesc.as_ref().map(|x| _fbb.create_string(x));
+        let isDisplay = self.isDisplay;
+        let questRouteType = self.questRouteType;
+        let questLineType = self.questLineType;
+        let questRouteParam = self.questRouteParam.as_ref().map(|x| _fbb.create_string(x));
+        let showProgressIndex = self.showProgressIndex;
+        clz_Torappu_SandboxV2QuestData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2QuestDataArgs {
+                questId,
+                questLine,
+                questTitle,
+                questDesc,
+                questTargetDesc,
+                isDisplay,
+                questRouteType,
+                questLineType,
+                questRouteParam,
+                showProgressIndex,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2QuestDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -24684,7 +32236,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2QuestDat
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -24710,6 +32262,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2QuestData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2QuestDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2QuestDataT { key, value }
     }
 
     #[inline]
@@ -24783,6 +32344,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2QuestDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2QuestData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2QuestData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2QuestDataBuilder<
     'a: 'b,
     'b,
@@ -24841,6 +32419,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2QuestData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2QuestDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2QuestDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2QuestDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2QuestDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2QuestData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2QuestData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2QuestDataArgs { key, value },
+        )
+    }
+}
 pub enum dict__enum__Torappu_BattleDialogType__stringOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -24853,7 +32461,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__enum__Torappu_BattleDialogType__strin
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -24877,6 +32485,12 @@ impl<'a> dict__enum__Torappu_BattleDialogType__string<'a> {
         }
         builder.add_key(args.key);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__enum__Torappu_BattleDialogType__stringT {
+        let key = self.key();
+        let value = self.value().map(|x| x.to_string());
+        dict__enum__Torappu_BattleDialogType__stringT { key, value }
     }
 
     #[inline]
@@ -24948,6 +32562,23 @@ impl<'a> Default for dict__enum__Torappu_BattleDialogType__stringArgs<'a> {
     }
 }
 
+impl Serialize for dict__enum__Torappu_BattleDialogType__string<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__enum__Torappu_BattleDialogType__string", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__enum__Torappu_BattleDialogType__stringBuilder<
     'a: 'b,
     'b,
@@ -25001,6 +32632,33 @@ impl core::fmt::Debug for dict__enum__Torappu_BattleDialogType__string<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__enum__Torappu_BattleDialogType__stringT {
+    pub key: enum__Torappu_BattleDialogType,
+    pub value: Option<String>,
+}
+impl Default for dict__enum__Torappu_BattleDialogType__stringT {
+    fn default() -> Self {
+        Self {
+            key: enum__Torappu_BattleDialogType::NONE,
+            value: None,
+        }
+    }
+}
+impl dict__enum__Torappu_BattleDialogType__stringT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__enum__Torappu_BattleDialogType__string<'b>> {
+        let key = self.key;
+        let value = self.value.as_ref().map(|x| _fbb.create_string(x));
+        dict__enum__Torappu_BattleDialogType__string::create(
+            _fbb,
+            &dict__enum__Torappu_BattleDialogType__stringArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2NpcDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -25013,7 +32671,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2NpcData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -25063,6 +32721,33 @@ impl<'a> clz_Torappu_SandboxV2NpcData<'a> {
         }
         builder.add_showPic(args.showPic);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2NpcDataT {
+        let npcId = self.npcId().map(|x| x.to_string());
+        let trapId = self.trapId().map(|x| x.to_string());
+        let npcType = self.npcType();
+        let dialogIds = self
+            .dialogIds()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let npcLocation = self.npcLocation().map(|x| x.into_iter().collect());
+        let npcOrientation = self.npcOrientation();
+        let picId = self.picId().map(|x| x.to_string());
+        let picName = self.picName().map(|x| x.to_string());
+        let showPic = self.showPic();
+        let reactSkillIndex = self.reactSkillIndex();
+        clz_Torappu_SandboxV2NpcDataT {
+            npcId,
+            trapId,
+            npcType,
+            dialogIds,
+            npcLocation,
+            npcOrientation,
+            picId,
+            picName,
+            showPic,
+            reactSkillIndex,
+        }
     }
 
     #[inline]
@@ -25271,6 +32956,50 @@ impl<'a> Default for clz_Torappu_SandboxV2NpcDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2NpcData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2NpcData", 10)?;
+        if let Some(f) = self.npcId() {
+            s.serialize_field("npcId", &f)?;
+        } else {
+            s.skip_field("npcId")?;
+        }
+        if let Some(f) = self.trapId() {
+            s.serialize_field("trapId", &f)?;
+        } else {
+            s.skip_field("trapId")?;
+        }
+        s.serialize_field("npcType", &self.npcType())?;
+        if let Some(f) = self.dialogIds() {
+            s.serialize_field("dialogIds", &f)?;
+        } else {
+            s.skip_field("dialogIds")?;
+        }
+        if let Some(f) = self.npcLocation() {
+            s.serialize_field("npcLocation", &f)?;
+        } else {
+            s.skip_field("npcLocation")?;
+        }
+        s.serialize_field("npcOrientation", &self.npcOrientation())?;
+        if let Some(f) = self.picId() {
+            s.serialize_field("picId", &f)?;
+        } else {
+            s.skip_field("picId")?;
+        }
+        if let Some(f) = self.picName() {
+            s.serialize_field("picName", &f)?;
+        } else {
+            s.skip_field("picName")?;
+        }
+        s.serialize_field("showPic", &self.showPic())?;
+        s.serialize_field("reactSkillIndex", &self.reactSkillIndex())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2NpcDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -25391,6 +33120,71 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2NpcData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2NpcDataT {
+    pub npcId: Option<String>,
+    pub trapId: Option<String>,
+    pub npcType: enum__Torappu_SandboxV2NpcType,
+    pub dialogIds: Option<Vec<dict__enum__Torappu_BattleDialogType__stringT>>,
+    pub npcLocation: Option<Vec<i32>>,
+    pub npcOrientation: enum__Torappu_SharedConsts_Direction,
+    pub picId: Option<String>,
+    pub picName: Option<String>,
+    pub showPic: bool,
+    pub reactSkillIndex: i32,
+}
+impl Default for clz_Torappu_SandboxV2NpcDataT {
+    fn default() -> Self {
+        Self {
+            npcId: None,
+            trapId: None,
+            npcType: enum__Torappu_SandboxV2NpcType::NORMAL,
+            dialogIds: None,
+            npcLocation: None,
+            npcOrientation: enum__Torappu_SharedConsts_Direction::UP,
+            picId: None,
+            picName: None,
+            showPic: false,
+            reactSkillIndex: 0,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2NpcDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2NpcData<'b>> {
+        let npcId = self.npcId.as_ref().map(|x| _fbb.create_string(x));
+        let trapId = self.trapId.as_ref().map(|x| _fbb.create_string(x));
+        let npcType = self.npcType;
+        let dialogIds = self.dialogIds.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let npcLocation = self.npcLocation.as_ref().map(|x| _fbb.create_vector(x));
+        let npcOrientation = self.npcOrientation;
+        let picId = self.picId.as_ref().map(|x| _fbb.create_string(x));
+        let picName = self.picName.as_ref().map(|x| _fbb.create_string(x));
+        let showPic = self.showPic;
+        let reactSkillIndex = self.reactSkillIndex;
+        clz_Torappu_SandboxV2NpcData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2NpcDataArgs {
+                npcId,
+                trapId,
+                npcType,
+                dialogIds,
+                npcLocation,
+                npcOrientation,
+                picId,
+                picName,
+                showPic,
+                reactSkillIndex,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2NpcDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -25403,7 +33197,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2NpcData<
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -25429,6 +33223,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2NpcData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2NpcDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2NpcDataT { key, value }
     }
 
     #[inline]
@@ -25502,6 +33305,22 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2NpcDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2NpcData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2NpcData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2NpcDataBuilder<
     'a: 'b,
     'b,
@@ -25555,6 +33374,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2NpcData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2NpcDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2NpcDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2NpcDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2NpcDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2NpcData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2NpcData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2NpcDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2DialogDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -25567,7 +33416,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2DialogData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -25593,6 +33442,12 @@ impl<'a> clz_Torappu_SandboxV2DialogData<'a> {
             builder.add_dialogId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2DialogDataT {
+        let dialogId = self.dialogId().map(|x| x.to_string());
+        let avgId = self.avgId().map(|x| x.to_string());
+        clz_Torappu_SandboxV2DialogDataT { dialogId, avgId }
     }
 
     #[inline]
@@ -25653,6 +33508,26 @@ impl<'a> Default for clz_Torappu_SandboxV2DialogDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2DialogData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2DialogData", 2)?;
+        if let Some(f) = self.dialogId() {
+            s.serialize_field("dialogId", &f)?;
+        } else {
+            s.skip_field("dialogId")?;
+        }
+        if let Some(f) = self.avgId() {
+            s.serialize_field("avgId", &f)?;
+        } else {
+            s.skip_field("avgId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2DialogDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -25697,6 +33572,33 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2DialogData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2DialogDataT {
+    pub dialogId: Option<String>,
+    pub avgId: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2DialogDataT {
+    fn default() -> Self {
+        Self {
+            dialogId: None,
+            avgId: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2DialogDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2DialogData<'b>> {
+        let dialogId = self.dialogId.as_ref().map(|x| _fbb.create_string(x));
+        let avgId = self.avgId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2DialogData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2DialogDataArgs { dialogId, avgId },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2DialogDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -25709,7 +33611,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2DialogDa
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -25735,6 +33637,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2DialogData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2DialogDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2DialogDataT { key, value }
     }
 
     #[inline]
@@ -25808,6 +33719,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2DialogDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2DialogData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2DialogData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2DialogDataBuilder<
     'a: 'b,
     'b,
@@ -25869,6 +33797,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2DialogData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2DialogDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2DialogDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2DialogDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2DialogDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2DialogData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2DialogData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2DialogDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2QuestLineDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -25881,7 +33839,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2QuestLineData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -25919,6 +33877,25 @@ impl<'a> clz_Torappu_SandboxV2QuestLineData<'a> {
             builder.add_questLineId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2QuestLineDataT {
+        let questLineId = self.questLineId().map(|x| x.to_string());
+        let questLineTitle = self.questLineTitle().map(|x| x.to_string());
+        let questLineType = self.questLineType();
+        let questLineBadgeType = self.questLineBadgeType();
+        let questLineScopeType = self.questLineScopeType();
+        let questLineDesc = self.questLineDesc().map(|x| x.to_string());
+        let sortId = self.sortId();
+        clz_Torappu_SandboxV2QuestLineDataT {
+            questLineId,
+            questLineTitle,
+            questLineType,
+            questLineBadgeType,
+            questLineScopeType,
+            questLineDesc,
+            sortId,
+        }
     }
 
     #[inline]
@@ -26079,6 +34056,35 @@ impl<'a> Default for clz_Torappu_SandboxV2QuestLineDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2QuestLineData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2QuestLineData", 7)?;
+        if let Some(f) = self.questLineId() {
+            s.serialize_field("questLineId", &f)?;
+        } else {
+            s.skip_field("questLineId")?;
+        }
+        if let Some(f) = self.questLineTitle() {
+            s.serialize_field("questLineTitle", &f)?;
+        } else {
+            s.skip_field("questLineTitle")?;
+        }
+        s.serialize_field("questLineType", &self.questLineType())?;
+        s.serialize_field("questLineBadgeType", &self.questLineBadgeType())?;
+        s.serialize_field("questLineScopeType", &self.questLineScopeType())?;
+        if let Some(f) = self.questLineDesc() {
+            s.serialize_field("questLineDesc", &f)?;
+        } else {
+            s.skip_field("questLineDesc")?;
+        }
+        s.serialize_field("sortId", &self.sortId())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2QuestLineDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -26174,6 +34180,56 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2QuestLineData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2QuestLineDataT {
+    pub questLineId: Option<String>,
+    pub questLineTitle: Option<String>,
+    pub questLineType: enum__Torappu_SandboxV2QuestLineType,
+    pub questLineBadgeType: enum__Torappu_SandboxV2QuestLineBadgeType,
+    pub questLineScopeType: enum__Torappu_SandboxV2QuestLineScopeType,
+    pub questLineDesc: Option<String>,
+    pub sortId: i32,
+}
+impl Default for clz_Torappu_SandboxV2QuestLineDataT {
+    fn default() -> Self {
+        Self {
+            questLineId: None,
+            questLineTitle: None,
+            questLineType: enum__Torappu_SandboxV2QuestLineType::NONE,
+            questLineBadgeType: enum__Torappu_SandboxV2QuestLineBadgeType::NONE,
+            questLineScopeType: enum__Torappu_SandboxV2QuestLineScopeType::MAIN,
+            questLineDesc: None,
+            sortId: 0,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2QuestLineDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2QuestLineData<'b>> {
+        let questLineId = self.questLineId.as_ref().map(|x| _fbb.create_string(x));
+        let questLineTitle = self.questLineTitle.as_ref().map(|x| _fbb.create_string(x));
+        let questLineType = self.questLineType;
+        let questLineBadgeType = self.questLineBadgeType;
+        let questLineScopeType = self.questLineScopeType;
+        let questLineDesc = self.questLineDesc.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        clz_Torappu_SandboxV2QuestLineData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2QuestLineDataArgs {
+                questLineId,
+                questLineTitle,
+                questLineType,
+                questLineBadgeType,
+                questLineScopeType,
+                questLineDesc,
+                sortId,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2QuestLineDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -26186,7 +34242,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2QuestLin
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -26212,6 +34268,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2QuestLineData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2QuestLineDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2QuestLineDataT { key, value }
     }
 
     #[inline]
@@ -26288,6 +34353,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2QuestLineDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2QuestLineData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2QuestLineData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2QuestLineDataBuilder<
     'a: 'b,
     'b,
@@ -26349,6 +34431,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2QuestLineData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2QuestLineDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2QuestLineDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2QuestLineDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2QuestLineDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2QuestLineData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2QuestLineData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2QuestLineDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2GuideQuestDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -26361,7 +34473,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2GuideQuestData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -26391,6 +34503,17 @@ impl<'a> clz_Torappu_SandboxV2GuideQuestData<'a> {
             builder.add_questId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2GuideQuestDataT {
+        let questId = self.questId().map(|x| x.to_string());
+        let storyId = self.storyId().map(|x| x.to_string());
+        let triggerKey = self.triggerKey().map(|x| x.to_string());
+        clz_Torappu_SandboxV2GuideQuestDataT {
+            questId,
+            storyId,
+            triggerKey,
+        }
     }
 
     #[inline]
@@ -26466,6 +34589,31 @@ impl<'a> Default for clz_Torappu_SandboxV2GuideQuestDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2GuideQuestData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2GuideQuestData", 3)?;
+        if let Some(f) = self.questId() {
+            s.serialize_field("questId", &f)?;
+        } else {
+            s.skip_field("questId")?;
+        }
+        if let Some(f) = self.storyId() {
+            s.serialize_field("storyId", &f)?;
+        } else {
+            s.skip_field("storyId")?;
+        }
+        if let Some(f) = self.triggerKey() {
+            s.serialize_field("triggerKey", &f)?;
+        } else {
+            s.skip_field("triggerKey")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2GuideQuestDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -26520,6 +34668,40 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2GuideQuestData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2GuideQuestDataT {
+    pub questId: Option<String>,
+    pub storyId: Option<String>,
+    pub triggerKey: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2GuideQuestDataT {
+    fn default() -> Self {
+        Self {
+            questId: None,
+            storyId: None,
+            triggerKey: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2GuideQuestDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2GuideQuestData<'b>> {
+        let questId = self.questId.as_ref().map(|x| _fbb.create_string(x));
+        let storyId = self.storyId.as_ref().map(|x| _fbb.create_string(x));
+        let triggerKey = self.triggerKey.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2GuideQuestData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2GuideQuestDataArgs {
+                questId,
+                storyId,
+                triggerKey,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2GuideQuestDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -26532,7 +34714,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2GuideQue
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -26558,6 +34740,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2GuideQuestData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2GuideQuestDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2GuideQuestDataT { key, value }
     }
 
     #[inline]
@@ -26634,6 +34825,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2GuideQuestDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2GuideQuestData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2GuideQuestData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2GuideQuestDataBuilder<
     'a: 'b,
     'b,
@@ -26695,6 +34903,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2GuideQuestData<'_> 
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2GuideQuestDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2GuideQuestDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2GuideQuestDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2GuideQuestDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2GuideQuestData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2GuideQuestData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2GuideQuestDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2DevelopmentDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -26707,7 +34945,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2DevelopmentData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -26765,6 +35003,39 @@ impl<'a> clz_Torappu_SandboxV2DevelopmentData<'a> {
         }
         builder.add_canBuffReserch(args.canBuffReserch);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2DevelopmentDataT {
+        let techId = self.techId().map(|x| x.to_string());
+        let techType = self.techType();
+        let positionX = self.positionX();
+        let positionY = self.positionY();
+        let frontNodeId = self.frontNodeId().map(|x| x.to_string());
+        let nextNodeIds = self
+            .nextNodeIds()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let limitBaseLevel = self.limitBaseLevel();
+        let tokenCost = self.tokenCost();
+        let techName = self.techName().map(|x| x.to_string());
+        let techIconId = self.techIconId().map(|x| x.to_string());
+        let nodeTitle = self.nodeTitle().map(|x| x.to_string());
+        let rawDesc = self.rawDesc().map(|x| x.to_string());
+        let canBuffReserch = self.canBuffReserch();
+        clz_Torappu_SandboxV2DevelopmentDataT {
+            techId,
+            techType,
+            positionX,
+            positionY,
+            frontNodeId,
+            nextNodeIds,
+            limitBaseLevel,
+            tokenCost,
+            techName,
+            techIconId,
+            nodeTitle,
+            rawDesc,
+            canBuffReserch,
+        }
     }
 
     #[inline]
@@ -27014,6 +35285,57 @@ impl<'a> Default for clz_Torappu_SandboxV2DevelopmentDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2DevelopmentData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2DevelopmentData", 13)?;
+        if let Some(f) = self.techId() {
+            s.serialize_field("techId", &f)?;
+        } else {
+            s.skip_field("techId")?;
+        }
+        s.serialize_field("techType", &self.techType())?;
+        s.serialize_field("positionX", &self.positionX())?;
+        s.serialize_field("positionY", &self.positionY())?;
+        if let Some(f) = self.frontNodeId() {
+            s.serialize_field("frontNodeId", &f)?;
+        } else {
+            s.skip_field("frontNodeId")?;
+        }
+        if let Some(f) = self.nextNodeIds() {
+            s.serialize_field("nextNodeIds", &f)?;
+        } else {
+            s.skip_field("nextNodeIds")?;
+        }
+        s.serialize_field("limitBaseLevel", &self.limitBaseLevel())?;
+        s.serialize_field("tokenCost", &self.tokenCost())?;
+        if let Some(f) = self.techName() {
+            s.serialize_field("techName", &f)?;
+        } else {
+            s.skip_field("techName")?;
+        }
+        if let Some(f) = self.techIconId() {
+            s.serialize_field("techIconId", &f)?;
+        } else {
+            s.skip_field("techIconId")?;
+        }
+        if let Some(f) = self.nodeTitle() {
+            s.serialize_field("nodeTitle", &f)?;
+        } else {
+            s.skip_field("nodeTitle")?;
+        }
+        if let Some(f) = self.rawDesc() {
+            s.serialize_field("rawDesc", &f)?;
+        } else {
+            s.skip_field("rawDesc")?;
+        }
+        s.serialize_field("canBuffReserch", &self.canBuffReserch())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2DevelopmentDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -27160,6 +35482,83 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2DevelopmentData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2DevelopmentDataT {
+    pub techId: Option<String>,
+    pub techType: enum__Torappu_SandboxV2DevelopmentType,
+    pub positionX: i32,
+    pub positionY: i32,
+    pub frontNodeId: Option<String>,
+    pub nextNodeIds: Option<Vec<String>>,
+    pub limitBaseLevel: i32,
+    pub tokenCost: i32,
+    pub techName: Option<String>,
+    pub techIconId: Option<String>,
+    pub nodeTitle: Option<String>,
+    pub rawDesc: Option<String>,
+    pub canBuffReserch: bool,
+}
+impl Default for clz_Torappu_SandboxV2DevelopmentDataT {
+    fn default() -> Self {
+        Self {
+            techId: None,
+            techType: enum__Torappu_SandboxV2DevelopmentType::NONE,
+            positionX: 0,
+            positionY: 0,
+            frontNodeId: None,
+            nextNodeIds: None,
+            limitBaseLevel: 0,
+            tokenCost: 0,
+            techName: None,
+            techIconId: None,
+            nodeTitle: None,
+            rawDesc: None,
+            canBuffReserch: false,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2DevelopmentDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2DevelopmentData<'b>> {
+        let techId = self.techId.as_ref().map(|x| _fbb.create_string(x));
+        let techType = self.techType;
+        let positionX = self.positionX;
+        let positionY = self.positionY;
+        let frontNodeId = self.frontNodeId.as_ref().map(|x| _fbb.create_string(x));
+        let nextNodeIds = self.nextNodeIds.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let limitBaseLevel = self.limitBaseLevel;
+        let tokenCost = self.tokenCost;
+        let techName = self.techName.as_ref().map(|x| _fbb.create_string(x));
+        let techIconId = self.techIconId.as_ref().map(|x| _fbb.create_string(x));
+        let nodeTitle = self.nodeTitle.as_ref().map(|x| _fbb.create_string(x));
+        let rawDesc = self.rawDesc.as_ref().map(|x| _fbb.create_string(x));
+        let canBuffReserch = self.canBuffReserch;
+        clz_Torappu_SandboxV2DevelopmentData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2DevelopmentDataArgs {
+                techId,
+                techType,
+                positionX,
+                positionY,
+                frontNodeId,
+                nextNodeIds,
+                limitBaseLevel,
+                tokenCost,
+                techName,
+                techIconId,
+                nodeTitle,
+                rawDesc,
+                canBuffReserch,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2DevelopmentDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -27172,7 +35571,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2Developm
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -27198,6 +35597,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2DevelopmentData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2DevelopmentDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2DevelopmentDataT { key, value }
     }
 
     #[inline]
@@ -27274,6 +35682,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2DevelopmentDataArgs<'a> 
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2DevelopmentData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2DevelopmentData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2DevelopmentDataBuilder<
     'a: 'b,
     'b,
@@ -27335,6 +35760,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2DevelopmentData<'_>
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2DevelopmentDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2DevelopmentDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2DevelopmentDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2DevelopmentDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2DevelopmentData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2DevelopmentData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2DevelopmentDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2EventDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -27347,7 +35802,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2EventData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -27383,6 +35838,21 @@ impl<'a> clz_Torappu_SandboxV2EventData<'a> {
             builder.add_eventId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2EventDataT {
+        let eventId = self.eventId().map(|x| x.to_string());
+        let type_ = self.type_();
+        let iconId = self.iconId().map(|x| x.to_string());
+        let iconName = self.iconName().map(|x| x.to_string());
+        let enterSceneId = self.enterSceneId().map(|x| x.to_string());
+        clz_Torappu_SandboxV2EventDataT {
+            eventId,
+            type_,
+            iconId,
+            iconName,
+            enterSceneId,
+        }
     }
 
     #[inline]
@@ -27494,6 +35964,37 @@ impl<'a> Default for clz_Torappu_SandboxV2EventDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2EventData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2EventData", 5)?;
+        if let Some(f) = self.eventId() {
+            s.serialize_field("eventId", &f)?;
+        } else {
+            s.skip_field("eventId")?;
+        }
+        s.serialize_field("type_", &self.type_())?;
+        if let Some(f) = self.iconId() {
+            s.serialize_field("iconId", &f)?;
+        } else {
+            s.skip_field("iconId")?;
+        }
+        if let Some(f) = self.iconName() {
+            s.serialize_field("iconName", &f)?;
+        } else {
+            s.skip_field("iconName")?;
+        }
+        if let Some(f) = self.enterSceneId() {
+            s.serialize_field("enterSceneId", &f)?;
+        } else {
+            s.skip_field("enterSceneId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2EventDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -27563,6 +36064,48 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2EventData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2EventDataT {
+    pub eventId: Option<String>,
+    pub type_: enum__Torappu_SandboxV2EventType,
+    pub iconId: Option<String>,
+    pub iconName: Option<String>,
+    pub enterSceneId: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2EventDataT {
+    fn default() -> Self {
+        Self {
+            eventId: None,
+            type_: enum__Torappu_SandboxV2EventType::NONE,
+            iconId: None,
+            iconName: None,
+            enterSceneId: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2EventDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2EventData<'b>> {
+        let eventId = self.eventId.as_ref().map(|x| _fbb.create_string(x));
+        let type_ = self.type_;
+        let iconId = self.iconId.as_ref().map(|x| _fbb.create_string(x));
+        let iconName = self.iconName.as_ref().map(|x| _fbb.create_string(x));
+        let enterSceneId = self.enterSceneId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2EventData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2EventDataArgs {
+                eventId,
+                type_,
+                iconId,
+                iconName,
+                enterSceneId,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2EventDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -27575,7 +36118,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2EventDat
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -27601,6 +36144,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2EventData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2EventDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2EventDataT { key, value }
     }
 
     #[inline]
@@ -27674,6 +36226,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2EventDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2EventData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2EventData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2EventDataBuilder<
     'a: 'b,
     'b,
@@ -27732,6 +36301,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2EventData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2EventDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2EventDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2EventDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2EventDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2EventData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2EventData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2EventDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2EventSceneDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -27744,7 +36343,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2EventSceneData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -27778,6 +36377,21 @@ impl<'a> clz_Torappu_SandboxV2EventSceneData<'a> {
             builder.add_eventSceneId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2EventSceneDataT {
+        let eventSceneId = self.eventSceneId().map(|x| x.to_string());
+        let title = self.title().map(|x| x.to_string());
+        let desc = self.desc().map(|x| x.to_string());
+        let choiceIds = self
+            .choiceIds()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        clz_Torappu_SandboxV2EventSceneDataT {
+            eventSceneId,
+            title,
+            desc,
+            choiceIds,
+        }
     }
 
     #[inline]
@@ -27873,6 +36487,36 @@ impl<'a> Default for clz_Torappu_SandboxV2EventSceneDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2EventSceneData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2EventSceneData", 4)?;
+        if let Some(f) = self.eventSceneId() {
+            s.serialize_field("eventSceneId", &f)?;
+        } else {
+            s.skip_field("eventSceneId")?;
+        }
+        if let Some(f) = self.title() {
+            s.serialize_field("title", &f)?;
+        } else {
+            s.skip_field("title")?;
+        }
+        if let Some(f) = self.desc() {
+            s.serialize_field("desc", &f)?;
+        } else {
+            s.skip_field("desc")?;
+        }
+        if let Some(f) = self.choiceIds() {
+            s.serialize_field("choiceIds", &f)?;
+        } else {
+            s.skip_field("choiceIds")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2EventSceneDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -27940,6 +36584,47 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2EventSceneData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2EventSceneDataT {
+    pub eventSceneId: Option<String>,
+    pub title: Option<String>,
+    pub desc: Option<String>,
+    pub choiceIds: Option<Vec<String>>,
+}
+impl Default for clz_Torappu_SandboxV2EventSceneDataT {
+    fn default() -> Self {
+        Self {
+            eventSceneId: None,
+            title: None,
+            desc: None,
+            choiceIds: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2EventSceneDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2EventSceneData<'b>> {
+        let eventSceneId = self.eventSceneId.as_ref().map(|x| _fbb.create_string(x));
+        let title = self.title.as_ref().map(|x| _fbb.create_string(x));
+        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
+        let choiceIds = self.choiceIds.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SandboxV2EventSceneData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2EventSceneDataArgs {
+                eventSceneId,
+                title,
+                desc,
+                choiceIds,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2EventSceneDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -27952,7 +36637,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2EventSce
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -27978,6 +36663,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2EventSceneData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2EventSceneDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2EventSceneDataT { key, value }
     }
 
     #[inline]
@@ -28054,6 +36748,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2EventSceneDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2EventSceneData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2EventSceneData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2EventSceneDataBuilder<
     'a: 'b,
     'b,
@@ -28115,6 +36826,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2EventSceneData<'_> 
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2EventSceneDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2EventSceneDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2EventSceneDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2EventSceneDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2EventSceneData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2EventSceneData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2EventSceneDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2EventChoiceDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -28127,7 +36868,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2EventChoiceData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -28165,6 +36906,23 @@ impl<'a> clz_Torappu_SandboxV2EventChoiceData<'a> {
             builder.add_choiceId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2EventChoiceDataT {
+        let choiceId = self.choiceId().map(|x| x.to_string());
+        let type_ = self.type_();
+        let costAction = self.costAction();
+        let title = self.title().map(|x| x.to_string());
+        let desc = self.desc().map(|x| x.to_string());
+        let expeditionId = self.expeditionId().map(|x| x.to_string());
+        clz_Torappu_SandboxV2EventChoiceDataT {
+            choiceId,
+            type_,
+            costAction,
+            title,
+            desc,
+            expeditionId,
+        }
     }
 
     #[inline]
@@ -28290,6 +37048,38 @@ impl<'a> Default for clz_Torappu_SandboxV2EventChoiceDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2EventChoiceData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2EventChoiceData", 6)?;
+        if let Some(f) = self.choiceId() {
+            s.serialize_field("choiceId", &f)?;
+        } else {
+            s.skip_field("choiceId")?;
+        }
+        s.serialize_field("type_", &self.type_())?;
+        s.serialize_field("costAction", &self.costAction())?;
+        if let Some(f) = self.title() {
+            s.serialize_field("title", &f)?;
+        } else {
+            s.skip_field("title")?;
+        }
+        if let Some(f) = self.desc() {
+            s.serialize_field("desc", &f)?;
+        } else {
+            s.skip_field("desc")?;
+        }
+        if let Some(f) = self.expeditionId() {
+            s.serialize_field("expeditionId", &f)?;
+        } else {
+            s.skip_field("expeditionId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2EventChoiceDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -28371,6 +37161,52 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2EventChoiceData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2EventChoiceDataT {
+    pub choiceId: Option<String>,
+    pub type_: enum__Torappu_SandboxV2EventChoiceType,
+    pub costAction: i32,
+    pub title: Option<String>,
+    pub desc: Option<String>,
+    pub expeditionId: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2EventChoiceDataT {
+    fn default() -> Self {
+        Self {
+            choiceId: None,
+            type_: enum__Torappu_SandboxV2EventChoiceType::NONE,
+            costAction: 0,
+            title: None,
+            desc: None,
+            expeditionId: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2EventChoiceDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2EventChoiceData<'b>> {
+        let choiceId = self.choiceId.as_ref().map(|x| _fbb.create_string(x));
+        let type_ = self.type_;
+        let costAction = self.costAction;
+        let title = self.title.as_ref().map(|x| _fbb.create_string(x));
+        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
+        let expeditionId = self.expeditionId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2EventChoiceData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2EventChoiceDataArgs {
+                choiceId,
+                type_,
+                costAction,
+                title,
+                desc,
+                expeditionId,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2EventChoiceDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -28383,7 +37219,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2EventCho
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -28409,6 +37245,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2EventChoiceData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2EventChoiceDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2EventChoiceDataT { key, value }
     }
 
     #[inline]
@@ -28485,6 +37330,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2EventChoiceDataArgs<'a> 
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2EventChoiceData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2EventChoiceData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2EventChoiceDataBuilder<
     'a: 'b,
     'b,
@@ -28546,6 +37408,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2EventChoiceData<'_>
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2EventChoiceDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2EventChoiceDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2EventChoiceDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2EventChoiceDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2EventChoiceData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2EventChoiceData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2EventChoiceDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2ExpeditionDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -28558,7 +37450,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2ExpeditionData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -28604,6 +37496,31 @@ impl<'a> clz_Torappu_SandboxV2ExpeditionData<'a> {
             builder.add_expeditionId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2ExpeditionDataT {
+        let expeditionId = self.expeditionId().map(|x| x.to_string());
+        let desc = self.desc().map(|x| x.to_string());
+        let effectDesc = self.effectDesc().map(|x| x.to_string());
+        let costAction = self.costAction();
+        let costDrink = self.costDrink();
+        let charCnt = self.charCnt();
+        let profession = self.profession();
+        let professions = self.professions().map(|x| x.into_iter().collect());
+        let minEliteRank = self.minEliteRank();
+        let duration = self.duration();
+        clz_Torappu_SandboxV2ExpeditionDataT {
+            expeditionId,
+            desc,
+            effectDesc,
+            costAction,
+            costDrink,
+            charCnt,
+            profession,
+            professions,
+            minEliteRank,
+            duration,
+        }
     }
 
     #[inline]
@@ -28780,6 +37697,42 @@ impl<'a> Default for clz_Torappu_SandboxV2ExpeditionDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2ExpeditionData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2ExpeditionData", 10)?;
+        if let Some(f) = self.expeditionId() {
+            s.serialize_field("expeditionId", &f)?;
+        } else {
+            s.skip_field("expeditionId")?;
+        }
+        if let Some(f) = self.desc() {
+            s.serialize_field("desc", &f)?;
+        } else {
+            s.skip_field("desc")?;
+        }
+        if let Some(f) = self.effectDesc() {
+            s.serialize_field("effectDesc", &f)?;
+        } else {
+            s.skip_field("effectDesc")?;
+        }
+        s.serialize_field("costAction", &self.costAction())?;
+        s.serialize_field("costDrink", &self.costDrink())?;
+        s.serialize_field("charCnt", &self.charCnt())?;
+        s.serialize_field("profession", &self.profession())?;
+        if let Some(f) = self.professions() {
+            s.serialize_field("professions", &f)?;
+        } else {
+            s.skip_field("professions")?;
+        }
+        s.serialize_field("minEliteRank", &self.minEliteRank())?;
+        s.serialize_field("duration", &self.duration())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2ExpeditionDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -28896,6 +37849,68 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2ExpeditionData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2ExpeditionDataT {
+    pub expeditionId: Option<String>,
+    pub desc: Option<String>,
+    pub effectDesc: Option<String>,
+    pub costAction: i32,
+    pub costDrink: i32,
+    pub charCnt: i32,
+    pub profession: enum__Torappu_ProfessionCategory,
+    pub professions: Option<Vec<enum__Torappu_ProfessionID>>,
+    pub minEliteRank: i32,
+    pub duration: i32,
+}
+impl Default for clz_Torappu_SandboxV2ExpeditionDataT {
+    fn default() -> Self {
+        Self {
+            expeditionId: None,
+            desc: None,
+            effectDesc: None,
+            costAction: 0,
+            costDrink: 0,
+            charCnt: 0,
+            profession: enum__Torappu_ProfessionCategory::NONE,
+            professions: None,
+            minEliteRank: 0,
+            duration: 0,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2ExpeditionDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2ExpeditionData<'b>> {
+        let expeditionId = self.expeditionId.as_ref().map(|x| _fbb.create_string(x));
+        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
+        let effectDesc = self.effectDesc.as_ref().map(|x| _fbb.create_string(x));
+        let costAction = self.costAction;
+        let costDrink = self.costDrink;
+        let charCnt = self.charCnt;
+        let profession = self.profession;
+        let professions = self.professions.as_ref().map(|x| _fbb.create_vector(x));
+        let minEliteRank = self.minEliteRank;
+        let duration = self.duration;
+        clz_Torappu_SandboxV2ExpeditionData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2ExpeditionDataArgs {
+                expeditionId,
+                desc,
+                effectDesc,
+                costAction,
+                costDrink,
+                charCnt,
+                profession,
+                professions,
+                minEliteRank,
+                duration,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2ExpeditionDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -28908,7 +37923,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2Expediti
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -28934,6 +37949,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2ExpeditionData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2ExpeditionDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2ExpeditionDataT { key, value }
     }
 
     #[inline]
@@ -29010,6 +38034,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2ExpeditionDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2ExpeditionData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2ExpeditionData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2ExpeditionDataBuilder<
     'a: 'b,
     'b,
@@ -29071,6 +38112,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2ExpeditionData<'_> 
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2ExpeditionDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2ExpeditionDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2ExpeditionDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2ExpeditionDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2ExpeditionData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2ExpeditionData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2ExpeditionDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2EventEffectDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -29083,7 +38154,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2EventEffectData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -29115,6 +38186,19 @@ impl<'a> clz_Torappu_SandboxV2EventEffectData<'a> {
             builder.add_eventEffectId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2EventEffectDataT {
+        let eventEffectId = self.eventEffectId().map(|x| x.to_string());
+        let buffId = self.buffId().map(|x| x.to_string());
+        let duration = self.duration();
+        let desc = self.desc().map(|x| x.to_string());
+        clz_Torappu_SandboxV2EventEffectDataT {
+            eventEffectId,
+            buffId,
+            duration,
+            desc,
+        }
     }
 
     #[inline]
@@ -29204,6 +38288,32 @@ impl<'a> Default for clz_Torappu_SandboxV2EventEffectDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2EventEffectData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2EventEffectData", 4)?;
+        if let Some(f) = self.eventEffectId() {
+            s.serialize_field("eventEffectId", &f)?;
+        } else {
+            s.skip_field("eventEffectId")?;
+        }
+        if let Some(f) = self.buffId() {
+            s.serialize_field("buffId", &f)?;
+        } else {
+            s.skip_field("buffId")?;
+        }
+        s.serialize_field("duration", &self.duration())?;
+        if let Some(f) = self.desc() {
+            s.serialize_field("desc", &f)?;
+        } else {
+            s.skip_field("desc")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2EventEffectDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -29267,6 +38377,44 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2EventEffectData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2EventEffectDataT {
+    pub eventEffectId: Option<String>,
+    pub buffId: Option<String>,
+    pub duration: i32,
+    pub desc: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2EventEffectDataT {
+    fn default() -> Self {
+        Self {
+            eventEffectId: None,
+            buffId: None,
+            duration: 0,
+            desc: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2EventEffectDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2EventEffectData<'b>> {
+        let eventEffectId = self.eventEffectId.as_ref().map(|x| _fbb.create_string(x));
+        let buffId = self.buffId.as_ref().map(|x| _fbb.create_string(x));
+        let duration = self.duration;
+        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2EventEffectData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2EventEffectDataArgs {
+                eventEffectId,
+                buffId,
+                duration,
+                desc,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2EventEffectDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -29279,7 +38427,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2EventEff
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -29305,6 +38453,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2EventEffectData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2EventEffectDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2EventEffectDataT { key, value }
     }
 
     #[inline]
@@ -29381,6 +38538,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2EventEffectDataArgs<'a> 
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2EventEffectData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2EventEffectData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2EventEffectDataBuilder<
     'a: 'b,
     'b,
@@ -29442,6 +38616,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2EventEffectData<'_>
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2EventEffectDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2EventEffectDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2EventEffectDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2EventEffectDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2EventEffectData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2EventEffectData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2EventEffectDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2ShopGoodDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -29454,7 +38658,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2ShopGoodData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -29486,6 +38690,21 @@ impl<'a> clz_Torappu_SandboxV2ShopGoodData<'a> {
             builder.add_goodId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2ShopGoodDataT {
+        let goodId = self.goodId().map(|x| x.to_string());
+        let itemId = self.itemId().map(|x| x.to_string());
+        let count = self.count();
+        let coinType = self.coinType();
+        let value = self.value();
+        clz_Torappu_SandboxV2ShopGoodDataT {
+            goodId,
+            itemId,
+            count,
+            coinType,
+            value,
+        }
     }
 
     #[inline]
@@ -29587,6 +38806,29 @@ impl<'a> Default for clz_Torappu_SandboxV2ShopGoodDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2ShopGoodData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2ShopGoodData", 5)?;
+        if let Some(f) = self.goodId() {
+            s.serialize_field("goodId", &f)?;
+        } else {
+            s.skip_field("goodId")?;
+        }
+        if let Some(f) = self.itemId() {
+            s.serialize_field("itemId", &f)?;
+        } else {
+            s.skip_field("itemId")?;
+        }
+        s.serialize_field("count", &self.count())?;
+        s.serialize_field("coinType", &self.coinType())?;
+        s.serialize_field("value", &self.value())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2ShopGoodDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -29654,6 +38896,48 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2ShopGoodData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2ShopGoodDataT {
+    pub goodId: Option<String>,
+    pub itemId: Option<String>,
+    pub count: i32,
+    pub coinType: enum__Torappu_SandboxV2CoinType,
+    pub value: i32,
+}
+impl Default for clz_Torappu_SandboxV2ShopGoodDataT {
+    fn default() -> Self {
+        Self {
+            goodId: None,
+            itemId: None,
+            count: 0,
+            coinType: enum__Torappu_SandboxV2CoinType::DIMENSION_COIN,
+            value: 0,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2ShopGoodDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2ShopGoodData<'b>> {
+        let goodId = self.goodId.as_ref().map(|x| _fbb.create_string(x));
+        let itemId = self.itemId.as_ref().map(|x| _fbb.create_string(x));
+        let count = self.count;
+        let coinType = self.coinType;
+        let value = self.value;
+        clz_Torappu_SandboxV2ShopGoodData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2ShopGoodDataArgs {
+                goodId,
+                itemId,
+                count,
+                coinType,
+                value,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2ShopGoodDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -29666,7 +38950,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2ShopGood
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -29692,6 +38976,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2ShopGoodData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2ShopGoodDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2ShopGoodDataT { key, value }
     }
 
     #[inline]
@@ -29768,6 +39061,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2ShopGoodDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2ShopGoodData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2ShopGoodData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2ShopGoodDataBuilder<
     'a: 'b,
     'b,
@@ -29829,6 +39139,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2ShopGoodData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2ShopGoodDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2ShopGoodDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2ShopGoodDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2ShopGoodDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2ShopGoodData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2ShopGoodData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2ShopGoodDataArgs { key, value },
+        )
+    }
+}
 pub enum dict__string__list_stringOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -29841,7 +39181,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__list_string<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -29867,6 +39207,17 @@ impl<'a> dict__string__list_string<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__list_stringT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self
+            .value()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        dict__string__list_stringT { key, value }
     }
 
     #[inline]
@@ -29935,6 +39286,22 @@ impl<'a> Default for dict__string__list_stringArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__list_string<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__list_string", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__list_stringBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -29984,6 +39351,36 @@ impl core::fmt::Debug for dict__string__list_string<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__list_stringT {
+    pub key: String,
+    pub value: Option<Vec<String>>,
+}
+impl Default for dict__string__list_stringT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__list_stringT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__list_string<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        dict__string__list_string::create(_fbb, &dict__string__list_stringArgs { key, value })
+    }
+}
 pub enum clz_Torappu_SandboxV2ShopDialogDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -29996,7 +39393,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2ShopDialogData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -30026,6 +39423,23 @@ impl<'a> clz_Torappu_SandboxV2ShopDialogData<'a> {
             builder.add_seasonDialogs(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2ShopDialogDataT {
+        let seasonDialogs = self
+            .seasonDialogs()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let afterBuyDialogs = self
+            .afterBuyDialogs()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let shopEmptyDialogs = self
+            .shopEmptyDialogs()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        clz_Torappu_SandboxV2ShopDialogDataT {
+            seasonDialogs,
+            afterBuyDialogs,
+            shopEmptyDialogs,
+        }
     }
 
     #[inline]
@@ -30121,6 +39535,31 @@ impl<'a> Default for clz_Torappu_SandboxV2ShopDialogDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2ShopDialogData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2ShopDialogData", 3)?;
+        if let Some(f) = self.seasonDialogs() {
+            s.serialize_field("seasonDialogs", &f)?;
+        } else {
+            s.skip_field("seasonDialogs")?;
+        }
+        if let Some(f) = self.afterBuyDialogs() {
+            s.serialize_field("afterBuyDialogs", &f)?;
+        } else {
+            s.skip_field("afterBuyDialogs")?;
+        }
+        if let Some(f) = self.shopEmptyDialogs() {
+            s.serialize_field("shopEmptyDialogs", &f)?;
+        } else {
+            s.skip_field("shopEmptyDialogs")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2ShopDialogDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -30190,6 +39629,49 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2ShopDialogData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2ShopDialogDataT {
+    pub seasonDialogs: Option<Vec<dict__string__list_stringT>>,
+    pub afterBuyDialogs: Option<Vec<String>>,
+    pub shopEmptyDialogs: Option<Vec<String>>,
+}
+impl Default for clz_Torappu_SandboxV2ShopDialogDataT {
+    fn default() -> Self {
+        Self {
+            seasonDialogs: None,
+            afterBuyDialogs: None,
+            shopEmptyDialogs: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2ShopDialogDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2ShopDialogData<'b>> {
+        let seasonDialogs = self.seasonDialogs.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let afterBuyDialogs = self.afterBuyDialogs.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let shopEmptyDialogs = self.shopEmptyDialogs.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SandboxV2ShopDialogData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2ShopDialogDataArgs {
+                seasonDialogs,
+                afterBuyDialogs,
+                shopEmptyDialogs,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2LogisticsDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -30202,7 +39684,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2LogisticsData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -30244,6 +39726,27 @@ impl<'a> clz_Torappu_SandboxV2LogisticsData<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2LogisticsDataT {
+        let id = self.id().map(|x| x.to_string());
+        let desc = self.desc().map(|x| x.to_string());
+        let noBuffDesc = self.noBuffDesc().map(|x| x.to_string());
+        let iconId = self.iconId().map(|x| x.to_string());
+        let profession = self.profession();
+        let sortId = self.sortId();
+        let levelParams = self
+            .levelParams()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        clz_Torappu_SandboxV2LogisticsDataT {
+            id,
+            desc,
+            noBuffDesc,
+            iconId,
+            profession,
+            sortId,
+            levelParams,
+        }
     }
 
     #[inline]
@@ -30389,6 +39892,43 @@ impl<'a> Default for clz_Torappu_SandboxV2LogisticsDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2LogisticsData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2LogisticsData", 7)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        if let Some(f) = self.desc() {
+            s.serialize_field("desc", &f)?;
+        } else {
+            s.skip_field("desc")?;
+        }
+        if let Some(f) = self.noBuffDesc() {
+            s.serialize_field("noBuffDesc", &f)?;
+        } else {
+            s.skip_field("noBuffDesc")?;
+        }
+        if let Some(f) = self.iconId() {
+            s.serialize_field("iconId", &f)?;
+        } else {
+            s.skip_field("iconId")?;
+        }
+        s.serialize_field("profession", &self.profession())?;
+        s.serialize_field("sortId", &self.sortId())?;
+        if let Some(f) = self.levelParams() {
+            s.serialize_field("levelParams", &f)?;
+        } else {
+            s.skip_field("levelParams")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2LogisticsDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -30479,6 +40019,59 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2LogisticsData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2LogisticsDataT {
+    pub id: Option<String>,
+    pub desc: Option<String>,
+    pub noBuffDesc: Option<String>,
+    pub iconId: Option<String>,
+    pub profession: enum__Torappu_ProfessionCategory,
+    pub sortId: i32,
+    pub levelParams: Option<Vec<String>>,
+}
+impl Default for clz_Torappu_SandboxV2LogisticsDataT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            desc: None,
+            noBuffDesc: None,
+            iconId: None,
+            profession: enum__Torappu_ProfessionCategory::NONE,
+            sortId: 0,
+            levelParams: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2LogisticsDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2LogisticsData<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
+        let noBuffDesc = self.noBuffDesc.as_ref().map(|x| _fbb.create_string(x));
+        let iconId = self.iconId.as_ref().map(|x| _fbb.create_string(x));
+        let profession = self.profession;
+        let sortId = self.sortId;
+        let levelParams = self.levelParams.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SandboxV2LogisticsData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2LogisticsDataArgs {
+                id,
+                desc,
+                noBuffDesc,
+                iconId,
+                profession,
+                sortId,
+                levelParams,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2LogisticsCharDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -30491,7 +40084,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2LogisticsCharData<'a> 
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -30513,6 +40106,15 @@ impl<'a> clz_Torappu_SandboxV2LogisticsCharData<'a> {
         builder.add_charUpperLimit(args.charUpperLimit);
         builder.add_levelUpperLimit(args.levelUpperLimit);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2LogisticsCharDataT {
+        let levelUpperLimit = self.levelUpperLimit();
+        let charUpperLimit = self.charUpperLimit();
+        clz_Torappu_SandboxV2LogisticsCharDataT {
+            levelUpperLimit,
+            charUpperLimit,
+        }
     }
 
     #[inline]
@@ -30573,6 +40175,18 @@ impl<'a> Default for clz_Torappu_SandboxV2LogisticsCharDataArgs {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2LogisticsCharData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2LogisticsCharData", 2)?;
+        s.serialize_field("levelUpperLimit", &self.levelUpperLimit())?;
+        s.serialize_field("charUpperLimit", &self.charUpperLimit())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2LogisticsCharDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -30622,6 +40236,36 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2LogisticsCharData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2LogisticsCharDataT {
+    pub levelUpperLimit: i32,
+    pub charUpperLimit: i32,
+}
+impl Default for clz_Torappu_SandboxV2LogisticsCharDataT {
+    fn default() -> Self {
+        Self {
+            levelUpperLimit: 0,
+            charUpperLimit: 0,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2LogisticsCharDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2LogisticsCharData<'b>> {
+        let levelUpperLimit = self.levelUpperLimit;
+        let charUpperLimit = self.charUpperLimit;
+        clz_Torappu_SandboxV2LogisticsCharData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2LogisticsCharDataArgs {
+                levelUpperLimit,
+                charUpperLimit,
+            },
+        )
+    }
+}
 pub enum dict__int__list_clz_Torappu_SandboxV2LogisticsCharDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -30634,7 +40278,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__int__list_clz_Torappu_SandboxV2Logist
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -30658,6 +40302,12 @@ impl<'a> dict__int__list_clz_Torappu_SandboxV2LogisticsCharData<'a> {
         }
         builder.add_key(args.key);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__int__list_clz_Torappu_SandboxV2LogisticsCharDataT {
+        let key = self.key();
+        let value = self.value().map(|x| x.iter().map(|t| t.unpack()).collect());
+        dict__int__list_clz_Torappu_SandboxV2LogisticsCharDataT { key, value }
     }
 
     #[inline]
@@ -30753,6 +40403,23 @@ impl<'a> Default for dict__int__list_clz_Torappu_SandboxV2LogisticsCharDataArgs<
     }
 }
 
+impl Serialize for dict__int__list_clz_Torappu_SandboxV2LogisticsCharData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("dict__int__list_clz_Torappu_SandboxV2LogisticsCharData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__int__list_clz_Torappu_SandboxV2LogisticsCharDataBuilder<
     'a: 'b,
     'b,
@@ -30814,6 +40481,36 @@ impl core::fmt::Debug for dict__int__list_clz_Torappu_SandboxV2LogisticsCharData
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__int__list_clz_Torappu_SandboxV2LogisticsCharDataT {
+    pub key: i32,
+    pub value: Option<Vec<clz_Torappu_SandboxV2LogisticsCharDataT>>,
+}
+impl Default for dict__int__list_clz_Torappu_SandboxV2LogisticsCharDataT {
+    fn default() -> Self {
+        Self {
+            key: 0,
+            value: None,
+        }
+    }
+}
+impl dict__int__list_clz_Torappu_SandboxV2LogisticsCharDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__int__list_clz_Torappu_SandboxV2LogisticsCharData<'b>> {
+        let key = self.key;
+        let value = self.value.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        dict__int__list_clz_Torappu_SandboxV2LogisticsCharData::create(
+            _fbb,
+            &dict__int__list_clz_Torappu_SandboxV2LogisticsCharDataArgs { key, value },
+        )
+    }
+}
 pub enum dict__int__list_dict__int__list_clz_Torappu_SandboxV2LogisticsCharDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -30828,7 +40525,7 @@ impl<'a> flatbuffers::Follow<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -30859,6 +40556,14 @@ impl<'a> dict__int__list_dict__int__list_clz_Torappu_SandboxV2LogisticsCharData<
         }
         builder.add_key(args.key);
         builder.finish()
+    }
+
+    pub fn unpack(
+        &self,
+    ) -> dict__int__list_dict__int__list_clz_Torappu_SandboxV2LogisticsCharDataT {
+        let key = self.key();
+        let value = self.value().map(|x| x.iter().map(|t| t.unpack()).collect());
+        dict__int__list_dict__int__list_clz_Torappu_SandboxV2LogisticsCharDataT { key, value }
     }
 
     #[inline]
@@ -30966,6 +40671,25 @@ impl<'a> Default
     }
 }
 
+impl Serialize for dict__int__list_dict__int__list_clz_Torappu_SandboxV2LogisticsCharData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "dict__int__list_dict__int__list_clz_Torappu_SandboxV2LogisticsCharData",
+            2,
+        )?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__int__list_dict__int__list_clz_Torappu_SandboxV2LogisticsCharDataBuilder<
     'a: 'b,
     'b,
@@ -31035,6 +40759,41 @@ impl core::fmt::Debug
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__int__list_dict__int__list_clz_Torappu_SandboxV2LogisticsCharDataT {
+    pub key: i32,
+    pub value: Option<Vec<dict__int__list_clz_Torappu_SandboxV2LogisticsCharDataT>>,
+}
+impl Default for dict__int__list_dict__int__list_clz_Torappu_SandboxV2LogisticsCharDataT {
+    fn default() -> Self {
+        Self {
+            key: 0,
+            value: None,
+        }
+    }
+}
+impl dict__int__list_dict__int__list_clz_Torappu_SandboxV2LogisticsCharDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<
+        dict__int__list_dict__int__list_clz_Torappu_SandboxV2LogisticsCharData<'b>,
+    > {
+        let key = self.key;
+        let value = self.value.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        dict__int__list_dict__int__list_clz_Torappu_SandboxV2LogisticsCharData::create(
+            _fbb,
+            &dict__int__list_dict__int__list_clz_Torappu_SandboxV2LogisticsCharDataArgs {
+                key,
+                value,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2MonthRushDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -31047,7 +40806,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2MonthRushData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -31109,6 +40868,39 @@ impl<'a> clz_Torappu_SandboxV2MonthRushData<'a> {
         }
         builder.add_isLast(args.isLast);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2MonthRushDataT {
+        let monthlyRushId = self.monthlyRushId().map(|x| x.to_string());
+        let startTime = self.startTime();
+        let endTime = self.endTime();
+        let isLast = self.isLast();
+        let sortId = self.sortId();
+        let rushGroupKey = self.rushGroupKey().map(|x| x.to_string());
+        let monthlyRushName = self.monthlyRushName().map(|x| x.to_string());
+        let monthlyRushDes = self.monthlyRushDes().map(|x| x.to_string());
+        let weatherId = self.weatherId().map(|x| x.to_string());
+        let nodeId = self.nodeId().map(|x| x.to_string());
+        let conditionGroup = self.conditionGroup().map(|x| x.to_string());
+        let conditionDesc = self.conditionDesc().map(|x| x.to_string());
+        let rewardItemList = self
+            .rewardItemList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_SandboxV2MonthRushDataT {
+            monthlyRushId,
+            startTime,
+            endTime,
+            isLast,
+            sortId,
+            rushGroupKey,
+            monthlyRushName,
+            monthlyRushDes,
+            weatherId,
+            nodeId,
+            conditionGroup,
+            conditionDesc,
+            rewardItemList,
+        }
     }
 
     #[inline]
@@ -31362,6 +41154,65 @@ impl<'a> Default for clz_Torappu_SandboxV2MonthRushDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2MonthRushData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2MonthRushData", 13)?;
+        if let Some(f) = self.monthlyRushId() {
+            s.serialize_field("monthlyRushId", &f)?;
+        } else {
+            s.skip_field("monthlyRushId")?;
+        }
+        s.serialize_field("startTime", &self.startTime())?;
+        s.serialize_field("endTime", &self.endTime())?;
+        s.serialize_field("isLast", &self.isLast())?;
+        s.serialize_field("sortId", &self.sortId())?;
+        if let Some(f) = self.rushGroupKey() {
+            s.serialize_field("rushGroupKey", &f)?;
+        } else {
+            s.skip_field("rushGroupKey")?;
+        }
+        if let Some(f) = self.monthlyRushName() {
+            s.serialize_field("monthlyRushName", &f)?;
+        } else {
+            s.skip_field("monthlyRushName")?;
+        }
+        if let Some(f) = self.monthlyRushDes() {
+            s.serialize_field("monthlyRushDes", &f)?;
+        } else {
+            s.skip_field("monthlyRushDes")?;
+        }
+        if let Some(f) = self.weatherId() {
+            s.serialize_field("weatherId", &f)?;
+        } else {
+            s.skip_field("weatherId")?;
+        }
+        if let Some(f) = self.nodeId() {
+            s.serialize_field("nodeId", &f)?;
+        } else {
+            s.skip_field("nodeId")?;
+        }
+        if let Some(f) = self.conditionGroup() {
+            s.serialize_field("conditionGroup", &f)?;
+        } else {
+            s.skip_field("conditionGroup")?;
+        }
+        if let Some(f) = self.conditionDesc() {
+            s.serialize_field("conditionDesc", &f)?;
+        } else {
+            s.skip_field("conditionDesc")?;
+        }
+        if let Some(f) = self.rewardItemList() {
+            s.serialize_field("rewardItemList", &f)?;
+        } else {
+            s.skip_field("rewardItemList")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2MonthRushDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -31496,6 +41347,83 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2MonthRushData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2MonthRushDataT {
+    pub monthlyRushId: Option<String>,
+    pub startTime: i64,
+    pub endTime: i64,
+    pub isLast: bool,
+    pub sortId: i32,
+    pub rushGroupKey: Option<String>,
+    pub monthlyRushName: Option<String>,
+    pub monthlyRushDes: Option<String>,
+    pub weatherId: Option<String>,
+    pub nodeId: Option<String>,
+    pub conditionGroup: Option<String>,
+    pub conditionDesc: Option<String>,
+    pub rewardItemList: Option<Vec<clz_Torappu_ItemBundleT>>,
+}
+impl Default for clz_Torappu_SandboxV2MonthRushDataT {
+    fn default() -> Self {
+        Self {
+            monthlyRushId: None,
+            startTime: 0,
+            endTime: 0,
+            isLast: false,
+            sortId: 0,
+            rushGroupKey: None,
+            monthlyRushName: None,
+            monthlyRushDes: None,
+            weatherId: None,
+            nodeId: None,
+            conditionGroup: None,
+            conditionDesc: None,
+            rewardItemList: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2MonthRushDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2MonthRushData<'b>> {
+        let monthlyRushId = self.monthlyRushId.as_ref().map(|x| _fbb.create_string(x));
+        let startTime = self.startTime;
+        let endTime = self.endTime;
+        let isLast = self.isLast;
+        let sortId = self.sortId;
+        let rushGroupKey = self.rushGroupKey.as_ref().map(|x| _fbb.create_string(x));
+        let monthlyRushName = self.monthlyRushName.as_ref().map(|x| _fbb.create_string(x));
+        let monthlyRushDes = self.monthlyRushDes.as_ref().map(|x| _fbb.create_string(x));
+        let weatherId = self.weatherId.as_ref().map(|x| _fbb.create_string(x));
+        let nodeId = self.nodeId.as_ref().map(|x| _fbb.create_string(x));
+        let conditionGroup = self.conditionGroup.as_ref().map(|x| _fbb.create_string(x));
+        let conditionDesc = self.conditionDesc.as_ref().map(|x| _fbb.create_string(x));
+        let rewardItemList = self.rewardItemList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SandboxV2MonthRushData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2MonthRushDataArgs {
+                monthlyRushId,
+                startTime,
+                endTime,
+                isLast,
+                sortId,
+                rushGroupKey,
+                monthlyRushName,
+                monthlyRushDes,
+                weatherId,
+                nodeId,
+                conditionGroup,
+                conditionDesc,
+                rewardItemList,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2RiftParamDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -31508,7 +41436,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2RiftParamData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -31542,6 +41470,19 @@ impl<'a> clz_Torappu_SandboxV2RiftParamData<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2RiftParamDataT {
+        let id = self.id().map(|x| x.to_string());
+        let desc = self.desc().map(|x| x.to_string());
+        let iconId = self.iconId().map(|x| x.to_string());
+        let bkColor = self.bkColor().map(|x| x.to_string());
+        clz_Torappu_SandboxV2RiftParamDataT {
+            id,
+            desc,
+            iconId,
+            bkColor,
+        }
     }
 
     #[inline]
@@ -31628,6 +41569,36 @@ impl<'a> Default for clz_Torappu_SandboxV2RiftParamDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2RiftParamData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2RiftParamData", 4)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        if let Some(f) = self.desc() {
+            s.serialize_field("desc", &f)?;
+        } else {
+            s.skip_field("desc")?;
+        }
+        if let Some(f) = self.iconId() {
+            s.serialize_field("iconId", &f)?;
+        } else {
+            s.skip_field("iconId")?;
+        }
+        if let Some(f) = self.bkColor() {
+            s.serialize_field("bkColor", &f)?;
+        } else {
+            s.skip_field("bkColor")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2RiftParamDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -31690,6 +41661,44 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2RiftParamData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2RiftParamDataT {
+    pub id: Option<String>,
+    pub desc: Option<String>,
+    pub iconId: Option<String>,
+    pub bkColor: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2RiftParamDataT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            desc: None,
+            iconId: None,
+            bkColor: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2RiftParamDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2RiftParamData<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
+        let iconId = self.iconId.as_ref().map(|x| _fbb.create_string(x));
+        let bkColor = self.bkColor.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2RiftParamData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2RiftParamDataArgs {
+                id,
+                desc,
+                iconId,
+                bkColor,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2RiftParamDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -31702,7 +41711,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2RiftPara
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -31728,6 +41737,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2RiftParamData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2RiftParamDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2RiftParamDataT { key, value }
     }
 
     #[inline]
@@ -31804,6 +41822,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2RiftParamDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2RiftParamData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2RiftParamData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2RiftParamDataBuilder<
     'a: 'b,
     'b,
@@ -31865,6 +41900,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2RiftParamData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2RiftParamDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2RiftParamDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2RiftParamDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2RiftParamDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2RiftParamData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2RiftParamData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2RiftParamDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2RiftSubTargetDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -31877,7 +41942,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2RiftSubTargetData<'a> 
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -31907,6 +41972,13 @@ impl<'a> clz_Torappu_SandboxV2RiftSubTargetData<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2RiftSubTargetDataT {
+        let id = self.id().map(|x| x.to_string());
+        let name = self.name().map(|x| x.to_string());
+        let desc = self.desc().map(|x| x.to_string());
+        clz_Torappu_SandboxV2RiftSubTargetDataT { id, name, desc }
     }
 
     #[inline]
@@ -31978,6 +42050,31 @@ impl<'a> Default for clz_Torappu_SandboxV2RiftSubTargetDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2RiftSubTargetData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2RiftSubTargetData", 3)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        if let Some(f) = self.desc() {
+            s.serialize_field("desc", &f)?;
+        } else {
+            s.skip_field("desc")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2RiftSubTargetDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -32033,6 +42130,36 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2RiftSubTargetData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2RiftSubTargetDataT {
+    pub id: Option<String>,
+    pub name: Option<String>,
+    pub desc: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2RiftSubTargetDataT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            name: None,
+            desc: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2RiftSubTargetDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2RiftSubTargetData<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2RiftSubTargetData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2RiftSubTargetDataArgs { id, name, desc },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2RiftSubTargetDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -32045,7 +42172,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2RiftSubT
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -32071,6 +42198,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2RiftSubTargetData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2RiftSubTargetDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2RiftSubTargetDataT { key, value }
     }
 
     #[inline]
@@ -32147,6 +42283,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2RiftSubTargetDataArgs<'a
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2RiftSubTargetData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("dict__string__clz_Torappu_SandboxV2RiftSubTargetData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2RiftSubTargetDataBuilder<
     'a: 'b,
     'b,
@@ -32208,6 +42361,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2RiftSubTargetData<'
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2RiftSubTargetDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2RiftSubTargetDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2RiftSubTargetDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2RiftSubTargetDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2RiftSubTargetData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2RiftSubTargetData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2RiftSubTargetDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2RiftMainTargetDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -32220,7 +42403,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2RiftMainTargetData<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -32266,6 +42449,27 @@ impl<'a> clz_Torappu_SandboxV2RiftMainTargetData<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2RiftMainTargetDataT {
+        let id = self.id().map(|x| x.to_string());
+        let title = self.title().map(|x| x.to_string());
+        let desc = self.desc().map(|x| x.to_string());
+        let storyDesc = self.storyDesc().map(|x| x.to_string());
+        let targetDayCount = self.targetDayCount();
+        let targetType = self.targetType();
+        let questIconId = self.questIconId().map(|x| x.to_string());
+        let questIconName = self.questIconName().map(|x| x.to_string());
+        clz_Torappu_SandboxV2RiftMainTargetDataT {
+            id,
+            title,
+            desc,
+            storyDesc,
+            targetDayCount,
+            targetType,
+            questIconId,
+            questIconName,
+        }
     }
 
     #[inline]
@@ -32432,6 +42636,48 @@ impl<'a> Default for clz_Torappu_SandboxV2RiftMainTargetDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2RiftMainTargetData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2RiftMainTargetData", 8)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        if let Some(f) = self.title() {
+            s.serialize_field("title", &f)?;
+        } else {
+            s.skip_field("title")?;
+        }
+        if let Some(f) = self.desc() {
+            s.serialize_field("desc", &f)?;
+        } else {
+            s.skip_field("desc")?;
+        }
+        if let Some(f) = self.storyDesc() {
+            s.serialize_field("storyDesc", &f)?;
+        } else {
+            s.skip_field("storyDesc")?;
+        }
+        s.serialize_field("targetDayCount", &self.targetDayCount())?;
+        s.serialize_field("targetType", &self.targetType())?;
+        if let Some(f) = self.questIconId() {
+            s.serialize_field("questIconId", &f)?;
+        } else {
+            s.skip_field("questIconId")?;
+        }
+        if let Some(f) = self.questIconName() {
+            s.serialize_field("questIconName", &f)?;
+        } else {
+            s.skip_field("questIconName")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2RiftMainTargetDataBuilder<
     'a: 'b,
     'b,
@@ -32533,6 +42779,60 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2RiftMainTargetData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2RiftMainTargetDataT {
+    pub id: Option<String>,
+    pub title: Option<String>,
+    pub desc: Option<String>,
+    pub storyDesc: Option<String>,
+    pub targetDayCount: i32,
+    pub targetType: enum__Torappu_SandboxV2RiftMainTargetType,
+    pub questIconId: Option<String>,
+    pub questIconName: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2RiftMainTargetDataT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            title: None,
+            desc: None,
+            storyDesc: None,
+            targetDayCount: 0,
+            targetType: enum__Torappu_SandboxV2RiftMainTargetType::NONE,
+            questIconId: None,
+            questIconName: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2RiftMainTargetDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2RiftMainTargetData<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let title = self.title.as_ref().map(|x| _fbb.create_string(x));
+        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
+        let storyDesc = self.storyDesc.as_ref().map(|x| _fbb.create_string(x));
+        let targetDayCount = self.targetDayCount;
+        let targetType = self.targetType;
+        let questIconId = self.questIconId.as_ref().map(|x| _fbb.create_string(x));
+        let questIconName = self.questIconName.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2RiftMainTargetData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2RiftMainTargetDataArgs {
+                id,
+                title,
+                desc,
+                storyDesc,
+                targetDayCount,
+                targetType,
+                questIconId,
+                questIconName,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2RiftMainTargetDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -32545,7 +42845,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2RiftMain
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -32571,6 +42871,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2RiftMainTargetData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2RiftMainTargetDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2RiftMainTargetDataT { key, value }
     }
 
     #[inline]
@@ -32647,6 +42956,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2RiftMainTargetDataArgs<'
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2RiftMainTargetData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("dict__string__clz_Torappu_SandboxV2RiftMainTargetData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2RiftMainTargetDataBuilder<
     'a: 'b,
     'b,
@@ -32708,6 +43034,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2RiftMainTargetData<
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2RiftMainTargetDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2RiftMainTargetDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2RiftMainTargetDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2RiftMainTargetDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2RiftMainTargetData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2RiftMainTargetData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2RiftMainTargetDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2RiftGlobalEffectDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -32720,7 +43076,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2RiftGlobalEffectData<'
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -32746,6 +43102,12 @@ impl<'a> clz_Torappu_SandboxV2RiftGlobalEffectData<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2RiftGlobalEffectDataT {
+        let id = self.id().map(|x| x.to_string());
+        let desc = self.desc().map(|x| x.to_string());
+        clz_Torappu_SandboxV2RiftGlobalEffectDataT { id, desc }
     }
 
     #[inline]
@@ -32802,6 +43164,26 @@ impl<'a> Default for clz_Torappu_SandboxV2RiftGlobalEffectDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2RiftGlobalEffectData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2RiftGlobalEffectData", 2)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        if let Some(f) = self.desc() {
+            s.serialize_field("desc", &f)?;
+        } else {
+            s.skip_field("desc")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2RiftGlobalEffectDataBuilder<
     'a: 'b,
     'b,
@@ -32852,6 +43234,33 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2RiftGlobalEffectData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2RiftGlobalEffectDataT {
+    pub id: Option<String>,
+    pub desc: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2RiftGlobalEffectDataT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            desc: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2RiftGlobalEffectDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2RiftGlobalEffectData<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2RiftGlobalEffectData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2RiftGlobalEffectDataArgs { id, desc },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2RiftGlobalEffectDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -32864,7 +43273,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2RiftGlob
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -32891,6 +43300,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2RiftGlobalEffectData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2RiftGlobalEffectDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2RiftGlobalEffectDataT { key, value }
     }
 
     #[inline]
@@ -32967,6 +43385,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2RiftGlobalEffectDataArgs
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2RiftGlobalEffectData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("dict__string__clz_Torappu_SandboxV2RiftGlobalEffectData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2RiftGlobalEffectDataBuilder<
     'a: 'b,
     'b,
@@ -33028,6 +43463,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2RiftGlobalEffectDat
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2RiftGlobalEffectDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2RiftGlobalEffectDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2RiftGlobalEffectDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2RiftGlobalEffectDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2RiftGlobalEffectData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2RiftGlobalEffectData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2RiftGlobalEffectDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2FixedRiftDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -33040,7 +43505,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2FixedRiftData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -33070,6 +43535,17 @@ impl<'a> clz_Torappu_SandboxV2FixedRiftData<'a> {
             builder.add_riftId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2FixedRiftDataT {
+        let riftId = self.riftId().map(|x| x.to_string());
+        let riftName = self.riftName().map(|x| x.to_string());
+        let rewardGroupId = self.rewardGroupId().map(|x| x.to_string());
+        clz_Torappu_SandboxV2FixedRiftDataT {
+            riftId,
+            riftName,
+            rewardGroupId,
+        }
     }
 
     #[inline]
@@ -33149,6 +43625,31 @@ impl<'a> Default for clz_Torappu_SandboxV2FixedRiftDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2FixedRiftData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2FixedRiftData", 3)?;
+        if let Some(f) = self.riftId() {
+            s.serialize_field("riftId", &f)?;
+        } else {
+            s.skip_field("riftId")?;
+        }
+        if let Some(f) = self.riftName() {
+            s.serialize_field("riftName", &f)?;
+        } else {
+            s.skip_field("riftName")?;
+        }
+        if let Some(f) = self.rewardGroupId() {
+            s.serialize_field("rewardGroupId", &f)?;
+        } else {
+            s.skip_field("rewardGroupId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2FixedRiftDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -33203,6 +43704,40 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2FixedRiftData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2FixedRiftDataT {
+    pub riftId: Option<String>,
+    pub riftName: Option<String>,
+    pub rewardGroupId: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2FixedRiftDataT {
+    fn default() -> Self {
+        Self {
+            riftId: None,
+            riftName: None,
+            rewardGroupId: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2FixedRiftDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2FixedRiftData<'b>> {
+        let riftId = self.riftId.as_ref().map(|x| _fbb.create_string(x));
+        let riftName = self.riftName.as_ref().map(|x| _fbb.create_string(x));
+        let rewardGroupId = self.rewardGroupId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2FixedRiftData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2FixedRiftDataArgs {
+                riftId,
+                riftName,
+                rewardGroupId,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2FixedRiftDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -33215,7 +43750,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2FixedRif
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -33241,6 +43776,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2FixedRiftData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2FixedRiftDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2FixedRiftDataT { key, value }
     }
 
     #[inline]
@@ -33317,6 +43861,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2FixedRiftDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2FixedRiftData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2FixedRiftData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2FixedRiftDataBuilder<
     'a: 'b,
     'b,
@@ -33378,6 +43939,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2FixedRiftData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2FixedRiftDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2FixedRiftDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2FixedRiftDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2FixedRiftDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2FixedRiftData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2FixedRiftData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2FixedRiftDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2RiftTeamBuffDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -33390,7 +43981,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2RiftTeamBuffData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -33438,6 +44029,27 @@ impl<'a> clz_Torappu_SandboxV2RiftTeamBuffData<'a> {
             builder.add_teamId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2RiftTeamBuffDataT {
+        let teamId = self.teamId().map(|x| x.to_string());
+        let teamName = self.teamName().map(|x| x.to_string());
+        let buffLevel = self.buffLevel();
+        let buffDesc = self.buffDesc().map(|x| x.to_string());
+        let teamSmallIconId = self.teamSmallIconId().map(|x| x.to_string());
+        let teamBigIconId = self.teamBigIconId().map(|x| x.to_string());
+        let teamDesc = self.teamDesc().map(|x| x.to_string());
+        let teamBgId = self.teamBgId().map(|x| x.to_string());
+        clz_Torappu_SandboxV2RiftTeamBuffDataT {
+            teamId,
+            teamName,
+            buffLevel,
+            buffDesc,
+            teamSmallIconId,
+            teamBigIconId,
+            teamDesc,
+            teamBgId,
+        }
     }
 
     #[inline]
@@ -33607,6 +44219,52 @@ impl<'a> Default for clz_Torappu_SandboxV2RiftTeamBuffDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2RiftTeamBuffData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2RiftTeamBuffData", 8)?;
+        if let Some(f) = self.teamId() {
+            s.serialize_field("teamId", &f)?;
+        } else {
+            s.skip_field("teamId")?;
+        }
+        if let Some(f) = self.teamName() {
+            s.serialize_field("teamName", &f)?;
+        } else {
+            s.skip_field("teamName")?;
+        }
+        s.serialize_field("buffLevel", &self.buffLevel())?;
+        if let Some(f) = self.buffDesc() {
+            s.serialize_field("buffDesc", &f)?;
+        } else {
+            s.skip_field("buffDesc")?;
+        }
+        if let Some(f) = self.teamSmallIconId() {
+            s.serialize_field("teamSmallIconId", &f)?;
+        } else {
+            s.skip_field("teamSmallIconId")?;
+        }
+        if let Some(f) = self.teamBigIconId() {
+            s.serialize_field("teamBigIconId", &f)?;
+        } else {
+            s.skip_field("teamBigIconId")?;
+        }
+        if let Some(f) = self.teamDesc() {
+            s.serialize_field("teamDesc", &f)?;
+        } else {
+            s.skip_field("teamDesc")?;
+        }
+        if let Some(f) = self.teamBgId() {
+            s.serialize_field("teamBgId", &f)?;
+        } else {
+            s.skip_field("teamBgId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2RiftTeamBuffDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -33703,6 +44361,60 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2RiftTeamBuffData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2RiftTeamBuffDataT {
+    pub teamId: Option<String>,
+    pub teamName: Option<String>,
+    pub buffLevel: i32,
+    pub buffDesc: Option<String>,
+    pub teamSmallIconId: Option<String>,
+    pub teamBigIconId: Option<String>,
+    pub teamDesc: Option<String>,
+    pub teamBgId: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2RiftTeamBuffDataT {
+    fn default() -> Self {
+        Self {
+            teamId: None,
+            teamName: None,
+            buffLevel: 0,
+            buffDesc: None,
+            teamSmallIconId: None,
+            teamBigIconId: None,
+            teamDesc: None,
+            teamBgId: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2RiftTeamBuffDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2RiftTeamBuffData<'b>> {
+        let teamId = self.teamId.as_ref().map(|x| _fbb.create_string(x));
+        let teamName = self.teamName.as_ref().map(|x| _fbb.create_string(x));
+        let buffLevel = self.buffLevel;
+        let buffDesc = self.buffDesc.as_ref().map(|x| _fbb.create_string(x));
+        let teamSmallIconId = self.teamSmallIconId.as_ref().map(|x| _fbb.create_string(x));
+        let teamBigIconId = self.teamBigIconId.as_ref().map(|x| _fbb.create_string(x));
+        let teamDesc = self.teamDesc.as_ref().map(|x| _fbb.create_string(x));
+        let teamBgId = self.teamBgId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2RiftTeamBuffData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2RiftTeamBuffDataArgs {
+                teamId,
+                teamName,
+                buffLevel,
+                buffDesc,
+                teamSmallIconId,
+                teamBigIconId,
+                teamDesc,
+                teamBgId,
+            },
+        )
+    }
+}
 pub enum dict__string__list_clz_Torappu_SandboxV2RiftTeamBuffDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -33715,7 +44427,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__list_clz_Torappu_SandboxV2Rif
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -33743,6 +44455,15 @@ impl<'a> dict__string__list_clz_Torappu_SandboxV2RiftTeamBuffData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__list_clz_Torappu_SandboxV2RiftTeamBuffDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| x.iter().map(|t| t.unpack()).collect());
+        dict__string__list_clz_Torappu_SandboxV2RiftTeamBuffDataT { key, value }
     }
 
     #[inline]
@@ -33838,6 +44559,25 @@ impl<'a> Default for dict__string__list_clz_Torappu_SandboxV2RiftTeamBuffDataArg
     }
 }
 
+impl Serialize for dict__string__list_clz_Torappu_SandboxV2RiftTeamBuffData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "dict__string__list_clz_Torappu_SandboxV2RiftTeamBuffData",
+            2,
+        )?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__list_clz_Torappu_SandboxV2RiftTeamBuffDataBuilder<
     'a: 'b,
     'b,
@@ -33903,6 +44643,39 @@ impl core::fmt::Debug for dict__string__list_clz_Torappu_SandboxV2RiftTeamBuffDa
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__list_clz_Torappu_SandboxV2RiftTeamBuffDataT {
+    pub key: String,
+    pub value: Option<Vec<clz_Torappu_SandboxV2RiftTeamBuffDataT>>,
+}
+impl Default for dict__string__list_clz_Torappu_SandboxV2RiftTeamBuffDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__list_clz_Torappu_SandboxV2RiftTeamBuffDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__list_clz_Torappu_SandboxV2RiftTeamBuffData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        dict__string__list_clz_Torappu_SandboxV2RiftTeamBuffData::create(
+            _fbb,
+            &dict__string__list_clz_Torappu_SandboxV2RiftTeamBuffDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2RiftDifficultyDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -33915,7 +44688,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2RiftDifficultyData<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -33951,6 +44724,21 @@ impl<'a> clz_Torappu_SandboxV2RiftDifficultyData<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2RiftDifficultyDataT {
+        let id = self.id().map(|x| x.to_string());
+        let riftId = self.riftId().map(|x| x.to_string());
+        let desc = self.desc().map(|x| x.to_string());
+        let difficultyLevel = self.difficultyLevel();
+        let rewardGroupId = self.rewardGroupId().map(|x| x.to_string());
+        clz_Torappu_SandboxV2RiftDifficultyDataT {
+            id,
+            riftId,
+            desc,
+            difficultyLevel,
+            rewardGroupId,
+        }
     }
 
     #[inline]
@@ -34058,6 +44846,37 @@ impl<'a> Default for clz_Torappu_SandboxV2RiftDifficultyDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2RiftDifficultyData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2RiftDifficultyData", 5)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        if let Some(f) = self.riftId() {
+            s.serialize_field("riftId", &f)?;
+        } else {
+            s.skip_field("riftId")?;
+        }
+        if let Some(f) = self.desc() {
+            s.serialize_field("desc", &f)?;
+        } else {
+            s.skip_field("desc")?;
+        }
+        s.serialize_field("difficultyLevel", &self.difficultyLevel())?;
+        if let Some(f) = self.rewardGroupId() {
+            s.serialize_field("rewardGroupId", &f)?;
+        } else {
+            s.skip_field("rewardGroupId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2RiftDifficultyDataBuilder<
     'a: 'b,
     'b,
@@ -34133,6 +44952,48 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2RiftDifficultyData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2RiftDifficultyDataT {
+    pub id: Option<String>,
+    pub riftId: Option<String>,
+    pub desc: Option<String>,
+    pub difficultyLevel: i32,
+    pub rewardGroupId: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2RiftDifficultyDataT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            riftId: None,
+            desc: None,
+            difficultyLevel: 0,
+            rewardGroupId: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2RiftDifficultyDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2RiftDifficultyData<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let riftId = self.riftId.as_ref().map(|x| _fbb.create_string(x));
+        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
+        let difficultyLevel = self.difficultyLevel;
+        let rewardGroupId = self.rewardGroupId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2RiftDifficultyData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2RiftDifficultyDataArgs {
+                id,
+                riftId,
+                desc,
+                difficultyLevel,
+                rewardGroupId,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2RiftDifficultyDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -34145,7 +45006,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2RiftDiff
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -34171,6 +45032,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2RiftDifficultyData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2RiftDifficultyDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2RiftDifficultyDataT { key, value }
     }
 
     #[inline]
@@ -34247,6 +45117,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2RiftDifficultyDataArgs<'
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2RiftDifficultyData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("dict__string__clz_Torappu_SandboxV2RiftDifficultyData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2RiftDifficultyDataBuilder<
     'a: 'b,
     'b,
@@ -34308,6 +45195,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2RiftDifficultyData<
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2RiftDifficultyDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2RiftDifficultyDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2RiftDifficultyDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2RiftDifficultyDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2RiftDifficultyData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2RiftDifficultyData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2RiftDifficultyDataArgs { key, value },
+        )
+    }
+}
 pub enum dict__string__list_dict__string__stringOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -34320,7 +45237,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__list_dict__string__string<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -34346,6 +45263,15 @@ impl<'a> dict__string__list_dict__string__string<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__list_dict__string__stringT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| x.iter().map(|t| t.unpack()).collect());
+        dict__string__list_dict__string__stringT { key, value }
     }
 
     #[inline]
@@ -34422,6 +45348,22 @@ impl<'a> Default for dict__string__list_dict__string__stringArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__list_dict__string__string<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__list_dict__string__string", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__list_dict__string__stringBuilder<
     'a: 'b,
     'b,
@@ -34479,6 +45421,39 @@ impl core::fmt::Debug for dict__string__list_dict__string__string<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__list_dict__string__stringT {
+    pub key: String,
+    pub value: Option<Vec<dict__string__stringT>>,
+}
+impl Default for dict__string__list_dict__string__stringT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__list_dict__string__stringT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__list_dict__string__string<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        dict__string__list_dict__string__string::create(
+            _fbb,
+            &dict__string__list_dict__string__stringArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2ArchiveQuestAvgDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -34491,7 +45466,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2ArchiveQuestAvgData<'a
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -34517,6 +45492,12 @@ impl<'a> clz_Torappu_SandboxV2ArchiveQuestAvgData<'a> {
             builder.add_avgId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2ArchiveQuestAvgDataT {
+        let avgId = self.avgId().map(|x| x.to_string());
+        let avgName = self.avgName().map(|x| x.to_string());
+        clz_Torappu_SandboxV2ArchiveQuestAvgDataT { avgId, avgName }
     }
 
     #[inline]
@@ -34573,6 +45554,26 @@ impl<'a> Default for clz_Torappu_SandboxV2ArchiveQuestAvgDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2ArchiveQuestAvgData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2ArchiveQuestAvgData", 2)?;
+        if let Some(f) = self.avgId() {
+            s.serialize_field("avgId", &f)?;
+        } else {
+            s.skip_field("avgId")?;
+        }
+        if let Some(f) = self.avgName() {
+            s.serialize_field("avgName", &f)?;
+        } else {
+            s.skip_field("avgName")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2ArchiveQuestAvgDataBuilder<
     'a: 'b,
     'b,
@@ -34623,6 +45624,33 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2ArchiveQuestAvgData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2ArchiveQuestAvgDataT {
+    pub avgId: Option<String>,
+    pub avgName: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2ArchiveQuestAvgDataT {
+    fn default() -> Self {
+        Self {
+            avgId: None,
+            avgName: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2ArchiveQuestAvgDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2ArchiveQuestAvgData<'b>> {
+        let avgId = self.avgId.as_ref().map(|x| _fbb.create_string(x));
+        let avgName = self.avgName.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2ArchiveQuestAvgData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2ArchiveQuestAvgDataArgs { avgId, avgName },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2ArchiveQuestCgDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -34635,7 +45663,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2ArchiveQuestCgData<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -34669,6 +45697,19 @@ impl<'a> clz_Torappu_SandboxV2ArchiveQuestCgData<'a> {
             builder.add_cgId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2ArchiveQuestCgDataT {
+        let cgId = self.cgId().map(|x| x.to_string());
+        let cgTitle = self.cgTitle().map(|x| x.to_string());
+        let cgDesc = self.cgDesc().map(|x| x.to_string());
+        let cgPath = self.cgPath().map(|x| x.to_string());
+        clz_Torappu_SandboxV2ArchiveQuestCgDataT {
+            cgId,
+            cgTitle,
+            cgDesc,
+            cgPath,
+        }
     }
 
     #[inline]
@@ -34755,6 +45796,36 @@ impl<'a> Default for clz_Torappu_SandboxV2ArchiveQuestCgDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2ArchiveQuestCgData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2ArchiveQuestCgData", 4)?;
+        if let Some(f) = self.cgId() {
+            s.serialize_field("cgId", &f)?;
+        } else {
+            s.skip_field("cgId")?;
+        }
+        if let Some(f) = self.cgTitle() {
+            s.serialize_field("cgTitle", &f)?;
+        } else {
+            s.skip_field("cgTitle")?;
+        }
+        if let Some(f) = self.cgDesc() {
+            s.serialize_field("cgDesc", &f)?;
+        } else {
+            s.skip_field("cgDesc")?;
+        }
+        if let Some(f) = self.cgPath() {
+            s.serialize_field("cgPath", &f)?;
+        } else {
+            s.skip_field("cgPath")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2ArchiveQuestCgDataBuilder<
     'a: 'b,
     'b,
@@ -34821,6 +45892,44 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2ArchiveQuestCgData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2ArchiveQuestCgDataT {
+    pub cgId: Option<String>,
+    pub cgTitle: Option<String>,
+    pub cgDesc: Option<String>,
+    pub cgPath: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2ArchiveQuestCgDataT {
+    fn default() -> Self {
+        Self {
+            cgId: None,
+            cgTitle: None,
+            cgDesc: None,
+            cgPath: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2ArchiveQuestCgDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2ArchiveQuestCgData<'b>> {
+        let cgId = self.cgId.as_ref().map(|x| _fbb.create_string(x));
+        let cgTitle = self.cgTitle.as_ref().map(|x| _fbb.create_string(x));
+        let cgDesc = self.cgDesc.as_ref().map(|x| _fbb.create_string(x));
+        let cgPath = self.cgPath.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2ArchiveQuestCgData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2ArchiveQuestCgDataArgs {
+                cgId,
+                cgTitle,
+                cgDesc,
+                cgPath,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2ArchiveQuestZoneDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -34833,7 +45942,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2ArchiveQuestZoneData<'
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -34867,6 +45976,19 @@ impl<'a> clz_Torappu_SandboxV2ArchiveQuestZoneData<'a> {
             builder.add_zoneId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2ArchiveQuestZoneDataT {
+        let zoneId = self.zoneId().map(|x| x.to_string());
+        let zoneName = self.zoneName().map(|x| x.to_string());
+        let zoneBgPicId = self.zoneBgPicId().map(|x| x.to_string());
+        let zoneNameIdEn = self.zoneNameIdEn().map(|x| x.to_string());
+        clz_Torappu_SandboxV2ArchiveQuestZoneDataT {
+            zoneId,
+            zoneName,
+            zoneBgPicId,
+            zoneNameIdEn,
+        }
     }
 
     #[inline]
@@ -34965,6 +46087,36 @@ impl<'a> Default for clz_Torappu_SandboxV2ArchiveQuestZoneDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2ArchiveQuestZoneData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2ArchiveQuestZoneData", 4)?;
+        if let Some(f) = self.zoneId() {
+            s.serialize_field("zoneId", &f)?;
+        } else {
+            s.skip_field("zoneId")?;
+        }
+        if let Some(f) = self.zoneName() {
+            s.serialize_field("zoneName", &f)?;
+        } else {
+            s.skip_field("zoneName")?;
+        }
+        if let Some(f) = self.zoneBgPicId() {
+            s.serialize_field("zoneBgPicId", &f)?;
+        } else {
+            s.skip_field("zoneBgPicId")?;
+        }
+        if let Some(f) = self.zoneNameIdEn() {
+            s.serialize_field("zoneNameIdEn", &f)?;
+        } else {
+            s.skip_field("zoneNameIdEn")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2ArchiveQuestZoneDataBuilder<
     'a: 'b,
     'b,
@@ -35031,6 +46183,44 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2ArchiveQuestZoneData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2ArchiveQuestZoneDataT {
+    pub zoneId: Option<String>,
+    pub zoneName: Option<String>,
+    pub zoneBgPicId: Option<String>,
+    pub zoneNameIdEn: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2ArchiveQuestZoneDataT {
+    fn default() -> Self {
+        Self {
+            zoneId: None,
+            zoneName: None,
+            zoneBgPicId: None,
+            zoneNameIdEn: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2ArchiveQuestZoneDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2ArchiveQuestZoneData<'b>> {
+        let zoneId = self.zoneId.as_ref().map(|x| _fbb.create_string(x));
+        let zoneName = self.zoneName.as_ref().map(|x| _fbb.create_string(x));
+        let zoneBgPicId = self.zoneBgPicId.as_ref().map(|x| _fbb.create_string(x));
+        let zoneNameIdEn = self.zoneNameIdEn.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2ArchiveQuestZoneData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2ArchiveQuestZoneDataArgs {
+                zoneId,
+                zoneName,
+                zoneBgPicId,
+                zoneNameIdEn,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2ArchiveQuestDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -35043,7 +46233,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2ArchiveQuestData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -35093,6 +46283,35 @@ impl<'a> clz_Torappu_SandboxV2ArchiveQuestData<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2ArchiveQuestDataT {
+        let id = self.id().map(|x| x.to_string());
+        let sortId = self.sortId();
+        let questType = self.questType();
+        let name = self.name().map(|x| x.to_string());
+        let desc = self.desc().map(|x| x.to_string());
+        let avgDataList = self
+            .avgDataList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let cgDataList = self
+            .cgDataList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let npcPicIdList = self
+            .npcPicIdList()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let zoneData = self.zoneData().map(|x| Box::new(x.unpack()));
+        clz_Torappu_SandboxV2ArchiveQuestDataT {
+            id,
+            sortId,
+            questType,
+            name,
+            desc,
+            avgDataList,
+            cgDataList,
+            npcPicIdList,
+            zoneData,
+        }
     }
 
     #[inline]
@@ -35311,6 +46530,53 @@ impl<'a> Default for clz_Torappu_SandboxV2ArchiveQuestDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2ArchiveQuestData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2ArchiveQuestData", 9)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        s.serialize_field("sortId", &self.sortId())?;
+        s.serialize_field("questType", &self.questType())?;
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        if let Some(f) = self.desc() {
+            s.serialize_field("desc", &f)?;
+        } else {
+            s.skip_field("desc")?;
+        }
+        if let Some(f) = self.avgDataList() {
+            s.serialize_field("avgDataList", &f)?;
+        } else {
+            s.skip_field("avgDataList")?;
+        }
+        if let Some(f) = self.cgDataList() {
+            s.serialize_field("cgDataList", &f)?;
+        } else {
+            s.skip_field("cgDataList")?;
+        }
+        if let Some(f) = self.npcPicIdList() {
+            s.serialize_field("npcPicIdList", &f)?;
+        } else {
+            s.skip_field("npcPicIdList")?;
+        }
+        if let Some(f) = self.zoneData() {
+            s.serialize_field("zoneData", &f)?;
+        } else {
+            s.skip_field("zoneData")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2ArchiveQuestDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -35439,6 +46705,73 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2ArchiveQuestData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2ArchiveQuestDataT {
+    pub id: Option<String>,
+    pub sortId: i32,
+    pub questType: enum__Torappu_SandboxV2ArchiveQuestType,
+    pub name: Option<String>,
+    pub desc: Option<String>,
+    pub avgDataList: Option<Vec<clz_Torappu_SandboxV2ArchiveQuestAvgDataT>>,
+    pub cgDataList: Option<Vec<clz_Torappu_SandboxV2ArchiveQuestCgDataT>>,
+    pub npcPicIdList: Option<Vec<String>>,
+    pub zoneData: Option<Box<clz_Torappu_SandboxV2ArchiveQuestZoneDataT>>,
+}
+impl Default for clz_Torappu_SandboxV2ArchiveQuestDataT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            sortId: 0,
+            questType: enum__Torappu_SandboxV2ArchiveQuestType::NONE,
+            name: None,
+            desc: None,
+            avgDataList: None,
+            cgDataList: None,
+            npcPicIdList: None,
+            zoneData: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2ArchiveQuestDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2ArchiveQuestData<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        let questType = self.questType;
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
+        let avgDataList = self.avgDataList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let cgDataList = self.cgDataList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let npcPicIdList = self.npcPicIdList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let zoneData = self.zoneData.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_SandboxV2ArchiveQuestData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2ArchiveQuestDataArgs {
+                id,
+                sortId,
+                questType,
+                name,
+                desc,
+                avgDataList,
+                cgDataList,
+                npcPicIdList,
+                zoneData,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2ArchiveQuestDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -35451,7 +46784,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2ArchiveQ
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -35477,6 +46810,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2ArchiveQuestData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2ArchiveQuestDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2ArchiveQuestDataT { key, value }
     }
 
     #[inline]
@@ -35553,6 +46895,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2ArchiveQuestDataArgs<'a>
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2ArchiveQuestData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("dict__string__clz_Torappu_SandboxV2ArchiveQuestData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2ArchiveQuestDataBuilder<
     'a: 'b,
     'b,
@@ -35614,6 +46973,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2ArchiveQuestData<'_
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2ArchiveQuestDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2ArchiveQuestDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2ArchiveQuestDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2ArchiveQuestDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2ArchiveQuestData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2ArchiveQuestData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2ArchiveQuestDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2ArchiveAchievementDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -35626,7 +47015,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2ArchiveAchievementData
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -35664,6 +47053,25 @@ impl<'a> clz_Torappu_SandboxV2ArchiveAchievementData<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2ArchiveAchievementDataT {
+        let id = self.id().map(|x| x.to_string());
+        let achievementType = self
+            .achievementType()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let raritySortId = self.raritySortId();
+        let sortId = self.sortId();
+        let name = self.name().map(|x| x.to_string());
+        let desc = self.desc().map(|x| x.to_string());
+        clz_Torappu_SandboxV2ArchiveAchievementDataT {
+            id,
+            achievementType,
+            raritySortId,
+            sortId,
+            name,
+            desc,
+        }
     }
 
     #[inline]
@@ -35792,6 +47200,39 @@ impl<'a> Default for clz_Torappu_SandboxV2ArchiveAchievementDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2ArchiveAchievementData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_SandboxV2ArchiveAchievementData", 6)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        if let Some(f) = self.achievementType() {
+            s.serialize_field("achievementType", &f)?;
+        } else {
+            s.skip_field("achievementType")?;
+        }
+        s.serialize_field("raritySortId", &self.raritySortId())?;
+        s.serialize_field("sortId", &self.sortId())?;
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        if let Some(f) = self.desc() {
+            s.serialize_field("desc", &f)?;
+        } else {
+            s.skip_field("desc")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2ArchiveAchievementDataBuilder<
     'a: 'b,
     'b,
@@ -35881,6 +47322,55 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2ArchiveAchievementData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2ArchiveAchievementDataT {
+    pub id: Option<String>,
+    pub achievementType: Option<Vec<String>>,
+    pub raritySortId: i32,
+    pub sortId: i32,
+    pub name: Option<String>,
+    pub desc: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2ArchiveAchievementDataT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            achievementType: None,
+            raritySortId: 0,
+            sortId: 0,
+            name: None,
+            desc: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2ArchiveAchievementDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2ArchiveAchievementData<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let achievementType = self.achievementType.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let raritySortId = self.raritySortId;
+        let sortId = self.sortId;
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2ArchiveAchievementData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2ArchiveAchievementDataArgs {
+                id,
+                achievementType,
+                raritySortId,
+                sortId,
+                name,
+                desc,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2ArchiveAchievementDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -35893,7 +47383,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2ArchiveA
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -35921,6 +47411,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2ArchiveAchievementData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2ArchiveAchievementDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2ArchiveAchievementDataT { key, value }
     }
 
     #[inline]
@@ -35993,6 +47492,25 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2ArchiveAchievementDataAr
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2ArchiveAchievementData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "dict__string__clz_Torappu_SandboxV2ArchiveAchievementData",
+            2,
+        )?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2ArchiveAchievementDataBuilder<
     'a: 'b,
     'b,
@@ -36050,6 +47568,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2ArchiveAchievementD
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2ArchiveAchievementDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2ArchiveAchievementDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2ArchiveAchievementDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2ArchiveAchievementDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2ArchiveAchievementData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2ArchiveAchievementData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2ArchiveAchievementDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2ArchiveAchievementTypeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -36062,7 +47610,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2ArchiveAchievementType
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -36090,6 +47638,17 @@ impl<'a> clz_Torappu_SandboxV2ArchiveAchievementTypeData<'a> {
             builder.add_achievementType(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2ArchiveAchievementTypeDataT {
+        let achievementType = self.achievementType().map(|x| x.to_string());
+        let name = self.name().map(|x| x.to_string());
+        let sortId = self.sortId();
+        clz_Torappu_SandboxV2ArchiveAchievementTypeDataT {
+            achievementType,
+            name,
+            sortId,
+        }
     }
 
     #[inline]
@@ -36167,6 +47726,28 @@ impl<'a> Default for clz_Torappu_SandboxV2ArchiveAchievementTypeDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2ArchiveAchievementTypeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_SandboxV2ArchiveAchievementTypeData", 3)?;
+        if let Some(f) = self.achievementType() {
+            s.serialize_field("achievementType", &f)?;
+        } else {
+            s.skip_field("achievementType")?;
+        }
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        s.serialize_field("sortId", &self.sortId())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2ArchiveAchievementTypeDataBuilder<
     'a: 'b,
     'b,
@@ -36228,6 +47809,40 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2ArchiveAchievementTypeData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2ArchiveAchievementTypeDataT {
+    pub achievementType: Option<String>,
+    pub name: Option<String>,
+    pub sortId: i32,
+}
+impl Default for clz_Torappu_SandboxV2ArchiveAchievementTypeDataT {
+    fn default() -> Self {
+        Self {
+            achievementType: None,
+            name: None,
+            sortId: 0,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2ArchiveAchievementTypeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2ArchiveAchievementTypeData<'b>> {
+        let achievementType = self.achievementType.as_ref().map(|x| _fbb.create_string(x));
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        clz_Torappu_SandboxV2ArchiveAchievementTypeData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2ArchiveAchievementTypeDataArgs {
+                achievementType,
+                name,
+                sortId,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2ArchiveAchievementTypeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -36242,7 +47857,7 @@ impl<'a> flatbuffers::Follow<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -36270,6 +47885,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2ArchiveAchievementTypeData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2ArchiveAchievementTypeDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2ArchiveAchievementTypeDataT { key, value }
     }
 
     #[inline]
@@ -36338,6 +47962,25 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2ArchiveAchievementTypeDa
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2ArchiveAchievementTypeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "dict__string__clz_Torappu_SandboxV2ArchiveAchievementTypeData",
+            2,
+        )?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2ArchiveAchievementTypeDataBuilder<
     'a: 'b,
     'b,
@@ -36397,6 +48040,37 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2ArchiveAchievementT
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2ArchiveAchievementTypeDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2ArchiveAchievementTypeDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2ArchiveAchievementTypeDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2ArchiveAchievementTypeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2ArchiveAchievementTypeData<'b>>
+    {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2ArchiveAchievementTypeData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2ArchiveAchievementTypeDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2ArchiveQuestTypeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -36409,7 +48083,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2ArchiveQuestTypeData<'
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -36437,6 +48111,17 @@ impl<'a> clz_Torappu_SandboxV2ArchiveQuestTypeData<'a> {
         }
         builder.add_type_(args.type_);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2ArchiveQuestTypeDataT {
+        let type_ = self.type_();
+        let name = self.name().map(|x| x.to_string());
+        let iconId = self.iconId().map(|x| x.to_string());
+        clz_Torappu_SandboxV2ArchiveQuestTypeDataT {
+            type_,
+            name,
+            iconId,
+        }
     }
 
     #[inline]
@@ -36510,6 +48195,27 @@ impl<'a> Default for clz_Torappu_SandboxV2ArchiveQuestTypeDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2ArchiveQuestTypeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2ArchiveQuestTypeData", 3)?;
+        s.serialize_field("type_", &self.type_())?;
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        if let Some(f) = self.iconId() {
+            s.serialize_field("iconId", &f)?;
+        } else {
+            s.skip_field("iconId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2ArchiveQuestTypeDataBuilder<
     'a: 'b,
     'b,
@@ -36570,6 +48276,40 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2ArchiveQuestTypeData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2ArchiveQuestTypeDataT {
+    pub type_: enum__Torappu_SandboxV2ArchiveQuestType,
+    pub name: Option<String>,
+    pub iconId: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2ArchiveQuestTypeDataT {
+    fn default() -> Self {
+        Self {
+            type_: enum__Torappu_SandboxV2ArchiveQuestType::NONE,
+            name: None,
+            iconId: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2ArchiveQuestTypeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2ArchiveQuestTypeData<'b>> {
+        let type_ = self.type_;
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        let iconId = self.iconId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2ArchiveQuestTypeData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2ArchiveQuestTypeDataArgs {
+                type_,
+                name,
+                iconId,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2ArchiveQuestTypeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -36582,7 +48322,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2ArchiveQ
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -36609,6 +48349,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2ArchiveQuestTypeData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2ArchiveQuestTypeDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2ArchiveQuestTypeDataT { key, value }
     }
 
     #[inline]
@@ -36685,6 +48434,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2ArchiveQuestTypeDataArgs
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2ArchiveQuestTypeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("dict__string__clz_Torappu_SandboxV2ArchiveQuestTypeData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2ArchiveQuestTypeDataBuilder<
     'a: 'b,
     'b,
@@ -36746,6 +48512,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2ArchiveQuestTypeDat
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2ArchiveQuestTypeDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2ArchiveQuestTypeDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2ArchiveQuestTypeDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2ArchiveQuestTypeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2ArchiveQuestTypeData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2ArchiveQuestTypeData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2ArchiveQuestTypeDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2ArchiveMusicUnlockDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -36758,7 +48554,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2ArchiveMusicUnlockData
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -36784,6 +48580,15 @@ impl<'a> clz_Torappu_SandboxV2ArchiveMusicUnlockData<'a> {
             builder.add_musicId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2ArchiveMusicUnlockDataT {
+        let musicId = self.musicId().map(|x| x.to_string());
+        let unlockCondDesc = self.unlockCondDesc().map(|x| x.to_string());
+        clz_Torappu_SandboxV2ArchiveMusicUnlockDataT {
+            musicId,
+            unlockCondDesc,
+        }
     }
 
     #[inline]
@@ -36844,6 +48649,27 @@ impl<'a> Default for clz_Torappu_SandboxV2ArchiveMusicUnlockDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2ArchiveMusicUnlockData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_SandboxV2ArchiveMusicUnlockData", 2)?;
+        if let Some(f) = self.musicId() {
+            s.serialize_field("musicId", &f)?;
+        } else {
+            s.skip_field("musicId")?;
+        }
+        if let Some(f) = self.unlockCondDesc() {
+            s.serialize_field("unlockCondDesc", &f)?;
+        } else {
+            s.skip_field("unlockCondDesc")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2ArchiveMusicUnlockDataBuilder<
     'a: 'b,
     'b,
@@ -36894,6 +48720,36 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2ArchiveMusicUnlockData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2ArchiveMusicUnlockDataT {
+    pub musicId: Option<String>,
+    pub unlockCondDesc: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2ArchiveMusicUnlockDataT {
+    fn default() -> Self {
+        Self {
+            musicId: None,
+            unlockCondDesc: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2ArchiveMusicUnlockDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2ArchiveMusicUnlockData<'b>> {
+        let musicId = self.musicId.as_ref().map(|x| _fbb.create_string(x));
+        let unlockCondDesc = self.unlockCondDesc.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2ArchiveMusicUnlockData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2ArchiveMusicUnlockDataArgs {
+                musicId,
+                unlockCondDesc,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2ArchiveMusicUnlockDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -36906,7 +48762,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2ArchiveM
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -36934,6 +48790,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2ArchiveMusicUnlockData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2ArchiveMusicUnlockDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2ArchiveMusicUnlockDataT { key, value }
     }
 
     #[inline]
@@ -37006,6 +48871,25 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2ArchiveMusicUnlockDataAr
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2ArchiveMusicUnlockData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "dict__string__clz_Torappu_SandboxV2ArchiveMusicUnlockData",
+            2,
+        )?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2ArchiveMusicUnlockDataBuilder<
     'a: 'b,
     'b,
@@ -37063,6 +48947,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2ArchiveMusicUnlockD
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2ArchiveMusicUnlockDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2ArchiveMusicUnlockDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2ArchiveMusicUnlockDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2ArchiveMusicUnlockDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2ArchiveMusicUnlockData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2ArchiveMusicUnlockData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2ArchiveMusicUnlockDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2BaseUpdateConditionOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -37075,7 +48989,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2BaseUpdateCondition<'a
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -37105,6 +49019,19 @@ impl<'a> clz_Torappu_SandboxV2BaseUpdateCondition<'a> {
             builder.add_desc(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2BaseUpdateConditionT {
+        let desc = self.desc().map(|x| x.to_string());
+        let limitCond = self.limitCond().map(|x| x.to_string());
+        let param = self
+            .param()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        clz_Torappu_SandboxV2BaseUpdateConditionT {
+            desc,
+            limitCond,
+            param,
+        }
     }
 
     #[inline]
@@ -37183,6 +49110,31 @@ impl<'a> Default for clz_Torappu_SandboxV2BaseUpdateConditionArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2BaseUpdateCondition<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2BaseUpdateCondition", 3)?;
+        if let Some(f) = self.desc() {
+            s.serialize_field("desc", &f)?;
+        } else {
+            s.skip_field("desc")?;
+        }
+        if let Some(f) = self.limitCond() {
+            s.serialize_field("limitCond", &f)?;
+        } else {
+            s.skip_field("limitCond")?;
+        }
+        if let Some(f) = self.param() {
+            s.serialize_field("param", &f)?;
+        } else {
+            s.skip_field("param")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2BaseUpdateConditionBuilder<
     'a: 'b,
     'b,
@@ -37246,6 +49198,43 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2BaseUpdateCondition<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2BaseUpdateConditionT {
+    pub desc: Option<String>,
+    pub limitCond: Option<String>,
+    pub param: Option<Vec<String>>,
+}
+impl Default for clz_Torappu_SandboxV2BaseUpdateConditionT {
+    fn default() -> Self {
+        Self {
+            desc: None,
+            limitCond: None,
+            param: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2BaseUpdateConditionT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2BaseUpdateCondition<'b>> {
+        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
+        let limitCond = self.limitCond.as_ref().map(|x| _fbb.create_string(x));
+        let param = self.param.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SandboxV2BaseUpdateCondition::create(
+            _fbb,
+            &clz_Torappu_SandboxV2BaseUpdateConditionArgs {
+                desc,
+                limitCond,
+                param,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2BaseUpdateFunctionPreviewDetailDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -37258,7 +49247,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2BaseUpdateFunctionPrev
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -37302,6 +49291,27 @@ impl<'a> clz_Torappu_SandboxV2BaseUpdateFunctionPreviewDetailData<'a> {
         }
         builder.add_darkMode(args.darkMode);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2BaseUpdateFunctionPreviewDetailDataT {
+        let funcId = self.funcId().map(|x| x.to_string());
+        let unlockType = self.unlockType();
+        let typeTitle = self.typeTitle().map(|x| x.to_string());
+        let desc = self.desc().map(|x| x.to_string());
+        let icon = self.icon().map(|x| x.to_string());
+        let darkMode = self.darkMode();
+        let sortId = self.sortId();
+        let displayType = self.displayType();
+        clz_Torappu_SandboxV2BaseUpdateFunctionPreviewDetailDataT {
+            funcId,
+            unlockType,
+            typeTitle,
+            desc,
+            icon,
+            darkMode,
+            sortId,
+            displayType,
+        }
     }
 
     #[inline]
@@ -37468,6 +49478,43 @@ impl<'a> Default for clz_Torappu_SandboxV2BaseUpdateFunctionPreviewDetailDataArg
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2BaseUpdateFunctionPreviewDetailData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "clz_Torappu_SandboxV2BaseUpdateFunctionPreviewDetailData",
+            8,
+        )?;
+        if let Some(f) = self.funcId() {
+            s.serialize_field("funcId", &f)?;
+        } else {
+            s.skip_field("funcId")?;
+        }
+        s.serialize_field("unlockType", &self.unlockType())?;
+        if let Some(f) = self.typeTitle() {
+            s.serialize_field("typeTitle", &f)?;
+        } else {
+            s.skip_field("typeTitle")?;
+        }
+        if let Some(f) = self.desc() {
+            s.serialize_field("desc", &f)?;
+        } else {
+            s.skip_field("desc")?;
+        }
+        if let Some(f) = self.icon() {
+            s.serialize_field("icon", &f)?;
+        } else {
+            s.skip_field("icon")?;
+        }
+        s.serialize_field("darkMode", &self.darkMode())?;
+        s.serialize_field("sortId", &self.sortId())?;
+        s.serialize_field("displayType", &self.displayType())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2BaseUpdateFunctionPreviewDetailDataBuilder<
     'a: 'b,
     'b,
@@ -37577,6 +49624,60 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2BaseUpdateFunctionPreviewDetailDa
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2BaseUpdateFunctionPreviewDetailDataT {
+    pub funcId: Option<String>,
+    pub unlockType: enum__Torappu_SandboxV2BaseUnlockFuncType,
+    pub typeTitle: Option<String>,
+    pub desc: Option<String>,
+    pub icon: Option<String>,
+    pub darkMode: bool,
+    pub sortId: i32,
+    pub displayType: enum__Torappu_SandboxV2BaseUnlockFuncDisplayType,
+}
+impl Default for clz_Torappu_SandboxV2BaseUpdateFunctionPreviewDetailDataT {
+    fn default() -> Self {
+        Self {
+            funcId: None,
+            unlockType: enum__Torappu_SandboxV2BaseUnlockFuncType::NONE,
+            typeTitle: None,
+            desc: None,
+            icon: None,
+            darkMode: false,
+            sortId: 0,
+            displayType: enum__Torappu_SandboxV2BaseUnlockFuncDisplayType::NONE,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2BaseUpdateFunctionPreviewDetailDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2BaseUpdateFunctionPreviewDetailData<'b>> {
+        let funcId = self.funcId.as_ref().map(|x| _fbb.create_string(x));
+        let unlockType = self.unlockType;
+        let typeTitle = self.typeTitle.as_ref().map(|x| _fbb.create_string(x));
+        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
+        let icon = self.icon.as_ref().map(|x| _fbb.create_string(x));
+        let darkMode = self.darkMode;
+        let sortId = self.sortId;
+        let displayType = self.displayType;
+        clz_Torappu_SandboxV2BaseUpdateFunctionPreviewDetailData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2BaseUpdateFunctionPreviewDetailDataArgs {
+                funcId,
+                unlockType,
+                typeTitle,
+                desc,
+                icon,
+                darkMode,
+                sortId,
+                displayType,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2BaseFunctionPreviewDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -37589,7 +49690,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2BaseFunctionPreviewDat
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -37617,6 +49718,17 @@ impl<'a> clz_Torappu_SandboxV2BaseFunctionPreviewData<'a> {
             builder.add_previewId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2BaseFunctionPreviewDataT {
+        let previewId = self.previewId().map(|x| x.to_string());
+        let previewValue = self.previewValue();
+        let detailData = self.detailData().map(|x| Box::new(x.unpack()));
+        clz_Torappu_SandboxV2BaseFunctionPreviewDataT {
+            previewId,
+            previewValue,
+            detailData,
+        }
     }
 
     #[inline]
@@ -37696,6 +49808,28 @@ impl<'a> Default for clz_Torappu_SandboxV2BaseFunctionPreviewDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2BaseFunctionPreviewData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_SandboxV2BaseFunctionPreviewData", 3)?;
+        if let Some(f) = self.previewId() {
+            s.serialize_field("previewId", &f)?;
+        } else {
+            s.skip_field("previewId")?;
+        }
+        s.serialize_field("previewValue", &self.previewValue())?;
+        if let Some(f) = self.detailData() {
+            s.serialize_field("detailData", &f)?;
+        } else {
+            s.skip_field("detailData")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2BaseFunctionPreviewDataBuilder<
     'a: 'b,
     'b,
@@ -37759,6 +49893,40 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2BaseFunctionPreviewData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2BaseFunctionPreviewDataT {
+    pub previewId: Option<String>,
+    pub previewValue: i32,
+    pub detailData: Option<Box<clz_Torappu_SandboxV2BaseUpdateFunctionPreviewDetailDataT>>,
+}
+impl Default for clz_Torappu_SandboxV2BaseFunctionPreviewDataT {
+    fn default() -> Self {
+        Self {
+            previewId: None,
+            previewValue: 0,
+            detailData: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2BaseFunctionPreviewDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2BaseFunctionPreviewData<'b>> {
+        let previewId = self.previewId.as_ref().map(|x| _fbb.create_string(x));
+        let previewValue = self.previewValue;
+        let detailData = self.detailData.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_SandboxV2BaseFunctionPreviewData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2BaseFunctionPreviewDataArgs {
+                previewId,
+                previewValue,
+                detailData,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2BaseUpdateDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -37771,7 +49939,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2BaseUpdateData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -37817,6 +49985,33 @@ impl<'a> clz_Torappu_SandboxV2BaseUpdateData<'a> {
             builder.add_baseLevelId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2BaseUpdateDataT {
+        let baseLevelId = self.baseLevelId().map(|x| x.to_string());
+        let baseLevel = self.baseLevel();
+        let conditions = self
+            .conditions()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let items = self.items().map(|x| x.iter().map(|t| t.unpack()).collect());
+        let previewDatas = self
+            .previewDatas()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let scoreFactor = self.scoreFactor().map(|x| x.to_string());
+        let portableRepairCost = self.portableRepairCost();
+        let entryCount = self.entryCount();
+        let repairCost = self.repairCost();
+        clz_Torappu_SandboxV2BaseUpdateDataT {
+            baseLevelId,
+            baseLevel,
+            conditions,
+            items,
+            previewDatas,
+            scoreFactor,
+            portableRepairCost,
+            entryCount,
+            repairCost,
+        }
     }
 
     #[inline]
@@ -38034,6 +50229,45 @@ impl<'a> Default for clz_Torappu_SandboxV2BaseUpdateDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2BaseUpdateData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2BaseUpdateData", 9)?;
+        if let Some(f) = self.baseLevelId() {
+            s.serialize_field("baseLevelId", &f)?;
+        } else {
+            s.skip_field("baseLevelId")?;
+        }
+        s.serialize_field("baseLevel", &self.baseLevel())?;
+        if let Some(f) = self.conditions() {
+            s.serialize_field("conditions", &f)?;
+        } else {
+            s.skip_field("conditions")?;
+        }
+        if let Some(f) = self.items() {
+            s.serialize_field("items", &f)?;
+        } else {
+            s.skip_field("items")?;
+        }
+        if let Some(f) = self.previewDatas() {
+            s.serialize_field("previewDatas", &f)?;
+        } else {
+            s.skip_field("previewDatas")?;
+        }
+        if let Some(f) = self.scoreFactor() {
+            s.serialize_field("scoreFactor", &f)?;
+        } else {
+            s.skip_field("scoreFactor")?;
+        }
+        s.serialize_field("portableRepairCost", &self.portableRepairCost())?;
+        s.serialize_field("entryCount", &self.entryCount())?;
+        s.serialize_field("repairCost", &self.repairCost())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2BaseUpdateDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -38161,6 +50395,73 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2BaseUpdateData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2BaseUpdateDataT {
+    pub baseLevelId: Option<String>,
+    pub baseLevel: i32,
+    pub conditions: Option<Vec<clz_Torappu_SandboxV2BaseUpdateConditionT>>,
+    pub items: Option<Vec<dict__string__intT>>,
+    pub previewDatas: Option<Vec<clz_Torappu_SandboxV2BaseFunctionPreviewDataT>>,
+    pub scoreFactor: Option<String>,
+    pub portableRepairCost: i32,
+    pub entryCount: i32,
+    pub repairCost: i32,
+}
+impl Default for clz_Torappu_SandboxV2BaseUpdateDataT {
+    fn default() -> Self {
+        Self {
+            baseLevelId: None,
+            baseLevel: 0,
+            conditions: None,
+            items: None,
+            previewDatas: None,
+            scoreFactor: None,
+            portableRepairCost: 0,
+            entryCount: 0,
+            repairCost: 0,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2BaseUpdateDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2BaseUpdateData<'b>> {
+        let baseLevelId = self.baseLevelId.as_ref().map(|x| _fbb.create_string(x));
+        let baseLevel = self.baseLevel;
+        let conditions = self.conditions.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let items = self.items.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let previewDatas = self.previewDatas.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let scoreFactor = self.scoreFactor.as_ref().map(|x| _fbb.create_string(x));
+        let portableRepairCost = self.portableRepairCost;
+        let entryCount = self.entryCount;
+        let repairCost = self.repairCost;
+        clz_Torappu_SandboxV2BaseUpdateData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2BaseUpdateDataArgs {
+                baseLevelId,
+                baseLevel,
+                conditions,
+                items,
+                previewDatas,
+                scoreFactor,
+                portableRepairCost,
+                entryCount,
+                repairCost,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2DevelopmentLineSegmentDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -38173,7 +50474,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2DevelopmentLineSegment
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -38211,6 +50512,29 @@ impl<'a> clz_Torappu_SandboxV2DevelopmentLineSegmentData<'a> {
             builder.add_fromNodeId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2DevelopmentLineSegmentDataT {
+        let fromNodeId = self.fromNodeId().map(|x| x.to_string());
+        let passingNodeIds = self
+            .passingNodeIds()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let fromAxisPosX = self.fromAxisPosX();
+        let fromAxisPosY = self.fromAxisPosY();
+        let toAxisPosX = self.toAxisPosX();
+        let toAxisPosY = self.toAxisPosY();
+        let lineStyle = self.lineStyle();
+        let unlockBasementLevel = self.unlockBasementLevel();
+        clz_Torappu_SandboxV2DevelopmentLineSegmentDataT {
+            fromNodeId,
+            passingNodeIds,
+            fromAxisPosX,
+            fromAxisPosY,
+            toAxisPosX,
+            toAxisPosY,
+            lineStyle,
+            unlockBasementLevel,
+        }
     }
 
     #[inline]
@@ -38385,6 +50709,33 @@ impl<'a> Default for clz_Torappu_SandboxV2DevelopmentLineSegmentDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2DevelopmentLineSegmentData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_SandboxV2DevelopmentLineSegmentData", 8)?;
+        if let Some(f) = self.fromNodeId() {
+            s.serialize_field("fromNodeId", &f)?;
+        } else {
+            s.skip_field("fromNodeId")?;
+        }
+        if let Some(f) = self.passingNodeIds() {
+            s.serialize_field("passingNodeIds", &f)?;
+        } else {
+            s.skip_field("passingNodeIds")?;
+        }
+        s.serialize_field("fromAxisPosX", &self.fromAxisPosX())?;
+        s.serialize_field("fromAxisPosY", &self.fromAxisPosY())?;
+        s.serialize_field("toAxisPosX", &self.toAxisPosX())?;
+        s.serialize_field("toAxisPosY", &self.toAxisPosY())?;
+        s.serialize_field("lineStyle", &self.lineStyle())?;
+        s.serialize_field("unlockBasementLevel", &self.unlockBasementLevel())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2DevelopmentLineSegmentDataBuilder<
     'a: 'b,
     'b,
@@ -38497,6 +50848,63 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2DevelopmentLineSegmentData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2DevelopmentLineSegmentDataT {
+    pub fromNodeId: Option<String>,
+    pub passingNodeIds: Option<Vec<String>>,
+    pub fromAxisPosX: i32,
+    pub fromAxisPosY: i32,
+    pub toAxisPosX: i32,
+    pub toAxisPosY: i32,
+    pub lineStyle: enum__Torappu_SandboxV2DevelopmentLineStyle,
+    pub unlockBasementLevel: i32,
+}
+impl Default for clz_Torappu_SandboxV2DevelopmentLineSegmentDataT {
+    fn default() -> Self {
+        Self {
+            fromNodeId: None,
+            passingNodeIds: None,
+            fromAxisPosX: 0,
+            fromAxisPosY: 0,
+            toAxisPosX: 0,
+            toAxisPosY: 0,
+            lineStyle: enum__Torappu_SandboxV2DevelopmentLineStyle::EMPTY,
+            unlockBasementLevel: 0,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2DevelopmentLineSegmentDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2DevelopmentLineSegmentData<'b>> {
+        let fromNodeId = self.fromNodeId.as_ref().map(|x| _fbb.create_string(x));
+        let passingNodeIds = self.passingNodeIds.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let fromAxisPosX = self.fromAxisPosX;
+        let fromAxisPosY = self.fromAxisPosY;
+        let toAxisPosX = self.toAxisPosX;
+        let toAxisPosY = self.toAxisPosY;
+        let lineStyle = self.lineStyle;
+        let unlockBasementLevel = self.unlockBasementLevel;
+        clz_Torappu_SandboxV2DevelopmentLineSegmentData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2DevelopmentLineSegmentDataArgs {
+                fromNodeId,
+                passingNodeIds,
+                fromAxisPosX,
+                fromAxisPosY,
+                toAxisPosX,
+                toAxisPosY,
+                lineStyle,
+                unlockBasementLevel,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2BuildingNodeScoreDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -38509,7 +50917,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2BuildingNodeScoreData<
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -38535,6 +50943,17 @@ impl<'a> clz_Torappu_SandboxV2BuildingNodeScoreData<'a> {
             builder.add_nodeId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2BuildingNodeScoreDataT {
+        let nodeId = self.nodeId().map(|x| x.to_string());
+        let sortId = self.sortId();
+        let limitScore = self.limitScore();
+        clz_Torappu_SandboxV2BuildingNodeScoreDataT {
+            nodeId,
+            sortId,
+            limitScore,
+        }
     }
 
     #[inline]
@@ -38610,6 +51029,23 @@ impl<'a> Default for clz_Torappu_SandboxV2BuildingNodeScoreDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2BuildingNodeScoreData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2BuildingNodeScoreData", 3)?;
+        if let Some(f) = self.nodeId() {
+            s.serialize_field("nodeId", &f)?;
+        } else {
+            s.skip_field("nodeId")?;
+        }
+        s.serialize_field("sortId", &self.sortId())?;
+        s.serialize_field("limitScore", &self.limitScore())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2BuildingNodeScoreDataBuilder<
     'a: 'b,
     'b,
@@ -38670,6 +51106,40 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2BuildingNodeScoreData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2BuildingNodeScoreDataT {
+    pub nodeId: Option<String>,
+    pub sortId: i32,
+    pub limitScore: i32,
+}
+impl Default for clz_Torappu_SandboxV2BuildingNodeScoreDataT {
+    fn default() -> Self {
+        Self {
+            nodeId: None,
+            sortId: 0,
+            limitScore: 0,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2BuildingNodeScoreDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2BuildingNodeScoreData<'b>> {
+        let nodeId = self.nodeId.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        let limitScore = self.limitScore;
+        clz_Torappu_SandboxV2BuildingNodeScoreData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2BuildingNodeScoreDataArgs {
+                nodeId,
+                sortId,
+                limitScore,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2BuildingNodeScoreDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -38682,7 +51152,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2Building
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -38710,6 +51180,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2BuildingNodeScoreData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2BuildingNodeScoreDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2BuildingNodeScoreDataT { key, value }
     }
 
     #[inline]
@@ -38782,6 +51261,25 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2BuildingNodeScoreDataArg
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2BuildingNodeScoreData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "dict__string__clz_Torappu_SandboxV2BuildingNodeScoreData",
+            2,
+        )?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2BuildingNodeScoreDataBuilder<
     'a: 'b,
     'b,
@@ -38843,6 +51341,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2BuildingNodeScoreDa
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2BuildingNodeScoreDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2BuildingNodeScoreDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2BuildingNodeScoreDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2BuildingNodeScoreDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2BuildingNodeScoreData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2BuildingNodeScoreData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2BuildingNodeScoreDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2SeasonDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -38855,7 +51383,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2SeasonData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -38891,6 +51419,21 @@ impl<'a> clz_Torappu_SandboxV2SeasonData<'a> {
         }
         builder.add_seasonType(args.seasonType);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2SeasonDataT {
+        let seasonType = self.seasonType();
+        let name = self.name().map(|x| x.to_string());
+        let functionDesc = self.functionDesc().map(|x| x.to_string());
+        let description = self.description().map(|x| x.to_string());
+        let color = self.color().map(|x| x.to_string());
+        clz_Torappu_SandboxV2SeasonDataT {
+            seasonType,
+            name,
+            functionDesc,
+            description,
+            color,
+        }
     }
 
     #[inline]
@@ -39006,6 +51549,37 @@ impl<'a> Default for clz_Torappu_SandboxV2SeasonDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2SeasonData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2SeasonData", 5)?;
+        s.serialize_field("seasonType", &self.seasonType())?;
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        if let Some(f) = self.functionDesc() {
+            s.serialize_field("functionDesc", &f)?;
+        } else {
+            s.skip_field("functionDesc")?;
+        }
+        if let Some(f) = self.description() {
+            s.serialize_field("description", &f)?;
+        } else {
+            s.skip_field("description")?;
+        }
+        if let Some(f) = self.color() {
+            s.serialize_field("color", &f)?;
+        } else {
+            s.skip_field("color")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2SeasonDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -39075,6 +51649,48 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2SeasonData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2SeasonDataT {
+    pub seasonType: enum__Torappu_SandboxV2SeasonType,
+    pub name: Option<String>,
+    pub functionDesc: Option<String>,
+    pub description: Option<String>,
+    pub color: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2SeasonDataT {
+    fn default() -> Self {
+        Self {
+            seasonType: enum__Torappu_SandboxV2SeasonType::NONE,
+            name: None,
+            functionDesc: None,
+            description: None,
+            color: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2SeasonDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2SeasonData<'b>> {
+        let seasonType = self.seasonType;
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        let functionDesc = self.functionDesc.as_ref().map(|x| _fbb.create_string(x));
+        let description = self.description.as_ref().map(|x| _fbb.create_string(x));
+        let color = self.color.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2SeasonData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2SeasonDataArgs {
+                seasonType,
+                name,
+                functionDesc,
+                description,
+                color,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2SeasonDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -39087,7 +51703,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2SeasonDa
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -39113,6 +51729,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2SeasonData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2SeasonDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2SeasonDataT { key, value }
     }
 
     #[inline]
@@ -39186,6 +51811,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2SeasonDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2SeasonData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2SeasonData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2SeasonDataBuilder<
     'a: 'b,
     'b,
@@ -39247,6 +51889,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2SeasonData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2SeasonDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2SeasonDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2SeasonDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2SeasonDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2SeasonData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2SeasonData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2SeasonDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2ConfirmIconDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -39259,7 +51931,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2ConfirmIconData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -39283,6 +51955,15 @@ impl<'a> clz_Torappu_SandboxV2ConfirmIconData<'a> {
         }
         builder.add_iconType(args.iconType);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2ConfirmIconDataT {
+        let iconType = self.iconType();
+        let iconPicId = self.iconPicId().map(|x| x.to_string());
+        clz_Torappu_SandboxV2ConfirmIconDataT {
+            iconType,
+            iconPicId,
+        }
     }
 
     #[inline]
@@ -39349,6 +52030,22 @@ impl<'a> Default for clz_Torappu_SandboxV2ConfirmIconDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2ConfirmIconData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2ConfirmIconData", 2)?;
+        s.serialize_field("iconType", &self.iconType())?;
+        if let Some(f) = self.iconPicId() {
+            s.serialize_field("iconPicId", &f)?;
+        } else {
+            s.skip_field("iconPicId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2ConfirmIconDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -39397,6 +52094,36 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2ConfirmIconData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2ConfirmIconDataT {
+    pub iconType: enum__Torappu_SandboxV2ConfirmIconType,
+    pub iconPicId: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2ConfirmIconDataT {
+    fn default() -> Self {
+        Self {
+            iconType: enum__Torappu_SandboxV2ConfirmIconType::COMMON,
+            iconPicId: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2ConfirmIconDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2ConfirmIconData<'b>> {
+        let iconType = self.iconType;
+        let iconPicId = self.iconPicId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2ConfirmIconData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2ConfirmIconDataArgs {
+                iconType,
+                iconPicId,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2TutorialRepoCharDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -39409,7 +52136,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2TutorialRepoCharData<'
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -39447,6 +52174,27 @@ impl<'a> clz_Torappu_SandboxV2TutorialRepoCharData<'a> {
         }
         builder.add_instId(args.instId);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2TutorialRepoCharDataT {
+        let instId = self.instId();
+        let charId = self.charId().map(|x| x.to_string());
+        let evolvePhase = self.evolvePhase();
+        let level = self.level();
+        let favorPoint = self.favorPoint();
+        let potentialRank = self.potentialRank();
+        let mainSkillLv = self.mainSkillLv();
+        let specSkillList = self.specSkillList().map(|x| x.into_iter().collect());
+        clz_Torappu_SandboxV2TutorialRepoCharDataT {
+            instId,
+            charId,
+            evolvePhase,
+            level,
+            favorPoint,
+            potentialRank,
+            mainSkillLv,
+            specSkillList,
+        }
     }
 
     #[inline]
@@ -39607,6 +52355,32 @@ impl<'a> Default for clz_Torappu_SandboxV2TutorialRepoCharDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2TutorialRepoCharData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2TutorialRepoCharData", 8)?;
+        s.serialize_field("instId", &self.instId())?;
+        if let Some(f) = self.charId() {
+            s.serialize_field("charId", &f)?;
+        } else {
+            s.skip_field("charId")?;
+        }
+        s.serialize_field("evolvePhase", &self.evolvePhase())?;
+        s.serialize_field("level", &self.level())?;
+        s.serialize_field("favorPoint", &self.favorPoint())?;
+        s.serialize_field("potentialRank", &self.potentialRank())?;
+        s.serialize_field("mainSkillLv", &self.mainSkillLv())?;
+        if let Some(f) = self.specSkillList() {
+            s.serialize_field("specSkillList", &f)?;
+        } else {
+            s.skip_field("specSkillList")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2TutorialRepoCharDataBuilder<
     'a: 'b,
     'b,
@@ -39714,6 +52488,60 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2TutorialRepoCharData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2TutorialRepoCharDataT {
+    pub instId: i32,
+    pub charId: Option<String>,
+    pub evolvePhase: enum__Torappu_EvolvePhase,
+    pub level: i32,
+    pub favorPoint: i32,
+    pub potentialRank: i32,
+    pub mainSkillLv: i32,
+    pub specSkillList: Option<Vec<i32>>,
+}
+impl Default for clz_Torappu_SandboxV2TutorialRepoCharDataT {
+    fn default() -> Self {
+        Self {
+            instId: 0,
+            charId: None,
+            evolvePhase: enum__Torappu_EvolvePhase::PHASE_0,
+            level: 0,
+            favorPoint: 0,
+            potentialRank: 0,
+            mainSkillLv: 0,
+            specSkillList: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2TutorialRepoCharDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2TutorialRepoCharData<'b>> {
+        let instId = self.instId;
+        let charId = self.charId.as_ref().map(|x| _fbb.create_string(x));
+        let evolvePhase = self.evolvePhase;
+        let level = self.level;
+        let favorPoint = self.favorPoint;
+        let potentialRank = self.potentialRank;
+        let mainSkillLv = self.mainSkillLv;
+        let specSkillList = self.specSkillList.as_ref().map(|x| _fbb.create_vector(x));
+        clz_Torappu_SandboxV2TutorialRepoCharData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2TutorialRepoCharDataArgs {
+                instId,
+                charId,
+                evolvePhase,
+                level,
+                favorPoint,
+                potentialRank,
+                mainSkillLv,
+                specSkillList,
+            },
+        )
+    }
+}
 pub enum dict__int__clz_Torappu_SandboxV2TutorialRepoCharDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -39726,7 +52554,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__int__clz_Torappu_SandboxV2TutorialRep
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -39750,6 +52578,12 @@ impl<'a> dict__int__clz_Torappu_SandboxV2TutorialRepoCharData<'a> {
         }
         builder.add_key(args.key);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__int__clz_Torappu_SandboxV2TutorialRepoCharDataT {
+        let key = self.key();
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__int__clz_Torappu_SandboxV2TutorialRepoCharDataT { key, value }
     }
 
     #[inline]
@@ -39826,6 +52660,23 @@ impl<'a> Default for dict__int__clz_Torappu_SandboxV2TutorialRepoCharDataArgs<'a
     }
 }
 
+impl Serialize for dict__int__clz_Torappu_SandboxV2TutorialRepoCharData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("dict__int__clz_Torappu_SandboxV2TutorialRepoCharData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__int__clz_Torappu_SandboxV2TutorialRepoCharDataBuilder<
     'a: 'b,
     'b,
@@ -39883,6 +52734,33 @@ impl core::fmt::Debug for dict__int__clz_Torappu_SandboxV2TutorialRepoCharData<'
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__int__clz_Torappu_SandboxV2TutorialRepoCharDataT {
+    pub key: i32,
+    pub value: Option<Box<clz_Torappu_SandboxV2TutorialRepoCharDataT>>,
+}
+impl Default for dict__int__clz_Torappu_SandboxV2TutorialRepoCharDataT {
+    fn default() -> Self {
+        Self {
+            key: 0,
+            value: None,
+        }
+    }
+}
+impl dict__int__clz_Torappu_SandboxV2TutorialRepoCharDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__int__clz_Torappu_SandboxV2TutorialRepoCharData<'b>> {
+        let key = self.key;
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__int__clz_Torappu_SandboxV2TutorialRepoCharData::create(
+            _fbb,
+            &dict__int__clz_Torappu_SandboxV2TutorialRepoCharDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2TutorialBasicConstOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -39895,7 +52773,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2TutorialBasicConst<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -39917,6 +52795,13 @@ impl<'a> clz_Torappu_SandboxV2TutorialBasicConst<'a> {
             builder.add_trainingQuestList(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2TutorialBasicConstT {
+        let trainingQuestList = self
+            .trainingQuestList()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        clz_Torappu_SandboxV2TutorialBasicConstT { trainingQuestList }
     }
 
     #[inline]
@@ -39963,6 +52848,21 @@ impl<'a> Default for clz_Torappu_SandboxV2TutorialBasicConstArgs<'a> {
         clz_Torappu_SandboxV2TutorialBasicConstArgs {
             trainingQuestList: None,
         }
+    }
+}
+
+impl Serialize for clz_Torappu_SandboxV2TutorialBasicConst<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2TutorialBasicConst", 1)?;
+        if let Some(f) = self.trainingQuestList() {
+            s.serialize_field("trainingQuestList", &f)?;
+        } else {
+            s.skip_field("trainingQuestList")?;
+        }
+        s.end()
     }
 }
 
@@ -40013,6 +52913,33 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2TutorialBasicConst<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2TutorialBasicConstT {
+    pub trainingQuestList: Option<Vec<String>>,
+}
+impl Default for clz_Torappu_SandboxV2TutorialBasicConstT {
+    fn default() -> Self {
+        Self {
+            trainingQuestList: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2TutorialBasicConstT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2TutorialBasicConst<'b>> {
+        let trainingQuestList = self.trainingQuestList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SandboxV2TutorialBasicConst::create(
+            _fbb,
+            &clz_Torappu_SandboxV2TutorialBasicConstArgs { trainingQuestList },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2TutorialDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -40025,7 +52952,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2TutorialData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -40063,6 +52990,29 @@ impl<'a> clz_Torappu_SandboxV2TutorialData<'a> {
             builder.add_charRepoData(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2TutorialDataT {
+        let charRepoData = self
+            .charRepoData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let questData = self
+            .questData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let guideQuestData = self
+            .guideQuestData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let questLineData = self
+            .questLineData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let basicConst = self.basicConst().map(|x| Box::new(x.unpack()));
+        clz_Torappu_SandboxV2TutorialDataT {
+            charRepoData,
+            questData,
+            guideQuestData,
+            questLineData,
+            basicConst,
+        }
     }
 
     #[inline]
@@ -40259,6 +53209,41 @@ impl<'a> Default for clz_Torappu_SandboxV2TutorialDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2TutorialData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2TutorialData", 5)?;
+        if let Some(f) = self.charRepoData() {
+            s.serialize_field("charRepoData", &f)?;
+        } else {
+            s.skip_field("charRepoData")?;
+        }
+        if let Some(f) = self.questData() {
+            s.serialize_field("questData", &f)?;
+        } else {
+            s.skip_field("questData")?;
+        }
+        if let Some(f) = self.guideQuestData() {
+            s.serialize_field("guideQuestData", &f)?;
+        } else {
+            s.skip_field("guideQuestData")?;
+        }
+        if let Some(f) = self.questLineData() {
+            s.serialize_field("questLineData", &f)?;
+        } else {
+            s.skip_field("questLineData")?;
+        }
+        if let Some(f) = self.basicConst() {
+            s.serialize_field("basicConst", &f)?;
+        } else {
+            s.skip_field("basicConst")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2TutorialDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -40367,6 +53352,60 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2TutorialData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2TutorialDataT {
+    pub charRepoData: Option<Vec<dict__int__clz_Torappu_SandboxV2TutorialRepoCharDataT>>,
+    pub questData: Option<Vec<dict__string__clz_Torappu_SandboxV2QuestDataT>>,
+    pub guideQuestData: Option<Vec<dict__string__clz_Torappu_SandboxV2GuideQuestDataT>>,
+    pub questLineData: Option<Vec<dict__string__clz_Torappu_SandboxV2QuestLineDataT>>,
+    pub basicConst: Option<Box<clz_Torappu_SandboxV2TutorialBasicConstT>>,
+}
+impl Default for clz_Torappu_SandboxV2TutorialDataT {
+    fn default() -> Self {
+        Self {
+            charRepoData: None,
+            questData: None,
+            guideQuestData: None,
+            questLineData: None,
+            basicConst: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2TutorialDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2TutorialData<'b>> {
+        let charRepoData = self.charRepoData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let questData = self.questData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let guideQuestData = self.guideQuestData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let questLineData = self.questLineData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let basicConst = self.basicConst.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_SandboxV2TutorialData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2TutorialDataArgs {
+                charRepoData,
+                questData,
+                guideQuestData,
+                questLineData,
+                basicConst,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2RacerBasicInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -40379,7 +53418,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2RacerBasicInfo<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -40415,6 +53454,21 @@ impl<'a> clz_Torappu_SandboxV2RacerBasicInfo<'a> {
             builder.add_racerId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2RacerBasicInfoT {
+        let racerId = self.racerId().map(|x| x.to_string());
+        let sortId = self.sortId();
+        let racerName = self.racerName().map(|x| x.to_string());
+        let itemId = self.itemId().map(|x| x.to_string());
+        let attributeMaxValue = self.attributeMaxValue().map(|x| x.into_iter().collect());
+        clz_Torappu_SandboxV2RacerBasicInfoT {
+            racerId,
+            sortId,
+            racerName,
+            itemId,
+            attributeMaxValue,
+        }
     }
 
     #[inline]
@@ -40524,6 +53578,37 @@ impl<'a> Default for clz_Torappu_SandboxV2RacerBasicInfoArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2RacerBasicInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2RacerBasicInfo", 5)?;
+        if let Some(f) = self.racerId() {
+            s.serialize_field("racerId", &f)?;
+        } else {
+            s.skip_field("racerId")?;
+        }
+        s.serialize_field("sortId", &self.sortId())?;
+        if let Some(f) = self.racerName() {
+            s.serialize_field("racerName", &f)?;
+        } else {
+            s.skip_field("racerName")?;
+        }
+        if let Some(f) = self.itemId() {
+            s.serialize_field("itemId", &f)?;
+        } else {
+            s.skip_field("itemId")?;
+        }
+        if let Some(f) = self.attributeMaxValue() {
+            s.serialize_field("attributeMaxValue", &f)?;
+        } else {
+            s.skip_field("attributeMaxValue")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2RacerBasicInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -40595,6 +53680,51 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2RacerBasicInfo<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2RacerBasicInfoT {
+    pub racerId: Option<String>,
+    pub sortId: i32,
+    pub racerName: Option<String>,
+    pub itemId: Option<String>,
+    pub attributeMaxValue: Option<Vec<i32>>,
+}
+impl Default for clz_Torappu_SandboxV2RacerBasicInfoT {
+    fn default() -> Self {
+        Self {
+            racerId: None,
+            sortId: 0,
+            racerName: None,
+            itemId: None,
+            attributeMaxValue: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2RacerBasicInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2RacerBasicInfo<'b>> {
+        let racerId = self.racerId.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        let racerName = self.racerName.as_ref().map(|x| _fbb.create_string(x));
+        let itemId = self.itemId.as_ref().map(|x| _fbb.create_string(x));
+        let attributeMaxValue = self
+            .attributeMaxValue
+            .as_ref()
+            .map(|x| _fbb.create_vector(x));
+        clz_Torappu_SandboxV2RacerBasicInfo::create(
+            _fbb,
+            &clz_Torappu_SandboxV2RacerBasicInfoArgs {
+                racerId,
+                sortId,
+                racerName,
+                itemId,
+                attributeMaxValue,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2RacerBasicInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -40607,7 +53737,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2RacerBas
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -40633,6 +53763,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2RacerBasicInfo<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2RacerBasicInfoT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2RacerBasicInfoT { key, value }
     }
 
     #[inline]
@@ -40709,6 +53848,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2RacerBasicInfoArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2RacerBasicInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2RacerBasicInfo", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2RacerBasicInfoBuilder<
     'a: 'b,
     'b,
@@ -40770,6 +53926,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2RacerBasicInfo<'_> 
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2RacerBasicInfoT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2RacerBasicInfoT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2RacerBasicInfoT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2RacerBasicInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2RacerBasicInfo<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2RacerBasicInfo::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2RacerBasicInfoArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2RacerTalentInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -40782,7 +53968,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2RacerTalentInfo<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -40814,6 +54000,19 @@ impl<'a> clz_Torappu_SandboxV2RacerTalentInfo<'a> {
             builder.add_talentId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2RacerTalentInfoT {
+        let talentId = self.talentId().map(|x| x.to_string());
+        let talentType = self.talentType();
+        let talentIconId = self.talentIconId().map(|x| x.to_string());
+        let desc = self.desc().map(|x| x.to_string());
+        clz_Torappu_SandboxV2RacerTalentInfoT {
+            talentId,
+            talentType,
+            talentIconId,
+            desc,
+        }
     }
 
     #[inline]
@@ -40914,6 +54113,32 @@ impl<'a> Default for clz_Torappu_SandboxV2RacerTalentInfoArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2RacerTalentInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2RacerTalentInfo", 4)?;
+        if let Some(f) = self.talentId() {
+            s.serialize_field("talentId", &f)?;
+        } else {
+            s.skip_field("talentId")?;
+        }
+        s.serialize_field("talentType", &self.talentType())?;
+        if let Some(f) = self.talentIconId() {
+            s.serialize_field("talentIconId", &f)?;
+        } else {
+            s.skip_field("talentIconId")?;
+        }
+        if let Some(f) = self.desc() {
+            s.serialize_field("desc", &f)?;
+        } else {
+            s.skip_field("desc")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2RacerTalentInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -40978,6 +54203,44 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2RacerTalentInfo<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2RacerTalentInfoT {
+    pub talentId: Option<String>,
+    pub talentType: enum__Torappu_SandboxV2RacerTalentType,
+    pub talentIconId: Option<String>,
+    pub desc: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2RacerTalentInfoT {
+    fn default() -> Self {
+        Self {
+            talentId: None,
+            talentType: enum__Torappu_SandboxV2RacerTalentType::BORN,
+            talentIconId: None,
+            desc: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2RacerTalentInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2RacerTalentInfo<'b>> {
+        let talentId = self.talentId.as_ref().map(|x| _fbb.create_string(x));
+        let talentType = self.talentType;
+        let talentIconId = self.talentIconId.as_ref().map(|x| _fbb.create_string(x));
+        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2RacerTalentInfo::create(
+            _fbb,
+            &clz_Torappu_SandboxV2RacerTalentInfoArgs {
+                talentId,
+                talentType,
+                talentIconId,
+                desc,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2RacerTalentInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -40990,7 +54253,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2RacerTal
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -41016,6 +54279,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2RacerTalentInfo<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2RacerTalentInfoT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2RacerTalentInfoT { key, value }
     }
 
     #[inline]
@@ -41092,6 +54364,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2RacerTalentInfoArgs<'a> 
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2RacerTalentInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2RacerTalentInfo", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2RacerTalentInfoBuilder<
     'a: 'b,
     'b,
@@ -41153,6 +54442,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2RacerTalentInfo<'_>
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2RacerTalentInfoT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2RacerTalentInfoT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2RacerTalentInfoT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2RacerTalentInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2RacerTalentInfo<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2RacerTalentInfo::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2RacerTalentInfoArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2RacerNameInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -41165,7 +54484,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2RacerNameInfo<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -41193,6 +54512,17 @@ impl<'a> clz_Torappu_SandboxV2RacerNameInfo<'a> {
             builder.add_nameId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2RacerNameInfoT {
+        let nameId = self.nameId().map(|x| x.to_string());
+        let nameType = self.nameType();
+        let nameDesc = self.nameDesc().map(|x| x.to_string());
+        clz_Torappu_SandboxV2RacerNameInfoT {
+            nameId,
+            nameType,
+            nameDesc,
+        }
     }
 
     #[inline]
@@ -41274,6 +54604,27 @@ impl<'a> Default for clz_Torappu_SandboxV2RacerNameInfoArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2RacerNameInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2RacerNameInfo", 3)?;
+        if let Some(f) = self.nameId() {
+            s.serialize_field("nameId", &f)?;
+        } else {
+            s.skip_field("nameId")?;
+        }
+        s.serialize_field("nameType", &self.nameType())?;
+        if let Some(f) = self.nameDesc() {
+            s.serialize_field("nameDesc", &f)?;
+        } else {
+            s.skip_field("nameDesc")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2RacerNameInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -41329,6 +54680,40 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2RacerNameInfo<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2RacerNameInfoT {
+    pub nameId: Option<String>,
+    pub nameType: enum__Torappu_SandboxV2RacerNameType,
+    pub nameDesc: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2RacerNameInfoT {
+    fn default() -> Self {
+        Self {
+            nameId: None,
+            nameType: enum__Torappu_SandboxV2RacerNameType::PREFIX,
+            nameDesc: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2RacerNameInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2RacerNameInfo<'b>> {
+        let nameId = self.nameId.as_ref().map(|x| _fbb.create_string(x));
+        let nameType = self.nameType;
+        let nameDesc = self.nameDesc.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2RacerNameInfo::create(
+            _fbb,
+            &clz_Torappu_SandboxV2RacerNameInfoArgs {
+                nameId,
+                nameType,
+                nameDesc,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2RacerNameInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -41341,7 +54726,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2RacerNam
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -41367,6 +54752,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2RacerNameInfo<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2RacerNameInfoT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2RacerNameInfoT { key, value }
     }
 
     #[inline]
@@ -41443,6 +54837,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2RacerNameInfoArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2RacerNameInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2RacerNameInfo", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2RacerNameInfoBuilder<
     'a: 'b,
     'b,
@@ -41504,6 +54915,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2RacerNameInfo<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2RacerNameInfoT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2RacerNameInfoT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2RacerNameInfoT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2RacerNameInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2RacerNameInfo<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2RacerNameInfo::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2RacerNameInfoArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2RacerMedalInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -41516,7 +54957,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2RacerMedalInfo<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -41556,6 +54997,23 @@ impl<'a> clz_Torappu_SandboxV2RacerMedalInfo<'a> {
             builder.add_medalId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2RacerMedalInfoT {
+        let medalId = self.medalId().map(|x| x.to_string());
+        let sortId = self.sortId();
+        let name = self.name().map(|x| x.to_string());
+        let desc = self.desc().map(|x| x.to_string());
+        let iconId = self.iconId().map(|x| x.to_string());
+        let smallIconId = self.smallIconId().map(|x| x.to_string());
+        clz_Torappu_SandboxV2RacerMedalInfoT {
+            medalId,
+            sortId,
+            name,
+            desc,
+            iconId,
+            smallIconId,
+        }
     }
 
     #[inline]
@@ -41675,6 +55133,42 @@ impl<'a> Default for clz_Torappu_SandboxV2RacerMedalInfoArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2RacerMedalInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2RacerMedalInfo", 6)?;
+        if let Some(f) = self.medalId() {
+            s.serialize_field("medalId", &f)?;
+        } else {
+            s.skip_field("medalId")?;
+        }
+        s.serialize_field("sortId", &self.sortId())?;
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        if let Some(f) = self.desc() {
+            s.serialize_field("desc", &f)?;
+        } else {
+            s.skip_field("desc")?;
+        }
+        if let Some(f) = self.iconId() {
+            s.serialize_field("iconId", &f)?;
+        } else {
+            s.skip_field("iconId")?;
+        }
+        if let Some(f) = self.smallIconId() {
+            s.serialize_field("smallIconId", &f)?;
+        } else {
+            s.skip_field("smallIconId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2RacerMedalInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -41751,6 +55245,52 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2RacerMedalInfo<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2RacerMedalInfoT {
+    pub medalId: Option<String>,
+    pub sortId: i32,
+    pub name: Option<String>,
+    pub desc: Option<String>,
+    pub iconId: Option<String>,
+    pub smallIconId: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2RacerMedalInfoT {
+    fn default() -> Self {
+        Self {
+            medalId: None,
+            sortId: 0,
+            name: None,
+            desc: None,
+            iconId: None,
+            smallIconId: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2RacerMedalInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2RacerMedalInfo<'b>> {
+        let medalId = self.medalId.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
+        let iconId = self.iconId.as_ref().map(|x| _fbb.create_string(x));
+        let smallIconId = self.smallIconId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2RacerMedalInfo::create(
+            _fbb,
+            &clz_Torappu_SandboxV2RacerMedalInfoArgs {
+                medalId,
+                sortId,
+                name,
+                desc,
+                iconId,
+                smallIconId,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2RacerMedalInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -41763,7 +55303,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2RacerMed
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -41789,6 +55329,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2RacerMedalInfo<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2RacerMedalInfoT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2RacerMedalInfoT { key, value }
     }
 
     #[inline]
@@ -41865,6 +55414,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2RacerMedalInfoArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2RacerMedalInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2RacerMedalInfo", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2RacerMedalInfoBuilder<
     'a: 'b,
     'b,
@@ -41926,6 +55492,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2RacerMedalInfo<'_> 
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2RacerMedalInfoT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2RacerMedalInfoT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2RacerMedalInfoT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2RacerMedalInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2RacerMedalInfo<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2RacerMedalInfo::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2RacerMedalInfoArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2RacingItemInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -41938,7 +55534,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2RacingItemInfo<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -41972,6 +55568,21 @@ impl<'a> clz_Torappu_SandboxV2RacingItemInfo<'a> {
             builder.add_racerItemId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2RacingItemInfoT {
+        let racerItemId = self.racerItemId().map(|x| x.to_string());
+        let name = self.name().map(|x| x.to_string());
+        let iconId = self.iconId().map(|x| x.to_string());
+        let blackboard = self
+            .blackboard()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_SandboxV2RacingItemInfoT {
+            racerItemId,
+            name,
+            iconId,
+            blackboard,
+        }
     }
 
     #[inline]
@@ -42080,6 +55691,36 @@ impl<'a> Default for clz_Torappu_SandboxV2RacingItemInfoArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2RacingItemInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2RacingItemInfo", 4)?;
+        if let Some(f) = self.racerItemId() {
+            s.serialize_field("racerItemId", &f)?;
+        } else {
+            s.skip_field("racerItemId")?;
+        }
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        if let Some(f) = self.iconId() {
+            s.serialize_field("iconId", &f)?;
+        } else {
+            s.skip_field("iconId")?;
+        }
+        if let Some(f) = self.blackboard() {
+            s.serialize_field("blackboard", &f)?;
+        } else {
+            s.skip_field("blackboard")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2RacingItemInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -42150,6 +55791,47 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2RacingItemInfo<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2RacingItemInfoT {
+    pub racerItemId: Option<String>,
+    pub name: Option<String>,
+    pub iconId: Option<String>,
+    pub blackboard: Option<Vec<clz_Torappu_Blackboard_DataPairT>>,
+}
+impl Default for clz_Torappu_SandboxV2RacingItemInfoT {
+    fn default() -> Self {
+        Self {
+            racerItemId: None,
+            name: None,
+            iconId: None,
+            blackboard: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2RacingItemInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2RacingItemInfo<'b>> {
+        let racerItemId = self.racerItemId.as_ref().map(|x| _fbb.create_string(x));
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        let iconId = self.iconId.as_ref().map(|x| _fbb.create_string(x));
+        let blackboard = self.blackboard.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SandboxV2RacingItemInfo::create(
+            _fbb,
+            &clz_Torappu_SandboxV2RacingItemInfoArgs {
+                racerItemId,
+                name,
+                iconId,
+                blackboard,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2RacingItemInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -42162,7 +55844,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2RacingIt
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -42188,6 +55870,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2RacingItemInfo<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2RacingItemInfoT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2RacingItemInfoT { key, value }
     }
 
     #[inline]
@@ -42264,6 +55955,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2RacingItemInfoArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2RacingItemInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2RacingItemInfo", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2RacingItemInfoBuilder<
     'a: 'b,
     'b,
@@ -42325,6 +56033,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2RacingItemInfo<'_> 
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2RacingItemInfoT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2RacingItemInfoT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2RacingItemInfoT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2RacingItemInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2RacingItemInfo<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2RacingItemInfo::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2RacingItemInfoArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2RacingConstDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -42337,7 +56075,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2RacingConstData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -42469,6 +56207,87 @@ impl<'a> clz_Torappu_SandboxV2RacingConstData<'a> {
             builder.add_attributeNameList(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2RacingConstDataT {
+        let attributeNameList = self
+            .attributeNameList()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let racerMaxValue = self.racerMaxValue().map(|x| x.into_iter().collect());
+        let bagFullHintPercent = self.bagFullHintPercent();
+        let tempBagFullHintPercent = self.tempBagFullHintPercent();
+        let bagName = self.bagName().map(|x| x.to_string());
+        let tempBagName = self.tempBagName().map(|x| x.to_string());
+        let bagEmptyLeftDesc = self.bagEmptyLeftDesc().map(|x| x.to_string());
+        let bagEmptyRightDesc = self.bagEmptyRightDesc().map(|x| x.to_string());
+        let tempBagEmptyLeftDesc = self.tempBagEmptyLeftDesc().map(|x| x.to_string());
+        let tempBagEmptyRightDesc = self.tempBagEmptyRightDesc().map(|x| x.to_string());
+        let bornTalentIconId = self.bornTalentIconId().map(|x| x.to_string());
+        let bornTalentTitle = self.bornTalentTitle().map(|x| x.to_string());
+        let learnedTalentIconId = self.learnedTalentIconId().map(|x| x.to_string());
+        let learnedTalentTitle = self.learnedTalentTitle().map(|x| x.to_string());
+        let talentEmptyDesc = self.talentEmptyDesc().map(|x| x.to_string());
+        let slugItemId = self.slugItemId().map(|x| x.to_string());
+        let racingHpFactor = self.racingHpFactor();
+        let racingSpeedFactor = self.racingSpeedFactor();
+        let racingAccelerationFactor = self.racingAccelerationFactor();
+        let recoverMoveSpeed = self.recoverMoveSpeed();
+        let recoverHpFactor = self.recoverHpFactor();
+        let bleedingFactor = self.bleedingFactor();
+        let maxSteeringFactor = self.maxSteeringFactor();
+        let steeringMassLevelFactor = self.steeringMassLevelFactor();
+        let steeringMoveSpeedFactor = self.steeringMoveSpeedFactor();
+        let safeAngleCos = self.safeAngleCos();
+        let safeCollisionForceLevel = self.safeCollisionForceLevel();
+        let tileCollisionFactor = self.tileCollisionFactor();
+        let collisionForceSector = self.collisionForceSector().map(|x| x.into_iter().collect());
+        let collisionForceLevel = self.collisionForceLevel().map(|x| x.into_iter().collect());
+        let collisionSpeedLoss = self.collisionSpeedLoss().map(|x| x.into_iter().collect());
+        let collisionHpLoss = self.collisionHpLoss().map(|x| x.into_iter().collect());
+        let tileCollisionSpeedLoss = self
+            .tileCollisionSpeedLoss()
+            .map(|x| x.into_iter().collect());
+        let tileCollisionHpLoss = self.tileCollisionHpLoss().map(|x| x.into_iter().collect());
+        let autoUseItemTimeRange = self.autoUseItemTimeRange().map(|x| x.into_iter().collect());
+        let recoverAcceleration = self.recoverAcceleration();
+        clz_Torappu_SandboxV2RacingConstDataT {
+            attributeNameList,
+            racerMaxValue,
+            bagFullHintPercent,
+            tempBagFullHintPercent,
+            bagName,
+            tempBagName,
+            bagEmptyLeftDesc,
+            bagEmptyRightDesc,
+            tempBagEmptyLeftDesc,
+            tempBagEmptyRightDesc,
+            bornTalentIconId,
+            bornTalentTitle,
+            learnedTalentIconId,
+            learnedTalentTitle,
+            talentEmptyDesc,
+            slugItemId,
+            racingHpFactor,
+            racingSpeedFactor,
+            racingAccelerationFactor,
+            recoverMoveSpeed,
+            recoverHpFactor,
+            bleedingFactor,
+            maxSteeringFactor,
+            steeringMassLevelFactor,
+            steeringMoveSpeedFactor,
+            safeAngleCos,
+            safeCollisionForceLevel,
+            tileCollisionFactor,
+            collisionForceSector,
+            collisionForceLevel,
+            collisionSpeedLoss,
+            collisionHpLoss,
+            tileCollisionSpeedLoss,
+            tileCollisionHpLoss,
+            autoUseItemTimeRange,
+            recoverAcceleration,
+        }
     }
 
     #[inline]
@@ -43177,6 +56996,136 @@ impl<'a> Default for clz_Torappu_SandboxV2RacingConstDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2RacingConstData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2RacingConstData", 36)?;
+        if let Some(f) = self.attributeNameList() {
+            s.serialize_field("attributeNameList", &f)?;
+        } else {
+            s.skip_field("attributeNameList")?;
+        }
+        if let Some(f) = self.racerMaxValue() {
+            s.serialize_field("racerMaxValue", &f)?;
+        } else {
+            s.skip_field("racerMaxValue")?;
+        }
+        s.serialize_field("bagFullHintPercent", &self.bagFullHintPercent())?;
+        s.serialize_field("tempBagFullHintPercent", &self.tempBagFullHintPercent())?;
+        if let Some(f) = self.bagName() {
+            s.serialize_field("bagName", &f)?;
+        } else {
+            s.skip_field("bagName")?;
+        }
+        if let Some(f) = self.tempBagName() {
+            s.serialize_field("tempBagName", &f)?;
+        } else {
+            s.skip_field("tempBagName")?;
+        }
+        if let Some(f) = self.bagEmptyLeftDesc() {
+            s.serialize_field("bagEmptyLeftDesc", &f)?;
+        } else {
+            s.skip_field("bagEmptyLeftDesc")?;
+        }
+        if let Some(f) = self.bagEmptyRightDesc() {
+            s.serialize_field("bagEmptyRightDesc", &f)?;
+        } else {
+            s.skip_field("bagEmptyRightDesc")?;
+        }
+        if let Some(f) = self.tempBagEmptyLeftDesc() {
+            s.serialize_field("tempBagEmptyLeftDesc", &f)?;
+        } else {
+            s.skip_field("tempBagEmptyLeftDesc")?;
+        }
+        if let Some(f) = self.tempBagEmptyRightDesc() {
+            s.serialize_field("tempBagEmptyRightDesc", &f)?;
+        } else {
+            s.skip_field("tempBagEmptyRightDesc")?;
+        }
+        if let Some(f) = self.bornTalentIconId() {
+            s.serialize_field("bornTalentIconId", &f)?;
+        } else {
+            s.skip_field("bornTalentIconId")?;
+        }
+        if let Some(f) = self.bornTalentTitle() {
+            s.serialize_field("bornTalentTitle", &f)?;
+        } else {
+            s.skip_field("bornTalentTitle")?;
+        }
+        if let Some(f) = self.learnedTalentIconId() {
+            s.serialize_field("learnedTalentIconId", &f)?;
+        } else {
+            s.skip_field("learnedTalentIconId")?;
+        }
+        if let Some(f) = self.learnedTalentTitle() {
+            s.serialize_field("learnedTalentTitle", &f)?;
+        } else {
+            s.skip_field("learnedTalentTitle")?;
+        }
+        if let Some(f) = self.talentEmptyDesc() {
+            s.serialize_field("talentEmptyDesc", &f)?;
+        } else {
+            s.skip_field("talentEmptyDesc")?;
+        }
+        if let Some(f) = self.slugItemId() {
+            s.serialize_field("slugItemId", &f)?;
+        } else {
+            s.skip_field("slugItemId")?;
+        }
+        s.serialize_field("racingHpFactor", &self.racingHpFactor())?;
+        s.serialize_field("racingSpeedFactor", &self.racingSpeedFactor())?;
+        s.serialize_field("racingAccelerationFactor", &self.racingAccelerationFactor())?;
+        s.serialize_field("recoverMoveSpeed", &self.recoverMoveSpeed())?;
+        s.serialize_field("recoverHpFactor", &self.recoverHpFactor())?;
+        s.serialize_field("bleedingFactor", &self.bleedingFactor())?;
+        s.serialize_field("maxSteeringFactor", &self.maxSteeringFactor())?;
+        s.serialize_field("steeringMassLevelFactor", &self.steeringMassLevelFactor())?;
+        s.serialize_field("steeringMoveSpeedFactor", &self.steeringMoveSpeedFactor())?;
+        s.serialize_field("safeAngleCos", &self.safeAngleCos())?;
+        s.serialize_field("safeCollisionForceLevel", &self.safeCollisionForceLevel())?;
+        s.serialize_field("tileCollisionFactor", &self.tileCollisionFactor())?;
+        if let Some(f) = self.collisionForceSector() {
+            s.serialize_field("collisionForceSector", &f)?;
+        } else {
+            s.skip_field("collisionForceSector")?;
+        }
+        if let Some(f) = self.collisionForceLevel() {
+            s.serialize_field("collisionForceLevel", &f)?;
+        } else {
+            s.skip_field("collisionForceLevel")?;
+        }
+        if let Some(f) = self.collisionSpeedLoss() {
+            s.serialize_field("collisionSpeedLoss", &f)?;
+        } else {
+            s.skip_field("collisionSpeedLoss")?;
+        }
+        if let Some(f) = self.collisionHpLoss() {
+            s.serialize_field("collisionHpLoss", &f)?;
+        } else {
+            s.skip_field("collisionHpLoss")?;
+        }
+        if let Some(f) = self.tileCollisionSpeedLoss() {
+            s.serialize_field("tileCollisionSpeedLoss", &f)?;
+        } else {
+            s.skip_field("tileCollisionSpeedLoss")?;
+        }
+        if let Some(f) = self.tileCollisionHpLoss() {
+            s.serialize_field("tileCollisionHpLoss", &f)?;
+        } else {
+            s.skip_field("tileCollisionHpLoss")?;
+        }
+        if let Some(f) = self.autoUseItemTimeRange() {
+            s.serialize_field("autoUseItemTimeRange", &f)?;
+        } else {
+            s.skip_field("autoUseItemTimeRange")?;
+        }
+        s.serialize_field("recoverAcceleration", &self.recoverAcceleration())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2RacingConstDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -43548,6 +57497,214 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2RacingConstData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2RacingConstDataT {
+    pub attributeNameList: Option<Vec<String>>,
+    pub racerMaxValue: Option<Vec<i32>>,
+    pub bagFullHintPercent: f32,
+    pub tempBagFullHintPercent: f32,
+    pub bagName: Option<String>,
+    pub tempBagName: Option<String>,
+    pub bagEmptyLeftDesc: Option<String>,
+    pub bagEmptyRightDesc: Option<String>,
+    pub tempBagEmptyLeftDesc: Option<String>,
+    pub tempBagEmptyRightDesc: Option<String>,
+    pub bornTalentIconId: Option<String>,
+    pub bornTalentTitle: Option<String>,
+    pub learnedTalentIconId: Option<String>,
+    pub learnedTalentTitle: Option<String>,
+    pub talentEmptyDesc: Option<String>,
+    pub slugItemId: Option<String>,
+    pub racingHpFactor: f32,
+    pub racingSpeedFactor: f32,
+    pub racingAccelerationFactor: f32,
+    pub recoverMoveSpeed: f32,
+    pub recoverHpFactor: f32,
+    pub bleedingFactor: f32,
+    pub maxSteeringFactor: f32,
+    pub steeringMassLevelFactor: f32,
+    pub steeringMoveSpeedFactor: f32,
+    pub safeAngleCos: f32,
+    pub safeCollisionForceLevel: f32,
+    pub tileCollisionFactor: f32,
+    pub collisionForceSector: Option<Vec<f32>>,
+    pub collisionForceLevel: Option<Vec<f32>>,
+    pub collisionSpeedLoss: Option<Vec<f32>>,
+    pub collisionHpLoss: Option<Vec<f32>>,
+    pub tileCollisionSpeedLoss: Option<Vec<f32>>,
+    pub tileCollisionHpLoss: Option<Vec<f32>>,
+    pub autoUseItemTimeRange: Option<Vec<f32>>,
+    pub recoverAcceleration: f32,
+}
+impl Default for clz_Torappu_SandboxV2RacingConstDataT {
+    fn default() -> Self {
+        Self {
+            attributeNameList: None,
+            racerMaxValue: None,
+            bagFullHintPercent: 0.0,
+            tempBagFullHintPercent: 0.0,
+            bagName: None,
+            tempBagName: None,
+            bagEmptyLeftDesc: None,
+            bagEmptyRightDesc: None,
+            tempBagEmptyLeftDesc: None,
+            tempBagEmptyRightDesc: None,
+            bornTalentIconId: None,
+            bornTalentTitle: None,
+            learnedTalentIconId: None,
+            learnedTalentTitle: None,
+            talentEmptyDesc: None,
+            slugItemId: None,
+            racingHpFactor: 0.0,
+            racingSpeedFactor: 0.0,
+            racingAccelerationFactor: 0.0,
+            recoverMoveSpeed: 0.0,
+            recoverHpFactor: 0.0,
+            bleedingFactor: 0.0,
+            maxSteeringFactor: 0.0,
+            steeringMassLevelFactor: 0.0,
+            steeringMoveSpeedFactor: 0.0,
+            safeAngleCos: 0.0,
+            safeCollisionForceLevel: 0.0,
+            tileCollisionFactor: 0.0,
+            collisionForceSector: None,
+            collisionForceLevel: None,
+            collisionSpeedLoss: None,
+            collisionHpLoss: None,
+            tileCollisionSpeedLoss: None,
+            tileCollisionHpLoss: None,
+            autoUseItemTimeRange: None,
+            recoverAcceleration: 0.0,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2RacingConstDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2RacingConstData<'b>> {
+        let attributeNameList = self.attributeNameList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let racerMaxValue = self.racerMaxValue.as_ref().map(|x| _fbb.create_vector(x));
+        let bagFullHintPercent = self.bagFullHintPercent;
+        let tempBagFullHintPercent = self.tempBagFullHintPercent;
+        let bagName = self.bagName.as_ref().map(|x| _fbb.create_string(x));
+        let tempBagName = self.tempBagName.as_ref().map(|x| _fbb.create_string(x));
+        let bagEmptyLeftDesc = self
+            .bagEmptyLeftDesc
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let bagEmptyRightDesc = self
+            .bagEmptyRightDesc
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let tempBagEmptyLeftDesc = self
+            .tempBagEmptyLeftDesc
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let tempBagEmptyRightDesc = self
+            .tempBagEmptyRightDesc
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let bornTalentIconId = self
+            .bornTalentIconId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let bornTalentTitle = self.bornTalentTitle.as_ref().map(|x| _fbb.create_string(x));
+        let learnedTalentIconId = self
+            .learnedTalentIconId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let learnedTalentTitle = self
+            .learnedTalentTitle
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let talentEmptyDesc = self.talentEmptyDesc.as_ref().map(|x| _fbb.create_string(x));
+        let slugItemId = self.slugItemId.as_ref().map(|x| _fbb.create_string(x));
+        let racingHpFactor = self.racingHpFactor;
+        let racingSpeedFactor = self.racingSpeedFactor;
+        let racingAccelerationFactor = self.racingAccelerationFactor;
+        let recoverMoveSpeed = self.recoverMoveSpeed;
+        let recoverHpFactor = self.recoverHpFactor;
+        let bleedingFactor = self.bleedingFactor;
+        let maxSteeringFactor = self.maxSteeringFactor;
+        let steeringMassLevelFactor = self.steeringMassLevelFactor;
+        let steeringMoveSpeedFactor = self.steeringMoveSpeedFactor;
+        let safeAngleCos = self.safeAngleCos;
+        let safeCollisionForceLevel = self.safeCollisionForceLevel;
+        let tileCollisionFactor = self.tileCollisionFactor;
+        let collisionForceSector = self
+            .collisionForceSector
+            .as_ref()
+            .map(|x| _fbb.create_vector(x));
+        let collisionForceLevel = self
+            .collisionForceLevel
+            .as_ref()
+            .map(|x| _fbb.create_vector(x));
+        let collisionSpeedLoss = self
+            .collisionSpeedLoss
+            .as_ref()
+            .map(|x| _fbb.create_vector(x));
+        let collisionHpLoss = self.collisionHpLoss.as_ref().map(|x| _fbb.create_vector(x));
+        let tileCollisionSpeedLoss = self
+            .tileCollisionSpeedLoss
+            .as_ref()
+            .map(|x| _fbb.create_vector(x));
+        let tileCollisionHpLoss = self
+            .tileCollisionHpLoss
+            .as_ref()
+            .map(|x| _fbb.create_vector(x));
+        let autoUseItemTimeRange = self
+            .autoUseItemTimeRange
+            .as_ref()
+            .map(|x| _fbb.create_vector(x));
+        let recoverAcceleration = self.recoverAcceleration;
+        clz_Torappu_SandboxV2RacingConstData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2RacingConstDataArgs {
+                attributeNameList,
+                racerMaxValue,
+                bagFullHintPercent,
+                tempBagFullHintPercent,
+                bagName,
+                tempBagName,
+                bagEmptyLeftDesc,
+                bagEmptyRightDesc,
+                tempBagEmptyLeftDesc,
+                tempBagEmptyRightDesc,
+                bornTalentIconId,
+                bornTalentTitle,
+                learnedTalentIconId,
+                learnedTalentTitle,
+                talentEmptyDesc,
+                slugItemId,
+                racingHpFactor,
+                racingSpeedFactor,
+                racingAccelerationFactor,
+                recoverMoveSpeed,
+                recoverHpFactor,
+                bleedingFactor,
+                maxSteeringFactor,
+                steeringMassLevelFactor,
+                steeringMoveSpeedFactor,
+                safeAngleCos,
+                safeCollisionForceLevel,
+                tileCollisionFactor,
+                collisionForceSector,
+                collisionForceLevel,
+                collisionSpeedLoss,
+                collisionHpLoss,
+                tileCollisionSpeedLoss,
+                tileCollisionHpLoss,
+                autoUseItemTimeRange,
+                recoverAcceleration,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2RacingDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -43560,7 +57717,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2RacingData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -43606,6 +57763,37 @@ impl<'a> clz_Torappu_SandboxV2RacingData<'a> {
             builder.add_racerBasicInfo(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2RacingDataT {
+        let racerBasicInfo = self
+            .racerBasicInfo()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let racerTalentInfo = self
+            .racerTalentInfo()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let racerNameInfo = self
+            .racerNameInfo()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let racerMedalInfo = self
+            .racerMedalInfo()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let enemyItemMap = self
+            .enemyItemMap()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let racingItemInfo = self
+            .racingItemInfo()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let constData = self.constData().map(|x| Box::new(x.unpack()));
+        clz_Torappu_SandboxV2RacingDataT {
+            racerBasicInfo,
+            racerTalentInfo,
+            racerNameInfo,
+            racerMedalInfo,
+            enemyItemMap,
+            racingItemInfo,
+            constData,
+        }
     }
 
     #[inline]
@@ -43861,6 +58049,51 @@ impl<'a> Default for clz_Torappu_SandboxV2RacingDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2RacingData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2RacingData", 7)?;
+        if let Some(f) = self.racerBasicInfo() {
+            s.serialize_field("racerBasicInfo", &f)?;
+        } else {
+            s.skip_field("racerBasicInfo")?;
+        }
+        if let Some(f) = self.racerTalentInfo() {
+            s.serialize_field("racerTalentInfo", &f)?;
+        } else {
+            s.skip_field("racerTalentInfo")?;
+        }
+        if let Some(f) = self.racerNameInfo() {
+            s.serialize_field("racerNameInfo", &f)?;
+        } else {
+            s.skip_field("racerNameInfo")?;
+        }
+        if let Some(f) = self.racerMedalInfo() {
+            s.serialize_field("racerMedalInfo", &f)?;
+        } else {
+            s.skip_field("racerMedalInfo")?;
+        }
+        if let Some(f) = self.enemyItemMap() {
+            s.serialize_field("enemyItemMap", &f)?;
+        } else {
+            s.skip_field("enemyItemMap")?;
+        }
+        if let Some(f) = self.racingItemInfo() {
+            s.serialize_field("racingItemInfo", &f)?;
+        } else {
+            s.skip_field("racingItemInfo")?;
+        }
+        if let Some(f) = self.constData() {
+            s.serialize_field("constData", &f)?;
+        } else {
+            s.skip_field("constData")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2RacingDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -43996,6 +58229,74 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2RacingData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2RacingDataT {
+    pub racerBasicInfo: Option<Vec<dict__string__clz_Torappu_SandboxV2RacerBasicInfoT>>,
+    pub racerTalentInfo: Option<Vec<dict__string__clz_Torappu_SandboxV2RacerTalentInfoT>>,
+    pub racerNameInfo: Option<Vec<dict__string__clz_Torappu_SandboxV2RacerNameInfoT>>,
+    pub racerMedalInfo: Option<Vec<dict__string__clz_Torappu_SandboxV2RacerMedalInfoT>>,
+    pub enemyItemMap: Option<Vec<dict__string__stringT>>,
+    pub racingItemInfo: Option<Vec<dict__string__clz_Torappu_SandboxV2RacingItemInfoT>>,
+    pub constData: Option<Box<clz_Torappu_SandboxV2RacingConstDataT>>,
+}
+impl Default for clz_Torappu_SandboxV2RacingDataT {
+    fn default() -> Self {
+        Self {
+            racerBasicInfo: None,
+            racerTalentInfo: None,
+            racerNameInfo: None,
+            racerMedalInfo: None,
+            enemyItemMap: None,
+            racingItemInfo: None,
+            constData: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2RacingDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2RacingData<'b>> {
+        let racerBasicInfo = self.racerBasicInfo.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let racerTalentInfo = self.racerTalentInfo.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let racerNameInfo = self.racerNameInfo.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let racerMedalInfo = self.racerMedalInfo.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let enemyItemMap = self.enemyItemMap.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let racingItemInfo = self.racingItemInfo.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let constData = self.constData.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_SandboxV2RacingData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2RacingDataArgs {
+                racerBasicInfo,
+                racerTalentInfo,
+                racerNameInfo,
+                racerMedalInfo,
+                enemyItemMap,
+                racingItemInfo,
+                constData,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2ChallengeConstOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -44008,7 +58309,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2ChallengeConst<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -44046,6 +58347,21 @@ impl<'a> clz_Torappu_SandboxV2ChallengeConst<'a> {
             builder.add_challengeModeDesc(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2ChallengeConstT {
+        let challengeModeDesc = self.challengeModeDesc().map(|x| x.to_string());
+        let dailyTitleDesc = self.dailyTitleDesc().map(|x| x.to_string());
+        let debuffCountdownDesc = self.debuffCountdownDesc().map(|x| x.to_string());
+        let gainAllDebuffDesc = self.gainAllDebuffDesc().map(|x| x.to_string());
+        let dailyUpAttributeDesc = self.dailyUpAttributeDesc().map(|x| x.to_string());
+        clz_Torappu_SandboxV2ChallengeConstT {
+            challengeModeDesc,
+            dailyTitleDesc,
+            debuffCountdownDesc,
+            gainAllDebuffDesc,
+            dailyUpAttributeDesc,
+        }
     }
 
     #[inline]
@@ -44167,6 +58483,41 @@ impl<'a> Default for clz_Torappu_SandboxV2ChallengeConstArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2ChallengeConst<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2ChallengeConst", 5)?;
+        if let Some(f) = self.challengeModeDesc() {
+            s.serialize_field("challengeModeDesc", &f)?;
+        } else {
+            s.skip_field("challengeModeDesc")?;
+        }
+        if let Some(f) = self.dailyTitleDesc() {
+            s.serialize_field("dailyTitleDesc", &f)?;
+        } else {
+            s.skip_field("dailyTitleDesc")?;
+        }
+        if let Some(f) = self.debuffCountdownDesc() {
+            s.serialize_field("debuffCountdownDesc", &f)?;
+        } else {
+            s.skip_field("debuffCountdownDesc")?;
+        }
+        if let Some(f) = self.gainAllDebuffDesc() {
+            s.serialize_field("gainAllDebuffDesc", &f)?;
+        } else {
+            s.skip_field("gainAllDebuffDesc")?;
+        }
+        if let Some(f) = self.dailyUpAttributeDesc() {
+            s.serialize_field("dailyUpAttributeDesc", &f)?;
+        } else {
+            s.skip_field("dailyUpAttributeDesc")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2ChallengeConstBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -44243,6 +58594,60 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2ChallengeConst<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2ChallengeConstT {
+    pub challengeModeDesc: Option<String>,
+    pub dailyTitleDesc: Option<String>,
+    pub debuffCountdownDesc: Option<String>,
+    pub gainAllDebuffDesc: Option<String>,
+    pub dailyUpAttributeDesc: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2ChallengeConstT {
+    fn default() -> Self {
+        Self {
+            challengeModeDesc: None,
+            dailyTitleDesc: None,
+            debuffCountdownDesc: None,
+            gainAllDebuffDesc: None,
+            dailyUpAttributeDesc: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2ChallengeConstT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2ChallengeConst<'b>> {
+        let challengeModeDesc = self
+            .challengeModeDesc
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let dailyTitleDesc = self.dailyTitleDesc.as_ref().map(|x| _fbb.create_string(x));
+        let debuffCountdownDesc = self
+            .debuffCountdownDesc
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let gainAllDebuffDesc = self
+            .gainAllDebuffDesc
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let dailyUpAttributeDesc = self
+            .dailyUpAttributeDesc
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2ChallengeConst::create(
+            _fbb,
+            &clz_Torappu_SandboxV2ChallengeConstArgs {
+                challengeModeDesc,
+                dailyTitleDesc,
+                debuffCountdownDesc,
+                gainAllDebuffDesc,
+                dailyUpAttributeDesc,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2ChallengeModeUnlockDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -44255,7 +58660,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2ChallengeModeUnlockDat
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -44283,6 +58688,17 @@ impl<'a> clz_Torappu_SandboxV2ChallengeModeUnlockData<'a> {
             builder.add_unlockId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2ChallengeModeUnlockDataT {
+        let unlockId = self.unlockId().map(|x| x.to_string());
+        let sortId = self.sortId();
+        let conditionDesc = self.conditionDesc().map(|x| x.to_string());
+        clz_Torappu_SandboxV2ChallengeModeUnlockDataT {
+            unlockId,
+            sortId,
+            conditionDesc,
+        }
     }
 
     #[inline]
@@ -44364,6 +58780,28 @@ impl<'a> Default for clz_Torappu_SandboxV2ChallengeModeUnlockDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2ChallengeModeUnlockData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_SandboxV2ChallengeModeUnlockData", 3)?;
+        if let Some(f) = self.unlockId() {
+            s.serialize_field("unlockId", &f)?;
+        } else {
+            s.skip_field("unlockId")?;
+        }
+        s.serialize_field("sortId", &self.sortId())?;
+        if let Some(f) = self.conditionDesc() {
+            s.serialize_field("conditionDesc", &f)?;
+        } else {
+            s.skip_field("conditionDesc")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2ChallengeModeUnlockDataBuilder<
     'a: 'b,
     'b,
@@ -44425,6 +58863,40 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2ChallengeModeUnlockData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2ChallengeModeUnlockDataT {
+    pub unlockId: Option<String>,
+    pub sortId: i32,
+    pub conditionDesc: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2ChallengeModeUnlockDataT {
+    fn default() -> Self {
+        Self {
+            unlockId: None,
+            sortId: 0,
+            conditionDesc: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2ChallengeModeUnlockDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2ChallengeModeUnlockData<'b>> {
+        let unlockId = self.unlockId.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        let conditionDesc = self.conditionDesc.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2ChallengeModeUnlockData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2ChallengeModeUnlockDataArgs {
+                unlockId,
+                sortId,
+                conditionDesc,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2ChallengeModeUnlockDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -44439,7 +58911,7 @@ impl<'a> flatbuffers::Follow<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -44467,6 +58939,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2ChallengeModeUnlockData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2ChallengeModeUnlockDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2ChallengeModeUnlockDataT { key, value }
     }
 
     #[inline]
@@ -44539,6 +59020,25 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2ChallengeModeUnlockDataA
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2ChallengeModeUnlockData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "dict__string__clz_Torappu_SandboxV2ChallengeModeUnlockData",
+            2,
+        )?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2ChallengeModeUnlockDataBuilder<
     'a: 'b,
     'b,
@@ -44597,6 +59097,37 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2ChallengeModeUnlock
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2ChallengeModeUnlockDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2ChallengeModeUnlockDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2ChallengeModeUnlockDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2ChallengeModeUnlockDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2ChallengeModeUnlockData<'b>>
+    {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2ChallengeModeUnlockData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2ChallengeModeUnlockDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2ChallengeModeRewardDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -44609,7 +59140,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2ChallengeModeRewardDat
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -44639,6 +59170,21 @@ impl<'a> clz_Torappu_SandboxV2ChallengeModeRewardData<'a> {
             builder.add_rewardId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2ChallengeModeRewardDataT {
+        let rewardId = self.rewardId().map(|x| x.to_string());
+        let sortId = self.sortId();
+        let rewardDay = self.rewardDay();
+        let rewardItemList = self
+            .rewardItemList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_SandboxV2ChallengeModeRewardDataT {
+            rewardId,
+            sortId,
+            rewardDay,
+            rewardItemList,
+        }
     }
 
     #[inline]
@@ -44744,6 +59290,29 @@ impl<'a> Default for clz_Torappu_SandboxV2ChallengeModeRewardDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2ChallengeModeRewardData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_SandboxV2ChallengeModeRewardData", 4)?;
+        if let Some(f) = self.rewardId() {
+            s.serialize_field("rewardId", &f)?;
+        } else {
+            s.skip_field("rewardId")?;
+        }
+        s.serialize_field("sortId", &self.sortId())?;
+        s.serialize_field("rewardDay", &self.rewardDay())?;
+        if let Some(f) = self.rewardItemList() {
+            s.serialize_field("rewardItemList", &f)?;
+        } else {
+            s.skip_field("rewardItemList")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2ChallengeModeRewardDataBuilder<
     'a: 'b,
     'b,
@@ -44819,6 +59388,47 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2ChallengeModeRewardData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2ChallengeModeRewardDataT {
+    pub rewardId: Option<String>,
+    pub sortId: i32,
+    pub rewardDay: i32,
+    pub rewardItemList: Option<Vec<clz_Torappu_ItemBundleT>>,
+}
+impl Default for clz_Torappu_SandboxV2ChallengeModeRewardDataT {
+    fn default() -> Self {
+        Self {
+            rewardId: None,
+            sortId: 0,
+            rewardDay: 0,
+            rewardItemList: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2ChallengeModeRewardDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2ChallengeModeRewardData<'b>> {
+        let rewardId = self.rewardId.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        let rewardDay = self.rewardDay;
+        let rewardItemList = self.rewardItemList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SandboxV2ChallengeModeRewardData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2ChallengeModeRewardDataArgs {
+                rewardId,
+                sortId,
+                rewardDay,
+                rewardItemList,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2ChallengeModeRewardDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -44833,7 +59443,7 @@ impl<'a> flatbuffers::Follow<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -44861,6 +59471,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2ChallengeModeRewardData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2ChallengeModeRewardDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2ChallengeModeRewardDataT { key, value }
     }
 
     #[inline]
@@ -44933,6 +59552,25 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2ChallengeModeRewardDataA
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2ChallengeModeRewardData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "dict__string__clz_Torappu_SandboxV2ChallengeModeRewardData",
+            2,
+        )?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2ChallengeModeRewardDataBuilder<
     'a: 'b,
     'b,
@@ -44991,6 +59629,37 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2ChallengeModeReward
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2ChallengeModeRewardDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2ChallengeModeRewardDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2ChallengeModeRewardDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2ChallengeModeRewardDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2ChallengeModeRewardData<'b>>
+    {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2ChallengeModeRewardData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2ChallengeModeRewardDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2ChallengeModeDifficultyDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -45003,7 +59672,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2ChallengeModeDifficult
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -45027,6 +59696,15 @@ impl<'a> clz_Torappu_SandboxV2ChallengeModeDifficultyData<'a> {
         }
         builder.add_challengeDay(args.challengeDay);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2ChallengeModeDifficultyDataT {
+        let challengeDay = self.challengeDay();
+        let diffDesc = self.diffDesc().map(|x| x.to_string());
+        clz_Torappu_SandboxV2ChallengeModeDifficultyDataT {
+            challengeDay,
+            diffDesc,
+        }
     }
 
     #[inline]
@@ -45089,6 +59767,23 @@ impl<'a> Default for clz_Torappu_SandboxV2ChallengeModeDifficultyDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2ChallengeModeDifficultyData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_SandboxV2ChallengeModeDifficultyData", 2)?;
+        s.serialize_field("challengeDay", &self.challengeDay())?;
+        if let Some(f) = self.diffDesc() {
+            s.serialize_field("diffDesc", &f)?;
+        } else {
+            s.skip_field("diffDesc")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2ChallengeModeDifficultyDataBuilder<
     'a: 'b,
     'b,
@@ -45142,6 +59837,36 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2ChallengeModeDifficultyData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2ChallengeModeDifficultyDataT {
+    pub challengeDay: i32,
+    pub diffDesc: Option<String>,
+}
+impl Default for clz_Torappu_SandboxV2ChallengeModeDifficultyDataT {
+    fn default() -> Self {
+        Self {
+            challengeDay: 0,
+            diffDesc: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2ChallengeModeDifficultyDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2ChallengeModeDifficultyData<'b>> {
+        let challengeDay = self.challengeDay;
+        let diffDesc = self.diffDesc.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxV2ChallengeModeDifficultyData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2ChallengeModeDifficultyDataArgs {
+                challengeDay,
+                diffDesc,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2ChallengeModeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -45154,7 +59879,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2ChallengeModeData<'a> 
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -45188,6 +59913,25 @@ impl<'a> clz_Torappu_SandboxV2ChallengeModeData<'a> {
             builder.add_challengeConst(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2ChallengeModeDataT {
+        let challengeConst = self.challengeConst().map(|x| Box::new(x.unpack()));
+        let challengeModeUnlockData = self
+            .challengeModeUnlockData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let challengeModeRewardData = self
+            .challengeModeRewardData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let challengeModeDifficultyData = self
+            .challengeModeDifficultyData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_SandboxV2ChallengeModeDataT {
+            challengeConst,
+            challengeModeUnlockData,
+            challengeModeRewardData,
+            challengeModeDifficultyData,
+        }
     }
 
     #[inline]
@@ -45379,6 +60123,36 @@ impl<'a> Default for clz_Torappu_SandboxV2ChallengeModeDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2ChallengeModeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2ChallengeModeData", 4)?;
+        if let Some(f) = self.challengeConst() {
+            s.serialize_field("challengeConst", &f)?;
+        } else {
+            s.skip_field("challengeConst")?;
+        }
+        if let Some(f) = self.challengeModeUnlockData() {
+            s.serialize_field("challengeModeUnlockData", &f)?;
+        } else {
+            s.skip_field("challengeModeUnlockData")?;
+        }
+        if let Some(f) = self.challengeModeRewardData() {
+            s.serialize_field("challengeModeRewardData", &f)?;
+        } else {
+            s.skip_field("challengeModeRewardData")?;
+        }
+        if let Some(f) = self.challengeModeDifficultyData() {
+            s.serialize_field("challengeModeDifficultyData", &f)?;
+        } else {
+            s.skip_field("challengeModeDifficultyData")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2ChallengeModeDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -45477,6 +60251,55 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2ChallengeModeData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2ChallengeModeDataT {
+    pub challengeConst: Option<Box<clz_Torappu_SandboxV2ChallengeConstT>>,
+    pub challengeModeUnlockData:
+        Option<Vec<dict__string__clz_Torappu_SandboxV2ChallengeModeUnlockDataT>>,
+    pub challengeModeRewardData:
+        Option<Vec<dict__string__clz_Torappu_SandboxV2ChallengeModeRewardDataT>>,
+    pub challengeModeDifficultyData: Option<Vec<clz_Torappu_SandboxV2ChallengeModeDifficultyDataT>>,
+}
+impl Default for clz_Torappu_SandboxV2ChallengeModeDataT {
+    fn default() -> Self {
+        Self {
+            challengeConst: None,
+            challengeModeUnlockData: None,
+            challengeModeRewardData: None,
+            challengeModeDifficultyData: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2ChallengeModeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2ChallengeModeData<'b>> {
+        let challengeConst = self.challengeConst.as_ref().map(|x| x.pack(_fbb));
+        let challengeModeUnlockData = self.challengeModeUnlockData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let challengeModeRewardData = self.challengeModeRewardData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let challengeModeDifficultyData = self.challengeModeDifficultyData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SandboxV2ChallengeModeData::create(
+            _fbb,
+            &clz_Torappu_SandboxV2ChallengeModeDataArgs {
+                challengeConst,
+                challengeModeUnlockData,
+                challengeModeRewardData,
+                challengeModeDifficultyData,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxV2DataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -45489,7 +60312,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxV2Data<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -45791,6 +60614,273 @@ impl<'a> clz_Torappu_SandboxV2Data<'a> {
             builder.add_mapData(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxV2DataT {
+        let mapData = self
+            .mapData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let itemTrapData = self
+            .itemTrapData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let itemTrapTagData = self
+            .itemTrapTagData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let buildingItemData = self
+            .buildingItemData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let craftItemData = self
+            .craftItemData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let livestockProduceData = self
+            .livestockProduceData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let craftGroupData = self
+            .craftGroupData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let alchemyRecipeData = self
+            .alchemyRecipeData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let drinkMatData = self
+            .drinkMatData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let foodMatData = self
+            .foodMatData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let foodData = self
+            .foodData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let nodeTypeData = self
+            .nodeTypeData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let nodeUpgradeData = self
+            .nodeUpgradeData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let weatherData = self
+            .weatherData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let stageData = self
+            .stageData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let zoneData = self
+            .zoneData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let nodeBuffData = self
+            .nodeBuffData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let rewardConfigData = self.rewardConfigData().map(|x| Box::new(x.unpack()));
+        let floatIconData = self
+            .floatIconData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let enemyRushTypeData = self
+            .enemyRushTypeData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let rushEnemyData = self.rushEnemyData().map(|x| Box::new(x.unpack()));
+        let gameConst = self.gameConst().map(|x| Box::new(x.unpack()));
+        let basicConst = self.basicConst().map(|x| Box::new(x.unpack()));
+        let riftConst = self.riftConst().map(|x| Box::new(x.unpack()));
+        let developmentConst = self.developmentConst().map(|x| Box::new(x.unpack()));
+        let battleLoadingTips = self
+            .battleLoadingTips()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let runeDatas = self
+            .runeDatas()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let itemRuneList = self
+            .itemRuneList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let questData = self
+            .questData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let npcData = self
+            .npcData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let dialogData = self
+            .dialogData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let questLineData = self
+            .questLineData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let questLineStoryData = self
+            .questLineStoryData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let guideQuestData = self
+            .guideQuestData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let developmentData = self
+            .developmentData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let eventData = self
+            .eventData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let eventSceneData = self
+            .eventSceneData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let eventChoiceData = self
+            .eventChoiceData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let expeditionData = self
+            .expeditionData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let eventEffectData = self
+            .eventEffectData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let shopGoodData = self
+            .shopGoodData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let shopDialogData = self.shopDialogData().map(|x| Box::new(x.unpack()));
+        let logisticsData = self
+            .logisticsData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let logisticsCharMapping = self
+            .logisticsCharMapping()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let materialKeywordData = self
+            .materialKeywordData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let monthRushData = self
+            .monthRushData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let riftTerrainParamData = self
+            .riftTerrainParamData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let riftClimateParamData = self
+            .riftClimateParamData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let riftEnemyParamData = self
+            .riftEnemyParamData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let riftSubTargetData = self
+            .riftSubTargetData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let riftMainTargetData = self
+            .riftMainTargetData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let riftGlobalEffectData = self
+            .riftGlobalEffectData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let fixedRiftData = self
+            .fixedRiftData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let riftTeamBuffData = self
+            .riftTeamBuffData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let riftDifficultyData = self
+            .riftDifficultyData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let riftRewardDisplayData = self
+            .riftRewardDisplayData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let enemyReplaceData = self
+            .enemyReplaceData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let archiveQuestData = self
+            .archiveQuestData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let achievementData = self
+            .achievementData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let achievementTypeData = self
+            .achievementTypeData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let archiveQuestTypeData = self
+            .archiveQuestTypeData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let archiveMusicUnlockData = self
+            .archiveMusicUnlockData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let baseUpdate = self
+            .baseUpdate()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let developmentLineSegmentDatas = self
+            .developmentLineSegmentDatas()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let buildingNodeScoreData = self
+            .buildingNodeScoreData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let seasonData = self
+            .seasonData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let confirmIconData = self
+            .confirmIconData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let shopUpdateTimeData = self.shopUpdateTimeData().map(|x| x.into_iter().collect());
+        let tutorialData = self.tutorialData().map(|x| Box::new(x.unpack()));
+        let racingData = self.racingData().map(|x| Box::new(x.unpack()));
+        let challengeModeData = self.challengeModeData().map(|x| Box::new(x.unpack()));
+        clz_Torappu_SandboxV2DataT {
+            mapData,
+            itemTrapData,
+            itemTrapTagData,
+            buildingItemData,
+            craftItemData,
+            livestockProduceData,
+            craftGroupData,
+            alchemyRecipeData,
+            drinkMatData,
+            foodMatData,
+            foodData,
+            nodeTypeData,
+            nodeUpgradeData,
+            weatherData,
+            stageData,
+            zoneData,
+            nodeBuffData,
+            rewardConfigData,
+            floatIconData,
+            enemyRushTypeData,
+            rushEnemyData,
+            gameConst,
+            basicConst,
+            riftConst,
+            developmentConst,
+            battleLoadingTips,
+            runeDatas,
+            itemRuneList,
+            questData,
+            npcData,
+            dialogData,
+            questLineData,
+            questLineStoryData,
+            guideQuestData,
+            developmentData,
+            eventData,
+            eventSceneData,
+            eventChoiceData,
+            expeditionData,
+            eventEffectData,
+            shopGoodData,
+            shopDialogData,
+            logisticsData,
+            logisticsCharMapping,
+            materialKeywordData,
+            monthRushData,
+            riftTerrainParamData,
+            riftClimateParamData,
+            riftEnemyParamData,
+            riftSubTargetData,
+            riftMainTargetData,
+            riftGlobalEffectData,
+            fixedRiftData,
+            riftTeamBuffData,
+            riftDifficultyData,
+            riftRewardDisplayData,
+            enemyReplaceData,
+            archiveQuestData,
+            achievementData,
+            achievementTypeData,
+            archiveQuestTypeData,
+            archiveMusicUnlockData,
+            baseUpdate,
+            developmentLineSegmentDatas,
+            buildingNodeScoreData,
+            seasonData,
+            confirmIconData,
+            shopUpdateTimeData,
+            tutorialData,
+            racingData,
+            challengeModeData,
+        }
     }
 
     #[inline]
@@ -47922,6 +63012,371 @@ impl<'a> Default for clz_Torappu_SandboxV2DataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxV2Data<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxV2Data", 71)?;
+        if let Some(f) = self.mapData() {
+            s.serialize_field("mapData", &f)?;
+        } else {
+            s.skip_field("mapData")?;
+        }
+        if let Some(f) = self.itemTrapData() {
+            s.serialize_field("itemTrapData", &f)?;
+        } else {
+            s.skip_field("itemTrapData")?;
+        }
+        if let Some(f) = self.itemTrapTagData() {
+            s.serialize_field("itemTrapTagData", &f)?;
+        } else {
+            s.skip_field("itemTrapTagData")?;
+        }
+        if let Some(f) = self.buildingItemData() {
+            s.serialize_field("buildingItemData", &f)?;
+        } else {
+            s.skip_field("buildingItemData")?;
+        }
+        if let Some(f) = self.craftItemData() {
+            s.serialize_field("craftItemData", &f)?;
+        } else {
+            s.skip_field("craftItemData")?;
+        }
+        if let Some(f) = self.livestockProduceData() {
+            s.serialize_field("livestockProduceData", &f)?;
+        } else {
+            s.skip_field("livestockProduceData")?;
+        }
+        if let Some(f) = self.craftGroupData() {
+            s.serialize_field("craftGroupData", &f)?;
+        } else {
+            s.skip_field("craftGroupData")?;
+        }
+        if let Some(f) = self.alchemyRecipeData() {
+            s.serialize_field("alchemyRecipeData", &f)?;
+        } else {
+            s.skip_field("alchemyRecipeData")?;
+        }
+        if let Some(f) = self.drinkMatData() {
+            s.serialize_field("drinkMatData", &f)?;
+        } else {
+            s.skip_field("drinkMatData")?;
+        }
+        if let Some(f) = self.foodMatData() {
+            s.serialize_field("foodMatData", &f)?;
+        } else {
+            s.skip_field("foodMatData")?;
+        }
+        if let Some(f) = self.foodData() {
+            s.serialize_field("foodData", &f)?;
+        } else {
+            s.skip_field("foodData")?;
+        }
+        if let Some(f) = self.nodeTypeData() {
+            s.serialize_field("nodeTypeData", &f)?;
+        } else {
+            s.skip_field("nodeTypeData")?;
+        }
+        if let Some(f) = self.nodeUpgradeData() {
+            s.serialize_field("nodeUpgradeData", &f)?;
+        } else {
+            s.skip_field("nodeUpgradeData")?;
+        }
+        if let Some(f) = self.weatherData() {
+            s.serialize_field("weatherData", &f)?;
+        } else {
+            s.skip_field("weatherData")?;
+        }
+        if let Some(f) = self.stageData() {
+            s.serialize_field("stageData", &f)?;
+        } else {
+            s.skip_field("stageData")?;
+        }
+        if let Some(f) = self.zoneData() {
+            s.serialize_field("zoneData", &f)?;
+        } else {
+            s.skip_field("zoneData")?;
+        }
+        if let Some(f) = self.nodeBuffData() {
+            s.serialize_field("nodeBuffData", &f)?;
+        } else {
+            s.skip_field("nodeBuffData")?;
+        }
+        if let Some(f) = self.rewardConfigData() {
+            s.serialize_field("rewardConfigData", &f)?;
+        } else {
+            s.skip_field("rewardConfigData")?;
+        }
+        if let Some(f) = self.floatIconData() {
+            s.serialize_field("floatIconData", &f)?;
+        } else {
+            s.skip_field("floatIconData")?;
+        }
+        if let Some(f) = self.enemyRushTypeData() {
+            s.serialize_field("enemyRushTypeData", &f)?;
+        } else {
+            s.skip_field("enemyRushTypeData")?;
+        }
+        if let Some(f) = self.rushEnemyData() {
+            s.serialize_field("rushEnemyData", &f)?;
+        } else {
+            s.skip_field("rushEnemyData")?;
+        }
+        if let Some(f) = self.gameConst() {
+            s.serialize_field("gameConst", &f)?;
+        } else {
+            s.skip_field("gameConst")?;
+        }
+        if let Some(f) = self.basicConst() {
+            s.serialize_field("basicConst", &f)?;
+        } else {
+            s.skip_field("basicConst")?;
+        }
+        if let Some(f) = self.riftConst() {
+            s.serialize_field("riftConst", &f)?;
+        } else {
+            s.skip_field("riftConst")?;
+        }
+        if let Some(f) = self.developmentConst() {
+            s.serialize_field("developmentConst", &f)?;
+        } else {
+            s.skip_field("developmentConst")?;
+        }
+        if let Some(f) = self.battleLoadingTips() {
+            s.serialize_field("battleLoadingTips", &f)?;
+        } else {
+            s.skip_field("battleLoadingTips")?;
+        }
+        if let Some(f) = self.runeDatas() {
+            s.serialize_field("runeDatas", &f)?;
+        } else {
+            s.skip_field("runeDatas")?;
+        }
+        if let Some(f) = self.itemRuneList() {
+            s.serialize_field("itemRuneList", &f)?;
+        } else {
+            s.skip_field("itemRuneList")?;
+        }
+        if let Some(f) = self.questData() {
+            s.serialize_field("questData", &f)?;
+        } else {
+            s.skip_field("questData")?;
+        }
+        if let Some(f) = self.npcData() {
+            s.serialize_field("npcData", &f)?;
+        } else {
+            s.skip_field("npcData")?;
+        }
+        if let Some(f) = self.dialogData() {
+            s.serialize_field("dialogData", &f)?;
+        } else {
+            s.skip_field("dialogData")?;
+        }
+        if let Some(f) = self.questLineData() {
+            s.serialize_field("questLineData", &f)?;
+        } else {
+            s.skip_field("questLineData")?;
+        }
+        if let Some(f) = self.questLineStoryData() {
+            s.serialize_field("questLineStoryData", &f)?;
+        } else {
+            s.skip_field("questLineStoryData")?;
+        }
+        if let Some(f) = self.guideQuestData() {
+            s.serialize_field("guideQuestData", &f)?;
+        } else {
+            s.skip_field("guideQuestData")?;
+        }
+        if let Some(f) = self.developmentData() {
+            s.serialize_field("developmentData", &f)?;
+        } else {
+            s.skip_field("developmentData")?;
+        }
+        if let Some(f) = self.eventData() {
+            s.serialize_field("eventData", &f)?;
+        } else {
+            s.skip_field("eventData")?;
+        }
+        if let Some(f) = self.eventSceneData() {
+            s.serialize_field("eventSceneData", &f)?;
+        } else {
+            s.skip_field("eventSceneData")?;
+        }
+        if let Some(f) = self.eventChoiceData() {
+            s.serialize_field("eventChoiceData", &f)?;
+        } else {
+            s.skip_field("eventChoiceData")?;
+        }
+        if let Some(f) = self.expeditionData() {
+            s.serialize_field("expeditionData", &f)?;
+        } else {
+            s.skip_field("expeditionData")?;
+        }
+        if let Some(f) = self.eventEffectData() {
+            s.serialize_field("eventEffectData", &f)?;
+        } else {
+            s.skip_field("eventEffectData")?;
+        }
+        if let Some(f) = self.shopGoodData() {
+            s.serialize_field("shopGoodData", &f)?;
+        } else {
+            s.skip_field("shopGoodData")?;
+        }
+        if let Some(f) = self.shopDialogData() {
+            s.serialize_field("shopDialogData", &f)?;
+        } else {
+            s.skip_field("shopDialogData")?;
+        }
+        if let Some(f) = self.logisticsData() {
+            s.serialize_field("logisticsData", &f)?;
+        } else {
+            s.skip_field("logisticsData")?;
+        }
+        if let Some(f) = self.logisticsCharMapping() {
+            s.serialize_field("logisticsCharMapping", &f)?;
+        } else {
+            s.skip_field("logisticsCharMapping")?;
+        }
+        if let Some(f) = self.materialKeywordData() {
+            s.serialize_field("materialKeywordData", &f)?;
+        } else {
+            s.skip_field("materialKeywordData")?;
+        }
+        if let Some(f) = self.monthRushData() {
+            s.serialize_field("monthRushData", &f)?;
+        } else {
+            s.skip_field("monthRushData")?;
+        }
+        if let Some(f) = self.riftTerrainParamData() {
+            s.serialize_field("riftTerrainParamData", &f)?;
+        } else {
+            s.skip_field("riftTerrainParamData")?;
+        }
+        if let Some(f) = self.riftClimateParamData() {
+            s.serialize_field("riftClimateParamData", &f)?;
+        } else {
+            s.skip_field("riftClimateParamData")?;
+        }
+        if let Some(f) = self.riftEnemyParamData() {
+            s.serialize_field("riftEnemyParamData", &f)?;
+        } else {
+            s.skip_field("riftEnemyParamData")?;
+        }
+        if let Some(f) = self.riftSubTargetData() {
+            s.serialize_field("riftSubTargetData", &f)?;
+        } else {
+            s.skip_field("riftSubTargetData")?;
+        }
+        if let Some(f) = self.riftMainTargetData() {
+            s.serialize_field("riftMainTargetData", &f)?;
+        } else {
+            s.skip_field("riftMainTargetData")?;
+        }
+        if let Some(f) = self.riftGlobalEffectData() {
+            s.serialize_field("riftGlobalEffectData", &f)?;
+        } else {
+            s.skip_field("riftGlobalEffectData")?;
+        }
+        if let Some(f) = self.fixedRiftData() {
+            s.serialize_field("fixedRiftData", &f)?;
+        } else {
+            s.skip_field("fixedRiftData")?;
+        }
+        if let Some(f) = self.riftTeamBuffData() {
+            s.serialize_field("riftTeamBuffData", &f)?;
+        } else {
+            s.skip_field("riftTeamBuffData")?;
+        }
+        if let Some(f) = self.riftDifficultyData() {
+            s.serialize_field("riftDifficultyData", &f)?;
+        } else {
+            s.skip_field("riftDifficultyData")?;
+        }
+        if let Some(f) = self.riftRewardDisplayData() {
+            s.serialize_field("riftRewardDisplayData", &f)?;
+        } else {
+            s.skip_field("riftRewardDisplayData")?;
+        }
+        if let Some(f) = self.enemyReplaceData() {
+            s.serialize_field("enemyReplaceData", &f)?;
+        } else {
+            s.skip_field("enemyReplaceData")?;
+        }
+        if let Some(f) = self.archiveQuestData() {
+            s.serialize_field("archiveQuestData", &f)?;
+        } else {
+            s.skip_field("archiveQuestData")?;
+        }
+        if let Some(f) = self.achievementData() {
+            s.serialize_field("achievementData", &f)?;
+        } else {
+            s.skip_field("achievementData")?;
+        }
+        if let Some(f) = self.achievementTypeData() {
+            s.serialize_field("achievementTypeData", &f)?;
+        } else {
+            s.skip_field("achievementTypeData")?;
+        }
+        if let Some(f) = self.archiveQuestTypeData() {
+            s.serialize_field("archiveQuestTypeData", &f)?;
+        } else {
+            s.skip_field("archiveQuestTypeData")?;
+        }
+        if let Some(f) = self.archiveMusicUnlockData() {
+            s.serialize_field("archiveMusicUnlockData", &f)?;
+        } else {
+            s.skip_field("archiveMusicUnlockData")?;
+        }
+        if let Some(f) = self.baseUpdate() {
+            s.serialize_field("baseUpdate", &f)?;
+        } else {
+            s.skip_field("baseUpdate")?;
+        }
+        if let Some(f) = self.developmentLineSegmentDatas() {
+            s.serialize_field("developmentLineSegmentDatas", &f)?;
+        } else {
+            s.skip_field("developmentLineSegmentDatas")?;
+        }
+        if let Some(f) = self.buildingNodeScoreData() {
+            s.serialize_field("buildingNodeScoreData", &f)?;
+        } else {
+            s.skip_field("buildingNodeScoreData")?;
+        }
+        if let Some(f) = self.seasonData() {
+            s.serialize_field("seasonData", &f)?;
+        } else {
+            s.skip_field("seasonData")?;
+        }
+        if let Some(f) = self.confirmIconData() {
+            s.serialize_field("confirmIconData", &f)?;
+        } else {
+            s.skip_field("confirmIconData")?;
+        }
+        if let Some(f) = self.shopUpdateTimeData() {
+            s.serialize_field("shopUpdateTimeData", &f)?;
+        } else {
+            s.skip_field("shopUpdateTimeData")?;
+        }
+        if let Some(f) = self.tutorialData() {
+            s.serialize_field("tutorialData", &f)?;
+        } else {
+            s.skip_field("tutorialData")?;
+        }
+        if let Some(f) = self.racingData() {
+            s.serialize_field("racingData", &f)?;
+        } else {
+            s.skip_field("racingData")?;
+        }
+        if let Some(f) = self.challengeModeData() {
+            s.serialize_field("challengeModeData", &f)?;
+        } else {
+            s.skip_field("challengeModeData")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxV2DataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -49076,6 +64531,499 @@ impl core::fmt::Debug for clz_Torappu_SandboxV2Data<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxV2DataT {
+    pub mapData: Option<Vec<dict__string__clz_Torappu_SandboxV2MapDataT>>,
+    pub itemTrapData: Option<Vec<dict__string__clz_Torappu_SandboxV2ItemTrapDataT>>,
+    pub itemTrapTagData: Option<Vec<dict__string__clz_Torappu_SandboxV2ItemTrapTagDataT>>,
+    pub buildingItemData: Option<Vec<dict__string__clz_Torappu_SandboxV2BuildingItemDataT>>,
+    pub craftItemData: Option<Vec<dict__string__clz_Torappu_SandboxV2CraftItemDataT>>,
+    pub livestockProduceData: Option<Vec<dict__string__clz_Torappu_SandboxV2LivestockDataT>>,
+    pub craftGroupData: Option<Vec<dict__string__clz_Torappu_SandboxV2CraftGroupDataT>>,
+    pub alchemyRecipeData: Option<Vec<dict__string__clz_Torappu_SandboxV2AlchemyRecipeDataT>>,
+    pub drinkMatData: Option<Vec<dict__string__clz_Torappu_SandboxV2DrinkMatDataT>>,
+    pub foodMatData: Option<Vec<dict__string__clz_Torappu_SandboxV2FoodMatDataT>>,
+    pub foodData: Option<Vec<dict__string__clz_Torappu_SandboxV2FoodDataT>>,
+    pub nodeTypeData: Option<Vec<dict__string__clz_Torappu_SandboxV2NodeTypeDataT>>,
+    pub nodeUpgradeData: Option<Vec<dict__string__clz_Torappu_SandboxV2NodeUpgradeDataT>>,
+    pub weatherData: Option<Vec<dict__string__clz_Torappu_SandboxV2WeatherDataT>>,
+    pub stageData: Option<Vec<dict__string__clz_Torappu_SandboxV2StageDataT>>,
+    pub zoneData: Option<Vec<dict__string__clz_Torappu_SandboxV2ZoneDataT>>,
+    pub nodeBuffData: Option<Vec<dict__string__clz_Torappu_SandboxV2NodeBuffDataT>>,
+    pub rewardConfigData: Option<Box<clz_Torappu_SandboxV2RewardConfigGroupDataT>>,
+    pub floatIconData: Option<Vec<dict__string__clz_Torappu_SandboxV2FloatIconDataT>>,
+    pub enemyRushTypeData: Option<Vec<dict__string__clz_Torappu_SandboxV2EnemyRushTypeDataT>>,
+    pub rushEnemyData: Option<Box<clz_Torappu_SandboxV2BattleRushEnemyDataT>>,
+    pub gameConst: Option<Box<clz_Torappu_SandboxV2GameConstT>>,
+    pub basicConst: Option<Box<clz_Torappu_SandboxV2BasicConstT>>,
+    pub riftConst: Option<Box<clz_Torappu_SandboxV2RiftConstT>>,
+    pub developmentConst: Option<Box<clz_Torappu_SandboxV2DevelopmentConstT>>,
+    pub battleLoadingTips: Option<Vec<clz_Torappu_TipDataT>>,
+    pub runeDatas: Option<Vec<dict__string__clz_Torappu_RuneTable_PackedRuneDataT>>,
+    pub itemRuneList: Option<Vec<dict__string__list_clz_Torappu_LegacyInLevelRuneDataT>>,
+    pub questData: Option<Vec<dict__string__clz_Torappu_SandboxV2QuestDataT>>,
+    pub npcData: Option<Vec<dict__string__clz_Torappu_SandboxV2NpcDataT>>,
+    pub dialogData: Option<Vec<dict__string__clz_Torappu_SandboxV2DialogDataT>>,
+    pub questLineData: Option<Vec<dict__string__clz_Torappu_SandboxV2QuestLineDataT>>,
+    pub questLineStoryData: Option<Vec<dict__string__stringT>>,
+    pub guideQuestData: Option<Vec<dict__string__clz_Torappu_SandboxV2GuideQuestDataT>>,
+    pub developmentData: Option<Vec<dict__string__clz_Torappu_SandboxV2DevelopmentDataT>>,
+    pub eventData: Option<Vec<dict__string__clz_Torappu_SandboxV2EventDataT>>,
+    pub eventSceneData: Option<Vec<dict__string__clz_Torappu_SandboxV2EventSceneDataT>>,
+    pub eventChoiceData: Option<Vec<dict__string__clz_Torappu_SandboxV2EventChoiceDataT>>,
+    pub expeditionData: Option<Vec<dict__string__clz_Torappu_SandboxV2ExpeditionDataT>>,
+    pub eventEffectData: Option<Vec<dict__string__clz_Torappu_SandboxV2EventEffectDataT>>,
+    pub shopGoodData: Option<Vec<dict__string__clz_Torappu_SandboxV2ShopGoodDataT>>,
+    pub shopDialogData: Option<Box<clz_Torappu_SandboxV2ShopDialogDataT>>,
+    pub logisticsData: Option<Vec<clz_Torappu_SandboxV2LogisticsDataT>>,
+    pub logisticsCharMapping:
+        Option<Vec<dict__int__list_dict__int__list_clz_Torappu_SandboxV2LogisticsCharDataT>>,
+    pub materialKeywordData: Option<Vec<dict__string__stringT>>,
+    pub monthRushData: Option<Vec<clz_Torappu_SandboxV2MonthRushDataT>>,
+    pub riftTerrainParamData: Option<Vec<dict__string__clz_Torappu_SandboxV2RiftParamDataT>>,
+    pub riftClimateParamData: Option<Vec<dict__string__clz_Torappu_SandboxV2RiftParamDataT>>,
+    pub riftEnemyParamData: Option<Vec<dict__string__clz_Torappu_SandboxV2RiftParamDataT>>,
+    pub riftSubTargetData: Option<Vec<dict__string__clz_Torappu_SandboxV2RiftSubTargetDataT>>,
+    pub riftMainTargetData: Option<Vec<dict__string__clz_Torappu_SandboxV2RiftMainTargetDataT>>,
+    pub riftGlobalEffectData: Option<Vec<dict__string__clz_Torappu_SandboxV2RiftGlobalEffectDataT>>,
+    pub fixedRiftData: Option<Vec<dict__string__clz_Torappu_SandboxV2FixedRiftDataT>>,
+    pub riftTeamBuffData: Option<Vec<dict__string__list_clz_Torappu_SandboxV2RiftTeamBuffDataT>>,
+    pub riftDifficultyData: Option<Vec<dict__string__clz_Torappu_SandboxV2RiftDifficultyDataT>>,
+    pub riftRewardDisplayData: Option<Vec<dict__string__list_stringT>>,
+    pub enemyReplaceData: Option<Vec<dict__string__list_dict__string__stringT>>,
+    pub archiveQuestData: Option<Vec<dict__string__clz_Torappu_SandboxV2ArchiveQuestDataT>>,
+    pub achievementData: Option<Vec<dict__string__clz_Torappu_SandboxV2ArchiveAchievementDataT>>,
+    pub achievementTypeData:
+        Option<Vec<dict__string__clz_Torappu_SandboxV2ArchiveAchievementTypeDataT>>,
+    pub archiveQuestTypeData: Option<Vec<dict__string__clz_Torappu_SandboxV2ArchiveQuestTypeDataT>>,
+    pub archiveMusicUnlockData:
+        Option<Vec<dict__string__clz_Torappu_SandboxV2ArchiveMusicUnlockDataT>>,
+    pub baseUpdate: Option<Vec<clz_Torappu_SandboxV2BaseUpdateDataT>>,
+    pub developmentLineSegmentDatas: Option<Vec<clz_Torappu_SandboxV2DevelopmentLineSegmentDataT>>,
+    pub buildingNodeScoreData:
+        Option<Vec<dict__string__clz_Torappu_SandboxV2BuildingNodeScoreDataT>>,
+    pub seasonData: Option<Vec<dict__string__clz_Torappu_SandboxV2SeasonDataT>>,
+    pub confirmIconData: Option<Vec<clz_Torappu_SandboxV2ConfirmIconDataT>>,
+    pub shopUpdateTimeData: Option<Vec<i64>>,
+    pub tutorialData: Option<Box<clz_Torappu_SandboxV2TutorialDataT>>,
+    pub racingData: Option<Box<clz_Torappu_SandboxV2RacingDataT>>,
+    pub challengeModeData: Option<Box<clz_Torappu_SandboxV2ChallengeModeDataT>>,
+}
+impl Default for clz_Torappu_SandboxV2DataT {
+    fn default() -> Self {
+        Self {
+            mapData: None,
+            itemTrapData: None,
+            itemTrapTagData: None,
+            buildingItemData: None,
+            craftItemData: None,
+            livestockProduceData: None,
+            craftGroupData: None,
+            alchemyRecipeData: None,
+            drinkMatData: None,
+            foodMatData: None,
+            foodData: None,
+            nodeTypeData: None,
+            nodeUpgradeData: None,
+            weatherData: None,
+            stageData: None,
+            zoneData: None,
+            nodeBuffData: None,
+            rewardConfigData: None,
+            floatIconData: None,
+            enemyRushTypeData: None,
+            rushEnemyData: None,
+            gameConst: None,
+            basicConst: None,
+            riftConst: None,
+            developmentConst: None,
+            battleLoadingTips: None,
+            runeDatas: None,
+            itemRuneList: None,
+            questData: None,
+            npcData: None,
+            dialogData: None,
+            questLineData: None,
+            questLineStoryData: None,
+            guideQuestData: None,
+            developmentData: None,
+            eventData: None,
+            eventSceneData: None,
+            eventChoiceData: None,
+            expeditionData: None,
+            eventEffectData: None,
+            shopGoodData: None,
+            shopDialogData: None,
+            logisticsData: None,
+            logisticsCharMapping: None,
+            materialKeywordData: None,
+            monthRushData: None,
+            riftTerrainParamData: None,
+            riftClimateParamData: None,
+            riftEnemyParamData: None,
+            riftSubTargetData: None,
+            riftMainTargetData: None,
+            riftGlobalEffectData: None,
+            fixedRiftData: None,
+            riftTeamBuffData: None,
+            riftDifficultyData: None,
+            riftRewardDisplayData: None,
+            enemyReplaceData: None,
+            archiveQuestData: None,
+            achievementData: None,
+            achievementTypeData: None,
+            archiveQuestTypeData: None,
+            archiveMusicUnlockData: None,
+            baseUpdate: None,
+            developmentLineSegmentDatas: None,
+            buildingNodeScoreData: None,
+            seasonData: None,
+            confirmIconData: None,
+            shopUpdateTimeData: None,
+            tutorialData: None,
+            racingData: None,
+            challengeModeData: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxV2DataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxV2Data<'b>> {
+        let mapData = self.mapData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let itemTrapData = self.itemTrapData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let itemTrapTagData = self.itemTrapTagData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let buildingItemData = self.buildingItemData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let craftItemData = self.craftItemData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let livestockProduceData = self.livestockProduceData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let craftGroupData = self.craftGroupData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let alchemyRecipeData = self.alchemyRecipeData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let drinkMatData = self.drinkMatData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let foodMatData = self.foodMatData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let foodData = self.foodData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let nodeTypeData = self.nodeTypeData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let nodeUpgradeData = self.nodeUpgradeData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let weatherData = self.weatherData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let stageData = self.stageData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let zoneData = self.zoneData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let nodeBuffData = self.nodeBuffData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let rewardConfigData = self.rewardConfigData.as_ref().map(|x| x.pack(_fbb));
+        let floatIconData = self.floatIconData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let enemyRushTypeData = self.enemyRushTypeData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let rushEnemyData = self.rushEnemyData.as_ref().map(|x| x.pack(_fbb));
+        let gameConst = self.gameConst.as_ref().map(|x| x.pack(_fbb));
+        let basicConst = self.basicConst.as_ref().map(|x| x.pack(_fbb));
+        let riftConst = self.riftConst.as_ref().map(|x| x.pack(_fbb));
+        let developmentConst = self.developmentConst.as_ref().map(|x| x.pack(_fbb));
+        let battleLoadingTips = self.battleLoadingTips.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let runeDatas = self.runeDatas.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let itemRuneList = self.itemRuneList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let questData = self.questData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let npcData = self.npcData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let dialogData = self.dialogData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let questLineData = self.questLineData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let questLineStoryData = self.questLineStoryData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let guideQuestData = self.guideQuestData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let developmentData = self.developmentData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let eventData = self.eventData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let eventSceneData = self.eventSceneData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let eventChoiceData = self.eventChoiceData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let expeditionData = self.expeditionData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let eventEffectData = self.eventEffectData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let shopGoodData = self.shopGoodData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let shopDialogData = self.shopDialogData.as_ref().map(|x| x.pack(_fbb));
+        let logisticsData = self.logisticsData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let logisticsCharMapping = self.logisticsCharMapping.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let materialKeywordData = self.materialKeywordData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let monthRushData = self.monthRushData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let riftTerrainParamData = self.riftTerrainParamData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let riftClimateParamData = self.riftClimateParamData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let riftEnemyParamData = self.riftEnemyParamData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let riftSubTargetData = self.riftSubTargetData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let riftMainTargetData = self.riftMainTargetData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let riftGlobalEffectData = self.riftGlobalEffectData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let fixedRiftData = self.fixedRiftData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let riftTeamBuffData = self.riftTeamBuffData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let riftDifficultyData = self.riftDifficultyData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let riftRewardDisplayData = self.riftRewardDisplayData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let enemyReplaceData = self.enemyReplaceData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let archiveQuestData = self.archiveQuestData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let achievementData = self.achievementData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let achievementTypeData = self.achievementTypeData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let archiveQuestTypeData = self.archiveQuestTypeData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let archiveMusicUnlockData = self.archiveMusicUnlockData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let baseUpdate = self.baseUpdate.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let developmentLineSegmentDatas = self.developmentLineSegmentDatas.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let buildingNodeScoreData = self.buildingNodeScoreData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let seasonData = self.seasonData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let confirmIconData = self.confirmIconData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let shopUpdateTimeData = self
+            .shopUpdateTimeData
+            .as_ref()
+            .map(|x| _fbb.create_vector(x));
+        let tutorialData = self.tutorialData.as_ref().map(|x| x.pack(_fbb));
+        let racingData = self.racingData.as_ref().map(|x| x.pack(_fbb));
+        let challengeModeData = self.challengeModeData.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_SandboxV2Data::create(
+            _fbb,
+            &clz_Torappu_SandboxV2DataArgs {
+                mapData,
+                itemTrapData,
+                itemTrapTagData,
+                buildingItemData,
+                craftItemData,
+                livestockProduceData,
+                craftGroupData,
+                alchemyRecipeData,
+                drinkMatData,
+                foodMatData,
+                foodData,
+                nodeTypeData,
+                nodeUpgradeData,
+                weatherData,
+                stageData,
+                zoneData,
+                nodeBuffData,
+                rewardConfigData,
+                floatIconData,
+                enemyRushTypeData,
+                rushEnemyData,
+                gameConst,
+                basicConst,
+                riftConst,
+                developmentConst,
+                battleLoadingTips,
+                runeDatas,
+                itemRuneList,
+                questData,
+                npcData,
+                dialogData,
+                questLineData,
+                questLineStoryData,
+                guideQuestData,
+                developmentData,
+                eventData,
+                eventSceneData,
+                eventChoiceData,
+                expeditionData,
+                eventEffectData,
+                shopGoodData,
+                shopDialogData,
+                logisticsData,
+                logisticsCharMapping,
+                materialKeywordData,
+                monthRushData,
+                riftTerrainParamData,
+                riftClimateParamData,
+                riftEnemyParamData,
+                riftSubTargetData,
+                riftMainTargetData,
+                riftGlobalEffectData,
+                fixedRiftData,
+                riftTeamBuffData,
+                riftDifficultyData,
+                riftRewardDisplayData,
+                enemyReplaceData,
+                archiveQuestData,
+                achievementData,
+                achievementTypeData,
+                archiveQuestTypeData,
+                archiveMusicUnlockData,
+                baseUpdate,
+                developmentLineSegmentDatas,
+                buildingNodeScoreData,
+                seasonData,
+                confirmIconData,
+                shopUpdateTimeData,
+                tutorialData,
+                racingData,
+                challengeModeData,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxV2DataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -49088,7 +65036,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxV2Data<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -49114,6 +65062,15 @@ impl<'a> dict__string__clz_Torappu_SandboxV2Data<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxV2DataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxV2DataT { key, value }
     }
 
     #[inline]
@@ -49187,6 +65144,22 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxV2DataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxV2Data<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_SandboxV2Data", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxV2DataBuilder<
     'a: 'b,
     'b,
@@ -49240,6 +65213,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxV2Data<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxV2DataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxV2DataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxV2DataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxV2DataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxV2Data<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxV2Data::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxV2DataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxPermDetailDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -49252,7 +65255,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxPermDetailData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -49274,6 +65277,13 @@ impl<'a> clz_Torappu_SandboxPermDetailData<'a> {
             builder.add_SANDBOX_V2(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxPermDetailDataT {
+        let SANDBOX_V2 = self
+            .SANDBOX_V2()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_SandboxPermDetailDataT { SANDBOX_V2 }
     }
 
     #[inline]
@@ -49334,6 +65344,21 @@ impl<'a> Default for clz_Torappu_SandboxPermDetailDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxPermDetailData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxPermDetailData", 1)?;
+        if let Some(f) = self.SANDBOX_V2() {
+            s.serialize_field("SANDBOX_V2", &f)?;
+        } else {
+            s.skip_field("SANDBOX_V2")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxPermDetailDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -49380,6 +65405,31 @@ impl core::fmt::Debug for clz_Torappu_SandboxPermDetailData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxPermDetailDataT {
+    pub SANDBOX_V2: Option<Vec<dict__string__clz_Torappu_SandboxV2DataT>>,
+}
+impl Default for clz_Torappu_SandboxPermDetailDataT {
+    fn default() -> Self {
+        Self { SANDBOX_V2: None }
+    }
+}
+impl clz_Torappu_SandboxPermDetailDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxPermDetailData<'b>> {
+        let SANDBOX_V2 = self.SANDBOX_V2.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SandboxPermDetailData::create(
+            _fbb,
+            &clz_Torappu_SandboxPermDetailDataArgs { SANDBOX_V2 },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxPermItemDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -49392,7 +65442,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxPermItemData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -49436,6 +65486,27 @@ impl<'a> clz_Torappu_SandboxPermItemData<'a> {
             builder.add_itemId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxPermItemDataT {
+        let itemId = self.itemId().map(|x| x.to_string());
+        let itemType = self.itemType();
+        let itemName = self.itemName().map(|x| x.to_string());
+        let itemUsage = self.itemUsage().map(|x| x.to_string());
+        let itemDesc = self.itemDesc().map(|x| x.to_string());
+        let itemRarity = self.itemRarity();
+        let sortId = self.sortId();
+        let obtainApproach = self.obtainApproach().map(|x| x.to_string());
+        clz_Torappu_SandboxPermItemDataT {
+            itemId,
+            itemType,
+            itemName,
+            itemUsage,
+            itemDesc,
+            itemRarity,
+            sortId,
+            obtainApproach,
+        }
     }
 
     #[inline]
@@ -49598,6 +65669,44 @@ impl<'a> Default for clz_Torappu_SandboxPermItemDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxPermItemData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxPermItemData", 8)?;
+        if let Some(f) = self.itemId() {
+            s.serialize_field("itemId", &f)?;
+        } else {
+            s.skip_field("itemId")?;
+        }
+        s.serialize_field("itemType", &self.itemType())?;
+        if let Some(f) = self.itemName() {
+            s.serialize_field("itemName", &f)?;
+        } else {
+            s.skip_field("itemName")?;
+        }
+        if let Some(f) = self.itemUsage() {
+            s.serialize_field("itemUsage", &f)?;
+        } else {
+            s.skip_field("itemUsage")?;
+        }
+        if let Some(f) = self.itemDesc() {
+            s.serialize_field("itemDesc", &f)?;
+        } else {
+            s.skip_field("itemDesc")?;
+        }
+        s.serialize_field("itemRarity", &self.itemRarity())?;
+        s.serialize_field("sortId", &self.sortId())?;
+        if let Some(f) = self.obtainApproach() {
+            s.serialize_field("obtainApproach", &f)?;
+        } else {
+            s.skip_field("obtainApproach")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxPermItemDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -49690,6 +65799,60 @@ impl core::fmt::Debug for clz_Torappu_SandboxPermItemData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxPermItemDataT {
+    pub itemId: Option<String>,
+    pub itemType: enum__Torappu_SandboxPermItemType,
+    pub itemName: Option<String>,
+    pub itemUsage: Option<String>,
+    pub itemDesc: Option<String>,
+    pub itemRarity: i32,
+    pub sortId: i32,
+    pub obtainApproach: Option<String>,
+}
+impl Default for clz_Torappu_SandboxPermItemDataT {
+    fn default() -> Self {
+        Self {
+            itemId: None,
+            itemType: enum__Torappu_SandboxPermItemType::NONE,
+            itemName: None,
+            itemUsage: None,
+            itemDesc: None,
+            itemRarity: 0,
+            sortId: 0,
+            obtainApproach: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxPermItemDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxPermItemData<'b>> {
+        let itemId = self.itemId.as_ref().map(|x| _fbb.create_string(x));
+        let itemType = self.itemType;
+        let itemName = self.itemName.as_ref().map(|x| _fbb.create_string(x));
+        let itemUsage = self.itemUsage.as_ref().map(|x| _fbb.create_string(x));
+        let itemDesc = self.itemDesc.as_ref().map(|x| _fbb.create_string(x));
+        let itemRarity = self.itemRarity;
+        let sortId = self.sortId;
+        let obtainApproach = self.obtainApproach.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SandboxPermItemData::create(
+            _fbb,
+            &clz_Torappu_SandboxPermItemDataArgs {
+                itemId,
+                itemType,
+                itemName,
+                itemUsage,
+                itemDesc,
+                itemRarity,
+                sortId,
+                obtainApproach,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SandboxPermItemDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -49702,7 +65865,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SandboxPermItemDa
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -49728,6 +65891,15 @@ impl<'a> dict__string__clz_Torappu_SandboxPermItemData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SandboxPermItemDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SandboxPermItemDataT { key, value }
     }
 
     #[inline]
@@ -49801,6 +65973,23 @@ impl<'a> Default for dict__string__clz_Torappu_SandboxPermItemDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SandboxPermItemData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SandboxPermItemData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SandboxPermItemDataBuilder<
     'a: 'b,
     'b,
@@ -49862,6 +66051,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SandboxPermItemData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SandboxPermItemDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SandboxPermItemDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SandboxPermItemDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SandboxPermItemDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SandboxPermItemData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SandboxPermItemData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SandboxPermItemDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SandboxPermTableOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -49874,7 +66093,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SandboxPermTable<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -49904,6 +66123,21 @@ impl<'a> clz_Torappu_SandboxPermTable<'a> {
             builder.add_basicInfo(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SandboxPermTableT {
+        let basicInfo = self
+            .basicInfo()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let detail = self.detail().map(|x| Box::new(x.unpack()));
+        let itemData = self
+            .itemData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_SandboxPermTableT {
+            basicInfo,
+            detail,
+            itemData,
+        }
     }
 
     #[inline]
@@ -50022,6 +66256,31 @@ impl<'a> Default for clz_Torappu_SandboxPermTableArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SandboxPermTable<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SandboxPermTable", 3)?;
+        if let Some(f) = self.basicInfo() {
+            s.serialize_field("basicInfo", &f)?;
+        } else {
+            s.skip_field("basicInfo")?;
+        }
+        if let Some(f) = self.detail() {
+            s.serialize_field("detail", &f)?;
+        } else {
+            s.skip_field("detail")?;
+        }
+        if let Some(f) = self.itemData() {
+            s.serialize_field("itemData", &f)?;
+        } else {
+            s.skip_field("itemData")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SandboxPermTableBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -50094,6 +66353,46 @@ impl core::fmt::Debug for clz_Torappu_SandboxPermTable<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SandboxPermTableT {
+    pub basicInfo: Option<Vec<dict__string__clz_Torappu_SandboxPermBasicDataT>>,
+    pub detail: Option<Box<clz_Torappu_SandboxPermDetailDataT>>,
+    pub itemData: Option<Vec<dict__string__clz_Torappu_SandboxPermItemDataT>>,
+}
+impl Default for clz_Torappu_SandboxPermTableT {
+    fn default() -> Self {
+        Self {
+            basicInfo: None,
+            detail: None,
+            itemData: None,
+        }
+    }
+}
+impl clz_Torappu_SandboxPermTableT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SandboxPermTable<'b>> {
+        let basicInfo = self.basicInfo.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let detail = self.detail.as_ref().map(|x| x.pack(_fbb));
+        let itemData = self.itemData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SandboxPermTable::create(
+            _fbb,
+            &clz_Torappu_SandboxPermTableArgs {
+                basicInfo,
+                detail,
+                itemData,
+            },
+        )
+    }
+}
 #[inline]
 /// Verifies that a buffer of bytes contains a `clz_Torappu_SandboxPermTable`
 /// and returns it.
@@ -50151,7 +66450,7 @@ pub fn size_prefixed_root_as_clz_torappu_sandbox_perm_table_with_opts<'b, 'o>(
 pub unsafe fn root_as_clz_torappu_sandbox_perm_table_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SandboxPermTable {
-    flatbuffers::root_unchecked::<clz_Torappu_SandboxPermTable>(buf)
+    unsafe { flatbuffers::root_unchecked::<clz_Torappu_SandboxPermTable>(buf) }
 }
 #[inline]
 /// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_SandboxPermTable and returns it.
@@ -50160,7 +66459,7 @@ pub unsafe fn root_as_clz_torappu_sandbox_perm_table_unchecked(
 pub unsafe fn size_prefixed_root_as_clz_torappu_sandbox_perm_table_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SandboxPermTable {
-    flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_SandboxPermTable>(buf)
+    unsafe { flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_SandboxPermTable>(buf) }
 }
 #[inline]
 pub fn finish_clz_torappu_sandbox_perm_table_buffer<'a, 'b, A: flatbuffers::Allocator + 'a>(

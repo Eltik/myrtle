@@ -5,6 +5,9 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+use self::serde::ser::{Serialize, SerializeStruct, Serializer};
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
@@ -20,7 +23,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_MeetingClueData_ClueData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -52,6 +55,19 @@ impl<'a> clz_Torappu_MeetingClueData_ClueData<'a> {
             builder.add_clueId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_MeetingClueData_ClueDataT {
+        let clueId = self.clueId().map(|x| x.to_string());
+        let clueName = self.clueName().map(|x| x.to_string());
+        let clueType = self.clueType().map(|x| x.to_string());
+        let number = self.number();
+        clz_Torappu_MeetingClueData_ClueDataT {
+            clueId,
+            clueName,
+            clueType,
+            number,
+        }
     }
 
     #[inline]
@@ -145,6 +161,32 @@ impl<'a> Default for clz_Torappu_MeetingClueData_ClueDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_MeetingClueData_ClueData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_MeetingClueData_ClueData", 4)?;
+        if let Some(f) = self.clueId() {
+            s.serialize_field("clueId", &f)?;
+        } else {
+            s.skip_field("clueId")?;
+        }
+        if let Some(f) = self.clueName() {
+            s.serialize_field("clueName", &f)?;
+        } else {
+            s.skip_field("clueName")?;
+        }
+        if let Some(f) = self.clueType() {
+            s.serialize_field("clueType", &f)?;
+        } else {
+            s.skip_field("clueType")?;
+        }
+        s.serialize_field("number", &self.number())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_MeetingClueData_ClueDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -205,6 +247,44 @@ impl core::fmt::Debug for clz_Torappu_MeetingClueData_ClueData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_MeetingClueData_ClueDataT {
+    pub clueId: Option<String>,
+    pub clueName: Option<String>,
+    pub clueType: Option<String>,
+    pub number: i32,
+}
+impl Default for clz_Torappu_MeetingClueData_ClueDataT {
+    fn default() -> Self {
+        Self {
+            clueId: None,
+            clueName: None,
+            clueType: None,
+            number: 0,
+        }
+    }
+}
+impl clz_Torappu_MeetingClueData_ClueDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_MeetingClueData_ClueData<'b>> {
+        let clueId = self.clueId.as_ref().map(|x| _fbb.create_string(x));
+        let clueName = self.clueName.as_ref().map(|x| _fbb.create_string(x));
+        let clueType = self.clueType.as_ref().map(|x| _fbb.create_string(x));
+        let number = self.number;
+        clz_Torappu_MeetingClueData_ClueData::create(
+            _fbb,
+            &clz_Torappu_MeetingClueData_ClueDataArgs {
+                clueId,
+                clueName,
+                clueType,
+                number,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_MeetingClueData_ClueTypeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -217,7 +297,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_MeetingClueData_ClueTypeData<'a
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -241,6 +321,15 @@ impl<'a> clz_Torappu_MeetingClueData_ClueTypeData<'a> {
             builder.add_clueType(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_MeetingClueData_ClueTypeDataT {
+        let clueType = self.clueType().map(|x| x.to_string());
+        let clueNumber = self.clueNumber();
+        clz_Torappu_MeetingClueData_ClueTypeDataT {
+            clueType,
+            clueNumber,
+        }
     }
 
     #[inline]
@@ -303,6 +392,22 @@ impl<'a> Default for clz_Torappu_MeetingClueData_ClueTypeDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_MeetingClueData_ClueTypeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_MeetingClueData_ClueTypeData", 2)?;
+        if let Some(f) = self.clueType() {
+            s.serialize_field("clueType", &f)?;
+        } else {
+            s.skip_field("clueType")?;
+        }
+        s.serialize_field("clueNumber", &self.clueNumber())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_MeetingClueData_ClueTypeDataBuilder<
     'a: 'b,
     'b,
@@ -354,6 +459,36 @@ impl core::fmt::Debug for clz_Torappu_MeetingClueData_ClueTypeData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_MeetingClueData_ClueTypeDataT {
+    pub clueType: Option<String>,
+    pub clueNumber: i32,
+}
+impl Default for clz_Torappu_MeetingClueData_ClueTypeDataT {
+    fn default() -> Self {
+        Self {
+            clueType: None,
+            clueNumber: 0,
+        }
+    }
+}
+impl clz_Torappu_MeetingClueData_ClueTypeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_MeetingClueData_ClueTypeData<'b>> {
+        let clueType = self.clueType.as_ref().map(|x| _fbb.create_string(x));
+        let clueNumber = self.clueNumber;
+        clz_Torappu_MeetingClueData_ClueTypeData::create(
+            _fbb,
+            &clz_Torappu_MeetingClueData_ClueTypeDataArgs {
+                clueType,
+                clueNumber,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_MeetingClueData_ReceiveTimeBonusOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -366,7 +501,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_MeetingClueData_ReceiveTimeBonu
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -388,6 +523,15 @@ impl<'a> clz_Torappu_MeetingClueData_ReceiveTimeBonus<'a> {
         builder.add_receiveBonus(args.receiveBonus);
         builder.add_receiveTimes(args.receiveTimes);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_MeetingClueData_ReceiveTimeBonusT {
+        let receiveTimes = self.receiveTimes();
+        let receiveBonus = self.receiveBonus();
+        clz_Torappu_MeetingClueData_ReceiveTimeBonusT {
+            receiveTimes,
+            receiveBonus,
+        }
     }
 
     #[inline]
@@ -448,6 +592,19 @@ impl<'a> Default for clz_Torappu_MeetingClueData_ReceiveTimeBonusArgs {
     }
 }
 
+impl Serialize for clz_Torappu_MeetingClueData_ReceiveTimeBonus<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_MeetingClueData_ReceiveTimeBonus", 2)?;
+        s.serialize_field("receiveTimes", &self.receiveTimes())?;
+        s.serialize_field("receiveBonus", &self.receiveBonus())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_MeetingClueData_ReceiveTimeBonusBuilder<
     'a: 'b,
     'b,
@@ -502,6 +659,36 @@ impl core::fmt::Debug for clz_Torappu_MeetingClueData_ReceiveTimeBonus<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_MeetingClueData_ReceiveTimeBonusT {
+    pub receiveTimes: i32,
+    pub receiveBonus: i32,
+}
+impl Default for clz_Torappu_MeetingClueData_ReceiveTimeBonusT {
+    fn default() -> Self {
+        Self {
+            receiveTimes: 0,
+            receiveBonus: 0,
+        }
+    }
+}
+impl clz_Torappu_MeetingClueData_ReceiveTimeBonusT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_MeetingClueData_ReceiveTimeBonus<'b>> {
+        let receiveTimes = self.receiveTimes;
+        let receiveBonus = self.receiveBonus;
+        clz_Torappu_MeetingClueData_ReceiveTimeBonus::create(
+            _fbb,
+            &clz_Torappu_MeetingClueData_ReceiveTimeBonusArgs {
+                receiveTimes,
+                receiveBonus,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_MeetingClueData_MessageLeaveBoardConstDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -514,7 +701,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_MeetingClueData_MessageLeaveBoa
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -556,6 +743,27 @@ impl<'a> clz_Torappu_MeetingClueData_MessageLeaveBoardConstData<'a> {
         builder.add_visitorBonusLimit(args.visitorBonusLimit);
         builder.add_visitorBonus(args.visitorBonus);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_MeetingClueData_MessageLeaveBoardConstDataT {
+        let visitorBonus = self.visitorBonus();
+        let visitorBonusLimit = self.visitorBonusLimit();
+        let visitorToWeek = self.visitorToWeek();
+        let visitorPreWeek = self.visitorPreWeek();
+        let bonusToast = self.bonusToast().map(|x| x.to_string());
+        let bonusLimitText = self.bonusLimitText().map(|x| x.to_string());
+        let recordsTextBonus = self.recordsTextBonus().map(|x| x.to_string());
+        let recordsTextTip = self.recordsTextTip().map(|x| x.to_string());
+        clz_Torappu_MeetingClueData_MessageLeaveBoardConstDataT {
+            visitorBonus,
+            visitorBonusLimit,
+            visitorToWeek,
+            visitorPreWeek,
+            bonusToast,
+            bonusLimitText,
+            recordsTextBonus,
+            recordsTextTip,
+        }
     }
 
     #[inline]
@@ -726,6 +934,41 @@ impl<'a> Default for clz_Torappu_MeetingClueData_MessageLeaveBoardConstDataArgs<
     }
 }
 
+impl Serialize for clz_Torappu_MeetingClueData_MessageLeaveBoardConstData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("clz_Torappu_MeetingClueData_MessageLeaveBoardConstData", 8)?;
+        s.serialize_field("visitorBonus", &self.visitorBonus())?;
+        s.serialize_field("visitorBonusLimit", &self.visitorBonusLimit())?;
+        s.serialize_field("visitorToWeek", &self.visitorToWeek())?;
+        s.serialize_field("visitorPreWeek", &self.visitorPreWeek())?;
+        if let Some(f) = self.bonusToast() {
+            s.serialize_field("bonusToast", &f)?;
+        } else {
+            s.skip_field("bonusToast")?;
+        }
+        if let Some(f) = self.bonusLimitText() {
+            s.serialize_field("bonusLimitText", &f)?;
+        } else {
+            s.skip_field("bonusLimitText")?;
+        }
+        if let Some(f) = self.recordsTextBonus() {
+            s.serialize_field("recordsTextBonus", &f)?;
+        } else {
+            s.skip_field("recordsTextBonus")?;
+        }
+        if let Some(f) = self.recordsTextTip() {
+            s.serialize_field("recordsTextTip", &f)?;
+        } else {
+            s.skip_field("recordsTextTip")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_MeetingClueData_MessageLeaveBoardConstDataBuilder<
     'a: 'b,
     'b,
@@ -830,6 +1073,63 @@ impl core::fmt::Debug for clz_Torappu_MeetingClueData_MessageLeaveBoardConstData
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_MeetingClueData_MessageLeaveBoardConstDataT {
+    pub visitorBonus: i32,
+    pub visitorBonusLimit: i32,
+    pub visitorToWeek: i32,
+    pub visitorPreWeek: i32,
+    pub bonusToast: Option<String>,
+    pub bonusLimitText: Option<String>,
+    pub recordsTextBonus: Option<String>,
+    pub recordsTextTip: Option<String>,
+}
+impl Default for clz_Torappu_MeetingClueData_MessageLeaveBoardConstDataT {
+    fn default() -> Self {
+        Self {
+            visitorBonus: 0,
+            visitorBonusLimit: 0,
+            visitorToWeek: 0,
+            visitorPreWeek: 0,
+            bonusToast: None,
+            bonusLimitText: None,
+            recordsTextBonus: None,
+            recordsTextTip: None,
+        }
+    }
+}
+impl clz_Torappu_MeetingClueData_MessageLeaveBoardConstDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_MeetingClueData_MessageLeaveBoardConstData<'b>> {
+        let visitorBonus = self.visitorBonus;
+        let visitorBonusLimit = self.visitorBonusLimit;
+        let visitorToWeek = self.visitorToWeek;
+        let visitorPreWeek = self.visitorPreWeek;
+        let bonusToast = self.bonusToast.as_ref().map(|x| _fbb.create_string(x));
+        let bonusLimitText = self.bonusLimitText.as_ref().map(|x| _fbb.create_string(x));
+        let recordsTextBonus = self
+            .recordsTextBonus
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let recordsTextTip = self.recordsTextTip.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_MeetingClueData_MessageLeaveBoardConstData::create(
+            _fbb,
+            &clz_Torappu_MeetingClueData_MessageLeaveBoardConstDataArgs {
+                visitorBonus,
+                visitorBonusLimit,
+                visitorToWeek,
+                visitorPreWeek,
+                bonusToast,
+                bonusLimitText,
+                recordsTextBonus,
+                recordsTextTip,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_MeetingClueDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -842,7 +1142,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_MeetingClueData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -900,6 +1200,49 @@ impl<'a> clz_Torappu_MeetingClueData<'a> {
             builder.add_clues(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_MeetingClueDataT {
+        let clues = self.clues().map(|x| x.iter().map(|t| t.unpack()).collect());
+        let clueTypes = self
+            .clueTypes()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let receiveTimeBonus = self
+            .receiveTimeBonus()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let messageLeaveBoardConstData = self
+            .messageLeaveBoardConstData()
+            .map(|x| Box::new(x.unpack()));
+        let inventoryLimit = self.inventoryLimit();
+        let outputBasicBonus = self.outputBasicBonus();
+        let outputOperatorsBonus = self.outputOperatorsBonus();
+        let cluePointLimit = self.cluePointLimit();
+        let expiredDays = self.expiredDays();
+        let transferBonus = self.transferBonus();
+        let recycleBonus = self.recycleBonus();
+        let expiredBonus = self.expiredBonus();
+        let communicationDuration = self.communicationDuration();
+        let initiatorBonus = self.initiatorBonus();
+        let participantsBonus = self.participantsBonus();
+        let commuFoldDuration = self.commuFoldDuration();
+        clz_Torappu_MeetingClueDataT {
+            clues,
+            clueTypes,
+            receiveTimeBonus,
+            messageLeaveBoardConstData,
+            inventoryLimit,
+            outputBasicBonus,
+            outputOperatorsBonus,
+            cluePointLimit,
+            expiredDays,
+            transferBonus,
+            recycleBonus,
+            expiredBonus,
+            communicationDuration,
+            initiatorBonus,
+            participantsBonus,
+            commuFoldDuration,
+        }
     }
 
     #[inline]
@@ -1213,6 +1556,48 @@ impl<'a> Default for clz_Torappu_MeetingClueDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_MeetingClueData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_MeetingClueData", 16)?;
+        if let Some(f) = self.clues() {
+            s.serialize_field("clues", &f)?;
+        } else {
+            s.skip_field("clues")?;
+        }
+        if let Some(f) = self.clueTypes() {
+            s.serialize_field("clueTypes", &f)?;
+        } else {
+            s.skip_field("clueTypes")?;
+        }
+        if let Some(f) = self.receiveTimeBonus() {
+            s.serialize_field("receiveTimeBonus", &f)?;
+        } else {
+            s.skip_field("receiveTimeBonus")?;
+        }
+        if let Some(f) = self.messageLeaveBoardConstData() {
+            s.serialize_field("messageLeaveBoardConstData", &f)?;
+        } else {
+            s.skip_field("messageLeaveBoardConstData")?;
+        }
+        s.serialize_field("inventoryLimit", &self.inventoryLimit())?;
+        s.serialize_field("outputBasicBonus", &self.outputBasicBonus())?;
+        s.serialize_field("outputOperatorsBonus", &self.outputOperatorsBonus())?;
+        s.serialize_field("cluePointLimit", &self.cluePointLimit())?;
+        s.serialize_field("expiredDays", &self.expiredDays())?;
+        s.serialize_field("transferBonus", &self.transferBonus())?;
+        s.serialize_field("recycleBonus", &self.recycleBonus())?;
+        s.serialize_field("expiredBonus", &self.expiredBonus())?;
+        s.serialize_field("communicationDuration", &self.communicationDuration())?;
+        s.serialize_field("initiatorBonus", &self.initiatorBonus())?;
+        s.serialize_field("participantsBonus", &self.participantsBonus())?;
+        s.serialize_field("commuFoldDuration", &self.commuFoldDuration())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_MeetingClueDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1407,6 +1792,105 @@ impl core::fmt::Debug for clz_Torappu_MeetingClueData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_MeetingClueDataT {
+    pub clues: Option<Vec<clz_Torappu_MeetingClueData_ClueDataT>>,
+    pub clueTypes: Option<Vec<clz_Torappu_MeetingClueData_ClueTypeDataT>>,
+    pub receiveTimeBonus: Option<Vec<clz_Torappu_MeetingClueData_ReceiveTimeBonusT>>,
+    pub messageLeaveBoardConstData:
+        Option<Box<clz_Torappu_MeetingClueData_MessageLeaveBoardConstDataT>>,
+    pub inventoryLimit: i32,
+    pub outputBasicBonus: i32,
+    pub outputOperatorsBonus: i32,
+    pub cluePointLimit: i32,
+    pub expiredDays: i32,
+    pub transferBonus: i32,
+    pub recycleBonus: i32,
+    pub expiredBonus: i32,
+    pub communicationDuration: i32,
+    pub initiatorBonus: i32,
+    pub participantsBonus: i32,
+    pub commuFoldDuration: f32,
+}
+impl Default for clz_Torappu_MeetingClueDataT {
+    fn default() -> Self {
+        Self {
+            clues: None,
+            clueTypes: None,
+            receiveTimeBonus: None,
+            messageLeaveBoardConstData: None,
+            inventoryLimit: 0,
+            outputBasicBonus: 0,
+            outputOperatorsBonus: 0,
+            cluePointLimit: 0,
+            expiredDays: 0,
+            transferBonus: 0,
+            recycleBonus: 0,
+            expiredBonus: 0,
+            communicationDuration: 0,
+            initiatorBonus: 0,
+            participantsBonus: 0,
+            commuFoldDuration: 0.0,
+        }
+    }
+}
+impl clz_Torappu_MeetingClueDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_MeetingClueData<'b>> {
+        let clues = self.clues.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let clueTypes = self.clueTypes.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let receiveTimeBonus = self.receiveTimeBonus.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let messageLeaveBoardConstData = self
+            .messageLeaveBoardConstData
+            .as_ref()
+            .map(|x| x.pack(_fbb));
+        let inventoryLimit = self.inventoryLimit;
+        let outputBasicBonus = self.outputBasicBonus;
+        let outputOperatorsBonus = self.outputOperatorsBonus;
+        let cluePointLimit = self.cluePointLimit;
+        let expiredDays = self.expiredDays;
+        let transferBonus = self.transferBonus;
+        let recycleBonus = self.recycleBonus;
+        let expiredBonus = self.expiredBonus;
+        let communicationDuration = self.communicationDuration;
+        let initiatorBonus = self.initiatorBonus;
+        let participantsBonus = self.participantsBonus;
+        let commuFoldDuration = self.commuFoldDuration;
+        clz_Torappu_MeetingClueData::create(
+            _fbb,
+            &clz_Torappu_MeetingClueDataArgs {
+                clues,
+                clueTypes,
+                receiveTimeBonus,
+                messageLeaveBoardConstData,
+                inventoryLimit,
+                outputBasicBonus,
+                outputOperatorsBonus,
+                cluePointLimit,
+                expiredDays,
+                transferBonus,
+                recycleBonus,
+                expiredBonus,
+                communicationDuration,
+                initiatorBonus,
+                participantsBonus,
+                commuFoldDuration,
+            },
+        )
+    }
+}
 #[inline]
 /// Verifies that a buffer of bytes contains a `clz_Torappu_MeetingClueData`
 /// and returns it.
@@ -1464,7 +1948,7 @@ pub fn size_prefixed_root_as_clz_torappu_meeting_clue_data_with_opts<'b, 'o>(
 pub unsafe fn root_as_clz_torappu_meeting_clue_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_MeetingClueData {
-    flatbuffers::root_unchecked::<clz_Torappu_MeetingClueData>(buf)
+    unsafe { flatbuffers::root_unchecked::<clz_Torappu_MeetingClueData>(buf) }
 }
 #[inline]
 /// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_MeetingClueData and returns it.
@@ -1473,7 +1957,7 @@ pub unsafe fn root_as_clz_torappu_meeting_clue_data_unchecked(
 pub unsafe fn size_prefixed_root_as_clz_torappu_meeting_clue_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_MeetingClueData {
-    flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_MeetingClueData>(buf)
+    unsafe { flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_MeetingClueData>(buf) }
 }
 #[inline]
 pub fn finish_clz_torappu_meeting_clue_data_buffer<'a, 'b, A: flatbuffers::Allocator + 'a>(

@@ -5,6 +5,9 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+use self::serde::ser::{Serialize, SerializeStruct, Serializer};
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
@@ -60,11 +63,24 @@ impl core::fmt::Debug for enum__Torappu_CharWordVoiceType {
         }
     }
 }
+impl Serialize for enum__Torappu_CharWordVoiceType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_CharWordVoiceType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_CharWordVoiceType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -73,7 +89,9 @@ impl flatbuffers::Push for enum__Torappu_CharWordVoiceType {
     type Output = enum__Torappu_CharWordVoiceType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -179,11 +197,24 @@ impl core::fmt::Debug for enum__Torappu_DataUnlockType {
         }
     }
 }
+impl Serialize for enum__Torappu_DataUnlockType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_DataUnlockType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_DataUnlockType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -192,7 +223,9 @@ impl flatbuffers::Push for enum__Torappu_DataUnlockType {
     type Output = enum__Torappu_DataUnlockType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -410,11 +443,24 @@ impl core::fmt::Debug for enum__Torappu_CharWordShowType {
         }
     }
 }
+impl Serialize for enum__Torappu_CharWordShowType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_CharWordShowType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_CharWordShowType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -423,7 +469,9 @@ impl flatbuffers::Push for enum__Torappu_CharWordShowType {
     type Output = enum__Torappu_CharWordShowType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -545,11 +593,24 @@ impl core::fmt::Debug for enum__Torappu_VoiceLangType {
         }
     }
 }
+impl Serialize for enum__Torappu_VoiceLangType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_VoiceLangType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_VoiceLangType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -558,7 +619,9 @@ impl flatbuffers::Push for enum__Torappu_VoiceLangType {
     type Output = enum__Torappu_VoiceLangType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -660,11 +723,24 @@ impl core::fmt::Debug for enum__Torappu_VoiceLangGroupType {
         }
     }
 }
+impl Serialize for enum__Torappu_VoiceLangGroupType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_VoiceLangGroupType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_VoiceLangGroupType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -673,7 +749,9 @@ impl flatbuffers::Push for enum__Torappu_VoiceLangGroupType {
     type Output = enum__Torappu_VoiceLangGroupType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -756,11 +834,24 @@ impl core::fmt::Debug for enum__Torappu_FestivalVoiceTimeType {
         }
     }
 }
+impl Serialize for enum__Torappu_FestivalVoiceTimeType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_FestivalVoiceTimeType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_FestivalVoiceTimeType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -769,7 +860,9 @@ impl flatbuffers::Push for enum__Torappu_FestivalVoiceTimeType {
     type Output = enum__Torappu_FestivalVoiceTimeType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -811,7 +904,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_CharWordUnlockParam<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -835,6 +928,12 @@ impl<'a> clz_Torappu_CharWordUnlockParam<'a> {
             builder.add_valueStr(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_CharWordUnlockParamT {
+        let valueStr = self.valueStr().map(|x| x.to_string());
+        let valueInt = self.valueInt();
+        clz_Torappu_CharWordUnlockParamT { valueStr, valueInt }
     }
 
     #[inline]
@@ -894,6 +993,22 @@ impl<'a> Default for clz_Torappu_CharWordUnlockParamArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_CharWordUnlockParam<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_CharWordUnlockParam", 2)?;
+        if let Some(f) = self.valueStr() {
+            s.serialize_field("valueStr", &f)?;
+        } else {
+            s.skip_field("valueStr")?;
+        }
+        s.serialize_field("valueInt", &self.valueInt())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_CharWordUnlockParamBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -936,6 +1051,33 @@ impl core::fmt::Debug for clz_Torappu_CharWordUnlockParam<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_CharWordUnlockParamT {
+    pub valueStr: Option<String>,
+    pub valueInt: i32,
+}
+impl Default for clz_Torappu_CharWordUnlockParamT {
+    fn default() -> Self {
+        Self {
+            valueStr: None,
+            valueInt: 0,
+        }
+    }
+}
+impl clz_Torappu_CharWordUnlockParamT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_CharWordUnlockParam<'b>> {
+        let valueStr = self.valueStr.as_ref().map(|x| _fbb.create_string(x));
+        let valueInt = self.valueInt;
+        clz_Torappu_CharWordUnlockParam::create(
+            _fbb,
+            &clz_Torappu_CharWordUnlockParamArgs { valueStr, valueInt },
+        )
+    }
+}
 pub enum clz_Torappu_CharWordDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -948,7 +1090,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_CharWordData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1010,6 +1152,39 @@ impl<'a> clz_Torappu_CharWordData<'a> {
             builder.add_charWordId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_CharWordDataT {
+        let charWordId = self.charWordId().map(|x| x.to_string());
+        let wordKey = self.wordKey().map(|x| x.to_string());
+        let charId = self.charId().map(|x| x.to_string());
+        let voiceId = self.voiceId().map(|x| x.to_string());
+        let voiceText = self.voiceText().map(|x| x.to_string());
+        let voiceTitle = self.voiceTitle().map(|x| x.to_string());
+        let voiceIndex = self.voiceIndex();
+        let voiceType = self.voiceType();
+        let unlockType = self.unlockType();
+        let unlockParam = self
+            .unlockParam()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let lockDescription = self.lockDescription().map(|x| x.to_string());
+        let placeType = self.placeType();
+        let voiceAsset = self.voiceAsset().map(|x| x.to_string());
+        clz_Torappu_CharWordDataT {
+            charWordId,
+            wordKey,
+            charId,
+            voiceId,
+            voiceText,
+            voiceTitle,
+            voiceIndex,
+            voiceType,
+            unlockType,
+            unlockParam,
+            lockDescription,
+            placeType,
+            voiceAsset,
+        }
     }
 
     #[inline]
@@ -1274,6 +1449,65 @@ impl<'a> Default for clz_Torappu_CharWordDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_CharWordData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_CharWordData", 13)?;
+        if let Some(f) = self.charWordId() {
+            s.serialize_field("charWordId", &f)?;
+        } else {
+            s.skip_field("charWordId")?;
+        }
+        if let Some(f) = self.wordKey() {
+            s.serialize_field("wordKey", &f)?;
+        } else {
+            s.skip_field("wordKey")?;
+        }
+        if let Some(f) = self.charId() {
+            s.serialize_field("charId", &f)?;
+        } else {
+            s.skip_field("charId")?;
+        }
+        if let Some(f) = self.voiceId() {
+            s.serialize_field("voiceId", &f)?;
+        } else {
+            s.skip_field("voiceId")?;
+        }
+        if let Some(f) = self.voiceText() {
+            s.serialize_field("voiceText", &f)?;
+        } else {
+            s.skip_field("voiceText")?;
+        }
+        if let Some(f) = self.voiceTitle() {
+            s.serialize_field("voiceTitle", &f)?;
+        } else {
+            s.skip_field("voiceTitle")?;
+        }
+        s.serialize_field("voiceIndex", &self.voiceIndex())?;
+        s.serialize_field("voiceType", &self.voiceType())?;
+        s.serialize_field("unlockType", &self.unlockType())?;
+        if let Some(f) = self.unlockParam() {
+            s.serialize_field("unlockParam", &f)?;
+        } else {
+            s.skip_field("unlockParam")?;
+        }
+        if let Some(f) = self.lockDescription() {
+            s.serialize_field("lockDescription", &f)?;
+        } else {
+            s.skip_field("lockDescription")?;
+        }
+        s.serialize_field("placeType", &self.placeType())?;
+        if let Some(f) = self.voiceAsset() {
+            s.serialize_field("voiceAsset", &f)?;
+        } else {
+            s.skip_field("voiceAsset")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_CharWordDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1415,6 +1649,83 @@ impl core::fmt::Debug for clz_Torappu_CharWordData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_CharWordDataT {
+    pub charWordId: Option<String>,
+    pub wordKey: Option<String>,
+    pub charId: Option<String>,
+    pub voiceId: Option<String>,
+    pub voiceText: Option<String>,
+    pub voiceTitle: Option<String>,
+    pub voiceIndex: i32,
+    pub voiceType: enum__Torappu_CharWordVoiceType,
+    pub unlockType: enum__Torappu_DataUnlockType,
+    pub unlockParam: Option<Vec<clz_Torappu_CharWordUnlockParamT>>,
+    pub lockDescription: Option<String>,
+    pub placeType: enum__Torappu_CharWordShowType,
+    pub voiceAsset: Option<String>,
+}
+impl Default for clz_Torappu_CharWordDataT {
+    fn default() -> Self {
+        Self {
+            charWordId: None,
+            wordKey: None,
+            charId: None,
+            voiceId: None,
+            voiceText: None,
+            voiceTitle: None,
+            voiceIndex: 0,
+            voiceType: enum__Torappu_CharWordVoiceType::ONLY_TEXT,
+            unlockType: enum__Torappu_DataUnlockType::DIRECT,
+            unlockParam: None,
+            lockDescription: None,
+            placeType: enum__Torappu_CharWordShowType::HOME_SHOW,
+            voiceAsset: None,
+        }
+    }
+}
+impl clz_Torappu_CharWordDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_CharWordData<'b>> {
+        let charWordId = self.charWordId.as_ref().map(|x| _fbb.create_string(x));
+        let wordKey = self.wordKey.as_ref().map(|x| _fbb.create_string(x));
+        let charId = self.charId.as_ref().map(|x| _fbb.create_string(x));
+        let voiceId = self.voiceId.as_ref().map(|x| _fbb.create_string(x));
+        let voiceText = self.voiceText.as_ref().map(|x| _fbb.create_string(x));
+        let voiceTitle = self.voiceTitle.as_ref().map(|x| _fbb.create_string(x));
+        let voiceIndex = self.voiceIndex;
+        let voiceType = self.voiceType;
+        let unlockType = self.unlockType;
+        let unlockParam = self.unlockParam.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let lockDescription = self.lockDescription.as_ref().map(|x| _fbb.create_string(x));
+        let placeType = self.placeType;
+        let voiceAsset = self.voiceAsset.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_CharWordData::create(
+            _fbb,
+            &clz_Torappu_CharWordDataArgs {
+                charWordId,
+                wordKey,
+                charId,
+                voiceId,
+                voiceText,
+                voiceTitle,
+                voiceIndex,
+                voiceType,
+                unlockType,
+                unlockParam,
+                lockDescription,
+                placeType,
+                voiceAsset,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_CharWordDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1427,7 +1738,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_CharWordData<'a> 
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1453,6 +1764,15 @@ impl<'a> dict__string__clz_Torappu_CharWordData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_CharWordDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_CharWordDataT { key, value }
     }
 
     #[inline]
@@ -1526,6 +1846,22 @@ impl<'a> Default for dict__string__clz_Torappu_CharWordDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_CharWordData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_CharWordData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_CharWordDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -1576,6 +1912,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_CharWordData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_CharWordDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_CharWordDataT>>,
+}
+impl Default for dict__string__clz_Torappu_CharWordDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_CharWordDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_CharWordData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_CharWordData::create(
+            _fbb,
+            &dict__string__clz_Torappu_CharWordDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_CharExtraWordDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1588,7 +1954,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_CharExtraWordData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1622,6 +1988,19 @@ impl<'a> clz_Torappu_CharExtraWordData<'a> {
             builder.add_wordKey(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_CharExtraWordDataT {
+        let wordKey = self.wordKey().map(|x| x.to_string());
+        let charId = self.charId().map(|x| x.to_string());
+        let voiceId = self.voiceId().map(|x| x.to_string());
+        let voiceText = self.voiceText().map(|x| x.to_string());
+        clz_Torappu_CharExtraWordDataT {
+            wordKey,
+            charId,
+            voiceId,
+            voiceText,
+        }
     }
 
     #[inline]
@@ -1712,6 +2091,36 @@ impl<'a> Default for clz_Torappu_CharExtraWordDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_CharExtraWordData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_CharExtraWordData", 4)?;
+        if let Some(f) = self.wordKey() {
+            s.serialize_field("wordKey", &f)?;
+        } else {
+            s.skip_field("wordKey")?;
+        }
+        if let Some(f) = self.charId() {
+            s.serialize_field("charId", &f)?;
+        } else {
+            s.skip_field("charId")?;
+        }
+        if let Some(f) = self.voiceId() {
+            s.serialize_field("voiceId", &f)?;
+        } else {
+            s.skip_field("voiceId")?;
+        }
+        if let Some(f) = self.voiceText() {
+            s.serialize_field("voiceText", &f)?;
+        } else {
+            s.skip_field("voiceText")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_CharExtraWordDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1772,6 +2181,44 @@ impl core::fmt::Debug for clz_Torappu_CharExtraWordData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_CharExtraWordDataT {
+    pub wordKey: Option<String>,
+    pub charId: Option<String>,
+    pub voiceId: Option<String>,
+    pub voiceText: Option<String>,
+}
+impl Default for clz_Torappu_CharExtraWordDataT {
+    fn default() -> Self {
+        Self {
+            wordKey: None,
+            charId: None,
+            voiceId: None,
+            voiceText: None,
+        }
+    }
+}
+impl clz_Torappu_CharExtraWordDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_CharExtraWordData<'b>> {
+        let wordKey = self.wordKey.as_ref().map(|x| _fbb.create_string(x));
+        let charId = self.charId.as_ref().map(|x| _fbb.create_string(x));
+        let voiceId = self.voiceId.as_ref().map(|x| _fbb.create_string(x));
+        let voiceText = self.voiceText.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_CharExtraWordData::create(
+            _fbb,
+            &clz_Torappu_CharExtraWordDataArgs {
+                wordKey,
+                charId,
+                voiceId,
+                voiceText,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_CharExtraWordDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1784,7 +2231,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_CharExtraWordData
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1810,6 +2257,15 @@ impl<'a> dict__string__clz_Torappu_CharExtraWordData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_CharExtraWordDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_CharExtraWordDataT { key, value }
     }
 
     #[inline]
@@ -1883,6 +2339,23 @@ impl<'a> Default for dict__string__clz_Torappu_CharExtraWordDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_CharExtraWordData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_CharExtraWordData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_CharExtraWordDataBuilder<
     'a: 'b,
     'b,
@@ -1939,6 +2412,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_CharExtraWordData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_CharExtraWordDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_CharExtraWordDataT>>,
+}
+impl Default for dict__string__clz_Torappu_CharExtraWordDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_CharExtraWordDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_CharExtraWordData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_CharExtraWordData::create(
+            _fbb,
+            &dict__string__clz_Torappu_CharExtraWordDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_VoiceLangInfoDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1951,7 +2454,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_VoiceLangInfoData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1983,6 +2486,21 @@ impl<'a> clz_Torappu_VoiceLangInfoData<'a> {
             builder.add_wordkey(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_VoiceLangInfoDataT {
+        let wordkey = self.wordkey().map(|x| x.to_string());
+        let voiceLangType = self.voiceLangType();
+        let cvName = self
+            .cvName()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let voicePath = self.voicePath().map(|x| x.to_string());
+        clz_Torappu_VoiceLangInfoDataT {
+            wordkey,
+            voiceLangType,
+            cvName,
+            voicePath,
+        }
     }
 
     #[inline]
@@ -2082,6 +2600,32 @@ impl<'a> Default for clz_Torappu_VoiceLangInfoDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_VoiceLangInfoData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_VoiceLangInfoData", 4)?;
+        if let Some(f) = self.wordkey() {
+            s.serialize_field("wordkey", &f)?;
+        } else {
+            s.skip_field("wordkey")?;
+        }
+        s.serialize_field("voiceLangType", &self.voiceLangType())?;
+        if let Some(f) = self.cvName() {
+            s.serialize_field("cvName", &f)?;
+        } else {
+            s.skip_field("cvName")?;
+        }
+        if let Some(f) = self.voicePath() {
+            s.serialize_field("voicePath", &f)?;
+        } else {
+            s.skip_field("voicePath")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_VoiceLangInfoDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2148,6 +2692,47 @@ impl core::fmt::Debug for clz_Torappu_VoiceLangInfoData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_VoiceLangInfoDataT {
+    pub wordkey: Option<String>,
+    pub voiceLangType: enum__Torappu_VoiceLangType,
+    pub cvName: Option<Vec<String>>,
+    pub voicePath: Option<String>,
+}
+impl Default for clz_Torappu_VoiceLangInfoDataT {
+    fn default() -> Self {
+        Self {
+            wordkey: None,
+            voiceLangType: enum__Torappu_VoiceLangType::NONE,
+            cvName: None,
+            voicePath: None,
+        }
+    }
+}
+impl clz_Torappu_VoiceLangInfoDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_VoiceLangInfoData<'b>> {
+        let wordkey = self.wordkey.as_ref().map(|x| _fbb.create_string(x));
+        let voiceLangType = self.voiceLangType;
+        let cvName = self.cvName.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let voicePath = self.voicePath.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_VoiceLangInfoData::create(
+            _fbb,
+            &clz_Torappu_VoiceLangInfoDataArgs {
+                wordkey,
+                voiceLangType,
+                cvName,
+                voicePath,
+            },
+        )
+    }
+}
 pub enum dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2162,7 +2747,7 @@ impl<'a> flatbuffers::Follow<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2189,6 +2774,12 @@ impl<'a> dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoData<'a> {
         }
         builder.add_key(args.key);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoDataT {
+        let key = self.key();
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoDataT { key, value }
     }
 
     #[inline]
@@ -2270,6 +2861,25 @@ impl<'a> Default for dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInf
     }
 }
 
+impl Serialize for dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoData",
+            2,
+        )?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoDataBuilder<
     'a: 'b,
     'b,
@@ -2326,6 +2936,34 @@ impl core::fmt::Debug for dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLa
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoDataT {
+    pub key: enum__Torappu_VoiceLangType,
+    pub value: Option<Box<clz_Torappu_VoiceLangInfoDataT>>,
+}
+impl Default for dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoDataT {
+    fn default() -> Self {
+        Self {
+            key: enum__Torappu_VoiceLangType::NONE,
+            value: None,
+        }
+    }
+}
+impl dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoData<'b>>
+    {
+        let key = self.key;
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoData::create(
+            _fbb,
+            &dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_VoiceLangDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2338,7 +2976,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_VoiceLangData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2368,6 +3006,19 @@ impl<'a> clz_Torappu_VoiceLangData<'a> {
             builder.add_wordkeys(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_VoiceLangDataT {
+        let wordkeys = self
+            .wordkeys()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let charId = self.charId().map(|x| x.to_string());
+        let dict = self.dict().map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_VoiceLangDataT {
+            wordkeys,
+            charId,
+            dict,
+        }
     }
 
     #[inline]
@@ -2473,6 +3124,31 @@ impl<'a> Default for clz_Torappu_VoiceLangDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_VoiceLangData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_VoiceLangData", 3)?;
+        if let Some(f) = self.wordkeys() {
+            s.serialize_field("wordkeys", &f)?;
+        } else {
+            s.skip_field("wordkeys")?;
+        }
+        if let Some(f) = self.charId() {
+            s.serialize_field("charId", &f)?;
+        } else {
+            s.skip_field("charId")?;
+        }
+        if let Some(f) = self.dict() {
+            s.serialize_field("dict", &f)?;
+        } else {
+            s.skip_field("dict")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_VoiceLangDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2540,6 +3216,46 @@ impl core::fmt::Debug for clz_Torappu_VoiceLangData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_VoiceLangDataT {
+    pub wordkeys: Option<Vec<String>>,
+    pub charId: Option<String>,
+    pub dict: Option<Vec<dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoDataT>>,
+}
+impl Default for clz_Torappu_VoiceLangDataT {
+    fn default() -> Self {
+        Self {
+            wordkeys: None,
+            charId: None,
+            dict: None,
+        }
+    }
+}
+impl clz_Torappu_VoiceLangDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_VoiceLangData<'b>> {
+        let wordkeys = self.wordkeys.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let charId = self.charId.as_ref().map(|x| _fbb.create_string(x));
+        let dict = self.dict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_VoiceLangData::create(
+            _fbb,
+            &clz_Torappu_VoiceLangDataArgs {
+                wordkeys,
+                charId,
+                dict,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_VoiceLangDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2552,7 +3268,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_VoiceLangData<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2578,6 +3294,15 @@ impl<'a> dict__string__clz_Torappu_VoiceLangData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_VoiceLangDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_VoiceLangDataT { key, value }
     }
 
     #[inline]
@@ -2651,6 +3376,22 @@ impl<'a> Default for dict__string__clz_Torappu_VoiceLangDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_VoiceLangData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_VoiceLangData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_VoiceLangDataBuilder<
     'a: 'b,
     'b,
@@ -2704,6 +3445,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_VoiceLangData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_VoiceLangDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_VoiceLangDataT>>,
+}
+impl Default for dict__string__clz_Torappu_VoiceLangDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_VoiceLangDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_VoiceLangData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_VoiceLangData::create(
+            _fbb,
+            &dict__string__clz_Torappu_VoiceLangDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_VoiceLangTypeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2716,7 +3487,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_VoiceLangTypeData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2740,6 +3511,12 @@ impl<'a> clz_Torappu_VoiceLangTypeData<'a> {
             builder.add_name(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_VoiceLangTypeDataT {
+        let name = self.name().map(|x| x.to_string());
+        let groupType = self.groupType();
+        clz_Torappu_VoiceLangTypeDataT { name, groupType }
     }
 
     #[inline]
@@ -2802,6 +3579,22 @@ impl<'a> Default for clz_Torappu_VoiceLangTypeDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_VoiceLangTypeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_VoiceLangTypeData", 2)?;
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        s.serialize_field("groupType", &self.groupType())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_VoiceLangTypeDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2847,6 +3640,33 @@ impl core::fmt::Debug for clz_Torappu_VoiceLangTypeData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_VoiceLangTypeDataT {
+    pub name: Option<String>,
+    pub groupType: enum__Torappu_VoiceLangGroupType,
+}
+impl Default for clz_Torappu_VoiceLangTypeDataT {
+    fn default() -> Self {
+        Self {
+            name: None,
+            groupType: enum__Torappu_VoiceLangGroupType::NONE,
+        }
+    }
+}
+impl clz_Torappu_VoiceLangTypeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_VoiceLangTypeData<'b>> {
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        let groupType = self.groupType;
+        clz_Torappu_VoiceLangTypeData::create(
+            _fbb,
+            &clz_Torappu_VoiceLangTypeDataArgs { name, groupType },
+        )
+    }
+}
 pub enum dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2861,7 +3681,7 @@ impl<'a> flatbuffers::Follow<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2888,6 +3708,12 @@ impl<'a> dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeData<'a> {
         }
         builder.add_key(args.key);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeDataT {
+        let key = self.key();
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeDataT { key, value }
     }
 
     #[inline]
@@ -2969,6 +3795,25 @@ impl<'a> Default for dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTyp
     }
 }
 
+impl Serialize for dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeData",
+            2,
+        )?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeDataBuilder<
     'a: 'b,
     'b,
@@ -3025,6 +3870,34 @@ impl core::fmt::Debug for dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLa
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeDataT {
+    pub key: enum__Torappu_VoiceLangType,
+    pub value: Option<Box<clz_Torappu_VoiceLangTypeDataT>>,
+}
+impl Default for dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeDataT {
+    fn default() -> Self {
+        Self {
+            key: enum__Torappu_VoiceLangType::NONE,
+            value: None,
+        }
+    }
+}
+impl dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeData<'b>>
+    {
+        let key = self.key;
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeData::create(
+            _fbb,
+            &dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_VoiceLangGroupDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3037,7 +3910,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_VoiceLangGroupData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3063,6 +3936,12 @@ impl<'a> clz_Torappu_VoiceLangGroupData<'a> {
             builder.add_name(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_VoiceLangGroupDataT {
+        let name = self.name().map(|x| x.to_string());
+        let members = self.members().map(|x| x.into_iter().collect());
+        clz_Torappu_VoiceLangGroupDataT { name, members }
     }
 
     #[inline]
@@ -3119,6 +3998,26 @@ impl<'a> Default for clz_Torappu_VoiceLangGroupDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_VoiceLangGroupData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_VoiceLangGroupData", 2)?;
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        if let Some(f) = self.members() {
+            s.serialize_field("members", &f)?;
+        } else {
+            s.skip_field("members")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_VoiceLangGroupDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3166,6 +4065,33 @@ impl core::fmt::Debug for clz_Torappu_VoiceLangGroupData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_VoiceLangGroupDataT {
+    pub name: Option<String>,
+    pub members: Option<Vec<enum__Torappu_VoiceLangType>>,
+}
+impl Default for clz_Torappu_VoiceLangGroupDataT {
+    fn default() -> Self {
+        Self {
+            name: None,
+            members: None,
+        }
+    }
+}
+impl clz_Torappu_VoiceLangGroupDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_VoiceLangGroupData<'b>> {
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        let members = self.members.as_ref().map(|x| _fbb.create_vector(x));
+        clz_Torappu_VoiceLangGroupData::create(
+            _fbb,
+            &clz_Torappu_VoiceLangGroupDataArgs { name, members },
+        )
+    }
+}
 pub enum dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3180,7 +4106,7 @@ impl<'a> flatbuffers::Follow<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3211,6 +4137,14 @@ impl<'a> dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupData<
         }
         builder.add_key(args.key);
         builder.finish()
+    }
+
+    pub fn unpack(
+        &self,
+    ) -> dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupDataT {
+        let key = self.key();
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupDataT { key, value }
     }
 
     #[inline]
@@ -3294,6 +4228,25 @@ impl<'a> Default
     }
 }
 
+impl Serialize for dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupData",
+            2,
+        )?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupDataBuilder<
     'a: 'b,
     'b,
@@ -3354,6 +4307,38 @@ impl core::fmt::Debug
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupDataT {
+    pub key: enum__Torappu_VoiceLangGroupType,
+    pub value: Option<Box<clz_Torappu_VoiceLangGroupDataT>>,
+}
+impl Default for dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupDataT {
+    fn default() -> Self {
+        Self {
+            key: enum__Torappu_VoiceLangGroupType::NONE,
+            value: None,
+        }
+    }
+}
+impl dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<
+        dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupData<'b>,
+    > {
+        let key = self.key;
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupData::create(
+            _fbb,
+            &dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupDataArgs {
+                key,
+                value,
+            },
+        )
+    }
+}
 pub enum dict__string__enum__Torappu_VoiceLangTypeOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3366,7 +4351,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__enum__Torappu_VoiceLangType<'
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3390,6 +4375,15 @@ impl<'a> dict__string__enum__Torappu_VoiceLangType<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__enum__Torappu_VoiceLangTypeT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value();
+        dict__string__enum__Torappu_VoiceLangTypeT { key, value }
     }
 
     #[inline]
@@ -3460,6 +4454,18 @@ impl<'a> Default for dict__string__enum__Torappu_VoiceLangTypeArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__enum__Torappu_VoiceLangType<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__enum__Torappu_VoiceLangType", 2)?;
+        s.serialize_field("key", &self.key())?;
+        s.serialize_field("value", &self.value())?;
+        s.end()
+    }
+}
+
 pub struct dict__string__enum__Torappu_VoiceLangTypeBuilder<
     'a: 'b,
     'b,
@@ -3513,6 +4519,36 @@ impl core::fmt::Debug for dict__string__enum__Torappu_VoiceLangType<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__enum__Torappu_VoiceLangTypeT {
+    pub key: String,
+    pub value: enum__Torappu_VoiceLangType,
+}
+impl Default for dict__string__enum__Torappu_VoiceLangTypeT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: enum__Torappu_VoiceLangType::NONE,
+        }
+    }
+}
+impl dict__string__enum__Torappu_VoiceLangTypeT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__enum__Torappu_VoiceLangType<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value;
+        dict__string__enum__Torappu_VoiceLangType::create(
+            _fbb,
+            &dict__string__enum__Torappu_VoiceLangTypeArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_NewVoiceTimeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3525,7 +4561,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_NewVoiceTimeData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3549,6 +4585,14 @@ impl<'a> clz_Torappu_NewVoiceTimeData<'a> {
             builder.add_charSet(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_NewVoiceTimeDataT {
+        let timestamp = self.timestamp();
+        let charSet = self
+            .charSet()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        clz_Torappu_NewVoiceTimeDataT { timestamp, charSet }
     }
 
     #[inline]
@@ -3609,6 +4653,22 @@ impl<'a> Default for clz_Torappu_NewVoiceTimeDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_NewVoiceTimeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_NewVoiceTimeData", 2)?;
+        s.serialize_field("timestamp", &self.timestamp())?;
+        if let Some(f) = self.charSet() {
+            s.serialize_field("charSet", &f)?;
+        } else {
+            s.skip_field("charSet")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_NewVoiceTimeDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3656,6 +4716,36 @@ impl core::fmt::Debug for clz_Torappu_NewVoiceTimeData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_NewVoiceTimeDataT {
+    pub timestamp: i64,
+    pub charSet: Option<Vec<String>>,
+}
+impl Default for clz_Torappu_NewVoiceTimeDataT {
+    fn default() -> Self {
+        Self {
+            timestamp: 0,
+            charSet: None,
+        }
+    }
+}
+impl clz_Torappu_NewVoiceTimeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_NewVoiceTimeData<'b>> {
+        let timestamp = self.timestamp;
+        let charSet = self.charSet.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_NewVoiceTimeData::create(
+            _fbb,
+            &clz_Torappu_NewVoiceTimeDataArgs { timestamp, charSet },
+        )
+    }
+}
 pub enum dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3670,7 +4760,7 @@ impl<'a> flatbuffers::Follow<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3699,6 +4789,12 @@ impl<'a> dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeData<'a
         }
         builder.add_key(args.key);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeDataT {
+        let key = self.key();
+        let value = self.value().map(|x| x.iter().map(|t| t.unpack()).collect());
+        dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeDataT { key, value }
     }
 
     #[inline]
@@ -3787,6 +4883,25 @@ impl<'a> Default for dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoic
     }
 }
 
+impl Serialize for dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeData",
+            2,
+        )?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeDataBuilder<
     'a: 'b,
     'b,
@@ -3849,6 +4964,41 @@ impl core::fmt::Debug for dict__enum__Torappu_VoiceLangType__list_clz_Torappu_Ne
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeDataT {
+    pub key: enum__Torappu_VoiceLangType,
+    pub value: Option<Vec<clz_Torappu_NewVoiceTimeDataT>>,
+}
+impl Default for dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeDataT {
+    fn default() -> Self {
+        Self {
+            key: enum__Torappu_VoiceLangType::NONE,
+            value: None,
+        }
+    }
+}
+impl dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<
+        dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeData<'b>,
+    > {
+        let key = self.key;
+        let value = self.value.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeData::create(
+            _fbb,
+            &dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeDataArgs {
+                key,
+                value,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_FestivalTimeIntervalOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3861,7 +5011,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_FestivalTimeInterval<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3883,6 +5033,12 @@ impl<'a> clz_Torappu_FestivalTimeInterval<'a> {
         builder.add_endTs(args.endTs);
         builder.add_startTs(args.startTs);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_FestivalTimeIntervalT {
+        let startTs = self.startTs();
+        let endTs = self.endTs();
+        clz_Torappu_FestivalTimeIntervalT { startTs, endTs }
     }
 
     #[inline]
@@ -3937,6 +5093,18 @@ impl<'a> Default for clz_Torappu_FestivalTimeIntervalArgs {
     }
 }
 
+impl Serialize for clz_Torappu_FestivalTimeInterval<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_FestivalTimeInterval", 2)?;
+        s.serialize_field("startTs", &self.startTs())?;
+        s.serialize_field("endTs", &self.endTs())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_FestivalTimeIntervalBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3979,6 +5147,33 @@ impl core::fmt::Debug for clz_Torappu_FestivalTimeInterval<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_FestivalTimeIntervalT {
+    pub startTs: i64,
+    pub endTs: i64,
+}
+impl Default for clz_Torappu_FestivalTimeIntervalT {
+    fn default() -> Self {
+        Self {
+            startTs: 0,
+            endTs: 0,
+        }
+    }
+}
+impl clz_Torappu_FestivalTimeIntervalT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_FestivalTimeInterval<'b>> {
+        let startTs = self.startTs;
+        let endTs = self.endTs;
+        clz_Torappu_FestivalTimeInterval::create(
+            _fbb,
+            &clz_Torappu_FestivalTimeIntervalArgs { startTs, endTs },
+        )
+    }
+}
 pub enum clz_Torappu_FestivalTimeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3991,7 +5186,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_FestivalTimeData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4015,6 +5210,12 @@ impl<'a> clz_Torappu_FestivalTimeData<'a> {
         }
         builder.add_timeType(args.timeType);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_FestivalTimeDataT {
+        let timeType = self.timeType();
+        let interval = self.interval().map(|x| Box::new(x.unpack()));
+        clz_Torappu_FestivalTimeDataT { timeType, interval }
     }
 
     #[inline]
@@ -4082,6 +5283,22 @@ impl<'a> Default for clz_Torappu_FestivalTimeDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_FestivalTimeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_FestivalTimeData", 2)?;
+        s.serialize_field("timeType", &self.timeType())?;
+        if let Some(f) = self.interval() {
+            s.serialize_field("interval", &f)?;
+        } else {
+            s.skip_field("interval")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_FestivalTimeDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -4131,6 +5348,33 @@ impl core::fmt::Debug for clz_Torappu_FestivalTimeData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_FestivalTimeDataT {
+    pub timeType: enum__Torappu_FestivalVoiceTimeType,
+    pub interval: Option<Box<clz_Torappu_FestivalTimeIntervalT>>,
+}
+impl Default for clz_Torappu_FestivalTimeDataT {
+    fn default() -> Self {
+        Self {
+            timeType: enum__Torappu_FestivalVoiceTimeType::NONE,
+            interval: None,
+        }
+    }
+}
+impl clz_Torappu_FestivalTimeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_FestivalTimeData<'b>> {
+        let timeType = self.timeType;
+        let interval = self.interval.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_FestivalTimeData::create(
+            _fbb,
+            &clz_Torappu_FestivalTimeDataArgs { timeType, interval },
+        )
+    }
+}
 pub enum clz_Torappu_FestivalVoiceDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4143,7 +5387,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_FestivalVoiceData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4167,6 +5411,14 @@ impl<'a> clz_Torappu_FestivalVoiceData<'a> {
         }
         builder.add_showType(args.showType);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_FestivalVoiceDataT {
+        let showType = self.showType();
+        let timeData = self
+            .timeData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_FestivalVoiceDataT { showType, timeData }
     }
 
     #[inline]
@@ -4234,6 +5486,22 @@ impl<'a> Default for clz_Torappu_FestivalVoiceDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_FestivalVoiceData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_FestivalVoiceData", 2)?;
+        s.serialize_field("showType", &self.showType())?;
+        if let Some(f) = self.timeData() {
+            s.serialize_field("timeData", &f)?;
+        } else {
+            s.skip_field("timeData")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_FestivalVoiceDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -4284,6 +5552,36 @@ impl core::fmt::Debug for clz_Torappu_FestivalVoiceData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_FestivalVoiceDataT {
+    pub showType: enum__Torappu_CharWordShowType,
+    pub timeData: Option<Vec<clz_Torappu_FestivalTimeDataT>>,
+}
+impl Default for clz_Torappu_FestivalVoiceDataT {
+    fn default() -> Self {
+        Self {
+            showType: enum__Torappu_CharWordShowType::HOME_SHOW,
+            timeData: None,
+        }
+    }
+}
+impl clz_Torappu_FestivalVoiceDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_FestivalVoiceData<'b>> {
+        let showType = self.showType;
+        let timeData = self.timeData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_FestivalVoiceData::create(
+            _fbb,
+            &clz_Torappu_FestivalVoiceDataArgs { showType, timeData },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_FestivalVoiceDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4296,7 +5594,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_FestivalVoiceData
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4322,6 +5620,15 @@ impl<'a> dict__string__clz_Torappu_FestivalVoiceData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_FestivalVoiceDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_FestivalVoiceDataT { key, value }
     }
 
     #[inline]
@@ -4395,6 +5702,23 @@ impl<'a> Default for dict__string__clz_Torappu_FestivalVoiceDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_FestivalVoiceData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_FestivalVoiceData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_FestivalVoiceDataBuilder<
     'a: 'b,
     'b,
@@ -4451,6 +5775,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_FestivalVoiceData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_FestivalVoiceDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_FestivalVoiceDataT>>,
+}
+impl Default for dict__string__clz_Torappu_FestivalVoiceDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_FestivalVoiceDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_FestivalVoiceData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_FestivalVoiceData::create(
+            _fbb,
+            &dict__string__clz_Torappu_FestivalVoiceDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_FestivalVoiceWeightDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4463,7 +5817,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_FestivalVoiceWeightData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4487,6 +5841,17 @@ impl<'a> clz_Torappu_FestivalVoiceWeightData<'a> {
         builder.add_weight(args.weight);
         builder.add_showType(args.showType);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_FestivalVoiceWeightDataT {
+        let showType = self.showType();
+        let weight = self.weight();
+        let priority = self.priority();
+        clz_Torappu_FestivalVoiceWeightDataT {
+            showType,
+            weight,
+            priority,
+        }
     }
 
     #[inline]
@@ -4558,6 +5923,19 @@ impl<'a> Default for clz_Torappu_FestivalVoiceWeightDataArgs {
     }
 }
 
+impl Serialize for clz_Torappu_FestivalVoiceWeightData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_FestivalVoiceWeightData", 3)?;
+        s.serialize_field("showType", &self.showType())?;
+        s.serialize_field("weight", &self.weight())?;
+        s.serialize_field("priority", &self.priority())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_FestivalVoiceWeightDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -4612,6 +5990,40 @@ impl core::fmt::Debug for clz_Torappu_FestivalVoiceWeightData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_FestivalVoiceWeightDataT {
+    pub showType: enum__Torappu_CharWordShowType,
+    pub weight: f32,
+    pub priority: i32,
+}
+impl Default for clz_Torappu_FestivalVoiceWeightDataT {
+    fn default() -> Self {
+        Self {
+            showType: enum__Torappu_CharWordShowType::HOME_SHOW,
+            weight: 0.0,
+            priority: 0,
+        }
+    }
+}
+impl clz_Torappu_FestivalVoiceWeightDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_FestivalVoiceWeightData<'b>> {
+        let showType = self.showType;
+        let weight = self.weight;
+        let priority = self.priority;
+        clz_Torappu_FestivalVoiceWeightData::create(
+            _fbb,
+            &clz_Torappu_FestivalVoiceWeightDataArgs {
+                showType,
+                weight,
+                priority,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_FestivalVoiceWeightDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4624,7 +6036,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_FestivalVoiceWeig
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4650,6 +6062,15 @@ impl<'a> dict__string__clz_Torappu_FestivalVoiceWeightData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_FestivalVoiceWeightDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_FestivalVoiceWeightDataT { key, value }
     }
 
     #[inline]
@@ -4726,6 +6147,23 @@ impl<'a> Default for dict__string__clz_Torappu_FestivalVoiceWeightDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_FestivalVoiceWeightData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_FestivalVoiceWeightData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_FestivalVoiceWeightDataBuilder<
     'a: 'b,
     'b,
@@ -4787,6 +6225,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_FestivalVoiceWeightData<'_> 
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_FestivalVoiceWeightDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_FestivalVoiceWeightDataT>>,
+}
+impl Default for dict__string__clz_Torappu_FestivalVoiceWeightDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_FestivalVoiceWeightDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_FestivalVoiceWeightData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_FestivalVoiceWeightData::create(
+            _fbb,
+            &dict__string__clz_Torappu_FestivalVoiceWeightDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_ExtraVoiceConfigDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4799,7 +6267,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ExtraVoiceConfigData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4825,6 +6293,15 @@ impl<'a> clz_Torappu_ExtraVoiceConfigData<'a> {
             builder.add_voiceId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ExtraVoiceConfigDataT {
+        let voiceId = self.voiceId().map(|x| x.to_string());
+        let validVoiceLang = self.validVoiceLang().map(|x| x.into_iter().collect());
+        clz_Torappu_ExtraVoiceConfigDataT {
+            voiceId,
+            validVoiceLang,
+        }
     }
 
     #[inline]
@@ -4881,6 +6358,26 @@ impl<'a> Default for clz_Torappu_ExtraVoiceConfigDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ExtraVoiceConfigData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ExtraVoiceConfigData", 2)?;
+        if let Some(f) = self.voiceId() {
+            s.serialize_field("voiceId", &f)?;
+        } else {
+            s.skip_field("voiceId")?;
+        }
+        if let Some(f) = self.validVoiceLang() {
+            s.serialize_field("validVoiceLang", &f)?;
+        } else {
+            s.skip_field("validVoiceLang")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ExtraVoiceConfigDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -4932,6 +6429,36 @@ impl core::fmt::Debug for clz_Torappu_ExtraVoiceConfigData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ExtraVoiceConfigDataT {
+    pub voiceId: Option<String>,
+    pub validVoiceLang: Option<Vec<enum__Torappu_VoiceLangType>>,
+}
+impl Default for clz_Torappu_ExtraVoiceConfigDataT {
+    fn default() -> Self {
+        Self {
+            voiceId: None,
+            validVoiceLang: None,
+        }
+    }
+}
+impl clz_Torappu_ExtraVoiceConfigDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ExtraVoiceConfigData<'b>> {
+        let voiceId = self.voiceId.as_ref().map(|x| _fbb.create_string(x));
+        let validVoiceLang = self.validVoiceLang.as_ref().map(|x| _fbb.create_vector(x));
+        clz_Torappu_ExtraVoiceConfigData::create(
+            _fbb,
+            &clz_Torappu_ExtraVoiceConfigDataArgs {
+                voiceId,
+                validVoiceLang,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_ExtraVoiceConfigDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4944,7 +6471,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_ExtraVoiceConfigD
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4970,6 +6497,15 @@ impl<'a> dict__string__clz_Torappu_ExtraVoiceConfigData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_ExtraVoiceConfigDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_ExtraVoiceConfigDataT { key, value }
     }
 
     #[inline]
@@ -5046,6 +6582,23 @@ impl<'a> Default for dict__string__clz_Torappu_ExtraVoiceConfigDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_ExtraVoiceConfigData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_ExtraVoiceConfigData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_ExtraVoiceConfigDataBuilder<
     'a: 'b,
     'b,
@@ -5107,6 +6660,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_ExtraVoiceConfigData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_ExtraVoiceConfigDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_ExtraVoiceConfigDataT>>,
+}
+impl Default for dict__string__clz_Torappu_ExtraVoiceConfigDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_ExtraVoiceConfigDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ExtraVoiceConfigData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_ExtraVoiceConfigData::create(
+            _fbb,
+            &dict__string__clz_Torappu_ExtraVoiceConfigDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_CharWordTableOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -5119,7 +6702,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_CharWordTable<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -5193,6 +6776,63 @@ impl<'a> clz_Torappu_CharWordTable<'a> {
             builder.add_charWords(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_CharWordTableT {
+        let charWords = self
+            .charWords()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let charExtraWords = self
+            .charExtraWords()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let voiceLangDict = self
+            .voiceLangDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let defaultLangType = self.defaultLangType();
+        let newTagList = self
+            .newTagList()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let voiceLangTypeDict = self
+            .voiceLangTypeDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let voiceLangGroupTypeDict = self
+            .voiceLangGroupTypeDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let charDefaultTypeDict = self
+            .charDefaultTypeDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let startTimeWithTypeDict = self
+            .startTimeWithTypeDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let displayGroupTypeList = self.displayGroupTypeList().map(|x| x.into_iter().collect());
+        let displayTypeList = self.displayTypeList().map(|x| x.into_iter().collect());
+        let playVoiceRange = self.playVoiceRange();
+        let fesVoiceData = self
+            .fesVoiceData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let fesVoiceWeight = self
+            .fesVoiceWeight()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let extraVoiceConfigData = self
+            .extraVoiceConfigData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_CharWordTableT {
+            charWords,
+            charExtraWords,
+            voiceLangDict,
+            defaultLangType,
+            newTagList,
+            voiceLangTypeDict,
+            voiceLangGroupTypeDict,
+            charDefaultTypeDict,
+            startTimeWithTypeDict,
+            displayGroupTypeList,
+            displayTypeList,
+            playVoiceRange,
+            fesVoiceData,
+            fesVoiceWeight,
+            extraVoiceConfigData,
+        }
     }
 
     #[inline]
@@ -5631,6 +7271,83 @@ impl<'a> Default for clz_Torappu_CharWordTableArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_CharWordTable<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_CharWordTable", 15)?;
+        if let Some(f) = self.charWords() {
+            s.serialize_field("charWords", &f)?;
+        } else {
+            s.skip_field("charWords")?;
+        }
+        if let Some(f) = self.charExtraWords() {
+            s.serialize_field("charExtraWords", &f)?;
+        } else {
+            s.skip_field("charExtraWords")?;
+        }
+        if let Some(f) = self.voiceLangDict() {
+            s.serialize_field("voiceLangDict", &f)?;
+        } else {
+            s.skip_field("voiceLangDict")?;
+        }
+        s.serialize_field("defaultLangType", &self.defaultLangType())?;
+        if let Some(f) = self.newTagList() {
+            s.serialize_field("newTagList", &f)?;
+        } else {
+            s.skip_field("newTagList")?;
+        }
+        if let Some(f) = self.voiceLangTypeDict() {
+            s.serialize_field("voiceLangTypeDict", &f)?;
+        } else {
+            s.skip_field("voiceLangTypeDict")?;
+        }
+        if let Some(f) = self.voiceLangGroupTypeDict() {
+            s.serialize_field("voiceLangGroupTypeDict", &f)?;
+        } else {
+            s.skip_field("voiceLangGroupTypeDict")?;
+        }
+        if let Some(f) = self.charDefaultTypeDict() {
+            s.serialize_field("charDefaultTypeDict", &f)?;
+        } else {
+            s.skip_field("charDefaultTypeDict")?;
+        }
+        if let Some(f) = self.startTimeWithTypeDict() {
+            s.serialize_field("startTimeWithTypeDict", &f)?;
+        } else {
+            s.skip_field("startTimeWithTypeDict")?;
+        }
+        if let Some(f) = self.displayGroupTypeList() {
+            s.serialize_field("displayGroupTypeList", &f)?;
+        } else {
+            s.skip_field("displayGroupTypeList")?;
+        }
+        if let Some(f) = self.displayTypeList() {
+            s.serialize_field("displayTypeList", &f)?;
+        } else {
+            s.skip_field("displayTypeList")?;
+        }
+        s.serialize_field("playVoiceRange", &self.playVoiceRange())?;
+        if let Some(f) = self.fesVoiceData() {
+            s.serialize_field("fesVoiceData", &f)?;
+        } else {
+            s.skip_field("fesVoiceData")?;
+        }
+        if let Some(f) = self.fesVoiceWeight() {
+            s.serialize_field("fesVoiceWeight", &f)?;
+        } else {
+            s.skip_field("fesVoiceWeight")?;
+        }
+        if let Some(f) = self.extraVoiceConfigData() {
+            s.serialize_field("extraVoiceConfigData", &f)?;
+        } else {
+            s.skip_field("extraVoiceConfigData")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_CharWordTableBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -5882,6 +7599,127 @@ impl core::fmt::Debug for clz_Torappu_CharWordTable<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_CharWordTableT {
+    pub charWords: Option<Vec<dict__string__clz_Torappu_CharWordDataT>>,
+    pub charExtraWords: Option<Vec<dict__string__clz_Torappu_CharExtraWordDataT>>,
+    pub voiceLangDict: Option<Vec<dict__string__clz_Torappu_VoiceLangDataT>>,
+    pub defaultLangType: enum__Torappu_VoiceLangType,
+    pub newTagList: Option<Vec<String>>,
+    pub voiceLangTypeDict:
+        Option<Vec<dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeDataT>>,
+    pub voiceLangGroupTypeDict:
+        Option<Vec<dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupDataT>>,
+    pub charDefaultTypeDict: Option<Vec<dict__string__enum__Torappu_VoiceLangTypeT>>,
+    pub startTimeWithTypeDict:
+        Option<Vec<dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeDataT>>,
+    pub displayGroupTypeList: Option<Vec<enum__Torappu_VoiceLangGroupType>>,
+    pub displayTypeList: Option<Vec<enum__Torappu_VoiceLangType>>,
+    pub playVoiceRange: enum__Torappu_CharWordShowType,
+    pub fesVoiceData: Option<Vec<dict__string__clz_Torappu_FestivalVoiceDataT>>,
+    pub fesVoiceWeight: Option<Vec<dict__string__clz_Torappu_FestivalVoiceWeightDataT>>,
+    pub extraVoiceConfigData: Option<Vec<dict__string__clz_Torappu_ExtraVoiceConfigDataT>>,
+}
+impl Default for clz_Torappu_CharWordTableT {
+    fn default() -> Self {
+        Self {
+            charWords: None,
+            charExtraWords: None,
+            voiceLangDict: None,
+            defaultLangType: enum__Torappu_VoiceLangType::NONE,
+            newTagList: None,
+            voiceLangTypeDict: None,
+            voiceLangGroupTypeDict: None,
+            charDefaultTypeDict: None,
+            startTimeWithTypeDict: None,
+            displayGroupTypeList: None,
+            displayTypeList: None,
+            playVoiceRange: enum__Torappu_CharWordShowType::HOME_SHOW,
+            fesVoiceData: None,
+            fesVoiceWeight: None,
+            extraVoiceConfigData: None,
+        }
+    }
+}
+impl clz_Torappu_CharWordTableT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_CharWordTable<'b>> {
+        let charWords = self.charWords.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let charExtraWords = self.charExtraWords.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let voiceLangDict = self.voiceLangDict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let defaultLangType = self.defaultLangType;
+        let newTagList = self.newTagList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let voiceLangTypeDict = self.voiceLangTypeDict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let voiceLangGroupTypeDict = self.voiceLangGroupTypeDict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let charDefaultTypeDict = self.charDefaultTypeDict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let startTimeWithTypeDict = self.startTimeWithTypeDict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let displayGroupTypeList = self
+            .displayGroupTypeList
+            .as_ref()
+            .map(|x| _fbb.create_vector(x));
+        let displayTypeList = self.displayTypeList.as_ref().map(|x| _fbb.create_vector(x));
+        let playVoiceRange = self.playVoiceRange;
+        let fesVoiceData = self.fesVoiceData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let fesVoiceWeight = self.fesVoiceWeight.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let extraVoiceConfigData = self.extraVoiceConfigData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_CharWordTable::create(
+            _fbb,
+            &clz_Torappu_CharWordTableArgs {
+                charWords,
+                charExtraWords,
+                voiceLangDict,
+                defaultLangType,
+                newTagList,
+                voiceLangTypeDict,
+                voiceLangGroupTypeDict,
+                charDefaultTypeDict,
+                startTimeWithTypeDict,
+                displayGroupTypeList,
+                displayTypeList,
+                playVoiceRange,
+                fesVoiceData,
+                fesVoiceWeight,
+                extraVoiceConfigData,
+            },
+        )
+    }
+}
 #[inline]
 /// Verifies that a buffer of bytes contains a `clz_Torappu_CharWordTable`
 /// and returns it.
@@ -5939,7 +7777,7 @@ pub fn size_prefixed_root_as_clz_torappu_char_word_table_with_opts<'b, 'o>(
 pub unsafe fn root_as_clz_torappu_char_word_table_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_CharWordTable {
-    flatbuffers::root_unchecked::<clz_Torappu_CharWordTable>(buf)
+    unsafe { flatbuffers::root_unchecked::<clz_Torappu_CharWordTable>(buf) }
 }
 #[inline]
 /// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_CharWordTable and returns it.
@@ -5948,7 +7786,7 @@ pub unsafe fn root_as_clz_torappu_char_word_table_unchecked(
 pub unsafe fn size_prefixed_root_as_clz_torappu_char_word_table_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_CharWordTable {
-    flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_CharWordTable>(buf)
+    unsafe { flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_CharWordTable>(buf) }
 }
 #[inline]
 pub fn finish_clz_torappu_char_word_table_buffer<'a, 'b, A: flatbuffers::Allocator + 'a>(

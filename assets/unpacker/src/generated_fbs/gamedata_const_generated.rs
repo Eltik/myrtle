@@ -5,6 +5,9 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+use self::serde::ser::{Serialize, SerializeStruct, Serializer};
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
@@ -416,11 +419,24 @@ impl core::fmt::Debug for enum__Torappu_ItemType {
         }
     }
 }
+impl Serialize for enum__Torappu_ItemType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_ItemType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ItemType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -429,7 +445,9 @@ impl flatbuffers::Push for enum__Torappu_ItemType {
     type Output = enum__Torappu_ItemType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -516,11 +534,24 @@ impl core::fmt::Debug for enum__Torappu_SubProfessionAttackType {
         }
     }
 }
+impl Serialize for enum__Torappu_SubProfessionAttackType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SubProfessionAttackType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SubProfessionAttackType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -529,7 +560,9 @@ impl flatbuffers::Push for enum__Torappu_SubProfessionAttackType {
     type Output = enum__Torappu_SubProfessionAttackType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -571,7 +604,7 @@ impl<'a> flatbuffers::Follow<'a> for list_int<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -593,6 +626,11 @@ impl<'a> list_int<'a> {
             builder.add_values(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> list_intT {
+        let values = self.values().map(|x| x.into_iter().collect());
+        list_intT { values }
     }
 
     #[inline]
@@ -637,6 +675,21 @@ impl<'a> Default for list_intArgs<'a> {
     }
 }
 
+impl Serialize for list_int<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("list_int", 1)?;
+        if let Some(f) = self.values() {
+            s.serialize_field("values", &f)?;
+        } else {
+            s.skip_field("values")?;
+        }
+        s.end()
+    }
+}
+
 pub struct list_intBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -669,6 +722,25 @@ impl core::fmt::Debug for list_int<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct list_intT {
+    pub values: Option<Vec<i32>>,
+}
+impl Default for list_intT {
+    fn default() -> Self {
+        Self { values: None }
+    }
+}
+impl list_intT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<list_int<'b>> {
+        let values = self.values.as_ref().map(|x| _fbb.create_vector(x));
+        list_int::create(_fbb, &list_intArgs { values })
+    }
+}
 pub enum dict__string__stringOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -681,7 +753,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__string<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -707,6 +779,15 @@ impl<'a> dict__string__string<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__stringT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| x.to_string());
+        dict__string__stringT { key, value }
     }
 
     #[inline]
@@ -770,6 +851,22 @@ impl<'a> Default for dict__string__stringArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__string<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__string", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__stringBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -811,6 +908,33 @@ impl core::fmt::Debug for dict__string__string<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__stringT {
+    pub key: String,
+    pub value: Option<String>,
+}
+impl Default for dict__string__stringT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__stringT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__string<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| _fbb.create_string(x));
+        dict__string__string::create(_fbb, &dict__string__stringArgs { key, value })
+    }
+}
 pub enum clz_Torappu_GameDataConsts_CharAssistRefreshTimeStateOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -823,7 +947,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_GameDataConsts_CharAssistRefres
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -845,6 +969,12 @@ impl<'a> clz_Torappu_GameDataConsts_CharAssistRefreshTimeState<'a> {
         builder.add_Minute(args.Minute);
         builder.add_Hour(args.Hour);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_GameDataConsts_CharAssistRefreshTimeStateT {
+        let Hour = self.Hour();
+        let Minute = self.Minute();
+        clz_Torappu_GameDataConsts_CharAssistRefreshTimeStateT { Hour, Minute }
     }
 
     #[inline]
@@ -902,6 +1032,19 @@ impl<'a> Default for clz_Torappu_GameDataConsts_CharAssistRefreshTimeStateArgs {
     }
 }
 
+impl Serialize for clz_Torappu_GameDataConsts_CharAssistRefreshTimeState<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("clz_Torappu_GameDataConsts_CharAssistRefreshTimeState", 2)?;
+        s.serialize_field("Hour", &self.Hour())?;
+        s.serialize_field("Minute", &self.Minute())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_GameDataConsts_CharAssistRefreshTimeStateBuilder<
     'a: 'b,
     'b,
@@ -956,6 +1099,30 @@ impl core::fmt::Debug for clz_Torappu_GameDataConsts_CharAssistRefreshTimeState<
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_GameDataConsts_CharAssistRefreshTimeStateT {
+    pub Hour: i32,
+    pub Minute: i32,
+}
+impl Default for clz_Torappu_GameDataConsts_CharAssistRefreshTimeStateT {
+    fn default() -> Self {
+        Self { Hour: 0, Minute: 0 }
+    }
+}
+impl clz_Torappu_GameDataConsts_CharAssistRefreshTimeStateT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_GameDataConsts_CharAssistRefreshTimeState<'b>> {
+        let Hour = self.Hour;
+        let Minute = self.Minute;
+        clz_Torappu_GameDataConsts_CharAssistRefreshTimeState::create(
+            _fbb,
+            &clz_Torappu_GameDataConsts_CharAssistRefreshTimeStateArgs { Hour, Minute },
+        )
+    }
+}
 pub enum clz_Torappu_ItemBundleOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -968,7 +1135,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ItemBundle<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -994,6 +1161,13 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ItemBundleT {
+        let id = self.id().map(|x| x.to_string());
+        let count = self.count();
+        let type_ = self.type_();
+        clz_Torappu_ItemBundleT { id, count, type_ }
     }
 
     #[inline]
@@ -1064,6 +1238,23 @@ impl<'a> Default for clz_Torappu_ItemBundleArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ItemBundle<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ItemBundle", 3)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        s.serialize_field("count", &self.count())?;
+        s.serialize_field("type_", &self.type_())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ItemBundleBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1113,6 +1304,33 @@ impl core::fmt::Debug for clz_Torappu_ItemBundle<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ItemBundleT {
+    pub id: Option<String>,
+    pub count: i32,
+    pub type_: enum__Torappu_ItemType,
+}
+impl Default for clz_Torappu_ItemBundleT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            count: 0,
+            type_: enum__Torappu_ItemType::NONE,
+        }
+    }
+}
+impl clz_Torappu_ItemBundleT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ItemBundle<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let count = self.count;
+        let type_ = self.type_;
+        clz_Torappu_ItemBundle::create(_fbb, &clz_Torappu_ItemBundleArgs { id, count, type_ })
+    }
+}
 pub enum dict__int__intOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1125,7 +1343,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__int__int<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1147,6 +1365,12 @@ impl<'a> dict__int__int<'a> {
         builder.add_value(args.value);
         builder.add_key(args.key);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__int__intT {
+        let key = self.key();
+        let value = self.value();
+        dict__int__intT { key, value }
     }
 
     #[inline]
@@ -1208,6 +1432,18 @@ impl<'a> Default for dict__int__intArgs {
     }
 }
 
+impl Serialize for dict__int__int<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__int__int", 2)?;
+        s.serialize_field("key", &self.key())?;
+        s.serialize_field("value", &self.value())?;
+        s.end()
+    }
+}
+
 pub struct dict__int__intBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1247,6 +1483,27 @@ impl core::fmt::Debug for dict__int__int<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__int__intT {
+    pub key: i32,
+    pub value: i32,
+}
+impl Default for dict__int__intT {
+    fn default() -> Self {
+        Self { key: 0, value: 0 }
+    }
+}
+impl dict__int__intT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__int__int<'b>> {
+        let key = self.key;
+        let value = self.value;
+        dict__int__int::create(_fbb, &dict__int__intArgs { key, value })
+    }
+}
 pub enum clz_Torappu_TermDescriptionDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1259,7 +1516,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_TermDescriptionData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1289,6 +1546,17 @@ impl<'a> clz_Torappu_TermDescriptionData<'a> {
             builder.add_termId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_TermDescriptionDataT {
+        let termId = self.termId().map(|x| x.to_string());
+        let termName = self.termName().map(|x| x.to_string());
+        let description = self.description().map(|x| x.to_string());
+        clz_Torappu_TermDescriptionDataT {
+            termId,
+            termName,
+            description,
+        }
     }
 
     #[inline]
@@ -1368,6 +1636,31 @@ impl<'a> Default for clz_Torappu_TermDescriptionDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_TermDescriptionData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_TermDescriptionData", 3)?;
+        if let Some(f) = self.termId() {
+            s.serialize_field("termId", &f)?;
+        } else {
+            s.skip_field("termId")?;
+        }
+        if let Some(f) = self.termName() {
+            s.serialize_field("termName", &f)?;
+        } else {
+            s.skip_field("termName")?;
+        }
+        if let Some(f) = self.description() {
+            s.serialize_field("description", &f)?;
+        } else {
+            s.skip_field("description")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_TermDescriptionDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1420,6 +1713,40 @@ impl core::fmt::Debug for clz_Torappu_TermDescriptionData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_TermDescriptionDataT {
+    pub termId: Option<String>,
+    pub termName: Option<String>,
+    pub description: Option<String>,
+}
+impl Default for clz_Torappu_TermDescriptionDataT {
+    fn default() -> Self {
+        Self {
+            termId: None,
+            termName: None,
+            description: None,
+        }
+    }
+}
+impl clz_Torappu_TermDescriptionDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_TermDescriptionData<'b>> {
+        let termId = self.termId.as_ref().map(|x| _fbb.create_string(x));
+        let termName = self.termName.as_ref().map(|x| _fbb.create_string(x));
+        let description = self.description.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_TermDescriptionData::create(
+            _fbb,
+            &clz_Torappu_TermDescriptionDataArgs {
+                termId,
+                termName,
+                description,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_TermDescriptionDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1432,7 +1759,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_TermDescriptionDa
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1458,6 +1785,15 @@ impl<'a> dict__string__clz_Torappu_TermDescriptionData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_TermDescriptionDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_TermDescriptionDataT { key, value }
     }
 
     #[inline]
@@ -1531,6 +1867,23 @@ impl<'a> Default for dict__string__clz_Torappu_TermDescriptionDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_TermDescriptionData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_TermDescriptionData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_TermDescriptionDataBuilder<
     'a: 'b,
     'b,
@@ -1592,6 +1945,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_TermDescriptionData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_TermDescriptionDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_TermDescriptionDataT>>,
+}
+impl Default for dict__string__clz_Torappu_TermDescriptionDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_TermDescriptionDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_TermDescriptionData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_TermDescriptionData::create(
+            _fbb,
+            &dict__string__clz_Torappu_TermDescriptionDataArgs { key, value },
+        )
+    }
+}
 pub enum dict__string__enum__Torappu_SubProfessionAttackTypeOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1604,7 +1987,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__enum__Torappu_SubProfessionAt
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1628,6 +2011,15 @@ impl<'a> dict__string__enum__Torappu_SubProfessionAttackType<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__enum__Torappu_SubProfessionAttackTypeT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value();
+        dict__string__enum__Torappu_SubProfessionAttackTypeT { key, value }
     }
 
     #[inline]
@@ -1701,6 +2093,19 @@ impl<'a> Default for dict__string__enum__Torappu_SubProfessionAttackTypeArgs<'a>
     }
 }
 
+impl Serialize for dict__string__enum__Torappu_SubProfessionAttackType<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("dict__string__enum__Torappu_SubProfessionAttackType", 2)?;
+        s.serialize_field("key", &self.key())?;
+        s.serialize_field("value", &self.value())?;
+        s.end()
+    }
+}
+
 pub struct dict__string__enum__Torappu_SubProfessionAttackTypeBuilder<
     'a: 'b,
     'b,
@@ -1760,6 +2165,36 @@ impl core::fmt::Debug for dict__string__enum__Torappu_SubProfessionAttackType<'_
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__enum__Torappu_SubProfessionAttackTypeT {
+    pub key: String,
+    pub value: enum__Torappu_SubProfessionAttackType,
+}
+impl Default for dict__string__enum__Torappu_SubProfessionAttackTypeT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: enum__Torappu_SubProfessionAttackType::NONE,
+        }
+    }
+}
+impl dict__string__enum__Torappu_SubProfessionAttackTypeT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__enum__Torappu_SubProfessionAttackType<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value;
+        dict__string__enum__Torappu_SubProfessionAttackType::create(
+            _fbb,
+            &dict__string__enum__Torappu_SubProfessionAttackTypeArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_GameDataConsts_FeverGameDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1772,7 +2207,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_GameDataConsts_FeverGameData<'a
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1794,6 +2229,15 @@ impl<'a> clz_Torappu_GameDataConsts_FeverGameData<'a> {
         builder.add_feverNeed(args.feverNeed);
         builder.add_feverDuration(args.feverDuration);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_GameDataConsts_FeverGameDataT {
+        let feverDuration = self.feverDuration();
+        let feverNeed = self.feverNeed();
+        clz_Torappu_GameDataConsts_FeverGameDataT {
+            feverDuration,
+            feverNeed,
+        }
     }
 
     #[inline]
@@ -1854,6 +2298,18 @@ impl<'a> Default for clz_Torappu_GameDataConsts_FeverGameDataArgs {
     }
 }
 
+impl Serialize for clz_Torappu_GameDataConsts_FeverGameData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_GameDataConsts_FeverGameData", 2)?;
+        s.serialize_field("feverDuration", &self.feverDuration())?;
+        s.serialize_field("feverNeed", &self.feverNeed())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_GameDataConsts_FeverGameDataBuilder<
     'a: 'b,
     'b,
@@ -1906,6 +2362,36 @@ impl core::fmt::Debug for clz_Torappu_GameDataConsts_FeverGameData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_GameDataConsts_FeverGameDataT {
+    pub feverDuration: f32,
+    pub feverNeed: f32,
+}
+impl Default for clz_Torappu_GameDataConsts_FeverGameDataT {
+    fn default() -> Self {
+        Self {
+            feverDuration: 0.0,
+            feverNeed: 0.0,
+        }
+    }
+}
+impl clz_Torappu_GameDataConsts_FeverGameDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_GameDataConsts_FeverGameData<'b>> {
+        let feverDuration = self.feverDuration;
+        let feverNeed = self.feverNeed;
+        clz_Torappu_GameDataConsts_FeverGameData::create(
+            _fbb,
+            &clz_Torappu_GameDataConsts_FeverGameDataArgs {
+                feverDuration,
+                feverNeed,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_GameDataConstsOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1918,7 +2404,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_GameDataConsts<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2284,6 +2770,295 @@ impl<'a> clz_Torappu_GameDataConsts<'a> {
         builder.add_isLMGTSEnabled(args.isLMGTSEnabled);
         builder.add_buyApTimeNoLimitFlag(args.buyApTimeNoLimitFlag);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_GameDataConstsT {
+        let maxPlayerLevel = self.maxPlayerLevel();
+        let playerExpMap = self.playerExpMap().map(|x| x.into_iter().collect());
+        let playerApMap = self.playerApMap().map(|x| x.into_iter().collect());
+        let maxLevel = self
+            .maxLevel()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let characterExpMap = self
+            .characterExpMap()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let characterUpgradeCostMap = self
+            .characterUpgradeCostMap()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let evolveGoldCost = self
+            .evolveGoldCost()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let completeGainBonus = self.completeGainBonus();
+        let playerApRegenSpeed = self.playerApRegenSpeed();
+        let maxPracticeTicket = self.maxPracticeTicket();
+        let advancedGachaCrystalCost = self.advancedGachaCrystalCost();
+        let completeCrystalBonus = self.completeCrystalBonus();
+        let initPlayerGold = self.initPlayerGold();
+        let initPlayerDiamondShard = self.initPlayerDiamondShard();
+        let initCampaignTotalFee = self.initCampaignTotalFee();
+        let initRecruitTagList = self.initRecruitTagList().map(|x| x.into_iter().collect());
+        let initCharIdList = self
+            .initCharIdList()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let attackMax = self.attackMax();
+        let defMax = self.defMax();
+        let hpMax = self.hpMax();
+        let reMax = self.reMax();
+        let diamondToShdRate = self.diamondToShdRate();
+        let requestSameFriendCD = self.requestSameFriendCD();
+        let baseMaxFriendNum = self.baseMaxFriendNum();
+        let maxStarFriendNum = self.maxStarFriendNum();
+        let maxSquadAssistDisplayNum = self.maxSquadAssistDisplayNum();
+        let friendStarEditTrackTs = self.friendStarEditTrackTs();
+        let hardDiamondDrop = self.hardDiamondDrop();
+        let instFinDmdShdCost = self.instFinDmdShdCost();
+        let easyCrystalBonus = self.easyCrystalBonus();
+        let diamondMaterialToShardExchangeRatio = self.diamondMaterialToShardExchangeRatio();
+        let diamondHandbookStageGain = self.diamondHandbookStageGain();
+        let apBuyCost = self.apBuyCost();
+        let apBuyThreshold = self.apBuyThreshold();
+        let creditLimit = self.creditLimit();
+        let monthlySubRemainTimeLimitDays = self.monthlySubRemainTimeLimitDays();
+        let friendAssistRarityLimit = self
+            .friendAssistRarityLimit()
+            .map(|x| x.into_iter().collect());
+        let mainlineCompatibleDesc = self.mainlineCompatibleDesc().map(|x| x.to_string());
+        let mainlineToughDesc = self.mainlineToughDesc().map(|x| x.to_string());
+        let mainlineEasyDesc = self.mainlineEasyDesc().map(|x| x.to_string());
+        let mainlineNormalDesc = self.mainlineNormalDesc().map(|x| x.to_string());
+        let rejectSpCharMission = self.rejectSpCharMission();
+        let addedRewardDisplayZone = self.addedRewardDisplayZone().map(|x| x.to_string());
+        let oneDiamondAp = self.oneDiamondAp();
+        let charRotationPresetMaxCnt = self.charRotationPresetMaxCnt();
+        let charRotationSkinListMaxCnt = self.charRotationSkinListMaxCnt();
+        let defaultCRPresetCharId = self.defaultCRPresetCharId().map(|x| x.to_string());
+        let defaultCRPresetCharSkinId = self.defaultCRPresetCharSkinId().map(|x| x.to_string());
+        let defaultCRPresetBGId = self.defaultCRPresetBGId().map(|x| x.to_string());
+        let defaultCRPresetThemeId = self.defaultCRPresetThemeId().map(|x| x.to_string());
+        let defaultCRPresetName = self.defaultCRPresetName().map(|x| x.to_string());
+        let charRotationPresetTrackTs = self.charRotationPresetTrackTs();
+        let uniequipArchiveSysTrackTs = self.uniequipArchiveSysTrackTs();
+        let manufactPromptTime = self.manufactPromptTime();
+        let mainGuideActivedStageId = self.mainGuideActivedStageId().map(|x| x.to_string());
+        let richTextStyles = self
+            .richTextStyles()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let charAssistRefreshTime = self
+            .charAssistRefreshTime()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let normalRecruitLockedString = self
+            .normalRecruitLockedString()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let commonPotentialLvlUpCount = self.commonPotentialLvlUpCount();
+        let weeklyOverrideDesc = self.weeklyOverrideDesc().map(|x| x.to_string());
+        let voucherDiv = self.voucherDiv();
+        let recruitPoolVersion = self.recruitPoolVersion();
+        let v006RecruitTimeStep1Refresh = self.v006RecruitTimeStep1Refresh();
+        let v006RecruitTimeStep2Check = self.v006RecruitTimeStep2Check();
+        let v006RecruitTimeStep2Flush = self.v006RecruitTimeStep2Flush();
+        let buyApTimeNoLimitFlag = self.buyApTimeNoLimitFlag();
+        let isLMGTSEnabled = self.isLMGTSEnabled();
+        let legacyTime = self.legacyTime();
+        let legacyItemList = self
+            .legacyItemList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let useAssistSocialPt = self.useAssistSocialPt();
+        let useAssistSocialPtMaxCount = self.useAssistSocialPtMaxCount();
+        let assistBeUsedSocialPt = self
+            .assistBeUsedSocialPt()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let pushForces = self.pushForces().map(|x| x.into_iter().collect());
+        let pushForceZeroIndex = self.pushForceZeroIndex();
+        let normalGachaUnlockPrice = self
+            .normalGachaUnlockPrice()
+            .map(|x| x.into_iter().collect());
+        let pullForces = self.pullForces().map(|x| x.into_iter().collect());
+        let pullForceZeroIndex = self.pullForceZeroIndex();
+        let multiInComeByRank = self
+            .multiInComeByRank()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let LMTGSToEPGSRatio = self.LMTGSToEPGSRatio();
+        let newBeeGiftEPGS = self.newBeeGiftEPGS();
+        let lMTGSDescConstOne = self.lMTGSDescConstOne().map(|x| x.to_string());
+        let lMTGSDescConstTwo = self.lMTGSDescConstTwo().map(|x| x.to_string());
+        let defCDPrimColor = self.defCDPrimColor().map(|x| x.to_string());
+        let defCDSecColor = self.defCDSecColor().map(|x| x.to_string());
+        let mailBannerType = self
+            .mailBannerType()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let monthlySubWarningTime = self.monthlySubWarningTime();
+        let UnlimitSkinOutOfTime = self.UnlimitSkinOutOfTime();
+        let replicateShopStartTime = self.replicateShopStartTime();
+        let TSO = self.TSO();
+        let isDynIllustEnabled = self.isDynIllustEnabled();
+        let isDynIllustStartEnabled = self.isDynIllustStartEnabled();
+        let isClassicQCShopEnabled = self.isClassicQCShopEnabled();
+        let isRoguelikeTopicFuncEnabled = self.isRoguelikeTopicFuncEnabled();
+        let isSandboxPermFuncEnabled = self.isSandboxPermFuncEnabled();
+        let isRoguelikeAvgAchieveFuncEnabled = self.isRoguelikeAvgAchieveFuncEnabled();
+        let isClassicPotentialItemFuncEnabled = self.isClassicPotentialItemFuncEnabled();
+        let isClassicGachaPoolFuncEnabled = self.isClassicGachaPoolFuncEnabled();
+        let isSpecialGachaPoolFuncEnabled = self.isSpecialGachaPoolFuncEnabled();
+        let isVoucherClassicItemDistinguishable = self.isVoucherClassicItemDistinguishable();
+        let isRecalRuneFuncEnabled = self.isRecalRuneFuncEnabled();
+        let voucherSkinRedeem = self.voucherSkinRedeem();
+        let voucherSkinDesc = self.voucherSkinDesc().map(|x| x.to_string());
+        let charmEquipCount = self.charmEquipCount();
+        let termDescriptionDict = self
+            .termDescriptionDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let storyReviewUnlockItemLackTip =
+            self.storyReviewUnlockItemLackTip().map(|x| x.to_string());
+        let dataVersion = self.dataVersion().map(|x| x.to_string());
+        let resPrefVersion = self.resPrefVersion().map(|x| x.to_string());
+        let announceWebBusType = self.announceWebBusType().map(|x| x.to_string());
+        let videoPlayerWebBusType = self.videoPlayerWebBusType().map(|x| x.to_string());
+        let gachaLogBusType = self.gachaLogBusType().map(|x| x.to_string());
+        let defaultMinMultipleBattleTimes = self.defaultMinMultipleBattleTimes();
+        let defaultMaxMultipleBattleTimes = self.defaultMaxMultipleBattleTimes();
+        let multipleActionOpen = self.multipleActionOpen();
+        let subProfessionDamageTypePairs = self
+            .subProfessionDamageTypePairs()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let classicProtectChar = self
+            .classicProtectChar()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let feverGameData = self.feverGameData().map(|x| Box::new(x.unpack()));
+        let birthdaySettingDesc = self.birthdaySettingDesc().map(|x| x.to_string());
+        let birthdaySettingConfirmDesc = self.birthdaySettingConfirmDesc().map(|x| x.to_string());
+        let birthdaySettingLeapConfirmDesc =
+            self.birthdaySettingLeapConfirmDesc().map(|x| x.to_string());
+        let leapBirthdayRewardMonth = self.leapBirthdayRewardMonth();
+        let leapBirthdayRewardDay = self.leapBirthdayRewardDay();
+        let birthdaySettingShowStageId = self.birthdaySettingShowStageId().map(|x| x.to_string());
+        let isBirthdayFuncEnabled = self.isBirthdayFuncEnabled();
+        let isSoCharEnabled = self.isSoCharEnabled();
+        clz_Torappu_GameDataConstsT {
+            maxPlayerLevel,
+            playerExpMap,
+            playerApMap,
+            maxLevel,
+            characterExpMap,
+            characterUpgradeCostMap,
+            evolveGoldCost,
+            completeGainBonus,
+            playerApRegenSpeed,
+            maxPracticeTicket,
+            advancedGachaCrystalCost,
+            completeCrystalBonus,
+            initPlayerGold,
+            initPlayerDiamondShard,
+            initCampaignTotalFee,
+            initRecruitTagList,
+            initCharIdList,
+            attackMax,
+            defMax,
+            hpMax,
+            reMax,
+            diamondToShdRate,
+            requestSameFriendCD,
+            baseMaxFriendNum,
+            maxStarFriendNum,
+            maxSquadAssistDisplayNum,
+            friendStarEditTrackTs,
+            hardDiamondDrop,
+            instFinDmdShdCost,
+            easyCrystalBonus,
+            diamondMaterialToShardExchangeRatio,
+            diamondHandbookStageGain,
+            apBuyCost,
+            apBuyThreshold,
+            creditLimit,
+            monthlySubRemainTimeLimitDays,
+            friendAssistRarityLimit,
+            mainlineCompatibleDesc,
+            mainlineToughDesc,
+            mainlineEasyDesc,
+            mainlineNormalDesc,
+            rejectSpCharMission,
+            addedRewardDisplayZone,
+            oneDiamondAp,
+            charRotationPresetMaxCnt,
+            charRotationSkinListMaxCnt,
+            defaultCRPresetCharId,
+            defaultCRPresetCharSkinId,
+            defaultCRPresetBGId,
+            defaultCRPresetThemeId,
+            defaultCRPresetName,
+            charRotationPresetTrackTs,
+            uniequipArchiveSysTrackTs,
+            manufactPromptTime,
+            mainGuideActivedStageId,
+            richTextStyles,
+            charAssistRefreshTime,
+            normalRecruitLockedString,
+            commonPotentialLvlUpCount,
+            weeklyOverrideDesc,
+            voucherDiv,
+            recruitPoolVersion,
+            v006RecruitTimeStep1Refresh,
+            v006RecruitTimeStep2Check,
+            v006RecruitTimeStep2Flush,
+            buyApTimeNoLimitFlag,
+            isLMGTSEnabled,
+            legacyTime,
+            legacyItemList,
+            useAssistSocialPt,
+            useAssistSocialPtMaxCount,
+            assistBeUsedSocialPt,
+            pushForces,
+            pushForceZeroIndex,
+            normalGachaUnlockPrice,
+            pullForces,
+            pullForceZeroIndex,
+            multiInComeByRank,
+            LMTGSToEPGSRatio,
+            newBeeGiftEPGS,
+            lMTGSDescConstOne,
+            lMTGSDescConstTwo,
+            defCDPrimColor,
+            defCDSecColor,
+            mailBannerType,
+            monthlySubWarningTime,
+            UnlimitSkinOutOfTime,
+            replicateShopStartTime,
+            TSO,
+            isDynIllustEnabled,
+            isDynIllustStartEnabled,
+            isClassicQCShopEnabled,
+            isRoguelikeTopicFuncEnabled,
+            isSandboxPermFuncEnabled,
+            isRoguelikeAvgAchieveFuncEnabled,
+            isClassicPotentialItemFuncEnabled,
+            isClassicGachaPoolFuncEnabled,
+            isSpecialGachaPoolFuncEnabled,
+            isVoucherClassicItemDistinguishable,
+            isRecalRuneFuncEnabled,
+            voucherSkinRedeem,
+            voucherSkinDesc,
+            charmEquipCount,
+            termDescriptionDict,
+            storyReviewUnlockItemLackTip,
+            dataVersion,
+            resPrefVersion,
+            announceWebBusType,
+            videoPlayerWebBusType,
+            gachaLogBusType,
+            defaultMinMultipleBattleTimes,
+            defaultMaxMultipleBattleTimes,
+            multipleActionOpen,
+            subProfessionDamageTypePairs,
+            classicProtectChar,
+            feverGameData,
+            birthdaySettingDesc,
+            birthdaySettingConfirmDesc,
+            birthdaySettingLeapConfirmDesc,
+            leapBirthdayRewardMonth,
+            leapBirthdayRewardDay,
+            birthdaySettingShowStageId,
+            isBirthdayFuncEnabled,
+            isSoCharEnabled,
+        }
     }
 
     #[inline]
@@ -4649,6 +5424,394 @@ impl<'a> Default for clz_Torappu_GameDataConstsArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_GameDataConsts<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_GameDataConsts", 124)?;
+        s.serialize_field("maxPlayerLevel", &self.maxPlayerLevel())?;
+        if let Some(f) = self.playerExpMap() {
+            s.serialize_field("playerExpMap", &f)?;
+        } else {
+            s.skip_field("playerExpMap")?;
+        }
+        if let Some(f) = self.playerApMap() {
+            s.serialize_field("playerApMap", &f)?;
+        } else {
+            s.skip_field("playerApMap")?;
+        }
+        if let Some(f) = self.maxLevel() {
+            s.serialize_field("maxLevel", &f)?;
+        } else {
+            s.skip_field("maxLevel")?;
+        }
+        if let Some(f) = self.characterExpMap() {
+            s.serialize_field("characterExpMap", &f)?;
+        } else {
+            s.skip_field("characterExpMap")?;
+        }
+        if let Some(f) = self.characterUpgradeCostMap() {
+            s.serialize_field("characterUpgradeCostMap", &f)?;
+        } else {
+            s.skip_field("characterUpgradeCostMap")?;
+        }
+        if let Some(f) = self.evolveGoldCost() {
+            s.serialize_field("evolveGoldCost", &f)?;
+        } else {
+            s.skip_field("evolveGoldCost")?;
+        }
+        s.serialize_field("completeGainBonus", &self.completeGainBonus())?;
+        s.serialize_field("playerApRegenSpeed", &self.playerApRegenSpeed())?;
+        s.serialize_field("maxPracticeTicket", &self.maxPracticeTicket())?;
+        s.serialize_field("advancedGachaCrystalCost", &self.advancedGachaCrystalCost())?;
+        s.serialize_field("completeCrystalBonus", &self.completeCrystalBonus())?;
+        s.serialize_field("initPlayerGold", &self.initPlayerGold())?;
+        s.serialize_field("initPlayerDiamondShard", &self.initPlayerDiamondShard())?;
+        s.serialize_field("initCampaignTotalFee", &self.initCampaignTotalFee())?;
+        if let Some(f) = self.initRecruitTagList() {
+            s.serialize_field("initRecruitTagList", &f)?;
+        } else {
+            s.skip_field("initRecruitTagList")?;
+        }
+        if let Some(f) = self.initCharIdList() {
+            s.serialize_field("initCharIdList", &f)?;
+        } else {
+            s.skip_field("initCharIdList")?;
+        }
+        s.serialize_field("attackMax", &self.attackMax())?;
+        s.serialize_field("defMax", &self.defMax())?;
+        s.serialize_field("hpMax", &self.hpMax())?;
+        s.serialize_field("reMax", &self.reMax())?;
+        s.serialize_field("diamondToShdRate", &self.diamondToShdRate())?;
+        s.serialize_field("requestSameFriendCD", &self.requestSameFriendCD())?;
+        s.serialize_field("baseMaxFriendNum", &self.baseMaxFriendNum())?;
+        s.serialize_field("maxStarFriendNum", &self.maxStarFriendNum())?;
+        s.serialize_field("maxSquadAssistDisplayNum", &self.maxSquadAssistDisplayNum())?;
+        s.serialize_field("friendStarEditTrackTs", &self.friendStarEditTrackTs())?;
+        s.serialize_field("hardDiamondDrop", &self.hardDiamondDrop())?;
+        s.serialize_field("instFinDmdShdCost", &self.instFinDmdShdCost())?;
+        s.serialize_field("easyCrystalBonus", &self.easyCrystalBonus())?;
+        s.serialize_field(
+            "diamondMaterialToShardExchangeRatio",
+            &self.diamondMaterialToShardExchangeRatio(),
+        )?;
+        s.serialize_field("diamondHandbookStageGain", &self.diamondHandbookStageGain())?;
+        s.serialize_field("apBuyCost", &self.apBuyCost())?;
+        s.serialize_field("apBuyThreshold", &self.apBuyThreshold())?;
+        s.serialize_field("creditLimit", &self.creditLimit())?;
+        s.serialize_field(
+            "monthlySubRemainTimeLimitDays",
+            &self.monthlySubRemainTimeLimitDays(),
+        )?;
+        if let Some(f) = self.friendAssistRarityLimit() {
+            s.serialize_field("friendAssistRarityLimit", &f)?;
+        } else {
+            s.skip_field("friendAssistRarityLimit")?;
+        }
+        if let Some(f) = self.mainlineCompatibleDesc() {
+            s.serialize_field("mainlineCompatibleDesc", &f)?;
+        } else {
+            s.skip_field("mainlineCompatibleDesc")?;
+        }
+        if let Some(f) = self.mainlineToughDesc() {
+            s.serialize_field("mainlineToughDesc", &f)?;
+        } else {
+            s.skip_field("mainlineToughDesc")?;
+        }
+        if let Some(f) = self.mainlineEasyDesc() {
+            s.serialize_field("mainlineEasyDesc", &f)?;
+        } else {
+            s.skip_field("mainlineEasyDesc")?;
+        }
+        if let Some(f) = self.mainlineNormalDesc() {
+            s.serialize_field("mainlineNormalDesc", &f)?;
+        } else {
+            s.skip_field("mainlineNormalDesc")?;
+        }
+        s.serialize_field("rejectSpCharMission", &self.rejectSpCharMission())?;
+        if let Some(f) = self.addedRewardDisplayZone() {
+            s.serialize_field("addedRewardDisplayZone", &f)?;
+        } else {
+            s.skip_field("addedRewardDisplayZone")?;
+        }
+        s.serialize_field("oneDiamondAp", &self.oneDiamondAp())?;
+        s.serialize_field("charRotationPresetMaxCnt", &self.charRotationPresetMaxCnt())?;
+        s.serialize_field(
+            "charRotationSkinListMaxCnt",
+            &self.charRotationSkinListMaxCnt(),
+        )?;
+        if let Some(f) = self.defaultCRPresetCharId() {
+            s.serialize_field("defaultCRPresetCharId", &f)?;
+        } else {
+            s.skip_field("defaultCRPresetCharId")?;
+        }
+        if let Some(f) = self.defaultCRPresetCharSkinId() {
+            s.serialize_field("defaultCRPresetCharSkinId", &f)?;
+        } else {
+            s.skip_field("defaultCRPresetCharSkinId")?;
+        }
+        if let Some(f) = self.defaultCRPresetBGId() {
+            s.serialize_field("defaultCRPresetBGId", &f)?;
+        } else {
+            s.skip_field("defaultCRPresetBGId")?;
+        }
+        if let Some(f) = self.defaultCRPresetThemeId() {
+            s.serialize_field("defaultCRPresetThemeId", &f)?;
+        } else {
+            s.skip_field("defaultCRPresetThemeId")?;
+        }
+        if let Some(f) = self.defaultCRPresetName() {
+            s.serialize_field("defaultCRPresetName", &f)?;
+        } else {
+            s.skip_field("defaultCRPresetName")?;
+        }
+        s.serialize_field(
+            "charRotationPresetTrackTs",
+            &self.charRotationPresetTrackTs(),
+        )?;
+        s.serialize_field(
+            "uniequipArchiveSysTrackTs",
+            &self.uniequipArchiveSysTrackTs(),
+        )?;
+        s.serialize_field("manufactPromptTime", &self.manufactPromptTime())?;
+        if let Some(f) = self.mainGuideActivedStageId() {
+            s.serialize_field("mainGuideActivedStageId", &f)?;
+        } else {
+            s.skip_field("mainGuideActivedStageId")?;
+        }
+        if let Some(f) = self.richTextStyles() {
+            s.serialize_field("richTextStyles", &f)?;
+        } else {
+            s.skip_field("richTextStyles")?;
+        }
+        if let Some(f) = self.charAssistRefreshTime() {
+            s.serialize_field("charAssistRefreshTime", &f)?;
+        } else {
+            s.skip_field("charAssistRefreshTime")?;
+        }
+        if let Some(f) = self.normalRecruitLockedString() {
+            s.serialize_field("normalRecruitLockedString", &f)?;
+        } else {
+            s.skip_field("normalRecruitLockedString")?;
+        }
+        s.serialize_field(
+            "commonPotentialLvlUpCount",
+            &self.commonPotentialLvlUpCount(),
+        )?;
+        if let Some(f) = self.weeklyOverrideDesc() {
+            s.serialize_field("weeklyOverrideDesc", &f)?;
+        } else {
+            s.skip_field("weeklyOverrideDesc")?;
+        }
+        s.serialize_field("voucherDiv", &self.voucherDiv())?;
+        s.serialize_field("recruitPoolVersion", &self.recruitPoolVersion())?;
+        s.serialize_field(
+            "v006RecruitTimeStep1Refresh",
+            &self.v006RecruitTimeStep1Refresh(),
+        )?;
+        s.serialize_field(
+            "v006RecruitTimeStep2Check",
+            &self.v006RecruitTimeStep2Check(),
+        )?;
+        s.serialize_field(
+            "v006RecruitTimeStep2Flush",
+            &self.v006RecruitTimeStep2Flush(),
+        )?;
+        s.serialize_field("buyApTimeNoLimitFlag", &self.buyApTimeNoLimitFlag())?;
+        s.serialize_field("isLMGTSEnabled", &self.isLMGTSEnabled())?;
+        s.serialize_field("legacyTime", &self.legacyTime())?;
+        if let Some(f) = self.legacyItemList() {
+            s.serialize_field("legacyItemList", &f)?;
+        } else {
+            s.skip_field("legacyItemList")?;
+        }
+        s.serialize_field("useAssistSocialPt", &self.useAssistSocialPt())?;
+        s.serialize_field(
+            "useAssistSocialPtMaxCount",
+            &self.useAssistSocialPtMaxCount(),
+        )?;
+        if let Some(f) = self.assistBeUsedSocialPt() {
+            s.serialize_field("assistBeUsedSocialPt", &f)?;
+        } else {
+            s.skip_field("assistBeUsedSocialPt")?;
+        }
+        if let Some(f) = self.pushForces() {
+            s.serialize_field("pushForces", &f)?;
+        } else {
+            s.skip_field("pushForces")?;
+        }
+        s.serialize_field("pushForceZeroIndex", &self.pushForceZeroIndex())?;
+        if let Some(f) = self.normalGachaUnlockPrice() {
+            s.serialize_field("normalGachaUnlockPrice", &f)?;
+        } else {
+            s.skip_field("normalGachaUnlockPrice")?;
+        }
+        if let Some(f) = self.pullForces() {
+            s.serialize_field("pullForces", &f)?;
+        } else {
+            s.skip_field("pullForces")?;
+        }
+        s.serialize_field("pullForceZeroIndex", &self.pullForceZeroIndex())?;
+        if let Some(f) = self.multiInComeByRank() {
+            s.serialize_field("multiInComeByRank", &f)?;
+        } else {
+            s.skip_field("multiInComeByRank")?;
+        }
+        s.serialize_field("LMTGSToEPGSRatio", &self.LMTGSToEPGSRatio())?;
+        s.serialize_field("newBeeGiftEPGS", &self.newBeeGiftEPGS())?;
+        if let Some(f) = self.lMTGSDescConstOne() {
+            s.serialize_field("lMTGSDescConstOne", &f)?;
+        } else {
+            s.skip_field("lMTGSDescConstOne")?;
+        }
+        if let Some(f) = self.lMTGSDescConstTwo() {
+            s.serialize_field("lMTGSDescConstTwo", &f)?;
+        } else {
+            s.skip_field("lMTGSDescConstTwo")?;
+        }
+        if let Some(f) = self.defCDPrimColor() {
+            s.serialize_field("defCDPrimColor", &f)?;
+        } else {
+            s.skip_field("defCDPrimColor")?;
+        }
+        if let Some(f) = self.defCDSecColor() {
+            s.serialize_field("defCDSecColor", &f)?;
+        } else {
+            s.skip_field("defCDSecColor")?;
+        }
+        if let Some(f) = self.mailBannerType() {
+            s.serialize_field("mailBannerType", &f)?;
+        } else {
+            s.skip_field("mailBannerType")?;
+        }
+        s.serialize_field("monthlySubWarningTime", &self.monthlySubWarningTime())?;
+        s.serialize_field("UnlimitSkinOutOfTime", &self.UnlimitSkinOutOfTime())?;
+        s.serialize_field("replicateShopStartTime", &self.replicateShopStartTime())?;
+        s.serialize_field("TSO", &self.TSO())?;
+        s.serialize_field("isDynIllustEnabled", &self.isDynIllustEnabled())?;
+        s.serialize_field("isDynIllustStartEnabled", &self.isDynIllustStartEnabled())?;
+        s.serialize_field("isClassicQCShopEnabled", &self.isClassicQCShopEnabled())?;
+        s.serialize_field(
+            "isRoguelikeTopicFuncEnabled",
+            &self.isRoguelikeTopicFuncEnabled(),
+        )?;
+        s.serialize_field("isSandboxPermFuncEnabled", &self.isSandboxPermFuncEnabled())?;
+        s.serialize_field(
+            "isRoguelikeAvgAchieveFuncEnabled",
+            &self.isRoguelikeAvgAchieveFuncEnabled(),
+        )?;
+        s.serialize_field(
+            "isClassicPotentialItemFuncEnabled",
+            &self.isClassicPotentialItemFuncEnabled(),
+        )?;
+        s.serialize_field(
+            "isClassicGachaPoolFuncEnabled",
+            &self.isClassicGachaPoolFuncEnabled(),
+        )?;
+        s.serialize_field(
+            "isSpecialGachaPoolFuncEnabled",
+            &self.isSpecialGachaPoolFuncEnabled(),
+        )?;
+        s.serialize_field(
+            "isVoucherClassicItemDistinguishable",
+            &self.isVoucherClassicItemDistinguishable(),
+        )?;
+        s.serialize_field("isRecalRuneFuncEnabled", &self.isRecalRuneFuncEnabled())?;
+        s.serialize_field("voucherSkinRedeem", &self.voucherSkinRedeem())?;
+        if let Some(f) = self.voucherSkinDesc() {
+            s.serialize_field("voucherSkinDesc", &f)?;
+        } else {
+            s.skip_field("voucherSkinDesc")?;
+        }
+        s.serialize_field("charmEquipCount", &self.charmEquipCount())?;
+        if let Some(f) = self.termDescriptionDict() {
+            s.serialize_field("termDescriptionDict", &f)?;
+        } else {
+            s.skip_field("termDescriptionDict")?;
+        }
+        if let Some(f) = self.storyReviewUnlockItemLackTip() {
+            s.serialize_field("storyReviewUnlockItemLackTip", &f)?;
+        } else {
+            s.skip_field("storyReviewUnlockItemLackTip")?;
+        }
+        if let Some(f) = self.dataVersion() {
+            s.serialize_field("dataVersion", &f)?;
+        } else {
+            s.skip_field("dataVersion")?;
+        }
+        if let Some(f) = self.resPrefVersion() {
+            s.serialize_field("resPrefVersion", &f)?;
+        } else {
+            s.skip_field("resPrefVersion")?;
+        }
+        if let Some(f) = self.announceWebBusType() {
+            s.serialize_field("announceWebBusType", &f)?;
+        } else {
+            s.skip_field("announceWebBusType")?;
+        }
+        if let Some(f) = self.videoPlayerWebBusType() {
+            s.serialize_field("videoPlayerWebBusType", &f)?;
+        } else {
+            s.skip_field("videoPlayerWebBusType")?;
+        }
+        if let Some(f) = self.gachaLogBusType() {
+            s.serialize_field("gachaLogBusType", &f)?;
+        } else {
+            s.skip_field("gachaLogBusType")?;
+        }
+        s.serialize_field(
+            "defaultMinMultipleBattleTimes",
+            &self.defaultMinMultipleBattleTimes(),
+        )?;
+        s.serialize_field(
+            "defaultMaxMultipleBattleTimes",
+            &self.defaultMaxMultipleBattleTimes(),
+        )?;
+        s.serialize_field("multipleActionOpen", &self.multipleActionOpen())?;
+        if let Some(f) = self.subProfessionDamageTypePairs() {
+            s.serialize_field("subProfessionDamageTypePairs", &f)?;
+        } else {
+            s.skip_field("subProfessionDamageTypePairs")?;
+        }
+        if let Some(f) = self.classicProtectChar() {
+            s.serialize_field("classicProtectChar", &f)?;
+        } else {
+            s.skip_field("classicProtectChar")?;
+        }
+        if let Some(f) = self.feverGameData() {
+            s.serialize_field("feverGameData", &f)?;
+        } else {
+            s.skip_field("feverGameData")?;
+        }
+        if let Some(f) = self.birthdaySettingDesc() {
+            s.serialize_field("birthdaySettingDesc", &f)?;
+        } else {
+            s.skip_field("birthdaySettingDesc")?;
+        }
+        if let Some(f) = self.birthdaySettingConfirmDesc() {
+            s.serialize_field("birthdaySettingConfirmDesc", &f)?;
+        } else {
+            s.skip_field("birthdaySettingConfirmDesc")?;
+        }
+        if let Some(f) = self.birthdaySettingLeapConfirmDesc() {
+            s.serialize_field("birthdaySettingLeapConfirmDesc", &f)?;
+        } else {
+            s.skip_field("birthdaySettingLeapConfirmDesc")?;
+        }
+        s.serialize_field("leapBirthdayRewardMonth", &self.leapBirthdayRewardMonth())?;
+        s.serialize_field("leapBirthdayRewardDay", &self.leapBirthdayRewardDay())?;
+        if let Some(f) = self.birthdaySettingShowStageId() {
+            s.serialize_field("birthdaySettingShowStageId", &f)?;
+        } else {
+            s.skip_field("birthdaySettingShowStageId")?;
+        }
+        s.serialize_field("isBirthdayFuncEnabled", &self.isBirthdayFuncEnabled())?;
+        s.serialize_field("isSoCharEnabled", &self.isSoCharEnabled())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_GameDataConstsBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -5952,6 +7115,642 @@ impl core::fmt::Debug for clz_Torappu_GameDataConsts<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_GameDataConstsT {
+    pub maxPlayerLevel: i32,
+    pub playerExpMap: Option<Vec<i32>>,
+    pub playerApMap: Option<Vec<i32>>,
+    pub maxLevel: Option<Vec<list_intT>>,
+    pub characterExpMap: Option<Vec<list_intT>>,
+    pub characterUpgradeCostMap: Option<Vec<list_intT>>,
+    pub evolveGoldCost: Option<Vec<list_intT>>,
+    pub completeGainBonus: f32,
+    pub playerApRegenSpeed: i32,
+    pub maxPracticeTicket: i32,
+    pub advancedGachaCrystalCost: i32,
+    pub completeCrystalBonus: i32,
+    pub initPlayerGold: i32,
+    pub initPlayerDiamondShard: i32,
+    pub initCampaignTotalFee: i32,
+    pub initRecruitTagList: Option<Vec<i32>>,
+    pub initCharIdList: Option<Vec<String>>,
+    pub attackMax: f32,
+    pub defMax: f32,
+    pub hpMax: f32,
+    pub reMax: f32,
+    pub diamondToShdRate: i32,
+    pub requestSameFriendCD: i32,
+    pub baseMaxFriendNum: i32,
+    pub maxStarFriendNum: i32,
+    pub maxSquadAssistDisplayNum: i32,
+    pub friendStarEditTrackTs: i64,
+    pub hardDiamondDrop: i32,
+    pub instFinDmdShdCost: i32,
+    pub easyCrystalBonus: i32,
+    pub diamondMaterialToShardExchangeRatio: i32,
+    pub diamondHandbookStageGain: i32,
+    pub apBuyCost: i32,
+    pub apBuyThreshold: i32,
+    pub creditLimit: i32,
+    pub monthlySubRemainTimeLimitDays: i32,
+    pub friendAssistRarityLimit: Option<Vec<i32>>,
+    pub mainlineCompatibleDesc: Option<String>,
+    pub mainlineToughDesc: Option<String>,
+    pub mainlineEasyDesc: Option<String>,
+    pub mainlineNormalDesc: Option<String>,
+    pub rejectSpCharMission: i64,
+    pub addedRewardDisplayZone: Option<String>,
+    pub oneDiamondAp: i32,
+    pub charRotationPresetMaxCnt: i32,
+    pub charRotationSkinListMaxCnt: i32,
+    pub defaultCRPresetCharId: Option<String>,
+    pub defaultCRPresetCharSkinId: Option<String>,
+    pub defaultCRPresetBGId: Option<String>,
+    pub defaultCRPresetThemeId: Option<String>,
+    pub defaultCRPresetName: Option<String>,
+    pub charRotationPresetTrackTs: i64,
+    pub uniequipArchiveSysTrackTs: i64,
+    pub manufactPromptTime: i32,
+    pub mainGuideActivedStageId: Option<String>,
+    pub richTextStyles: Option<Vec<dict__string__stringT>>,
+    pub charAssistRefreshTime: Option<Vec<clz_Torappu_GameDataConsts_CharAssistRefreshTimeStateT>>,
+    pub normalRecruitLockedString: Option<Vec<String>>,
+    pub commonPotentialLvlUpCount: i32,
+    pub weeklyOverrideDesc: Option<String>,
+    pub voucherDiv: i32,
+    pub recruitPoolVersion: i32,
+    pub v006RecruitTimeStep1Refresh: i64,
+    pub v006RecruitTimeStep2Check: i64,
+    pub v006RecruitTimeStep2Flush: i64,
+    pub buyApTimeNoLimitFlag: bool,
+    pub isLMGTSEnabled: bool,
+    pub legacyTime: i64,
+    pub legacyItemList: Option<Vec<clz_Torappu_ItemBundleT>>,
+    pub useAssistSocialPt: i32,
+    pub useAssistSocialPtMaxCount: i32,
+    pub assistBeUsedSocialPt: Option<Vec<dict__int__intT>>,
+    pub pushForces: Option<Vec<f32>>,
+    pub pushForceZeroIndex: i32,
+    pub normalGachaUnlockPrice: Option<Vec<i32>>,
+    pub pullForces: Option<Vec<f32>>,
+    pub pullForceZeroIndex: i32,
+    pub multiInComeByRank: Option<Vec<String>>,
+    pub LMTGSToEPGSRatio: i32,
+    pub newBeeGiftEPGS: i32,
+    pub lMTGSDescConstOne: Option<String>,
+    pub lMTGSDescConstTwo: Option<String>,
+    pub defCDPrimColor: Option<String>,
+    pub defCDSecColor: Option<String>,
+    pub mailBannerType: Option<Vec<String>>,
+    pub monthlySubWarningTime: i64,
+    pub UnlimitSkinOutOfTime: i64,
+    pub replicateShopStartTime: i64,
+    pub TSO: i64,
+    pub isDynIllustEnabled: bool,
+    pub isDynIllustStartEnabled: bool,
+    pub isClassicQCShopEnabled: bool,
+    pub isRoguelikeTopicFuncEnabled: bool,
+    pub isSandboxPermFuncEnabled: bool,
+    pub isRoguelikeAvgAchieveFuncEnabled: bool,
+    pub isClassicPotentialItemFuncEnabled: bool,
+    pub isClassicGachaPoolFuncEnabled: bool,
+    pub isSpecialGachaPoolFuncEnabled: bool,
+    pub isVoucherClassicItemDistinguishable: bool,
+    pub isRecalRuneFuncEnabled: bool,
+    pub voucherSkinRedeem: i32,
+    pub voucherSkinDesc: Option<String>,
+    pub charmEquipCount: i32,
+    pub termDescriptionDict: Option<Vec<dict__string__clz_Torappu_TermDescriptionDataT>>,
+    pub storyReviewUnlockItemLackTip: Option<String>,
+    pub dataVersion: Option<String>,
+    pub resPrefVersion: Option<String>,
+    pub announceWebBusType: Option<String>,
+    pub videoPlayerWebBusType: Option<String>,
+    pub gachaLogBusType: Option<String>,
+    pub defaultMinMultipleBattleTimes: i32,
+    pub defaultMaxMultipleBattleTimes: i32,
+    pub multipleActionOpen: bool,
+    pub subProfessionDamageTypePairs:
+        Option<Vec<dict__string__enum__Torappu_SubProfessionAttackTypeT>>,
+    pub classicProtectChar: Option<Vec<String>>,
+    pub feverGameData: Option<Box<clz_Torappu_GameDataConsts_FeverGameDataT>>,
+    pub birthdaySettingDesc: Option<String>,
+    pub birthdaySettingConfirmDesc: Option<String>,
+    pub birthdaySettingLeapConfirmDesc: Option<String>,
+    pub leapBirthdayRewardMonth: i32,
+    pub leapBirthdayRewardDay: i32,
+    pub birthdaySettingShowStageId: Option<String>,
+    pub isBirthdayFuncEnabled: bool,
+    pub isSoCharEnabled: bool,
+}
+impl Default for clz_Torappu_GameDataConstsT {
+    fn default() -> Self {
+        Self {
+            maxPlayerLevel: 0,
+            playerExpMap: None,
+            playerApMap: None,
+            maxLevel: None,
+            characterExpMap: None,
+            characterUpgradeCostMap: None,
+            evolveGoldCost: None,
+            completeGainBonus: 0.0,
+            playerApRegenSpeed: 0,
+            maxPracticeTicket: 0,
+            advancedGachaCrystalCost: 0,
+            completeCrystalBonus: 0,
+            initPlayerGold: 0,
+            initPlayerDiamondShard: 0,
+            initCampaignTotalFee: 0,
+            initRecruitTagList: None,
+            initCharIdList: None,
+            attackMax: 0.0,
+            defMax: 0.0,
+            hpMax: 0.0,
+            reMax: 0.0,
+            diamondToShdRate: 0,
+            requestSameFriendCD: 0,
+            baseMaxFriendNum: 0,
+            maxStarFriendNum: 0,
+            maxSquadAssistDisplayNum: 0,
+            friendStarEditTrackTs: 0,
+            hardDiamondDrop: 0,
+            instFinDmdShdCost: 0,
+            easyCrystalBonus: 0,
+            diamondMaterialToShardExchangeRatio: 0,
+            diamondHandbookStageGain: 0,
+            apBuyCost: 0,
+            apBuyThreshold: 0,
+            creditLimit: 0,
+            monthlySubRemainTimeLimitDays: 0,
+            friendAssistRarityLimit: None,
+            mainlineCompatibleDesc: None,
+            mainlineToughDesc: None,
+            mainlineEasyDesc: None,
+            mainlineNormalDesc: None,
+            rejectSpCharMission: 0,
+            addedRewardDisplayZone: None,
+            oneDiamondAp: 0,
+            charRotationPresetMaxCnt: 0,
+            charRotationSkinListMaxCnt: 0,
+            defaultCRPresetCharId: None,
+            defaultCRPresetCharSkinId: None,
+            defaultCRPresetBGId: None,
+            defaultCRPresetThemeId: None,
+            defaultCRPresetName: None,
+            charRotationPresetTrackTs: 0,
+            uniequipArchiveSysTrackTs: 0,
+            manufactPromptTime: 0,
+            mainGuideActivedStageId: None,
+            richTextStyles: None,
+            charAssistRefreshTime: None,
+            normalRecruitLockedString: None,
+            commonPotentialLvlUpCount: 0,
+            weeklyOverrideDesc: None,
+            voucherDiv: 0,
+            recruitPoolVersion: 0,
+            v006RecruitTimeStep1Refresh: 0,
+            v006RecruitTimeStep2Check: 0,
+            v006RecruitTimeStep2Flush: 0,
+            buyApTimeNoLimitFlag: false,
+            isLMGTSEnabled: false,
+            legacyTime: 0,
+            legacyItemList: None,
+            useAssistSocialPt: 0,
+            useAssistSocialPtMaxCount: 0,
+            assistBeUsedSocialPt: None,
+            pushForces: None,
+            pushForceZeroIndex: 0,
+            normalGachaUnlockPrice: None,
+            pullForces: None,
+            pullForceZeroIndex: 0,
+            multiInComeByRank: None,
+            LMTGSToEPGSRatio: 0,
+            newBeeGiftEPGS: 0,
+            lMTGSDescConstOne: None,
+            lMTGSDescConstTwo: None,
+            defCDPrimColor: None,
+            defCDSecColor: None,
+            mailBannerType: None,
+            monthlySubWarningTime: 0,
+            UnlimitSkinOutOfTime: 0,
+            replicateShopStartTime: 0,
+            TSO: 0,
+            isDynIllustEnabled: false,
+            isDynIllustStartEnabled: false,
+            isClassicQCShopEnabled: false,
+            isRoguelikeTopicFuncEnabled: false,
+            isSandboxPermFuncEnabled: false,
+            isRoguelikeAvgAchieveFuncEnabled: false,
+            isClassicPotentialItemFuncEnabled: false,
+            isClassicGachaPoolFuncEnabled: false,
+            isSpecialGachaPoolFuncEnabled: false,
+            isVoucherClassicItemDistinguishable: false,
+            isRecalRuneFuncEnabled: false,
+            voucherSkinRedeem: 0,
+            voucherSkinDesc: None,
+            charmEquipCount: 0,
+            termDescriptionDict: None,
+            storyReviewUnlockItemLackTip: None,
+            dataVersion: None,
+            resPrefVersion: None,
+            announceWebBusType: None,
+            videoPlayerWebBusType: None,
+            gachaLogBusType: None,
+            defaultMinMultipleBattleTimes: 0,
+            defaultMaxMultipleBattleTimes: 0,
+            multipleActionOpen: false,
+            subProfessionDamageTypePairs: None,
+            classicProtectChar: None,
+            feverGameData: None,
+            birthdaySettingDesc: None,
+            birthdaySettingConfirmDesc: None,
+            birthdaySettingLeapConfirmDesc: None,
+            leapBirthdayRewardMonth: 0,
+            leapBirthdayRewardDay: 0,
+            birthdaySettingShowStageId: None,
+            isBirthdayFuncEnabled: false,
+            isSoCharEnabled: false,
+        }
+    }
+}
+impl clz_Torappu_GameDataConstsT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_GameDataConsts<'b>> {
+        let maxPlayerLevel = self.maxPlayerLevel;
+        let playerExpMap = self.playerExpMap.as_ref().map(|x| _fbb.create_vector(x));
+        let playerApMap = self.playerApMap.as_ref().map(|x| _fbb.create_vector(x));
+        let maxLevel = self.maxLevel.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let characterExpMap = self.characterExpMap.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let characterUpgradeCostMap = self.characterUpgradeCostMap.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let evolveGoldCost = self.evolveGoldCost.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let completeGainBonus = self.completeGainBonus;
+        let playerApRegenSpeed = self.playerApRegenSpeed;
+        let maxPracticeTicket = self.maxPracticeTicket;
+        let advancedGachaCrystalCost = self.advancedGachaCrystalCost;
+        let completeCrystalBonus = self.completeCrystalBonus;
+        let initPlayerGold = self.initPlayerGold;
+        let initPlayerDiamondShard = self.initPlayerDiamondShard;
+        let initCampaignTotalFee = self.initCampaignTotalFee;
+        let initRecruitTagList = self
+            .initRecruitTagList
+            .as_ref()
+            .map(|x| _fbb.create_vector(x));
+        let initCharIdList = self.initCharIdList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let attackMax = self.attackMax;
+        let defMax = self.defMax;
+        let hpMax = self.hpMax;
+        let reMax = self.reMax;
+        let diamondToShdRate = self.diamondToShdRate;
+        let requestSameFriendCD = self.requestSameFriendCD;
+        let baseMaxFriendNum = self.baseMaxFriendNum;
+        let maxStarFriendNum = self.maxStarFriendNum;
+        let maxSquadAssistDisplayNum = self.maxSquadAssistDisplayNum;
+        let friendStarEditTrackTs = self.friendStarEditTrackTs;
+        let hardDiamondDrop = self.hardDiamondDrop;
+        let instFinDmdShdCost = self.instFinDmdShdCost;
+        let easyCrystalBonus = self.easyCrystalBonus;
+        let diamondMaterialToShardExchangeRatio = self.diamondMaterialToShardExchangeRatio;
+        let diamondHandbookStageGain = self.diamondHandbookStageGain;
+        let apBuyCost = self.apBuyCost;
+        let apBuyThreshold = self.apBuyThreshold;
+        let creditLimit = self.creditLimit;
+        let monthlySubRemainTimeLimitDays = self.monthlySubRemainTimeLimitDays;
+        let friendAssistRarityLimit = self
+            .friendAssistRarityLimit
+            .as_ref()
+            .map(|x| _fbb.create_vector(x));
+        let mainlineCompatibleDesc = self
+            .mainlineCompatibleDesc
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let mainlineToughDesc = self
+            .mainlineToughDesc
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let mainlineEasyDesc = self
+            .mainlineEasyDesc
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let mainlineNormalDesc = self
+            .mainlineNormalDesc
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let rejectSpCharMission = self.rejectSpCharMission;
+        let addedRewardDisplayZone = self
+            .addedRewardDisplayZone
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let oneDiamondAp = self.oneDiamondAp;
+        let charRotationPresetMaxCnt = self.charRotationPresetMaxCnt;
+        let charRotationSkinListMaxCnt = self.charRotationSkinListMaxCnt;
+        let defaultCRPresetCharId = self
+            .defaultCRPresetCharId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let defaultCRPresetCharSkinId = self
+            .defaultCRPresetCharSkinId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let defaultCRPresetBGId = self
+            .defaultCRPresetBGId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let defaultCRPresetThemeId = self
+            .defaultCRPresetThemeId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let defaultCRPresetName = self
+            .defaultCRPresetName
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let charRotationPresetTrackTs = self.charRotationPresetTrackTs;
+        let uniequipArchiveSysTrackTs = self.uniequipArchiveSysTrackTs;
+        let manufactPromptTime = self.manufactPromptTime;
+        let mainGuideActivedStageId = self
+            .mainGuideActivedStageId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let richTextStyles = self.richTextStyles.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let charAssistRefreshTime = self.charAssistRefreshTime.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let normalRecruitLockedString = self.normalRecruitLockedString.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let commonPotentialLvlUpCount = self.commonPotentialLvlUpCount;
+        let weeklyOverrideDesc = self
+            .weeklyOverrideDesc
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let voucherDiv = self.voucherDiv;
+        let recruitPoolVersion = self.recruitPoolVersion;
+        let v006RecruitTimeStep1Refresh = self.v006RecruitTimeStep1Refresh;
+        let v006RecruitTimeStep2Check = self.v006RecruitTimeStep2Check;
+        let v006RecruitTimeStep2Flush = self.v006RecruitTimeStep2Flush;
+        let buyApTimeNoLimitFlag = self.buyApTimeNoLimitFlag;
+        let isLMGTSEnabled = self.isLMGTSEnabled;
+        let legacyTime = self.legacyTime;
+        let legacyItemList = self.legacyItemList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let useAssistSocialPt = self.useAssistSocialPt;
+        let useAssistSocialPtMaxCount = self.useAssistSocialPtMaxCount;
+        let assistBeUsedSocialPt = self.assistBeUsedSocialPt.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let pushForces = self.pushForces.as_ref().map(|x| _fbb.create_vector(x));
+        let pushForceZeroIndex = self.pushForceZeroIndex;
+        let normalGachaUnlockPrice = self
+            .normalGachaUnlockPrice
+            .as_ref()
+            .map(|x| _fbb.create_vector(x));
+        let pullForces = self.pullForces.as_ref().map(|x| _fbb.create_vector(x));
+        let pullForceZeroIndex = self.pullForceZeroIndex;
+        let multiInComeByRank = self.multiInComeByRank.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let LMTGSToEPGSRatio = self.LMTGSToEPGSRatio;
+        let newBeeGiftEPGS = self.newBeeGiftEPGS;
+        let lMTGSDescConstOne = self
+            .lMTGSDescConstOne
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let lMTGSDescConstTwo = self
+            .lMTGSDescConstTwo
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let defCDPrimColor = self.defCDPrimColor.as_ref().map(|x| _fbb.create_string(x));
+        let defCDSecColor = self.defCDSecColor.as_ref().map(|x| _fbb.create_string(x));
+        let mailBannerType = self.mailBannerType.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let monthlySubWarningTime = self.monthlySubWarningTime;
+        let UnlimitSkinOutOfTime = self.UnlimitSkinOutOfTime;
+        let replicateShopStartTime = self.replicateShopStartTime;
+        let TSO = self.TSO;
+        let isDynIllustEnabled = self.isDynIllustEnabled;
+        let isDynIllustStartEnabled = self.isDynIllustStartEnabled;
+        let isClassicQCShopEnabled = self.isClassicQCShopEnabled;
+        let isRoguelikeTopicFuncEnabled = self.isRoguelikeTopicFuncEnabled;
+        let isSandboxPermFuncEnabled = self.isSandboxPermFuncEnabled;
+        let isRoguelikeAvgAchieveFuncEnabled = self.isRoguelikeAvgAchieveFuncEnabled;
+        let isClassicPotentialItemFuncEnabled = self.isClassicPotentialItemFuncEnabled;
+        let isClassicGachaPoolFuncEnabled = self.isClassicGachaPoolFuncEnabled;
+        let isSpecialGachaPoolFuncEnabled = self.isSpecialGachaPoolFuncEnabled;
+        let isVoucherClassicItemDistinguishable = self.isVoucherClassicItemDistinguishable;
+        let isRecalRuneFuncEnabled = self.isRecalRuneFuncEnabled;
+        let voucherSkinRedeem = self.voucherSkinRedeem;
+        let voucherSkinDesc = self.voucherSkinDesc.as_ref().map(|x| _fbb.create_string(x));
+        let charmEquipCount = self.charmEquipCount;
+        let termDescriptionDict = self.termDescriptionDict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let storyReviewUnlockItemLackTip = self
+            .storyReviewUnlockItemLackTip
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let dataVersion = self.dataVersion.as_ref().map(|x| _fbb.create_string(x));
+        let resPrefVersion = self.resPrefVersion.as_ref().map(|x| _fbb.create_string(x));
+        let announceWebBusType = self
+            .announceWebBusType
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let videoPlayerWebBusType = self
+            .videoPlayerWebBusType
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let gachaLogBusType = self.gachaLogBusType.as_ref().map(|x| _fbb.create_string(x));
+        let defaultMinMultipleBattleTimes = self.defaultMinMultipleBattleTimes;
+        let defaultMaxMultipleBattleTimes = self.defaultMaxMultipleBattleTimes;
+        let multipleActionOpen = self.multipleActionOpen;
+        let subProfessionDamageTypePairs = self.subProfessionDamageTypePairs.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let classicProtectChar = self.classicProtectChar.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let feverGameData = self.feverGameData.as_ref().map(|x| x.pack(_fbb));
+        let birthdaySettingDesc = self
+            .birthdaySettingDesc
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let birthdaySettingConfirmDesc = self
+            .birthdaySettingConfirmDesc
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let birthdaySettingLeapConfirmDesc = self
+            .birthdaySettingLeapConfirmDesc
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let leapBirthdayRewardMonth = self.leapBirthdayRewardMonth;
+        let leapBirthdayRewardDay = self.leapBirthdayRewardDay;
+        let birthdaySettingShowStageId = self
+            .birthdaySettingShowStageId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let isBirthdayFuncEnabled = self.isBirthdayFuncEnabled;
+        let isSoCharEnabled = self.isSoCharEnabled;
+        clz_Torappu_GameDataConsts::create(
+            _fbb,
+            &clz_Torappu_GameDataConstsArgs {
+                maxPlayerLevel,
+                playerExpMap,
+                playerApMap,
+                maxLevel,
+                characterExpMap,
+                characterUpgradeCostMap,
+                evolveGoldCost,
+                completeGainBonus,
+                playerApRegenSpeed,
+                maxPracticeTicket,
+                advancedGachaCrystalCost,
+                completeCrystalBonus,
+                initPlayerGold,
+                initPlayerDiamondShard,
+                initCampaignTotalFee,
+                initRecruitTagList,
+                initCharIdList,
+                attackMax,
+                defMax,
+                hpMax,
+                reMax,
+                diamondToShdRate,
+                requestSameFriendCD,
+                baseMaxFriendNum,
+                maxStarFriendNum,
+                maxSquadAssistDisplayNum,
+                friendStarEditTrackTs,
+                hardDiamondDrop,
+                instFinDmdShdCost,
+                easyCrystalBonus,
+                diamondMaterialToShardExchangeRatio,
+                diamondHandbookStageGain,
+                apBuyCost,
+                apBuyThreshold,
+                creditLimit,
+                monthlySubRemainTimeLimitDays,
+                friendAssistRarityLimit,
+                mainlineCompatibleDesc,
+                mainlineToughDesc,
+                mainlineEasyDesc,
+                mainlineNormalDesc,
+                rejectSpCharMission,
+                addedRewardDisplayZone,
+                oneDiamondAp,
+                charRotationPresetMaxCnt,
+                charRotationSkinListMaxCnt,
+                defaultCRPresetCharId,
+                defaultCRPresetCharSkinId,
+                defaultCRPresetBGId,
+                defaultCRPresetThemeId,
+                defaultCRPresetName,
+                charRotationPresetTrackTs,
+                uniequipArchiveSysTrackTs,
+                manufactPromptTime,
+                mainGuideActivedStageId,
+                richTextStyles,
+                charAssistRefreshTime,
+                normalRecruitLockedString,
+                commonPotentialLvlUpCount,
+                weeklyOverrideDesc,
+                voucherDiv,
+                recruitPoolVersion,
+                v006RecruitTimeStep1Refresh,
+                v006RecruitTimeStep2Check,
+                v006RecruitTimeStep2Flush,
+                buyApTimeNoLimitFlag,
+                isLMGTSEnabled,
+                legacyTime,
+                legacyItemList,
+                useAssistSocialPt,
+                useAssistSocialPtMaxCount,
+                assistBeUsedSocialPt,
+                pushForces,
+                pushForceZeroIndex,
+                normalGachaUnlockPrice,
+                pullForces,
+                pullForceZeroIndex,
+                multiInComeByRank,
+                LMTGSToEPGSRatio,
+                newBeeGiftEPGS,
+                lMTGSDescConstOne,
+                lMTGSDescConstTwo,
+                defCDPrimColor,
+                defCDSecColor,
+                mailBannerType,
+                monthlySubWarningTime,
+                UnlimitSkinOutOfTime,
+                replicateShopStartTime,
+                TSO,
+                isDynIllustEnabled,
+                isDynIllustStartEnabled,
+                isClassicQCShopEnabled,
+                isRoguelikeTopicFuncEnabled,
+                isSandboxPermFuncEnabled,
+                isRoguelikeAvgAchieveFuncEnabled,
+                isClassicPotentialItemFuncEnabled,
+                isClassicGachaPoolFuncEnabled,
+                isSpecialGachaPoolFuncEnabled,
+                isVoucherClassicItemDistinguishable,
+                isRecalRuneFuncEnabled,
+                voucherSkinRedeem,
+                voucherSkinDesc,
+                charmEquipCount,
+                termDescriptionDict,
+                storyReviewUnlockItemLackTip,
+                dataVersion,
+                resPrefVersion,
+                announceWebBusType,
+                videoPlayerWebBusType,
+                gachaLogBusType,
+                defaultMinMultipleBattleTimes,
+                defaultMaxMultipleBattleTimes,
+                multipleActionOpen,
+                subProfessionDamageTypePairs,
+                classicProtectChar,
+                feverGameData,
+                birthdaySettingDesc,
+                birthdaySettingConfirmDesc,
+                birthdaySettingLeapConfirmDesc,
+                leapBirthdayRewardMonth,
+                leapBirthdayRewardDay,
+                birthdaySettingShowStageId,
+                isBirthdayFuncEnabled,
+                isSoCharEnabled,
+            },
+        )
+    }
+}
 #[inline]
 /// Verifies that a buffer of bytes contains a `clz_Torappu_GameDataConsts`
 /// and returns it.
@@ -6009,7 +7808,7 @@ pub fn size_prefixed_root_as_clz_torappu_game_data_consts_with_opts<'b, 'o>(
 pub unsafe fn root_as_clz_torappu_game_data_consts_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_GameDataConsts {
-    flatbuffers::root_unchecked::<clz_Torappu_GameDataConsts>(buf)
+    unsafe { flatbuffers::root_unchecked::<clz_Torappu_GameDataConsts>(buf) }
 }
 #[inline]
 /// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_GameDataConsts and returns it.
@@ -6018,7 +7817,7 @@ pub unsafe fn root_as_clz_torappu_game_data_consts_unchecked(
 pub unsafe fn size_prefixed_root_as_clz_torappu_game_data_consts_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_GameDataConsts {
-    flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_GameDataConsts>(buf)
+    unsafe { flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_GameDataConsts>(buf) }
 }
 #[inline]
 pub fn finish_clz_torappu_game_data_consts_buffer<'a, 'b, A: flatbuffers::Allocator + 'a>(

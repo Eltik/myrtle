@@ -5,6 +5,9 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+use self::serde::ser::{Serialize, SerializeStruct, Serializer};
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
@@ -77,11 +80,24 @@ impl core::fmt::Debug for enum__Torappu_Audio_MixerDesc_Category {
         }
     }
 }
+impl Serialize for enum__Torappu_Audio_MixerDesc_Category {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_Audio_MixerDesc_Category",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_Audio_MixerDesc_Category {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -90,7 +106,9 @@ impl flatbuffers::Push for enum__Torappu_Audio_MixerDesc_Category {
     type Output = enum__Torappu_Audio_MixerDesc_Category;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -201,11 +219,24 @@ impl core::fmt::Debug for enum__Torappu_BattleVoiceOption_BattleVoiceType {
         }
     }
 }
+impl Serialize for enum__Torappu_BattleVoiceOption_BattleVoiceType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_BattleVoiceOption_BattleVoiceType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_BattleVoiceOption_BattleVoiceType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -214,7 +245,9 @@ impl flatbuffers::Push for enum__Torappu_BattleVoiceOption_BattleVoiceType {
     type Output = enum__Torappu_BattleVoiceOption_BattleVoiceType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -294,11 +327,24 @@ impl core::fmt::Debug for enum__Torappu_Audio_Middleware_Data_AudioFadeType {
         }
     }
 }
+impl Serialize for enum__Torappu_Audio_Middleware_Data_AudioFadeType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_Audio_Middleware_Data_AudioFadeType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_Audio_Middleware_Data_AudioFadeType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -307,7 +353,9 @@ impl flatbuffers::Push for enum__Torappu_Audio_Middleware_Data_AudioFadeType {
     type Output = enum__Torappu_Audio_Middleware_Data_AudioFadeType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -429,11 +477,24 @@ impl core::fmt::Debug for enum__Torappu_VoiceLangType {
         }
     }
 }
+impl Serialize for enum__Torappu_VoiceLangType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_VoiceLangType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_VoiceLangType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -442,7 +503,9 @@ impl flatbuffers::Push for enum__Torappu_VoiceLangType {
     type Output = enum__Torappu_VoiceLangType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -484,7 +547,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_Audio_Middleware_Data_BGMBank<'
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -524,6 +587,25 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_BGMBank<'a> {
             builder.add_intro(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Audio_Middleware_Data_BGMBankT {
+        let intro = self.intro().map(|x| x.to_string());
+        let loop_ = self.loop_().map(|x| x.to_string());
+        let volume = self.volume();
+        let crossfade = self.crossfade();
+        let delay = self.delay();
+        let fadeStyleId = self.fadeStyleId().map(|x| x.to_string());
+        let name = self.name().map(|x| x.to_string());
+        clz_Torappu_Audio_Middleware_Data_BGMBankT {
+            intro,
+            loop_,
+            volume,
+            crossfade,
+            delay,
+            fadeStyleId,
+            name,
+        }
     }
 
     #[inline]
@@ -665,6 +747,39 @@ impl<'a> Default for clz_Torappu_Audio_Middleware_Data_BGMBankArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_Audio_Middleware_Data_BGMBank<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_Audio_Middleware_Data_BGMBank", 7)?;
+        if let Some(f) = self.intro() {
+            s.serialize_field("intro", &f)?;
+        } else {
+            s.skip_field("intro")?;
+        }
+        if let Some(f) = self.loop_() {
+            s.serialize_field("loop_", &f)?;
+        } else {
+            s.skip_field("loop_")?;
+        }
+        s.serialize_field("volume", &self.volume())?;
+        s.serialize_field("crossfade", &self.crossfade())?;
+        s.serialize_field("delay", &self.delay())?;
+        if let Some(f) = self.fadeStyleId() {
+            s.serialize_field("fadeStyleId", &f)?;
+        } else {
+            s.skip_field("fadeStyleId")?;
+        }
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_Audio_Middleware_Data_BGMBankBuilder<
     'a: 'b,
     'b,
@@ -758,6 +873,56 @@ impl core::fmt::Debug for clz_Torappu_Audio_Middleware_Data_BGMBank<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Audio_Middleware_Data_BGMBankT {
+    pub intro: Option<String>,
+    pub loop_: Option<String>,
+    pub volume: f32,
+    pub crossfade: f32,
+    pub delay: f32,
+    pub fadeStyleId: Option<String>,
+    pub name: Option<String>,
+}
+impl Default for clz_Torappu_Audio_Middleware_Data_BGMBankT {
+    fn default() -> Self {
+        Self {
+            intro: None,
+            loop_: None,
+            volume: 0.0,
+            crossfade: 0.0,
+            delay: 0.0,
+            fadeStyleId: None,
+            name: None,
+        }
+    }
+}
+impl clz_Torappu_Audio_Middleware_Data_BGMBankT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_Audio_Middleware_Data_BGMBank<'b>> {
+        let intro = self.intro.as_ref().map(|x| _fbb.create_string(x));
+        let loop_ = self.loop_.as_ref().map(|x| _fbb.create_string(x));
+        let volume = self.volume;
+        let crossfade = self.crossfade;
+        let delay = self.delay;
+        let fadeStyleId = self.fadeStyleId.as_ref().map(|x| _fbb.create_string(x));
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_Audio_Middleware_Data_BGMBank::create(
+            _fbb,
+            &clz_Torappu_Audio_Middleware_Data_BGMBankArgs {
+                intro,
+                loop_,
+                volume,
+                crossfade,
+                delay,
+                fadeStyleId,
+                name,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFXOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -770,7 +935,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_Audio_Middleware_Data_SoundFXBa
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -810,6 +975,31 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFX<'a> {
         builder.add_is2D(args.is2D);
         builder.add_important(args.important);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFXT {
+        let asset = self.asset().map(|x| x.to_string());
+        let weight = self.weight();
+        let important = self.important();
+        let is2D = self.is2D();
+        let delay = self.delay();
+        let minPitch = self.minPitch();
+        let maxPitch = self.maxPitch();
+        let minVolume = self.minVolume();
+        let maxVolume = self.maxVolume();
+        let ignoreTimeScale = self.ignoreTimeScale();
+        clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFXT {
+            asset,
+            weight,
+            important,
+            is2D,
+            delay,
+            minPitch,
+            maxPitch,
+            minVolume,
+            maxVolume,
+            ignoreTimeScale,
+        }
     }
 
     #[inline]
@@ -1004,6 +1194,31 @@ impl<'a> Default for clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFXArgs<'
     }
 }
 
+impl Serialize for clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFX<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFX", 10)?;
+        if let Some(f) = self.asset() {
+            s.serialize_field("asset", &f)?;
+        } else {
+            s.skip_field("asset")?;
+        }
+        s.serialize_field("weight", &self.weight())?;
+        s.serialize_field("important", &self.important())?;
+        s.serialize_field("is2D", &self.is2D())?;
+        s.serialize_field("delay", &self.delay())?;
+        s.serialize_field("minPitch", &self.minPitch())?;
+        s.serialize_field("maxPitch", &self.maxPitch())?;
+        s.serialize_field("minVolume", &self.minVolume())?;
+        s.serialize_field("maxVolume", &self.maxVolume())?;
+        s.serialize_field("ignoreTimeScale", &self.ignoreTimeScale())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFXBuilder<
     'a: 'b,
     'b,
@@ -1129,6 +1344,68 @@ impl core::fmt::Debug for clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFX<
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFXT {
+    pub asset: Option<String>,
+    pub weight: f32,
+    pub important: bool,
+    pub is2D: bool,
+    pub delay: f32,
+    pub minPitch: f32,
+    pub maxPitch: f32,
+    pub minVolume: f32,
+    pub maxVolume: f32,
+    pub ignoreTimeScale: bool,
+}
+impl Default for clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFXT {
+    fn default() -> Self {
+        Self {
+            asset: None,
+            weight: 0.0,
+            important: false,
+            is2D: false,
+            delay: 0.0,
+            minPitch: 0.0,
+            maxPitch: 0.0,
+            minVolume: 0.0,
+            maxVolume: 0.0,
+            ignoreTimeScale: false,
+        }
+    }
+}
+impl clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFXT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFX<'b>> {
+        let asset = self.asset.as_ref().map(|x| _fbb.create_string(x));
+        let weight = self.weight;
+        let important = self.important;
+        let is2D = self.is2D;
+        let delay = self.delay;
+        let minPitch = self.minPitch;
+        let maxPitch = self.maxPitch;
+        let minVolume = self.minVolume;
+        let maxVolume = self.maxVolume;
+        let ignoreTimeScale = self.ignoreTimeScale;
+        clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFX::create(
+            _fbb,
+            &clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFXArgs {
+                asset,
+                weight,
+                important,
+                is2D,
+                delay,
+                minPitch,
+                maxPitch,
+                minVolume,
+                maxVolume,
+                ignoreTimeScale,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_Audio_MixerDescOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1141,7 +1418,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_Audio_MixerDesc<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1167,6 +1444,17 @@ impl<'a> clz_Torappu_Audio_MixerDesc<'a> {
         builder.add_category(args.category);
         builder.add_important(args.important);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Audio_MixerDescT {
+        let category = self.category();
+        let customGroup = self.customGroup().map(|x| x.to_string());
+        let important = self.important();
+        clz_Torappu_Audio_MixerDescT {
+            category,
+            customGroup,
+            important,
+        }
     }
 
     #[inline]
@@ -1247,6 +1535,23 @@ impl<'a> Default for clz_Torappu_Audio_MixerDescArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_Audio_MixerDesc<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_Audio_MixerDesc", 3)?;
+        s.serialize_field("category", &self.category())?;
+        if let Some(f) = self.customGroup() {
+            s.serialize_field("customGroup", &f)?;
+        } else {
+            s.skip_field("customGroup")?;
+        }
+        s.serialize_field("important", &self.important())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_Audio_MixerDescBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1299,6 +1604,40 @@ impl core::fmt::Debug for clz_Torappu_Audio_MixerDesc<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Audio_MixerDescT {
+    pub category: enum__Torappu_Audio_MixerDesc_Category,
+    pub customGroup: Option<String>,
+    pub important: bool,
+}
+impl Default for clz_Torappu_Audio_MixerDescT {
+    fn default() -> Self {
+        Self {
+            category: enum__Torappu_Audio_MixerDesc_Category::CUSTOM,
+            customGroup: None,
+            important: false,
+        }
+    }
+}
+impl clz_Torappu_Audio_MixerDescT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_Audio_MixerDesc<'b>> {
+        let category = self.category;
+        let customGroup = self.customGroup.as_ref().map(|x| _fbb.create_string(x));
+        let important = self.important;
+        clz_Torappu_Audio_MixerDesc::create(
+            _fbb,
+            &clz_Torappu_Audio_MixerDescArgs {
+                category,
+                customGroup,
+                important,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_Audio_Middleware_Data_SoundFXBankOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1311,7 +1650,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_Audio_Middleware_Data_SoundFXBa
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1351,6 +1690,27 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SoundFXBank<'a> {
         builder.add_loop_(args.loop_);
         builder.add_popOldest(args.popOldest);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Audio_Middleware_Data_SoundFXBankT {
+        let sounds = self
+            .sounds()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let maxSoundAllowed = self.maxSoundAllowed();
+        let popOldest = self.popOldest();
+        let customMixerGroup = self.customMixerGroup().map(|x| x.to_string());
+        let loop_ = self.loop_();
+        let name = self.name().map(|x| x.to_string());
+        let mixerDesc = self.mixerDesc().map(|x| Box::new(x.unpack()));
+        clz_Torappu_Audio_Middleware_Data_SoundFXBankT {
+            sounds,
+            maxSoundAllowed,
+            popOldest,
+            customMixerGroup,
+            loop_,
+            name,
+            mixerDesc,
+        }
     }
 
     #[inline]
@@ -1527,6 +1887,40 @@ impl<'a> Default for clz_Torappu_Audio_Middleware_Data_SoundFXBankArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_Audio_Middleware_Data_SoundFXBank<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_Audio_Middleware_Data_SoundFXBank", 7)?;
+        if let Some(f) = self.sounds() {
+            s.serialize_field("sounds", &f)?;
+        } else {
+            s.skip_field("sounds")?;
+        }
+        s.serialize_field("maxSoundAllowed", &self.maxSoundAllowed())?;
+        s.serialize_field("popOldest", &self.popOldest())?;
+        if let Some(f) = self.customMixerGroup() {
+            s.serialize_field("customMixerGroup", &f)?;
+        } else {
+            s.skip_field("customMixerGroup")?;
+        }
+        s.serialize_field("loop_", &self.loop_())?;
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        if let Some(f) = self.mixerDesc() {
+            s.serialize_field("mixerDesc", &f)?;
+        } else {
+            s.skip_field("mixerDesc")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_Audio_Middleware_Data_SoundFXBankBuilder<
     'a: 'b,
     'b,
@@ -1636,6 +2030,62 @@ impl core::fmt::Debug for clz_Torappu_Audio_Middleware_Data_SoundFXBank<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Audio_Middleware_Data_SoundFXBankT {
+    pub sounds: Option<Vec<clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFXT>>,
+    pub maxSoundAllowed: i32,
+    pub popOldest: bool,
+    pub customMixerGroup: Option<String>,
+    pub loop_: bool,
+    pub name: Option<String>,
+    pub mixerDesc: Option<Box<clz_Torappu_Audio_MixerDescT>>,
+}
+impl Default for clz_Torappu_Audio_Middleware_Data_SoundFXBankT {
+    fn default() -> Self {
+        Self {
+            sounds: None,
+            maxSoundAllowed: 0,
+            popOldest: false,
+            customMixerGroup: None,
+            loop_: false,
+            name: None,
+            mixerDesc: None,
+        }
+    }
+}
+impl clz_Torappu_Audio_Middleware_Data_SoundFXBankT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_Audio_Middleware_Data_SoundFXBank<'b>> {
+        let sounds = self.sounds.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let maxSoundAllowed = self.maxSoundAllowed;
+        let popOldest = self.popOldest;
+        let customMixerGroup = self
+            .customMixerGroup
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let loop_ = self.loop_;
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        let mixerDesc = self.mixerDesc.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_Audio_Middleware_Data_SoundFXBank::create(
+            _fbb,
+            &clz_Torappu_Audio_Middleware_Data_SoundFXBankArgs {
+                sounds,
+                maxSoundAllowed,
+                popOldest,
+                customMixerGroup,
+                loop_,
+                name,
+                mixerDesc,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBankOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1648,7 +2098,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_Audio_Middleware_Data_SoundFXCt
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1678,6 +2128,19 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBank<'a> {
         }
         builder.add_ctrlStop(args.ctrlStop);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBankT {
+        let targetBank = self.targetBank().map(|x| x.to_string());
+        let ctrlStop = self.ctrlStop();
+        let ctrlStopFadetime = self.ctrlStopFadetime();
+        let name = self.name().map(|x| x.to_string());
+        clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBankT {
+            targetBank,
+            ctrlStop,
+            ctrlStopFadetime,
+            name,
+        }
     }
 
     #[inline]
@@ -1772,6 +2235,29 @@ impl<'a> Default for clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBankArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBank<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBank", 4)?;
+        if let Some(f) = self.targetBank() {
+            s.serialize_field("targetBank", &f)?;
+        } else {
+            s.skip_field("targetBank")?;
+        }
+        s.serialize_field("ctrlStop", &self.ctrlStop())?;
+        s.serialize_field("ctrlStopFadetime", &self.ctrlStopFadetime())?;
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBankBuilder<
     'a: 'b,
     'b,
@@ -1842,6 +2328,44 @@ impl core::fmt::Debug for clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBank<'_> 
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBankT {
+    pub targetBank: Option<String>,
+    pub ctrlStop: bool,
+    pub ctrlStopFadetime: f32,
+    pub name: Option<String>,
+}
+impl Default for clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBankT {
+    fn default() -> Self {
+        Self {
+            targetBank: None,
+            ctrlStop: false,
+            ctrlStopFadetime: 0.0,
+            name: None,
+        }
+    }
+}
+impl clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBankT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBank<'b>> {
+        let targetBank = self.targetBank.as_ref().map(|x| _fbb.create_string(x));
+        let ctrlStop = self.ctrlStop;
+        let ctrlStopFadetime = self.ctrlStopFadetime;
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBank::create(
+            _fbb,
+            &clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBankArgs {
+                targetBank,
+                ctrlStop,
+                ctrlStopFadetime,
+                name,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_Audio_Middleware_Data_SnapshotBankOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1854,7 +2378,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_Audio_Middleware_Data_SnapshotB
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1888,6 +2412,21 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_SnapshotBank<'a> {
             builder.add_targetSnapshot(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Audio_Middleware_Data_SnapshotBankT {
+        let targetSnapshot = self.targetSnapshot().map(|x| x.to_string());
+        let hookSoundFxBank = self.hookSoundFxBank().map(|x| x.to_string());
+        let delay = self.delay();
+        let duration = self.duration();
+        let name = self.name().map(|x| x.to_string());
+        clz_Torappu_Audio_Middleware_Data_SnapshotBankT {
+            targetSnapshot,
+            hookSoundFxBank,
+            delay,
+            duration,
+            name,
+        }
     }
 
     #[inline]
@@ -2001,6 +2540,34 @@ impl<'a> Default for clz_Torappu_Audio_Middleware_Data_SnapshotBankArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_Audio_Middleware_Data_SnapshotBank<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_Audio_Middleware_Data_SnapshotBank", 5)?;
+        if let Some(f) = self.targetSnapshot() {
+            s.serialize_field("targetSnapshot", &f)?;
+        } else {
+            s.skip_field("targetSnapshot")?;
+        }
+        if let Some(f) = self.hookSoundFxBank() {
+            s.serialize_field("hookSoundFxBank", &f)?;
+        } else {
+            s.skip_field("hookSoundFxBank")?;
+        }
+        s.serialize_field("delay", &self.delay())?;
+        s.serialize_field("duration", &self.duration())?;
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_Audio_Middleware_Data_SnapshotBankBuilder<
     'a: 'b,
     'b,
@@ -2079,6 +2646,48 @@ impl core::fmt::Debug for clz_Torappu_Audio_Middleware_Data_SnapshotBank<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Audio_Middleware_Data_SnapshotBankT {
+    pub targetSnapshot: Option<String>,
+    pub hookSoundFxBank: Option<String>,
+    pub delay: f32,
+    pub duration: f32,
+    pub name: Option<String>,
+}
+impl Default for clz_Torappu_Audio_Middleware_Data_SnapshotBankT {
+    fn default() -> Self {
+        Self {
+            targetSnapshot: None,
+            hookSoundFxBank: None,
+            delay: 0.0,
+            duration: 0.0,
+            name: None,
+        }
+    }
+}
+impl clz_Torappu_Audio_Middleware_Data_SnapshotBankT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_Audio_Middleware_Data_SnapshotBank<'b>> {
+        let targetSnapshot = self.targetSnapshot.as_ref().map(|x| _fbb.create_string(x));
+        let hookSoundFxBank = self.hookSoundFxBank.as_ref().map(|x| _fbb.create_string(x));
+        let delay = self.delay;
+        let duration = self.duration;
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_Audio_Middleware_Data_SnapshotBank::create(
+            _fbb,
+            &clz_Torappu_Audio_Middleware_Data_SnapshotBankArgs {
+                targetSnapshot,
+                hookSoundFxBank,
+                delay,
+                duration,
+                name,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_BattleVoiceOptionOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2091,7 +2700,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_BattleVoiceOption<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2119,6 +2728,21 @@ impl<'a> clz_Torappu_BattleVoiceOption<'a> {
         builder.add_voiceType(args.voiceType);
         builder.add_overlapIfSamePriority(args.overlapIfSamePriority);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_BattleVoiceOptionT {
+        let voiceType = self.voiceType();
+        let priority = self.priority();
+        let overlapIfSamePriority = self.overlapIfSamePriority();
+        let cooldown = self.cooldown();
+        let delay = self.delay();
+        clz_Torappu_BattleVoiceOptionT {
+            voiceType,
+            priority,
+            overlapIfSamePriority,
+            cooldown,
+            delay,
+        }
     }
 
     #[inline]
@@ -2229,6 +2853,21 @@ impl<'a> Default for clz_Torappu_BattleVoiceOptionArgs {
     }
 }
 
+impl Serialize for clz_Torappu_BattleVoiceOption<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_BattleVoiceOption", 5)?;
+        s.serialize_field("voiceType", &self.voiceType())?;
+        s.serialize_field("priority", &self.priority())?;
+        s.serialize_field("overlapIfSamePriority", &self.overlapIfSamePriority())?;
+        s.serialize_field("cooldown", &self.cooldown())?;
+        s.serialize_field("delay", &self.delay())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_BattleVoiceOptionBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2294,6 +2933,48 @@ impl core::fmt::Debug for clz_Torappu_BattleVoiceOption<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_BattleVoiceOptionT {
+    pub voiceType: enum__Torappu_BattleVoiceOption_BattleVoiceType,
+    pub priority: i32,
+    pub overlapIfSamePriority: bool,
+    pub cooldown: f32,
+    pub delay: f32,
+}
+impl Default for clz_Torappu_BattleVoiceOptionT {
+    fn default() -> Self {
+        Self {
+            voiceType: enum__Torappu_BattleVoiceOption_BattleVoiceType::BATTLE_START,
+            priority: 0,
+            overlapIfSamePriority: false,
+            cooldown: 0.0,
+            delay: 0.0,
+        }
+    }
+}
+impl clz_Torappu_BattleVoiceOptionT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_BattleVoiceOption<'b>> {
+        let voiceType = self.voiceType;
+        let priority = self.priority;
+        let overlapIfSamePriority = self.overlapIfSamePriority;
+        let cooldown = self.cooldown;
+        let delay = self.delay;
+        clz_Torappu_BattleVoiceOption::create(
+            _fbb,
+            &clz_Torappu_BattleVoiceOptionArgs {
+                voiceType,
+                priority,
+                overlapIfSamePriority,
+                cooldown,
+                delay,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_BattleVoiceDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2306,7 +2987,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_BattleVoiceData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2334,6 +3015,21 @@ impl<'a> clz_Torappu_BattleVoiceData<'a> {
         builder.add_minTimeDeltaForEnemyEncounter(args.minTimeDeltaForEnemyEncounter);
         builder.add_crossfade(args.crossfade);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_BattleVoiceDataT {
+        let crossfade = self.crossfade();
+        let minTimeDeltaForEnemyEncounter = self.minTimeDeltaForEnemyEncounter();
+        let minSpCostForImportantPassiveSkill = self.minSpCostForImportantPassiveSkill();
+        let voiceTypeOptions = self
+            .voiceTypeOptions()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_BattleVoiceDataT {
+            crossfade,
+            minTimeDeltaForEnemyEncounter,
+            minSpCostForImportantPassiveSkill,
+            voiceTypeOptions,
+        }
     }
 
     #[inline]
@@ -2449,6 +3145,30 @@ impl<'a> Default for clz_Torappu_BattleVoiceDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_BattleVoiceData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_BattleVoiceData", 4)?;
+        s.serialize_field("crossfade", &self.crossfade())?;
+        s.serialize_field(
+            "minTimeDeltaForEnemyEncounter",
+            &self.minTimeDeltaForEnemyEncounter(),
+        )?;
+        s.serialize_field(
+            "minSpCostForImportantPassiveSkill",
+            &self.minSpCostForImportantPassiveSkill(),
+        )?;
+        if let Some(f) = self.voiceTypeOptions() {
+            s.serialize_field("voiceTypeOptions", &f)?;
+        } else {
+            s.skip_field("voiceTypeOptions")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_BattleVoiceDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2526,6 +3246,47 @@ impl core::fmt::Debug for clz_Torappu_BattleVoiceData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_BattleVoiceDataT {
+    pub crossfade: f32,
+    pub minTimeDeltaForEnemyEncounter: f32,
+    pub minSpCostForImportantPassiveSkill: i32,
+    pub voiceTypeOptions: Option<Vec<clz_Torappu_BattleVoiceOptionT>>,
+}
+impl Default for clz_Torappu_BattleVoiceDataT {
+    fn default() -> Self {
+        Self {
+            crossfade: 0.0,
+            minTimeDeltaForEnemyEncounter: 0.0,
+            minSpCostForImportantPassiveSkill: 0,
+            voiceTypeOptions: None,
+        }
+    }
+}
+impl clz_Torappu_BattleVoiceDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_BattleVoiceData<'b>> {
+        let crossfade = self.crossfade;
+        let minTimeDeltaForEnemyEncounter = self.minTimeDeltaForEnemyEncounter;
+        let minSpCostForImportantPassiveSkill = self.minSpCostForImportantPassiveSkill;
+        let voiceTypeOptions = self.voiceTypeOptions.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_BattleVoiceData::create(
+            _fbb,
+            &clz_Torappu_BattleVoiceDataArgs {
+                crossfade,
+                minTimeDeltaForEnemyEncounter,
+                minSpCostForImportantPassiveSkill,
+                voiceTypeOptions,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_Audio_Middleware_Data_MusicDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2538,7 +3299,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_Audio_Middleware_Data_MusicData
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2568,6 +3329,13 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_MusicData<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Audio_Middleware_Data_MusicDataT {
+        let id = self.id().map(|x| x.to_string());
+        let name = self.name().map(|x| x.to_string());
+        let bank = self.bank().map(|x| x.to_string());
+        clz_Torappu_Audio_Middleware_Data_MusicDataT { id, name, bank }
     }
 
     #[inline]
@@ -2639,6 +3407,32 @@ impl<'a> Default for clz_Torappu_Audio_Middleware_Data_MusicDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_Audio_Middleware_Data_MusicData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_Audio_Middleware_Data_MusicData", 3)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        if let Some(f) = self.bank() {
+            s.serialize_field("bank", &f)?;
+        } else {
+            s.skip_field("bank")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_Audio_Middleware_Data_MusicDataBuilder<
     'a: 'b,
     'b,
@@ -2697,6 +3491,36 @@ impl core::fmt::Debug for clz_Torappu_Audio_Middleware_Data_MusicData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Audio_Middleware_Data_MusicDataT {
+    pub id: Option<String>,
+    pub name: Option<String>,
+    pub bank: Option<String>,
+}
+impl Default for clz_Torappu_Audio_Middleware_Data_MusicDataT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            name: None,
+            bank: None,
+        }
+    }
+}
+impl clz_Torappu_Audio_Middleware_Data_MusicDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_Audio_Middleware_Data_MusicData<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        let bank = self.bank.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_Audio_Middleware_Data_MusicData::create(
+            _fbb,
+            &clz_Torappu_Audio_Middleware_Data_MusicDataArgs { id, name, bank },
+        )
+    }
+}
 pub enum clz_Torappu_Audio_Middleware_Data_DuckingDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2709,7 +3533,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_Audio_Middleware_Data_DuckingDa
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2741,6 +3565,21 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_DuckingData<'a> {
             builder.add_bank(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Audio_Middleware_Data_DuckingDataT {
+        let bank = self.bank().map(|x| x.to_string());
+        let volume = self.volume();
+        let fadeTime = self.fadeTime();
+        let delay = self.delay();
+        let fadeStyleId = self.fadeStyleId().map(|x| x.to_string());
+        clz_Torappu_Audio_Middleware_Data_DuckingDataT {
+            bank,
+            volume,
+            fadeTime,
+            delay,
+            fadeStyleId,
+        }
     }
 
     #[inline]
@@ -2852,6 +3691,30 @@ impl<'a> Default for clz_Torappu_Audio_Middleware_Data_DuckingDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_Audio_Middleware_Data_DuckingData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_Audio_Middleware_Data_DuckingData", 5)?;
+        if let Some(f) = self.bank() {
+            s.serialize_field("bank", &f)?;
+        } else {
+            s.skip_field("bank")?;
+        }
+        s.serialize_field("volume", &self.volume())?;
+        s.serialize_field("fadeTime", &self.fadeTime())?;
+        s.serialize_field("delay", &self.delay())?;
+        if let Some(f) = self.fadeStyleId() {
+            s.serialize_field("fadeStyleId", &f)?;
+        } else {
+            s.skip_field("fadeStyleId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_Audio_Middleware_Data_DuckingDataBuilder<
     'a: 'b,
     'b,
@@ -2931,6 +3794,48 @@ impl core::fmt::Debug for clz_Torappu_Audio_Middleware_Data_DuckingData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Audio_Middleware_Data_DuckingDataT {
+    pub bank: Option<String>,
+    pub volume: f32,
+    pub fadeTime: f32,
+    pub delay: f32,
+    pub fadeStyleId: Option<String>,
+}
+impl Default for clz_Torappu_Audio_Middleware_Data_DuckingDataT {
+    fn default() -> Self {
+        Self {
+            bank: None,
+            volume: 0.0,
+            fadeTime: 0.0,
+            delay: 0.0,
+            fadeStyleId: None,
+        }
+    }
+}
+impl clz_Torappu_Audio_Middleware_Data_DuckingDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_Audio_Middleware_Data_DuckingData<'b>> {
+        let bank = self.bank.as_ref().map(|x| _fbb.create_string(x));
+        let volume = self.volume;
+        let fadeTime = self.fadeTime;
+        let delay = self.delay;
+        let fadeStyleId = self.fadeStyleId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_Audio_Middleware_Data_DuckingData::create(
+            _fbb,
+            &clz_Torappu_Audio_Middleware_Data_DuckingDataArgs {
+                bank,
+                volume,
+                fadeTime,
+                delay,
+                fadeStyleId,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_Audio_Middleware_Data_FadeStyleDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2943,7 +3848,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_Audio_Middleware_Data_FadeStyle
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2973,6 +3878,21 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_FadeStyleData<'a> {
             builder.add_styleName(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Audio_Middleware_Data_FadeStyleDataT {
+        let styleName = self.styleName().map(|x| x.to_string());
+        let fadeinTime = self.fadeinTime();
+        let fadeoutTime = self.fadeoutTime();
+        let fadeinType = self.fadeinType();
+        let fadeoutType = self.fadeoutType();
+        clz_Torappu_Audio_Middleware_Data_FadeStyleDataT {
+            styleName,
+            fadeinTime,
+            fadeoutTime,
+            fadeinType,
+            fadeoutType,
+        }
     }
 
     #[inline]
@@ -3094,6 +4014,26 @@ impl<'a> Default for clz_Torappu_Audio_Middleware_Data_FadeStyleDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_Audio_Middleware_Data_FadeStyleData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_Audio_Middleware_Data_FadeStyleData", 5)?;
+        if let Some(f) = self.styleName() {
+            s.serialize_field("styleName", &f)?;
+        } else {
+            s.skip_field("styleName")?;
+        }
+        s.serialize_field("fadeinTime", &self.fadeinTime())?;
+        s.serialize_field("fadeoutTime", &self.fadeoutTime())?;
+        s.serialize_field("fadeinType", &self.fadeinType())?;
+        s.serialize_field("fadeoutType", &self.fadeoutType())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_Audio_Middleware_Data_FadeStyleDataBuilder<
     'a: 'b,
     'b,
@@ -3182,6 +4122,48 @@ impl core::fmt::Debug for clz_Torappu_Audio_Middleware_Data_FadeStyleData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Audio_Middleware_Data_FadeStyleDataT {
+    pub styleName: Option<String>,
+    pub fadeinTime: f32,
+    pub fadeoutTime: f32,
+    pub fadeinType: enum__Torappu_Audio_Middleware_Data_AudioFadeType,
+    pub fadeoutType: enum__Torappu_Audio_Middleware_Data_AudioFadeType,
+}
+impl Default for clz_Torappu_Audio_Middleware_Data_FadeStyleDataT {
+    fn default() -> Self {
+        Self {
+            styleName: None,
+            fadeinTime: 0.0,
+            fadeoutTime: 0.0,
+            fadeinType: enum__Torappu_Audio_Middleware_Data_AudioFadeType::LINEAR,
+            fadeoutType: enum__Torappu_Audio_Middleware_Data_AudioFadeType::LINEAR,
+        }
+    }
+}
+impl clz_Torappu_Audio_Middleware_Data_FadeStyleDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_Audio_Middleware_Data_FadeStyleData<'b>> {
+        let styleName = self.styleName.as_ref().map(|x| _fbb.create_string(x));
+        let fadeinTime = self.fadeinTime;
+        let fadeoutTime = self.fadeoutTime;
+        let fadeinType = self.fadeinType;
+        let fadeoutType = self.fadeoutType;
+        clz_Torappu_Audio_Middleware_Data_FadeStyleData::create(
+            _fbb,
+            &clz_Torappu_Audio_Middleware_Data_FadeStyleDataArgs {
+                styleName,
+                fadeinTime,
+                fadeoutTime,
+                fadeinType,
+                fadeoutType,
+            },
+        )
+    }
+}
 pub enum dict__enum__Torappu_VoiceLangType__stringOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3194,7 +4176,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__enum__Torappu_VoiceLangType__string<'
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3218,6 +4200,12 @@ impl<'a> dict__enum__Torappu_VoiceLangType__string<'a> {
         }
         builder.add_key(args.key);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__enum__Torappu_VoiceLangType__stringT {
+        let key = self.key();
+        let value = self.value().map(|x| x.to_string());
+        dict__enum__Torappu_VoiceLangType__stringT { key, value }
     }
 
     #[inline]
@@ -3289,6 +4277,22 @@ impl<'a> Default for dict__enum__Torappu_VoiceLangType__stringArgs<'a> {
     }
 }
 
+impl Serialize for dict__enum__Torappu_VoiceLangType__string<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__enum__Torappu_VoiceLangType__string", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__enum__Torappu_VoiceLangType__stringBuilder<
     'a: 'b,
     'b,
@@ -3340,6 +4344,33 @@ impl core::fmt::Debug for dict__enum__Torappu_VoiceLangType__string<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__enum__Torappu_VoiceLangType__stringT {
+    pub key: enum__Torappu_VoiceLangType,
+    pub value: Option<String>,
+}
+impl Default for dict__enum__Torappu_VoiceLangType__stringT {
+    fn default() -> Self {
+        Self {
+            key: enum__Torappu_VoiceLangType::NONE,
+            value: None,
+        }
+    }
+}
+impl dict__enum__Torappu_VoiceLangType__stringT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__enum__Torappu_VoiceLangType__string<'b>> {
+        let key = self.key;
+        let value = self.value.as_ref().map(|x| _fbb.create_string(x));
+        dict__enum__Torappu_VoiceLangType__string::create(
+            _fbb,
+            &dict__enum__Torappu_VoiceLangType__stringArgs { key, value },
+        )
+    }
+}
 pub enum dict__string__list_dict__enum__Torappu_VoiceLangType__stringOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3354,7 +4385,7 @@ impl<'a> flatbuffers::Follow<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3382,6 +4413,15 @@ impl<'a> dict__string__list_dict__enum__Torappu_VoiceLangType__string<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__list_dict__enum__Torappu_VoiceLangType__stringT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| x.iter().map(|t| t.unpack()).collect());
+        dict__string__list_dict__enum__Torappu_VoiceLangType__stringT { key, value }
     }
 
     #[inline]
@@ -3477,6 +4517,25 @@ impl<'a> Default for dict__string__list_dict__enum__Torappu_VoiceLangType__strin
     }
 }
 
+impl Serialize for dict__string__list_dict__enum__Torappu_VoiceLangType__string<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "dict__string__list_dict__enum__Torappu_VoiceLangType__string",
+            2,
+        )?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__list_dict__enum__Torappu_VoiceLangType__stringBuilder<
     'a: 'b,
     'b,
@@ -3543,6 +4602,40 @@ impl core::fmt::Debug for dict__string__list_dict__enum__Torappu_VoiceLangType__
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__list_dict__enum__Torappu_VoiceLangType__stringT {
+    pub key: String,
+    pub value: Option<Vec<dict__enum__Torappu_VoiceLangType__stringT>>,
+}
+impl Default for dict__string__list_dict__enum__Torappu_VoiceLangType__stringT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__list_dict__enum__Torappu_VoiceLangType__stringT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__list_dict__enum__Torappu_VoiceLangType__string<'b>>
+    {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        dict__string__list_dict__enum__Torappu_VoiceLangType__string::create(
+            _fbb,
+            &dict__string__list_dict__enum__Torappu_VoiceLangType__stringArgs { key, value },
+        )
+    }
+}
 pub enum dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType__stringOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3558,7 +4651,7 @@ impl<'a> flatbuffers::Follow<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3588,6 +4681,20 @@ impl<'a> dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(
+        &self,
+    ) -> dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType__stringT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| x.iter().map(|t| t.unpack()).collect());
+        dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType__stringT {
+            key,
+            value,
+        }
     }
 
     #[inline]
@@ -3680,6 +4787,27 @@ impl<'a> Default
     }
 }
 
+impl Serialize
+    for dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType__string<'_>
+{
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType__string",
+            2,
+        )?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType__stringBuilder<
     'a: 'b,
     'b,
@@ -3758,6 +4886,44 @@ impl core::fmt::Debug
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType__stringT {
+    pub key: String,
+    pub value: Option<Vec<dict__string__list_dict__enum__Torappu_VoiceLangType__stringT>>,
+}
+impl Default for dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType__stringT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType__stringT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<
+        dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType__string<'b>,
+    > {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType__string::create(
+            _fbb,
+            &dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType__stringArgs {
+                key,
+                value,
+            },
+        )
+    }
+}
 pub enum dict__string__stringOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3770,7 +4936,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__string<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3796,6 +4962,15 @@ impl<'a> dict__string__string<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__stringT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| x.to_string());
+        dict__string__stringT { key, value }
     }
 
     #[inline]
@@ -3859,6 +5034,22 @@ impl<'a> Default for dict__string__stringArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__string<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__string", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__stringBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3900,6 +5091,33 @@ impl core::fmt::Debug for dict__string__string<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__stringT {
+    pub key: String,
+    pub value: Option<String>,
+}
+impl Default for dict__string__stringT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__stringT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__string<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| _fbb.create_string(x));
+        dict__string__string::create(_fbb, &dict__string__stringArgs { key, value })
+    }
+}
 pub enum clz_Torappu_Audio_Middleware_Data_TorappuAudioDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3912,7 +5130,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_Audio_Middleware_Data_TorappuAu
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3970,6 +5188,49 @@ impl<'a> clz_Torappu_Audio_Middleware_Data_TorappuAudioData<'a> {
             builder.add_bgmBanks(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Audio_Middleware_Data_TorappuAudioDataT {
+        let bgmBanks = self
+            .bgmBanks()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let soundFXBanks = self
+            .soundFXBanks()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let soundFXCtrlBanks = self
+            .soundFXCtrlBanks()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let snapshotBanks = self
+            .snapshotBanks()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let battleVoice = self.battleVoice().map(|x| Box::new(x.unpack()));
+        let musics = self
+            .musics()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let duckings = self
+            .duckings()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let fadeStyles = self
+            .fadeStyles()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let soundFxVoiceLang = self
+            .soundFxVoiceLang()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let bankAlias = self
+            .bankAlias()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_Audio_Middleware_Data_TorappuAudioDataT {
+            bgmBanks,
+            soundFXBanks,
+            soundFXCtrlBanks,
+            snapshotBanks,
+            battleVoice,
+            musics,
+            duckings,
+            fadeStyles,
+            soundFxVoiceLang,
+            bankAlias,
+        }
     }
 
     #[inline]
@@ -4306,6 +5567,67 @@ impl<'a> Default for clz_Torappu_Audio_Middleware_Data_TorappuAudioDataArgs<'a> 
     }
 }
 
+impl Serialize for clz_Torappu_Audio_Middleware_Data_TorappuAudioData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("clz_Torappu_Audio_Middleware_Data_TorappuAudioData", 10)?;
+        if let Some(f) = self.bgmBanks() {
+            s.serialize_field("bgmBanks", &f)?;
+        } else {
+            s.skip_field("bgmBanks")?;
+        }
+        if let Some(f) = self.soundFXBanks() {
+            s.serialize_field("soundFXBanks", &f)?;
+        } else {
+            s.skip_field("soundFXBanks")?;
+        }
+        if let Some(f) = self.soundFXCtrlBanks() {
+            s.serialize_field("soundFXCtrlBanks", &f)?;
+        } else {
+            s.skip_field("soundFXCtrlBanks")?;
+        }
+        if let Some(f) = self.snapshotBanks() {
+            s.serialize_field("snapshotBanks", &f)?;
+        } else {
+            s.skip_field("snapshotBanks")?;
+        }
+        if let Some(f) = self.battleVoice() {
+            s.serialize_field("battleVoice", &f)?;
+        } else {
+            s.skip_field("battleVoice")?;
+        }
+        if let Some(f) = self.musics() {
+            s.serialize_field("musics", &f)?;
+        } else {
+            s.skip_field("musics")?;
+        }
+        if let Some(f) = self.duckings() {
+            s.serialize_field("duckings", &f)?;
+        } else {
+            s.skip_field("duckings")?;
+        }
+        if let Some(f) = self.fadeStyles() {
+            s.serialize_field("fadeStyles", &f)?;
+        } else {
+            s.skip_field("fadeStyles")?;
+        }
+        if let Some(f) = self.soundFxVoiceLang() {
+            s.serialize_field("soundFxVoiceLang", &f)?;
+        } else {
+            s.skip_field("soundFxVoiceLang")?;
+        }
+        if let Some(f) = self.bankAlias() {
+            s.serialize_field("bankAlias", &f)?;
+        } else {
+            s.skip_field("bankAlias")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_Audio_Middleware_Data_TorappuAudioDataBuilder<
     'a: 'b,
     'b,
@@ -4499,6 +5821,97 @@ impl core::fmt::Debug for clz_Torappu_Audio_Middleware_Data_TorappuAudioData<'_>
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Audio_Middleware_Data_TorappuAudioDataT {
+    pub bgmBanks: Option<Vec<clz_Torappu_Audio_Middleware_Data_BGMBankT>>,
+    pub soundFXBanks: Option<Vec<clz_Torappu_Audio_Middleware_Data_SoundFXBankT>>,
+    pub soundFXCtrlBanks: Option<Vec<clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBankT>>,
+    pub snapshotBanks: Option<Vec<clz_Torappu_Audio_Middleware_Data_SnapshotBankT>>,
+    pub battleVoice: Option<Box<clz_Torappu_BattleVoiceDataT>>,
+    pub musics: Option<Vec<clz_Torappu_Audio_Middleware_Data_MusicDataT>>,
+    pub duckings: Option<Vec<clz_Torappu_Audio_Middleware_Data_DuckingDataT>>,
+    pub fadeStyles: Option<Vec<clz_Torappu_Audio_Middleware_Data_FadeStyleDataT>>,
+    pub soundFxVoiceLang: Option<
+        Vec<dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType__stringT>,
+    >,
+    pub bankAlias: Option<Vec<dict__string__stringT>>,
+}
+impl Default for clz_Torappu_Audio_Middleware_Data_TorappuAudioDataT {
+    fn default() -> Self {
+        Self {
+            bgmBanks: None,
+            soundFXBanks: None,
+            soundFXCtrlBanks: None,
+            snapshotBanks: None,
+            battleVoice: None,
+            musics: None,
+            duckings: None,
+            fadeStyles: None,
+            soundFxVoiceLang: None,
+            bankAlias: None,
+        }
+    }
+}
+impl clz_Torappu_Audio_Middleware_Data_TorappuAudioDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_Audio_Middleware_Data_TorappuAudioData<'b>> {
+        let bgmBanks = self.bgmBanks.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let soundFXBanks = self.soundFXBanks.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let soundFXCtrlBanks = self.soundFXCtrlBanks.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let snapshotBanks = self.snapshotBanks.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let battleVoice = self.battleVoice.as_ref().map(|x| x.pack(_fbb));
+        let musics = self.musics.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let duckings = self.duckings.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let fadeStyles = self.fadeStyles.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let soundFxVoiceLang = self.soundFxVoiceLang.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let bankAlias = self.bankAlias.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_Audio_Middleware_Data_TorappuAudioData::create(
+            _fbb,
+            &clz_Torappu_Audio_Middleware_Data_TorappuAudioDataArgs {
+                bgmBanks,
+                soundFXBanks,
+                soundFXCtrlBanks,
+                snapshotBanks,
+                battleVoice,
+                musics,
+                duckings,
+                fadeStyles,
+                soundFxVoiceLang,
+                bankAlias,
+            },
+        )
+    }
+}
 #[inline]
 /// Verifies that a buffer of bytes contains a `clz_Torappu_Audio_Middleware_Data_TorappuAudioData`
 /// and returns it.
@@ -4563,7 +5976,9 @@ pub fn size_prefixed_root_as_clz_torappu_audio_middleware_data_torappu_audio_dat
 pub unsafe fn root_as_clz_torappu_audio_middleware_data_torappu_audio_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_Audio_Middleware_Data_TorappuAudioData {
-    flatbuffers::root_unchecked::<clz_Torappu_Audio_Middleware_Data_TorappuAudioData>(buf)
+    unsafe {
+        flatbuffers::root_unchecked::<clz_Torappu_Audio_Middleware_Data_TorappuAudioData>(buf)
+    }
 }
 #[inline]
 /// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_Audio_Middleware_Data_TorappuAudioData and returns it.
@@ -4572,9 +5987,11 @@ pub unsafe fn root_as_clz_torappu_audio_middleware_data_torappu_audio_data_unche
 pub unsafe fn size_prefixed_root_as_clz_torappu_audio_middleware_data_torappu_audio_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_Audio_Middleware_Data_TorappuAudioData {
-    flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_Audio_Middleware_Data_TorappuAudioData>(
-        buf,
-    )
+    unsafe {
+        flatbuffers::size_prefixed_root_unchecked::<
+            clz_Torappu_Audio_Middleware_Data_TorappuAudioData,
+        >(buf)
+    }
 }
 #[inline]
 pub fn finish_clz_torappu_audio_middleware_data_torappu_audio_data_buffer<
