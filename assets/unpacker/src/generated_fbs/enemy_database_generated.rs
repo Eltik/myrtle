@@ -5,6 +5,9 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+use self::serde::ser::{Serialize, SerializeStruct, Serializer};
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
@@ -63,11 +66,24 @@ impl core::fmt::Debug for enum__Torappu_SourceApplyWay {
         }
     }
 }
+impl Serialize for enum__Torappu_SourceApplyWay {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SourceApplyWay",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SourceApplyWay {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -76,7 +92,9 @@ impl flatbuffers::Push for enum__Torappu_SourceApplyWay {
     type Output = enum__Torappu_SourceApplyWay;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -158,11 +176,24 @@ impl core::fmt::Debug for enum__Torappu_MotionMode {
         }
     }
 }
+impl Serialize for enum__Torappu_MotionMode {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_MotionMode",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_MotionMode {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -171,7 +202,9 @@ impl flatbuffers::Push for enum__Torappu_MotionMode {
     type Output = enum__Torappu_MotionMode;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -256,11 +289,24 @@ impl core::fmt::Debug for enum__Torappu_EnemyLevelType {
         }
     }
 }
+impl Serialize for enum__Torappu_EnemyLevelType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_EnemyLevelType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_EnemyLevelType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -269,7 +315,9 @@ impl flatbuffers::Push for enum__Torappu_EnemyLevelType {
     type Output = enum__Torappu_EnemyLevelType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -367,11 +415,24 @@ impl core::fmt::Debug for enum__Torappu_SpType {
         }
     }
 }
+impl Serialize for enum__Torappu_SpType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SpType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SpType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -380,7 +441,9 @@ impl flatbuffers::Push for enum__Torappu_SpType {
     type Output = enum__Torappu_SpType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -422,7 +485,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_Undefinable_1_System_String_<'a
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -446,6 +509,12 @@ impl<'a> clz_Torappu_Undefinable_1_System_String_<'a> {
         }
         builder.add_m_defined(args.m_defined);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Undefinable_1_System_String_T {
+        let m_defined = self.m_defined();
+        let m_value = self.m_value().map(|x| x.to_string());
+        clz_Torappu_Undefinable_1_System_String_T { m_defined, m_value }
     }
 
     #[inline]
@@ -504,6 +573,22 @@ impl<'a> Default for clz_Torappu_Undefinable_1_System_String_Args<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_Undefinable_1_System_String_<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_Undefinable_1_System_String_", 2)?;
+        s.serialize_field("m_defined", &self.m_defined())?;
+        if let Some(f) = self.m_value() {
+            s.serialize_field("m_value", &f)?;
+        } else {
+            s.skip_field("m_value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_Undefinable_1_System_String_Builder<
     'a: 'b,
     'b,
@@ -555,6 +640,33 @@ impl core::fmt::Debug for clz_Torappu_Undefinable_1_System_String_<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Undefinable_1_System_String_T {
+    pub m_defined: bool,
+    pub m_value: Option<String>,
+}
+impl Default for clz_Torappu_Undefinable_1_System_String_T {
+    fn default() -> Self {
+        Self {
+            m_defined: false,
+            m_value: None,
+        }
+    }
+}
+impl clz_Torappu_Undefinable_1_System_String_T {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_Undefinable_1_System_String_<'b>> {
+        let m_defined = self.m_defined;
+        let m_value = self.m_value.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_Undefinable_1_System_String_::create(
+            _fbb,
+            &clz_Torappu_Undefinable_1_System_String_Args { m_defined, m_value },
+        )
+    }
+}
 pub enum clz_Torappu_Undefinable_1_System_Int32_Offset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -567,7 +679,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_Undefinable_1_System_Int32_<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -589,6 +701,12 @@ impl<'a> clz_Torappu_Undefinable_1_System_Int32_<'a> {
         builder.add_m_value(args.m_value);
         builder.add_m_defined(args.m_defined);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Undefinable_1_System_Int32_T {
+        let m_defined = self.m_defined();
+        let m_value = self.m_value();
+        clz_Torappu_Undefinable_1_System_Int32_T { m_defined, m_value }
     }
 
     #[inline]
@@ -646,6 +764,18 @@ impl<'a> Default for clz_Torappu_Undefinable_1_System_Int32_Args {
     }
 }
 
+impl Serialize for clz_Torappu_Undefinable_1_System_Int32_<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_Undefinable_1_System_Int32_", 2)?;
+        s.serialize_field("m_defined", &self.m_defined())?;
+        s.serialize_field("m_value", &self.m_value())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_Undefinable_1_System_Int32_Builder<
     'a: 'b,
     'b,
@@ -698,6 +828,33 @@ impl core::fmt::Debug for clz_Torappu_Undefinable_1_System_Int32_<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Undefinable_1_System_Int32_T {
+    pub m_defined: bool,
+    pub m_value: i32,
+}
+impl Default for clz_Torappu_Undefinable_1_System_Int32_T {
+    fn default() -> Self {
+        Self {
+            m_defined: false,
+            m_value: 0,
+        }
+    }
+}
+impl clz_Torappu_Undefinable_1_System_Int32_T {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_Undefinable_1_System_Int32_<'b>> {
+        let m_defined = self.m_defined;
+        let m_value = self.m_value;
+        clz_Torappu_Undefinable_1_System_Int32_::create(
+            _fbb,
+            &clz_Torappu_Undefinable_1_System_Int32_Args { m_defined, m_value },
+        )
+    }
+}
 pub enum clz_Torappu_Undefinable_1_System_Single_Offset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -710,7 +867,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_Undefinable_1_System_Single_<'a
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -732,6 +889,12 @@ impl<'a> clz_Torappu_Undefinable_1_System_Single_<'a> {
         builder.add_m_value(args.m_value);
         builder.add_m_defined(args.m_defined);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Undefinable_1_System_Single_T {
+        let m_defined = self.m_defined();
+        let m_value = self.m_value();
+        clz_Torappu_Undefinable_1_System_Single_T { m_defined, m_value }
     }
 
     #[inline]
@@ -792,6 +955,18 @@ impl<'a> Default for clz_Torappu_Undefinable_1_System_Single_Args {
     }
 }
 
+impl Serialize for clz_Torappu_Undefinable_1_System_Single_<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_Undefinable_1_System_Single_", 2)?;
+        s.serialize_field("m_defined", &self.m_defined())?;
+        s.serialize_field("m_value", &self.m_value())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_Undefinable_1_System_Single_Builder<
     'a: 'b,
     'b,
@@ -844,6 +1019,33 @@ impl core::fmt::Debug for clz_Torappu_Undefinable_1_System_Single_<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Undefinable_1_System_Single_T {
+    pub m_defined: bool,
+    pub m_value: f32,
+}
+impl Default for clz_Torappu_Undefinable_1_System_Single_T {
+    fn default() -> Self {
+        Self {
+            m_defined: false,
+            m_value: 0.0,
+        }
+    }
+}
+impl clz_Torappu_Undefinable_1_System_Single_T {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_Undefinable_1_System_Single_<'b>> {
+        let m_defined = self.m_defined;
+        let m_value = self.m_value;
+        clz_Torappu_Undefinable_1_System_Single_::create(
+            _fbb,
+            &clz_Torappu_Undefinable_1_System_Single_Args { m_defined, m_value },
+        )
+    }
+}
 pub enum clz_Torappu_Undefinable_1_System_Boolean_Offset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -856,7 +1058,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_Undefinable_1_System_Boolean_<'
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -878,6 +1080,12 @@ impl<'a> clz_Torappu_Undefinable_1_System_Boolean_<'a> {
         builder.add_m_value(args.m_value);
         builder.add_m_defined(args.m_defined);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Undefinable_1_System_Boolean_T {
+        let m_defined = self.m_defined();
+        let m_value = self.m_value();
+        clz_Torappu_Undefinable_1_System_Boolean_T { m_defined, m_value }
     }
 
     #[inline]
@@ -938,6 +1146,18 @@ impl<'a> Default for clz_Torappu_Undefinable_1_System_Boolean_Args {
     }
 }
 
+impl Serialize for clz_Torappu_Undefinable_1_System_Boolean_<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_Undefinable_1_System_Boolean_", 2)?;
+        s.serialize_field("m_defined", &self.m_defined())?;
+        s.serialize_field("m_value", &self.m_value())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_Undefinable_1_System_Boolean_Builder<
     'a: 'b,
     'b,
@@ -990,6 +1210,33 @@ impl core::fmt::Debug for clz_Torappu_Undefinable_1_System_Boolean_<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Undefinable_1_System_Boolean_T {
+    pub m_defined: bool,
+    pub m_value: bool,
+}
+impl Default for clz_Torappu_Undefinable_1_System_Boolean_T {
+    fn default() -> Self {
+        Self {
+            m_defined: false,
+            m_value: false,
+        }
+    }
+}
+impl clz_Torappu_Undefinable_1_System_Boolean_T {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_Undefinable_1_System_Boolean_<'b>> {
+        let m_defined = self.m_defined;
+        let m_value = self.m_value;
+        clz_Torappu_Undefinable_1_System_Boolean_::create(
+            _fbb,
+            &clz_Torappu_Undefinable_1_System_Boolean_Args { m_defined, m_value },
+        )
+    }
+}
 pub enum clz_Torappu_EnemyDatabase_AttributesDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1002,7 +1249,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_EnemyDatabase_AttributesData<'a
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1140,6 +1387,71 @@ impl<'a> clz_Torappu_EnemyDatabase_AttributesData<'a> {
             builder.add_maxHp(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_EnemyDatabase_AttributesDataT {
+        let maxHp = self.maxHp().map(|x| Box::new(x.unpack()));
+        let atk = self.atk().map(|x| Box::new(x.unpack()));
+        let def = self.def().map(|x| Box::new(x.unpack()));
+        let magicResistance = self.magicResistance().map(|x| Box::new(x.unpack()));
+        let cost = self.cost().map(|x| Box::new(x.unpack()));
+        let blockCnt = self.blockCnt().map(|x| Box::new(x.unpack()));
+        let moveSpeed = self.moveSpeed().map(|x| Box::new(x.unpack()));
+        let attackSpeed = self.attackSpeed().map(|x| Box::new(x.unpack()));
+        let baseAttackTime = self.baseAttackTime().map(|x| Box::new(x.unpack()));
+        let respawnTime = self.respawnTime().map(|x| Box::new(x.unpack()));
+        let hpRecoveryPerSec = self.hpRecoveryPerSec().map(|x| Box::new(x.unpack()));
+        let spRecoveryPerSec = self.spRecoveryPerSec().map(|x| Box::new(x.unpack()));
+        let maxDeployCount = self.maxDeployCount().map(|x| Box::new(x.unpack()));
+        let massLevel = self.massLevel().map(|x| Box::new(x.unpack()));
+        let baseForceLevel = self.baseForceLevel().map(|x| Box::new(x.unpack()));
+        let tauntLevel = self.tauntLevel().map(|x| Box::new(x.unpack()));
+        let epDamageResistance = self.epDamageResistance().map(|x| Box::new(x.unpack()));
+        let epResistance = self.epResistance().map(|x| Box::new(x.unpack()));
+        let damageHitratePhysical = self.damageHitratePhysical().map(|x| Box::new(x.unpack()));
+        let damageHitrateMagical = self.damageHitrateMagical().map(|x| Box::new(x.unpack()));
+        let epBreakRecoverSpeed = self.epBreakRecoverSpeed().map(|x| Box::new(x.unpack()));
+        let stunImmune = self.stunImmune().map(|x| Box::new(x.unpack()));
+        let silenceImmune = self.silenceImmune().map(|x| Box::new(x.unpack()));
+        let sleepImmune = self.sleepImmune().map(|x| Box::new(x.unpack()));
+        let frozenImmune = self.frozenImmune().map(|x| Box::new(x.unpack()));
+        let levitateImmune = self.levitateImmune().map(|x| Box::new(x.unpack()));
+        let disarmedCombatImmune = self.disarmedCombatImmune().map(|x| Box::new(x.unpack()));
+        let fearedImmune = self.fearedImmune().map(|x| Box::new(x.unpack()));
+        let palsyImmune = self.palsyImmune().map(|x| Box::new(x.unpack()));
+        let attractImmune = self.attractImmune().map(|x| Box::new(x.unpack()));
+        clz_Torappu_EnemyDatabase_AttributesDataT {
+            maxHp,
+            atk,
+            def,
+            magicResistance,
+            cost,
+            blockCnt,
+            moveSpeed,
+            attackSpeed,
+            baseAttackTime,
+            respawnTime,
+            hpRecoveryPerSec,
+            spRecoveryPerSec,
+            maxDeployCount,
+            massLevel,
+            baseForceLevel,
+            tauntLevel,
+            epDamageResistance,
+            epResistance,
+            damageHitratePhysical,
+            damageHitrateMagical,
+            epBreakRecoverSpeed,
+            stunImmune,
+            silenceImmune,
+            sleepImmune,
+            frozenImmune,
+            levitateImmune,
+            disarmedCombatImmune,
+            fearedImmune,
+            palsyImmune,
+            attractImmune,
+        }
     }
 
     #[inline]
@@ -1778,6 +2090,166 @@ impl<'a> Default for clz_Torappu_EnemyDatabase_AttributesDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_EnemyDatabase_AttributesData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_EnemyDatabase_AttributesData", 30)?;
+        if let Some(f) = self.maxHp() {
+            s.serialize_field("maxHp", &f)?;
+        } else {
+            s.skip_field("maxHp")?;
+        }
+        if let Some(f) = self.atk() {
+            s.serialize_field("atk", &f)?;
+        } else {
+            s.skip_field("atk")?;
+        }
+        if let Some(f) = self.def() {
+            s.serialize_field("def", &f)?;
+        } else {
+            s.skip_field("def")?;
+        }
+        if let Some(f) = self.magicResistance() {
+            s.serialize_field("magicResistance", &f)?;
+        } else {
+            s.skip_field("magicResistance")?;
+        }
+        if let Some(f) = self.cost() {
+            s.serialize_field("cost", &f)?;
+        } else {
+            s.skip_field("cost")?;
+        }
+        if let Some(f) = self.blockCnt() {
+            s.serialize_field("blockCnt", &f)?;
+        } else {
+            s.skip_field("blockCnt")?;
+        }
+        if let Some(f) = self.moveSpeed() {
+            s.serialize_field("moveSpeed", &f)?;
+        } else {
+            s.skip_field("moveSpeed")?;
+        }
+        if let Some(f) = self.attackSpeed() {
+            s.serialize_field("attackSpeed", &f)?;
+        } else {
+            s.skip_field("attackSpeed")?;
+        }
+        if let Some(f) = self.baseAttackTime() {
+            s.serialize_field("baseAttackTime", &f)?;
+        } else {
+            s.skip_field("baseAttackTime")?;
+        }
+        if let Some(f) = self.respawnTime() {
+            s.serialize_field("respawnTime", &f)?;
+        } else {
+            s.skip_field("respawnTime")?;
+        }
+        if let Some(f) = self.hpRecoveryPerSec() {
+            s.serialize_field("hpRecoveryPerSec", &f)?;
+        } else {
+            s.skip_field("hpRecoveryPerSec")?;
+        }
+        if let Some(f) = self.spRecoveryPerSec() {
+            s.serialize_field("spRecoveryPerSec", &f)?;
+        } else {
+            s.skip_field("spRecoveryPerSec")?;
+        }
+        if let Some(f) = self.maxDeployCount() {
+            s.serialize_field("maxDeployCount", &f)?;
+        } else {
+            s.skip_field("maxDeployCount")?;
+        }
+        if let Some(f) = self.massLevel() {
+            s.serialize_field("massLevel", &f)?;
+        } else {
+            s.skip_field("massLevel")?;
+        }
+        if let Some(f) = self.baseForceLevel() {
+            s.serialize_field("baseForceLevel", &f)?;
+        } else {
+            s.skip_field("baseForceLevel")?;
+        }
+        if let Some(f) = self.tauntLevel() {
+            s.serialize_field("tauntLevel", &f)?;
+        } else {
+            s.skip_field("tauntLevel")?;
+        }
+        if let Some(f) = self.epDamageResistance() {
+            s.serialize_field("epDamageResistance", &f)?;
+        } else {
+            s.skip_field("epDamageResistance")?;
+        }
+        if let Some(f) = self.epResistance() {
+            s.serialize_field("epResistance", &f)?;
+        } else {
+            s.skip_field("epResistance")?;
+        }
+        if let Some(f) = self.damageHitratePhysical() {
+            s.serialize_field("damageHitratePhysical", &f)?;
+        } else {
+            s.skip_field("damageHitratePhysical")?;
+        }
+        if let Some(f) = self.damageHitrateMagical() {
+            s.serialize_field("damageHitrateMagical", &f)?;
+        } else {
+            s.skip_field("damageHitrateMagical")?;
+        }
+        if let Some(f) = self.epBreakRecoverSpeed() {
+            s.serialize_field("epBreakRecoverSpeed", &f)?;
+        } else {
+            s.skip_field("epBreakRecoverSpeed")?;
+        }
+        if let Some(f) = self.stunImmune() {
+            s.serialize_field("stunImmune", &f)?;
+        } else {
+            s.skip_field("stunImmune")?;
+        }
+        if let Some(f) = self.silenceImmune() {
+            s.serialize_field("silenceImmune", &f)?;
+        } else {
+            s.skip_field("silenceImmune")?;
+        }
+        if let Some(f) = self.sleepImmune() {
+            s.serialize_field("sleepImmune", &f)?;
+        } else {
+            s.skip_field("sleepImmune")?;
+        }
+        if let Some(f) = self.frozenImmune() {
+            s.serialize_field("frozenImmune", &f)?;
+        } else {
+            s.skip_field("frozenImmune")?;
+        }
+        if let Some(f) = self.levitateImmune() {
+            s.serialize_field("levitateImmune", &f)?;
+        } else {
+            s.skip_field("levitateImmune")?;
+        }
+        if let Some(f) = self.disarmedCombatImmune() {
+            s.serialize_field("disarmedCombatImmune", &f)?;
+        } else {
+            s.skip_field("disarmedCombatImmune")?;
+        }
+        if let Some(f) = self.fearedImmune() {
+            s.serialize_field("fearedImmune", &f)?;
+        } else {
+            s.skip_field("fearedImmune")?;
+        }
+        if let Some(f) = self.palsyImmune() {
+            s.serialize_field("palsyImmune", &f)?;
+        } else {
+            s.skip_field("palsyImmune")?;
+        }
+        if let Some(f) = self.attractImmune() {
+            s.serialize_field("attractImmune", &f)?;
+        } else {
+            s.skip_field("attractImmune")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_EnemyDatabase_AttributesDataBuilder<
     'a: 'b,
     'b,
@@ -2172,6 +2644,148 @@ impl core::fmt::Debug for clz_Torappu_EnemyDatabase_AttributesData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_EnemyDatabase_AttributesDataT {
+    pub maxHp: Option<Box<clz_Torappu_Undefinable_1_System_Int32_T>>,
+    pub atk: Option<Box<clz_Torappu_Undefinable_1_System_Int32_T>>,
+    pub def: Option<Box<clz_Torappu_Undefinable_1_System_Int32_T>>,
+    pub magicResistance: Option<Box<clz_Torappu_Undefinable_1_System_Single_T>>,
+    pub cost: Option<Box<clz_Torappu_Undefinable_1_System_Int32_T>>,
+    pub blockCnt: Option<Box<clz_Torappu_Undefinable_1_System_Int32_T>>,
+    pub moveSpeed: Option<Box<clz_Torappu_Undefinable_1_System_Single_T>>,
+    pub attackSpeed: Option<Box<clz_Torappu_Undefinable_1_System_Single_T>>,
+    pub baseAttackTime: Option<Box<clz_Torappu_Undefinable_1_System_Single_T>>,
+    pub respawnTime: Option<Box<clz_Torappu_Undefinable_1_System_Int32_T>>,
+    pub hpRecoveryPerSec: Option<Box<clz_Torappu_Undefinable_1_System_Single_T>>,
+    pub spRecoveryPerSec: Option<Box<clz_Torappu_Undefinable_1_System_Single_T>>,
+    pub maxDeployCount: Option<Box<clz_Torappu_Undefinable_1_System_Int32_T>>,
+    pub massLevel: Option<Box<clz_Torappu_Undefinable_1_System_Int32_T>>,
+    pub baseForceLevel: Option<Box<clz_Torappu_Undefinable_1_System_Int32_T>>,
+    pub tauntLevel: Option<Box<clz_Torappu_Undefinable_1_System_Int32_T>>,
+    pub epDamageResistance: Option<Box<clz_Torappu_Undefinable_1_System_Single_T>>,
+    pub epResistance: Option<Box<clz_Torappu_Undefinable_1_System_Single_T>>,
+    pub damageHitratePhysical: Option<Box<clz_Torappu_Undefinable_1_System_Single_T>>,
+    pub damageHitrateMagical: Option<Box<clz_Torappu_Undefinable_1_System_Single_T>>,
+    pub epBreakRecoverSpeed: Option<Box<clz_Torappu_Undefinable_1_System_Single_T>>,
+    pub stunImmune: Option<Box<clz_Torappu_Undefinable_1_System_Boolean_T>>,
+    pub silenceImmune: Option<Box<clz_Torappu_Undefinable_1_System_Boolean_T>>,
+    pub sleepImmune: Option<Box<clz_Torappu_Undefinable_1_System_Boolean_T>>,
+    pub frozenImmune: Option<Box<clz_Torappu_Undefinable_1_System_Boolean_T>>,
+    pub levitateImmune: Option<Box<clz_Torappu_Undefinable_1_System_Boolean_T>>,
+    pub disarmedCombatImmune: Option<Box<clz_Torappu_Undefinable_1_System_Boolean_T>>,
+    pub fearedImmune: Option<Box<clz_Torappu_Undefinable_1_System_Boolean_T>>,
+    pub palsyImmune: Option<Box<clz_Torappu_Undefinable_1_System_Boolean_T>>,
+    pub attractImmune: Option<Box<clz_Torappu_Undefinable_1_System_Boolean_T>>,
+}
+impl Default for clz_Torappu_EnemyDatabase_AttributesDataT {
+    fn default() -> Self {
+        Self {
+            maxHp: None,
+            atk: None,
+            def: None,
+            magicResistance: None,
+            cost: None,
+            blockCnt: None,
+            moveSpeed: None,
+            attackSpeed: None,
+            baseAttackTime: None,
+            respawnTime: None,
+            hpRecoveryPerSec: None,
+            spRecoveryPerSec: None,
+            maxDeployCount: None,
+            massLevel: None,
+            baseForceLevel: None,
+            tauntLevel: None,
+            epDamageResistance: None,
+            epResistance: None,
+            damageHitratePhysical: None,
+            damageHitrateMagical: None,
+            epBreakRecoverSpeed: None,
+            stunImmune: None,
+            silenceImmune: None,
+            sleepImmune: None,
+            frozenImmune: None,
+            levitateImmune: None,
+            disarmedCombatImmune: None,
+            fearedImmune: None,
+            palsyImmune: None,
+            attractImmune: None,
+        }
+    }
+}
+impl clz_Torappu_EnemyDatabase_AttributesDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_EnemyDatabase_AttributesData<'b>> {
+        let maxHp = self.maxHp.as_ref().map(|x| x.pack(_fbb));
+        let atk = self.atk.as_ref().map(|x| x.pack(_fbb));
+        let def = self.def.as_ref().map(|x| x.pack(_fbb));
+        let magicResistance = self.magicResistance.as_ref().map(|x| x.pack(_fbb));
+        let cost = self.cost.as_ref().map(|x| x.pack(_fbb));
+        let blockCnt = self.blockCnt.as_ref().map(|x| x.pack(_fbb));
+        let moveSpeed = self.moveSpeed.as_ref().map(|x| x.pack(_fbb));
+        let attackSpeed = self.attackSpeed.as_ref().map(|x| x.pack(_fbb));
+        let baseAttackTime = self.baseAttackTime.as_ref().map(|x| x.pack(_fbb));
+        let respawnTime = self.respawnTime.as_ref().map(|x| x.pack(_fbb));
+        let hpRecoveryPerSec = self.hpRecoveryPerSec.as_ref().map(|x| x.pack(_fbb));
+        let spRecoveryPerSec = self.spRecoveryPerSec.as_ref().map(|x| x.pack(_fbb));
+        let maxDeployCount = self.maxDeployCount.as_ref().map(|x| x.pack(_fbb));
+        let massLevel = self.massLevel.as_ref().map(|x| x.pack(_fbb));
+        let baseForceLevel = self.baseForceLevel.as_ref().map(|x| x.pack(_fbb));
+        let tauntLevel = self.tauntLevel.as_ref().map(|x| x.pack(_fbb));
+        let epDamageResistance = self.epDamageResistance.as_ref().map(|x| x.pack(_fbb));
+        let epResistance = self.epResistance.as_ref().map(|x| x.pack(_fbb));
+        let damageHitratePhysical = self.damageHitratePhysical.as_ref().map(|x| x.pack(_fbb));
+        let damageHitrateMagical = self.damageHitrateMagical.as_ref().map(|x| x.pack(_fbb));
+        let epBreakRecoverSpeed = self.epBreakRecoverSpeed.as_ref().map(|x| x.pack(_fbb));
+        let stunImmune = self.stunImmune.as_ref().map(|x| x.pack(_fbb));
+        let silenceImmune = self.silenceImmune.as_ref().map(|x| x.pack(_fbb));
+        let sleepImmune = self.sleepImmune.as_ref().map(|x| x.pack(_fbb));
+        let frozenImmune = self.frozenImmune.as_ref().map(|x| x.pack(_fbb));
+        let levitateImmune = self.levitateImmune.as_ref().map(|x| x.pack(_fbb));
+        let disarmedCombatImmune = self.disarmedCombatImmune.as_ref().map(|x| x.pack(_fbb));
+        let fearedImmune = self.fearedImmune.as_ref().map(|x| x.pack(_fbb));
+        let palsyImmune = self.palsyImmune.as_ref().map(|x| x.pack(_fbb));
+        let attractImmune = self.attractImmune.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_EnemyDatabase_AttributesData::create(
+            _fbb,
+            &clz_Torappu_EnemyDatabase_AttributesDataArgs {
+                maxHp,
+                atk,
+                def,
+                magicResistance,
+                cost,
+                blockCnt,
+                moveSpeed,
+                attackSpeed,
+                baseAttackTime,
+                respawnTime,
+                hpRecoveryPerSec,
+                spRecoveryPerSec,
+                maxDeployCount,
+                massLevel,
+                baseForceLevel,
+                tauntLevel,
+                epDamageResistance,
+                epResistance,
+                damageHitratePhysical,
+                damageHitrateMagical,
+                epBreakRecoverSpeed,
+                stunImmune,
+                silenceImmune,
+                sleepImmune,
+                frozenImmune,
+                levitateImmune,
+                disarmedCombatImmune,
+                fearedImmune,
+                palsyImmune,
+                attractImmune,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_Undefinable_1_Torappu_SourceApplyWay_Offset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2184,7 +2798,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_Undefinable_1_Torappu_SourceApp
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2206,6 +2820,12 @@ impl<'a> clz_Torappu_Undefinable_1_Torappu_SourceApplyWay_<'a> {
         builder.add_m_value(args.m_value);
         builder.add_m_defined(args.m_defined);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Undefinable_1_Torappu_SourceApplyWay_T {
+        let m_defined = self.m_defined();
+        let m_value = self.m_value();
+        clz_Torappu_Undefinable_1_Torappu_SourceApplyWay_T { m_defined, m_value }
     }
 
     #[inline]
@@ -2266,6 +2886,19 @@ impl<'a> Default for clz_Torappu_Undefinable_1_Torappu_SourceApplyWay_Args {
     }
 }
 
+impl Serialize for clz_Torappu_Undefinable_1_Torappu_SourceApplyWay_<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_Undefinable_1_Torappu_SourceApplyWay_", 2)?;
+        s.serialize_field("m_defined", &self.m_defined())?;
+        s.serialize_field("m_value", &self.m_value())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_Undefinable_1_Torappu_SourceApplyWay_Builder<
     'a: 'b,
     'b,
@@ -2320,6 +2953,33 @@ impl core::fmt::Debug for clz_Torappu_Undefinable_1_Torappu_SourceApplyWay_<'_> 
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Undefinable_1_Torappu_SourceApplyWay_T {
+    pub m_defined: bool,
+    pub m_value: enum__Torappu_SourceApplyWay,
+}
+impl Default for clz_Torappu_Undefinable_1_Torappu_SourceApplyWay_T {
+    fn default() -> Self {
+        Self {
+            m_defined: false,
+            m_value: enum__Torappu_SourceApplyWay::NONE,
+        }
+    }
+}
+impl clz_Torappu_Undefinable_1_Torappu_SourceApplyWay_T {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_Undefinable_1_Torappu_SourceApplyWay_<'b>> {
+        let m_defined = self.m_defined;
+        let m_value = self.m_value;
+        clz_Torappu_Undefinable_1_Torappu_SourceApplyWay_::create(
+            _fbb,
+            &clz_Torappu_Undefinable_1_Torappu_SourceApplyWay_Args { m_defined, m_value },
+        )
+    }
+}
 pub enum clz_Torappu_Undefinable_1_Torappu_MotionMode_Offset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2332,7 +2992,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_Undefinable_1_Torappu_MotionMod
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2354,6 +3014,12 @@ impl<'a> clz_Torappu_Undefinable_1_Torappu_MotionMode_<'a> {
         builder.add_m_value(args.m_value);
         builder.add_m_defined(args.m_defined);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Undefinable_1_Torappu_MotionMode_T {
+        let m_defined = self.m_defined();
+        let m_value = self.m_value();
+        clz_Torappu_Undefinable_1_Torappu_MotionMode_T { m_defined, m_value }
     }
 
     #[inline]
@@ -2414,6 +3080,19 @@ impl<'a> Default for clz_Torappu_Undefinable_1_Torappu_MotionMode_Args {
     }
 }
 
+impl Serialize for clz_Torappu_Undefinable_1_Torappu_MotionMode_<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_Undefinable_1_Torappu_MotionMode_", 2)?;
+        s.serialize_field("m_defined", &self.m_defined())?;
+        s.serialize_field("m_value", &self.m_value())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_Undefinable_1_Torappu_MotionMode_Builder<
     'a: 'b,
     'b,
@@ -2468,6 +3147,33 @@ impl core::fmt::Debug for clz_Torappu_Undefinable_1_Torappu_MotionMode_<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Undefinable_1_Torappu_MotionMode_T {
+    pub m_defined: bool,
+    pub m_value: enum__Torappu_MotionMode,
+}
+impl Default for clz_Torappu_Undefinable_1_Torappu_MotionMode_T {
+    fn default() -> Self {
+        Self {
+            m_defined: false,
+            m_value: enum__Torappu_MotionMode::WALK,
+        }
+    }
+}
+impl clz_Torappu_Undefinable_1_Torappu_MotionMode_T {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_Undefinable_1_Torappu_MotionMode_<'b>> {
+        let m_defined = self.m_defined;
+        let m_value = self.m_value;
+        clz_Torappu_Undefinable_1_Torappu_MotionMode_::create(
+            _fbb,
+            &clz_Torappu_Undefinable_1_Torappu_MotionMode_Args { m_defined, m_value },
+        )
+    }
+}
 pub enum clz_Torappu_Undefinable_1_System_String___Offset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2480,7 +3186,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_Undefinable_1_System_String___<
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2504,6 +3210,14 @@ impl<'a> clz_Torappu_Undefinable_1_System_String___<'a> {
         }
         builder.add_m_defined(args.m_defined);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Undefinable_1_System_String___T {
+        let m_defined = self.m_defined();
+        let m_value = self
+            .m_value()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        clz_Torappu_Undefinable_1_System_String___T { m_defined, m_value }
     }
 
     #[inline]
@@ -2567,6 +3281,22 @@ impl<'a> Default for clz_Torappu_Undefinable_1_System_String___Args<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_Undefinable_1_System_String___<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_Undefinable_1_System_String___", 2)?;
+        s.serialize_field("m_defined", &self.m_defined())?;
+        if let Some(f) = self.m_value() {
+            s.serialize_field("m_value", &f)?;
+        } else {
+            s.skip_field("m_value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_Undefinable_1_System_String___Builder<
     'a: 'b,
     'b,
@@ -2623,6 +3353,36 @@ impl core::fmt::Debug for clz_Torappu_Undefinable_1_System_String___<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Undefinable_1_System_String___T {
+    pub m_defined: bool,
+    pub m_value: Option<Vec<String>>,
+}
+impl Default for clz_Torappu_Undefinable_1_System_String___T {
+    fn default() -> Self {
+        Self {
+            m_defined: false,
+            m_value: None,
+        }
+    }
+}
+impl clz_Torappu_Undefinable_1_System_String___T {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_Undefinable_1_System_String___<'b>> {
+        let m_defined = self.m_defined;
+        let m_value = self.m_value.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_Undefinable_1_System_String___::create(
+            _fbb,
+            &clz_Torappu_Undefinable_1_System_String___Args { m_defined, m_value },
+        )
+    }
+}
 pub enum clz_Torappu_Undefinable_1_Torappu_EnemyLevelType_Offset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2635,7 +3395,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_Undefinable_1_Torappu_EnemyLeve
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2657,6 +3417,12 @@ impl<'a> clz_Torappu_Undefinable_1_Torappu_EnemyLevelType_<'a> {
         builder.add_m_value(args.m_value);
         builder.add_m_defined(args.m_defined);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Undefinable_1_Torappu_EnemyLevelType_T {
+        let m_defined = self.m_defined();
+        let m_value = self.m_value();
+        clz_Torappu_Undefinable_1_Torappu_EnemyLevelType_T { m_defined, m_value }
     }
 
     #[inline]
@@ -2717,6 +3483,19 @@ impl<'a> Default for clz_Torappu_Undefinable_1_Torappu_EnemyLevelType_Args {
     }
 }
 
+impl Serialize for clz_Torappu_Undefinable_1_Torappu_EnemyLevelType_<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_Undefinable_1_Torappu_EnemyLevelType_", 2)?;
+        s.serialize_field("m_defined", &self.m_defined())?;
+        s.serialize_field("m_value", &self.m_value())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_Undefinable_1_Torappu_EnemyLevelType_Builder<
     'a: 'b,
     'b,
@@ -2771,6 +3550,33 @@ impl core::fmt::Debug for clz_Torappu_Undefinable_1_Torappu_EnemyLevelType_<'_> 
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Undefinable_1_Torappu_EnemyLevelType_T {
+    pub m_defined: bool,
+    pub m_value: enum__Torappu_EnemyLevelType,
+}
+impl Default for clz_Torappu_Undefinable_1_Torappu_EnemyLevelType_T {
+    fn default() -> Self {
+        Self {
+            m_defined: false,
+            m_value: enum__Torappu_EnemyLevelType::NORMAL,
+        }
+    }
+}
+impl clz_Torappu_Undefinable_1_Torappu_EnemyLevelType_T {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_Undefinable_1_Torappu_EnemyLevelType_<'b>> {
+        let m_defined = self.m_defined;
+        let m_value = self.m_value;
+        clz_Torappu_Undefinable_1_Torappu_EnemyLevelType_::create(
+            _fbb,
+            &clz_Torappu_Undefinable_1_Torappu_EnemyLevelType_Args { m_defined, m_value },
+        )
+    }
+}
 pub enum clz_Torappu_Blackboard_DataPairOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2783,7 +3589,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_Blackboard_DataPair<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2811,6 +3617,17 @@ impl<'a> clz_Torappu_Blackboard_DataPair<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Blackboard_DataPairT {
+        let key = self.key().map(|x| x.to_string());
+        let value = self.value();
+        let valueStr = self.valueStr().map(|x| x.to_string());
+        clz_Torappu_Blackboard_DataPairT {
+            key,
+            value,
+            valueStr,
+        }
     }
 
     #[inline]
@@ -2885,6 +3702,27 @@ impl<'a> Default for clz_Torappu_Blackboard_DataPairArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_Blackboard_DataPair<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_Blackboard_DataPair", 3)?;
+        if let Some(f) = self.key() {
+            s.serialize_field("key", &f)?;
+        } else {
+            s.skip_field("key")?;
+        }
+        s.serialize_field("value", &self.value())?;
+        if let Some(f) = self.valueStr() {
+            s.serialize_field("valueStr", &f)?;
+        } else {
+            s.skip_field("valueStr")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_Blackboard_DataPairBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2935,6 +3773,40 @@ impl core::fmt::Debug for clz_Torappu_Blackboard_DataPair<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Blackboard_DataPairT {
+    pub key: Option<String>,
+    pub value: f32,
+    pub valueStr: Option<String>,
+}
+impl Default for clz_Torappu_Blackboard_DataPairT {
+    fn default() -> Self {
+        Self {
+            key: None,
+            value: 0.0,
+            valueStr: None,
+        }
+    }
+}
+impl clz_Torappu_Blackboard_DataPairT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_Blackboard_DataPair<'b>> {
+        let key = self.key.as_ref().map(|x| _fbb.create_string(x));
+        let value = self.value;
+        let valueStr = self.valueStr.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_Blackboard_DataPair::create(
+            _fbb,
+            &clz_Torappu_Blackboard_DataPairArgs {
+                key,
+                value,
+                valueStr,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_LevelData_EnemyData_ESkillDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2947,7 +3819,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_LevelData_EnemyData_ESkillData<
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2981,6 +3853,25 @@ impl<'a> clz_Torappu_LevelData_EnemyData_ESkillData<'a> {
             builder.add_prefabKey(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_LevelData_EnemyData_ESkillDataT {
+        let prefabKey = self.prefabKey().map(|x| x.to_string());
+        let priority = self.priority();
+        let cooldown = self.cooldown();
+        let initCooldown = self.initCooldown();
+        let spCost = self.spCost();
+        let blackboard = self
+            .blackboard()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_LevelData_EnemyData_ESkillDataT {
+            prefabKey,
+            priority,
+            cooldown,
+            initCooldown,
+            spCost,
+            blackboard,
+        }
     }
 
     #[inline]
@@ -3130,6 +4021,30 @@ impl<'a> Default for clz_Torappu_LevelData_EnemyData_ESkillDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_LevelData_EnemyData_ESkillData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_LevelData_EnemyData_ESkillData", 6)?;
+        if let Some(f) = self.prefabKey() {
+            s.serialize_field("prefabKey", &f)?;
+        } else {
+            s.skip_field("prefabKey")?;
+        }
+        s.serialize_field("priority", &self.priority())?;
+        s.serialize_field("cooldown", &self.cooldown())?;
+        s.serialize_field("initCooldown", &self.initCooldown())?;
+        s.serialize_field("spCost", &self.spCost())?;
+        if let Some(f) = self.blackboard() {
+            s.serialize_field("blackboard", &f)?;
+        } else {
+            s.skip_field("blackboard")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_LevelData_EnemyData_ESkillDataBuilder<
     'a: 'b,
     'b,
@@ -3224,6 +4139,55 @@ impl core::fmt::Debug for clz_Torappu_LevelData_EnemyData_ESkillData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_LevelData_EnemyData_ESkillDataT {
+    pub prefabKey: Option<String>,
+    pub priority: i32,
+    pub cooldown: f32,
+    pub initCooldown: f32,
+    pub spCost: i32,
+    pub blackboard: Option<Vec<clz_Torappu_Blackboard_DataPairT>>,
+}
+impl Default for clz_Torappu_LevelData_EnemyData_ESkillDataT {
+    fn default() -> Self {
+        Self {
+            prefabKey: None,
+            priority: 0,
+            cooldown: 0.0,
+            initCooldown: 0.0,
+            spCost: 0,
+            blackboard: None,
+        }
+    }
+}
+impl clz_Torappu_LevelData_EnemyData_ESkillDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_LevelData_EnemyData_ESkillData<'b>> {
+        let prefabKey = self.prefabKey.as_ref().map(|x| _fbb.create_string(x));
+        let priority = self.priority;
+        let cooldown = self.cooldown;
+        let initCooldown = self.initCooldown;
+        let spCost = self.spCost;
+        let blackboard = self.blackboard.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_LevelData_EnemyData_ESkillData::create(
+            _fbb,
+            &clz_Torappu_LevelData_EnemyData_ESkillDataArgs {
+                prefabKey,
+                priority,
+                cooldown,
+                initCooldown,
+                spCost,
+                blackboard,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_LevelData_EnemyData_ESpDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3236,7 +4200,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_LevelData_EnemyData_ESpData<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3262,6 +4226,19 @@ impl<'a> clz_Torappu_LevelData_EnemyData_ESpData<'a> {
         builder.add_maxSp(args.maxSp);
         builder.add_spType(args.spType);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_LevelData_EnemyData_ESpDataT {
+        let spType = self.spType();
+        let maxSp = self.maxSp();
+        let initSp = self.initSp();
+        let increment = self.increment();
+        clz_Torappu_LevelData_EnemyData_ESpDataT {
+            spType,
+            maxSp,
+            initSp,
+            increment,
+        }
     }
 
     #[inline]
@@ -3350,6 +4327,20 @@ impl<'a> Default for clz_Torappu_LevelData_EnemyData_ESpDataArgs {
     }
 }
 
+impl Serialize for clz_Torappu_LevelData_EnemyData_ESpData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_LevelData_EnemyData_ESpData", 4)?;
+        s.serialize_field("spType", &self.spType())?;
+        s.serialize_field("maxSp", &self.maxSp())?;
+        s.serialize_field("initSp", &self.initSp())?;
+        s.serialize_field("increment", &self.increment())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_LevelData_EnemyData_ESpDataBuilder<
     'a: 'b,
     'b,
@@ -3417,6 +4408,44 @@ impl core::fmt::Debug for clz_Torappu_LevelData_EnemyData_ESpData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_LevelData_EnemyData_ESpDataT {
+    pub spType: enum__Torappu_SpType,
+    pub maxSp: i32,
+    pub initSp: i32,
+    pub increment: f32,
+}
+impl Default for clz_Torappu_LevelData_EnemyData_ESpDataT {
+    fn default() -> Self {
+        Self {
+            spType: enum__Torappu_SpType::NONE,
+            maxSp: 0,
+            initSp: 0,
+            increment: 0.0,
+        }
+    }
+}
+impl clz_Torappu_LevelData_EnemyData_ESpDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_LevelData_EnemyData_ESpData<'b>> {
+        let spType = self.spType;
+        let maxSp = self.maxSp;
+        let initSp = self.initSp;
+        let increment = self.increment;
+        clz_Torappu_LevelData_EnemyData_ESpData::create(
+            _fbb,
+            &clz_Torappu_LevelData_EnemyData_ESpDataArgs {
+                spType,
+                maxSp,
+                initSp,
+                increment,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_EnemyDatabase_EnemyDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3429,7 +4458,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_EnemyDatabase_EnemyData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3511,6 +4540,47 @@ impl<'a> clz_Torappu_EnemyDatabase_EnemyData<'a> {
             builder.add_name(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_EnemyDatabase_EnemyDataT {
+        let name = self.name().map(|x| Box::new(x.unpack()));
+        let description = self.description().map(|x| Box::new(x.unpack()));
+        let prefabKey = self.prefabKey().map(|x| Box::new(x.unpack()));
+        let attributes = self.attributes().map(|x| Box::new(x.unpack()));
+        let applyWay = self.applyWay().map(|x| Box::new(x.unpack()));
+        let motion = self.motion().map(|x| Box::new(x.unpack()));
+        let enemyTags = self.enemyTags().map(|x| Box::new(x.unpack()));
+        let lifePointReduce = self.lifePointReduce().map(|x| Box::new(x.unpack()));
+        let levelType = self.levelType().map(|x| Box::new(x.unpack()));
+        let rangeRadius = self.rangeRadius().map(|x| Box::new(x.unpack()));
+        let numOfExtraDrops = self.numOfExtraDrops().map(|x| Box::new(x.unpack()));
+        let viewRadius = self.viewRadius().map(|x| Box::new(x.unpack()));
+        let notCountInTotal = self.notCountInTotal().map(|x| Box::new(x.unpack()));
+        let talentBlackboard = self
+            .talentBlackboard()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let skills = self
+            .skills()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let spData = self.spData().map(|x| Box::new(x.unpack()));
+        clz_Torappu_EnemyDatabase_EnemyDataT {
+            name,
+            description,
+            prefabKey,
+            attributes,
+            applyWay,
+            motion,
+            enemyTags,
+            lifePointReduce,
+            levelType,
+            rangeRadius,
+            numOfExtraDrops,
+            viewRadius,
+            notCountInTotal,
+            talentBlackboard,
+            skills,
+            spData,
+        }
     }
 
     #[inline]
@@ -3820,6 +4890,96 @@ impl<'a> Default for clz_Torappu_EnemyDatabase_EnemyDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_EnemyDatabase_EnemyData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_EnemyDatabase_EnemyData", 16)?;
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        if let Some(f) = self.description() {
+            s.serialize_field("description", &f)?;
+        } else {
+            s.skip_field("description")?;
+        }
+        if let Some(f) = self.prefabKey() {
+            s.serialize_field("prefabKey", &f)?;
+        } else {
+            s.skip_field("prefabKey")?;
+        }
+        if let Some(f) = self.attributes() {
+            s.serialize_field("attributes", &f)?;
+        } else {
+            s.skip_field("attributes")?;
+        }
+        if let Some(f) = self.applyWay() {
+            s.serialize_field("applyWay", &f)?;
+        } else {
+            s.skip_field("applyWay")?;
+        }
+        if let Some(f) = self.motion() {
+            s.serialize_field("motion", &f)?;
+        } else {
+            s.skip_field("motion")?;
+        }
+        if let Some(f) = self.enemyTags() {
+            s.serialize_field("enemyTags", &f)?;
+        } else {
+            s.skip_field("enemyTags")?;
+        }
+        if let Some(f) = self.lifePointReduce() {
+            s.serialize_field("lifePointReduce", &f)?;
+        } else {
+            s.skip_field("lifePointReduce")?;
+        }
+        if let Some(f) = self.levelType() {
+            s.serialize_field("levelType", &f)?;
+        } else {
+            s.skip_field("levelType")?;
+        }
+        if let Some(f) = self.rangeRadius() {
+            s.serialize_field("rangeRadius", &f)?;
+        } else {
+            s.skip_field("rangeRadius")?;
+        }
+        if let Some(f) = self.numOfExtraDrops() {
+            s.serialize_field("numOfExtraDrops", &f)?;
+        } else {
+            s.skip_field("numOfExtraDrops")?;
+        }
+        if let Some(f) = self.viewRadius() {
+            s.serialize_field("viewRadius", &f)?;
+        } else {
+            s.skip_field("viewRadius")?;
+        }
+        if let Some(f) = self.notCountInTotal() {
+            s.serialize_field("notCountInTotal", &f)?;
+        } else {
+            s.skip_field("notCountInTotal")?;
+        }
+        if let Some(f) = self.talentBlackboard() {
+            s.serialize_field("talentBlackboard", &f)?;
+        } else {
+            s.skip_field("talentBlackboard")?;
+        }
+        if let Some(f) = self.skills() {
+            s.serialize_field("skills", &f)?;
+        } else {
+            s.skip_field("skills")?;
+        }
+        if let Some(f) = self.spData() {
+            s.serialize_field("spData", &f)?;
+        } else {
+            s.skip_field("spData")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_EnemyDatabase_EnemyDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -4038,6 +5198,98 @@ impl core::fmt::Debug for clz_Torappu_EnemyDatabase_EnemyData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_EnemyDatabase_EnemyDataT {
+    pub name: Option<Box<clz_Torappu_Undefinable_1_System_String_T>>,
+    pub description: Option<Box<clz_Torappu_Undefinable_1_System_String_T>>,
+    pub prefabKey: Option<Box<clz_Torappu_Undefinable_1_System_String_T>>,
+    pub attributes: Option<Box<clz_Torappu_EnemyDatabase_AttributesDataT>>,
+    pub applyWay: Option<Box<clz_Torappu_Undefinable_1_Torappu_SourceApplyWay_T>>,
+    pub motion: Option<Box<clz_Torappu_Undefinable_1_Torappu_MotionMode_T>>,
+    pub enemyTags: Option<Box<clz_Torappu_Undefinable_1_System_String___T>>,
+    pub lifePointReduce: Option<Box<clz_Torappu_Undefinable_1_System_Int32_T>>,
+    pub levelType: Option<Box<clz_Torappu_Undefinable_1_Torappu_EnemyLevelType_T>>,
+    pub rangeRadius: Option<Box<clz_Torappu_Undefinable_1_System_Single_T>>,
+    pub numOfExtraDrops: Option<Box<clz_Torappu_Undefinable_1_System_Int32_T>>,
+    pub viewRadius: Option<Box<clz_Torappu_Undefinable_1_System_Single_T>>,
+    pub notCountInTotal: Option<Box<clz_Torappu_Undefinable_1_System_Boolean_T>>,
+    pub talentBlackboard: Option<Vec<clz_Torappu_Blackboard_DataPairT>>,
+    pub skills: Option<Vec<clz_Torappu_LevelData_EnemyData_ESkillDataT>>,
+    pub spData: Option<Box<clz_Torappu_LevelData_EnemyData_ESpDataT>>,
+}
+impl Default for clz_Torappu_EnemyDatabase_EnemyDataT {
+    fn default() -> Self {
+        Self {
+            name: None,
+            description: None,
+            prefabKey: None,
+            attributes: None,
+            applyWay: None,
+            motion: None,
+            enemyTags: None,
+            lifePointReduce: None,
+            levelType: None,
+            rangeRadius: None,
+            numOfExtraDrops: None,
+            viewRadius: None,
+            notCountInTotal: None,
+            talentBlackboard: None,
+            skills: None,
+            spData: None,
+        }
+    }
+}
+impl clz_Torappu_EnemyDatabase_EnemyDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_EnemyDatabase_EnemyData<'b>> {
+        let name = self.name.as_ref().map(|x| x.pack(_fbb));
+        let description = self.description.as_ref().map(|x| x.pack(_fbb));
+        let prefabKey = self.prefabKey.as_ref().map(|x| x.pack(_fbb));
+        let attributes = self.attributes.as_ref().map(|x| x.pack(_fbb));
+        let applyWay = self.applyWay.as_ref().map(|x| x.pack(_fbb));
+        let motion = self.motion.as_ref().map(|x| x.pack(_fbb));
+        let enemyTags = self.enemyTags.as_ref().map(|x| x.pack(_fbb));
+        let lifePointReduce = self.lifePointReduce.as_ref().map(|x| x.pack(_fbb));
+        let levelType = self.levelType.as_ref().map(|x| x.pack(_fbb));
+        let rangeRadius = self.rangeRadius.as_ref().map(|x| x.pack(_fbb));
+        let numOfExtraDrops = self.numOfExtraDrops.as_ref().map(|x| x.pack(_fbb));
+        let viewRadius = self.viewRadius.as_ref().map(|x| x.pack(_fbb));
+        let notCountInTotal = self.notCountInTotal.as_ref().map(|x| x.pack(_fbb));
+        let talentBlackboard = self.talentBlackboard.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let skills = self.skills.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let spData = self.spData.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_EnemyDatabase_EnemyData::create(
+            _fbb,
+            &clz_Torappu_EnemyDatabase_EnemyDataArgs {
+                name,
+                description,
+                prefabKey,
+                attributes,
+                applyWay,
+                motion,
+                enemyTags,
+                lifePointReduce,
+                levelType,
+                rangeRadius,
+                numOfExtraDrops,
+                viewRadius,
+                notCountInTotal,
+                talentBlackboard,
+                skills,
+                spData,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_EnemyDatabase_EnemyLevelOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4050,7 +5302,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_EnemyDatabase_EnemyLevel<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4074,6 +5326,12 @@ impl<'a> clz_Torappu_EnemyDatabase_EnemyLevel<'a> {
         }
         builder.add_level(args.level);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_EnemyDatabase_EnemyLevelT {
+        let level = self.level();
+        let enemyData = self.enemyData().map(|x| Box::new(x.unpack()));
+        clz_Torappu_EnemyDatabase_EnemyLevelT { level, enemyData }
     }
 
     #[inline]
@@ -4134,6 +5392,22 @@ impl<'a> Default for clz_Torappu_EnemyDatabase_EnemyLevelArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_EnemyDatabase_EnemyLevel<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_EnemyDatabase_EnemyLevel", 2)?;
+        s.serialize_field("level", &self.level())?;
+        if let Some(f) = self.enemyData() {
+            s.serialize_field("enemyData", &f)?;
+        } else {
+            s.skip_field("enemyData")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_EnemyDatabase_EnemyLevelBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -4182,6 +5456,33 @@ impl core::fmt::Debug for clz_Torappu_EnemyDatabase_EnemyLevel<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_EnemyDatabase_EnemyLevelT {
+    pub level: i32,
+    pub enemyData: Option<Box<clz_Torappu_EnemyDatabase_EnemyDataT>>,
+}
+impl Default for clz_Torappu_EnemyDatabase_EnemyLevelT {
+    fn default() -> Self {
+        Self {
+            level: 0,
+            enemyData: None,
+        }
+    }
+}
+impl clz_Torappu_EnemyDatabase_EnemyLevelT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_EnemyDatabase_EnemyLevel<'b>> {
+        let level = self.level;
+        let enemyData = self.enemyData.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_EnemyDatabase_EnemyLevel::create(
+            _fbb,
+            &clz_Torappu_EnemyDatabase_EnemyLevelArgs { level, enemyData },
+        )
+    }
+}
 pub enum kvp__string__list_clz_Torappu_EnemyDatabase_EnemyLevelOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4194,7 +5495,7 @@ impl<'a> flatbuffers::Follow<'a> for kvp__string__list_clz_Torappu_EnemyDatabase
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4220,6 +5521,15 @@ impl<'a> kvp__string__list_clz_Torappu_EnemyDatabase_EnemyLevel<'a> {
             builder.add_Key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> kvp__string__list_clz_Torappu_EnemyDatabase_EnemyLevelT {
+        let Key = {
+            let x = self.Key();
+            x.to_string()
+        };
+        let Value = self.Value().map(|x| x.iter().map(|t| t.unpack()).collect());
+        kvp__string__list_clz_Torappu_EnemyDatabase_EnemyLevelT { Key, Value }
     }
 
     #[inline]
@@ -4315,6 +5625,23 @@ impl<'a> Default for kvp__string__list_clz_Torappu_EnemyDatabase_EnemyLevelArgs<
     }
 }
 
+impl Serialize for kvp__string__list_clz_Torappu_EnemyDatabase_EnemyLevel<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("kvp__string__list_clz_Torappu_EnemyDatabase_EnemyLevel", 2)?;
+        s.serialize_field("Key", &self.Key())?;
+        if let Some(f) = self.Value() {
+            s.serialize_field("Value", &f)?;
+        } else {
+            s.skip_field("Value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct kvp__string__list_clz_Torappu_EnemyDatabase_EnemyLevelBuilder<
     'a: 'b,
     'b,
@@ -4380,6 +5707,39 @@ impl core::fmt::Debug for kvp__string__list_clz_Torappu_EnemyDatabase_EnemyLevel
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct kvp__string__list_clz_Torappu_EnemyDatabase_EnemyLevelT {
+    pub Key: String,
+    pub Value: Option<Vec<clz_Torappu_EnemyDatabase_EnemyLevelT>>,
+}
+impl Default for kvp__string__list_clz_Torappu_EnemyDatabase_EnemyLevelT {
+    fn default() -> Self {
+        Self {
+            Key: "".to_string(),
+            Value: None,
+        }
+    }
+}
+impl kvp__string__list_clz_Torappu_EnemyDatabase_EnemyLevelT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<kvp__string__list_clz_Torappu_EnemyDatabase_EnemyLevel<'b>> {
+        let Key = Some({
+            let x = &self.Key;
+            _fbb.create_string(x)
+        });
+        let Value = self.Value.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        kvp__string__list_clz_Torappu_EnemyDatabase_EnemyLevel::create(
+            _fbb,
+            &kvp__string__list_clz_Torappu_EnemyDatabase_EnemyLevelArgs { Key, Value },
+        )
+    }
+}
 pub enum clz_Torappu_EnemyDatabaseOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4392,7 +5752,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_EnemyDatabase<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4414,6 +5774,13 @@ impl<'a> clz_Torappu_EnemyDatabase<'a> {
             builder.add_enemies(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_EnemyDatabaseT {
+        let enemies = self
+            .enemies()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_EnemyDatabaseT { enemies }
     }
 
     #[inline]
@@ -4482,6 +5849,21 @@ impl<'a> Default for clz_Torappu_EnemyDatabaseArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_EnemyDatabase<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_EnemyDatabase", 1)?;
+        if let Some(f) = self.enemies() {
+            s.serialize_field("enemies", &f)?;
+        } else {
+            s.skip_field("enemies")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_EnemyDatabaseBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -4526,6 +5908,28 @@ impl core::fmt::Debug for clz_Torappu_EnemyDatabase<'_> {
         let mut ds = f.debug_struct("clz_Torappu_EnemyDatabase");
         ds.field("enemies", &self.enemies());
         ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_EnemyDatabaseT {
+    pub enemies: Option<Vec<kvp__string__list_clz_Torappu_EnemyDatabase_EnemyLevelT>>,
+}
+impl Default for clz_Torappu_EnemyDatabaseT {
+    fn default() -> Self {
+        Self { enemies: None }
+    }
+}
+impl clz_Torappu_EnemyDatabaseT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_EnemyDatabase<'b>> {
+        let enemies = self.enemies.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_EnemyDatabase::create(_fbb, &clz_Torappu_EnemyDatabaseArgs { enemies })
     }
 }
 #[inline]
@@ -4585,7 +5989,7 @@ pub fn size_prefixed_root_as_clz_torappu_enemy_database_with_opts<'b, 'o>(
 pub unsafe fn root_as_clz_torappu_enemy_database_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_EnemyDatabase {
-    flatbuffers::root_unchecked::<clz_Torappu_EnemyDatabase>(buf)
+    unsafe { flatbuffers::root_unchecked::<clz_Torappu_EnemyDatabase>(buf) }
 }
 #[inline]
 /// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_EnemyDatabase and returns it.
@@ -4594,7 +5998,7 @@ pub unsafe fn root_as_clz_torappu_enemy_database_unchecked(
 pub unsafe fn size_prefixed_root_as_clz_torappu_enemy_database_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_EnemyDatabase {
-    flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_EnemyDatabase>(buf)
+    unsafe { flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_EnemyDatabase>(buf) }
 }
 #[inline]
 pub fn finish_clz_torappu_enemy_database_buffer<'a, 'b, A: flatbuffers::Allocator + 'a>(

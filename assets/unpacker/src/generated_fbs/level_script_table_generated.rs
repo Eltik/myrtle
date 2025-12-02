@@ -5,6 +5,9 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+use self::serde::ser::{Serialize, SerializeStruct, Serializer};
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
@@ -20,7 +23,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__list_string<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -46,6 +49,17 @@ impl<'a> dict__string__list_string<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__list_stringT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self
+            .value()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        dict__string__list_stringT { key, value }
     }
 
     #[inline]
@@ -114,6 +128,22 @@ impl<'a> Default for dict__string__list_stringArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__list_string<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__list_string", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__list_stringBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -163,6 +193,36 @@ impl core::fmt::Debug for dict__string__list_string<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__list_stringT {
+    pub key: String,
+    pub value: Option<Vec<String>>,
+}
+impl Default for dict__string__list_stringT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__list_stringT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__list_string<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        dict__string__list_string::create(_fbb, &dict__string__list_stringArgs { key, value })
+    }
+}
 pub enum clz_Torappu_Battle_LevelScriptDataMapOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -175,7 +235,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_Battle_LevelScriptDataMap<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -213,6 +273,31 @@ impl<'a> clz_Torappu_Battle_LevelScriptDataMap<'a> {
             builder.add_levelScriptDataCharacterDict(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Battle_LevelScriptDataMapT {
+        let levelScriptDataCharacterDict = self
+            .levelScriptDataCharacterDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let levelScriptDataEnemyDict = self
+            .levelScriptDataEnemyDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let levelScriptDataLevelDict = self
+            .levelScriptDataLevelDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let levelScriptDataGameModeDict = self
+            .levelScriptDataGameModeDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let levelScriptDataMiscList = self
+            .levelScriptDataMiscList()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        clz_Torappu_Battle_LevelScriptDataMapT {
+            levelScriptDataCharacterDict,
+            levelScriptDataEnemyDict,
+            levelScriptDataLevelDict,
+            levelScriptDataGameModeDict,
+            levelScriptDataMiscList,
+        }
     }
 
     #[inline]
@@ -386,6 +471,41 @@ impl<'a> Default for clz_Torappu_Battle_LevelScriptDataMapArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_Battle_LevelScriptDataMap<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_Battle_LevelScriptDataMap", 5)?;
+        if let Some(f) = self.levelScriptDataCharacterDict() {
+            s.serialize_field("levelScriptDataCharacterDict", &f)?;
+        } else {
+            s.skip_field("levelScriptDataCharacterDict")?;
+        }
+        if let Some(f) = self.levelScriptDataEnemyDict() {
+            s.serialize_field("levelScriptDataEnemyDict", &f)?;
+        } else {
+            s.skip_field("levelScriptDataEnemyDict")?;
+        }
+        if let Some(f) = self.levelScriptDataLevelDict() {
+            s.serialize_field("levelScriptDataLevelDict", &f)?;
+        } else {
+            s.skip_field("levelScriptDataLevelDict")?;
+        }
+        if let Some(f) = self.levelScriptDataGameModeDict() {
+            s.serialize_field("levelScriptDataGameModeDict", &f)?;
+        } else {
+            s.skip_field("levelScriptDataGameModeDict")?;
+        }
+        if let Some(f) = self.levelScriptDataMiscList() {
+            s.serialize_field("levelScriptDataMiscList", &f)?;
+        } else {
+            s.skip_field("levelScriptDataMiscList")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_Battle_LevelScriptDataMapBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -488,6 +608,63 @@ impl core::fmt::Debug for clz_Torappu_Battle_LevelScriptDataMap<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Battle_LevelScriptDataMapT {
+    pub levelScriptDataCharacterDict: Option<Vec<dict__string__list_stringT>>,
+    pub levelScriptDataEnemyDict: Option<Vec<dict__string__list_stringT>>,
+    pub levelScriptDataLevelDict: Option<Vec<dict__string__list_stringT>>,
+    pub levelScriptDataGameModeDict: Option<Vec<dict__string__list_stringT>>,
+    pub levelScriptDataMiscList: Option<Vec<String>>,
+}
+impl Default for clz_Torappu_Battle_LevelScriptDataMapT {
+    fn default() -> Self {
+        Self {
+            levelScriptDataCharacterDict: None,
+            levelScriptDataEnemyDict: None,
+            levelScriptDataLevelDict: None,
+            levelScriptDataGameModeDict: None,
+            levelScriptDataMiscList: None,
+        }
+    }
+}
+impl clz_Torappu_Battle_LevelScriptDataMapT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_Battle_LevelScriptDataMap<'b>> {
+        let levelScriptDataCharacterDict = self.levelScriptDataCharacterDict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let levelScriptDataEnemyDict = self.levelScriptDataEnemyDict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let levelScriptDataLevelDict = self.levelScriptDataLevelDict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let levelScriptDataGameModeDict = self.levelScriptDataGameModeDict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let levelScriptDataMiscList = self.levelScriptDataMiscList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_Battle_LevelScriptDataMap::create(
+            _fbb,
+            &clz_Torappu_Battle_LevelScriptDataMapArgs {
+                levelScriptDataCharacterDict,
+                levelScriptDataEnemyDict,
+                levelScriptDataLevelDict,
+                levelScriptDataGameModeDict,
+                levelScriptDataMiscList,
+            },
+        )
+    }
+}
 #[inline]
 /// Verifies that a buffer of bytes contains a `clz_Torappu_Battle_LevelScriptDataMap`
 /// and returns it.
@@ -547,7 +724,7 @@ pub fn size_prefixed_root_as_clz_torappu_battle_level_script_data_map_with_opts<
 pub unsafe fn root_as_clz_torappu_battle_level_script_data_map_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_Battle_LevelScriptDataMap {
-    flatbuffers::root_unchecked::<clz_Torappu_Battle_LevelScriptDataMap>(buf)
+    unsafe { flatbuffers::root_unchecked::<clz_Torappu_Battle_LevelScriptDataMap>(buf) }
 }
 #[inline]
 /// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_Battle_LevelScriptDataMap and returns it.
@@ -556,7 +733,9 @@ pub unsafe fn root_as_clz_torappu_battle_level_script_data_map_unchecked(
 pub unsafe fn size_prefixed_root_as_clz_torappu_battle_level_script_data_map_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_Battle_LevelScriptDataMap {
-    flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_Battle_LevelScriptDataMap>(buf)
+    unsafe {
+        flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_Battle_LevelScriptDataMap>(buf)
+    }
 }
 #[inline]
 pub fn finish_clz_torappu_battle_level_script_data_map_buffer<

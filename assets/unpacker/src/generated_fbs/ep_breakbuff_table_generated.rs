@@ -5,6 +5,9 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+use self::serde::ser::{Serialize, SerializeStruct, Serializer};
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
@@ -20,7 +23,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_EPBreakBuffData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -44,6 +47,17 @@ impl<'a> clz_Torappu_EPBreakBuffData<'a> {
         }
         builder.add_elementBreakDuration(args.elementBreakDuration);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_EPBreakBuffDataT {
+        let elementBreakDuration = self.elementBreakDuration();
+        let elementBuffs = self
+            .elementBuffs()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        clz_Torappu_EPBreakBuffDataT {
+            elementBreakDuration,
+            elementBuffs,
+        }
     }
 
     #[inline]
@@ -107,6 +121,22 @@ impl<'a> Default for clz_Torappu_EPBreakBuffDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_EPBreakBuffData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_EPBreakBuffData", 2)?;
+        s.serialize_field("elementBreakDuration", &self.elementBreakDuration())?;
+        if let Some(f) = self.elementBuffs() {
+            s.serialize_field("elementBuffs", &f)?;
+        } else {
+            s.skip_field("elementBuffs")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_EPBreakBuffDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -157,6 +187,39 @@ impl core::fmt::Debug for clz_Torappu_EPBreakBuffData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_EPBreakBuffDataT {
+    pub elementBreakDuration: f32,
+    pub elementBuffs: Option<Vec<String>>,
+}
+impl Default for clz_Torappu_EPBreakBuffDataT {
+    fn default() -> Self {
+        Self {
+            elementBreakDuration: 0.0,
+            elementBuffs: None,
+        }
+    }
+}
+impl clz_Torappu_EPBreakBuffDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_EPBreakBuffData<'b>> {
+        let elementBreakDuration = self.elementBreakDuration;
+        let elementBuffs = self.elementBuffs.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_EPBreakBuffData::create(
+            _fbb,
+            &clz_Torappu_EPBreakBuffDataArgs {
+                elementBreakDuration,
+                elementBuffs,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_EPBreakBuffDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -169,7 +232,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_EPBreakBuffData<'
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -195,6 +258,15 @@ impl<'a> dict__string__clz_Torappu_EPBreakBuffData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_EPBreakBuffDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_EPBreakBuffDataT { key, value }
     }
 
     #[inline]
@@ -268,6 +340,22 @@ impl<'a> Default for dict__string__clz_Torappu_EPBreakBuffDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_EPBreakBuffData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_EPBreakBuffData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_EPBreakBuffDataBuilder<
     'a: 'b,
     'b,
@@ -321,6 +409,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_EPBreakBuffData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_EPBreakBuffDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_EPBreakBuffDataT>>,
+}
+impl Default for dict__string__clz_Torappu_EPBreakBuffDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_EPBreakBuffDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_EPBreakBuffData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_EPBreakBuffData::create(
+            _fbb,
+            &dict__string__clz_Torappu_EPBreakBuffDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -333,7 +451,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SimpleKVTable_clz_Torappu_EPBre
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -355,6 +473,13 @@ impl<'a> clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData<'a> {
             builder.add_ep_breakbuffs(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffDataT {
+        let ep_breakbuffs = self
+            .ep_breakbuffs()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffDataT { ep_breakbuffs }
     }
 
     #[inline]
@@ -420,6 +545,22 @@ impl<'a> Default for clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffDataArgs<'
     }
 }
 
+impl Serialize for clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData", 1)?;
+        if let Some(f) = self.ep_breakbuffs() {
+            s.serialize_field("ep_breakbuffs", &f)?;
+        } else {
+            s.skip_field("ep_breakbuffs")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffDataBuilder<
     'a: 'b,
     'b,
@@ -470,6 +611,33 @@ impl core::fmt::Debug for clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData<
         let mut ds = f.debug_struct("clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData");
         ds.field("ep_breakbuffs", &self.ep_breakbuffs());
         ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffDataT {
+    pub ep_breakbuffs: Option<Vec<dict__string__clz_Torappu_EPBreakBuffDataT>>,
+}
+impl Default for clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffDataT {
+    fn default() -> Self {
+        Self {
+            ep_breakbuffs: None,
+        }
+    }
+}
+impl clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData<'b>> {
+        let ep_breakbuffs = self.ep_breakbuffs.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData::create(
+            _fbb,
+            &clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffDataArgs { ep_breakbuffs },
+        )
     }
 }
 #[inline]
@@ -538,7 +706,9 @@ pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_epbreak_buff
 pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_epbreak_buff_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData {
-    flatbuffers::root_unchecked::<clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData>(buf)
+    unsafe {
+        flatbuffers::root_unchecked::<clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData>(buf)
+    }
 }
 #[inline]
 /// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData and returns it.
@@ -547,9 +717,11 @@ pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_epbreak_buff_data_u
 pub unsafe fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_epbreak_buff_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData {
-    flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData>(
-        buf,
-    )
+    unsafe {
+        flatbuffers::size_prefixed_root_unchecked::<
+            clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData,
+        >(buf)
+    }
 }
 #[inline]
 pub fn finish_clz_torappu_simple_kvtable_clz_torappu_epbreak_buff_data_buffer<

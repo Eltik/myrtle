@@ -9,8 +9,8 @@ pub mod resolve_ab;
 pub mod resource_manifest;
 pub mod utils;
 
-// FlatBuffer JSON serialization
+// FlatBuffer JSON serialization (handles unknown enum values gracefully)
 #[macro_use]
 pub mod fb_json_macros;
-pub mod fb_json_impl_character;
-pub mod fb_json_impl_enemy;
+// Auto-generated implementations for ALL FlatBuffer types
+pub mod fb_json_auto;

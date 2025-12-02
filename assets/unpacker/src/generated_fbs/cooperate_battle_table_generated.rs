@@ -5,6 +5,9 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+use self::serde::ser::{Serialize, SerializeStruct, Serializer};
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
@@ -65,11 +68,24 @@ impl core::fmt::Debug for enum__Torappu_Battle_Cooperate_EndTileType {
         }
     }
 }
+impl Serialize for enum__Torappu_Battle_Cooperate_EndTileType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_Battle_Cooperate_EndTileType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_Battle_Cooperate_EndTileType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -78,7 +94,9 @@ impl flatbuffers::Push for enum__Torappu_Battle_Cooperate_EndTileType {
     type Output = enum__Torappu_Battle_Cooperate_EndTileType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -158,11 +176,24 @@ impl core::fmt::Debug for enum__Torappu_Battle_Cooperate_LASTROUNDRESULT {
         }
     }
 }
+impl Serialize for enum__Torappu_Battle_Cooperate_LASTROUNDRESULT {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_Battle_Cooperate_LASTROUNDRESULT",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_Battle_Cooperate_LASTROUNDRESULT {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -171,7 +202,9 @@ impl flatbuffers::Push for enum__Torappu_Battle_Cooperate_LASTROUNDRESULT {
     type Output = enum__Torappu_Battle_Cooperate_LASTROUNDRESULT;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -213,7 +246,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_Battle_Cooperate_CooperateEndTi
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -239,6 +272,12 @@ impl<'a> clz_Torappu_Battle_Cooperate_CooperateEndTileInfo<'a> {
             builder.add_name(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Battle_Cooperate_CooperateEndTileInfoT {
+        let name = self.name().map(|x| x.to_string());
+        let description = self.description().map(|x| x.to_string());
+        clz_Torappu_Battle_Cooperate_CooperateEndTileInfoT { name, description }
     }
 
     #[inline]
@@ -299,6 +338,27 @@ impl<'a> Default for clz_Torappu_Battle_Cooperate_CooperateEndTileInfoArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_Battle_Cooperate_CooperateEndTileInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_Battle_Cooperate_CooperateEndTileInfo", 2)?;
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        if let Some(f) = self.description() {
+            s.serialize_field("description", &f)?;
+        } else {
+            s.skip_field("description")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_Battle_Cooperate_CooperateEndTileInfoBuilder<
     'a: 'b,
     'b,
@@ -351,6 +411,33 @@ impl core::fmt::Debug for clz_Torappu_Battle_Cooperate_CooperateEndTileInfo<'_> 
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Battle_Cooperate_CooperateEndTileInfoT {
+    pub name: Option<String>,
+    pub description: Option<String>,
+}
+impl Default for clz_Torappu_Battle_Cooperate_CooperateEndTileInfoT {
+    fn default() -> Self {
+        Self {
+            name: None,
+            description: None,
+        }
+    }
+}
+impl clz_Torappu_Battle_Cooperate_CooperateEndTileInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_Battle_Cooperate_CooperateEndTileInfo<'b>> {
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        let description = self.description.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_Battle_Cooperate_CooperateEndTileInfo::create(
+            _fbb,
+            &clz_Torappu_Battle_Cooperate_CooperateEndTileInfoArgs { name, description },
+        )
+    }
+}
 pub enum dict__enum__Torappu_Battle_Cooperate_EndTileType__clz_Torappu_Battle_Cooperate_CooperateEndTileInfoOffset
 {}
 #[derive(Copy, Clone, PartialEq)]
@@ -365,7 +452,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__enum__Torappu_Battle_Cooperate_EndTil
   type Inner = dict__enum__Torappu_Battle_Cooperate_EndTileType__clz_Torappu_Battle_Cooperate_CooperateEndTileInfo<'a>;
   #[inline]
   unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: flatbuffers::Table::new(buf, loc) }
+    Self { _tab: unsafe { flatbuffers::Table::new(buf, loc) } }
   }
 }
 
@@ -388,6 +475,16 @@ impl<'a> dict__enum__Torappu_Battle_Cooperate_EndTileType__clz_Torappu_Battle_Co
     builder.finish()
   }
 
+  pub fn unpack(&self) -> dict__enum__Torappu_Battle_Cooperate_EndTileType__clz_Torappu_Battle_Cooperate_CooperateEndTileInfoT {
+    let key = self.key();
+    let value = self.value().map(|x| {
+      Box::new(x.unpack())
+    });
+    dict__enum__Torappu_Battle_Cooperate_EndTileType__clz_Torappu_Battle_Cooperate_CooperateEndTileInfoT {
+      key,
+      value,
+    }
+  }
 
   #[inline]
   pub fn key(&self) -> enum__Torappu_Battle_Cooperate_EndTileType {
@@ -445,6 +542,22 @@ impl<'a> Default for dict__enum__Torappu_Battle_Cooperate_EndTileType__clz_Torap
   }
 }
 
+impl Serialize for dict__enum__Torappu_Battle_Cooperate_EndTileType__clz_Torappu_Battle_Cooperate_CooperateEndTileInfo<'_> {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: Serializer,
+  {
+    let mut s = serializer.serialize_struct("dict__enum__Torappu_Battle_Cooperate_EndTileType__clz_Torappu_Battle_Cooperate_CooperateEndTileInfo", 2)?;
+      s.serialize_field("key", &self.key())?;
+      if let Some(f) = self.value() {
+        s.serialize_field("value", &f)?;
+      } else {
+        s.skip_field("value")?;
+      }
+    s.end()
+  }
+}
+
 pub struct dict__enum__Torappu_Battle_Cooperate_EndTileType__clz_Torappu_Battle_Cooperate_CooperateEndTileInfoBuilder<
     'a: 'b,
     'b,
@@ -485,6 +598,36 @@ impl core::fmt::Debug for dict__enum__Torappu_Battle_Cooperate_EndTileType__clz_
       ds.finish()
   }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__enum__Torappu_Battle_Cooperate_EndTileType__clz_Torappu_Battle_Cooperate_CooperateEndTileInfoT
+{
+    pub key: enum__Torappu_Battle_Cooperate_EndTileType,
+    pub value: Option<Box<clz_Torappu_Battle_Cooperate_CooperateEndTileInfoT>>,
+}
+impl Default for dict__enum__Torappu_Battle_Cooperate_EndTileType__clz_Torappu_Battle_Cooperate_CooperateEndTileInfoT {
+  fn default() -> Self {
+    Self {
+      key: enum__Torappu_Battle_Cooperate_EndTileType::NONE,
+      value: None,
+    }
+  }
+}
+impl dict__enum__Torappu_Battle_Cooperate_EndTileType__clz_Torappu_Battle_Cooperate_CooperateEndTileInfoT {
+  pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+    &self,
+    _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>
+  ) -> flatbuffers::WIPOffset<dict__enum__Torappu_Battle_Cooperate_EndTileType__clz_Torappu_Battle_Cooperate_CooperateEndTileInfo<'b>> {
+    let key = self.key;
+    let value = self.value.as_ref().map(|x|{
+      x.pack(_fbb)
+    });
+    dict__enum__Torappu_Battle_Cooperate_EndTileType__clz_Torappu_Battle_Cooperate_CooperateEndTileInfo::create(_fbb, &dict__enum__Torappu_Battle_Cooperate_EndTileType__clz_Torappu_Battle_Cooperate_CooperateEndTileInfoArgs{
+      key,
+      value,
+    })
+  }
+}
 pub enum clz_Torappu_Battle_Cooperate_CooperateAheadGoalDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -497,7 +640,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_Battle_Cooperate_CooperateAhead
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -519,6 +662,12 @@ impl<'a> clz_Torappu_Battle_Cooperate_CooperateAheadGoalData<'a> {
         builder.add_level(args.level);
         builder.add_aheadCnt(args.aheadCnt);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Battle_Cooperate_CooperateAheadGoalDataT {
+        let aheadCnt = self.aheadCnt();
+        let level = self.level();
+        clz_Torappu_Battle_Cooperate_CooperateAheadGoalDataT { aheadCnt, level }
     }
 
     #[inline]
@@ -579,6 +728,19 @@ impl<'a> Default for clz_Torappu_Battle_Cooperate_CooperateAheadGoalDataArgs {
     }
 }
 
+impl Serialize for clz_Torappu_Battle_Cooperate_CooperateAheadGoalData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("clz_Torappu_Battle_Cooperate_CooperateAheadGoalData", 2)?;
+        s.serialize_field("aheadCnt", &self.aheadCnt())?;
+        s.serialize_field("level", &self.level())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_Battle_Cooperate_CooperateAheadGoalDataBuilder<
     'a: 'b,
     'b,
@@ -633,6 +795,33 @@ impl core::fmt::Debug for clz_Torappu_Battle_Cooperate_CooperateAheadGoalData<'_
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Battle_Cooperate_CooperateAheadGoalDataT {
+    pub aheadCnt: i32,
+    pub level: i32,
+}
+impl Default for clz_Torappu_Battle_Cooperate_CooperateAheadGoalDataT {
+    fn default() -> Self {
+        Self {
+            aheadCnt: 0,
+            level: 0,
+        }
+    }
+}
+impl clz_Torappu_Battle_Cooperate_CooperateAheadGoalDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_Battle_Cooperate_CooperateAheadGoalData<'b>> {
+        let aheadCnt = self.aheadCnt;
+        let level = self.level;
+        clz_Torappu_Battle_Cooperate_CooperateAheadGoalData::create(
+            _fbb,
+            &clz_Torappu_Battle_Cooperate_CooperateAheadGoalDataArgs { aheadCnt, level },
+        )
+    }
+}
 pub enum dict__enum__Torappu_Battle_Cooperate_LASTROUNDRESULT__intOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -645,7 +834,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__enum__Torappu_Battle_Cooperate_LASTRO
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -669,6 +858,12 @@ impl<'a> dict__enum__Torappu_Battle_Cooperate_LASTROUNDRESULT__int<'a> {
         builder.add_value(args.value);
         builder.add_key(args.key);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__enum__Torappu_Battle_Cooperate_LASTROUNDRESULT__intT {
+        let key = self.key();
+        let value = self.value();
+        dict__enum__Torappu_Battle_Cooperate_LASTROUNDRESULT__intT { key, value }
     }
 
     #[inline]
@@ -749,6 +944,21 @@ impl<'a> Default for dict__enum__Torappu_Battle_Cooperate_LASTROUNDRESULT__intAr
     }
 }
 
+impl Serialize for dict__enum__Torappu_Battle_Cooperate_LASTROUNDRESULT__int<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "dict__enum__Torappu_Battle_Cooperate_LASTROUNDRESULT__int",
+            2,
+        )?;
+        s.serialize_field("key", &self.key())?;
+        s.serialize_field("value", &self.value())?;
+        s.end()
+    }
+}
+
 pub struct dict__enum__Torappu_Battle_Cooperate_LASTROUNDRESULT__intBuilder<
     'a: 'b,
     'b,
@@ -804,6 +1014,33 @@ impl core::fmt::Debug for dict__enum__Torappu_Battle_Cooperate_LASTROUNDRESULT__
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__enum__Torappu_Battle_Cooperate_LASTROUNDRESULT__intT {
+    pub key: enum__Torappu_Battle_Cooperate_LASTROUNDRESULT,
+    pub value: i32,
+}
+impl Default for dict__enum__Torappu_Battle_Cooperate_LASTROUNDRESULT__intT {
+    fn default() -> Self {
+        Self {
+            key: enum__Torappu_Battle_Cooperate_LASTROUNDRESULT::GOAL,
+            value: 0,
+        }
+    }
+}
+impl dict__enum__Torappu_Battle_Cooperate_LASTROUNDRESULT__intT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__enum__Torappu_Battle_Cooperate_LASTROUNDRESULT__int<'b>> {
+        let key = self.key;
+        let value = self.value;
+        dict__enum__Torappu_Battle_Cooperate_LASTROUNDRESULT__int::create(
+            _fbb,
+            &dict__enum__Torappu_Battle_Cooperate_LASTROUNDRESULT__intArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_Battle_Cooperate_CooperateWaveWeightOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -816,7 +1053,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_Battle_Cooperate_CooperateWaveW
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -838,6 +1075,12 @@ impl<'a> clz_Torappu_Battle_Cooperate_CooperateWaveWeight<'a> {
         builder.add_weight(args.weight);
         builder.add_wave(args.wave);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Battle_Cooperate_CooperateWaveWeightT {
+        let wave = self.wave();
+        let weight = self.weight();
+        clz_Torappu_Battle_Cooperate_CooperateWaveWeightT { wave, weight }
     }
 
     #[inline]
@@ -895,6 +1138,19 @@ impl<'a> Default for clz_Torappu_Battle_Cooperate_CooperateWaveWeightArgs {
     }
 }
 
+impl Serialize for clz_Torappu_Battle_Cooperate_CooperateWaveWeight<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_Battle_Cooperate_CooperateWaveWeight", 2)?;
+        s.serialize_field("wave", &self.wave())?;
+        s.serialize_field("weight", &self.weight())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_Battle_Cooperate_CooperateWaveWeightBuilder<
     'a: 'b,
     'b,
@@ -949,6 +1205,30 @@ impl core::fmt::Debug for clz_Torappu_Battle_Cooperate_CooperateWaveWeight<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Battle_Cooperate_CooperateWaveWeightT {
+    pub wave: i32,
+    pub weight: i32,
+}
+impl Default for clz_Torappu_Battle_Cooperate_CooperateWaveWeightT {
+    fn default() -> Self {
+        Self { wave: 0, weight: 0 }
+    }
+}
+impl clz_Torappu_Battle_Cooperate_CooperateWaveWeightT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_Battle_Cooperate_CooperateWaveWeight<'b>> {
+        let wave = self.wave;
+        let weight = self.weight;
+        clz_Torappu_Battle_Cooperate_CooperateWaveWeight::create(
+            _fbb,
+            &clz_Torappu_Battle_Cooperate_CooperateWaveWeightArgs { wave, weight },
+        )
+    }
+}
 pub enum dict__int__list_clz_Torappu_Battle_Cooperate_CooperateWaveWeightOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -963,7 +1243,7 @@ impl<'a> flatbuffers::Follow<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -990,6 +1270,12 @@ impl<'a> dict__int__list_clz_Torappu_Battle_Cooperate_CooperateWaveWeight<'a> {
         }
         builder.add_key(args.key);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__int__list_clz_Torappu_Battle_Cooperate_CooperateWaveWeightT {
+        let key = self.key();
+        let value = self.value().map(|x| x.iter().map(|t| t.unpack()).collect());
+        dict__int__list_clz_Torappu_Battle_Cooperate_CooperateWaveWeightT { key, value }
     }
 
     #[inline]
@@ -1087,6 +1373,25 @@ impl<'a> Default for dict__int__list_clz_Torappu_Battle_Cooperate_CooperateWaveW
     }
 }
 
+impl Serialize for dict__int__list_clz_Torappu_Battle_Cooperate_CooperateWaveWeight<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "dict__int__list_clz_Torappu_Battle_Cooperate_CooperateWaveWeight",
+            2,
+        )?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__int__list_clz_Torappu_Battle_Cooperate_CooperateWaveWeightBuilder<
     'a: 'b,
     'b,
@@ -1150,6 +1455,37 @@ impl core::fmt::Debug for dict__int__list_clz_Torappu_Battle_Cooperate_Cooperate
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__int__list_clz_Torappu_Battle_Cooperate_CooperateWaveWeightT {
+    pub key: i32,
+    pub value: Option<Vec<clz_Torappu_Battle_Cooperate_CooperateWaveWeightT>>,
+}
+impl Default for dict__int__list_clz_Torappu_Battle_Cooperate_CooperateWaveWeightT {
+    fn default() -> Self {
+        Self {
+            key: 0,
+            value: None,
+        }
+    }
+}
+impl dict__int__list_clz_Torappu_Battle_Cooperate_CooperateWaveWeightT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__int__list_clz_Torappu_Battle_Cooperate_CooperateWaveWeight<'b>>
+    {
+        let key = self.key;
+        let value = self.value.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        dict__int__list_clz_Torappu_Battle_Cooperate_CooperateWaveWeight::create(
+            _fbb,
+            &dict__int__list_clz_Torappu_Battle_Cooperate_CooperateWaveWeightArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_Battle_Cooperate_CooperateTeamWeightOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1162,7 +1498,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_Battle_Cooperate_CooperateTeamW
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1186,6 +1522,12 @@ impl<'a> clz_Torappu_Battle_Cooperate_CooperateTeamWeight<'a> {
             builder.add_teamName(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Battle_Cooperate_CooperateTeamWeightT {
+        let teamName = self.teamName().map(|x| x.to_string());
+        let weight = self.weight();
+        clz_Torappu_Battle_Cooperate_CooperateTeamWeightT { teamName, weight }
     }
 
     #[inline]
@@ -1248,6 +1590,23 @@ impl<'a> Default for clz_Torappu_Battle_Cooperate_CooperateTeamWeightArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_Battle_Cooperate_CooperateTeamWeight<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_Battle_Cooperate_CooperateTeamWeight", 2)?;
+        if let Some(f) = self.teamName() {
+            s.serialize_field("teamName", &f)?;
+        } else {
+            s.skip_field("teamName")?;
+        }
+        s.serialize_field("weight", &self.weight())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_Battle_Cooperate_CooperateTeamWeightBuilder<
     'a: 'b,
     'b,
@@ -1301,6 +1660,33 @@ impl core::fmt::Debug for clz_Torappu_Battle_Cooperate_CooperateTeamWeight<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Battle_Cooperate_CooperateTeamWeightT {
+    pub teamName: Option<String>,
+    pub weight: i32,
+}
+impl Default for clz_Torappu_Battle_Cooperate_CooperateTeamWeightT {
+    fn default() -> Self {
+        Self {
+            teamName: None,
+            weight: 0,
+        }
+    }
+}
+impl clz_Torappu_Battle_Cooperate_CooperateTeamWeightT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_Battle_Cooperate_CooperateTeamWeight<'b>> {
+        let teamName = self.teamName.as_ref().map(|x| _fbb.create_string(x));
+        let weight = self.weight;
+        clz_Torappu_Battle_Cooperate_CooperateTeamWeight::create(
+            _fbb,
+            &clz_Torappu_Battle_Cooperate_CooperateTeamWeightArgs { teamName, weight },
+        )
+    }
+}
 pub enum clz_Torappu_Battle_Cooperate_CooperateTeamPlayerOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1313,7 +1699,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_Battle_Cooperate_CooperateTeamP
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1343,6 +1729,17 @@ impl<'a> clz_Torappu_Battle_Cooperate_CooperateTeamPlayer<'a> {
             builder.add_forward(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Battle_Cooperate_CooperateTeamPlayerT {
+        let forward = self.forward().map(|x| x.to_string());
+        let goalkeeper = self.goalkeeper().map(|x| x.to_string());
+        let muscleman = self.muscleman().map(|x| x.to_string());
+        clz_Torappu_Battle_Cooperate_CooperateTeamPlayerT {
+            forward,
+            goalkeeper,
+            muscleman,
+        }
     }
 
     #[inline]
@@ -1422,6 +1819,32 @@ impl<'a> Default for clz_Torappu_Battle_Cooperate_CooperateTeamPlayerArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_Battle_Cooperate_CooperateTeamPlayer<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_Battle_Cooperate_CooperateTeamPlayer", 3)?;
+        if let Some(f) = self.forward() {
+            s.serialize_field("forward", &f)?;
+        } else {
+            s.skip_field("forward")?;
+        }
+        if let Some(f) = self.goalkeeper() {
+            s.serialize_field("goalkeeper", &f)?;
+        } else {
+            s.skip_field("goalkeeper")?;
+        }
+        if let Some(f) = self.muscleman() {
+            s.serialize_field("muscleman", &f)?;
+        } else {
+            s.skip_field("muscleman")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_Battle_Cooperate_CooperateTeamPlayerBuilder<
     'a: 'b,
     'b,
@@ -1482,6 +1905,40 @@ impl core::fmt::Debug for clz_Torappu_Battle_Cooperate_CooperateTeamPlayer<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Battle_Cooperate_CooperateTeamPlayerT {
+    pub forward: Option<String>,
+    pub goalkeeper: Option<String>,
+    pub muscleman: Option<String>,
+}
+impl Default for clz_Torappu_Battle_Cooperate_CooperateTeamPlayerT {
+    fn default() -> Self {
+        Self {
+            forward: None,
+            goalkeeper: None,
+            muscleman: None,
+        }
+    }
+}
+impl clz_Torappu_Battle_Cooperate_CooperateTeamPlayerT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_Battle_Cooperate_CooperateTeamPlayer<'b>> {
+        let forward = self.forward.as_ref().map(|x| _fbb.create_string(x));
+        let goalkeeper = self.goalkeeper.as_ref().map(|x| _fbb.create_string(x));
+        let muscleman = self.muscleman.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_Battle_Cooperate_CooperateTeamPlayer::create(
+            _fbb,
+            &clz_Torappu_Battle_Cooperate_CooperateTeamPlayerArgs {
+                forward,
+                goalkeeper,
+                muscleman,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_Battle_Cooperate_CooperateTeamPlayerOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1496,7 +1953,7 @@ impl<'a> flatbuffers::Follow<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1524,6 +1981,15 @@ impl<'a> dict__string__clz_Torappu_Battle_Cooperate_CooperateTeamPlayer<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_Battle_Cooperate_CooperateTeamPlayerT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_Battle_Cooperate_CooperateTeamPlayerT { key, value }
     }
 
     #[inline]
@@ -1594,6 +2060,25 @@ impl<'a> Default for dict__string__clz_Torappu_Battle_Cooperate_CooperateTeamPla
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_Battle_Cooperate_CooperateTeamPlayer<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "dict__string__clz_Torappu_Battle_Cooperate_CooperateTeamPlayer",
+            2,
+        )?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_Battle_Cooperate_CooperateTeamPlayerBuilder<
     'a: 'b,
     'b,
@@ -1653,6 +2138,37 @@ impl core::fmt::Debug for dict__string__clz_Torappu_Battle_Cooperate_CooperateTe
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_Battle_Cooperate_CooperateTeamPlayerT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_Battle_Cooperate_CooperateTeamPlayerT>>,
+}
+impl Default for dict__string__clz_Torappu_Battle_Cooperate_CooperateTeamPlayerT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_Battle_Cooperate_CooperateTeamPlayerT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_Battle_Cooperate_CooperateTeamPlayer<'b>>
+    {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_Battle_Cooperate_CooperateTeamPlayer::create(
+            _fbb,
+            &dict__string__clz_Torappu_Battle_Cooperate_CooperateTeamPlayerArgs { key, value },
+        )
+    }
+}
 pub enum dict__string__stringOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1665,7 +2181,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__string<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1691,6 +2207,15 @@ impl<'a> dict__string__string<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__stringT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| x.to_string());
+        dict__string__stringT { key, value }
     }
 
     #[inline]
@@ -1754,6 +2279,22 @@ impl<'a> Default for dict__string__stringArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__string<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__string", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__stringBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1795,6 +2336,33 @@ impl core::fmt::Debug for dict__string__string<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__stringT {
+    pub key: String,
+    pub value: Option<String>,
+}
+impl Default for dict__string__stringT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__stringT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__string<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| _fbb.create_string(x));
+        dict__string__string::create(_fbb, &dict__string__stringArgs { key, value })
+    }
+}
 pub enum clz_Torappu_Battle_Cooperate_CooperateModeBattleDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1807,7 +2375,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_Battle_Cooperate_CooperateModeB
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1859,6 +2427,45 @@ impl<'a> clz_Torappu_Battle_Cooperate_CooperateModeBattleData<'a> {
         builder.add_getMaxMsgCntInOneUpdate(args.getMaxMsgCntInOneUpdate);
         builder.add_costTransferred(args.costTransferred);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Battle_Cooperate_CooperateModeBattleDataT {
+        let costTransferred = self.costTransferred();
+        let getMaxMsgCntInOneUpdate = self.getMaxMsgCntInOneUpdate();
+        let endTileInfo = self
+            .endTileInfo()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let footballAheadGoalCntFactor = self
+            .footballAheadGoalCntFactor()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let footballHardTypeFactor = self.footballHardTypeFactor();
+        let footballLastRoundResultFactor = self
+            .footballLastRoundResultFactor()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let footballLevelOfWaveFactor = self
+            .footballLevelOfWaveFactor()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let footballTeamWeights = self
+            .footballTeamWeights()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let footballTeamPlayers = self
+            .footballTeamPlayers()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let footballPlayersName = self
+            .footballPlayersName()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_Battle_Cooperate_CooperateModeBattleDataT {
+            costTransferred,
+            getMaxMsgCntInOneUpdate,
+            endTileInfo,
+            footballAheadGoalCntFactor,
+            footballHardTypeFactor,
+            footballLastRoundResultFactor,
+            footballLevelOfWaveFactor,
+            footballTeamWeights,
+            footballTeamPlayers,
+            footballPlayersName,
+        }
     }
 
     #[inline]
@@ -2102,6 +2709,55 @@ impl<'a> Default for clz_Torappu_Battle_Cooperate_CooperateModeBattleDataArgs<'a
     }
 }
 
+impl Serialize for clz_Torappu_Battle_Cooperate_CooperateModeBattleData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("clz_Torappu_Battle_Cooperate_CooperateModeBattleData", 10)?;
+        s.serialize_field("costTransferred", &self.costTransferred())?;
+        s.serialize_field("getMaxMsgCntInOneUpdate", &self.getMaxMsgCntInOneUpdate())?;
+        if let Some(f) = self.endTileInfo() {
+            s.serialize_field("endTileInfo", &f)?;
+        } else {
+            s.skip_field("endTileInfo")?;
+        }
+        if let Some(f) = self.footballAheadGoalCntFactor() {
+            s.serialize_field("footballAheadGoalCntFactor", &f)?;
+        } else {
+            s.skip_field("footballAheadGoalCntFactor")?;
+        }
+        s.serialize_field("footballHardTypeFactor", &self.footballHardTypeFactor())?;
+        if let Some(f) = self.footballLastRoundResultFactor() {
+            s.serialize_field("footballLastRoundResultFactor", &f)?;
+        } else {
+            s.skip_field("footballLastRoundResultFactor")?;
+        }
+        if let Some(f) = self.footballLevelOfWaveFactor() {
+            s.serialize_field("footballLevelOfWaveFactor", &f)?;
+        } else {
+            s.skip_field("footballLevelOfWaveFactor")?;
+        }
+        if let Some(f) = self.footballTeamWeights() {
+            s.serialize_field("footballTeamWeights", &f)?;
+        } else {
+            s.skip_field("footballTeamWeights")?;
+        }
+        if let Some(f) = self.footballTeamPlayers() {
+            s.serialize_field("footballTeamPlayers", &f)?;
+        } else {
+            s.skip_field("footballTeamPlayers")?;
+        }
+        if let Some(f) = self.footballPlayersName() {
+            s.serialize_field("footballPlayersName", &f)?;
+        } else {
+            s.skip_field("footballPlayersName")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_Battle_Cooperate_CooperateModeBattleDataBuilder<
     'a: 'b,
     'b,
@@ -2286,6 +2942,89 @@ impl core::fmt::Debug for clz_Torappu_Battle_Cooperate_CooperateModeBattleData<'
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Battle_Cooperate_CooperateModeBattleDataT {
+  pub costTransferred: i32,
+  pub getMaxMsgCntInOneUpdate: i32,
+  pub endTileInfo: Option<Vec<dict__enum__Torappu_Battle_Cooperate_EndTileType__clz_Torappu_Battle_Cooperate_CooperateEndTileInfoT>>,
+  pub footballAheadGoalCntFactor: Option<Vec<clz_Torappu_Battle_Cooperate_CooperateAheadGoalDataT>>,
+  pub footballHardTypeFactor: i32,
+  pub footballLastRoundResultFactor: Option<Vec<dict__enum__Torappu_Battle_Cooperate_LASTROUNDRESULT__intT>>,
+  pub footballLevelOfWaveFactor: Option<Vec<dict__int__list_clz_Torappu_Battle_Cooperate_CooperateWaveWeightT>>,
+  pub footballTeamWeights: Option<Vec<clz_Torappu_Battle_Cooperate_CooperateTeamWeightT>>,
+  pub footballTeamPlayers: Option<Vec<dict__string__clz_Torappu_Battle_Cooperate_CooperateTeamPlayerT>>,
+  pub footballPlayersName: Option<Vec<dict__string__stringT>>,
+}
+impl Default for clz_Torappu_Battle_Cooperate_CooperateModeBattleDataT {
+    fn default() -> Self {
+        Self {
+            costTransferred: 0,
+            getMaxMsgCntInOneUpdate: 0,
+            endTileInfo: None,
+            footballAheadGoalCntFactor: None,
+            footballHardTypeFactor: 0,
+            footballLastRoundResultFactor: None,
+            footballLevelOfWaveFactor: None,
+            footballTeamWeights: None,
+            footballTeamPlayers: None,
+            footballPlayersName: None,
+        }
+    }
+}
+impl clz_Torappu_Battle_Cooperate_CooperateModeBattleDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_Battle_Cooperate_CooperateModeBattleData<'b>> {
+        let costTransferred = self.costTransferred;
+        let getMaxMsgCntInOneUpdate = self.getMaxMsgCntInOneUpdate;
+        let endTileInfo = self.endTileInfo.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let footballAheadGoalCntFactor = self.footballAheadGoalCntFactor.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let footballHardTypeFactor = self.footballHardTypeFactor;
+        let footballLastRoundResultFactor = self.footballLastRoundResultFactor.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let footballLevelOfWaveFactor = self.footballLevelOfWaveFactor.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let footballTeamWeights = self.footballTeamWeights.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let footballTeamPlayers = self.footballTeamPlayers.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let footballPlayersName = self.footballPlayersName.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_Battle_Cooperate_CooperateModeBattleData::create(
+            _fbb,
+            &clz_Torappu_Battle_Cooperate_CooperateModeBattleDataArgs {
+                costTransferred,
+                getMaxMsgCntInOneUpdate,
+                endTileInfo,
+                footballAheadGoalCntFactor,
+                footballHardTypeFactor,
+                footballLastRoundResultFactor,
+                footballLevelOfWaveFactor,
+                footballTeamWeights,
+                footballTeamPlayers,
+                footballPlayersName,
+            },
+        )
+    }
+}
 #[inline]
 /// Verifies that a buffer of bytes contains a `clz_Torappu_Battle_Cooperate_CooperateModeBattleData`
 /// and returns it.
@@ -2352,7 +3091,9 @@ pub fn size_prefixed_root_as_clz_torappu_battle_cooperate_cooperate_mode_battle_
 pub unsafe fn root_as_clz_torappu_battle_cooperate_cooperate_mode_battle_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_Battle_Cooperate_CooperateModeBattleData {
-    flatbuffers::root_unchecked::<clz_Torappu_Battle_Cooperate_CooperateModeBattleData>(buf)
+    unsafe {
+        flatbuffers::root_unchecked::<clz_Torappu_Battle_Cooperate_CooperateModeBattleData>(buf)
+    }
 }
 #[inline]
 /// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_Battle_Cooperate_CooperateModeBattleData and returns it.
@@ -2361,9 +3102,11 @@ pub unsafe fn root_as_clz_torappu_battle_cooperate_cooperate_mode_battle_data_un
 pub unsafe fn size_prefixed_root_as_clz_torappu_battle_cooperate_cooperate_mode_battle_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_Battle_Cooperate_CooperateModeBattleData {
-    flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_Battle_Cooperate_CooperateModeBattleData>(
-        buf,
-    )
+    unsafe {
+        flatbuffers::size_prefixed_root_unchecked::<
+            clz_Torappu_Battle_Cooperate_CooperateModeBattleData,
+        >(buf)
+    }
 }
 #[inline]
 pub fn finish_clz_torappu_battle_cooperate_cooperate_mode_battle_data_buffer<

@@ -5,6 +5,9 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+use self::serde::ser::{Serialize, SerializeStruct, Serializer};
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
@@ -72,11 +75,24 @@ impl core::fmt::Debug for enum__Torappu_EvolvePhase {
         }
     }
 }
+impl Serialize for enum__Torappu_EvolvePhase {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_EvolvePhase",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_EvolvePhase {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -85,7 +101,9 @@ impl flatbuffers::Push for enum__Torappu_EvolvePhase {
     type Output = enum__Torappu_EvolvePhase;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -523,11 +541,24 @@ impl core::fmt::Debug for enum__Torappu_ItemType {
         }
     }
 }
+impl Serialize for enum__Torappu_ItemType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_ItemType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ItemType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -536,7 +567,9 @@ impl flatbuffers::Push for enum__Torappu_ItemType {
     type Output = enum__Torappu_ItemType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -615,11 +648,24 @@ impl core::fmt::Debug for enum__Torappu_UniEquipType {
         }
     }
 }
+impl Serialize for enum__Torappu_UniEquipType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_UniEquipType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_UniEquipType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -628,7 +674,9 @@ impl flatbuffers::Push for enum__Torappu_UniEquipType {
     type Output = enum__Torappu_UniEquipType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -670,7 +718,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__int<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -694,6 +742,15 @@ impl<'a> dict__string__int<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__intT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value();
+        dict__string__intT { key, value }
     }
 
     #[inline]
@@ -758,6 +815,18 @@ impl<'a> Default for dict__string__intArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__int<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__int", 2)?;
+        s.serialize_field("key", &self.key())?;
+        s.serialize_field("value", &self.value())?;
+        s.end()
+    }
+}
+
 pub struct dict__string__intBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -799,6 +868,33 @@ impl core::fmt::Debug for dict__string__int<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__intT {
+    pub key: String,
+    pub value: i32,
+}
+impl Default for dict__string__intT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: 0,
+        }
+    }
+}
+impl dict__string__intT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__int<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value;
+        dict__string__int::create(_fbb, &dict__string__intArgs { key, value })
+    }
+}
 pub enum clz_Torappu_ItemBundleOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -811,7 +907,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ItemBundle<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -837,6 +933,13 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ItemBundleT {
+        let id = self.id().map(|x| x.to_string());
+        let count = self.count();
+        let type_ = self.type_();
+        clz_Torappu_ItemBundleT { id, count, type_ }
     }
 
     #[inline]
@@ -907,6 +1010,23 @@ impl<'a> Default for clz_Torappu_ItemBundleArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ItemBundle<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ItemBundle", 3)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        s.serialize_field("count", &self.count())?;
+        s.serialize_field("type_", &self.type_())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ItemBundleBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -956,6 +1076,33 @@ impl core::fmt::Debug for clz_Torappu_ItemBundle<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ItemBundleT {
+    pub id: Option<String>,
+    pub count: i32,
+    pub type_: enum__Torappu_ItemType,
+}
+impl Default for clz_Torappu_ItemBundleT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            count: 0,
+            type_: enum__Torappu_ItemType::NONE,
+        }
+    }
+}
+impl clz_Torappu_ItemBundleT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ItemBundle<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let count = self.count;
+        let type_ = self.type_;
+        clz_Torappu_ItemBundle::create(_fbb, &clz_Torappu_ItemBundleArgs { id, count, type_ })
+    }
+}
 pub enum dict__int__list_clz_Torappu_ItemBundleOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -968,7 +1115,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__int__list_clz_Torappu_ItemBundle<'a> 
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -992,6 +1139,12 @@ impl<'a> dict__int__list_clz_Torappu_ItemBundle<'a> {
         }
         builder.add_key(args.key);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__int__list_clz_Torappu_ItemBundleT {
+        let key = self.key();
+        let value = self.value().map(|x| x.iter().map(|t| t.unpack()).collect());
+        dict__int__list_clz_Torappu_ItemBundleT { key, value }
     }
 
     #[inline]
@@ -1065,6 +1218,22 @@ impl<'a> Default for dict__int__list_clz_Torappu_ItemBundleArgs<'a> {
     }
 }
 
+impl Serialize for dict__int__list_clz_Torappu_ItemBundle<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__int__list_clz_Torappu_ItemBundle", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__int__list_clz_Torappu_ItemBundleBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -1115,6 +1284,36 @@ impl core::fmt::Debug for dict__int__list_clz_Torappu_ItemBundle<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__int__list_clz_Torappu_ItemBundleT {
+    pub key: i32,
+    pub value: Option<Vec<clz_Torappu_ItemBundleT>>,
+}
+impl Default for dict__int__list_clz_Torappu_ItemBundleT {
+    fn default() -> Self {
+        Self {
+            key: 0,
+            value: None,
+        }
+    }
+}
+impl dict__int__list_clz_Torappu_ItemBundleT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__int__list_clz_Torappu_ItemBundle<'b>> {
+        let key = self.key;
+        let value = self.value.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        dict__int__list_clz_Torappu_ItemBundle::create(
+            _fbb,
+            &dict__int__list_clz_Torappu_ItemBundleArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_UniEquipDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1127,7 +1326,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_UniEquipData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1229,6 +1428,69 @@ impl<'a> clz_Torappu_UniEquipData<'a> {
         builder.add_isSpecialEquip(args.isSpecialEquip);
         builder.add_hasUnlockMission(args.hasUnlockMission);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_UniEquipDataT {
+        let uniEquipId = self.uniEquipId().map(|x| x.to_string());
+        let uniEquipName = self.uniEquipName().map(|x| x.to_string());
+        let uniEquipIcon = self.uniEquipIcon().map(|x| x.to_string());
+        let uniEquipDesc = self.uniEquipDesc().map(|x| x.to_string());
+        let typeIcon = self.typeIcon().map(|x| x.to_string());
+        let typeName1 = self.typeName1().map(|x| x.to_string());
+        let typeName2 = self.typeName2().map(|x| x.to_string());
+        let equipShiningColor = self.equipShiningColor().map(|x| x.to_string());
+        let showEvolvePhase = self.showEvolvePhase();
+        let unlockEvolvePhase = self.unlockEvolvePhase();
+        let charId = self.charId().map(|x| x.to_string());
+        let tmplId = self.tmplId().map(|x| x.to_string());
+        let showLevel = self.showLevel();
+        let unlockLevel = self.unlockLevel();
+        let missionList = self
+            .missionList()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let unlockFavors = self
+            .unlockFavors()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let itemCost = self
+            .itemCost()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let type_ = self.type_();
+        let uniEquipGetTime = self.uniEquipGetTime();
+        let uniEquipShowEnd = self.uniEquipShowEnd();
+        let charEquipOrder = self.charEquipOrder();
+        let hasUnlockMission = self.hasUnlockMission();
+        let isSpecialEquip = self.isSpecialEquip();
+        let specialEquipDesc = self.specialEquipDesc().map(|x| x.to_string());
+        let specialEquipColor = self.specialEquipColor().map(|x| x.to_string());
+        let charColor = self.charColor().map(|x| x.to_string());
+        clz_Torappu_UniEquipDataT {
+            uniEquipId,
+            uniEquipName,
+            uniEquipIcon,
+            uniEquipDesc,
+            typeIcon,
+            typeName1,
+            typeName2,
+            equipShiningColor,
+            showEvolvePhase,
+            unlockEvolvePhase,
+            charId,
+            tmplId,
+            showLevel,
+            unlockLevel,
+            missionList,
+            unlockFavors,
+            itemCost,
+            type_,
+            uniEquipGetTime,
+            uniEquipShowEnd,
+            charEquipOrder,
+            hasUnlockMission,
+            isSpecialEquip,
+            specialEquipDesc,
+            specialEquipColor,
+            charColor,
+        }
     }
 
     #[inline]
@@ -1729,6 +1991,106 @@ impl<'a> Default for clz_Torappu_UniEquipDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_UniEquipData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_UniEquipData", 26)?;
+        if let Some(f) = self.uniEquipId() {
+            s.serialize_field("uniEquipId", &f)?;
+        } else {
+            s.skip_field("uniEquipId")?;
+        }
+        if let Some(f) = self.uniEquipName() {
+            s.serialize_field("uniEquipName", &f)?;
+        } else {
+            s.skip_field("uniEquipName")?;
+        }
+        if let Some(f) = self.uniEquipIcon() {
+            s.serialize_field("uniEquipIcon", &f)?;
+        } else {
+            s.skip_field("uniEquipIcon")?;
+        }
+        if let Some(f) = self.uniEquipDesc() {
+            s.serialize_field("uniEquipDesc", &f)?;
+        } else {
+            s.skip_field("uniEquipDesc")?;
+        }
+        if let Some(f) = self.typeIcon() {
+            s.serialize_field("typeIcon", &f)?;
+        } else {
+            s.skip_field("typeIcon")?;
+        }
+        if let Some(f) = self.typeName1() {
+            s.serialize_field("typeName1", &f)?;
+        } else {
+            s.skip_field("typeName1")?;
+        }
+        if let Some(f) = self.typeName2() {
+            s.serialize_field("typeName2", &f)?;
+        } else {
+            s.skip_field("typeName2")?;
+        }
+        if let Some(f) = self.equipShiningColor() {
+            s.serialize_field("equipShiningColor", &f)?;
+        } else {
+            s.skip_field("equipShiningColor")?;
+        }
+        s.serialize_field("showEvolvePhase", &self.showEvolvePhase())?;
+        s.serialize_field("unlockEvolvePhase", &self.unlockEvolvePhase())?;
+        if let Some(f) = self.charId() {
+            s.serialize_field("charId", &f)?;
+        } else {
+            s.skip_field("charId")?;
+        }
+        if let Some(f) = self.tmplId() {
+            s.serialize_field("tmplId", &f)?;
+        } else {
+            s.skip_field("tmplId")?;
+        }
+        s.serialize_field("showLevel", &self.showLevel())?;
+        s.serialize_field("unlockLevel", &self.unlockLevel())?;
+        if let Some(f) = self.missionList() {
+            s.serialize_field("missionList", &f)?;
+        } else {
+            s.skip_field("missionList")?;
+        }
+        if let Some(f) = self.unlockFavors() {
+            s.serialize_field("unlockFavors", &f)?;
+        } else {
+            s.skip_field("unlockFavors")?;
+        }
+        if let Some(f) = self.itemCost() {
+            s.serialize_field("itemCost", &f)?;
+        } else {
+            s.skip_field("itemCost")?;
+        }
+        s.serialize_field("type_", &self.type_())?;
+        s.serialize_field("uniEquipGetTime", &self.uniEquipGetTime())?;
+        s.serialize_field("uniEquipShowEnd", &self.uniEquipShowEnd())?;
+        s.serialize_field("charEquipOrder", &self.charEquipOrder())?;
+        s.serialize_field("hasUnlockMission", &self.hasUnlockMission())?;
+        s.serialize_field("isSpecialEquip", &self.isSpecialEquip())?;
+        if let Some(f) = self.specialEquipDesc() {
+            s.serialize_field("specialEquipDesc", &f)?;
+        } else {
+            s.skip_field("specialEquipDesc")?;
+        }
+        if let Some(f) = self.specialEquipColor() {
+            s.serialize_field("specialEquipColor", &f)?;
+        } else {
+            s.skip_field("specialEquipColor")?;
+        }
+        if let Some(f) = self.charColor() {
+            s.serialize_field("charColor", &f)?;
+        } else {
+            s.skip_field("charColor")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_UniEquipDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1987,6 +2349,150 @@ impl core::fmt::Debug for clz_Torappu_UniEquipData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_UniEquipDataT {
+    pub uniEquipId: Option<String>,
+    pub uniEquipName: Option<String>,
+    pub uniEquipIcon: Option<String>,
+    pub uniEquipDesc: Option<String>,
+    pub typeIcon: Option<String>,
+    pub typeName1: Option<String>,
+    pub typeName2: Option<String>,
+    pub equipShiningColor: Option<String>,
+    pub showEvolvePhase: enum__Torappu_EvolvePhase,
+    pub unlockEvolvePhase: enum__Torappu_EvolvePhase,
+    pub charId: Option<String>,
+    pub tmplId: Option<String>,
+    pub showLevel: i32,
+    pub unlockLevel: i32,
+    pub missionList: Option<Vec<String>>,
+    pub unlockFavors: Option<Vec<dict__string__intT>>,
+    pub itemCost: Option<Vec<dict__int__list_clz_Torappu_ItemBundleT>>,
+    pub type_: enum__Torappu_UniEquipType,
+    pub uniEquipGetTime: i64,
+    pub uniEquipShowEnd: i64,
+    pub charEquipOrder: i32,
+    pub hasUnlockMission: bool,
+    pub isSpecialEquip: bool,
+    pub specialEquipDesc: Option<String>,
+    pub specialEquipColor: Option<String>,
+    pub charColor: Option<String>,
+}
+impl Default for clz_Torappu_UniEquipDataT {
+    fn default() -> Self {
+        Self {
+            uniEquipId: None,
+            uniEquipName: None,
+            uniEquipIcon: None,
+            uniEquipDesc: None,
+            typeIcon: None,
+            typeName1: None,
+            typeName2: None,
+            equipShiningColor: None,
+            showEvolvePhase: enum__Torappu_EvolvePhase::PHASE_0,
+            unlockEvolvePhase: enum__Torappu_EvolvePhase::PHASE_0,
+            charId: None,
+            tmplId: None,
+            showLevel: 0,
+            unlockLevel: 0,
+            missionList: None,
+            unlockFavors: None,
+            itemCost: None,
+            type_: enum__Torappu_UniEquipType::INITIAL,
+            uniEquipGetTime: 0,
+            uniEquipShowEnd: 0,
+            charEquipOrder: 0,
+            hasUnlockMission: false,
+            isSpecialEquip: false,
+            specialEquipDesc: None,
+            specialEquipColor: None,
+            charColor: None,
+        }
+    }
+}
+impl clz_Torappu_UniEquipDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_UniEquipData<'b>> {
+        let uniEquipId = self.uniEquipId.as_ref().map(|x| _fbb.create_string(x));
+        let uniEquipName = self.uniEquipName.as_ref().map(|x| _fbb.create_string(x));
+        let uniEquipIcon = self.uniEquipIcon.as_ref().map(|x| _fbb.create_string(x));
+        let uniEquipDesc = self.uniEquipDesc.as_ref().map(|x| _fbb.create_string(x));
+        let typeIcon = self.typeIcon.as_ref().map(|x| _fbb.create_string(x));
+        let typeName1 = self.typeName1.as_ref().map(|x| _fbb.create_string(x));
+        let typeName2 = self.typeName2.as_ref().map(|x| _fbb.create_string(x));
+        let equipShiningColor = self
+            .equipShiningColor
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let showEvolvePhase = self.showEvolvePhase;
+        let unlockEvolvePhase = self.unlockEvolvePhase;
+        let charId = self.charId.as_ref().map(|x| _fbb.create_string(x));
+        let tmplId = self.tmplId.as_ref().map(|x| _fbb.create_string(x));
+        let showLevel = self.showLevel;
+        let unlockLevel = self.unlockLevel;
+        let missionList = self.missionList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let unlockFavors = self.unlockFavors.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let itemCost = self.itemCost.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let type_ = self.type_;
+        let uniEquipGetTime = self.uniEquipGetTime;
+        let uniEquipShowEnd = self.uniEquipShowEnd;
+        let charEquipOrder = self.charEquipOrder;
+        let hasUnlockMission = self.hasUnlockMission;
+        let isSpecialEquip = self.isSpecialEquip;
+        let specialEquipDesc = self
+            .specialEquipDesc
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let specialEquipColor = self
+            .specialEquipColor
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let charColor = self.charColor.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_UniEquipData::create(
+            _fbb,
+            &clz_Torappu_UniEquipDataArgs {
+                uniEquipId,
+                uniEquipName,
+                uniEquipIcon,
+                uniEquipDesc,
+                typeIcon,
+                typeName1,
+                typeName2,
+                equipShiningColor,
+                showEvolvePhase,
+                unlockEvolvePhase,
+                charId,
+                tmplId,
+                showLevel,
+                unlockLevel,
+                missionList,
+                unlockFavors,
+                itemCost,
+                type_,
+                uniEquipGetTime,
+                uniEquipShowEnd,
+                charEquipOrder,
+                hasUnlockMission,
+                isSpecialEquip,
+                specialEquipDesc,
+                specialEquipColor,
+                charColor,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_UniEquipDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1999,7 +2505,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_UniEquipData<'a> 
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2025,6 +2531,15 @@ impl<'a> dict__string__clz_Torappu_UniEquipData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_UniEquipDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_UniEquipDataT { key, value }
     }
 
     #[inline]
@@ -2098,6 +2613,22 @@ impl<'a> Default for dict__string__clz_Torappu_UniEquipDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_UniEquipData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_UniEquipData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_UniEquipDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -2148,6 +2679,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_UniEquipData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_UniEquipDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_UniEquipDataT>>,
+}
+impl Default for dict__string__clz_Torappu_UniEquipDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_UniEquipDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_UniEquipData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_UniEquipData::create(
+            _fbb,
+            &dict__string__clz_Torappu_UniEquipDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_UniEquipMissionDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2160,7 +2721,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_UniEquipMissionData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2204,6 +2765,27 @@ impl<'a> clz_Torappu_UniEquipMissionData<'a> {
             builder.add_template(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_UniEquipMissionDataT {
+        let template = self.template().map(|x| x.to_string());
+        let desc = self.desc().map(|x| x.to_string());
+        let paramList = self
+            .paramList()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let uniEquipMissionId = self.uniEquipMissionId().map(|x| x.to_string());
+        let uniEquipMissionSort = self.uniEquipMissionSort();
+        let uniEquipId = self.uniEquipId().map(|x| x.to_string());
+        let jumpStageId = self.jumpStageId().map(|x| x.to_string());
+        clz_Torappu_UniEquipMissionDataT {
+            template,
+            desc,
+            paramList,
+            uniEquipMissionId,
+            uniEquipMissionSort,
+            uniEquipId,
+            jumpStageId,
+        }
     }
 
     #[inline]
@@ -2358,6 +2940,47 @@ impl<'a> Default for clz_Torappu_UniEquipMissionDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_UniEquipMissionData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_UniEquipMissionData", 7)?;
+        if let Some(f) = self.template() {
+            s.serialize_field("template", &f)?;
+        } else {
+            s.skip_field("template")?;
+        }
+        if let Some(f) = self.desc() {
+            s.serialize_field("desc", &f)?;
+        } else {
+            s.skip_field("desc")?;
+        }
+        if let Some(f) = self.paramList() {
+            s.serialize_field("paramList", &f)?;
+        } else {
+            s.skip_field("paramList")?;
+        }
+        if let Some(f) = self.uniEquipMissionId() {
+            s.serialize_field("uniEquipMissionId", &f)?;
+        } else {
+            s.skip_field("uniEquipMissionId")?;
+        }
+        s.serialize_field("uniEquipMissionSort", &self.uniEquipMissionSort())?;
+        if let Some(f) = self.uniEquipId() {
+            s.serialize_field("uniEquipId", &f)?;
+        } else {
+            s.skip_field("uniEquipId")?;
+        }
+        if let Some(f) = self.jumpStageId() {
+            s.serialize_field("jumpStageId", &f)?;
+        } else {
+            s.skip_field("jumpStageId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_UniEquipMissionDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2448,6 +3071,62 @@ impl core::fmt::Debug for clz_Torappu_UniEquipMissionData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_UniEquipMissionDataT {
+    pub template: Option<String>,
+    pub desc: Option<String>,
+    pub paramList: Option<Vec<String>>,
+    pub uniEquipMissionId: Option<String>,
+    pub uniEquipMissionSort: i32,
+    pub uniEquipId: Option<String>,
+    pub jumpStageId: Option<String>,
+}
+impl Default for clz_Torappu_UniEquipMissionDataT {
+    fn default() -> Self {
+        Self {
+            template: None,
+            desc: None,
+            paramList: None,
+            uniEquipMissionId: None,
+            uniEquipMissionSort: 0,
+            uniEquipId: None,
+            jumpStageId: None,
+        }
+    }
+}
+impl clz_Torappu_UniEquipMissionDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_UniEquipMissionData<'b>> {
+        let template = self.template.as_ref().map(|x| _fbb.create_string(x));
+        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
+        let paramList = self.paramList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let uniEquipMissionId = self
+            .uniEquipMissionId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let uniEquipMissionSort = self.uniEquipMissionSort;
+        let uniEquipId = self.uniEquipId.as_ref().map(|x| _fbb.create_string(x));
+        let jumpStageId = self.jumpStageId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_UniEquipMissionData::create(
+            _fbb,
+            &clz_Torappu_UniEquipMissionDataArgs {
+                template,
+                desc,
+                paramList,
+                uniEquipMissionId,
+                uniEquipMissionSort,
+                uniEquipId,
+                jumpStageId,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_UniEquipMissionDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2460,7 +3139,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_UniEquipMissionDa
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2486,6 +3165,15 @@ impl<'a> dict__string__clz_Torappu_UniEquipMissionData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_UniEquipMissionDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_UniEquipMissionDataT { key, value }
     }
 
     #[inline]
@@ -2559,6 +3247,23 @@ impl<'a> Default for dict__string__clz_Torappu_UniEquipMissionDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_UniEquipMissionData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_UniEquipMissionData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_UniEquipMissionDataBuilder<
     'a: 'b,
     'b,
@@ -2620,6 +3325,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_UniEquipMissionData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_UniEquipMissionDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_UniEquipMissionDataT>>,
+}
+impl Default for dict__string__clz_Torappu_UniEquipMissionDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_UniEquipMissionDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_UniEquipMissionData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_UniEquipMissionData::create(
+            _fbb,
+            &dict__string__clz_Torappu_UniEquipMissionDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SubProfessionDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2632,7 +3367,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SubProfessionData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2660,6 +3395,17 @@ impl<'a> clz_Torappu_SubProfessionData<'a> {
             builder.add_subProfessionId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SubProfessionDataT {
+        let subProfessionId = self.subProfessionId().map(|x| x.to_string());
+        let subProfessionName = self.subProfessionName().map(|x| x.to_string());
+        let subProfessionCatagory = self.subProfessionCatagory();
+        clz_Torappu_SubProfessionDataT {
+            subProfessionId,
+            subProfessionName,
+            subProfessionCatagory,
+        }
     }
 
     #[inline]
@@ -2745,6 +3491,27 @@ impl<'a> Default for clz_Torappu_SubProfessionDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SubProfessionData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SubProfessionData", 3)?;
+        if let Some(f) = self.subProfessionId() {
+            s.serialize_field("subProfessionId", &f)?;
+        } else {
+            s.skip_field("subProfessionId")?;
+        }
+        if let Some(f) = self.subProfessionName() {
+            s.serialize_field("subProfessionName", &f)?;
+        } else {
+            s.skip_field("subProfessionName")?;
+        }
+        s.serialize_field("subProfessionCatagory", &self.subProfessionCatagory())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SubProfessionDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2798,6 +3565,43 @@ impl core::fmt::Debug for clz_Torappu_SubProfessionData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SubProfessionDataT {
+    pub subProfessionId: Option<String>,
+    pub subProfessionName: Option<String>,
+    pub subProfessionCatagory: i32,
+}
+impl Default for clz_Torappu_SubProfessionDataT {
+    fn default() -> Self {
+        Self {
+            subProfessionId: None,
+            subProfessionName: None,
+            subProfessionCatagory: 0,
+        }
+    }
+}
+impl clz_Torappu_SubProfessionDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SubProfessionData<'b>> {
+        let subProfessionId = self.subProfessionId.as_ref().map(|x| _fbb.create_string(x));
+        let subProfessionName = self
+            .subProfessionName
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let subProfessionCatagory = self.subProfessionCatagory;
+        clz_Torappu_SubProfessionData::create(
+            _fbb,
+            &clz_Torappu_SubProfessionDataArgs {
+                subProfessionId,
+                subProfessionName,
+                subProfessionCatagory,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SubProfessionDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2810,7 +3614,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SubProfessionData
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2836,6 +3640,15 @@ impl<'a> dict__string__clz_Torappu_SubProfessionData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SubProfessionDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SubProfessionDataT { key, value }
     }
 
     #[inline]
@@ -2909,6 +3722,23 @@ impl<'a> Default for dict__string__clz_Torappu_SubProfessionDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SubProfessionData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_SubProfessionData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SubProfessionDataBuilder<
     'a: 'b,
     'b,
@@ -2965,6 +3795,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SubProfessionData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SubProfessionDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SubProfessionDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SubProfessionDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SubProfessionDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SubProfessionData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SubProfessionData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SubProfessionDataArgs { key, value },
+        )
+    }
+}
 pub enum dict__string__list_stringOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2977,7 +3837,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__list_string<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3003,6 +3863,17 @@ impl<'a> dict__string__list_string<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__list_stringT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self
+            .value()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        dict__string__list_stringT { key, value }
     }
 
     #[inline]
@@ -3071,6 +3942,22 @@ impl<'a> Default for dict__string__list_stringArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__list_string<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__list_string", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__list_stringBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3120,6 +4007,36 @@ impl core::fmt::Debug for dict__string__list_string<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__list_stringT {
+    pub key: String,
+    pub value: Option<Vec<String>>,
+}
+impl Default for dict__string__list_stringT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__list_stringT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__list_string<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        dict__string__list_string::create(_fbb, &dict__string__list_stringArgs { key, value })
+    }
+}
 pub enum clz_Torappu_UniEquipTypeInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3132,7 +4049,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_UniEquipTypeInfo<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3160,6 +4077,19 @@ impl<'a> clz_Torappu_UniEquipTypeInfo<'a> {
         builder.add_isInitial(args.isInitial);
         builder.add_isSpecial(args.isSpecial);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_UniEquipTypeInfoT {
+        let uniEquipTypeName = self.uniEquipTypeName().map(|x| x.to_string());
+        let sortId = self.sortId();
+        let isSpecial = self.isSpecial();
+        let isInitial = self.isInitial();
+        clz_Torappu_UniEquipTypeInfoT {
+            uniEquipTypeName,
+            sortId,
+            isSpecial,
+            isInitial,
+        }
     }
 
     #[inline]
@@ -3247,6 +4177,24 @@ impl<'a> Default for clz_Torappu_UniEquipTypeInfoArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_UniEquipTypeInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_UniEquipTypeInfo", 4)?;
+        if let Some(f) = self.uniEquipTypeName() {
+            s.serialize_field("uniEquipTypeName", &f)?;
+        } else {
+            s.skip_field("uniEquipTypeName")?;
+        }
+        s.serialize_field("sortId", &self.sortId())?;
+        s.serialize_field("isSpecial", &self.isSpecial())?;
+        s.serialize_field("isInitial", &self.isInitial())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_UniEquipTypeInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3301,6 +4249,47 @@ impl core::fmt::Debug for clz_Torappu_UniEquipTypeInfo<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_UniEquipTypeInfoT {
+    pub uniEquipTypeName: Option<String>,
+    pub sortId: i32,
+    pub isSpecial: bool,
+    pub isInitial: bool,
+}
+impl Default for clz_Torappu_UniEquipTypeInfoT {
+    fn default() -> Self {
+        Self {
+            uniEquipTypeName: None,
+            sortId: 0,
+            isSpecial: false,
+            isInitial: false,
+        }
+    }
+}
+impl clz_Torappu_UniEquipTypeInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_UniEquipTypeInfo<'b>> {
+        let uniEquipTypeName = self
+            .uniEquipTypeName
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        let isSpecial = self.isSpecial;
+        let isInitial = self.isInitial;
+        clz_Torappu_UniEquipTypeInfo::create(
+            _fbb,
+            &clz_Torappu_UniEquipTypeInfoArgs {
+                uniEquipTypeName,
+                sortId,
+                isSpecial,
+                isInitial,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_UniEquipTrackOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3313,7 +4302,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_UniEquipTrack<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3343,6 +4332,19 @@ impl<'a> clz_Torappu_UniEquipTrack<'a> {
             builder.add_charId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_UniEquipTrackT {
+        let charId = self.charId().map(|x| x.to_string());
+        let equipId = self.equipId().map(|x| x.to_string());
+        let type_ = self.type_();
+        let archiveShowTimeEnd = self.archiveShowTimeEnd();
+        clz_Torappu_UniEquipTrackT {
+            charId,
+            equipId,
+            type_,
+            archiveShowTimeEnd,
+        }
     }
 
     #[inline]
@@ -3430,6 +4432,28 @@ impl<'a> Default for clz_Torappu_UniEquipTrackArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_UniEquipTrack<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_UniEquipTrack", 4)?;
+        if let Some(f) = self.charId() {
+            s.serialize_field("charId", &f)?;
+        } else {
+            s.skip_field("charId")?;
+        }
+        if let Some(f) = self.equipId() {
+            s.serialize_field("equipId", &f)?;
+        } else {
+            s.skip_field("equipId")?;
+        }
+        s.serialize_field("type_", &self.type_())?;
+        s.serialize_field("archiveShowTimeEnd", &self.archiveShowTimeEnd())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_UniEquipTrackBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3492,6 +4516,44 @@ impl core::fmt::Debug for clz_Torappu_UniEquipTrack<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_UniEquipTrackT {
+    pub charId: Option<String>,
+    pub equipId: Option<String>,
+    pub type_: enum__Torappu_UniEquipType,
+    pub archiveShowTimeEnd: i64,
+}
+impl Default for clz_Torappu_UniEquipTrackT {
+    fn default() -> Self {
+        Self {
+            charId: None,
+            equipId: None,
+            type_: enum__Torappu_UniEquipType::INITIAL,
+            archiveShowTimeEnd: 0,
+        }
+    }
+}
+impl clz_Torappu_UniEquipTrackT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_UniEquipTrack<'b>> {
+        let charId = self.charId.as_ref().map(|x| _fbb.create_string(x));
+        let equipId = self.equipId.as_ref().map(|x| _fbb.create_string(x));
+        let type_ = self.type_;
+        let archiveShowTimeEnd = self.archiveShowTimeEnd;
+        clz_Torappu_UniEquipTrack::create(
+            _fbb,
+            &clz_Torappu_UniEquipTrackArgs {
+                charId,
+                equipId,
+                type_,
+                archiveShowTimeEnd,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_UniEquipTimeInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3504,7 +4566,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_UniEquipTimeInfo<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3528,6 +4590,17 @@ impl<'a> clz_Torappu_UniEquipTimeInfo<'a> {
             builder.add_trackList(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_UniEquipTimeInfoT {
+        let timeStamp = self.timeStamp();
+        let trackList = self
+            .trackList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_UniEquipTimeInfoT {
+            timeStamp,
+            trackList,
+        }
     }
 
     #[inline]
@@ -3591,6 +4664,22 @@ impl<'a> Default for clz_Torappu_UniEquipTimeInfoArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_UniEquipTimeInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_UniEquipTimeInfo", 2)?;
+        s.serialize_field("timeStamp", &self.timeStamp())?;
+        if let Some(f) = self.trackList() {
+            s.serialize_field("trackList", &f)?;
+        } else {
+            s.skip_field("trackList")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_UniEquipTimeInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3638,6 +4727,39 @@ impl core::fmt::Debug for clz_Torappu_UniEquipTimeInfo<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_UniEquipTimeInfoT {
+    pub timeStamp: i64,
+    pub trackList: Option<Vec<clz_Torappu_UniEquipTrackT>>,
+}
+impl Default for clz_Torappu_UniEquipTimeInfoT {
+    fn default() -> Self {
+        Self {
+            timeStamp: 0,
+            trackList: None,
+        }
+    }
+}
+impl clz_Torappu_UniEquipTimeInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_UniEquipTimeInfo<'b>> {
+        let timeStamp = self.timeStamp;
+        let trackList = self.trackList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_UniEquipTimeInfo::create(
+            _fbb,
+            &clz_Torappu_UniEquipTimeInfoArgs {
+                timeStamp,
+                trackList,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_UniEquipTableOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3650,7 +4772,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_UniEquipTable<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3696,6 +4818,39 @@ impl<'a> clz_Torappu_UniEquipTable<'a> {
             builder.add_equipDict(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_UniEquipTableT {
+        let equipDict = self
+            .equipDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let missionList = self
+            .missionList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let subProfDict = self
+            .subProfDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let subProfToProfDict = self
+            .subProfToProfDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let charEquip = self
+            .charEquip()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let equipTypeInfos = self
+            .equipTypeInfos()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let equipTrackDict = self
+            .equipTrackDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_UniEquipTableT {
+            equipDict,
+            missionList,
+            subProfDict,
+            subProfToProfDict,
+            charEquip,
+            equipTypeInfos,
+            equipTrackDict,
+        }
     }
 
     #[inline]
@@ -3923,6 +5078,51 @@ impl<'a> Default for clz_Torappu_UniEquipTableArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_UniEquipTable<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_UniEquipTable", 7)?;
+        if let Some(f) = self.equipDict() {
+            s.serialize_field("equipDict", &f)?;
+        } else {
+            s.skip_field("equipDict")?;
+        }
+        if let Some(f) = self.missionList() {
+            s.serialize_field("missionList", &f)?;
+        } else {
+            s.skip_field("missionList")?;
+        }
+        if let Some(f) = self.subProfDict() {
+            s.serialize_field("subProfDict", &f)?;
+        } else {
+            s.skip_field("subProfDict")?;
+        }
+        if let Some(f) = self.subProfToProfDict() {
+            s.serialize_field("subProfToProfDict", &f)?;
+        } else {
+            s.skip_field("subProfToProfDict")?;
+        }
+        if let Some(f) = self.charEquip() {
+            s.serialize_field("charEquip", &f)?;
+        } else {
+            s.skip_field("charEquip")?;
+        }
+        if let Some(f) = self.equipTypeInfos() {
+            s.serialize_field("equipTypeInfos", &f)?;
+        } else {
+            s.skip_field("equipTypeInfos")?;
+        }
+        if let Some(f) = self.equipTrackDict() {
+            s.serialize_field("equipTrackDict", &f)?;
+        } else {
+            s.skip_field("equipTrackDict")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_UniEquipTableBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -4051,6 +5251,77 @@ impl core::fmt::Debug for clz_Torappu_UniEquipTable<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_UniEquipTableT {
+    pub equipDict: Option<Vec<dict__string__clz_Torappu_UniEquipDataT>>,
+    pub missionList: Option<Vec<dict__string__clz_Torappu_UniEquipMissionDataT>>,
+    pub subProfDict: Option<Vec<dict__string__clz_Torappu_SubProfessionDataT>>,
+    pub subProfToProfDict: Option<Vec<dict__string__intT>>,
+    pub charEquip: Option<Vec<dict__string__list_stringT>>,
+    pub equipTypeInfos: Option<Vec<clz_Torappu_UniEquipTypeInfoT>>,
+    pub equipTrackDict: Option<Vec<clz_Torappu_UniEquipTimeInfoT>>,
+}
+impl Default for clz_Torappu_UniEquipTableT {
+    fn default() -> Self {
+        Self {
+            equipDict: None,
+            missionList: None,
+            subProfDict: None,
+            subProfToProfDict: None,
+            charEquip: None,
+            equipTypeInfos: None,
+            equipTrackDict: None,
+        }
+    }
+}
+impl clz_Torappu_UniEquipTableT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_UniEquipTable<'b>> {
+        let equipDict = self.equipDict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let missionList = self.missionList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let subProfDict = self.subProfDict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let subProfToProfDict = self.subProfToProfDict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let charEquip = self.charEquip.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let equipTypeInfos = self.equipTypeInfos.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let equipTrackDict = self.equipTrackDict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_UniEquipTable::create(
+            _fbb,
+            &clz_Torappu_UniEquipTableArgs {
+                equipDict,
+                missionList,
+                subProfDict,
+                subProfToProfDict,
+                charEquip,
+                equipTypeInfos,
+                equipTrackDict,
+            },
+        )
+    }
+}
 #[inline]
 /// Verifies that a buffer of bytes contains a `clz_Torappu_UniEquipTable`
 /// and returns it.
@@ -4108,7 +5379,7 @@ pub fn size_prefixed_root_as_clz_torappu_uni_equip_table_with_opts<'b, 'o>(
 pub unsafe fn root_as_clz_torappu_uni_equip_table_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_UniEquipTable {
-    flatbuffers::root_unchecked::<clz_Torappu_UniEquipTable>(buf)
+    unsafe { flatbuffers::root_unchecked::<clz_Torappu_UniEquipTable>(buf) }
 }
 #[inline]
 /// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_UniEquipTable and returns it.
@@ -4117,7 +5388,7 @@ pub unsafe fn root_as_clz_torappu_uni_equip_table_unchecked(
 pub unsafe fn size_prefixed_root_as_clz_torappu_uni_equip_table_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_UniEquipTable {
-    flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_UniEquipTable>(buf)
+    unsafe { flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_UniEquipTable>(buf) }
 }
 #[inline]
 pub fn finish_clz_torappu_uni_equip_table_buffer<'a, 'b, A: flatbuffers::Allocator + 'a>(

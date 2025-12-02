@@ -5,6 +5,9 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+use self::serde::ser::{Serialize, SerializeStruct, Serializer};
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
@@ -20,7 +23,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ExtraBattleLogDataKey<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -78,6 +81,33 @@ impl<'a> clz_Torappu_ExtraBattleLogDataKey<'a> {
             builder.add_description(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ExtraBattleLogDataKeyT {
+        let description = self.description().map(|x| x.to_string());
+        let sourceId = self.sourceId().map(|x| x.to_string());
+        let sourceMode = self.sourceMode().map(|x| x.to_string());
+        let enemyId = self.enemyId().map(|x| x.to_string());
+        let enemyApplyWay = self.enemyApplyWay().map(|x| x.to_string());
+        let projectileName = self.projectileName().map(|x| x.to_string());
+        let abilityName = self.abilityName().map(|x| x.to_string());
+        let enemyLevelType = self.enemyLevelType().map(|x| x.to_string());
+        let enemyTag = self
+            .enemyTag()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let logAlias = self.logAlias().map(|x| x.to_string());
+        clz_Torappu_ExtraBattleLogDataKeyT {
+            description,
+            sourceId,
+            sourceMode,
+            enemyId,
+            enemyApplyWay,
+            projectileName,
+            abilityName,
+            enemyLevelType,
+            enemyTag,
+            logAlias,
+        }
     }
 
     #[inline]
@@ -291,6 +321,66 @@ impl<'a> Default for clz_Torappu_ExtraBattleLogDataKeyArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ExtraBattleLogDataKey<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ExtraBattleLogDataKey", 10)?;
+        if let Some(f) = self.description() {
+            s.serialize_field("description", &f)?;
+        } else {
+            s.skip_field("description")?;
+        }
+        if let Some(f) = self.sourceId() {
+            s.serialize_field("sourceId", &f)?;
+        } else {
+            s.skip_field("sourceId")?;
+        }
+        if let Some(f) = self.sourceMode() {
+            s.serialize_field("sourceMode", &f)?;
+        } else {
+            s.skip_field("sourceMode")?;
+        }
+        if let Some(f) = self.enemyId() {
+            s.serialize_field("enemyId", &f)?;
+        } else {
+            s.skip_field("enemyId")?;
+        }
+        if let Some(f) = self.enemyApplyWay() {
+            s.serialize_field("enemyApplyWay", &f)?;
+        } else {
+            s.skip_field("enemyApplyWay")?;
+        }
+        if let Some(f) = self.projectileName() {
+            s.serialize_field("projectileName", &f)?;
+        } else {
+            s.skip_field("projectileName")?;
+        }
+        if let Some(f) = self.abilityName() {
+            s.serialize_field("abilityName", &f)?;
+        } else {
+            s.skip_field("abilityName")?;
+        }
+        if let Some(f) = self.enemyLevelType() {
+            s.serialize_field("enemyLevelType", &f)?;
+        } else {
+            s.skip_field("enemyLevelType")?;
+        }
+        if let Some(f) = self.enemyTag() {
+            s.serialize_field("enemyTag", &f)?;
+        } else {
+            s.skip_field("enemyTag")?;
+        }
+        if let Some(f) = self.logAlias() {
+            s.serialize_field("logAlias", &f)?;
+        } else {
+            s.skip_field("logAlias")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ExtraBattleLogDataKeyBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -406,6 +496,71 @@ impl core::fmt::Debug for clz_Torappu_ExtraBattleLogDataKey<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ExtraBattleLogDataKeyT {
+    pub description: Option<String>,
+    pub sourceId: Option<String>,
+    pub sourceMode: Option<String>,
+    pub enemyId: Option<String>,
+    pub enemyApplyWay: Option<String>,
+    pub projectileName: Option<String>,
+    pub abilityName: Option<String>,
+    pub enemyLevelType: Option<String>,
+    pub enemyTag: Option<Vec<String>>,
+    pub logAlias: Option<String>,
+}
+impl Default for clz_Torappu_ExtraBattleLogDataKeyT {
+    fn default() -> Self {
+        Self {
+            description: None,
+            sourceId: None,
+            sourceMode: None,
+            enemyId: None,
+            enemyApplyWay: None,
+            projectileName: None,
+            abilityName: None,
+            enemyLevelType: None,
+            enemyTag: None,
+            logAlias: None,
+        }
+    }
+}
+impl clz_Torappu_ExtraBattleLogDataKeyT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ExtraBattleLogDataKey<'b>> {
+        let description = self.description.as_ref().map(|x| _fbb.create_string(x));
+        let sourceId = self.sourceId.as_ref().map(|x| _fbb.create_string(x));
+        let sourceMode = self.sourceMode.as_ref().map(|x| _fbb.create_string(x));
+        let enemyId = self.enemyId.as_ref().map(|x| _fbb.create_string(x));
+        let enemyApplyWay = self.enemyApplyWay.as_ref().map(|x| _fbb.create_string(x));
+        let projectileName = self.projectileName.as_ref().map(|x| _fbb.create_string(x));
+        let abilityName = self.abilityName.as_ref().map(|x| _fbb.create_string(x));
+        let enemyLevelType = self.enemyLevelType.as_ref().map(|x| _fbb.create_string(x));
+        let enemyTag = self.enemyTag.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let logAlias = self.logAlias.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_ExtraBattleLogDataKey::create(
+            _fbb,
+            &clz_Torappu_ExtraBattleLogDataKeyArgs {
+                description,
+                sourceId,
+                sourceMode,
+                enemyId,
+                enemyApplyWay,
+                projectileName,
+                abilityName,
+                enemyLevelType,
+                enemyTag,
+                logAlias,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ExtraBattleLogDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -418,7 +573,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ExtraBattleLogData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -440,6 +595,11 @@ impl<'a> clz_Torappu_ExtraBattleLogData<'a> {
             builder.add_data(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ExtraBattleLogDataT {
+        let data = self.data().map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_ExtraBattleLogDataT { data }
     }
 
     #[inline]
@@ -500,6 +660,21 @@ impl<'a> Default for clz_Torappu_ExtraBattleLogDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ExtraBattleLogData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ExtraBattleLogData", 1)?;
+        if let Some(f) = self.data() {
+            s.serialize_field("data", &f)?;
+        } else {
+            s.skip_field("data")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ExtraBattleLogDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -544,6 +719,28 @@ impl core::fmt::Debug for clz_Torappu_ExtraBattleLogData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ExtraBattleLogDataT {
+    pub data: Option<Vec<clz_Torappu_ExtraBattleLogDataKeyT>>,
+}
+impl Default for clz_Torappu_ExtraBattleLogDataT {
+    fn default() -> Self {
+        Self { data: None }
+    }
+}
+impl clz_Torappu_ExtraBattleLogDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ExtraBattleLogData<'b>> {
+        let data = self.data.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_ExtraBattleLogData::create(_fbb, &clz_Torappu_ExtraBattleLogDataArgs { data })
+    }
+}
 pub enum dict__string__clz_Torappu_ExtraBattleLogDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -556,7 +753,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_ExtraBattleLogDat
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -582,6 +779,15 @@ impl<'a> dict__string__clz_Torappu_ExtraBattleLogData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_ExtraBattleLogDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_ExtraBattleLogDataT { key, value }
     }
 
     #[inline]
@@ -655,6 +861,23 @@ impl<'a> Default for dict__string__clz_Torappu_ExtraBattleLogDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_ExtraBattleLogData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_ExtraBattleLogData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_ExtraBattleLogDataBuilder<
     'a: 'b,
     'b,
@@ -713,6 +936,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_ExtraBattleLogData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_ExtraBattleLogDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_ExtraBattleLogDataT>>,
+}
+impl Default for dict__string__clz_Torappu_ExtraBattleLogDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_ExtraBattleLogDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ExtraBattleLogData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_ExtraBattleLogData::create(
+            _fbb,
+            &dict__string__clz_Torappu_ExtraBattleLogDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -725,7 +978,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SimpleKVTable_clz_Torappu_Extra
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -749,6 +1002,13 @@ impl<'a> clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData<'a> {
             builder.add_extra_battlelogs(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogDataT {
+        let extra_battlelogs = self
+            .extra_battlelogs()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogDataT { extra_battlelogs }
     }
 
     #[inline]
@@ -814,6 +1074,24 @@ impl<'a> Default for clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogDataArg
     }
 }
 
+impl Serialize for clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData",
+            1,
+        )?;
+        if let Some(f) = self.extra_battlelogs() {
+            s.serialize_field("extra_battlelogs", &f)?;
+        } else {
+            s.skip_field("extra_battlelogs")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogDataBuilder<
     'a: 'b,
     'b,
@@ -864,6 +1142,33 @@ impl core::fmt::Debug for clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogDa
         let mut ds = f.debug_struct("clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData");
         ds.field("extra_battlelogs", &self.extra_battlelogs());
         ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogDataT {
+    pub extra_battlelogs: Option<Vec<dict__string__clz_Torappu_ExtraBattleLogDataT>>,
+}
+impl Default for clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogDataT {
+    fn default() -> Self {
+        Self {
+            extra_battlelogs: None,
+        }
+    }
+}
+impl clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData<'b>> {
+        let extra_battlelogs = self.extra_battlelogs.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData::create(
+            _fbb,
+            &clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogDataArgs { extra_battlelogs },
+        )
     }
 }
 #[inline]
@@ -938,7 +1243,9 @@ pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_extra_battle
 pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_extra_battle_log_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData {
-    flatbuffers::root_unchecked::<clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData>(buf)
+    unsafe {
+        flatbuffers::root_unchecked::<clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData>(buf)
+    }
 }
 #[inline]
 /// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData and returns it.
@@ -947,9 +1254,11 @@ pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_extra_battle_log_da
 pub unsafe fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_extra_battle_log_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData {
-    flatbuffers::size_prefixed_root_unchecked::<
-        clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData,
-    >(buf)
+    unsafe {
+        flatbuffers::size_prefixed_root_unchecked::<
+            clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData,
+        >(buf)
+    }
 }
 #[inline]
 pub fn finish_clz_torappu_simple_kvtable_clz_torappu_extra_battle_log_data_buffer<

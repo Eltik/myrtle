@@ -5,6 +5,9 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+use self::serde::ser::{Serialize, SerializeStruct, Serializer};
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
@@ -416,11 +419,24 @@ impl core::fmt::Debug for enum__Torappu_ItemType {
         }
     }
 }
+impl Serialize for enum__Torappu_ItemType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_ItemType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ItemType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -429,7 +445,9 @@ impl flatbuffers::Push for enum__Torappu_ItemType {
     type Output = enum__Torappu_ItemType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -471,7 +489,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_MonthlySignInData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -497,6 +515,17 @@ impl<'a> clz_Torappu_MonthlySignInData<'a> {
             builder.add_itemId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_MonthlySignInDataT {
+        let itemId = self.itemId().map(|x| x.to_string());
+        let itemType = self.itemType();
+        let count = self.count();
+        clz_Torappu_MonthlySignInDataT {
+            itemId,
+            itemType,
+            count,
+        }
     }
 
     #[inline]
@@ -569,6 +598,23 @@ impl<'a> Default for clz_Torappu_MonthlySignInDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_MonthlySignInData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_MonthlySignInData", 3)?;
+        if let Some(f) = self.itemId() {
+            s.serialize_field("itemId", &f)?;
+        } else {
+            s.skip_field("itemId")?;
+        }
+        s.serialize_field("itemType", &self.itemType())?;
+        s.serialize_field("count", &self.count())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_MonthlySignInDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -620,6 +666,40 @@ impl core::fmt::Debug for clz_Torappu_MonthlySignInData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_MonthlySignInDataT {
+    pub itemId: Option<String>,
+    pub itemType: enum__Torappu_ItemType,
+    pub count: i32,
+}
+impl Default for clz_Torappu_MonthlySignInDataT {
+    fn default() -> Self {
+        Self {
+            itemId: None,
+            itemType: enum__Torappu_ItemType::NONE,
+            count: 0,
+        }
+    }
+}
+impl clz_Torappu_MonthlySignInDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_MonthlySignInData<'b>> {
+        let itemId = self.itemId.as_ref().map(|x| _fbb.create_string(x));
+        let itemType = self.itemType;
+        let count = self.count;
+        clz_Torappu_MonthlySignInData::create(
+            _fbb,
+            &clz_Torappu_MonthlySignInDataArgs {
+                itemId,
+                itemType,
+                count,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_MonthlySignInGroupDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -632,7 +712,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_MonthlySignInGroupData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -670,6 +750,23 @@ impl<'a> clz_Torappu_MonthlySignInGroupData<'a> {
             builder.add_groupId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_MonthlySignInGroupDataT {
+        let groupId = self.groupId().map(|x| x.to_string());
+        let title = self.title().map(|x| x.to_string());
+        let description = self.description().map(|x| x.to_string());
+        let signStartTime = self.signStartTime();
+        let signEndTime = self.signEndTime();
+        let items = self.items().map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_MonthlySignInGroupDataT {
+            groupId,
+            title,
+            description,
+            signStartTime,
+            signEndTime,
+            items,
+        }
     }
 
     #[inline]
@@ -809,6 +906,38 @@ impl<'a> Default for clz_Torappu_MonthlySignInGroupDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_MonthlySignInGroupData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_MonthlySignInGroupData", 6)?;
+        if let Some(f) = self.groupId() {
+            s.serialize_field("groupId", &f)?;
+        } else {
+            s.skip_field("groupId")?;
+        }
+        if let Some(f) = self.title() {
+            s.serialize_field("title", &f)?;
+        } else {
+            s.skip_field("title")?;
+        }
+        if let Some(f) = self.description() {
+            s.serialize_field("description", &f)?;
+        } else {
+            s.skip_field("description")?;
+        }
+        s.serialize_field("signStartTime", &self.signStartTime())?;
+        s.serialize_field("signEndTime", &self.signEndTime())?;
+        if let Some(f) = self.items() {
+            s.serialize_field("items", &f)?;
+        } else {
+            s.skip_field("items")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_MonthlySignInGroupDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -897,6 +1026,55 @@ impl core::fmt::Debug for clz_Torappu_MonthlySignInGroupData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_MonthlySignInGroupDataT {
+    pub groupId: Option<String>,
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub signStartTime: i64,
+    pub signEndTime: i64,
+    pub items: Option<Vec<clz_Torappu_MonthlySignInDataT>>,
+}
+impl Default for clz_Torappu_MonthlySignInGroupDataT {
+    fn default() -> Self {
+        Self {
+            groupId: None,
+            title: None,
+            description: None,
+            signStartTime: 0,
+            signEndTime: 0,
+            items: None,
+        }
+    }
+}
+impl clz_Torappu_MonthlySignInGroupDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_MonthlySignInGroupData<'b>> {
+        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
+        let title = self.title.as_ref().map(|x| _fbb.create_string(x));
+        let description = self.description.as_ref().map(|x| _fbb.create_string(x));
+        let signStartTime = self.signStartTime;
+        let signEndTime = self.signEndTime;
+        let items = self.items.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_MonthlySignInGroupData::create(
+            _fbb,
+            &clz_Torappu_MonthlySignInGroupDataArgs {
+                groupId,
+                title,
+                description,
+                signStartTime,
+                signEndTime,
+                items,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_MonthlySignInGroupDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -909,7 +1087,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_MonthlySignInGrou
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -935,6 +1113,15 @@ impl<'a> dict__string__clz_Torappu_MonthlySignInGroupData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_MonthlySignInGroupDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_MonthlySignInGroupDataT { key, value }
     }
 
     #[inline]
@@ -1011,6 +1198,23 @@ impl<'a> Default for dict__string__clz_Torappu_MonthlySignInGroupDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_MonthlySignInGroupData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_MonthlySignInGroupData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_MonthlySignInGroupDataBuilder<
     'a: 'b,
     'b,
@@ -1072,6 +1276,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_MonthlySignInGroupData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_MonthlySignInGroupDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_MonthlySignInGroupDataT>>,
+}
+impl Default for dict__string__clz_Torappu_MonthlySignInGroupDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_MonthlySignInGroupDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_MonthlySignInGroupData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_MonthlySignInGroupData::create(
+            _fbb,
+            &dict__string__clz_Torappu_MonthlySignInGroupDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_ItemBundleOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1084,7 +1318,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ItemBundle<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1110,6 +1344,13 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ItemBundleT {
+        let id = self.id().map(|x| x.to_string());
+        let count = self.count();
+        let type_ = self.type_();
+        clz_Torappu_ItemBundleT { id, count, type_ }
     }
 
     #[inline]
@@ -1180,6 +1421,23 @@ impl<'a> Default for clz_Torappu_ItemBundleArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ItemBundle<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ItemBundle", 3)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        s.serialize_field("count", &self.count())?;
+        s.serialize_field("type_", &self.type_())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ItemBundleBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1229,6 +1487,33 @@ impl core::fmt::Debug for clz_Torappu_ItemBundle<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ItemBundleT {
+    pub id: Option<String>,
+    pub count: i32,
+    pub type_: enum__Torappu_ItemType,
+}
+impl Default for clz_Torappu_ItemBundleT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            count: 0,
+            type_: enum__Torappu_ItemType::NONE,
+        }
+    }
+}
+impl clz_Torappu_ItemBundleT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ItemBundle<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let count = self.count;
+        let type_ = self.type_;
+        clz_Torappu_ItemBundle::create(_fbb, &clz_Torappu_ItemBundleArgs { id, count, type_ })
+    }
+}
 pub enum clz_Torappu_MonthlyDailyBonusGroupOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1241,7 +1526,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_MonthlyDailyBonusGroup<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1279,6 +1564,23 @@ impl<'a> clz_Torappu_MonthlyDailyBonusGroup<'a> {
             builder.add_groupId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_MonthlyDailyBonusGroupT {
+        let groupId = self.groupId().map(|x| x.to_string());
+        let startTime = self.startTime();
+        let endTime = self.endTime();
+        let items = self.items().map(|x| x.iter().map(|t| t.unpack()).collect());
+        let imgId = self.imgId().map(|x| x.to_string());
+        let backId = self.backId().map(|x| x.to_string());
+        clz_Torappu_MonthlyDailyBonusGroupT {
+            groupId,
+            startTime,
+            endTime,
+            items,
+            imgId,
+            backId,
+        }
     }
 
     #[inline]
@@ -1401,6 +1703,38 @@ impl<'a> Default for clz_Torappu_MonthlyDailyBonusGroupArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_MonthlyDailyBonusGroup<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_MonthlyDailyBonusGroup", 6)?;
+        if let Some(f) = self.groupId() {
+            s.serialize_field("groupId", &f)?;
+        } else {
+            s.skip_field("groupId")?;
+        }
+        s.serialize_field("startTime", &self.startTime())?;
+        s.serialize_field("endTime", &self.endTime())?;
+        if let Some(f) = self.items() {
+            s.serialize_field("items", &f)?;
+        } else {
+            s.skip_field("items")?;
+        }
+        if let Some(f) = self.imgId() {
+            s.serialize_field("imgId", &f)?;
+        } else {
+            s.skip_field("imgId")?;
+        }
+        if let Some(f) = self.backId() {
+            s.serialize_field("backId", &f)?;
+        } else {
+            s.skip_field("backId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_MonthlyDailyBonusGroupBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1483,6 +1817,55 @@ impl core::fmt::Debug for clz_Torappu_MonthlyDailyBonusGroup<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_MonthlyDailyBonusGroupT {
+    pub groupId: Option<String>,
+    pub startTime: i64,
+    pub endTime: i64,
+    pub items: Option<Vec<clz_Torappu_ItemBundleT>>,
+    pub imgId: Option<String>,
+    pub backId: Option<String>,
+}
+impl Default for clz_Torappu_MonthlyDailyBonusGroupT {
+    fn default() -> Self {
+        Self {
+            groupId: None,
+            startTime: 0,
+            endTime: 0,
+            items: None,
+            imgId: None,
+            backId: None,
+        }
+    }
+}
+impl clz_Torappu_MonthlyDailyBonusGroupT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_MonthlyDailyBonusGroup<'b>> {
+        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
+        let startTime = self.startTime;
+        let endTime = self.endTime;
+        let items = self.items.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let imgId = self.imgId.as_ref().map(|x| _fbb.create_string(x));
+        let backId = self.backId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_MonthlyDailyBonusGroup::create(
+            _fbb,
+            &clz_Torappu_MonthlyDailyBonusGroupArgs {
+                groupId,
+                startTime,
+                endTime,
+                items,
+                imgId,
+                backId,
+            },
+        )
+    }
+}
 pub enum dict__string__list_clz_Torappu_MonthlyDailyBonusGroupOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1495,7 +1878,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__list_clz_Torappu_MonthlyDaily
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1521,6 +1904,15 @@ impl<'a> dict__string__list_clz_Torappu_MonthlyDailyBonusGroup<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__list_clz_Torappu_MonthlyDailyBonusGroupT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| x.iter().map(|t| t.unpack()).collect());
+        dict__string__list_clz_Torappu_MonthlyDailyBonusGroupT { key, value }
     }
 
     #[inline]
@@ -1616,6 +2008,23 @@ impl<'a> Default for dict__string__list_clz_Torappu_MonthlyDailyBonusGroupArgs<'
     }
 }
 
+impl Serialize for dict__string__list_clz_Torappu_MonthlyDailyBonusGroup<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("dict__string__list_clz_Torappu_MonthlyDailyBonusGroup", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__list_clz_Torappu_MonthlyDailyBonusGroupBuilder<
     'a: 'b,
     'b,
@@ -1681,6 +2090,39 @@ impl core::fmt::Debug for dict__string__list_clz_Torappu_MonthlyDailyBonusGroup<
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__list_clz_Torappu_MonthlyDailyBonusGroupT {
+    pub key: String,
+    pub value: Option<Vec<clz_Torappu_MonthlyDailyBonusGroupT>>,
+}
+impl Default for dict__string__list_clz_Torappu_MonthlyDailyBonusGroupT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__list_clz_Torappu_MonthlyDailyBonusGroupT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__list_clz_Torappu_MonthlyDailyBonusGroup<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        dict__string__list_clz_Torappu_MonthlyDailyBonusGroup::create(
+            _fbb,
+            &dict__string__list_clz_Torappu_MonthlyDailyBonusGroupArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_CheckInTableOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1693,7 +2135,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_CheckInTable<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1723,6 +2165,21 @@ impl<'a> clz_Torappu_CheckInTable<'a> {
             builder.add_groups(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_CheckInTableT {
+        let groups = self
+            .groups()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let monthlySubItem = self
+            .monthlySubItem()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let currentMonthlySubId = self.currentMonthlySubId().map(|x| x.to_string());
+        clz_Torappu_CheckInTableT {
+            groups,
+            monthlySubItem,
+            currentMonthlySubId,
+        }
     }
 
     #[inline]
@@ -1846,6 +2303,31 @@ impl<'a> Default for clz_Torappu_CheckInTableArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_CheckInTable<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_CheckInTable", 3)?;
+        if let Some(f) = self.groups() {
+            s.serialize_field("groups", &f)?;
+        } else {
+            s.skip_field("groups")?;
+        }
+        if let Some(f) = self.monthlySubItem() {
+            s.serialize_field("monthlySubItem", &f)?;
+        } else {
+            s.skip_field("monthlySubItem")?;
+        }
+        if let Some(f) = self.currentMonthlySubId() {
+            s.serialize_field("currentMonthlySubId", &f)?;
+        } else {
+            s.skip_field("currentMonthlySubId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_CheckInTableBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1919,6 +2401,49 @@ impl core::fmt::Debug for clz_Torappu_CheckInTable<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_CheckInTableT {
+    pub groups: Option<Vec<dict__string__clz_Torappu_MonthlySignInGroupDataT>>,
+    pub monthlySubItem: Option<Vec<dict__string__list_clz_Torappu_MonthlyDailyBonusGroupT>>,
+    pub currentMonthlySubId: Option<String>,
+}
+impl Default for clz_Torappu_CheckInTableT {
+    fn default() -> Self {
+        Self {
+            groups: None,
+            monthlySubItem: None,
+            currentMonthlySubId: None,
+        }
+    }
+}
+impl clz_Torappu_CheckInTableT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_CheckInTable<'b>> {
+        let groups = self.groups.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let monthlySubItem = self.monthlySubItem.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let currentMonthlySubId = self
+            .currentMonthlySubId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        clz_Torappu_CheckInTable::create(
+            _fbb,
+            &clz_Torappu_CheckInTableArgs {
+                groups,
+                monthlySubItem,
+                currentMonthlySubId,
+            },
+        )
+    }
+}
 #[inline]
 /// Verifies that a buffer of bytes contains a `clz_Torappu_CheckInTable`
 /// and returns it.
@@ -1974,7 +2499,7 @@ pub fn size_prefixed_root_as_clz_torappu_check_in_table_with_opts<'b, 'o>(
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_CheckInTable`.
 pub unsafe fn root_as_clz_torappu_check_in_table_unchecked(buf: &[u8]) -> clz_Torappu_CheckInTable {
-    flatbuffers::root_unchecked::<clz_Torappu_CheckInTable>(buf)
+    unsafe { flatbuffers::root_unchecked::<clz_Torappu_CheckInTable>(buf) }
 }
 #[inline]
 /// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_CheckInTable and returns it.
@@ -1983,7 +2508,7 @@ pub unsafe fn root_as_clz_torappu_check_in_table_unchecked(buf: &[u8]) -> clz_To
 pub unsafe fn size_prefixed_root_as_clz_torappu_check_in_table_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_CheckInTable {
-    flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_CheckInTable>(buf)
+    unsafe { flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_CheckInTable>(buf) }
 }
 #[inline]
 pub fn finish_clz_torappu_check_in_table_buffer<'a, 'b, A: flatbuffers::Allocator + 'a>(

@@ -5,6 +5,9 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+use self::serde::ser::{Serialize, SerializeStruct, Serializer};
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
@@ -63,11 +66,24 @@ impl core::fmt::Debug for enum__Torappu_EnemyLevelType {
         }
     }
 }
+impl Serialize for enum__Torappu_EnemyLevelType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_EnemyLevelType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_EnemyLevelType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -76,7 +92,9 @@ impl flatbuffers::Push for enum__Torappu_EnemyLevelType {
     type Output = enum__Torappu_EnemyLevelType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -159,11 +177,24 @@ impl core::fmt::Debug for enum__Torappu_EnemyHandBookData_TextFormat {
         }
     }
 }
+impl Serialize for enum__Torappu_EnemyHandBookData_TextFormat {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_EnemyHandBookData_TextFormat",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_EnemyHandBookData_TextFormat {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -172,7 +203,9 @@ impl flatbuffers::Push for enum__Torappu_EnemyHandBookData_TextFormat {
     type Output = enum__Torappu_EnemyHandBookData_TextFormat;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -259,11 +292,24 @@ impl core::fmt::Debug for enum__Torappu_EnemyHandBookDamageType {
         }
     }
 }
+impl Serialize for enum__Torappu_EnemyHandBookDamageType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_EnemyHandBookDamageType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_EnemyHandBookDamageType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -272,7 +318,9 @@ impl flatbuffers::Push for enum__Torappu_EnemyHandBookDamageType {
     type Output = enum__Torappu_EnemyHandBookDamageType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -314,7 +362,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_EnemyHandbookLevelInfoData_Rang
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -336,6 +384,12 @@ impl<'a> clz_Torappu_EnemyHandbookLevelInfoData_RangePair<'a> {
         builder.add_max(args.max);
         builder.add_min(args.min);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_EnemyHandbookLevelInfoData_RangePairT {
+        let min = self.min();
+        let max = self.max();
+        clz_Torappu_EnemyHandbookLevelInfoData_RangePairT { min, max }
     }
 
     #[inline]
@@ -393,6 +447,19 @@ impl<'a> Default for clz_Torappu_EnemyHandbookLevelInfoData_RangePairArgs {
     }
 }
 
+impl Serialize for clz_Torappu_EnemyHandbookLevelInfoData_RangePair<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_EnemyHandbookLevelInfoData_RangePair", 2)?;
+        s.serialize_field("min", &self.min())?;
+        s.serialize_field("max", &self.max())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_EnemyHandbookLevelInfoData_RangePairBuilder<
     'a: 'b,
     'b,
@@ -447,6 +514,30 @@ impl core::fmt::Debug for clz_Torappu_EnemyHandbookLevelInfoData_RangePair<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_EnemyHandbookLevelInfoData_RangePairT {
+    pub min: f32,
+    pub max: f32,
+}
+impl Default for clz_Torappu_EnemyHandbookLevelInfoData_RangePairT {
+    fn default() -> Self {
+        Self { min: 0.0, max: 0.0 }
+    }
+}
+impl clz_Torappu_EnemyHandbookLevelInfoData_RangePairT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_EnemyHandbookLevelInfoData_RangePair<'b>> {
+        let min = self.min;
+        let max = self.max;
+        clz_Torappu_EnemyHandbookLevelInfoData_RangePair::create(
+            _fbb,
+            &clz_Torappu_EnemyHandbookLevelInfoData_RangePairArgs { min, max },
+        )
+    }
+}
 pub enum clz_Torappu_EnemyHandbookLevelInfoDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -459,7 +550,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_EnemyHandbookLevelInfoData<'a> 
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -513,6 +604,29 @@ impl<'a> clz_Torappu_EnemyHandbookLevelInfoData<'a> {
             builder.add_classLevel(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_EnemyHandbookLevelInfoDataT {
+        let classLevel = self.classLevel().map(|x| x.to_string());
+        let attack = self.attack().map(|x| Box::new(x.unpack()));
+        let def = self.def().map(|x| Box::new(x.unpack()));
+        let magicRes = self.magicRes().map(|x| Box::new(x.unpack()));
+        let maxHP = self.maxHP().map(|x| Box::new(x.unpack()));
+        let moveSpeed = self.moveSpeed().map(|x| Box::new(x.unpack()));
+        let attackSpeed = self.attackSpeed().map(|x| Box::new(x.unpack()));
+        let enemyDamageRes = self.enemyDamageRes().map(|x| Box::new(x.unpack()));
+        let enemyRes = self.enemyRes().map(|x| Box::new(x.unpack()));
+        clz_Torappu_EnemyHandbookLevelInfoDataT {
+            classLevel,
+            attack,
+            def,
+            magicRes,
+            maxHP,
+            moveSpeed,
+            attackSpeed,
+            enemyDamageRes,
+            enemyRes,
+        }
     }
 
     #[inline]
@@ -656,6 +770,61 @@ impl<'a> Default for clz_Torappu_EnemyHandbookLevelInfoDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_EnemyHandbookLevelInfoData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_EnemyHandbookLevelInfoData", 9)?;
+        if let Some(f) = self.classLevel() {
+            s.serialize_field("classLevel", &f)?;
+        } else {
+            s.skip_field("classLevel")?;
+        }
+        if let Some(f) = self.attack() {
+            s.serialize_field("attack", &f)?;
+        } else {
+            s.skip_field("attack")?;
+        }
+        if let Some(f) = self.def() {
+            s.serialize_field("def", &f)?;
+        } else {
+            s.skip_field("def")?;
+        }
+        if let Some(f) = self.magicRes() {
+            s.serialize_field("magicRes", &f)?;
+        } else {
+            s.skip_field("magicRes")?;
+        }
+        if let Some(f) = self.maxHP() {
+            s.serialize_field("maxHP", &f)?;
+        } else {
+            s.skip_field("maxHP")?;
+        }
+        if let Some(f) = self.moveSpeed() {
+            s.serialize_field("moveSpeed", &f)?;
+        } else {
+            s.skip_field("moveSpeed")?;
+        }
+        if let Some(f) = self.attackSpeed() {
+            s.serialize_field("attackSpeed", &f)?;
+        } else {
+            s.skip_field("attackSpeed")?;
+        }
+        if let Some(f) = self.enemyDamageRes() {
+            s.serialize_field("enemyDamageRes", &f)?;
+        } else {
+            s.skip_field("enemyDamageRes")?;
+        }
+        if let Some(f) = self.enemyRes() {
+            s.serialize_field("enemyRes", &f)?;
+        } else {
+            s.skip_field("enemyRes")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_EnemyHandbookLevelInfoDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -761,6 +930,64 @@ impl core::fmt::Debug for clz_Torappu_EnemyHandbookLevelInfoData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_EnemyHandbookLevelInfoDataT {
+    pub classLevel: Option<String>,
+    pub attack: Option<Box<clz_Torappu_EnemyHandbookLevelInfoData_RangePairT>>,
+    pub def: Option<Box<clz_Torappu_EnemyHandbookLevelInfoData_RangePairT>>,
+    pub magicRes: Option<Box<clz_Torappu_EnemyHandbookLevelInfoData_RangePairT>>,
+    pub maxHP: Option<Box<clz_Torappu_EnemyHandbookLevelInfoData_RangePairT>>,
+    pub moveSpeed: Option<Box<clz_Torappu_EnemyHandbookLevelInfoData_RangePairT>>,
+    pub attackSpeed: Option<Box<clz_Torappu_EnemyHandbookLevelInfoData_RangePairT>>,
+    pub enemyDamageRes: Option<Box<clz_Torappu_EnemyHandbookLevelInfoData_RangePairT>>,
+    pub enemyRes: Option<Box<clz_Torappu_EnemyHandbookLevelInfoData_RangePairT>>,
+}
+impl Default for clz_Torappu_EnemyHandbookLevelInfoDataT {
+    fn default() -> Self {
+        Self {
+            classLevel: None,
+            attack: None,
+            def: None,
+            magicRes: None,
+            maxHP: None,
+            moveSpeed: None,
+            attackSpeed: None,
+            enemyDamageRes: None,
+            enemyRes: None,
+        }
+    }
+}
+impl clz_Torappu_EnemyHandbookLevelInfoDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_EnemyHandbookLevelInfoData<'b>> {
+        let classLevel = self.classLevel.as_ref().map(|x| _fbb.create_string(x));
+        let attack = self.attack.as_ref().map(|x| x.pack(_fbb));
+        let def = self.def.as_ref().map(|x| x.pack(_fbb));
+        let magicRes = self.magicRes.as_ref().map(|x| x.pack(_fbb));
+        let maxHP = self.maxHP.as_ref().map(|x| x.pack(_fbb));
+        let moveSpeed = self.moveSpeed.as_ref().map(|x| x.pack(_fbb));
+        let attackSpeed = self.attackSpeed.as_ref().map(|x| x.pack(_fbb));
+        let enemyDamageRes = self.enemyDamageRes.as_ref().map(|x| x.pack(_fbb));
+        let enemyRes = self.enemyRes.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_EnemyHandbookLevelInfoData::create(
+            _fbb,
+            &clz_Torappu_EnemyHandbookLevelInfoDataArgs {
+                classLevel,
+                attack,
+                def,
+                magicRes,
+                maxHP,
+                moveSpeed,
+                attackSpeed,
+                enemyDamageRes,
+                enemyRes,
+            },
+        )
+    }
+}
 pub enum dict__string__intOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -773,7 +1000,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__int<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -797,6 +1024,15 @@ impl<'a> dict__string__int<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__intT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value();
+        dict__string__intT { key, value }
     }
 
     #[inline]
@@ -861,6 +1097,18 @@ impl<'a> Default for dict__string__intArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__int<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__int", 2)?;
+        s.serialize_field("key", &self.key())?;
+        s.serialize_field("value", &self.value())?;
+        s.end()
+    }
+}
+
 pub struct dict__string__intBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -902,6 +1150,33 @@ impl core::fmt::Debug for dict__string__int<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__intT {
+    pub key: String,
+    pub value: i32,
+}
+impl Default for dict__string__intT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: 0,
+        }
+    }
+}
+impl dict__string__intT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__int<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value;
+        dict__string__int::create(_fbb, &dict__string__intArgs { key, value })
+    }
+}
 pub enum clz_Torappu_EnemyHandBookData_AbiltyOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -914,7 +1189,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_EnemyHandBookData_Abilty<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -938,6 +1213,12 @@ impl<'a> clz_Torappu_EnemyHandBookData_Abilty<'a> {
             builder.add_text(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_EnemyHandBookData_AbiltyT {
+        let text = self.text().map(|x| x.to_string());
+        let textFormat = self.textFormat();
+        clz_Torappu_EnemyHandBookData_AbiltyT { text, textFormat }
     }
 
     #[inline]
@@ -1000,6 +1281,22 @@ impl<'a> Default for clz_Torappu_EnemyHandBookData_AbiltyArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_EnemyHandBookData_Abilty<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_EnemyHandBookData_Abilty", 2)?;
+        if let Some(f) = self.text() {
+            s.serialize_field("text", &f)?;
+        } else {
+            s.skip_field("text")?;
+        }
+        s.serialize_field("textFormat", &self.textFormat())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_EnemyHandBookData_AbiltyBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1048,6 +1345,33 @@ impl core::fmt::Debug for clz_Torappu_EnemyHandBookData_Abilty<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_EnemyHandBookData_AbiltyT {
+    pub text: Option<String>,
+    pub textFormat: enum__Torappu_EnemyHandBookData_TextFormat,
+}
+impl Default for clz_Torappu_EnemyHandBookData_AbiltyT {
+    fn default() -> Self {
+        Self {
+            text: None,
+            textFormat: enum__Torappu_EnemyHandBookData_TextFormat::NORMAL,
+        }
+    }
+}
+impl clz_Torappu_EnemyHandBookData_AbiltyT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_EnemyHandBookData_Abilty<'b>> {
+        let text = self.text.as_ref().map(|x| _fbb.create_string(x));
+        let textFormat = self.textFormat;
+        clz_Torappu_EnemyHandBookData_Abilty::create(
+            _fbb,
+            &clz_Torappu_EnemyHandBookData_AbiltyArgs { text, textFormat },
+        )
+    }
+}
 pub enum clz_Torappu_EnemyHandBookDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1060,7 +1384,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_EnemyHandBookData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1134,6 +1458,53 @@ impl<'a> clz_Torappu_EnemyHandBookData<'a> {
         builder.add_hideInHandbook(args.hideInHandbook);
         builder.add_isInvalidKilled(args.isInvalidKilled);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_EnemyHandBookDataT {
+        let enemyId = self.enemyId().map(|x| x.to_string());
+        let enemyIndex = self.enemyIndex().map(|x| x.to_string());
+        let enemyTags = self
+            .enemyTags()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let sortId = self.sortId();
+        let name = self.name().map(|x| x.to_string());
+        let enemyLevel = self.enemyLevel();
+        let description = self.description().map(|x| x.to_string());
+        let attackType = self.attackType().map(|x| x.to_string());
+        let ability = self.ability().map(|x| x.to_string());
+        let isInvalidKilled = self.isInvalidKilled();
+        let overrideKillCntInfos = self
+            .overrideKillCntInfos()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let hideInHandbook = self.hideInHandbook();
+        let hideInStage = self.hideInStage();
+        let abilityList = self
+            .abilityList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let linkEnemies = self
+            .linkEnemies()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let damageType = self.damageType().map(|x| x.into_iter().collect());
+        let invisibleDetail = self.invisibleDetail();
+        clz_Torappu_EnemyHandBookDataT {
+            enemyId,
+            enemyIndex,
+            enemyTags,
+            sortId,
+            name,
+            enemyLevel,
+            description,
+            attackType,
+            ability,
+            isInvalidKilled,
+            overrideKillCntInfos,
+            hideInHandbook,
+            hideInStage,
+            abilityList,
+            linkEnemies,
+            damageType,
+            invisibleDetail,
+        }
     }
 
     #[inline]
@@ -1476,6 +1847,77 @@ impl<'a> Default for clz_Torappu_EnemyHandBookDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_EnemyHandBookData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_EnemyHandBookData", 17)?;
+        if let Some(f) = self.enemyId() {
+            s.serialize_field("enemyId", &f)?;
+        } else {
+            s.skip_field("enemyId")?;
+        }
+        if let Some(f) = self.enemyIndex() {
+            s.serialize_field("enemyIndex", &f)?;
+        } else {
+            s.skip_field("enemyIndex")?;
+        }
+        if let Some(f) = self.enemyTags() {
+            s.serialize_field("enemyTags", &f)?;
+        } else {
+            s.skip_field("enemyTags")?;
+        }
+        s.serialize_field("sortId", &self.sortId())?;
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        s.serialize_field("enemyLevel", &self.enemyLevel())?;
+        if let Some(f) = self.description() {
+            s.serialize_field("description", &f)?;
+        } else {
+            s.skip_field("description")?;
+        }
+        if let Some(f) = self.attackType() {
+            s.serialize_field("attackType", &f)?;
+        } else {
+            s.skip_field("attackType")?;
+        }
+        if let Some(f) = self.ability() {
+            s.serialize_field("ability", &f)?;
+        } else {
+            s.skip_field("ability")?;
+        }
+        s.serialize_field("isInvalidKilled", &self.isInvalidKilled())?;
+        if let Some(f) = self.overrideKillCntInfos() {
+            s.serialize_field("overrideKillCntInfos", &f)?;
+        } else {
+            s.skip_field("overrideKillCntInfos")?;
+        }
+        s.serialize_field("hideInHandbook", &self.hideInHandbook())?;
+        s.serialize_field("hideInStage", &self.hideInStage())?;
+        if let Some(f) = self.abilityList() {
+            s.serialize_field("abilityList", &f)?;
+        } else {
+            s.skip_field("abilityList")?;
+        }
+        if let Some(f) = self.linkEnemies() {
+            s.serialize_field("linkEnemies", &f)?;
+        } else {
+            s.skip_field("linkEnemies")?;
+        }
+        if let Some(f) = self.damageType() {
+            s.serialize_field("damageType", &f)?;
+        } else {
+            s.skip_field("damageType")?;
+        }
+        s.serialize_field("invisibleDetail", &self.invisibleDetail())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_EnemyHandBookDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1671,6 +2113,108 @@ impl core::fmt::Debug for clz_Torappu_EnemyHandBookData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_EnemyHandBookDataT {
+    pub enemyId: Option<String>,
+    pub enemyIndex: Option<String>,
+    pub enemyTags: Option<Vec<String>>,
+    pub sortId: i32,
+    pub name: Option<String>,
+    pub enemyLevel: enum__Torappu_EnemyLevelType,
+    pub description: Option<String>,
+    pub attackType: Option<String>,
+    pub ability: Option<String>,
+    pub isInvalidKilled: bool,
+    pub overrideKillCntInfos: Option<Vec<dict__string__intT>>,
+    pub hideInHandbook: bool,
+    pub hideInStage: bool,
+    pub abilityList: Option<Vec<clz_Torappu_EnemyHandBookData_AbiltyT>>,
+    pub linkEnemies: Option<Vec<String>>,
+    pub damageType: Option<Vec<enum__Torappu_EnemyHandBookDamageType>>,
+    pub invisibleDetail: bool,
+}
+impl Default for clz_Torappu_EnemyHandBookDataT {
+    fn default() -> Self {
+        Self {
+            enemyId: None,
+            enemyIndex: None,
+            enemyTags: None,
+            sortId: 0,
+            name: None,
+            enemyLevel: enum__Torappu_EnemyLevelType::NORMAL,
+            description: None,
+            attackType: None,
+            ability: None,
+            isInvalidKilled: false,
+            overrideKillCntInfos: None,
+            hideInHandbook: false,
+            hideInStage: false,
+            abilityList: None,
+            linkEnemies: None,
+            damageType: None,
+            invisibleDetail: false,
+        }
+    }
+}
+impl clz_Torappu_EnemyHandBookDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_EnemyHandBookData<'b>> {
+        let enemyId = self.enemyId.as_ref().map(|x| _fbb.create_string(x));
+        let enemyIndex = self.enemyIndex.as_ref().map(|x| _fbb.create_string(x));
+        let enemyTags = self.enemyTags.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let sortId = self.sortId;
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        let enemyLevel = self.enemyLevel;
+        let description = self.description.as_ref().map(|x| _fbb.create_string(x));
+        let attackType = self.attackType.as_ref().map(|x| _fbb.create_string(x));
+        let ability = self.ability.as_ref().map(|x| _fbb.create_string(x));
+        let isInvalidKilled = self.isInvalidKilled;
+        let overrideKillCntInfos = self.overrideKillCntInfos.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let hideInHandbook = self.hideInHandbook;
+        let hideInStage = self.hideInStage;
+        let abilityList = self.abilityList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let linkEnemies = self.linkEnemies.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let damageType = self.damageType.as_ref().map(|x| _fbb.create_vector(x));
+        let invisibleDetail = self.invisibleDetail;
+        clz_Torappu_EnemyHandBookData::create(
+            _fbb,
+            &clz_Torappu_EnemyHandBookDataArgs {
+                enemyId,
+                enemyIndex,
+                enemyTags,
+                sortId,
+                name,
+                enemyLevel,
+                description,
+                attackType,
+                ability,
+                isInvalidKilled,
+                overrideKillCntInfos,
+                hideInHandbook,
+                hideInStage,
+                abilityList,
+                linkEnemies,
+                damageType,
+                invisibleDetail,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_EnemyHandBookDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1683,7 +2227,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_EnemyHandBookData
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1709,6 +2253,15 @@ impl<'a> dict__string__clz_Torappu_EnemyHandBookData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_EnemyHandBookDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_EnemyHandBookDataT { key, value }
     }
 
     #[inline]
@@ -1782,6 +2335,23 @@ impl<'a> Default for dict__string__clz_Torappu_EnemyHandBookDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_EnemyHandBookData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_EnemyHandBookData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_EnemyHandBookDataBuilder<
     'a: 'b,
     'b,
@@ -1838,6 +2408,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_EnemyHandBookData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_EnemyHandBookDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_EnemyHandBookDataT>>,
+}
+impl Default for dict__string__clz_Torappu_EnemyHandBookDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_EnemyHandBookDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_EnemyHandBookData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_EnemyHandBookData::create(
+            _fbb,
+            &dict__string__clz_Torappu_EnemyHandBookDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_EnemyHandbookRaceDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1850,7 +2450,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_EnemyHandbookRaceData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1878,6 +2478,17 @@ impl<'a> clz_Torappu_EnemyHandbookRaceData<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_EnemyHandbookRaceDataT {
+        let id = self.id().map(|x| x.to_string());
+        let raceName = self.raceName().map(|x| x.to_string());
+        let sortId = self.sortId();
+        clz_Torappu_EnemyHandbookRaceDataT {
+            id,
+            raceName,
+            sortId,
+        }
     }
 
     #[inline]
@@ -1952,6 +2563,27 @@ impl<'a> Default for clz_Torappu_EnemyHandbookRaceDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_EnemyHandbookRaceData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_EnemyHandbookRaceData", 3)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        if let Some(f) = self.raceName() {
+            s.serialize_field("raceName", &f)?;
+        } else {
+            s.skip_field("raceName")?;
+        }
+        s.serialize_field("sortId", &self.sortId())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_EnemyHandbookRaceDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2004,6 +2636,40 @@ impl core::fmt::Debug for clz_Torappu_EnemyHandbookRaceData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_EnemyHandbookRaceDataT {
+    pub id: Option<String>,
+    pub raceName: Option<String>,
+    pub sortId: i32,
+}
+impl Default for clz_Torappu_EnemyHandbookRaceDataT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            raceName: None,
+            sortId: 0,
+        }
+    }
+}
+impl clz_Torappu_EnemyHandbookRaceDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_EnemyHandbookRaceData<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let raceName = self.raceName.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        clz_Torappu_EnemyHandbookRaceData::create(
+            _fbb,
+            &clz_Torappu_EnemyHandbookRaceDataArgs {
+                id,
+                raceName,
+                sortId,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_EnemyHandbookRaceDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2016,7 +2682,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_EnemyHandbookRace
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2042,6 +2708,15 @@ impl<'a> dict__string__clz_Torappu_EnemyHandbookRaceData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_EnemyHandbookRaceDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_EnemyHandbookRaceDataT { key, value }
     }
 
     #[inline]
@@ -2118,6 +2793,23 @@ impl<'a> Default for dict__string__clz_Torappu_EnemyHandbookRaceDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_EnemyHandbookRaceData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_EnemyHandbookRaceData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_EnemyHandbookRaceDataBuilder<
     'a: 'b,
     'b,
@@ -2179,6 +2871,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_EnemyHandbookRaceData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_EnemyHandbookRaceDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_EnemyHandbookRaceDataT>>,
+}
+impl Default for dict__string__clz_Torappu_EnemyHandbookRaceDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_EnemyHandbookRaceDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_EnemyHandbookRaceData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_EnemyHandbookRaceData::create(
+            _fbb,
+            &dict__string__clz_Torappu_EnemyHandbookRaceDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_EnemyHandBookDataGroupOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2191,7 +2913,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_EnemyHandBookDataGroup<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2221,6 +2943,23 @@ impl<'a> clz_Torappu_EnemyHandBookDataGroup<'a> {
             builder.add_levelInfoList(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_EnemyHandBookDataGroupT {
+        let levelInfoList = self
+            .levelInfoList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let enemyData = self
+            .enemyData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let raceData = self
+            .raceData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_EnemyHandBookDataGroupT {
+            levelInfoList,
+            enemyData,
+            raceData,
+        }
     }
 
     #[inline]
@@ -2355,6 +3094,31 @@ impl<'a> Default for clz_Torappu_EnemyHandBookDataGroupArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_EnemyHandBookDataGroup<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_EnemyHandBookDataGroup", 3)?;
+        if let Some(f) = self.levelInfoList() {
+            s.serialize_field("levelInfoList", &f)?;
+        } else {
+            s.skip_field("levelInfoList")?;
+        }
+        if let Some(f) = self.enemyData() {
+            s.serialize_field("enemyData", &f)?;
+        } else {
+            s.skip_field("enemyData")?;
+        }
+        if let Some(f) = self.raceData() {
+            s.serialize_field("raceData", &f)?;
+        } else {
+            s.skip_field("raceData")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_EnemyHandBookDataGroupBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2433,6 +3197,49 @@ impl core::fmt::Debug for clz_Torappu_EnemyHandBookDataGroup<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_EnemyHandBookDataGroupT {
+    pub levelInfoList: Option<Vec<clz_Torappu_EnemyHandbookLevelInfoDataT>>,
+    pub enemyData: Option<Vec<dict__string__clz_Torappu_EnemyHandBookDataT>>,
+    pub raceData: Option<Vec<dict__string__clz_Torappu_EnemyHandbookRaceDataT>>,
+}
+impl Default for clz_Torappu_EnemyHandBookDataGroupT {
+    fn default() -> Self {
+        Self {
+            levelInfoList: None,
+            enemyData: None,
+            raceData: None,
+        }
+    }
+}
+impl clz_Torappu_EnemyHandBookDataGroupT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_EnemyHandBookDataGroup<'b>> {
+        let levelInfoList = self.levelInfoList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let enemyData = self.enemyData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let raceData = self.raceData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_EnemyHandBookDataGroup::create(
+            _fbb,
+            &clz_Torappu_EnemyHandBookDataGroupArgs {
+                levelInfoList,
+                enemyData,
+                raceData,
+            },
+        )
+    }
+}
 #[inline]
 /// Verifies that a buffer of bytes contains a `clz_Torappu_EnemyHandBookDataGroup`
 /// and returns it.
@@ -2490,7 +3297,7 @@ pub fn size_prefixed_root_as_clz_torappu_enemy_hand_book_data_group_with_opts<'b
 pub unsafe fn root_as_clz_torappu_enemy_hand_book_data_group_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_EnemyHandBookDataGroup {
-    flatbuffers::root_unchecked::<clz_Torappu_EnemyHandBookDataGroup>(buf)
+    unsafe { flatbuffers::root_unchecked::<clz_Torappu_EnemyHandBookDataGroup>(buf) }
 }
 #[inline]
 /// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_EnemyHandBookDataGroup and returns it.
@@ -2499,7 +3306,7 @@ pub unsafe fn root_as_clz_torappu_enemy_hand_book_data_group_unchecked(
 pub unsafe fn size_prefixed_root_as_clz_torappu_enemy_hand_book_data_group_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_EnemyHandBookDataGroup {
-    flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_EnemyHandBookDataGroup>(buf)
+    unsafe { flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_EnemyHandBookDataGroup>(buf) }
 }
 #[inline]
 pub fn finish_clz_torappu_enemy_hand_book_data_group_buffer<

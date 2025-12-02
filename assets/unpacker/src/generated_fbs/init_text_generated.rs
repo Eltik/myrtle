@@ -5,6 +5,9 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+use self::serde::ser::{Serialize, SerializeStruct, Serializer};
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
@@ -20,7 +23,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__string<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -46,6 +49,15 @@ impl<'a> dict__string__string<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__stringT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| x.to_string());
+        dict__string__stringT { key, value }
     }
 
     #[inline]
@@ -109,6 +121,22 @@ impl<'a> Default for dict__string__stringArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__string<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__string", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__stringBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -150,6 +178,33 @@ impl core::fmt::Debug for dict__string__string<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__stringT {
+    pub key: String,
+    pub value: Option<String>,
+}
+impl Default for dict__string__stringT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__stringT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__string<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| _fbb.create_string(x));
+        dict__string__string::create(_fbb, &dict__string__stringArgs { key, value })
+    }
+}
 pub enum clz_Torappu_LanguageDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -162,7 +217,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_LanguageData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -184,6 +239,13 @@ impl<'a> clz_Torappu_LanguageData<'a> {
             builder.add_strings(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_LanguageDataT {
+        let strings = self
+            .strings()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_LanguageDataT { strings }
     }
 
     #[inline]
@@ -231,6 +293,21 @@ impl<'a> Default for clz_Torappu_LanguageDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_LanguageData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_LanguageData", 1)?;
+        if let Some(f) = self.strings() {
+            s.serialize_field("strings", &f)?;
+        } else {
+            s.skip_field("strings")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_LanguageDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -270,6 +347,28 @@ impl core::fmt::Debug for clz_Torappu_LanguageData<'_> {
         let mut ds = f.debug_struct("clz_Torappu_LanguageData");
         ds.field("strings", &self.strings());
         ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_LanguageDataT {
+    pub strings: Option<Vec<dict__string__stringT>>,
+}
+impl Default for clz_Torappu_LanguageDataT {
+    fn default() -> Self {
+        Self { strings: None }
+    }
+}
+impl clz_Torappu_LanguageDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_LanguageData<'b>> {
+        let strings = self.strings.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_LanguageData::create(_fbb, &clz_Torappu_LanguageDataArgs { strings })
     }
 }
 #[inline]
@@ -327,7 +426,7 @@ pub fn size_prefixed_root_as_clz_torappu_language_data_with_opts<'b, 'o>(
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_LanguageData`.
 pub unsafe fn root_as_clz_torappu_language_data_unchecked(buf: &[u8]) -> clz_Torappu_LanguageData {
-    flatbuffers::root_unchecked::<clz_Torappu_LanguageData>(buf)
+    unsafe { flatbuffers::root_unchecked::<clz_Torappu_LanguageData>(buf) }
 }
 #[inline]
 /// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_LanguageData and returns it.
@@ -336,7 +435,7 @@ pub unsafe fn root_as_clz_torappu_language_data_unchecked(buf: &[u8]) -> clz_Tor
 pub unsafe fn size_prefixed_root_as_clz_torappu_language_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_LanguageData {
-    flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_LanguageData>(buf)
+    unsafe { flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_LanguageData>(buf) }
 }
 #[inline]
 pub fn finish_clz_torappu_language_data_buffer<'a, 'b, A: flatbuffers::Allocator + 'a>(

@@ -5,6 +5,9 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+use self::serde::ser::{Serialize, SerializeStruct, Serializer};
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
@@ -96,11 +99,24 @@ impl core::fmt::Debug for enum__Torappu_GachaRuleType {
         }
     }
 }
+impl Serialize for enum__Torappu_GachaRuleType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_GachaRuleType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_GachaRuleType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -109,7 +125,9 @@ impl flatbuffers::Push for enum__Torappu_GachaRuleType {
     type Output = enum__Torappu_GachaRuleType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -547,11 +565,24 @@ impl core::fmt::Debug for enum__Torappu_ItemType {
         }
     }
 }
+impl Serialize for enum__Torappu_ItemType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_ItemType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ItemType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -560,7 +591,9 @@ impl flatbuffers::Push for enum__Torappu_ItemType {
     type Output = enum__Torappu_ItemType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -602,7 +635,7 @@ impl<'a> flatbuffers::Follow<'a> for hg__internal__JObject<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -624,6 +657,11 @@ impl<'a> hg__internal__JObject<'a> {
             builder.add_base64(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> hg__internal__JObjectT {
+        let base64 = self.base64().map(|x| x.to_string());
+        hg__internal__JObjectT { base64 }
     }
 
     #[inline]
@@ -658,6 +696,21 @@ impl<'a> Default for hg__internal__JObjectArgs<'a> {
     #[inline]
     fn default() -> Self {
         hg__internal__JObjectArgs { base64: None }
+    }
+}
+
+impl Serialize for hg__internal__JObject<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("hg__internal__JObject", 1)?;
+        if let Some(f) = self.base64() {
+            s.serialize_field("base64", &f)?;
+        } else {
+            s.skip_field("base64")?;
+        }
+        s.end()
     }
 }
 
@@ -697,6 +750,25 @@ impl core::fmt::Debug for hg__internal__JObject<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct hg__internal__JObjectT {
+    pub base64: Option<String>,
+}
+impl Default for hg__internal__JObjectT {
+    fn default() -> Self {
+        Self { base64: None }
+    }
+}
+impl hg__internal__JObjectT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<hg__internal__JObject<'b>> {
+        let base64 = self.base64.as_ref().map(|x| _fbb.create_string(x));
+        hg__internal__JObject::create(_fbb, &hg__internal__JObjectArgs { base64 })
+    }
+}
 pub enum clz_Torappu_GachaPoolClientDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -709,7 +781,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_GachaPoolClientData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -791,6 +863,49 @@ impl<'a> clz_Torappu_GachaPoolClientData<'a> {
             builder.add_gachaPoolId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_GachaPoolClientDataT {
+        let gachaPoolId = self.gachaPoolId().map(|x| x.to_string());
+        let gachaIndex = self.gachaIndex();
+        let openTime = self.openTime();
+        let endTime = self.endTime();
+        let gachaPoolName = self.gachaPoolName().map(|x| x.to_string());
+        let gachaPoolSummary = self.gachaPoolSummary().map(|x| x.to_string());
+        let gachaPoolDetail = self.gachaPoolDetail().map(|x| x.to_string());
+        let guaranteeName = self.guaranteeName().map(|x| x.to_string());
+        let guarantee5Avail = self.guarantee5Avail();
+        let guarantee5Count = self.guarantee5Count();
+        let LMTGSID = self.LMTGSID().map(|x| x.to_string());
+        let CDPrimColor = self.CDPrimColor().map(|x| x.to_string());
+        let CDSecColor = self.CDSecColor().map(|x| x.to_string());
+        let freeBackColor = self.freeBackColor().map(|x| x.to_string());
+        let gachaRuleType = self.gachaRuleType();
+        let dynMeta = self.dynMeta().map(|x| Box::new(x.unpack()));
+        let linkageRuleId = self.linkageRuleId().map(|x| x.to_string());
+        let linkageParam = self.linkageParam().map(|x| Box::new(x.unpack()));
+        let limitParam = self.limitParam().map(|x| Box::new(x.unpack()));
+        clz_Torappu_GachaPoolClientDataT {
+            gachaPoolId,
+            gachaIndex,
+            openTime,
+            endTime,
+            gachaPoolName,
+            gachaPoolSummary,
+            gachaPoolDetail,
+            guaranteeName,
+            guarantee5Avail,
+            guarantee5Count,
+            LMTGSID,
+            CDPrimColor,
+            CDSecColor,
+            freeBackColor,
+            gachaRuleType,
+            dynMeta,
+            linkageRuleId,
+            linkageParam,
+            limitParam,
+        }
     }
 
     #[inline]
@@ -1154,6 +1269,87 @@ impl<'a> Default for clz_Torappu_GachaPoolClientDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_GachaPoolClientData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_GachaPoolClientData", 19)?;
+        if let Some(f) = self.gachaPoolId() {
+            s.serialize_field("gachaPoolId", &f)?;
+        } else {
+            s.skip_field("gachaPoolId")?;
+        }
+        s.serialize_field("gachaIndex", &self.gachaIndex())?;
+        s.serialize_field("openTime", &self.openTime())?;
+        s.serialize_field("endTime", &self.endTime())?;
+        if let Some(f) = self.gachaPoolName() {
+            s.serialize_field("gachaPoolName", &f)?;
+        } else {
+            s.skip_field("gachaPoolName")?;
+        }
+        if let Some(f) = self.gachaPoolSummary() {
+            s.serialize_field("gachaPoolSummary", &f)?;
+        } else {
+            s.skip_field("gachaPoolSummary")?;
+        }
+        if let Some(f) = self.gachaPoolDetail() {
+            s.serialize_field("gachaPoolDetail", &f)?;
+        } else {
+            s.skip_field("gachaPoolDetail")?;
+        }
+        if let Some(f) = self.guaranteeName() {
+            s.serialize_field("guaranteeName", &f)?;
+        } else {
+            s.skip_field("guaranteeName")?;
+        }
+        s.serialize_field("guarantee5Avail", &self.guarantee5Avail())?;
+        s.serialize_field("guarantee5Count", &self.guarantee5Count())?;
+        if let Some(f) = self.LMTGSID() {
+            s.serialize_field("LMTGSID", &f)?;
+        } else {
+            s.skip_field("LMTGSID")?;
+        }
+        if let Some(f) = self.CDPrimColor() {
+            s.serialize_field("CDPrimColor", &f)?;
+        } else {
+            s.skip_field("CDPrimColor")?;
+        }
+        if let Some(f) = self.CDSecColor() {
+            s.serialize_field("CDSecColor", &f)?;
+        } else {
+            s.skip_field("CDSecColor")?;
+        }
+        if let Some(f) = self.freeBackColor() {
+            s.serialize_field("freeBackColor", &f)?;
+        } else {
+            s.skip_field("freeBackColor")?;
+        }
+        s.serialize_field("gachaRuleType", &self.gachaRuleType())?;
+        if let Some(f) = self.dynMeta() {
+            s.serialize_field("dynMeta", &f)?;
+        } else {
+            s.skip_field("dynMeta")?;
+        }
+        if let Some(f) = self.linkageRuleId() {
+            s.serialize_field("linkageRuleId", &f)?;
+        } else {
+            s.skip_field("linkageRuleId")?;
+        }
+        if let Some(f) = self.linkageParam() {
+            s.serialize_field("linkageParam", &f)?;
+        } else {
+            s.skip_field("linkageParam")?;
+        }
+        if let Some(f) = self.limitParam() {
+            s.serialize_field("limitParam", &f)?;
+        } else {
+            s.skip_field("limitParam")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_GachaPoolClientDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1343,6 +1539,107 @@ impl core::fmt::Debug for clz_Torappu_GachaPoolClientData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_GachaPoolClientDataT {
+    pub gachaPoolId: Option<String>,
+    pub gachaIndex: i32,
+    pub openTime: i64,
+    pub endTime: i64,
+    pub gachaPoolName: Option<String>,
+    pub gachaPoolSummary: Option<String>,
+    pub gachaPoolDetail: Option<String>,
+    pub guaranteeName: Option<String>,
+    pub guarantee5Avail: i32,
+    pub guarantee5Count: i32,
+    pub LMTGSID: Option<String>,
+    pub CDPrimColor: Option<String>,
+    pub CDSecColor: Option<String>,
+    pub freeBackColor: Option<String>,
+    pub gachaRuleType: enum__Torappu_GachaRuleType,
+    pub dynMeta: Option<Box<hg__internal__JObjectT>>,
+    pub linkageRuleId: Option<String>,
+    pub linkageParam: Option<Box<hg__internal__JObjectT>>,
+    pub limitParam: Option<Box<hg__internal__JObjectT>>,
+}
+impl Default for clz_Torappu_GachaPoolClientDataT {
+    fn default() -> Self {
+        Self {
+            gachaPoolId: None,
+            gachaIndex: 0,
+            openTime: 0,
+            endTime: 0,
+            gachaPoolName: None,
+            gachaPoolSummary: None,
+            gachaPoolDetail: None,
+            guaranteeName: None,
+            guarantee5Avail: 0,
+            guarantee5Count: 0,
+            LMTGSID: None,
+            CDPrimColor: None,
+            CDSecColor: None,
+            freeBackColor: None,
+            gachaRuleType: enum__Torappu_GachaRuleType::NORMAL,
+            dynMeta: None,
+            linkageRuleId: None,
+            linkageParam: None,
+            limitParam: None,
+        }
+    }
+}
+impl clz_Torappu_GachaPoolClientDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_GachaPoolClientData<'b>> {
+        let gachaPoolId = self.gachaPoolId.as_ref().map(|x| _fbb.create_string(x));
+        let gachaIndex = self.gachaIndex;
+        let openTime = self.openTime;
+        let endTime = self.endTime;
+        let gachaPoolName = self.gachaPoolName.as_ref().map(|x| _fbb.create_string(x));
+        let gachaPoolSummary = self
+            .gachaPoolSummary
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let gachaPoolDetail = self.gachaPoolDetail.as_ref().map(|x| _fbb.create_string(x));
+        let guaranteeName = self.guaranteeName.as_ref().map(|x| _fbb.create_string(x));
+        let guarantee5Avail = self.guarantee5Avail;
+        let guarantee5Count = self.guarantee5Count;
+        let LMTGSID = self.LMTGSID.as_ref().map(|x| _fbb.create_string(x));
+        let CDPrimColor = self.CDPrimColor.as_ref().map(|x| _fbb.create_string(x));
+        let CDSecColor = self.CDSecColor.as_ref().map(|x| _fbb.create_string(x));
+        let freeBackColor = self.freeBackColor.as_ref().map(|x| _fbb.create_string(x));
+        let gachaRuleType = self.gachaRuleType;
+        let dynMeta = self.dynMeta.as_ref().map(|x| x.pack(_fbb));
+        let linkageRuleId = self.linkageRuleId.as_ref().map(|x| _fbb.create_string(x));
+        let linkageParam = self.linkageParam.as_ref().map(|x| x.pack(_fbb));
+        let limitParam = self.limitParam.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_GachaPoolClientData::create(
+            _fbb,
+            &clz_Torappu_GachaPoolClientDataArgs {
+                gachaPoolId,
+                gachaIndex,
+                openTime,
+                endTime,
+                gachaPoolName,
+                gachaPoolSummary,
+                gachaPoolDetail,
+                guaranteeName,
+                guarantee5Avail,
+                guarantee5Count,
+                LMTGSID,
+                CDPrimColor,
+                CDSecColor,
+                freeBackColor,
+                gachaRuleType,
+                dynMeta,
+                linkageRuleId,
+                linkageParam,
+                limitParam,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_NewbeeGachaPoolClientDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1355,7 +1652,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_NewbeeGachaPoolClientData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1395,6 +1692,25 @@ impl<'a> clz_Torappu_NewbeeGachaPoolClientData<'a> {
             builder.add_gachaPoolId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_NewbeeGachaPoolClientDataT {
+        let gachaPoolId = self.gachaPoolId().map(|x| x.to_string());
+        let gachaIndex = self.gachaIndex();
+        let gachaPoolName = self.gachaPoolName().map(|x| x.to_string());
+        let gachaPoolDetail = self.gachaPoolDetail().map(|x| x.to_string());
+        let gachaPrice = self.gachaPrice();
+        let gachaTimes = self.gachaTimes();
+        let gachaOffset = self.gachaOffset().map(|x| x.to_string());
+        clz_Torappu_NewbeeGachaPoolClientDataT {
+            gachaPoolId,
+            gachaIndex,
+            gachaPoolName,
+            gachaPoolDetail,
+            gachaPrice,
+            gachaTimes,
+            gachaOffset,
+        }
     }
 
     #[inline]
@@ -1548,6 +1864,39 @@ impl<'a> Default for clz_Torappu_NewbeeGachaPoolClientDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_NewbeeGachaPoolClientData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_NewbeeGachaPoolClientData", 7)?;
+        if let Some(f) = self.gachaPoolId() {
+            s.serialize_field("gachaPoolId", &f)?;
+        } else {
+            s.skip_field("gachaPoolId")?;
+        }
+        s.serialize_field("gachaIndex", &self.gachaIndex())?;
+        if let Some(f) = self.gachaPoolName() {
+            s.serialize_field("gachaPoolName", &f)?;
+        } else {
+            s.skip_field("gachaPoolName")?;
+        }
+        if let Some(f) = self.gachaPoolDetail() {
+            s.serialize_field("gachaPoolDetail", &f)?;
+        } else {
+            s.skip_field("gachaPoolDetail")?;
+        }
+        s.serialize_field("gachaPrice", &self.gachaPrice())?;
+        s.serialize_field("gachaTimes", &self.gachaTimes())?;
+        if let Some(f) = self.gachaOffset() {
+            s.serialize_field("gachaOffset", &f)?;
+        } else {
+            s.skip_field("gachaOffset")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_NewbeeGachaPoolClientDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -1638,6 +1987,56 @@ impl core::fmt::Debug for clz_Torappu_NewbeeGachaPoolClientData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_NewbeeGachaPoolClientDataT {
+    pub gachaPoolId: Option<String>,
+    pub gachaIndex: i32,
+    pub gachaPoolName: Option<String>,
+    pub gachaPoolDetail: Option<String>,
+    pub gachaPrice: i32,
+    pub gachaTimes: i32,
+    pub gachaOffset: Option<String>,
+}
+impl Default for clz_Torappu_NewbeeGachaPoolClientDataT {
+    fn default() -> Self {
+        Self {
+            gachaPoolId: None,
+            gachaIndex: 0,
+            gachaPoolName: None,
+            gachaPoolDetail: None,
+            gachaPrice: 0,
+            gachaTimes: 0,
+            gachaOffset: None,
+        }
+    }
+}
+impl clz_Torappu_NewbeeGachaPoolClientDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_NewbeeGachaPoolClientData<'b>> {
+        let gachaPoolId = self.gachaPoolId.as_ref().map(|x| _fbb.create_string(x));
+        let gachaIndex = self.gachaIndex;
+        let gachaPoolName = self.gachaPoolName.as_ref().map(|x| _fbb.create_string(x));
+        let gachaPoolDetail = self.gachaPoolDetail.as_ref().map(|x| _fbb.create_string(x));
+        let gachaPrice = self.gachaPrice;
+        let gachaTimes = self.gachaTimes;
+        let gachaOffset = self.gachaOffset.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_NewbeeGachaPoolClientData::create(
+            _fbb,
+            &clz_Torappu_NewbeeGachaPoolClientDataArgs {
+                gachaPoolId,
+                gachaIndex,
+                gachaPoolName,
+                gachaPoolDetail,
+                gachaPrice,
+                gachaTimes,
+                gachaOffset,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ItemBundleOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1650,7 +2049,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ItemBundle<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1676,6 +2075,13 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ItemBundleT {
+        let id = self.id().map(|x| x.to_string());
+        let count = self.count();
+        let type_ = self.type_();
+        clz_Torappu_ItemBundleT { id, count, type_ }
     }
 
     #[inline]
@@ -1746,6 +2152,23 @@ impl<'a> Default for clz_Torappu_ItemBundleArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ItemBundle<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ItemBundle", 3)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        s.serialize_field("count", &self.count())?;
+        s.serialize_field("type_", &self.type_())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ItemBundleBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1795,6 +2218,33 @@ impl core::fmt::Debug for clz_Torappu_ItemBundle<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ItemBundleT {
+    pub id: Option<String>,
+    pub count: i32,
+    pub type_: enum__Torappu_ItemType,
+}
+impl Default for clz_Torappu_ItemBundleT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            count: 0,
+            type_: enum__Torappu_ItemType::NONE,
+        }
+    }
+}
+impl clz_Torappu_ItemBundleT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ItemBundle<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let count = self.count;
+        let type_ = self.type_;
+        clz_Torappu_ItemBundle::create(_fbb, &clz_Torappu_ItemBundleArgs { id, count, type_ })
+    }
+}
 pub enum clz_Torappu_SpecialRecruitPool_SpecialRecruitCostDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1807,7 +2257,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SpecialRecruitPool_SpecialRecru
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1833,6 +2283,19 @@ impl<'a> clz_Torappu_SpecialRecruitPool_SpecialRecruitCostData<'a> {
         builder.add_recruitPrice(args.recruitPrice);
         builder.add_timeLength(args.timeLength);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SpecialRecruitPool_SpecialRecruitCostDataT {
+        let timeLength = self.timeLength();
+        let recruitPrice = self.recruitPrice();
+        let itemCosts = self
+            .itemCosts()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_SpecialRecruitPool_SpecialRecruitCostDataT {
+            timeLength,
+            recruitPrice,
+            itemCosts,
+        }
     }
 
     #[inline]
@@ -1919,6 +2382,24 @@ impl<'a> Default for clz_Torappu_SpecialRecruitPool_SpecialRecruitCostDataArgs<'
     }
 }
 
+impl Serialize for clz_Torappu_SpecialRecruitPool_SpecialRecruitCostData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("clz_Torappu_SpecialRecruitPool_SpecialRecruitCostData", 3)?;
+        s.serialize_field("timeLength", &self.timeLength())?;
+        s.serialize_field("recruitPrice", &self.recruitPrice())?;
+        if let Some(f) = self.itemCosts() {
+            s.serialize_field("itemCosts", &f)?;
+        } else {
+            s.skip_field("itemCosts")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SpecialRecruitPool_SpecialRecruitCostDataBuilder<
     'a: 'b,
     'b,
@@ -1986,6 +2467,43 @@ impl core::fmt::Debug for clz_Torappu_SpecialRecruitPool_SpecialRecruitCostData<
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SpecialRecruitPool_SpecialRecruitCostDataT {
+    pub timeLength: i32,
+    pub recruitPrice: i32,
+    pub itemCosts: Option<Vec<clz_Torappu_ItemBundleT>>,
+}
+impl Default for clz_Torappu_SpecialRecruitPool_SpecialRecruitCostDataT {
+    fn default() -> Self {
+        Self {
+            timeLength: 0,
+            recruitPrice: 0,
+            itemCosts: None,
+        }
+    }
+}
+impl clz_Torappu_SpecialRecruitPool_SpecialRecruitCostDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SpecialRecruitPool_SpecialRecruitCostData<'b>> {
+        let timeLength = self.timeLength;
+        let recruitPrice = self.recruitPrice;
+        let itemCosts = self.itemCosts.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SpecialRecruitPool_SpecialRecruitCostData::create(
+            _fbb,
+            &clz_Torappu_SpecialRecruitPool_SpecialRecruitCostDataArgs {
+                timeLength,
+                recruitPrice,
+                itemCosts,
+            },
+        )
+    }
+}
 pub enum dict__int__intOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1998,7 +2516,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__int__int<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2020,6 +2538,12 @@ impl<'a> dict__int__int<'a> {
         builder.add_value(args.value);
         builder.add_key(args.key);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__int__intT {
+        let key = self.key();
+        let value = self.value();
+        dict__int__intT { key, value }
     }
 
     #[inline]
@@ -2081,6 +2605,18 @@ impl<'a> Default for dict__int__intArgs {
     }
 }
 
+impl Serialize for dict__int__int<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__int__int", 2)?;
+        s.serialize_field("key", &self.key())?;
+        s.serialize_field("value", &self.value())?;
+        s.end()
+    }
+}
+
 pub struct dict__int__intBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2120,6 +2656,27 @@ impl core::fmt::Debug for dict__int__int<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__int__intT {
+    pub key: i32,
+    pub value: i32,
+}
+impl Default for dict__int__intT {
+    fn default() -> Self {
+        Self { key: 0, value: 0 }
+    }
+}
+impl dict__int__intT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__int__int<'b>> {
+        let key = self.key;
+        let value = self.value;
+        dict__int__int::create(_fbb, &dict__int__intArgs { key, value })
+    }
+}
 pub enum clz_Torappu_BasedRecruitPool_RecruitConstantsOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2132,7 +2689,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_BasedRecruitPool_RecruitConstan
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2156,6 +2713,17 @@ impl<'a> clz_Torappu_BasedRecruitPool_RecruitConstants<'a> {
             builder.add_tagPriceList(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_BasedRecruitPool_RecruitConstantsT {
+        let tagPriceList = self
+            .tagPriceList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let maxRecruitTime = self.maxRecruitTime();
+        clz_Torappu_BasedRecruitPool_RecruitConstantsT {
+            tagPriceList,
+            maxRecruitTime,
+        }
     }
 
     #[inline]
@@ -2224,6 +2792,23 @@ impl<'a> Default for clz_Torappu_BasedRecruitPool_RecruitConstantsArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_BasedRecruitPool_RecruitConstants<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_BasedRecruitPool_RecruitConstants", 2)?;
+        if let Some(f) = self.tagPriceList() {
+            s.serialize_field("tagPriceList", &f)?;
+        } else {
+            s.skip_field("tagPriceList")?;
+        }
+        s.serialize_field("maxRecruitTime", &self.maxRecruitTime())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_BasedRecruitPool_RecruitConstantsBuilder<
     'a: 'b,
     'b,
@@ -2282,6 +2867,39 @@ impl core::fmt::Debug for clz_Torappu_BasedRecruitPool_RecruitConstants<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_BasedRecruitPool_RecruitConstantsT {
+    pub tagPriceList: Option<Vec<dict__int__intT>>,
+    pub maxRecruitTime: i32,
+}
+impl Default for clz_Torappu_BasedRecruitPool_RecruitConstantsT {
+    fn default() -> Self {
+        Self {
+            tagPriceList: None,
+            maxRecruitTime: 0,
+        }
+    }
+}
+impl clz_Torappu_BasedRecruitPool_RecruitConstantsT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_BasedRecruitPool_RecruitConstants<'b>> {
+        let tagPriceList = self.tagPriceList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let maxRecruitTime = self.maxRecruitTime;
+        clz_Torappu_BasedRecruitPool_RecruitConstants::create(
+            _fbb,
+            &clz_Torappu_BasedRecruitPool_RecruitConstantsArgs {
+                tagPriceList,
+                maxRecruitTime,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_SpecialRecruitPoolOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2294,7 +2912,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SpecialRecruitPool<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2336,6 +2954,29 @@ impl<'a> clz_Torappu_SpecialRecruitPool<'a> {
             builder.add_recruitId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SpecialRecruitPoolT {
+        let recruitId = self.recruitId().map(|x| x.to_string());
+        let tagName = self.tagName().map(|x| x.to_string());
+        let tagId = self.tagId();
+        let order = self.order();
+        let startDateTime = self.startDateTime();
+        let endDateTime = self.endDateTime();
+        let recruitTimeTable = self
+            .recruitTimeTable()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let recruitConstants = self.recruitConstants().map(|x| Box::new(x.unpack()));
+        clz_Torappu_SpecialRecruitPoolT {
+            recruitId,
+            tagName,
+            tagId,
+            order,
+            startDateTime,
+            endDateTime,
+            recruitTimeTable,
+            recruitConstants,
+        }
     }
 
     #[inline]
@@ -2500,6 +3141,40 @@ impl<'a> Default for clz_Torappu_SpecialRecruitPoolArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SpecialRecruitPool<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SpecialRecruitPool", 8)?;
+        if let Some(f) = self.recruitId() {
+            s.serialize_field("recruitId", &f)?;
+        } else {
+            s.skip_field("recruitId")?;
+        }
+        if let Some(f) = self.tagName() {
+            s.serialize_field("tagName", &f)?;
+        } else {
+            s.skip_field("tagName")?;
+        }
+        s.serialize_field("tagId", &self.tagId())?;
+        s.serialize_field("order", &self.order())?;
+        s.serialize_field("startDateTime", &self.startDateTime())?;
+        s.serialize_field("endDateTime", &self.endDateTime())?;
+        if let Some(f) = self.recruitTimeTable() {
+            s.serialize_field("recruitTimeTable", &f)?;
+        } else {
+            s.skip_field("recruitTimeTable")?;
+        }
+        if let Some(f) = self.recruitConstants() {
+            s.serialize_field("recruitConstants", &f)?;
+        } else {
+            s.skip_field("recruitConstants")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SpecialRecruitPoolBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2600,6 +3275,63 @@ impl core::fmt::Debug for clz_Torappu_SpecialRecruitPool<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SpecialRecruitPoolT {
+    pub recruitId: Option<String>,
+    pub tagName: Option<String>,
+    pub tagId: i32,
+    pub order: i32,
+    pub startDateTime: i64,
+    pub endDateTime: i64,
+    pub recruitTimeTable: Option<Vec<clz_Torappu_SpecialRecruitPool_SpecialRecruitCostDataT>>,
+    pub recruitConstants: Option<Box<clz_Torappu_BasedRecruitPool_RecruitConstantsT>>,
+}
+impl Default for clz_Torappu_SpecialRecruitPoolT {
+    fn default() -> Self {
+        Self {
+            recruitId: None,
+            tagName: None,
+            tagId: 0,
+            order: 0,
+            startDateTime: 0,
+            endDateTime: 0,
+            recruitTimeTable: None,
+            recruitConstants: None,
+        }
+    }
+}
+impl clz_Torappu_SpecialRecruitPoolT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SpecialRecruitPool<'b>> {
+        let recruitId = self.recruitId.as_ref().map(|x| _fbb.create_string(x));
+        let tagName = self.tagName.as_ref().map(|x| _fbb.create_string(x));
+        let tagId = self.tagId;
+        let order = self.order;
+        let startDateTime = self.startDateTime;
+        let endDateTime = self.endDateTime;
+        let recruitTimeTable = self.recruitTimeTable.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let recruitConstants = self.recruitConstants.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_SpecialRecruitPool::create(
+            _fbb,
+            &clz_Torappu_SpecialRecruitPoolArgs {
+                recruitId,
+                tagName,
+                tagId,
+                order,
+                startDateTime,
+                endDateTime,
+                recruitTimeTable,
+                recruitConstants,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_GachaTagOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2612,7 +3344,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_GachaTag<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2638,6 +3370,17 @@ impl<'a> clz_Torappu_GachaTag<'a> {
         }
         builder.add_tagId(args.tagId);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_GachaTagT {
+        let tagId = self.tagId();
+        let tagName = self.tagName().map(|x| x.to_string());
+        let tagGroup = self.tagGroup();
+        clz_Torappu_GachaTagT {
+            tagId,
+            tagName,
+            tagGroup,
+        }
     }
 
     #[inline]
@@ -2705,6 +3448,23 @@ impl<'a> Default for clz_Torappu_GachaTagArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_GachaTag<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_GachaTag", 3)?;
+        s.serialize_field("tagId", &self.tagId())?;
+        if let Some(f) = self.tagName() {
+            s.serialize_field("tagName", &f)?;
+        } else {
+            s.skip_field("tagName")?;
+        }
+        s.serialize_field("tagGroup", &self.tagGroup())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_GachaTagBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2753,6 +3513,40 @@ impl core::fmt::Debug for clz_Torappu_GachaTag<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_GachaTagT {
+    pub tagId: i32,
+    pub tagName: Option<String>,
+    pub tagGroup: i32,
+}
+impl Default for clz_Torappu_GachaTagT {
+    fn default() -> Self {
+        Self {
+            tagId: 0,
+            tagName: None,
+            tagGroup: 0,
+        }
+    }
+}
+impl clz_Torappu_GachaTagT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_GachaTag<'b>> {
+        let tagId = self.tagId;
+        let tagName = self.tagName.as_ref().map(|x| _fbb.create_string(x));
+        let tagGroup = self.tagGroup;
+        clz_Torappu_GachaTag::create(
+            _fbb,
+            &clz_Torappu_GachaTagArgs {
+                tagId,
+                tagName,
+                tagGroup,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_RecruitPool_RecruitTimeOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2765,7 +3559,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_RecruitPool_RecruitTime<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2787,6 +3581,15 @@ impl<'a> clz_Torappu_RecruitPool_RecruitTime<'a> {
         builder.add_recruitPrice(args.recruitPrice);
         builder.add_timeLength(args.timeLength);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_RecruitPool_RecruitTimeT {
+        let timeLength = self.timeLength();
+        let recruitPrice = self.recruitPrice();
+        clz_Torappu_RecruitPool_RecruitTimeT {
+            timeLength,
+            recruitPrice,
+        }
     }
 
     #[inline]
@@ -2844,6 +3647,18 @@ impl<'a> Default for clz_Torappu_RecruitPool_RecruitTimeArgs {
     }
 }
 
+impl Serialize for clz_Torappu_RecruitPool_RecruitTime<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_RecruitPool_RecruitTime", 2)?;
+        s.serialize_field("timeLength", &self.timeLength())?;
+        s.serialize_field("recruitPrice", &self.recruitPrice())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_RecruitPool_RecruitTimeBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2892,6 +3707,36 @@ impl core::fmt::Debug for clz_Torappu_RecruitPool_RecruitTime<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_RecruitPool_RecruitTimeT {
+    pub timeLength: i32,
+    pub recruitPrice: i32,
+}
+impl Default for clz_Torappu_RecruitPool_RecruitTimeT {
+    fn default() -> Self {
+        Self {
+            timeLength: 0,
+            recruitPrice: 0,
+        }
+    }
+}
+impl clz_Torappu_RecruitPool_RecruitTimeT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_RecruitPool_RecruitTime<'b>> {
+        let timeLength = self.timeLength;
+        let recruitPrice = self.recruitPrice;
+        clz_Torappu_RecruitPool_RecruitTime::create(
+            _fbb,
+            &clz_Torappu_RecruitPool_RecruitTimeArgs {
+                timeLength,
+                recruitPrice,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_RecruitPoolOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2904,7 +3749,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_RecruitPool<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2930,6 +3775,17 @@ impl<'a> clz_Torappu_RecruitPool<'a> {
             builder.add_recruitTimeTable(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_RecruitPoolT {
+        let recruitTimeTable = self
+            .recruitTimeTable()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let recruitConstants = self.recruitConstants().map(|x| Box::new(x.unpack()));
+        clz_Torappu_RecruitPoolT {
+            recruitTimeTable,
+            recruitConstants,
+        }
     }
 
     #[inline]
@@ -3004,6 +3860,26 @@ impl<'a> Default for clz_Torappu_RecruitPoolArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_RecruitPool<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_RecruitPool", 2)?;
+        if let Some(f) = self.recruitTimeTable() {
+            s.serialize_field("recruitTimeTable", &f)?;
+        } else {
+            s.skip_field("recruitTimeTable")?;
+        }
+        if let Some(f) = self.recruitConstants() {
+            s.serialize_field("recruitConstants", &f)?;
+        } else {
+            s.skip_field("recruitConstants")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_RecruitPoolBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3056,6 +3932,39 @@ impl core::fmt::Debug for clz_Torappu_RecruitPool<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_RecruitPoolT {
+    pub recruitTimeTable: Option<Vec<clz_Torappu_RecruitPool_RecruitTimeT>>,
+    pub recruitConstants: Option<Box<clz_Torappu_BasedRecruitPool_RecruitConstantsT>>,
+}
+impl Default for clz_Torappu_RecruitPoolT {
+    fn default() -> Self {
+        Self {
+            recruitTimeTable: None,
+            recruitConstants: None,
+        }
+    }
+}
+impl clz_Torappu_RecruitPoolT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_RecruitPool<'b>> {
+        let recruitTimeTable = self.recruitTimeTable.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let recruitConstants = self.recruitConstants.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_RecruitPool::create(
+            _fbb,
+            &clz_Torappu_RecruitPoolArgs {
+                recruitTimeTable,
+                recruitConstants,
+            },
+        )
+    }
+}
 pub enum dict__int__clz_Torappu_ItemBundleOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3068,7 +3977,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__int__clz_Torappu_ItemBundle<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3092,6 +4001,12 @@ impl<'a> dict__int__clz_Torappu_ItemBundle<'a> {
         }
         builder.add_key(args.key);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__int__clz_Torappu_ItemBundleT {
+        let key = self.key();
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__int__clz_Torappu_ItemBundleT { key, value }
     }
 
     #[inline]
@@ -3162,6 +4077,22 @@ impl<'a> Default for dict__int__clz_Torappu_ItemBundleArgs<'a> {
     }
 }
 
+impl Serialize for dict__int__clz_Torappu_ItemBundle<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__int__clz_Torappu_ItemBundle", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__int__clz_Torappu_ItemBundleBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3207,6 +4138,33 @@ impl core::fmt::Debug for dict__int__clz_Torappu_ItemBundle<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__int__clz_Torappu_ItemBundleT {
+    pub key: i32,
+    pub value: Option<Box<clz_Torappu_ItemBundleT>>,
+}
+impl Default for dict__int__clz_Torappu_ItemBundleT {
+    fn default() -> Self {
+        Self {
+            key: 0,
+            value: None,
+        }
+    }
+}
+impl dict__int__clz_Torappu_ItemBundleT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__int__clz_Torappu_ItemBundle<'b>> {
+        let key = self.key;
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__int__clz_Torappu_ItemBundle::create(
+            _fbb,
+            &dict__int__clz_Torappu_ItemBundleArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_PotentialMaterialConverterConfigOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3219,7 +4177,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_PotentialMaterialConverterConfi
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3241,6 +4199,11 @@ impl<'a> clz_Torappu_PotentialMaterialConverterConfig<'a> {
             builder.add_items(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_PotentialMaterialConverterConfigT {
+        let items = self.items().map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_PotentialMaterialConverterConfigT { items }
     }
 
     #[inline]
@@ -3301,6 +4264,22 @@ impl<'a> Default for clz_Torappu_PotentialMaterialConverterConfigArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_PotentialMaterialConverterConfig<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_PotentialMaterialConverterConfig", 1)?;
+        if let Some(f) = self.items() {
+            s.serialize_field("items", &f)?;
+        } else {
+            s.skip_field("items")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_PotentialMaterialConverterConfigBuilder<
     'a: 'b,
     'b,
@@ -3353,6 +4332,31 @@ impl core::fmt::Debug for clz_Torappu_PotentialMaterialConverterConfig<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_PotentialMaterialConverterConfigT {
+    pub items: Option<Vec<dict__int__clz_Torappu_ItemBundleT>>,
+}
+impl Default for clz_Torappu_PotentialMaterialConverterConfigT {
+    fn default() -> Self {
+        Self { items: None }
+    }
+}
+impl clz_Torappu_PotentialMaterialConverterConfigT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_PotentialMaterialConverterConfig<'b>> {
+        let items = self.items.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_PotentialMaterialConverterConfig::create(
+            _fbb,
+            &clz_Torappu_PotentialMaterialConverterConfigArgs { items },
+        )
+    }
+}
 pub enum clz_Torappu_GachaData_RecruitRangeOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3365,7 +4369,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_GachaData_RecruitRange<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3387,6 +4391,15 @@ impl<'a> clz_Torappu_GachaData_RecruitRange<'a> {
         builder.add_rarityEnd(args.rarityEnd);
         builder.add_rarityStart(args.rarityStart);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_GachaData_RecruitRangeT {
+        let rarityStart = self.rarityStart();
+        let rarityEnd = self.rarityEnd();
+        clz_Torappu_GachaData_RecruitRangeT {
+            rarityStart,
+            rarityEnd,
+        }
     }
 
     #[inline]
@@ -3441,6 +4454,18 @@ impl<'a> Default for clz_Torappu_GachaData_RecruitRangeArgs {
     }
 }
 
+impl Serialize for clz_Torappu_GachaData_RecruitRange<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_GachaData_RecruitRange", 2)?;
+        s.serialize_field("rarityStart", &self.rarityStart())?;
+        s.serialize_field("rarityEnd", &self.rarityEnd())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_GachaData_RecruitRangeBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3489,6 +4514,36 @@ impl core::fmt::Debug for clz_Torappu_GachaData_RecruitRange<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_GachaData_RecruitRangeT {
+    pub rarityStart: i32,
+    pub rarityEnd: i32,
+}
+impl Default for clz_Torappu_GachaData_RecruitRangeT {
+    fn default() -> Self {
+        Self {
+            rarityStart: 0,
+            rarityEnd: 0,
+        }
+    }
+}
+impl clz_Torappu_GachaData_RecruitRangeT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_GachaData_RecruitRange<'b>> {
+        let rarityStart = self.rarityStart;
+        let rarityEnd = self.rarityEnd;
+        clz_Torappu_GachaData_RecruitRange::create(
+            _fbb,
+            &clz_Torappu_GachaData_RecruitRangeArgs {
+                rarityStart,
+                rarityEnd,
+            },
+        )
+    }
+}
 pub enum dict__int__clz_Torappu_GachaData_RecruitRangeOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3501,7 +4556,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__int__clz_Torappu_GachaData_RecruitRan
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3525,6 +4580,12 @@ impl<'a> dict__int__clz_Torappu_GachaData_RecruitRange<'a> {
         }
         builder.add_key(args.key);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__int__clz_Torappu_GachaData_RecruitRangeT {
+        let key = self.key();
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__int__clz_Torappu_GachaData_RecruitRangeT { key, value }
     }
 
     #[inline]
@@ -3598,6 +4659,23 @@ impl<'a> Default for dict__int__clz_Torappu_GachaData_RecruitRangeArgs<'a> {
     }
 }
 
+impl Serialize for dict__int__clz_Torappu_GachaData_RecruitRange<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__int__clz_Torappu_GachaData_RecruitRange", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__int__clz_Torappu_GachaData_RecruitRangeBuilder<
     'a: 'b,
     'b,
@@ -3655,6 +4733,33 @@ impl core::fmt::Debug for dict__int__clz_Torappu_GachaData_RecruitRange<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__int__clz_Torappu_GachaData_RecruitRangeT {
+    pub key: i32,
+    pub value: Option<Box<clz_Torappu_GachaData_RecruitRangeT>>,
+}
+impl Default for dict__int__clz_Torappu_GachaData_RecruitRangeT {
+    fn default() -> Self {
+        Self {
+            key: 0,
+            value: None,
+        }
+    }
+}
+impl dict__int__clz_Torappu_GachaData_RecruitRangeT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__int__clz_Torappu_GachaData_RecruitRange<'b>> {
+        let key = self.key;
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__int__clz_Torappu_GachaData_RecruitRange::create(
+            _fbb,
+            &dict__int__clz_Torappu_GachaData_RecruitRangeArgs { key, value },
+        )
+    }
+}
 pub enum dict__int__list_intOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3667,7 +4772,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__int__list_int<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3691,6 +4796,12 @@ impl<'a> dict__int__list_int<'a> {
         }
         builder.add_key(args.key);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__int__list_intT {
+        let key = self.key();
+        let value = self.value().map(|x| x.into_iter().collect());
+        dict__int__list_intT { key, value }
     }
 
     #[inline]
@@ -3761,6 +4872,22 @@ impl<'a> Default for dict__int__list_intArgs<'a> {
     }
 }
 
+impl Serialize for dict__int__list_int<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__int__list_int", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__int__list_intBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3801,6 +4928,30 @@ impl core::fmt::Debug for dict__int__list_int<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__int__list_intT {
+    pub key: i32,
+    pub value: Option<Vec<i32>>,
+}
+impl Default for dict__int__list_intT {
+    fn default() -> Self {
+        Self {
+            key: 0,
+            value: None,
+        }
+    }
+}
+impl dict__int__list_intT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__int__list_int<'b>> {
+        let key = self.key;
+        let value = self.value.as_ref().map(|x| _fbb.create_vector(x));
+        dict__int__list_int::create(_fbb, &dict__int__list_intArgs { key, value })
+    }
+}
 pub enum clz_Torappu_GachaData_CarouselDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3813,7 +4964,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_GachaData_CarouselData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3845,6 +4996,21 @@ impl<'a> clz_Torappu_GachaData_CarouselData<'a> {
             builder.add_poolId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_GachaData_CarouselDataT {
+        let poolId = self.poolId().map(|x| x.to_string());
+        let index = self.index();
+        let startTime = self.startTime();
+        let endTime = self.endTime();
+        let spriteId = self.spriteId().map(|x| x.to_string());
+        clz_Torappu_GachaData_CarouselDataT {
+            poolId,
+            index,
+            startTime,
+            endTime,
+            spriteId,
+        }
     }
 
     #[inline]
@@ -3947,6 +5113,29 @@ impl<'a> Default for clz_Torappu_GachaData_CarouselDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_GachaData_CarouselData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_GachaData_CarouselData", 5)?;
+        if let Some(f) = self.poolId() {
+            s.serialize_field("poolId", &f)?;
+        } else {
+            s.skip_field("poolId")?;
+        }
+        s.serialize_field("index", &self.index())?;
+        s.serialize_field("startTime", &self.startTime())?;
+        s.serialize_field("endTime", &self.endTime())?;
+        if let Some(f) = self.spriteId() {
+            s.serialize_field("spriteId", &f)?;
+        } else {
+            s.skip_field("spriteId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_GachaData_CarouselDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -4014,6 +5203,48 @@ impl core::fmt::Debug for clz_Torappu_GachaData_CarouselData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_GachaData_CarouselDataT {
+    pub poolId: Option<String>,
+    pub index: i32,
+    pub startTime: i64,
+    pub endTime: i64,
+    pub spriteId: Option<String>,
+}
+impl Default for clz_Torappu_GachaData_CarouselDataT {
+    fn default() -> Self {
+        Self {
+            poolId: None,
+            index: 0,
+            startTime: 0,
+            endTime: 0,
+            spriteId: None,
+        }
+    }
+}
+impl clz_Torappu_GachaData_CarouselDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_GachaData_CarouselData<'b>> {
+        let poolId = self.poolId.as_ref().map(|x| _fbb.create_string(x));
+        let index = self.index;
+        let startTime = self.startTime;
+        let endTime = self.endTime;
+        let spriteId = self.spriteId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_GachaData_CarouselData::create(
+            _fbb,
+            &clz_Torappu_GachaData_CarouselDataArgs {
+                poolId,
+                index,
+                startTime,
+                endTime,
+                spriteId,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_GachaData_FreeLimitGachaDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4026,7 +5257,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_GachaData_FreeLimitGachaData<'a
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4054,6 +5285,19 @@ impl<'a> clz_Torappu_GachaData_FreeLimitGachaData<'a> {
             builder.add_poolId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_GachaData_FreeLimitGachaDataT {
+        let poolId = self.poolId().map(|x| x.to_string());
+        let openTime = self.openTime();
+        let endTime = self.endTime();
+        let freeCount = self.freeCount();
+        clz_Torappu_GachaData_FreeLimitGachaDataT {
+            poolId,
+            openTime,
+            endTime,
+            freeCount,
+        }
     }
 
     #[inline]
@@ -4146,6 +5390,24 @@ impl<'a> Default for clz_Torappu_GachaData_FreeLimitGachaDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_GachaData_FreeLimitGachaData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_GachaData_FreeLimitGachaData", 4)?;
+        if let Some(f) = self.poolId() {
+            s.serialize_field("poolId", &f)?;
+        } else {
+            s.skip_field("poolId")?;
+        }
+        s.serialize_field("openTime", &self.openTime())?;
+        s.serialize_field("endTime", &self.endTime())?;
+        s.serialize_field("freeCount", &self.freeCount())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_GachaData_FreeLimitGachaDataBuilder<
     'a: 'b,
     'b,
@@ -4215,6 +5477,44 @@ impl core::fmt::Debug for clz_Torappu_GachaData_FreeLimitGachaData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_GachaData_FreeLimitGachaDataT {
+    pub poolId: Option<String>,
+    pub openTime: i64,
+    pub endTime: i64,
+    pub freeCount: i32,
+}
+impl Default for clz_Torappu_GachaData_FreeLimitGachaDataT {
+    fn default() -> Self {
+        Self {
+            poolId: None,
+            openTime: 0,
+            endTime: 0,
+            freeCount: 0,
+        }
+    }
+}
+impl clz_Torappu_GachaData_FreeLimitGachaDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_GachaData_FreeLimitGachaData<'b>> {
+        let poolId = self.poolId.as_ref().map(|x| _fbb.create_string(x));
+        let openTime = self.openTime;
+        let endTime = self.endTime;
+        let freeCount = self.freeCount;
+        clz_Torappu_GachaData_FreeLimitGachaData::create(
+            _fbb,
+            &clz_Torappu_GachaData_FreeLimitGachaDataArgs {
+                poolId,
+                openTime,
+                endTime,
+                freeCount,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_GachaData_LimitTenGachaTktOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4227,7 +5527,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_GachaData_LimitTenGachaTkt<'a> 
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4251,6 +5551,12 @@ impl<'a> clz_Torappu_GachaData_LimitTenGachaTkt<'a> {
             builder.add_itemId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_GachaData_LimitTenGachaTktT {
+        let itemId = self.itemId().map(|x| x.to_string());
+        let endTime = self.endTime();
+        clz_Torappu_GachaData_LimitTenGachaTktT { itemId, endTime }
     }
 
     #[inline]
@@ -4306,6 +5612,22 @@ impl<'a> Default for clz_Torappu_GachaData_LimitTenGachaTktArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_GachaData_LimitTenGachaTkt<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_GachaData_LimitTenGachaTkt", 2)?;
+        if let Some(f) = self.itemId() {
+            s.serialize_field("itemId", &f)?;
+        } else {
+            s.skip_field("itemId")?;
+        }
+        s.serialize_field("endTime", &self.endTime())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_GachaData_LimitTenGachaTktBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -4354,6 +5676,33 @@ impl core::fmt::Debug for clz_Torappu_GachaData_LimitTenGachaTkt<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_GachaData_LimitTenGachaTktT {
+    pub itemId: Option<String>,
+    pub endTime: i64,
+}
+impl Default for clz_Torappu_GachaData_LimitTenGachaTktT {
+    fn default() -> Self {
+        Self {
+            itemId: None,
+            endTime: 0,
+        }
+    }
+}
+impl clz_Torappu_GachaData_LimitTenGachaTktT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_GachaData_LimitTenGachaTkt<'b>> {
+        let itemId = self.itemId.as_ref().map(|x| _fbb.create_string(x));
+        let endTime = self.endTime;
+        clz_Torappu_GachaData_LimitTenGachaTkt::create(
+            _fbb,
+            &clz_Torappu_GachaData_LimitTenGachaTktArgs { itemId, endTime },
+        )
+    }
+}
 pub enum clz_Torappu_GachaData_LinkageTenGachaTktOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4366,7 +5715,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_GachaData_LinkageTenGachaTkt<'a
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4394,6 +5743,17 @@ impl<'a> clz_Torappu_GachaData_LinkageTenGachaTkt<'a> {
             builder.add_itemId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_GachaData_LinkageTenGachaTktT {
+        let itemId = self.itemId().map(|x| x.to_string());
+        let endTime = self.endTime();
+        let gachaPoolId = self.gachaPoolId().map(|x| x.to_string());
+        clz_Torappu_GachaData_LinkageTenGachaTktT {
+            itemId,
+            endTime,
+            gachaPoolId,
+        }
     }
 
     #[inline]
@@ -4471,6 +5831,27 @@ impl<'a> Default for clz_Torappu_GachaData_LinkageTenGachaTktArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_GachaData_LinkageTenGachaTkt<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_GachaData_LinkageTenGachaTkt", 3)?;
+        if let Some(f) = self.itemId() {
+            s.serialize_field("itemId", &f)?;
+        } else {
+            s.skip_field("itemId")?;
+        }
+        s.serialize_field("endTime", &self.endTime())?;
+        if let Some(f) = self.gachaPoolId() {
+            s.serialize_field("gachaPoolId", &f)?;
+        } else {
+            s.skip_field("gachaPoolId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_GachaData_LinkageTenGachaTktBuilder<
     'a: 'b,
     'b,
@@ -4530,6 +5911,40 @@ impl core::fmt::Debug for clz_Torappu_GachaData_LinkageTenGachaTkt<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_GachaData_LinkageTenGachaTktT {
+    pub itemId: Option<String>,
+    pub endTime: i64,
+    pub gachaPoolId: Option<String>,
+}
+impl Default for clz_Torappu_GachaData_LinkageTenGachaTktT {
+    fn default() -> Self {
+        Self {
+            itemId: None,
+            endTime: 0,
+            gachaPoolId: None,
+        }
+    }
+}
+impl clz_Torappu_GachaData_LinkageTenGachaTktT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_GachaData_LinkageTenGachaTkt<'b>> {
+        let itemId = self.itemId.as_ref().map(|x| _fbb.create_string(x));
+        let endTime = self.endTime;
+        let gachaPoolId = self.gachaPoolId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_GachaData_LinkageTenGachaTkt::create(
+            _fbb,
+            &clz_Torappu_GachaData_LinkageTenGachaTktArgs {
+                itemId,
+                endTime,
+                gachaPoolId,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_GachaData_NormalGachaTktOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4542,7 +5957,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_GachaData_NormalGachaTkt<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4572,6 +5987,19 @@ impl<'a> clz_Torappu_GachaData_NormalGachaTkt<'a> {
         }
         builder.add_isTen(args.isTen);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_GachaData_NormalGachaTktT {
+        let itemId = self.itemId().map(|x| x.to_string());
+        let endTime = self.endTime();
+        let gachaPoolId = self.gachaPoolId().map(|x| x.to_string());
+        let isTen = self.isTen();
+        clz_Torappu_GachaData_NormalGachaTktT {
+            itemId,
+            endTime,
+            gachaPoolId,
+            isTen,
+        }
     }
 
     #[inline]
@@ -4660,6 +6088,28 @@ impl<'a> Default for clz_Torappu_GachaData_NormalGachaTktArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_GachaData_NormalGachaTkt<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_GachaData_NormalGachaTkt", 4)?;
+        if let Some(f) = self.itemId() {
+            s.serialize_field("itemId", &f)?;
+        } else {
+            s.skip_field("itemId")?;
+        }
+        s.serialize_field("endTime", &self.endTime())?;
+        if let Some(f) = self.gachaPoolId() {
+            s.serialize_field("gachaPoolId", &f)?;
+        } else {
+            s.skip_field("gachaPoolId")?;
+        }
+        s.serialize_field("isTen", &self.isTen())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_GachaData_NormalGachaTktBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -4718,6 +6168,44 @@ impl core::fmt::Debug for clz_Torappu_GachaData_NormalGachaTkt<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_GachaData_NormalGachaTktT {
+    pub itemId: Option<String>,
+    pub endTime: i64,
+    pub gachaPoolId: Option<String>,
+    pub isTen: bool,
+}
+impl Default for clz_Torappu_GachaData_NormalGachaTktT {
+    fn default() -> Self {
+        Self {
+            itemId: None,
+            endTime: 0,
+            gachaPoolId: None,
+            isTen: false,
+        }
+    }
+}
+impl clz_Torappu_GachaData_NormalGachaTktT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_GachaData_NormalGachaTkt<'b>> {
+        let itemId = self.itemId.as_ref().map(|x| _fbb.create_string(x));
+        let endTime = self.endTime;
+        let gachaPoolId = self.gachaPoolId.as_ref().map(|x| _fbb.create_string(x));
+        let isTen = self.isTen;
+        clz_Torappu_GachaData_NormalGachaTkt::create(
+            _fbb,
+            &clz_Torappu_GachaData_NormalGachaTktArgs {
+                itemId,
+                endTime,
+                gachaPoolId,
+                isTen,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_GachaData_FesGachaPoolRelateItemOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4730,7 +6218,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_GachaData_FesGachaPoolRelateIte
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4756,6 +6244,15 @@ impl<'a> clz_Torappu_GachaData_FesGachaPoolRelateItem<'a> {
             builder.add_rarityRank5ItemId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_GachaData_FesGachaPoolRelateItemT {
+        let rarityRank5ItemId = self.rarityRank5ItemId().map(|x| x.to_string());
+        let rarityRank6ItemId = self.rarityRank6ItemId().map(|x| x.to_string());
+        clz_Torappu_GachaData_FesGachaPoolRelateItemT {
+            rarityRank5ItemId,
+            rarityRank6ItemId,
+        }
     }
 
     #[inline]
@@ -4820,6 +6317,27 @@ impl<'a> Default for clz_Torappu_GachaData_FesGachaPoolRelateItemArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_GachaData_FesGachaPoolRelateItem<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_GachaData_FesGachaPoolRelateItem", 2)?;
+        if let Some(f) = self.rarityRank5ItemId() {
+            s.serialize_field("rarityRank5ItemId", &f)?;
+        } else {
+            s.skip_field("rarityRank5ItemId")?;
+        }
+        if let Some(f) = self.rarityRank6ItemId() {
+            s.serialize_field("rarityRank6ItemId", &f)?;
+        } else {
+            s.skip_field("rarityRank6ItemId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_GachaData_FesGachaPoolRelateItemBuilder<
     'a: 'b,
     'b,
@@ -4872,6 +6390,42 @@ impl core::fmt::Debug for clz_Torappu_GachaData_FesGachaPoolRelateItem<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_GachaData_FesGachaPoolRelateItemT {
+    pub rarityRank5ItemId: Option<String>,
+    pub rarityRank6ItemId: Option<String>,
+}
+impl Default for clz_Torappu_GachaData_FesGachaPoolRelateItemT {
+    fn default() -> Self {
+        Self {
+            rarityRank5ItemId: None,
+            rarityRank6ItemId: None,
+        }
+    }
+}
+impl clz_Torappu_GachaData_FesGachaPoolRelateItemT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_GachaData_FesGachaPoolRelateItem<'b>> {
+        let rarityRank5ItemId = self
+            .rarityRank5ItemId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let rarityRank6ItemId = self
+            .rarityRank6ItemId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        clz_Torappu_GachaData_FesGachaPoolRelateItem::create(
+            _fbb,
+            &clz_Torappu_GachaData_FesGachaPoolRelateItemArgs {
+                rarityRank5ItemId,
+                rarityRank6ItemId,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItemOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4886,7 +6440,7 @@ impl<'a> flatbuffers::Follow<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4914,6 +6468,15 @@ impl<'a> dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItem<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItemT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItemT { key, value }
     }
 
     #[inline]
@@ -4986,6 +6549,25 @@ impl<'a> Default for dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItemA
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItem<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItem",
+            2,
+        )?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItemBuilder<
     'a: 'b,
     'b,
@@ -5044,6 +6626,37 @@ impl core::fmt::Debug for dict__string__clz_Torappu_GachaData_FesGachaPoolRelate
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItemT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_GachaData_FesGachaPoolRelateItemT>>,
+}
+impl Default for dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItemT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItemT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItem<'b>>
+    {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItem::create(
+            _fbb,
+            &dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItemArgs { key, value },
+        )
+    }
+}
 pub enum dict__string__stringOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -5056,7 +6669,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__string<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -5082,6 +6695,15 @@ impl<'a> dict__string__string<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__stringT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| x.to_string());
+        dict__string__stringT { key, value }
     }
 
     #[inline]
@@ -5145,6 +6767,22 @@ impl<'a> Default for dict__string__stringArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__string<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__string", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__stringBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -5186,6 +6824,33 @@ impl core::fmt::Debug for dict__string__string<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__stringT {
+    pub key: String,
+    pub value: Option<String>,
+}
+impl Default for dict__string__stringT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__stringT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__string<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| _fbb.create_string(x));
+        dict__string__string::create(_fbb, &dict__string__stringArgs { key, value })
+    }
+}
 pub enum dict__int__floatOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -5198,7 +6863,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__int__float<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -5220,6 +6885,12 @@ impl<'a> dict__int__float<'a> {
         builder.add_value(args.value);
         builder.add_key(args.key);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__int__floatT {
+        let key = self.key();
+        let value = self.value();
+        dict__int__floatT { key, value }
     }
 
     #[inline]
@@ -5281,6 +6952,18 @@ impl<'a> Default for dict__int__floatArgs {
     }
 }
 
+impl Serialize for dict__int__float<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__int__float", 2)?;
+        s.serialize_field("key", &self.key())?;
+        s.serialize_field("value", &self.value())?;
+        s.end()
+    }
+}
+
 pub struct dict__int__floatBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -5320,6 +7003,27 @@ impl core::fmt::Debug for dict__int__float<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__int__floatT {
+    pub key: i32,
+    pub value: f32,
+}
+impl Default for dict__int__floatT {
+    fn default() -> Self {
+        Self { key: 0, value: 0.0 }
+    }
+}
+impl dict__int__floatT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__int__float<'b>> {
+        let key = self.key;
+        let value = self.value;
+        dict__int__float::create(_fbb, &dict__int__floatArgs { key, value })
+    }
+}
 pub enum clz_Torappu_GachaDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -5332,7 +7036,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_GachaData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -5424,6 +7128,81 @@ impl<'a> clz_Torappu_GachaData<'a> {
         }
         builder.add_showGachaLogEntry(args.showGachaLogEntry);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_GachaDataT {
+        let gachaPoolClient = self
+            .gachaPoolClient()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let newbeeGachaPoolClient = self
+            .newbeeGachaPoolClient()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let specialRecruitPool = self
+            .specialRecruitPool()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let gachaTags = self
+            .gachaTags()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let recruitPool = self.recruitPool().map(|x| Box::new(x.unpack()));
+        let potentialMaterialConverter = self
+            .potentialMaterialConverter()
+            .map(|x| Box::new(x.unpack()));
+        let classicPotentialMaterialConverter = self
+            .classicPotentialMaterialConverter()
+            .map(|x| Box::new(x.unpack()));
+        let recruitRarityTable = self
+            .recruitRarityTable()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let specialTagRarityTable = self
+            .specialTagRarityTable()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let recruitDetail = self.recruitDetail().map(|x| x.to_string());
+        let showGachaLogEntry = self.showGachaLogEntry();
+        let carousel = self
+            .carousel()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let freeGacha = self
+            .freeGacha()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let limitTenGachaItem = self
+            .limitTenGachaItem()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let linkageTenGachaItem = self
+            .linkageTenGachaItem()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let normalGachaItem = self
+            .normalGachaItem()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let fesGachaPoolRelateItem = self
+            .fesGachaPoolRelateItem()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let dicRecruit6StarHint = self
+            .dicRecruit6StarHint()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let specialGachaPercentDict = self
+            .specialGachaPercentDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_GachaDataT {
+            gachaPoolClient,
+            newbeeGachaPoolClient,
+            specialRecruitPool,
+            gachaTags,
+            recruitPool,
+            potentialMaterialConverter,
+            classicPotentialMaterialConverter,
+            recruitRarityTable,
+            specialTagRarityTable,
+            recruitDetail,
+            showGachaLogEntry,
+            carousel,
+            freeGacha,
+            limitTenGachaItem,
+            linkageTenGachaItem,
+            normalGachaItem,
+            fesGachaPoolRelateItem,
+            dicRecruit6StarHint,
+            specialGachaPercentDict,
+        }
     }
 
     #[inline]
@@ -5926,6 +7705,107 @@ impl<'a> Default for clz_Torappu_GachaDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_GachaData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_GachaData", 19)?;
+        if let Some(f) = self.gachaPoolClient() {
+            s.serialize_field("gachaPoolClient", &f)?;
+        } else {
+            s.skip_field("gachaPoolClient")?;
+        }
+        if let Some(f) = self.newbeeGachaPoolClient() {
+            s.serialize_field("newbeeGachaPoolClient", &f)?;
+        } else {
+            s.skip_field("newbeeGachaPoolClient")?;
+        }
+        if let Some(f) = self.specialRecruitPool() {
+            s.serialize_field("specialRecruitPool", &f)?;
+        } else {
+            s.skip_field("specialRecruitPool")?;
+        }
+        if let Some(f) = self.gachaTags() {
+            s.serialize_field("gachaTags", &f)?;
+        } else {
+            s.skip_field("gachaTags")?;
+        }
+        if let Some(f) = self.recruitPool() {
+            s.serialize_field("recruitPool", &f)?;
+        } else {
+            s.skip_field("recruitPool")?;
+        }
+        if let Some(f) = self.potentialMaterialConverter() {
+            s.serialize_field("potentialMaterialConverter", &f)?;
+        } else {
+            s.skip_field("potentialMaterialConverter")?;
+        }
+        if let Some(f) = self.classicPotentialMaterialConverter() {
+            s.serialize_field("classicPotentialMaterialConverter", &f)?;
+        } else {
+            s.skip_field("classicPotentialMaterialConverter")?;
+        }
+        if let Some(f) = self.recruitRarityTable() {
+            s.serialize_field("recruitRarityTable", &f)?;
+        } else {
+            s.skip_field("recruitRarityTable")?;
+        }
+        if let Some(f) = self.specialTagRarityTable() {
+            s.serialize_field("specialTagRarityTable", &f)?;
+        } else {
+            s.skip_field("specialTagRarityTable")?;
+        }
+        if let Some(f) = self.recruitDetail() {
+            s.serialize_field("recruitDetail", &f)?;
+        } else {
+            s.skip_field("recruitDetail")?;
+        }
+        s.serialize_field("showGachaLogEntry", &self.showGachaLogEntry())?;
+        if let Some(f) = self.carousel() {
+            s.serialize_field("carousel", &f)?;
+        } else {
+            s.skip_field("carousel")?;
+        }
+        if let Some(f) = self.freeGacha() {
+            s.serialize_field("freeGacha", &f)?;
+        } else {
+            s.skip_field("freeGacha")?;
+        }
+        if let Some(f) = self.limitTenGachaItem() {
+            s.serialize_field("limitTenGachaItem", &f)?;
+        } else {
+            s.skip_field("limitTenGachaItem")?;
+        }
+        if let Some(f) = self.linkageTenGachaItem() {
+            s.serialize_field("linkageTenGachaItem", &f)?;
+        } else {
+            s.skip_field("linkageTenGachaItem")?;
+        }
+        if let Some(f) = self.normalGachaItem() {
+            s.serialize_field("normalGachaItem", &f)?;
+        } else {
+            s.skip_field("normalGachaItem")?;
+        }
+        if let Some(f) = self.fesGachaPoolRelateItem() {
+            s.serialize_field("fesGachaPoolRelateItem", &f)?;
+        } else {
+            s.skip_field("fesGachaPoolRelateItem")?;
+        }
+        if let Some(f) = self.dicRecruit6StarHint() {
+            s.serialize_field("dicRecruit6StarHint", &f)?;
+        } else {
+            s.skip_field("dicRecruit6StarHint")?;
+        }
+        if let Some(f) = self.specialGachaPercentDict() {
+            s.serialize_field("specialGachaPercentDict", &f)?;
+        } else {
+            s.skip_field("specialGachaPercentDict")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_GachaDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -6223,6 +8103,154 @@ impl core::fmt::Debug for clz_Torappu_GachaData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_GachaDataT {
+    pub gachaPoolClient: Option<Vec<clz_Torappu_GachaPoolClientDataT>>,
+    pub newbeeGachaPoolClient: Option<Vec<clz_Torappu_NewbeeGachaPoolClientDataT>>,
+    pub specialRecruitPool: Option<Vec<clz_Torappu_SpecialRecruitPoolT>>,
+    pub gachaTags: Option<Vec<clz_Torappu_GachaTagT>>,
+    pub recruitPool: Option<Box<clz_Torappu_RecruitPoolT>>,
+    pub potentialMaterialConverter: Option<Box<clz_Torappu_PotentialMaterialConverterConfigT>>,
+    pub classicPotentialMaterialConverter:
+        Option<Box<clz_Torappu_PotentialMaterialConverterConfigT>>,
+    pub recruitRarityTable: Option<Vec<dict__int__clz_Torappu_GachaData_RecruitRangeT>>,
+    pub specialTagRarityTable: Option<Vec<dict__int__list_intT>>,
+    pub recruitDetail: Option<String>,
+    pub showGachaLogEntry: bool,
+    pub carousel: Option<Vec<clz_Torappu_GachaData_CarouselDataT>>,
+    pub freeGacha: Option<Vec<clz_Torappu_GachaData_FreeLimitGachaDataT>>,
+    pub limitTenGachaItem: Option<Vec<clz_Torappu_GachaData_LimitTenGachaTktT>>,
+    pub linkageTenGachaItem: Option<Vec<clz_Torappu_GachaData_LinkageTenGachaTktT>>,
+    pub normalGachaItem: Option<Vec<clz_Torappu_GachaData_NormalGachaTktT>>,
+    pub fesGachaPoolRelateItem:
+        Option<Vec<dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItemT>>,
+    pub dicRecruit6StarHint: Option<Vec<dict__string__stringT>>,
+    pub specialGachaPercentDict: Option<Vec<dict__int__floatT>>,
+}
+impl Default for clz_Torappu_GachaDataT {
+    fn default() -> Self {
+        Self {
+            gachaPoolClient: None,
+            newbeeGachaPoolClient: None,
+            specialRecruitPool: None,
+            gachaTags: None,
+            recruitPool: None,
+            potentialMaterialConverter: None,
+            classicPotentialMaterialConverter: None,
+            recruitRarityTable: None,
+            specialTagRarityTable: None,
+            recruitDetail: None,
+            showGachaLogEntry: false,
+            carousel: None,
+            freeGacha: None,
+            limitTenGachaItem: None,
+            linkageTenGachaItem: None,
+            normalGachaItem: None,
+            fesGachaPoolRelateItem: None,
+            dicRecruit6StarHint: None,
+            specialGachaPercentDict: None,
+        }
+    }
+}
+impl clz_Torappu_GachaDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_GachaData<'b>> {
+        let gachaPoolClient = self.gachaPoolClient.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let newbeeGachaPoolClient = self.newbeeGachaPoolClient.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let specialRecruitPool = self.specialRecruitPool.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let gachaTags = self.gachaTags.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let recruitPool = self.recruitPool.as_ref().map(|x| x.pack(_fbb));
+        let potentialMaterialConverter = self
+            .potentialMaterialConverter
+            .as_ref()
+            .map(|x| x.pack(_fbb));
+        let classicPotentialMaterialConverter = self
+            .classicPotentialMaterialConverter
+            .as_ref()
+            .map(|x| x.pack(_fbb));
+        let recruitRarityTable = self.recruitRarityTable.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let specialTagRarityTable = self.specialTagRarityTable.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let recruitDetail = self.recruitDetail.as_ref().map(|x| _fbb.create_string(x));
+        let showGachaLogEntry = self.showGachaLogEntry;
+        let carousel = self.carousel.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let freeGacha = self.freeGacha.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let limitTenGachaItem = self.limitTenGachaItem.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let linkageTenGachaItem = self.linkageTenGachaItem.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let normalGachaItem = self.normalGachaItem.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let fesGachaPoolRelateItem = self.fesGachaPoolRelateItem.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let dicRecruit6StarHint = self.dicRecruit6StarHint.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let specialGachaPercentDict = self.specialGachaPercentDict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_GachaData::create(
+            _fbb,
+            &clz_Torappu_GachaDataArgs {
+                gachaPoolClient,
+                newbeeGachaPoolClient,
+                specialRecruitPool,
+                gachaTags,
+                recruitPool,
+                potentialMaterialConverter,
+                classicPotentialMaterialConverter,
+                recruitRarityTable,
+                specialTagRarityTable,
+                recruitDetail,
+                showGachaLogEntry,
+                carousel,
+                freeGacha,
+                limitTenGachaItem,
+                linkageTenGachaItem,
+                normalGachaItem,
+                fesGachaPoolRelateItem,
+                dicRecruit6StarHint,
+                specialGachaPercentDict,
+            },
+        )
+    }
+}
 #[inline]
 /// Verifies that a buffer of bytes contains a `clz_Torappu_GachaData`
 /// and returns it.
@@ -6278,7 +8306,7 @@ pub fn size_prefixed_root_as_clz_torappu_gacha_data_with_opts<'b, 'o>(
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_GachaData`.
 pub unsafe fn root_as_clz_torappu_gacha_data_unchecked(buf: &[u8]) -> clz_Torappu_GachaData {
-    flatbuffers::root_unchecked::<clz_Torappu_GachaData>(buf)
+    unsafe { flatbuffers::root_unchecked::<clz_Torappu_GachaData>(buf) }
 }
 #[inline]
 /// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_GachaData and returns it.
@@ -6287,7 +8315,7 @@ pub unsafe fn root_as_clz_torappu_gacha_data_unchecked(buf: &[u8]) -> clz_Torapp
 pub unsafe fn size_prefixed_root_as_clz_torappu_gacha_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_GachaData {
-    flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_GachaData>(buf)
+    unsafe { flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_GachaData>(buf) }
 }
 #[inline]
 pub fn finish_clz_torappu_gacha_data_buffer<'a, 'b, A: flatbuffers::Allocator + 'a>(

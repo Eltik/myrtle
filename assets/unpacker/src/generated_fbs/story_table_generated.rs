@@ -5,6 +5,9 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+use self::serde::ser::{Serialize, SerializeStruct, Serializer};
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
@@ -105,11 +108,24 @@ impl core::fmt::Debug for enum__Torappu_StoryData_Trigger_TriggerType {
         }
     }
 }
+impl Serialize for enum__Torappu_StoryData_Trigger_TriggerType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_StoryData_Trigger_TriggerType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_StoryData_Trigger_TriggerType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -118,7 +134,9 @@ impl flatbuffers::Push for enum__Torappu_StoryData_Trigger_TriggerType {
     type Output = enum__Torappu_StoryData_Trigger_TriggerType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -204,11 +222,24 @@ impl core::fmt::Debug for enum__Torappu_PlayerStageState {
         }
     }
 }
+impl Serialize for enum__Torappu_PlayerStageState {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_PlayerStageState",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_PlayerStageState {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -217,7 +248,9 @@ impl flatbuffers::Push for enum__Torappu_PlayerStageState {
     type Output = enum__Torappu_PlayerStageState;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -655,11 +688,24 @@ impl core::fmt::Debug for enum__Torappu_ItemType {
         }
     }
 }
+impl Serialize for enum__Torappu_ItemType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_ItemType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ItemType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -668,7 +714,9 @@ impl flatbuffers::Push for enum__Torappu_ItemType {
     type Output = enum__Torappu_ItemType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -710,7 +758,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StoryData_Trigger<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -736,6 +784,17 @@ impl<'a> clz_Torappu_StoryData_Trigger<'a> {
         builder.add_type_(args.type_);
         builder.add_useRegex(args.useRegex);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StoryData_TriggerT {
+        let type_ = self.type_();
+        let key = self.key().map(|x| x.to_string());
+        let useRegex = self.useRegex();
+        clz_Torappu_StoryData_TriggerT {
+            type_,
+            key,
+            useRegex,
+        }
     }
 
     #[inline]
@@ -812,6 +871,23 @@ impl<'a> Default for clz_Torappu_StoryData_TriggerArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_StoryData_Trigger<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_StoryData_Trigger", 3)?;
+        s.serialize_field("type_", &self.type_())?;
+        if let Some(f) = self.key() {
+            s.serialize_field("key", &f)?;
+        } else {
+            s.skip_field("key")?;
+        }
+        s.serialize_field("useRegex", &self.useRegex())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StoryData_TriggerBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -864,6 +940,40 @@ impl core::fmt::Debug for clz_Torappu_StoryData_Trigger<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StoryData_TriggerT {
+    pub type_: enum__Torappu_StoryData_Trigger_TriggerType,
+    pub key: Option<String>,
+    pub useRegex: bool,
+}
+impl Default for clz_Torappu_StoryData_TriggerT {
+    fn default() -> Self {
+        Self {
+            type_: enum__Torappu_StoryData_Trigger_TriggerType::GAME_START,
+            key: None,
+            useRegex: false,
+        }
+    }
+}
+impl clz_Torappu_StoryData_TriggerT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StoryData_Trigger<'b>> {
+        let type_ = self.type_;
+        let key = self.key.as_ref().map(|x| _fbb.create_string(x));
+        let useRegex = self.useRegex;
+        clz_Torappu_StoryData_Trigger::create(
+            _fbb,
+            &clz_Torappu_StoryData_TriggerArgs {
+                type_,
+                key,
+                useRegex,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_StoryData_Condition_StageConditionOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -876,7 +986,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StoryData_Condition_StageCondit
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -902,6 +1012,17 @@ impl<'a> clz_Torappu_StoryData_Condition_StageCondition<'a> {
             builder.add_stageId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StoryData_Condition_StageConditionT {
+        let stageId = self.stageId().map(|x| x.to_string());
+        let minState = self.minState();
+        let maxState = self.maxState();
+        clz_Torappu_StoryData_Condition_StageConditionT {
+            stageId,
+            minState,
+            maxState,
+        }
     }
 
     #[inline]
@@ -977,6 +1098,24 @@ impl<'a> Default for clz_Torappu_StoryData_Condition_StageConditionArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_StoryData_Condition_StageCondition<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_StoryData_Condition_StageCondition", 3)?;
+        if let Some(f) = self.stageId() {
+            s.serialize_field("stageId", &f)?;
+        } else {
+            s.skip_field("stageId")?;
+        }
+        s.serialize_field("minState", &self.minState())?;
+        s.serialize_field("maxState", &self.maxState())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StoryData_Condition_StageConditionBuilder<
     'a: 'b,
     'b,
@@ -1039,6 +1178,40 @@ impl core::fmt::Debug for clz_Torappu_StoryData_Condition_StageCondition<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StoryData_Condition_StageConditionT {
+    pub stageId: Option<String>,
+    pub minState: enum__Torappu_PlayerStageState,
+    pub maxState: enum__Torappu_PlayerStageState,
+}
+impl Default for clz_Torappu_StoryData_Condition_StageConditionT {
+    fn default() -> Self {
+        Self {
+            stageId: None,
+            minState: enum__Torappu_PlayerStageState::UNLOCKED,
+            maxState: enum__Torappu_PlayerStageState::UNLOCKED,
+        }
+    }
+}
+impl clz_Torappu_StoryData_Condition_StageConditionT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StoryData_Condition_StageCondition<'b>> {
+        let stageId = self.stageId.as_ref().map(|x| _fbb.create_string(x));
+        let minState = self.minState;
+        let maxState = self.maxState;
+        clz_Torappu_StoryData_Condition_StageCondition::create(
+            _fbb,
+            &clz_Torappu_StoryData_Condition_StageConditionArgs {
+                stageId,
+                minState,
+                maxState,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_StoryData_ConditionOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1051,7 +1224,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StoryData_Condition<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1087,6 +1260,29 @@ impl<'a> clz_Torappu_StoryData_Condition<'a> {
         builder.add_maxProgress(args.maxProgress);
         builder.add_minProgress(args.minProgress);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StoryData_ConditionT {
+        let minProgress = self.minProgress();
+        let maxProgress = self.maxProgress();
+        let minPlayerLevel = self.minPlayerLevel();
+        let requiredFlags = self
+            .requiredFlags()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let excludedFlags = self
+            .excludedFlags()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let requiredStages = self
+            .requiredStages()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_StoryData_ConditionT {
+            minProgress,
+            maxProgress,
+            minPlayerLevel,
+            requiredFlags,
+            excludedFlags,
+            requiredStages,
+        }
     }
 
     #[inline]
@@ -1231,6 +1427,34 @@ impl<'a> Default for clz_Torappu_StoryData_ConditionArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_StoryData_Condition<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_StoryData_Condition", 6)?;
+        s.serialize_field("minProgress", &self.minProgress())?;
+        s.serialize_field("maxProgress", &self.maxProgress())?;
+        s.serialize_field("minPlayerLevel", &self.minPlayerLevel())?;
+        if let Some(f) = self.requiredFlags() {
+            s.serialize_field("requiredFlags", &f)?;
+        } else {
+            s.skip_field("requiredFlags")?;
+        }
+        if let Some(f) = self.excludedFlags() {
+            s.serialize_field("excludedFlags", &f)?;
+        } else {
+            s.skip_field("excludedFlags")?;
+        }
+        if let Some(f) = self.requiredStages() {
+            s.serialize_field("requiredStages", &f)?;
+        } else {
+            s.skip_field("requiredStages")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StoryData_ConditionBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1328,6 +1552,61 @@ impl core::fmt::Debug for clz_Torappu_StoryData_Condition<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StoryData_ConditionT {
+    pub minProgress: i32,
+    pub maxProgress: i32,
+    pub minPlayerLevel: i32,
+    pub requiredFlags: Option<Vec<String>>,
+    pub excludedFlags: Option<Vec<String>>,
+    pub requiredStages: Option<Vec<clz_Torappu_StoryData_Condition_StageConditionT>>,
+}
+impl Default for clz_Torappu_StoryData_ConditionT {
+    fn default() -> Self {
+        Self {
+            minProgress: 0,
+            maxProgress: 0,
+            minPlayerLevel: 0,
+            requiredFlags: None,
+            excludedFlags: None,
+            requiredStages: None,
+        }
+    }
+}
+impl clz_Torappu_StoryData_ConditionT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StoryData_Condition<'b>> {
+        let minProgress = self.minProgress;
+        let maxProgress = self.maxProgress;
+        let minPlayerLevel = self.minPlayerLevel;
+        let requiredFlags = self.requiredFlags.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let excludedFlags = self.excludedFlags.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let requiredStages = self.requiredStages.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_StoryData_Condition::create(
+            _fbb,
+            &clz_Torappu_StoryData_ConditionArgs {
+                minProgress,
+                maxProgress,
+                minPlayerLevel,
+                requiredFlags,
+                excludedFlags,
+                requiredStages,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ItemBundleOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1340,7 +1619,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ItemBundle<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1366,6 +1645,13 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ItemBundleT {
+        let id = self.id().map(|x| x.to_string());
+        let count = self.count();
+        let type_ = self.type_();
+        clz_Torappu_ItemBundleT { id, count, type_ }
     }
 
     #[inline]
@@ -1436,6 +1722,23 @@ impl<'a> Default for clz_Torappu_ItemBundleArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ItemBundle<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ItemBundle", 3)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        s.serialize_field("count", &self.count())?;
+        s.serialize_field("type_", &self.type_())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ItemBundleBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1485,6 +1788,33 @@ impl core::fmt::Debug for clz_Torappu_ItemBundle<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ItemBundleT {
+    pub id: Option<String>,
+    pub count: i32,
+    pub type_: enum__Torappu_ItemType,
+}
+impl Default for clz_Torappu_ItemBundleT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            count: 0,
+            type_: enum__Torappu_ItemType::NONE,
+        }
+    }
+}
+impl clz_Torappu_ItemBundleT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ItemBundle<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let count = self.count;
+        let type_ = self.type_;
+        clz_Torappu_ItemBundle::create(_fbb, &clz_Torappu_ItemBundleArgs { id, count, type_ })
+    }
+}
 pub enum clz_Torappu_StoryDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1497,7 +1827,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StoryData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1545,6 +1875,35 @@ impl<'a> clz_Torappu_StoryData<'a> {
         builder.add_repeatable(args.repeatable);
         builder.add_needCommit(args.needCommit);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StoryDataT {
+        let id = self.id().map(|x| x.to_string());
+        let needCommit = self.needCommit();
+        let repeatable = self.repeatable();
+        let disabled = self.disabled();
+        let videoResource = self.videoResource();
+        let trigger = self.trigger().map(|x| Box::new(x.unpack()));
+        let condition = self.condition().map(|x| Box::new(x.unpack()));
+        let setProgress = self.setProgress();
+        let setFlags = self
+            .setFlags()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let completedRewards = self
+            .completedRewards()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_StoryDataT {
+            id,
+            needCommit,
+            repeatable,
+            disabled,
+            videoResource,
+            trigger,
+            condition,
+            setProgress,
+            setFlags,
+            completedRewards,
+        }
     }
 
     #[inline]
@@ -1737,6 +2096,46 @@ impl<'a> Default for clz_Torappu_StoryDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_StoryData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_StoryData", 10)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        s.serialize_field("needCommit", &self.needCommit())?;
+        s.serialize_field("repeatable", &self.repeatable())?;
+        s.serialize_field("disabled", &self.disabled())?;
+        s.serialize_field("videoResource", &self.videoResource())?;
+        if let Some(f) = self.trigger() {
+            s.serialize_field("trigger", &f)?;
+        } else {
+            s.skip_field("trigger")?;
+        }
+        if let Some(f) = self.condition() {
+            s.serialize_field("condition", &f)?;
+        } else {
+            s.skip_field("condition")?;
+        }
+        s.serialize_field("setProgress", &self.setProgress())?;
+        if let Some(f) = self.setFlags() {
+            s.serialize_field("setFlags", &f)?;
+        } else {
+            s.skip_field("setFlags")?;
+        }
+        if let Some(f) = self.completedRewards() {
+            s.serialize_field("completedRewards", &f)?;
+        } else {
+            s.skip_field("completedRewards")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StoryDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1854,6 +2253,74 @@ impl core::fmt::Debug for clz_Torappu_StoryData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StoryDataT {
+    pub id: Option<String>,
+    pub needCommit: bool,
+    pub repeatable: bool,
+    pub disabled: bool,
+    pub videoResource: bool,
+    pub trigger: Option<Box<clz_Torappu_StoryData_TriggerT>>,
+    pub condition: Option<Box<clz_Torappu_StoryData_ConditionT>>,
+    pub setProgress: i32,
+    pub setFlags: Option<Vec<String>>,
+    pub completedRewards: Option<Vec<clz_Torappu_ItemBundleT>>,
+}
+impl Default for clz_Torappu_StoryDataT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            needCommit: false,
+            repeatable: false,
+            disabled: false,
+            videoResource: false,
+            trigger: None,
+            condition: None,
+            setProgress: 0,
+            setFlags: None,
+            completedRewards: None,
+        }
+    }
+}
+impl clz_Torappu_StoryDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StoryData<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let needCommit = self.needCommit;
+        let repeatable = self.repeatable;
+        let disabled = self.disabled;
+        let videoResource = self.videoResource;
+        let trigger = self.trigger.as_ref().map(|x| x.pack(_fbb));
+        let condition = self.condition.as_ref().map(|x| x.pack(_fbb));
+        let setProgress = self.setProgress;
+        let setFlags = self.setFlags.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let completedRewards = self.completedRewards.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_StoryData::create(
+            _fbb,
+            &clz_Torappu_StoryDataArgs {
+                id,
+                needCommit,
+                repeatable,
+                disabled,
+                videoResource,
+                trigger,
+                condition,
+                setProgress,
+                setFlags,
+                completedRewards,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_StoryDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1866,7 +2333,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_StoryData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1892,6 +2359,15 @@ impl<'a> dict__string__clz_Torappu_StoryData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_StoryDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_StoryDataT { key, value }
     }
 
     #[inline]
@@ -1965,6 +2441,22 @@ impl<'a> Default for dict__string__clz_Torappu_StoryDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_StoryData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_StoryData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_StoryDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2014,6 +2506,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_StoryData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_StoryDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_StoryDataT>>,
+}
+impl Default for dict__string__clz_Torappu_StoryDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_StoryDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_StoryData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_StoryData::create(
+            _fbb,
+            &dict__string__clz_Torappu_StoryDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SimpleKVTable_clz_Torappu_StoryDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2026,7 +2548,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SimpleKVTable_clz_Torappu_Story
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2048,6 +2570,13 @@ impl<'a> clz_Torappu_SimpleKVTable_clz_Torappu_StoryData<'a> {
             builder.add_stories(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SimpleKVTable_clz_Torappu_StoryDataT {
+        let stories = self
+            .stories()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_SimpleKVTable_clz_Torappu_StoryDataT { stories }
     }
 
     #[inline]
@@ -2111,6 +2640,22 @@ impl<'a> Default for clz_Torappu_SimpleKVTable_clz_Torappu_StoryDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SimpleKVTable_clz_Torappu_StoryData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_SimpleKVTable_clz_Torappu_StoryData", 1)?;
+        if let Some(f) = self.stories() {
+            s.serialize_field("stories", &f)?;
+        } else {
+            s.skip_field("stories")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SimpleKVTable_clz_Torappu_StoryDataBuilder<
     'a: 'b,
     'b,
@@ -2161,6 +2706,31 @@ impl core::fmt::Debug for clz_Torappu_SimpleKVTable_clz_Torappu_StoryData<'_> {
         let mut ds = f.debug_struct("clz_Torappu_SimpleKVTable_clz_Torappu_StoryData");
         ds.field("stories", &self.stories());
         ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SimpleKVTable_clz_Torappu_StoryDataT {
+    pub stories: Option<Vec<dict__string__clz_Torappu_StoryDataT>>,
+}
+impl Default for clz_Torappu_SimpleKVTable_clz_Torappu_StoryDataT {
+    fn default() -> Self {
+        Self { stories: None }
+    }
+}
+impl clz_Torappu_SimpleKVTable_clz_Torappu_StoryDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SimpleKVTable_clz_Torappu_StoryData<'b>> {
+        let stories = self.stories.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SimpleKVTable_clz_Torappu_StoryData::create(
+            _fbb,
+            &clz_Torappu_SimpleKVTable_clz_Torappu_StoryDataArgs { stories },
+        )
     }
 }
 #[inline]
@@ -2222,7 +2792,7 @@ pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_story_data_w
 pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_story_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SimpleKVTable_clz_Torappu_StoryData {
-    flatbuffers::root_unchecked::<clz_Torappu_SimpleKVTable_clz_Torappu_StoryData>(buf)
+    unsafe { flatbuffers::root_unchecked::<clz_Torappu_SimpleKVTable_clz_Torappu_StoryData>(buf) }
 }
 #[inline]
 /// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_SimpleKVTable_clz_Torappu_StoryData and returns it.
@@ -2231,9 +2801,11 @@ pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_story_data_unchecke
 pub unsafe fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_story_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SimpleKVTable_clz_Torappu_StoryData {
-    flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_SimpleKVTable_clz_Torappu_StoryData>(
-        buf,
-    )
+    unsafe {
+        flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_SimpleKVTable_clz_Torappu_StoryData>(
+            buf,
+        )
+    }
 }
 #[inline]
 pub fn finish_clz_torappu_simple_kvtable_clz_torappu_story_data_buffer<

@@ -5,6 +5,9 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+use self::serde::ser::{Serialize, SerializeStruct, Serializer};
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
@@ -58,11 +61,24 @@ impl core::fmt::Debug for enum__Torappu_HotUpdateMetaPicData_PicType {
         }
     }
 }
+impl Serialize for enum__Torappu_HotUpdateMetaPicData_PicType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_HotUpdateMetaPicData_PicType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_HotUpdateMetaPicData_PicType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -71,7 +87,9 @@ impl flatbuffers::Push for enum__Torappu_HotUpdateMetaPicData_PicType {
     type Output = enum__Torappu_HotUpdateMetaPicData_PicType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -113,7 +131,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_HotUpdateMetaPicData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -157,6 +175,31 @@ impl<'a> clz_Torappu_HotUpdateMetaPicData<'a> {
             builder.add_picId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_HotUpdateMetaPicDataT {
+        let picId = self.picId().map(|x| x.to_string());
+        let groupId = self.groupId();
+        let sortId = self.sortId();
+        let startTime = self.startTime();
+        let endTime = self.endTime();
+        let textList = self
+            .textList()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let picType = self.picType();
+        let logoId = self.logoId().map(|x| x.to_string());
+        let color = self.color().map(|x| x.to_string());
+        clz_Torappu_HotUpdateMetaPicDataT {
+            picId,
+            groupId,
+            sortId,
+            startTime,
+            endTime,
+            textList,
+            picType,
+            logoId,
+            color,
+        }
     }
 
     #[inline]
@@ -325,6 +368,41 @@ impl<'a> Default for clz_Torappu_HotUpdateMetaPicDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_HotUpdateMetaPicData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_HotUpdateMetaPicData", 9)?;
+        if let Some(f) = self.picId() {
+            s.serialize_field("picId", &f)?;
+        } else {
+            s.skip_field("picId")?;
+        }
+        s.serialize_field("groupId", &self.groupId())?;
+        s.serialize_field("sortId", &self.sortId())?;
+        s.serialize_field("startTime", &self.startTime())?;
+        s.serialize_field("endTime", &self.endTime())?;
+        if let Some(f) = self.textList() {
+            s.serialize_field("textList", &f)?;
+        } else {
+            s.skip_field("textList")?;
+        }
+        s.serialize_field("picType", &self.picType())?;
+        if let Some(f) = self.logoId() {
+            s.serialize_field("logoId", &f)?;
+        } else {
+            s.skip_field("logoId")?;
+        }
+        if let Some(f) = self.color() {
+            s.serialize_field("color", &f)?;
+        } else {
+            s.skip_field("color")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_HotUpdateMetaPicDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -426,6 +504,67 @@ impl core::fmt::Debug for clz_Torappu_HotUpdateMetaPicData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_HotUpdateMetaPicDataT {
+    pub picId: Option<String>,
+    pub groupId: i32,
+    pub sortId: i32,
+    pub startTime: i64,
+    pub endTime: i64,
+    pub textList: Option<Vec<String>>,
+    pub picType: enum__Torappu_HotUpdateMetaPicData_PicType,
+    pub logoId: Option<String>,
+    pub color: Option<String>,
+}
+impl Default for clz_Torappu_HotUpdateMetaPicDataT {
+    fn default() -> Self {
+        Self {
+            picId: None,
+            groupId: 0,
+            sortId: 0,
+            startTime: 0,
+            endTime: 0,
+            textList: None,
+            picType: enum__Torappu_HotUpdateMetaPicData_PicType::NONE,
+            logoId: None,
+            color: None,
+        }
+    }
+}
+impl clz_Torappu_HotUpdateMetaPicDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_HotUpdateMetaPicData<'b>> {
+        let picId = self.picId.as_ref().map(|x| _fbb.create_string(x));
+        let groupId = self.groupId;
+        let sortId = self.sortId;
+        let startTime = self.startTime;
+        let endTime = self.endTime;
+        let textList = self.textList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let picType = self.picType;
+        let logoId = self.logoId.as_ref().map(|x| _fbb.create_string(x));
+        let color = self.color.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_HotUpdateMetaPicData::create(
+            _fbb,
+            &clz_Torappu_HotUpdateMetaPicDataArgs {
+                picId,
+                groupId,
+                sortId,
+                startTime,
+                endTime,
+                textList,
+                picType,
+                logoId,
+                color,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_HotUpdateMetaMovieDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -438,7 +577,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_HotUpdateMetaMovieData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -468,6 +607,19 @@ impl<'a> clz_Torappu_HotUpdateMetaMovieData<'a> {
             builder.add_videoId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_HotUpdateMetaMovieDataT {
+        let videoId = self.videoId().map(|x| x.to_string());
+        let videoPath = self.videoPath().map(|x| x.to_string());
+        let endTime = self.endTime();
+        let sortId = self.sortId();
+        clz_Torappu_HotUpdateMetaMovieDataT {
+            videoId,
+            videoPath,
+            endTime,
+            sortId,
+        }
     }
 
     #[inline]
@@ -556,6 +708,28 @@ impl<'a> Default for clz_Torappu_HotUpdateMetaMovieDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_HotUpdateMetaMovieData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_HotUpdateMetaMovieData", 4)?;
+        if let Some(f) = self.videoId() {
+            s.serialize_field("videoId", &f)?;
+        } else {
+            s.skip_field("videoId")?;
+        }
+        if let Some(f) = self.videoPath() {
+            s.serialize_field("videoPath", &f)?;
+        } else {
+            s.skip_field("videoPath")?;
+        }
+        s.serialize_field("endTime", &self.endTime())?;
+        s.serialize_field("sortId", &self.sortId())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_HotUpdateMetaMovieDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -614,6 +788,44 @@ impl core::fmt::Debug for clz_Torappu_HotUpdateMetaMovieData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_HotUpdateMetaMovieDataT {
+    pub videoId: Option<String>,
+    pub videoPath: Option<String>,
+    pub endTime: i64,
+    pub sortId: i32,
+}
+impl Default for clz_Torappu_HotUpdateMetaMovieDataT {
+    fn default() -> Self {
+        Self {
+            videoId: None,
+            videoPath: None,
+            endTime: 0,
+            sortId: 0,
+        }
+    }
+}
+impl clz_Torappu_HotUpdateMetaMovieDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_HotUpdateMetaMovieData<'b>> {
+        let videoId = self.videoId.as_ref().map(|x| _fbb.create_string(x));
+        let videoPath = self.videoPath.as_ref().map(|x| _fbb.create_string(x));
+        let endTime = self.endTime;
+        let sortId = self.sortId;
+        clz_Torappu_HotUpdateMetaMovieData::create(
+            _fbb,
+            &clz_Torappu_HotUpdateMetaMovieDataArgs {
+                videoId,
+                videoPath,
+                endTime,
+                sortId,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_HotUpdateMetaTableOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -626,7 +838,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_HotUpdateMetaTable<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -652,6 +864,14 @@ impl<'a> clz_Torappu_HotUpdateMetaTable<'a> {
             builder.add_picList(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_HotUpdateMetaTableT {
+        let picList = self
+            .picList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let movieInfo = self.movieInfo().map(|x| Box::new(x.unpack()));
+        clz_Torappu_HotUpdateMetaTableT { picList, movieInfo }
     }
 
     #[inline]
@@ -731,6 +951,26 @@ impl<'a> Default for clz_Torappu_HotUpdateMetaTableArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_HotUpdateMetaTable<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_HotUpdateMetaTable", 2)?;
+        if let Some(f) = self.picList() {
+            s.serialize_field("picList", &f)?;
+        } else {
+            s.skip_field("picList")?;
+        }
+        if let Some(f) = self.movieInfo() {
+            s.serialize_field("movieInfo", &f)?;
+        } else {
+            s.skip_field("movieInfo")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_HotUpdateMetaTableBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -785,6 +1025,36 @@ impl core::fmt::Debug for clz_Torappu_HotUpdateMetaTable<'_> {
         ds.field("picList", &self.picList());
         ds.field("movieInfo", &self.movieInfo());
         ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_HotUpdateMetaTableT {
+    pub picList: Option<Vec<clz_Torappu_HotUpdateMetaPicDataT>>,
+    pub movieInfo: Option<Box<clz_Torappu_HotUpdateMetaMovieDataT>>,
+}
+impl Default for clz_Torappu_HotUpdateMetaTableT {
+    fn default() -> Self {
+        Self {
+            picList: None,
+            movieInfo: None,
+        }
+    }
+}
+impl clz_Torappu_HotUpdateMetaTableT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_HotUpdateMetaTable<'b>> {
+        let picList = self.picList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let movieInfo = self.movieInfo.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_HotUpdateMetaTable::create(
+            _fbb,
+            &clz_Torappu_HotUpdateMetaTableArgs { picList, movieInfo },
+        )
     }
 }
 #[inline]
@@ -844,7 +1114,7 @@ pub fn size_prefixed_root_as_clz_torappu_hot_update_meta_table_with_opts<'b, 'o>
 pub unsafe fn root_as_clz_torappu_hot_update_meta_table_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_HotUpdateMetaTable {
-    flatbuffers::root_unchecked::<clz_Torappu_HotUpdateMetaTable>(buf)
+    unsafe { flatbuffers::root_unchecked::<clz_Torappu_HotUpdateMetaTable>(buf) }
 }
 #[inline]
 /// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_HotUpdateMetaTable and returns it.
@@ -853,7 +1123,7 @@ pub unsafe fn root_as_clz_torappu_hot_update_meta_table_unchecked(
 pub unsafe fn size_prefixed_root_as_clz_torappu_hot_update_meta_table_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_HotUpdateMetaTable {
-    flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_HotUpdateMetaTable>(buf)
+    unsafe { flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_HotUpdateMetaTable>(buf) }
 }
 #[inline]
 pub fn finish_clz_torappu_hot_update_meta_table_buffer<'a, 'b, A: flatbuffers::Allocator + 'a>(

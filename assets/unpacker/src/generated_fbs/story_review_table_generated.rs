@@ -5,6 +5,9 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+use self::serde::ser::{Serialize, SerializeStruct, Serializer};
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
@@ -69,11 +72,24 @@ impl core::fmt::Debug for enum__Torappu_StoryReviewEntryType {
         }
     }
 }
+impl Serialize for enum__Torappu_StoryReviewEntryType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_StoryReviewEntryType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_StoryReviewEntryType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -82,7 +98,9 @@ impl flatbuffers::Push for enum__Torappu_StoryReviewEntryType {
     type Output = enum__Torappu_StoryReviewEntryType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -172,11 +190,24 @@ impl core::fmt::Debug for enum__Torappu_StoryReviewType {
         }
     }
 }
+impl Serialize for enum__Torappu_StoryReviewType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_StoryReviewType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_StoryReviewType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -185,7 +216,9 @@ impl flatbuffers::Push for enum__Torappu_StoryReviewType {
     type Output = enum__Torappu_StoryReviewType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -623,11 +656,24 @@ impl core::fmt::Debug for enum__Torappu_ItemType {
         }
     }
 }
+impl Serialize for enum__Torappu_ItemType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_ItemType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ItemType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -636,7 +682,9 @@ impl flatbuffers::Push for enum__Torappu_ItemType {
     type Output = enum__Torappu_ItemType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -727,11 +775,24 @@ impl core::fmt::Debug for enum__Torappu_StoryReviewUnlockType {
         }
     }
 }
+impl Serialize for enum__Torappu_StoryReviewUnlockType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_StoryReviewUnlockType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_StoryReviewUnlockType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -740,7 +801,9 @@ impl flatbuffers::Push for enum__Torappu_StoryReviewUnlockType {
     type Output = enum__Torappu_StoryReviewUnlockType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -826,11 +889,24 @@ impl core::fmt::Debug for enum__Torappu_PlayerStageState {
         }
     }
 }
+impl Serialize for enum__Torappu_PlayerStageState {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_PlayerStageState",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_PlayerStageState {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -839,7 +915,9 @@ impl flatbuffers::Push for enum__Torappu_PlayerStageState {
     type Output = enum__Torappu_PlayerStageState;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -881,7 +959,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ItemBundle<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -907,6 +985,13 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ItemBundleT {
+        let id = self.id().map(|x| x.to_string());
+        let count = self.count();
+        let type_ = self.type_();
+        clz_Torappu_ItemBundleT { id, count, type_ }
     }
 
     #[inline]
@@ -977,6 +1062,23 @@ impl<'a> Default for clz_Torappu_ItemBundleArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ItemBundle<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ItemBundle", 3)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        s.serialize_field("count", &self.count())?;
+        s.serialize_field("type_", &self.type_())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ItemBundleBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1026,6 +1128,33 @@ impl core::fmt::Debug for clz_Torappu_ItemBundle<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ItemBundleT {
+    pub id: Option<String>,
+    pub count: i32,
+    pub type_: enum__Torappu_ItemType,
+}
+impl Default for clz_Torappu_ItemBundleT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            count: 0,
+            type_: enum__Torappu_ItemType::NONE,
+        }
+    }
+}
+impl clz_Torappu_ItemBundleT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ItemBundle<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let count = self.count;
+        let type_ = self.type_;
+        clz_Torappu_ItemBundle::create(_fbb, &clz_Torappu_ItemBundleArgs { id, count, type_ })
+    }
+}
 pub enum clz_Torappu_StoryData_Condition_StageConditionOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1038,7 +1167,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StoryData_Condition_StageCondit
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1064,6 +1193,17 @@ impl<'a> clz_Torappu_StoryData_Condition_StageCondition<'a> {
             builder.add_stageId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StoryData_Condition_StageConditionT {
+        let stageId = self.stageId().map(|x| x.to_string());
+        let minState = self.minState();
+        let maxState = self.maxState();
+        clz_Torappu_StoryData_Condition_StageConditionT {
+            stageId,
+            minState,
+            maxState,
+        }
     }
 
     #[inline]
@@ -1139,6 +1279,24 @@ impl<'a> Default for clz_Torappu_StoryData_Condition_StageConditionArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_StoryData_Condition_StageCondition<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_StoryData_Condition_StageCondition", 3)?;
+        if let Some(f) = self.stageId() {
+            s.serialize_field("stageId", &f)?;
+        } else {
+            s.skip_field("stageId")?;
+        }
+        s.serialize_field("minState", &self.minState())?;
+        s.serialize_field("maxState", &self.maxState())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StoryData_Condition_StageConditionBuilder<
     'a: 'b,
     'b,
@@ -1201,6 +1359,40 @@ impl core::fmt::Debug for clz_Torappu_StoryData_Condition_StageCondition<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StoryData_Condition_StageConditionT {
+    pub stageId: Option<String>,
+    pub minState: enum__Torappu_PlayerStageState,
+    pub maxState: enum__Torappu_PlayerStageState,
+}
+impl Default for clz_Torappu_StoryData_Condition_StageConditionT {
+    fn default() -> Self {
+        Self {
+            stageId: None,
+            minState: enum__Torappu_PlayerStageState::UNLOCKED,
+            maxState: enum__Torappu_PlayerStageState::UNLOCKED,
+        }
+    }
+}
+impl clz_Torappu_StoryData_Condition_StageConditionT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StoryData_Condition_StageCondition<'b>> {
+        let stageId = self.stageId.as_ref().map(|x| _fbb.create_string(x));
+        let minState = self.minState;
+        let maxState = self.maxState;
+        clz_Torappu_StoryData_Condition_StageCondition::create(
+            _fbb,
+            &clz_Torappu_StoryData_Condition_StageConditionArgs {
+                stageId,
+                minState,
+                maxState,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_StoryReviewInfoClientDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1213,7 +1405,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StoryReviewInfoClientData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1291,6 +1483,51 @@ impl<'a> clz_Torappu_StoryReviewInfoClientData<'a> {
         }
         builder.add_storyReviewType(args.storyReviewType);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StoryReviewInfoClientDataT {
+        let storyReviewType = self.storyReviewType();
+        let storyId = self.storyId().map(|x| x.to_string());
+        let storyGroup = self.storyGroup().map(|x| x.to_string());
+        let storySort = self.storySort();
+        let storyDependence = self.storyDependence().map(|x| x.to_string());
+        let storyCanShow = self.storyCanShow();
+        let storyCode = self.storyCode().map(|x| x.to_string());
+        let storyName = self.storyName().map(|x| x.to_string());
+        let storyPic = self.storyPic().map(|x| x.to_string());
+        let storyInfo = self.storyInfo().map(|x| x.to_string());
+        let storyCanEnter = self.storyCanEnter();
+        let storyTxt = self.storyTxt().map(|x| x.to_string());
+        let avgTag = self.avgTag().map(|x| x.to_string());
+        let unLockType = self.unLockType();
+        let costItemType = self.costItemType();
+        let costItemId = self.costItemId().map(|x| x.to_string());
+        let costItemCount = self.costItemCount();
+        let stageCount = self.stageCount();
+        let requiredStages = self
+            .requiredStages()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_StoryReviewInfoClientDataT {
+            storyReviewType,
+            storyId,
+            storyGroup,
+            storySort,
+            storyDependence,
+            storyCanShow,
+            storyCode,
+            storyName,
+            storyPic,
+            storyInfo,
+            storyCanEnter,
+            storyTxt,
+            avgTag,
+            unLockType,
+            costItemType,
+            costItemId,
+            costItemCount,
+            stageCount,
+            requiredStages,
+        }
     }
 
     #[inline]
@@ -1679,6 +1916,79 @@ impl<'a> Default for clz_Torappu_StoryReviewInfoClientDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_StoryReviewInfoClientData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_StoryReviewInfoClientData", 19)?;
+        s.serialize_field("storyReviewType", &self.storyReviewType())?;
+        if let Some(f) = self.storyId() {
+            s.serialize_field("storyId", &f)?;
+        } else {
+            s.skip_field("storyId")?;
+        }
+        if let Some(f) = self.storyGroup() {
+            s.serialize_field("storyGroup", &f)?;
+        } else {
+            s.skip_field("storyGroup")?;
+        }
+        s.serialize_field("storySort", &self.storySort())?;
+        if let Some(f) = self.storyDependence() {
+            s.serialize_field("storyDependence", &f)?;
+        } else {
+            s.skip_field("storyDependence")?;
+        }
+        s.serialize_field("storyCanShow", &self.storyCanShow())?;
+        if let Some(f) = self.storyCode() {
+            s.serialize_field("storyCode", &f)?;
+        } else {
+            s.skip_field("storyCode")?;
+        }
+        if let Some(f) = self.storyName() {
+            s.serialize_field("storyName", &f)?;
+        } else {
+            s.skip_field("storyName")?;
+        }
+        if let Some(f) = self.storyPic() {
+            s.serialize_field("storyPic", &f)?;
+        } else {
+            s.skip_field("storyPic")?;
+        }
+        if let Some(f) = self.storyInfo() {
+            s.serialize_field("storyInfo", &f)?;
+        } else {
+            s.skip_field("storyInfo")?;
+        }
+        s.serialize_field("storyCanEnter", &self.storyCanEnter())?;
+        if let Some(f) = self.storyTxt() {
+            s.serialize_field("storyTxt", &f)?;
+        } else {
+            s.skip_field("storyTxt")?;
+        }
+        if let Some(f) = self.avgTag() {
+            s.serialize_field("avgTag", &f)?;
+        } else {
+            s.skip_field("avgTag")?;
+        }
+        s.serialize_field("unLockType", &self.unLockType())?;
+        s.serialize_field("costItemType", &self.costItemType())?;
+        if let Some(f) = self.costItemId() {
+            s.serialize_field("costItemId", &f)?;
+        } else {
+            s.skip_field("costItemId")?;
+        }
+        s.serialize_field("costItemCount", &self.costItemCount())?;
+        s.serialize_field("stageCount", &self.stageCount())?;
+        if let Some(f) = self.requiredStages() {
+            s.serialize_field("requiredStages", &f)?;
+        } else {
+            s.skip_field("requiredStages")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StoryReviewInfoClientDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -1878,6 +2188,107 @@ impl core::fmt::Debug for clz_Torappu_StoryReviewInfoClientData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StoryReviewInfoClientDataT {
+    pub storyReviewType: enum__Torappu_StoryReviewType,
+    pub storyId: Option<String>,
+    pub storyGroup: Option<String>,
+    pub storySort: i32,
+    pub storyDependence: Option<String>,
+    pub storyCanShow: i32,
+    pub storyCode: Option<String>,
+    pub storyName: Option<String>,
+    pub storyPic: Option<String>,
+    pub storyInfo: Option<String>,
+    pub storyCanEnter: i32,
+    pub storyTxt: Option<String>,
+    pub avgTag: Option<String>,
+    pub unLockType: enum__Torappu_StoryReviewUnlockType,
+    pub costItemType: enum__Torappu_ItemType,
+    pub costItemId: Option<String>,
+    pub costItemCount: i32,
+    pub stageCount: i32,
+    pub requiredStages: Option<Vec<clz_Torappu_StoryData_Condition_StageConditionT>>,
+}
+impl Default for clz_Torappu_StoryReviewInfoClientDataT {
+    fn default() -> Self {
+        Self {
+            storyReviewType: enum__Torappu_StoryReviewType::NONE,
+            storyId: None,
+            storyGroup: None,
+            storySort: 0,
+            storyDependence: None,
+            storyCanShow: 0,
+            storyCode: None,
+            storyName: None,
+            storyPic: None,
+            storyInfo: None,
+            storyCanEnter: 0,
+            storyTxt: None,
+            avgTag: None,
+            unLockType: enum__Torappu_StoryReviewUnlockType::STAGE_CLEAR,
+            costItemType: enum__Torappu_ItemType::NONE,
+            costItemId: None,
+            costItemCount: 0,
+            stageCount: 0,
+            requiredStages: None,
+        }
+    }
+}
+impl clz_Torappu_StoryReviewInfoClientDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StoryReviewInfoClientData<'b>> {
+        let storyReviewType = self.storyReviewType;
+        let storyId = self.storyId.as_ref().map(|x| _fbb.create_string(x));
+        let storyGroup = self.storyGroup.as_ref().map(|x| _fbb.create_string(x));
+        let storySort = self.storySort;
+        let storyDependence = self.storyDependence.as_ref().map(|x| _fbb.create_string(x));
+        let storyCanShow = self.storyCanShow;
+        let storyCode = self.storyCode.as_ref().map(|x| _fbb.create_string(x));
+        let storyName = self.storyName.as_ref().map(|x| _fbb.create_string(x));
+        let storyPic = self.storyPic.as_ref().map(|x| _fbb.create_string(x));
+        let storyInfo = self.storyInfo.as_ref().map(|x| _fbb.create_string(x));
+        let storyCanEnter = self.storyCanEnter;
+        let storyTxt = self.storyTxt.as_ref().map(|x| _fbb.create_string(x));
+        let avgTag = self.avgTag.as_ref().map(|x| _fbb.create_string(x));
+        let unLockType = self.unLockType;
+        let costItemType = self.costItemType;
+        let costItemId = self.costItemId.as_ref().map(|x| _fbb.create_string(x));
+        let costItemCount = self.costItemCount;
+        let stageCount = self.stageCount;
+        let requiredStages = self.requiredStages.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_StoryReviewInfoClientData::create(
+            _fbb,
+            &clz_Torappu_StoryReviewInfoClientDataArgs {
+                storyReviewType,
+                storyId,
+                storyGroup,
+                storySort,
+                storyDependence,
+                storyCanShow,
+                storyCode,
+                storyName,
+                storyPic,
+                storyInfo,
+                storyCanEnter,
+                storyTxt,
+                avgTag,
+                unLockType,
+                costItemType,
+                costItemId,
+                costItemCount,
+                stageCount,
+                requiredStages,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_StoryReviewGroupClientDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1890,7 +2301,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StoryReviewGroupClientData<'a> 
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1958,6 +2369,49 @@ impl<'a> clz_Torappu_StoryReviewGroupClientData<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StoryReviewGroupClientDataT {
+        let id = self.id().map(|x| x.to_string());
+        let name = self.name().map(|x| x.to_string());
+        let entryType = self.entryType();
+        let actType = self.actType();
+        let startTime = self.startTime();
+        let endTime = self.endTime();
+        let startShowTime = self.startShowTime();
+        let endShowTime = self.endShowTime();
+        let remakeStartTime = self.remakeStartTime();
+        let remakeEndTime = self.remakeEndTime();
+        let storyEntryPicId = self.storyEntryPicId().map(|x| x.to_string());
+        let storyPicId = self.storyPicId().map(|x| x.to_string());
+        let storyMainColor = self.storyMainColor().map(|x| x.to_string());
+        let customType = self.customType();
+        let storyCompleteMedalId = self.storyCompleteMedalId().map(|x| x.to_string());
+        let rewards = self
+            .rewards()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let infoUnlockDatas = self
+            .infoUnlockDatas()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_StoryReviewGroupClientDataT {
+            id,
+            name,
+            entryType,
+            actType,
+            startTime,
+            endTime,
+            startShowTime,
+            endShowTime,
+            remakeStartTime,
+            remakeEndTime,
+            storyEntryPicId,
+            storyPicId,
+            storyMainColor,
+            customType,
+            storyCompleteMedalId,
+            rewards,
+            infoUnlockDatas,
+        }
     }
 
     #[inline]
@@ -2306,6 +2760,65 @@ impl<'a> Default for clz_Torappu_StoryReviewGroupClientDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_StoryReviewGroupClientData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_StoryReviewGroupClientData", 17)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        s.serialize_field("entryType", &self.entryType())?;
+        s.serialize_field("actType", &self.actType())?;
+        s.serialize_field("startTime", &self.startTime())?;
+        s.serialize_field("endTime", &self.endTime())?;
+        s.serialize_field("startShowTime", &self.startShowTime())?;
+        s.serialize_field("endShowTime", &self.endShowTime())?;
+        s.serialize_field("remakeStartTime", &self.remakeStartTime())?;
+        s.serialize_field("remakeEndTime", &self.remakeEndTime())?;
+        if let Some(f) = self.storyEntryPicId() {
+            s.serialize_field("storyEntryPicId", &f)?;
+        } else {
+            s.skip_field("storyEntryPicId")?;
+        }
+        if let Some(f) = self.storyPicId() {
+            s.serialize_field("storyPicId", &f)?;
+        } else {
+            s.skip_field("storyPicId")?;
+        }
+        if let Some(f) = self.storyMainColor() {
+            s.serialize_field("storyMainColor", &f)?;
+        } else {
+            s.skip_field("storyMainColor")?;
+        }
+        s.serialize_field("customType", &self.customType())?;
+        if let Some(f) = self.storyCompleteMedalId() {
+            s.serialize_field("storyCompleteMedalId", &f)?;
+        } else {
+            s.skip_field("storyCompleteMedalId")?;
+        }
+        if let Some(f) = self.rewards() {
+            s.serialize_field("rewards", &f)?;
+        } else {
+            s.skip_field("rewards")?;
+        }
+        if let Some(f) = self.infoUnlockDatas() {
+            s.serialize_field("infoUnlockDatas", &f)?;
+        } else {
+            s.skip_field("infoUnlockDatas")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StoryReviewGroupClientDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -2498,6 +3011,105 @@ impl core::fmt::Debug for clz_Torappu_StoryReviewGroupClientData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StoryReviewGroupClientDataT {
+    pub id: Option<String>,
+    pub name: Option<String>,
+    pub entryType: enum__Torappu_StoryReviewEntryType,
+    pub actType: enum__Torappu_StoryReviewType,
+    pub startTime: i64,
+    pub endTime: i64,
+    pub startShowTime: i64,
+    pub endShowTime: i64,
+    pub remakeStartTime: i64,
+    pub remakeEndTime: i64,
+    pub storyEntryPicId: Option<String>,
+    pub storyPicId: Option<String>,
+    pub storyMainColor: Option<String>,
+    pub customType: i32,
+    pub storyCompleteMedalId: Option<String>,
+    pub rewards: Option<Vec<clz_Torappu_ItemBundleT>>,
+    pub infoUnlockDatas: Option<Vec<clz_Torappu_StoryReviewInfoClientDataT>>,
+}
+impl Default for clz_Torappu_StoryReviewGroupClientDataT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            name: None,
+            entryType: enum__Torappu_StoryReviewEntryType::NONE,
+            actType: enum__Torappu_StoryReviewType::NONE,
+            startTime: 0,
+            endTime: 0,
+            startShowTime: 0,
+            endShowTime: 0,
+            remakeStartTime: 0,
+            remakeEndTime: 0,
+            storyEntryPicId: None,
+            storyPicId: None,
+            storyMainColor: None,
+            customType: 0,
+            storyCompleteMedalId: None,
+            rewards: None,
+            infoUnlockDatas: None,
+        }
+    }
+}
+impl clz_Torappu_StoryReviewGroupClientDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StoryReviewGroupClientData<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        let entryType = self.entryType;
+        let actType = self.actType;
+        let startTime = self.startTime;
+        let endTime = self.endTime;
+        let startShowTime = self.startShowTime;
+        let endShowTime = self.endShowTime;
+        let remakeStartTime = self.remakeStartTime;
+        let remakeEndTime = self.remakeEndTime;
+        let storyEntryPicId = self.storyEntryPicId.as_ref().map(|x| _fbb.create_string(x));
+        let storyPicId = self.storyPicId.as_ref().map(|x| _fbb.create_string(x));
+        let storyMainColor = self.storyMainColor.as_ref().map(|x| _fbb.create_string(x));
+        let customType = self.customType;
+        let storyCompleteMedalId = self
+            .storyCompleteMedalId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let rewards = self.rewards.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let infoUnlockDatas = self.infoUnlockDatas.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_StoryReviewGroupClientData::create(
+            _fbb,
+            &clz_Torappu_StoryReviewGroupClientDataArgs {
+                id,
+                name,
+                entryType,
+                actType,
+                startTime,
+                endTime,
+                startShowTime,
+                endShowTime,
+                remakeStartTime,
+                remakeEndTime,
+                storyEntryPicId,
+                storyPicId,
+                storyMainColor,
+                customType,
+                storyCompleteMedalId,
+                rewards,
+                infoUnlockDatas,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_StoryReviewGroupClientDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2510,7 +3122,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_StoryReviewGroupC
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2536,6 +3148,15 @@ impl<'a> dict__string__clz_Torappu_StoryReviewGroupClientData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_StoryReviewGroupClientDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_StoryReviewGroupClientDataT { key, value }
     }
 
     #[inline]
@@ -2612,6 +3233,23 @@ impl<'a> Default for dict__string__clz_Torappu_StoryReviewGroupClientDataArgs<'a
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_StoryReviewGroupClientData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("dict__string__clz_Torappu_StoryReviewGroupClientData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_StoryReviewGroupClientDataBuilder<
     'a: 'b,
     'b,
@@ -2673,6 +3311,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_StoryReviewGroupClientData<'
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_StoryReviewGroupClientDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_StoryReviewGroupClientDataT>>,
+}
+impl Default for dict__string__clz_Torappu_StoryReviewGroupClientDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_StoryReviewGroupClientDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_StoryReviewGroupClientData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_StoryReviewGroupClientData::create(
+            _fbb,
+            &dict__string__clz_Torappu_StoryReviewGroupClientDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2687,7 +3355,7 @@ impl<'a> flatbuffers::Follow<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2712,6 +3380,13 @@ impl<'a> clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData<'a> {
             builder.add_story_reviews(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientDataT {
+        let story_reviews = self
+            .story_reviews()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientDataT { story_reviews }
     }
 
     #[inline]
@@ -2785,6 +3460,24 @@ impl<'a> Default for clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClien
     }
 }
 
+impl Serialize for clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData",
+            1,
+        )?;
+        if let Some(f) = self.story_reviews() {
+            s.serialize_field("story_reviews", &f)?;
+        } else {
+            s.skip_field("story_reviews")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientDataBuilder<
     'a: 'b,
     'b,
@@ -2839,6 +3532,34 @@ impl core::fmt::Debug for clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroup
             f.debug_struct("clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData");
         ds.field("story_reviews", &self.story_reviews());
         ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientDataT {
+    pub story_reviews: Option<Vec<dict__string__clz_Torappu_StoryReviewGroupClientDataT>>,
+}
+impl Default for clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientDataT {
+    fn default() -> Self {
+        Self {
+            story_reviews: None,
+        }
+    }
+}
+impl clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData<'b>>
+    {
+        let story_reviews = self.story_reviews.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData::create(
+            _fbb,
+            &clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientDataArgs { story_reviews },
+        )
     }
 }
 #[inline]
@@ -2922,9 +3643,11 @@ pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_story_review
 pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_story_review_group_client_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData {
-    flatbuffers::root_unchecked::<clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData>(
-        buf,
-    )
+    unsafe {
+        flatbuffers::root_unchecked::<
+            clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData,
+        >(buf)
+    }
 }
 #[inline]
 /// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData and returns it.
@@ -2933,9 +3656,11 @@ pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_story_review_group_
 pub unsafe fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_story_review_group_client_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData {
-    flatbuffers::size_prefixed_root_unchecked::<
-        clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData,
-    >(buf)
+    unsafe {
+        flatbuffers::size_prefixed_root_unchecked::<
+            clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData,
+        >(buf)
+    }
 }
 #[inline]
 pub fn finish_clz_torappu_simple_kvtable_clz_torappu_story_review_group_client_data_buffer<

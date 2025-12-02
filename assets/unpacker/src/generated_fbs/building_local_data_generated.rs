@@ -5,6 +5,9 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+use self::serde::ser::{Serialize, SerializeStruct, Serializer};
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
@@ -73,11 +76,24 @@ impl core::fmt::Debug for enum__Torappu_BuildingData_LODLEVEL {
         }
     }
 }
+impl Serialize for enum__Torappu_BuildingData_LODLEVEL {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_BuildingData_LODLEVEL",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_BuildingData_LODLEVEL {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -86,7 +102,9 @@ impl flatbuffers::Push for enum__Torappu_BuildingData_LODLEVEL {
     type Output = enum__Torappu_BuildingData_LODLEVEL;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -128,7 +146,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_GridPosition<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -150,6 +168,12 @@ impl<'a> clz_Torappu_GridPosition<'a> {
         builder.add_col(args.col);
         builder.add_row(args.row);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_GridPositionT {
+        let row = self.row();
+        let col = self.col();
+        clz_Torappu_GridPositionT { row, col }
     }
 
     #[inline]
@@ -201,6 +225,18 @@ impl<'a> Default for clz_Torappu_GridPositionArgs {
     }
 }
 
+impl Serialize for clz_Torappu_GridPosition<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_GridPosition", 2)?;
+        s.serialize_field("row", &self.row())?;
+        s.serialize_field("col", &self.col())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_GridPositionBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -241,6 +277,27 @@ impl core::fmt::Debug for clz_Torappu_GridPosition<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_GridPositionT {
+    pub row: i32,
+    pub col: i32,
+}
+impl Default for clz_Torappu_GridPositionT {
+    fn default() -> Self {
+        Self { row: 0, col: 0 }
+    }
+}
+impl clz_Torappu_GridPositionT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_GridPosition<'b>> {
+        let row = self.row;
+        let col = self.col;
+        clz_Torappu_GridPosition::create(_fbb, &clz_Torappu_GridPositionArgs { row, col })
+    }
+}
 pub enum clz_Torappu_BuildingData_ObstaclePointOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -253,7 +310,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_BuildingData_ObstaclePoint<'a> 
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -277,6 +334,15 @@ impl<'a> clz_Torappu_BuildingData_ObstaclePoint<'a> {
         }
         builder.add_edgeWalkableMask(args.edgeWalkableMask);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_BuildingData_ObstaclePointT {
+        let offset = self.offset().map(|x| Box::new(x.unpack()));
+        let edgeWalkableMask = self.edgeWalkableMask();
+        clz_Torappu_BuildingData_ObstaclePointT {
+            offset,
+            edgeWalkableMask,
+        }
     }
 
     #[inline]
@@ -340,6 +406,22 @@ impl<'a> Default for clz_Torappu_BuildingData_ObstaclePointArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_BuildingData_ObstaclePoint<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_BuildingData_ObstaclePoint", 2)?;
+        if let Some(f) = self.offset() {
+            s.serialize_field("offset", &f)?;
+        } else {
+            s.skip_field("offset")?;
+        }
+        s.serialize_field("edgeWalkableMask", &self.edgeWalkableMask())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_BuildingData_ObstaclePointBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -389,6 +471,36 @@ impl core::fmt::Debug for clz_Torappu_BuildingData_ObstaclePoint<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_BuildingData_ObstaclePointT {
+    pub offset: Option<Box<clz_Torappu_GridPositionT>>,
+    pub edgeWalkableMask: u8,
+}
+impl Default for clz_Torappu_BuildingData_ObstaclePointT {
+    fn default() -> Self {
+        Self {
+            offset: None,
+            edgeWalkableMask: 0,
+        }
+    }
+}
+impl clz_Torappu_BuildingData_ObstaclePointT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_BuildingData_ObstaclePoint<'b>> {
+        let offset = self.offset.as_ref().map(|x| x.pack(_fbb));
+        let edgeWalkableMask = self.edgeWalkableMask;
+        clz_Torappu_BuildingData_ObstaclePoint::create(
+            _fbb,
+            &clz_Torappu_BuildingData_ObstaclePointArgs {
+                offset,
+                edgeWalkableMask,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_BuildingData_ObstacleDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -401,7 +513,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_BuildingData_ObstacleData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -427,6 +539,19 @@ impl<'a> clz_Torappu_BuildingData_ObstacleData<'a> {
             builder.add_floorObstacles(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_BuildingData_ObstacleDataT {
+        let floorObstacles = self
+            .floorObstacles()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let backwallObstacles = self
+            .backwallObstacles()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_BuildingData_ObstacleDataT {
+            floorObstacles,
+            backwallObstacles,
+        }
     }
 
     #[inline]
@@ -531,6 +656,26 @@ impl<'a> Default for clz_Torappu_BuildingData_ObstacleDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_BuildingData_ObstacleData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_BuildingData_ObstacleData", 2)?;
+        if let Some(f) = self.floorObstacles() {
+            s.serialize_field("floorObstacles", &f)?;
+        } else {
+            s.skip_field("floorObstacles")?;
+        }
+        if let Some(f) = self.backwallObstacles() {
+            s.serialize_field("backwallObstacles", &f)?;
+        } else {
+            s.skip_field("backwallObstacles")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_BuildingData_ObstacleDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -594,6 +739,42 @@ impl core::fmt::Debug for clz_Torappu_BuildingData_ObstacleData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_BuildingData_ObstacleDataT {
+    pub floorObstacles: Option<Vec<clz_Torappu_BuildingData_ObstaclePointT>>,
+    pub backwallObstacles: Option<Vec<clz_Torappu_BuildingData_ObstaclePointT>>,
+}
+impl Default for clz_Torappu_BuildingData_ObstacleDataT {
+    fn default() -> Self {
+        Self {
+            floorObstacles: None,
+            backwallObstacles: None,
+        }
+    }
+}
+impl clz_Torappu_BuildingData_ObstacleDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_BuildingData_ObstacleData<'b>> {
+        let floorObstacles = self.floorObstacles.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let backwallObstacles = self.backwallObstacles.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_BuildingData_ObstacleData::create(
+            _fbb,
+            &clz_Torappu_BuildingData_ObstacleDataArgs {
+                floorObstacles,
+                backwallObstacles,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_BuildingData_ObstacleDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -606,7 +787,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_BuildingData_Obst
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -632,6 +813,15 @@ impl<'a> dict__string__clz_Torappu_BuildingData_ObstacleData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_BuildingData_ObstacleDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_BuildingData_ObstacleDataT { key, value }
     }
 
     #[inline]
@@ -708,6 +898,23 @@ impl<'a> Default for dict__string__clz_Torappu_BuildingData_ObstacleDataArgs<'a>
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_BuildingData_ObstacleData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("dict__string__clz_Torappu_BuildingData_ObstacleData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_BuildingData_ObstacleDataBuilder<
     'a: 'b,
     'b,
@@ -769,6 +976,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_BuildingData_ObstacleData<'_
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_BuildingData_ObstacleDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_BuildingData_ObstacleDataT>>,
+}
+impl Default for dict__string__clz_Torappu_BuildingData_ObstacleDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_BuildingData_ObstacleDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_BuildingData_ObstacleData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_BuildingData_ObstacleData::create(
+            _fbb,
+            &dict__string__clz_Torappu_BuildingData_ObstacleDataArgs { key, value },
+        )
+    }
+}
 pub enum dict__enum__Torappu_BuildingData_LODLEVEL__list_stringOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -781,7 +1018,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__enum__Torappu_BuildingData_LODLEVEL__
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -805,6 +1042,14 @@ impl<'a> dict__enum__Torappu_BuildingData_LODLEVEL__list_string<'a> {
         }
         builder.add_key(args.key);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__enum__Torappu_BuildingData_LODLEVEL__list_stringT {
+        let key = self.key();
+        let value = self
+            .value()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        dict__enum__Torappu_BuildingData_LODLEVEL__list_stringT { key, value }
     }
 
     #[inline]
@@ -885,6 +1130,23 @@ impl<'a> Default for dict__enum__Torappu_BuildingData_LODLEVEL__list_stringArgs<
     }
 }
 
+impl Serialize for dict__enum__Torappu_BuildingData_LODLEVEL__list_string<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("dict__enum__Torappu_BuildingData_LODLEVEL__list_string", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__enum__Torappu_BuildingData_LODLEVEL__list_stringBuilder<
     'a: 'b,
     'b,
@@ -943,6 +1205,36 @@ impl core::fmt::Debug for dict__enum__Torappu_BuildingData_LODLEVEL__list_string
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__enum__Torappu_BuildingData_LODLEVEL__list_stringT {
+    pub key: enum__Torappu_BuildingData_LODLEVEL,
+    pub value: Option<Vec<String>>,
+}
+impl Default for dict__enum__Torappu_BuildingData_LODLEVEL__list_stringT {
+    fn default() -> Self {
+        Self {
+            key: enum__Torappu_BuildingData_LODLEVEL::HIGHEST,
+            value: None,
+        }
+    }
+}
+impl dict__enum__Torappu_BuildingData_LODLEVEL__list_stringT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__enum__Torappu_BuildingData_LODLEVEL__list_string<'b>> {
+        let key = self.key;
+        let value = self.value.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        dict__enum__Torappu_BuildingData_LODLEVEL__list_string::create(
+            _fbb,
+            &dict__enum__Torappu_BuildingData_LODLEVEL__list_stringArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_BuildingData_FurnitureLODConfigOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -955,7 +1247,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_BuildingData_FurnitureLODConfig
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -979,6 +1271,17 @@ impl<'a> clz_Torappu_BuildingData_FurnitureLODConfig<'a> {
         }
         builder.add_isOverWrite(args.isOverWrite);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_BuildingData_FurnitureLODConfigT {
+        let showedObjNames = self
+            .showedObjNames()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let isOverWrite = self.isOverWrite();
+        clz_Torappu_BuildingData_FurnitureLODConfigT {
+            showedObjNames,
+            isOverWrite,
+        }
     }
 
     #[inline]
@@ -1069,6 +1372,23 @@ impl<'a> Default for clz_Torappu_BuildingData_FurnitureLODConfigArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_BuildingData_FurnitureLODConfig<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_BuildingData_FurnitureLODConfig", 2)?;
+        if let Some(f) = self.showedObjNames() {
+            s.serialize_field("showedObjNames", &f)?;
+        } else {
+            s.skip_field("showedObjNames")?;
+        }
+        s.serialize_field("isOverWrite", &self.isOverWrite())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_BuildingData_FurnitureLODConfigBuilder<
     'a: 'b,
     'b,
@@ -1130,6 +1450,39 @@ impl core::fmt::Debug for clz_Torappu_BuildingData_FurnitureLODConfig<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_BuildingData_FurnitureLODConfigT {
+    pub showedObjNames: Option<Vec<dict__enum__Torappu_BuildingData_LODLEVEL__list_stringT>>,
+    pub isOverWrite: bool,
+}
+impl Default for clz_Torappu_BuildingData_FurnitureLODConfigT {
+    fn default() -> Self {
+        Self {
+            showedObjNames: None,
+            isOverWrite: false,
+        }
+    }
+}
+impl clz_Torappu_BuildingData_FurnitureLODConfigT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_BuildingData_FurnitureLODConfig<'b>> {
+        let showedObjNames = self.showedObjNames.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let isOverWrite = self.isOverWrite;
+        clz_Torappu_BuildingData_FurnitureLODConfig::create(
+            _fbb,
+            &clz_Torappu_BuildingData_FurnitureLODConfigArgs {
+                showedObjNames,
+                isOverWrite,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_BuildingData_FurnitureLODConfigOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1142,7 +1495,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_BuildingData_Furn
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1170,6 +1523,15 @@ impl<'a> dict__string__clz_Torappu_BuildingData_FurnitureLODConfig<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_BuildingData_FurnitureLODConfigT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_BuildingData_FurnitureLODConfigT { key, value }
     }
 
     #[inline]
@@ -1242,6 +1604,25 @@ impl<'a> Default for dict__string__clz_Torappu_BuildingData_FurnitureLODConfigAr
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_BuildingData_FurnitureLODConfig<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "dict__string__clz_Torappu_BuildingData_FurnitureLODConfig",
+            2,
+        )?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_BuildingData_FurnitureLODConfigBuilder<
     'a: 'b,
     'b,
@@ -1299,6 +1680,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_BuildingData_FurnitureLODCon
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_BuildingData_FurnitureLODConfigT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_BuildingData_FurnitureLODConfigT>>,
+}
+impl Default for dict__string__clz_Torappu_BuildingData_FurnitureLODConfigT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_BuildingData_FurnitureLODConfigT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_BuildingData_FurnitureLODConfig<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_BuildingData_FurnitureLODConfig::create(
+            _fbb,
+            &dict__string__clz_Torappu_BuildingData_FurnitureLODConfigArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_BuildingData_BuildingLocalDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1311,7 +1722,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_BuildingData_BuildingLocalData<
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1341,6 +1752,23 @@ impl<'a> clz_Torappu_BuildingData_BuildingLocalData<'a> {
             builder.add_furnitureObstacleData(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_BuildingData_BuildingLocalDataT {
+        let furnitureObstacleData = self
+            .furnitureObstacleData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let roomObstacleData = self
+            .roomObstacleData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let furnitureLODConfig = self
+            .furnitureLODConfig()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_BuildingData_BuildingLocalDataT {
+            furnitureObstacleData,
+            roomObstacleData,
+            furnitureLODConfig,
+        }
     }
 
     #[inline]
@@ -1508,6 +1936,31 @@ impl<'a> Default for clz_Torappu_BuildingData_BuildingLocalDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_BuildingData_BuildingLocalData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_BuildingData_BuildingLocalData", 3)?;
+        if let Some(f) = self.furnitureObstacleData() {
+            s.serialize_field("furnitureObstacleData", &f)?;
+        } else {
+            s.skip_field("furnitureObstacleData")?;
+        }
+        if let Some(f) = self.roomObstacleData() {
+            s.serialize_field("roomObstacleData", &f)?;
+        } else {
+            s.skip_field("roomObstacleData")?;
+        }
+        if let Some(f) = self.furnitureLODConfig() {
+            s.serialize_field("furnitureLODConfig", &f)?;
+        } else {
+            s.skip_field("furnitureLODConfig")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_BuildingData_BuildingLocalDataBuilder<
     'a: 'b,
     'b,
@@ -1596,6 +2049,49 @@ impl core::fmt::Debug for clz_Torappu_BuildingData_BuildingLocalData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_BuildingData_BuildingLocalDataT {
+    pub furnitureObstacleData: Option<Vec<dict__string__clz_Torappu_BuildingData_ObstacleDataT>>,
+    pub roomObstacleData: Option<Vec<dict__string__clz_Torappu_BuildingData_ObstacleDataT>>,
+    pub furnitureLODConfig: Option<Vec<dict__string__clz_Torappu_BuildingData_FurnitureLODConfigT>>,
+}
+impl Default for clz_Torappu_BuildingData_BuildingLocalDataT {
+    fn default() -> Self {
+        Self {
+            furnitureObstacleData: None,
+            roomObstacleData: None,
+            furnitureLODConfig: None,
+        }
+    }
+}
+impl clz_Torappu_BuildingData_BuildingLocalDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_BuildingData_BuildingLocalData<'b>> {
+        let furnitureObstacleData = self.furnitureObstacleData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let roomObstacleData = self.roomObstacleData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let furnitureLODConfig = self.furnitureLODConfig.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_BuildingData_BuildingLocalData::create(
+            _fbb,
+            &clz_Torappu_BuildingData_BuildingLocalDataArgs {
+                furnitureObstacleData,
+                roomObstacleData,
+                furnitureLODConfig,
+            },
+        )
+    }
+}
 #[inline]
 /// Verifies that a buffer of bytes contains a `clz_Torappu_BuildingData_BuildingLocalData`
 /// and returns it.
@@ -1655,7 +2151,7 @@ pub fn size_prefixed_root_as_clz_torappu_building_data_building_local_data_with_
 pub unsafe fn root_as_clz_torappu_building_data_building_local_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_BuildingData_BuildingLocalData {
-    flatbuffers::root_unchecked::<clz_Torappu_BuildingData_BuildingLocalData>(buf)
+    unsafe { flatbuffers::root_unchecked::<clz_Torappu_BuildingData_BuildingLocalData>(buf) }
 }
 #[inline]
 /// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_BuildingData_BuildingLocalData and returns it.
@@ -1664,7 +2160,9 @@ pub unsafe fn root_as_clz_torappu_building_data_building_local_data_unchecked(
 pub unsafe fn size_prefixed_root_as_clz_torappu_building_data_building_local_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_BuildingData_BuildingLocalData {
-    flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_BuildingData_BuildingLocalData>(buf)
+    unsafe {
+        flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_BuildingData_BuildingLocalData>(buf)
+    }
 }
 #[inline]
 pub fn finish_clz_torappu_building_data_building_local_data_buffer<

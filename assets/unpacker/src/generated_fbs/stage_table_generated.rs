@@ -5,6 +5,9 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+use self::serde::ser::{Serialize, SerializeStruct, Serializer};
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
@@ -96,11 +99,24 @@ impl core::fmt::Debug for enum__Torappu_StageType {
         }
     }
 }
+impl Serialize for enum__Torappu_StageType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_StageType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_StageType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -109,7 +125,9 @@ impl flatbuffers::Push for enum__Torappu_StageType {
     type Output = enum__Torappu_StageType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -207,11 +225,24 @@ impl core::fmt::Debug for enum__Torappu_LevelData_Difficulty {
         }
     }
 }
+impl Serialize for enum__Torappu_LevelData_Difficulty {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_LevelData_Difficulty",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_LevelData_Difficulty {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -220,7 +251,9 @@ impl flatbuffers::Push for enum__Torappu_LevelData_Difficulty {
     type Output = enum__Torappu_LevelData_Difficulty;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -300,11 +333,24 @@ impl core::fmt::Debug for enum__Torappu_StageData_PerformanceStageFlag {
         }
     }
 }
+impl Serialize for enum__Torappu_StageData_PerformanceStageFlag {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_StageData_PerformanceStageFlag",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_StageData_PerformanceStageFlag {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -313,7 +359,9 @@ impl flatbuffers::Push for enum__Torappu_StageData_PerformanceStageFlag {
     type Output = enum__Torappu_StageData_PerformanceStageFlag;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -402,11 +450,24 @@ impl core::fmt::Debug for enum__Torappu_StageDiffGroup {
         }
     }
 }
+impl Serialize for enum__Torappu_StageDiffGroup {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_StageDiffGroup",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_StageDiffGroup {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -415,7 +476,9 @@ impl flatbuffers::Push for enum__Torappu_StageDiffGroup {
     type Output = enum__Torappu_StageDiffGroup;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -501,11 +564,24 @@ impl core::fmt::Debug for enum__Torappu_PlayerBattleRank {
         }
     }
 }
+impl Serialize for enum__Torappu_PlayerBattleRank {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_PlayerBattleRank",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_PlayerBattleRank {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -514,7 +590,9 @@ impl flatbuffers::Push for enum__Torappu_PlayerBattleRank {
     type Output = enum__Torappu_PlayerBattleRank;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -616,11 +694,24 @@ impl core::fmt::Debug for enum__Torappu_AppearanceStyle {
         }
     }
 }
+impl Serialize for enum__Torappu_AppearanceStyle {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_AppearanceStyle",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_AppearanceStyle {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -629,7 +720,9 @@ impl flatbuffers::Push for enum__Torappu_AppearanceStyle {
     type Output = enum__Torappu_AppearanceStyle;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -1067,11 +1160,24 @@ impl core::fmt::Debug for enum__Torappu_ItemType {
         }
     }
 }
+impl Serialize for enum__Torappu_ItemType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_ItemType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ItemType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -1080,7 +1186,9 @@ impl flatbuffers::Push for enum__Torappu_ItemType {
     type Output = enum__Torappu_ItemType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -1206,11 +1314,24 @@ impl core::fmt::Debug for enum__Torappu_StageDropType {
         }
     }
 }
+impl Serialize for enum__Torappu_StageDropType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_StageDropType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_StageDropType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -1219,7 +1340,9 @@ impl flatbuffers::Push for enum__Torappu_StageDropType {
     type Output = enum__Torappu_StageDropType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -1321,11 +1444,24 @@ impl core::fmt::Debug for enum__Torappu_OccPer {
         }
     }
 }
+impl Serialize for enum__Torappu_OccPer {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_OccPer",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_OccPer {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -1334,7 +1470,9 @@ impl flatbuffers::Push for enum__Torappu_OccPer {
     type Output = enum__Torappu_OccPer;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -1414,11 +1552,24 @@ impl core::fmt::Debug for enum__Torappu_StageData_SpecialStageUnlockProgressType
         }
     }
 }
+impl Serialize for enum__Torappu_StageData_SpecialStageUnlockProgressType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_StageData_SpecialStageUnlockProgressType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_StageData_SpecialStageUnlockProgressType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -1427,7 +1578,9 @@ impl flatbuffers::Push for enum__Torappu_StageData_SpecialStageUnlockProgressTyp
     type Output = enum__Torappu_StageData_SpecialStageUnlockProgressType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -1504,11 +1657,24 @@ impl core::fmt::Debug for enum__Torappu_FogType {
         }
     }
 }
+impl Serialize for enum__Torappu_FogType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_FogType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_FogType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -1517,7 +1683,9 @@ impl flatbuffers::Push for enum__Torappu_FogType {
     type Output = enum__Torappu_FogType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -1597,11 +1765,24 @@ impl core::fmt::Debug for enum__Torappu_StageButtonInFogRenderType {
         }
     }
 }
+impl Serialize for enum__Torappu_StageButtonInFogRenderType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_StageButtonInFogRenderType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_StageButtonInFogRenderType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -1610,7 +1791,9 @@ impl flatbuffers::Push for enum__Torappu_StageButtonInFogRenderType {
     type Output = enum__Torappu_StageButtonInFogRenderType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -1704,11 +1887,24 @@ impl core::fmt::Debug for enum__Torappu_EvolvePhase {
         }
     }
 }
+impl Serialize for enum__Torappu_EvolvePhase {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_EvolvePhase",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_EvolvePhase {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -1717,7 +1913,9 @@ impl flatbuffers::Push for enum__Torappu_EvolvePhase {
     type Output = enum__Torappu_EvolvePhase;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -1796,11 +1994,24 @@ impl core::fmt::Debug for enum__Torappu_OverrideGameMode {
         }
     }
 }
+impl Serialize for enum__Torappu_OverrideGameMode {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_OverrideGameMode",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_OverrideGameMode {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -1809,7 +2020,9 @@ impl flatbuffers::Push for enum__Torappu_OverrideGameMode {
     type Output = enum__Torappu_OverrideGameMode;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -1888,11 +2101,24 @@ impl core::fmt::Debug for enum__Torappu_StorylineType {
         }
     }
 }
+impl Serialize for enum__Torappu_StorylineType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_StorylineType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_StorylineType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -1901,7 +2127,9 @@ impl flatbuffers::Push for enum__Torappu_StorylineType {
     type Output = enum__Torappu_StorylineType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -1992,11 +2220,24 @@ impl core::fmt::Debug for enum__Torappu_StorylineLocationType {
         }
     }
 }
+impl Serialize for enum__Torappu_StorylineLocationType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_StorylineLocationType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_StorylineLocationType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -2005,7 +2246,9 @@ impl flatbuffers::Push for enum__Torappu_StorylineLocationType {
     type Output = enum__Torappu_StorylineLocationType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -2088,11 +2331,24 @@ impl core::fmt::Debug for enum__Torappu_StorylineStorySetType {
         }
     }
 }
+impl Serialize for enum__Torappu_StorylineStorySetType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_StorylineStorySetType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_StorylineStorySetType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -2101,7 +2357,9 @@ impl flatbuffers::Push for enum__Torappu_StorylineStorySetType {
     type Output = enum__Torappu_StorylineStorySetType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -2181,11 +2439,24 @@ impl core::fmt::Debug for enum__Torappu_SixStarMilestoneRewardType {
         }
     }
 }
+impl Serialize for enum__Torappu_SixStarMilestoneRewardType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SixStarMilestoneRewardType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SixStarMilestoneRewardType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -2194,7 +2465,9 @@ impl flatbuffers::Push for enum__Torappu_SixStarMilestoneRewardType {
     type Output = enum__Torappu_SixStarMilestoneRewardType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -2270,11 +2543,24 @@ impl core::fmt::Debug for enum__Torappu_SixStarStageCompatibleDropType {
         }
     }
 }
+impl Serialize for enum__Torappu_SixStarStageCompatibleDropType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_SixStarStageCompatibleDropType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SixStarStageCompatibleDropType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -2283,7 +2569,9 @@ impl flatbuffers::Push for enum__Torappu_SixStarStageCompatibleDropType {
     type Output = enum__Torappu_SixStarStageCompatibleDropType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -2325,7 +2613,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StageData_ConditionDesc<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2349,6 +2637,15 @@ impl<'a> clz_Torappu_StageData_ConditionDesc<'a> {
             builder.add_stageId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StageData_ConditionDescT {
+        let stageId = self.stageId().map(|x| x.to_string());
+        let completeState = self.completeState();
+        clz_Torappu_StageData_ConditionDescT {
+            stageId,
+            completeState,
+        }
     }
 
     #[inline]
@@ -2411,6 +2708,22 @@ impl<'a> Default for clz_Torappu_StageData_ConditionDescArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_StageData_ConditionDesc<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_StageData_ConditionDesc", 2)?;
+        if let Some(f) = self.stageId() {
+            s.serialize_field("stageId", &f)?;
+        } else {
+            s.skip_field("stageId")?;
+        }
+        s.serialize_field("completeState", &self.completeState())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StageData_ConditionDescBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2458,6 +2771,36 @@ impl core::fmt::Debug for clz_Torappu_StageData_ConditionDesc<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StageData_ConditionDescT {
+    pub stageId: Option<String>,
+    pub completeState: enum__Torappu_PlayerBattleRank,
+}
+impl Default for clz_Torappu_StageData_ConditionDescT {
+    fn default() -> Self {
+        Self {
+            stageId: None,
+            completeState: enum__Torappu_PlayerBattleRank::ERR_ZERO,
+        }
+    }
+}
+impl clz_Torappu_StageData_ConditionDescT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StageData_ConditionDesc<'b>> {
+        let stageId = self.stageId.as_ref().map(|x| _fbb.create_string(x));
+        let completeState = self.completeState;
+        clz_Torappu_StageData_ConditionDesc::create(
+            _fbb,
+            &clz_Torappu_StageData_ConditionDescArgs {
+                stageId,
+                completeState,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_ItemBundleOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2470,7 +2813,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ItemBundle<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2496,6 +2839,13 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ItemBundleT {
+        let id = self.id().map(|x| x.to_string());
+        let count = self.count();
+        let type_ = self.type_();
+        clz_Torappu_ItemBundleT { id, count, type_ }
     }
 
     #[inline]
@@ -2566,6 +2916,23 @@ impl<'a> Default for clz_Torappu_ItemBundleArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ItemBundle<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ItemBundle", 3)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        s.serialize_field("count", &self.count())?;
+        s.serialize_field("type_", &self.type_())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ItemBundleBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2615,6 +2982,33 @@ impl core::fmt::Debug for clz_Torappu_ItemBundle<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ItemBundleT {
+    pub id: Option<String>,
+    pub count: i32,
+    pub type_: enum__Torappu_ItemType,
+}
+impl Default for clz_Torappu_ItemBundleT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            count: 0,
+            type_: enum__Torappu_ItemType::NONE,
+        }
+    }
+}
+impl clz_Torappu_ItemBundleT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ItemBundle<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let count = self.count;
+        let type_ = self.type_;
+        clz_Torappu_ItemBundle::create(_fbb, &clz_Torappu_ItemBundleArgs { id, count, type_ })
+    }
+}
 pub enum clz_Torappu_WeightItemBundleOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2627,7 +3021,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_WeightItemBundle<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2657,6 +3051,21 @@ impl<'a> clz_Torappu_WeightItemBundle<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_WeightItemBundleT {
+        let id = self.id().map(|x| x.to_string());
+        let type_ = self.type_();
+        let dropType = self.dropType();
+        let count = self.count();
+        let weight = self.weight();
+        clz_Torappu_WeightItemBundleT {
+            id,
+            type_,
+            dropType,
+            count,
+            weight,
+        }
     }
 
     #[inline]
@@ -2760,6 +3169,25 @@ impl<'a> Default for clz_Torappu_WeightItemBundleArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_WeightItemBundle<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_WeightItemBundle", 5)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        s.serialize_field("type_", &self.type_())?;
+        s.serialize_field("dropType", &self.dropType())?;
+        s.serialize_field("count", &self.count())?;
+        s.serialize_field("weight", &self.weight())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_WeightItemBundleBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2824,6 +3252,48 @@ impl core::fmt::Debug for clz_Torappu_WeightItemBundle<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_WeightItemBundleT {
+    pub id: Option<String>,
+    pub type_: enum__Torappu_ItemType,
+    pub dropType: enum__Torappu_StageDropType,
+    pub count: i32,
+    pub weight: i32,
+}
+impl Default for clz_Torappu_WeightItemBundleT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            type_: enum__Torappu_ItemType::NONE,
+            dropType: enum__Torappu_StageDropType::NONE,
+            count: 0,
+            weight: 0,
+        }
+    }
+}
+impl clz_Torappu_WeightItemBundleT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_WeightItemBundle<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let type_ = self.type_;
+        let dropType = self.dropType;
+        let count = self.count;
+        let weight = self.weight;
+        clz_Torappu_WeightItemBundle::create(
+            _fbb,
+            &clz_Torappu_WeightItemBundleArgs {
+                id,
+                type_,
+                dropType,
+                count,
+                weight,
+            },
+        )
+    }
+}
 pub enum list_clz_Torappu_WeightItemBundleOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2836,7 +3306,7 @@ impl<'a> flatbuffers::Follow<'a> for list_clz_Torappu_WeightItemBundle<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2858,6 +3328,13 @@ impl<'a> list_clz_Torappu_WeightItemBundle<'a> {
             builder.add_values(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> list_clz_Torappu_WeightItemBundleT {
+        let values = self
+            .values()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        list_clz_Torappu_WeightItemBundleT { values }
     }
 
     #[inline]
@@ -2906,6 +3383,21 @@ impl<'a> Default for list_clz_Torappu_WeightItemBundleArgs<'a> {
     }
 }
 
+impl Serialize for list_clz_Torappu_WeightItemBundle<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("list_clz_Torappu_WeightItemBundle", 1)?;
+        if let Some(f) = self.values() {
+            s.serialize_field("values", &f)?;
+        } else {
+            s.skip_field("values")?;
+        }
+        s.end()
+    }
+}
+
 pub struct list_clz_Torappu_WeightItemBundleBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2949,6 +3441,31 @@ impl core::fmt::Debug for list_clz_Torappu_WeightItemBundle<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct list_clz_Torappu_WeightItemBundleT {
+    pub values: Option<Vec<clz_Torappu_WeightItemBundleT>>,
+}
+impl Default for list_clz_Torappu_WeightItemBundleT {
+    fn default() -> Self {
+        Self { values: None }
+    }
+}
+impl list_clz_Torappu_WeightItemBundleT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<list_clz_Torappu_WeightItemBundle<'b>> {
+        let values = self.values.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        list_clz_Torappu_WeightItemBundle::create(
+            _fbb,
+            &list_clz_Torappu_WeightItemBundleArgs { values },
+        )
+    }
+}
 pub enum clz_Torappu_StageData_DisplayRewardsOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2961,7 +3478,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StageData_DisplayRewards<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2987,6 +3504,17 @@ impl<'a> clz_Torappu_StageData_DisplayRewards<'a> {
         }
         builder.add_type_(args.type_);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StageData_DisplayRewardsT {
+        let type_ = self.type_();
+        let id = self.id().map(|x| x.to_string());
+        let dropType = self.dropType();
+        clz_Torappu_StageData_DisplayRewardsT {
+            type_,
+            id,
+            dropType,
+        }
     }
 
     #[inline]
@@ -3062,6 +3590,23 @@ impl<'a> Default for clz_Torappu_StageData_DisplayRewardsArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_StageData_DisplayRewards<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_StageData_DisplayRewards", 3)?;
+        s.serialize_field("type_", &self.type_())?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        s.serialize_field("dropType", &self.dropType())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StageData_DisplayRewardsBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3118,6 +3663,40 @@ impl core::fmt::Debug for clz_Torappu_StageData_DisplayRewards<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StageData_DisplayRewardsT {
+    pub type_: enum__Torappu_ItemType,
+    pub id: Option<String>,
+    pub dropType: enum__Torappu_StageDropType,
+}
+impl Default for clz_Torappu_StageData_DisplayRewardsT {
+    fn default() -> Self {
+        Self {
+            type_: enum__Torappu_ItemType::NONE,
+            id: None,
+            dropType: enum__Torappu_StageDropType::NONE,
+        }
+    }
+}
+impl clz_Torappu_StageData_DisplayRewardsT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StageData_DisplayRewards<'b>> {
+        let type_ = self.type_;
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let dropType = self.dropType;
+        clz_Torappu_StageData_DisplayRewards::create(
+            _fbb,
+            &clz_Torappu_StageData_DisplayRewardsArgs {
+                type_,
+                id,
+                dropType,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_StageData_DisplayDetailRewardsOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3130,7 +3709,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StageData_DisplayDetailRewards<
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3158,6 +3737,19 @@ impl<'a> clz_Torappu_StageData_DisplayDetailRewards<'a> {
         builder.add_type_(args.type_);
         builder.add_occPercent(args.occPercent);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StageData_DisplayDetailRewardsT {
+        let occPercent = self.occPercent();
+        let type_ = self.type_();
+        let id = self.id().map(|x| x.to_string());
+        let dropType = self.dropType();
+        clz_Torappu_StageData_DisplayDetailRewardsT {
+            occPercent,
+            type_,
+            id,
+            dropType,
+        }
     }
 
     #[inline]
@@ -3250,6 +3842,24 @@ impl<'a> Default for clz_Torappu_StageData_DisplayDetailRewardsArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_StageData_DisplayDetailRewards<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_StageData_DisplayDetailRewards", 4)?;
+        s.serialize_field("occPercent", &self.occPercent())?;
+        s.serialize_field("type_", &self.type_())?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        s.serialize_field("dropType", &self.dropType())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StageData_DisplayDetailRewardsBuilder<
     'a: 'b,
     'b,
@@ -3319,6 +3929,44 @@ impl core::fmt::Debug for clz_Torappu_StageData_DisplayDetailRewards<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StageData_DisplayDetailRewardsT {
+    pub occPercent: enum__Torappu_OccPer,
+    pub type_: enum__Torappu_ItemType,
+    pub id: Option<String>,
+    pub dropType: enum__Torappu_StageDropType,
+}
+impl Default for clz_Torappu_StageData_DisplayDetailRewardsT {
+    fn default() -> Self {
+        Self {
+            occPercent: enum__Torappu_OccPer::ALWAYS,
+            type_: enum__Torappu_ItemType::NONE,
+            id: None,
+            dropType: enum__Torappu_StageDropType::NONE,
+        }
+    }
+}
+impl clz_Torappu_StageData_DisplayDetailRewardsT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StageData_DisplayDetailRewards<'b>> {
+        let occPercent = self.occPercent;
+        let type_ = self.type_;
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let dropType = self.dropType;
+        clz_Torappu_StageData_DisplayDetailRewards::create(
+            _fbb,
+            &clz_Torappu_StageData_DisplayDetailRewardsArgs {
+                occPercent,
+                type_,
+                id,
+                dropType,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_StageData_StageDropInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3331,7 +3979,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StageData_StageDropInfo<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3373,6 +4021,35 @@ impl<'a> clz_Torappu_StageData_StageDropInfo<'a> {
             builder.add_firstPassRewards(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StageData_StageDropInfoT {
+        let firstPassRewards = self
+            .firstPassRewards()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let firstCompleteRewards = self
+            .firstCompleteRewards()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let passRewards = self
+            .passRewards()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let completeRewards = self
+            .completeRewards()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let displayRewards = self
+            .displayRewards()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let displayDetailRewards = self
+            .displayDetailRewards()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_StageData_StageDropInfoT {
+            firstPassRewards,
+            firstCompleteRewards,
+            passRewards,
+            completeRewards,
+            displayRewards,
+            displayDetailRewards,
+        }
     }
 
     #[inline]
@@ -3601,6 +4278,46 @@ impl<'a> Default for clz_Torappu_StageData_StageDropInfoArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_StageData_StageDropInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_StageData_StageDropInfo", 6)?;
+        if let Some(f) = self.firstPassRewards() {
+            s.serialize_field("firstPassRewards", &f)?;
+        } else {
+            s.skip_field("firstPassRewards")?;
+        }
+        if let Some(f) = self.firstCompleteRewards() {
+            s.serialize_field("firstCompleteRewards", &f)?;
+        } else {
+            s.skip_field("firstCompleteRewards")?;
+        }
+        if let Some(f) = self.passRewards() {
+            s.serialize_field("passRewards", &f)?;
+        } else {
+            s.skip_field("passRewards")?;
+        }
+        if let Some(f) = self.completeRewards() {
+            s.serialize_field("completeRewards", &f)?;
+        } else {
+            s.skip_field("completeRewards")?;
+        }
+        if let Some(f) = self.displayRewards() {
+            s.serialize_field("displayRewards", &f)?;
+        } else {
+            s.skip_field("displayRewards")?;
+        }
+        if let Some(f) = self.displayDetailRewards() {
+            s.serialize_field("displayDetailRewards", &f)?;
+        } else {
+            s.skip_field("displayDetailRewards")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StageData_StageDropInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3721,6 +4438,70 @@ impl core::fmt::Debug for clz_Torappu_StageData_StageDropInfo<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StageData_StageDropInfoT {
+    pub firstPassRewards: Option<Vec<clz_Torappu_ItemBundleT>>,
+    pub firstCompleteRewards: Option<Vec<clz_Torappu_ItemBundleT>>,
+    pub passRewards: Option<Vec<list_clz_Torappu_WeightItemBundleT>>,
+    pub completeRewards: Option<Vec<list_clz_Torappu_WeightItemBundleT>>,
+    pub displayRewards: Option<Vec<clz_Torappu_StageData_DisplayRewardsT>>,
+    pub displayDetailRewards: Option<Vec<clz_Torappu_StageData_DisplayDetailRewardsT>>,
+}
+impl Default for clz_Torappu_StageData_StageDropInfoT {
+    fn default() -> Self {
+        Self {
+            firstPassRewards: None,
+            firstCompleteRewards: None,
+            passRewards: None,
+            completeRewards: None,
+            displayRewards: None,
+            displayDetailRewards: None,
+        }
+    }
+}
+impl clz_Torappu_StageData_StageDropInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StageData_StageDropInfo<'b>> {
+        let firstPassRewards = self.firstPassRewards.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let firstCompleteRewards = self.firstCompleteRewards.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let passRewards = self.passRewards.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let completeRewards = self.completeRewards.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let displayRewards = self.displayRewards.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let displayDetailRewards = self.displayDetailRewards.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_StageData_StageDropInfo::create(
+            _fbb,
+            &clz_Torappu_StageData_StageDropInfoArgs {
+                firstPassRewards,
+                firstCompleteRewards,
+                passRewards,
+                completeRewards,
+                displayRewards,
+                displayDetailRewards,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_StageData_ExtraConditionDescOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3733,7 +4514,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StageData_ExtraConditionDesc<'a
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3761,6 +4542,19 @@ impl<'a> clz_Torappu_StageData_ExtraConditionDesc<'a> {
         }
         builder.add_index(args.index);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StageData_ExtraConditionDescT {
+        let index = self.index();
+        let template = self.template().map(|x| x.to_string());
+        let unlockParam = self
+            .unlockParam()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        clz_Torappu_StageData_ExtraConditionDescT {
+            index,
+            template,
+            unlockParam,
+        }
     }
 
     #[inline]
@@ -3843,6 +4637,27 @@ impl<'a> Default for clz_Torappu_StageData_ExtraConditionDescArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_StageData_ExtraConditionDesc<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_StageData_ExtraConditionDesc", 3)?;
+        s.serialize_field("index", &self.index())?;
+        if let Some(f) = self.template() {
+            s.serialize_field("template", &f)?;
+        } else {
+            s.skip_field("template")?;
+        }
+        if let Some(f) = self.unlockParam() {
+            s.serialize_field("unlockParam", &f)?;
+        } else {
+            s.skip_field("unlockParam")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StageData_ExtraConditionDescBuilder<
     'a: 'b,
     'b,
@@ -3904,6 +4719,43 @@ impl core::fmt::Debug for clz_Torappu_StageData_ExtraConditionDesc<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StageData_ExtraConditionDescT {
+    pub index: i32,
+    pub template: Option<String>,
+    pub unlockParam: Option<Vec<String>>,
+}
+impl Default for clz_Torappu_StageData_ExtraConditionDescT {
+    fn default() -> Self {
+        Self {
+            index: 0,
+            template: None,
+            unlockParam: None,
+        }
+    }
+}
+impl clz_Torappu_StageData_ExtraConditionDescT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StageData_ExtraConditionDesc<'b>> {
+        let index = self.index;
+        let template = self.template.as_ref().map(|x| _fbb.create_string(x));
+        let unlockParam = self.unlockParam.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_StageData_ExtraConditionDesc::create(
+            _fbb,
+            &clz_Torappu_StageData_ExtraConditionDescArgs {
+                index,
+                template,
+                unlockParam,
+            },
+        )
+    }
+}
 pub enum dict__int__stringOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3916,7 +4768,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__int__string<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3940,6 +4792,12 @@ impl<'a> dict__int__string<'a> {
         }
         builder.add_key(args.key);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__int__stringT {
+        let key = self.key();
+        let value = self.value().map(|x| x.to_string());
+        dict__int__stringT { key, value }
     }
 
     #[inline]
@@ -4003,6 +4861,22 @@ impl<'a> Default for dict__int__stringArgs<'a> {
     }
 }
 
+impl Serialize for dict__int__string<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__int__string", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__int__stringBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -4043,6 +4917,30 @@ impl core::fmt::Debug for dict__int__string<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__int__stringT {
+    pub key: i32,
+    pub value: Option<String>,
+}
+impl Default for dict__int__stringT {
+    fn default() -> Self {
+        Self {
+            key: 0,
+            value: None,
+        }
+    }
+}
+impl dict__int__stringT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__int__string<'b>> {
+        let key = self.key;
+        let value = self.value.as_ref().map(|x| _fbb.create_string(x));
+        dict__int__string::create(_fbb, &dict__int__stringArgs { key, value })
+    }
+}
 pub enum clz_Torappu_StageData_SpecialProgressInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4055,7 +4953,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StageData_SpecialProgressInfo<'
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4079,6 +4977,17 @@ impl<'a> clz_Torappu_StageData_SpecialProgressInfo<'a> {
         }
         builder.add_progressType(args.progressType);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StageData_SpecialProgressInfoT {
+        let progressType = self.progressType();
+        let descList = self
+            .descList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_StageData_SpecialProgressInfoT {
+            progressType,
+            descList,
+        }
     }
 
     #[inline]
@@ -4148,6 +5057,22 @@ impl<'a> Default for clz_Torappu_StageData_SpecialProgressInfoArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_StageData_SpecialProgressInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_StageData_SpecialProgressInfo", 2)?;
+        s.serialize_field("progressType", &self.progressType())?;
+        if let Some(f) = self.descList() {
+            s.serialize_field("descList", &f)?;
+        } else {
+            s.skip_field("descList")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StageData_SpecialProgressInfoBuilder<
     'a: 'b,
     'b,
@@ -4208,6 +5133,39 @@ impl core::fmt::Debug for clz_Torappu_StageData_SpecialProgressInfo<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StageData_SpecialProgressInfoT {
+    pub progressType: enum__Torappu_StageData_SpecialStageUnlockProgressType,
+    pub descList: Option<Vec<dict__int__stringT>>,
+}
+impl Default for clz_Torappu_StageData_SpecialProgressInfoT {
+    fn default() -> Self {
+        Self {
+            progressType: enum__Torappu_StageData_SpecialStageUnlockProgressType::ONCE,
+            descList: None,
+        }
+    }
+}
+impl clz_Torappu_StageData_SpecialProgressInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StageData_SpecialProgressInfo<'b>> {
+        let progressType = self.progressType;
+        let descList = self.descList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_StageData_SpecialProgressInfo::create(
+            _fbb,
+            &clz_Torappu_StageData_SpecialProgressInfoArgs {
+                progressType,
+                descList,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_StageData_SpecialStoryInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4220,7 +5178,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StageData_SpecialStoryInfo<'a> 
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4262,6 +5220,25 @@ impl<'a> clz_Torappu_StageData_SpecialStoryInfo<'a> {
             builder.add_stageId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StageData_SpecialStoryInfoT {
+        let stageId = self.stageId().map(|x| x.to_string());
+        let rewards = self
+            .rewards()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let progressInfo = self.progressInfo().map(|x| Box::new(x.unpack()));
+        let imageId = self.imageId().map(|x| x.to_string());
+        let keyItemId = self.keyItemId().map(|x| x.to_string());
+        let unlockDesc = self.unlockDesc().map(|x| x.to_string());
+        clz_Torappu_StageData_SpecialStoryInfoT {
+            stageId,
+            rewards,
+            progressInfo,
+            imageId,
+            keyItemId,
+            unlockDesc,
+        }
     }
 
     #[inline]
@@ -4399,6 +5376,46 @@ impl<'a> Default for clz_Torappu_StageData_SpecialStoryInfoArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_StageData_SpecialStoryInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_StageData_SpecialStoryInfo", 6)?;
+        if let Some(f) = self.stageId() {
+            s.serialize_field("stageId", &f)?;
+        } else {
+            s.skip_field("stageId")?;
+        }
+        if let Some(f) = self.rewards() {
+            s.serialize_field("rewards", &f)?;
+        } else {
+            s.skip_field("rewards")?;
+        }
+        if let Some(f) = self.progressInfo() {
+            s.serialize_field("progressInfo", &f)?;
+        } else {
+            s.skip_field("progressInfo")?;
+        }
+        if let Some(f) = self.imageId() {
+            s.serialize_field("imageId", &f)?;
+        } else {
+            s.skip_field("imageId")?;
+        }
+        if let Some(f) = self.keyItemId() {
+            s.serialize_field("keyItemId", &f)?;
+        } else {
+            s.skip_field("keyItemId")?;
+        }
+        if let Some(f) = self.unlockDesc() {
+            s.serialize_field("unlockDesc", &f)?;
+        } else {
+            s.skip_field("unlockDesc")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StageData_SpecialStoryInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -4487,6 +5504,55 @@ impl core::fmt::Debug for clz_Torappu_StageData_SpecialStoryInfo<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StageData_SpecialStoryInfoT {
+    pub stageId: Option<String>,
+    pub rewards: Option<Vec<clz_Torappu_ItemBundleT>>,
+    pub progressInfo: Option<Box<clz_Torappu_StageData_SpecialProgressInfoT>>,
+    pub imageId: Option<String>,
+    pub keyItemId: Option<String>,
+    pub unlockDesc: Option<String>,
+}
+impl Default for clz_Torappu_StageData_SpecialStoryInfoT {
+    fn default() -> Self {
+        Self {
+            stageId: None,
+            rewards: None,
+            progressInfo: None,
+            imageId: None,
+            keyItemId: None,
+            unlockDesc: None,
+        }
+    }
+}
+impl clz_Torappu_StageData_SpecialStoryInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StageData_SpecialStoryInfo<'b>> {
+        let stageId = self.stageId.as_ref().map(|x| _fbb.create_string(x));
+        let rewards = self.rewards.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let progressInfo = self.progressInfo.as_ref().map(|x| x.pack(_fbb));
+        let imageId = self.imageId.as_ref().map(|x| _fbb.create_string(x));
+        let keyItemId = self.keyItemId.as_ref().map(|x| _fbb.create_string(x));
+        let unlockDesc = self.unlockDesc.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_StageData_SpecialStoryInfo::create(
+            _fbb,
+            &clz_Torappu_StageData_SpecialStoryInfoArgs {
+                stageId,
+                rewards,
+                progressInfo,
+                imageId,
+                keyItemId,
+                unlockDesc,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_StageDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -4499,7 +5565,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StageData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -4685,6 +5751,145 @@ impl<'a> clz_Torappu_StageData<'a> {
         builder.add_canBattleReplay(args.canBattleReplay);
         builder.add_canPractice(args.canPractice);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StageDataT {
+        let stageType = self.stageType();
+        let difficulty = self.difficulty();
+        let performanceStageFlag = self.performanceStageFlag();
+        let diffGroup = self.diffGroup();
+        let unlockCondition = self
+            .unlockCondition()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let stageId = self.stageId().map(|x| x.to_string());
+        let levelId = self.levelId().map(|x| x.to_string());
+        let zoneId = self.zoneId().map(|x| x.to_string());
+        let code = self.code().map(|x| x.to_string());
+        let name = self.name().map(|x| x.to_string());
+        let description = self.description().map(|x| x.to_string());
+        let hardStagedId = self.hardStagedId().map(|x| x.to_string());
+        let sixStarStageId = self.sixStarStageId().map(|x| x.to_string());
+        let dangerLevel = self.dangerLevel().map(|x| x.to_string());
+        let dangerPoint = self.dangerPoint();
+        let loadingPicId = self.loadingPicId().map(|x| x.to_string());
+        let canPractice = self.canPractice();
+        let canBattleReplay = self.canBattleReplay();
+        let apCost = self.apCost();
+        let apFailReturn = self.apFailReturn();
+        let maxSlot = self.maxSlot();
+        let etItemId = self.etItemId().map(|x| x.to_string());
+        let etCost = self.etCost();
+        let etFailReturn = self.etFailReturn();
+        let etButtonStyle = self.etButtonStyle().map(|x| x.to_string());
+        let apProtectTimes = self.apProtectTimes();
+        let diamondOnceDrop = self.diamondOnceDrop();
+        let practiceTicketCost = self.practiceTicketCost();
+        let dailyStageDifficulty = self.dailyStageDifficulty();
+        let expGain = self.expGain();
+        let goldGain = self.goldGain();
+        let loseExpGain = self.loseExpGain();
+        let loseGoldGain = self.loseGoldGain();
+        let passFavor = self.passFavor();
+        let completeFavor = self.completeFavor();
+        let slProgress = self.slProgress();
+        let displayMainItem = self.displayMainItem().map(|x| x.to_string());
+        let hilightMark = self.hilightMark();
+        let bossMark = self.bossMark();
+        let isPredefined = self.isPredefined();
+        let isHardPredefined = self.isHardPredefined();
+        let isSkillSelectablePredefined = self.isSkillSelectablePredefined();
+        let isStoryOnly = self.isStoryOnly();
+        let appearanceStyle = self.appearanceStyle();
+        let stageDropInfo = self.stageDropInfo().map(|x| Box::new(x.unpack()));
+        let canUseCharm = self.canUseCharm();
+        let canUseTech = self.canUseTech();
+        let canUseTrapTool = self.canUseTrapTool();
+        let canUseBattlePerformance = self.canUseBattlePerformance();
+        let canUseFirework = self.canUseFirework();
+        let canMultipleBattle = self.canMultipleBattle();
+        let startButtonOverrideId = self.startButtonOverrideId().map(|x| x.to_string());
+        let isStagePatch = self.isStagePatch();
+        let mainStageId = self.mainStageId().map(|x| x.to_string());
+        let extraCondition = self
+            .extraCondition()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let extraInfo = self
+            .extraInfo()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let sixStarBaseDesc = self.sixStarBaseDesc().map(|x| x.to_string());
+        let sixStarDisplayRewardList = self
+            .sixStarDisplayRewardList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let advancedRuneIdList1 = self
+            .advancedRuneIdList1()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let advancedRuneIdList2 = self
+            .advancedRuneIdList2()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let useSpecialSizeMapPreview = self.useSpecialSizeMapPreview();
+        clz_Torappu_StageDataT {
+            stageType,
+            difficulty,
+            performanceStageFlag,
+            diffGroup,
+            unlockCondition,
+            stageId,
+            levelId,
+            zoneId,
+            code,
+            name,
+            description,
+            hardStagedId,
+            sixStarStageId,
+            dangerLevel,
+            dangerPoint,
+            loadingPicId,
+            canPractice,
+            canBattleReplay,
+            apCost,
+            apFailReturn,
+            maxSlot,
+            etItemId,
+            etCost,
+            etFailReturn,
+            etButtonStyle,
+            apProtectTimes,
+            diamondOnceDrop,
+            practiceTicketCost,
+            dailyStageDifficulty,
+            expGain,
+            goldGain,
+            loseExpGain,
+            loseGoldGain,
+            passFavor,
+            completeFavor,
+            slProgress,
+            displayMainItem,
+            hilightMark,
+            bossMark,
+            isPredefined,
+            isHardPredefined,
+            isSkillSelectablePredefined,
+            isStoryOnly,
+            appearanceStyle,
+            stageDropInfo,
+            canUseCharm,
+            canUseTech,
+            canUseTrapTool,
+            canUseBattlePerformance,
+            canUseFirework,
+            canMultipleBattle,
+            startButtonOverrideId,
+            isStagePatch,
+            mainStageId,
+            extraCondition,
+            extraInfo,
+            sixStarBaseDesc,
+            sixStarDisplayRewardList,
+            advancedRuneIdList1,
+            advancedRuneIdList2,
+            useSpecialSizeMapPreview,
+        }
     }
 
     #[inline]
@@ -5758,6 +6963,172 @@ impl<'a> Default for clz_Torappu_StageDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_StageData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_StageData", 61)?;
+        s.serialize_field("stageType", &self.stageType())?;
+        s.serialize_field("difficulty", &self.difficulty())?;
+        s.serialize_field("performanceStageFlag", &self.performanceStageFlag())?;
+        s.serialize_field("diffGroup", &self.diffGroup())?;
+        if let Some(f) = self.unlockCondition() {
+            s.serialize_field("unlockCondition", &f)?;
+        } else {
+            s.skip_field("unlockCondition")?;
+        }
+        if let Some(f) = self.stageId() {
+            s.serialize_field("stageId", &f)?;
+        } else {
+            s.skip_field("stageId")?;
+        }
+        if let Some(f) = self.levelId() {
+            s.serialize_field("levelId", &f)?;
+        } else {
+            s.skip_field("levelId")?;
+        }
+        if let Some(f) = self.zoneId() {
+            s.serialize_field("zoneId", &f)?;
+        } else {
+            s.skip_field("zoneId")?;
+        }
+        if let Some(f) = self.code() {
+            s.serialize_field("code", &f)?;
+        } else {
+            s.skip_field("code")?;
+        }
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        if let Some(f) = self.description() {
+            s.serialize_field("description", &f)?;
+        } else {
+            s.skip_field("description")?;
+        }
+        if let Some(f) = self.hardStagedId() {
+            s.serialize_field("hardStagedId", &f)?;
+        } else {
+            s.skip_field("hardStagedId")?;
+        }
+        if let Some(f) = self.sixStarStageId() {
+            s.serialize_field("sixStarStageId", &f)?;
+        } else {
+            s.skip_field("sixStarStageId")?;
+        }
+        if let Some(f) = self.dangerLevel() {
+            s.serialize_field("dangerLevel", &f)?;
+        } else {
+            s.skip_field("dangerLevel")?;
+        }
+        s.serialize_field("dangerPoint", &self.dangerPoint())?;
+        if let Some(f) = self.loadingPicId() {
+            s.serialize_field("loadingPicId", &f)?;
+        } else {
+            s.skip_field("loadingPicId")?;
+        }
+        s.serialize_field("canPractice", &self.canPractice())?;
+        s.serialize_field("canBattleReplay", &self.canBattleReplay())?;
+        s.serialize_field("apCost", &self.apCost())?;
+        s.serialize_field("apFailReturn", &self.apFailReturn())?;
+        s.serialize_field("maxSlot", &self.maxSlot())?;
+        if let Some(f) = self.etItemId() {
+            s.serialize_field("etItemId", &f)?;
+        } else {
+            s.skip_field("etItemId")?;
+        }
+        s.serialize_field("etCost", &self.etCost())?;
+        s.serialize_field("etFailReturn", &self.etFailReturn())?;
+        if let Some(f) = self.etButtonStyle() {
+            s.serialize_field("etButtonStyle", &f)?;
+        } else {
+            s.skip_field("etButtonStyle")?;
+        }
+        s.serialize_field("apProtectTimes", &self.apProtectTimes())?;
+        s.serialize_field("diamondOnceDrop", &self.diamondOnceDrop())?;
+        s.serialize_field("practiceTicketCost", &self.practiceTicketCost())?;
+        s.serialize_field("dailyStageDifficulty", &self.dailyStageDifficulty())?;
+        s.serialize_field("expGain", &self.expGain())?;
+        s.serialize_field("goldGain", &self.goldGain())?;
+        s.serialize_field("loseExpGain", &self.loseExpGain())?;
+        s.serialize_field("loseGoldGain", &self.loseGoldGain())?;
+        s.serialize_field("passFavor", &self.passFavor())?;
+        s.serialize_field("completeFavor", &self.completeFavor())?;
+        s.serialize_field("slProgress", &self.slProgress())?;
+        if let Some(f) = self.displayMainItem() {
+            s.serialize_field("displayMainItem", &f)?;
+        } else {
+            s.skip_field("displayMainItem")?;
+        }
+        s.serialize_field("hilightMark", &self.hilightMark())?;
+        s.serialize_field("bossMark", &self.bossMark())?;
+        s.serialize_field("isPredefined", &self.isPredefined())?;
+        s.serialize_field("isHardPredefined", &self.isHardPredefined())?;
+        s.serialize_field(
+            "isSkillSelectablePredefined",
+            &self.isSkillSelectablePredefined(),
+        )?;
+        s.serialize_field("isStoryOnly", &self.isStoryOnly())?;
+        s.serialize_field("appearanceStyle", &self.appearanceStyle())?;
+        if let Some(f) = self.stageDropInfo() {
+            s.serialize_field("stageDropInfo", &f)?;
+        } else {
+            s.skip_field("stageDropInfo")?;
+        }
+        s.serialize_field("canUseCharm", &self.canUseCharm())?;
+        s.serialize_field("canUseTech", &self.canUseTech())?;
+        s.serialize_field("canUseTrapTool", &self.canUseTrapTool())?;
+        s.serialize_field("canUseBattlePerformance", &self.canUseBattlePerformance())?;
+        s.serialize_field("canUseFirework", &self.canUseFirework())?;
+        s.serialize_field("canMultipleBattle", &self.canMultipleBattle())?;
+        if let Some(f) = self.startButtonOverrideId() {
+            s.serialize_field("startButtonOverrideId", &f)?;
+        } else {
+            s.skip_field("startButtonOverrideId")?;
+        }
+        s.serialize_field("isStagePatch", &self.isStagePatch())?;
+        if let Some(f) = self.mainStageId() {
+            s.serialize_field("mainStageId", &f)?;
+        } else {
+            s.skip_field("mainStageId")?;
+        }
+        if let Some(f) = self.extraCondition() {
+            s.serialize_field("extraCondition", &f)?;
+        } else {
+            s.skip_field("extraCondition")?;
+        }
+        if let Some(f) = self.extraInfo() {
+            s.serialize_field("extraInfo", &f)?;
+        } else {
+            s.skip_field("extraInfo")?;
+        }
+        if let Some(f) = self.sixStarBaseDesc() {
+            s.serialize_field("sixStarBaseDesc", &f)?;
+        } else {
+            s.skip_field("sixStarBaseDesc")?;
+        }
+        if let Some(f) = self.sixStarDisplayRewardList() {
+            s.serialize_field("sixStarDisplayRewardList", &f)?;
+        } else {
+            s.skip_field("sixStarDisplayRewardList")?;
+        }
+        if let Some(f) = self.advancedRuneIdList1() {
+            s.serialize_field("advancedRuneIdList1", &f)?;
+        } else {
+            s.skip_field("advancedRuneIdList1")?;
+        }
+        if let Some(f) = self.advancedRuneIdList2() {
+            s.serialize_field("advancedRuneIdList2", &f)?;
+        } else {
+            s.skip_field("advancedRuneIdList2")?;
+        }
+        s.serialize_field("useSpecialSizeMapPreview", &self.useSpecialSizeMapPreview())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StageDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -6295,6 +7666,293 @@ impl core::fmt::Debug for clz_Torappu_StageData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StageDataT {
+    pub stageType: enum__Torappu_StageType,
+    pub difficulty: enum__Torappu_LevelData_Difficulty,
+    pub performanceStageFlag: enum__Torappu_StageData_PerformanceStageFlag,
+    pub diffGroup: enum__Torappu_StageDiffGroup,
+    pub unlockCondition: Option<Vec<clz_Torappu_StageData_ConditionDescT>>,
+    pub stageId: Option<String>,
+    pub levelId: Option<String>,
+    pub zoneId: Option<String>,
+    pub code: Option<String>,
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub hardStagedId: Option<String>,
+    pub sixStarStageId: Option<String>,
+    pub dangerLevel: Option<String>,
+    pub dangerPoint: f32,
+    pub loadingPicId: Option<String>,
+    pub canPractice: bool,
+    pub canBattleReplay: bool,
+    pub apCost: i32,
+    pub apFailReturn: i32,
+    pub maxSlot: i32,
+    pub etItemId: Option<String>,
+    pub etCost: i32,
+    pub etFailReturn: i32,
+    pub etButtonStyle: Option<String>,
+    pub apProtectTimes: i32,
+    pub diamondOnceDrop: i32,
+    pub practiceTicketCost: i32,
+    pub dailyStageDifficulty: i32,
+    pub expGain: i32,
+    pub goldGain: i32,
+    pub loseExpGain: i32,
+    pub loseGoldGain: i32,
+    pub passFavor: i32,
+    pub completeFavor: i32,
+    pub slProgress: i32,
+    pub displayMainItem: Option<String>,
+    pub hilightMark: bool,
+    pub bossMark: bool,
+    pub isPredefined: bool,
+    pub isHardPredefined: bool,
+    pub isSkillSelectablePredefined: bool,
+    pub isStoryOnly: bool,
+    pub appearanceStyle: enum__Torappu_AppearanceStyle,
+    pub stageDropInfo: Option<Box<clz_Torappu_StageData_StageDropInfoT>>,
+    pub canUseCharm: bool,
+    pub canUseTech: bool,
+    pub canUseTrapTool: bool,
+    pub canUseBattlePerformance: bool,
+    pub canUseFirework: bool,
+    pub canMultipleBattle: bool,
+    pub startButtonOverrideId: Option<String>,
+    pub isStagePatch: bool,
+    pub mainStageId: Option<String>,
+    pub extraCondition: Option<Vec<clz_Torappu_StageData_ExtraConditionDescT>>,
+    pub extraInfo: Option<Vec<clz_Torappu_StageData_SpecialStoryInfoT>>,
+    pub sixStarBaseDesc: Option<String>,
+    pub sixStarDisplayRewardList: Option<Vec<clz_Torappu_ItemBundleT>>,
+    pub advancedRuneIdList1: Option<Vec<String>>,
+    pub advancedRuneIdList2: Option<Vec<String>>,
+    pub useSpecialSizeMapPreview: bool,
+}
+impl Default for clz_Torappu_StageDataT {
+    fn default() -> Self {
+        Self {
+            stageType: enum__Torappu_StageType::MAIN,
+            difficulty: enum__Torappu_LevelData_Difficulty::NONE,
+            performanceStageFlag: enum__Torappu_StageData_PerformanceStageFlag::NORMAL_STAGE,
+            diffGroup: enum__Torappu_StageDiffGroup::NONE,
+            unlockCondition: None,
+            stageId: None,
+            levelId: None,
+            zoneId: None,
+            code: None,
+            name: None,
+            description: None,
+            hardStagedId: None,
+            sixStarStageId: None,
+            dangerLevel: None,
+            dangerPoint: 0.0,
+            loadingPicId: None,
+            canPractice: false,
+            canBattleReplay: false,
+            apCost: 0,
+            apFailReturn: 0,
+            maxSlot: 0,
+            etItemId: None,
+            etCost: 0,
+            etFailReturn: 0,
+            etButtonStyle: None,
+            apProtectTimes: 0,
+            diamondOnceDrop: 0,
+            practiceTicketCost: 0,
+            dailyStageDifficulty: 0,
+            expGain: 0,
+            goldGain: 0,
+            loseExpGain: 0,
+            loseGoldGain: 0,
+            passFavor: 0,
+            completeFavor: 0,
+            slProgress: 0,
+            displayMainItem: None,
+            hilightMark: false,
+            bossMark: false,
+            isPredefined: false,
+            isHardPredefined: false,
+            isSkillSelectablePredefined: false,
+            isStoryOnly: false,
+            appearanceStyle: enum__Torappu_AppearanceStyle::MAIN_NORMAL,
+            stageDropInfo: None,
+            canUseCharm: false,
+            canUseTech: false,
+            canUseTrapTool: false,
+            canUseBattlePerformance: false,
+            canUseFirework: false,
+            canMultipleBattle: false,
+            startButtonOverrideId: None,
+            isStagePatch: false,
+            mainStageId: None,
+            extraCondition: None,
+            extraInfo: None,
+            sixStarBaseDesc: None,
+            sixStarDisplayRewardList: None,
+            advancedRuneIdList1: None,
+            advancedRuneIdList2: None,
+            useSpecialSizeMapPreview: false,
+        }
+    }
+}
+impl clz_Torappu_StageDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StageData<'b>> {
+        let stageType = self.stageType;
+        let difficulty = self.difficulty;
+        let performanceStageFlag = self.performanceStageFlag;
+        let diffGroup = self.diffGroup;
+        let unlockCondition = self.unlockCondition.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let stageId = self.stageId.as_ref().map(|x| _fbb.create_string(x));
+        let levelId = self.levelId.as_ref().map(|x| _fbb.create_string(x));
+        let zoneId = self.zoneId.as_ref().map(|x| _fbb.create_string(x));
+        let code = self.code.as_ref().map(|x| _fbb.create_string(x));
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        let description = self.description.as_ref().map(|x| _fbb.create_string(x));
+        let hardStagedId = self.hardStagedId.as_ref().map(|x| _fbb.create_string(x));
+        let sixStarStageId = self.sixStarStageId.as_ref().map(|x| _fbb.create_string(x));
+        let dangerLevel = self.dangerLevel.as_ref().map(|x| _fbb.create_string(x));
+        let dangerPoint = self.dangerPoint;
+        let loadingPicId = self.loadingPicId.as_ref().map(|x| _fbb.create_string(x));
+        let canPractice = self.canPractice;
+        let canBattleReplay = self.canBattleReplay;
+        let apCost = self.apCost;
+        let apFailReturn = self.apFailReturn;
+        let maxSlot = self.maxSlot;
+        let etItemId = self.etItemId.as_ref().map(|x| _fbb.create_string(x));
+        let etCost = self.etCost;
+        let etFailReturn = self.etFailReturn;
+        let etButtonStyle = self.etButtonStyle.as_ref().map(|x| _fbb.create_string(x));
+        let apProtectTimes = self.apProtectTimes;
+        let diamondOnceDrop = self.diamondOnceDrop;
+        let practiceTicketCost = self.practiceTicketCost;
+        let dailyStageDifficulty = self.dailyStageDifficulty;
+        let expGain = self.expGain;
+        let goldGain = self.goldGain;
+        let loseExpGain = self.loseExpGain;
+        let loseGoldGain = self.loseGoldGain;
+        let passFavor = self.passFavor;
+        let completeFavor = self.completeFavor;
+        let slProgress = self.slProgress;
+        let displayMainItem = self.displayMainItem.as_ref().map(|x| _fbb.create_string(x));
+        let hilightMark = self.hilightMark;
+        let bossMark = self.bossMark;
+        let isPredefined = self.isPredefined;
+        let isHardPredefined = self.isHardPredefined;
+        let isSkillSelectablePredefined = self.isSkillSelectablePredefined;
+        let isStoryOnly = self.isStoryOnly;
+        let appearanceStyle = self.appearanceStyle;
+        let stageDropInfo = self.stageDropInfo.as_ref().map(|x| x.pack(_fbb));
+        let canUseCharm = self.canUseCharm;
+        let canUseTech = self.canUseTech;
+        let canUseTrapTool = self.canUseTrapTool;
+        let canUseBattlePerformance = self.canUseBattlePerformance;
+        let canUseFirework = self.canUseFirework;
+        let canMultipleBattle = self.canMultipleBattle;
+        let startButtonOverrideId = self
+            .startButtonOverrideId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let isStagePatch = self.isStagePatch;
+        let mainStageId = self.mainStageId.as_ref().map(|x| _fbb.create_string(x));
+        let extraCondition = self.extraCondition.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let extraInfo = self.extraInfo.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let sixStarBaseDesc = self.sixStarBaseDesc.as_ref().map(|x| _fbb.create_string(x));
+        let sixStarDisplayRewardList = self.sixStarDisplayRewardList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let advancedRuneIdList1 = self.advancedRuneIdList1.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let advancedRuneIdList2 = self.advancedRuneIdList2.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let useSpecialSizeMapPreview = self.useSpecialSizeMapPreview;
+        clz_Torappu_StageData::create(
+            _fbb,
+            &clz_Torappu_StageDataArgs {
+                stageType,
+                difficulty,
+                performanceStageFlag,
+                diffGroup,
+                unlockCondition,
+                stageId,
+                levelId,
+                zoneId,
+                code,
+                name,
+                description,
+                hardStagedId,
+                sixStarStageId,
+                dangerLevel,
+                dangerPoint,
+                loadingPicId,
+                canPractice,
+                canBattleReplay,
+                apCost,
+                apFailReturn,
+                maxSlot,
+                etItemId,
+                etCost,
+                etFailReturn,
+                etButtonStyle,
+                apProtectTimes,
+                diamondOnceDrop,
+                practiceTicketCost,
+                dailyStageDifficulty,
+                expGain,
+                goldGain,
+                loseExpGain,
+                loseGoldGain,
+                passFavor,
+                completeFavor,
+                slProgress,
+                displayMainItem,
+                hilightMark,
+                bossMark,
+                isPredefined,
+                isHardPredefined,
+                isSkillSelectablePredefined,
+                isStoryOnly,
+                appearanceStyle,
+                stageDropInfo,
+                canUseCharm,
+                canUseTech,
+                canUseTrapTool,
+                canUseBattlePerformance,
+                canUseFirework,
+                canMultipleBattle,
+                startButtonOverrideId,
+                isStagePatch,
+                mainStageId,
+                extraCondition,
+                extraInfo,
+                sixStarBaseDesc,
+                sixStarDisplayRewardList,
+                advancedRuneIdList1,
+                advancedRuneIdList2,
+                useSpecialSizeMapPreview,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_StageDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -6307,7 +7965,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_StageData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -6333,6 +7991,15 @@ impl<'a> dict__string__clz_Torappu_StageData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_StageDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_StageDataT { key, value }
     }
 
     #[inline]
@@ -6406,6 +8073,22 @@ impl<'a> Default for dict__string__clz_Torappu_StageDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_StageData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_StageData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_StageDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -6455,6 +8138,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_StageData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_StageDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_StageDataT>>,
+}
+impl Default for dict__string__clz_Torappu_StageDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_StageDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_StageData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_StageData::create(
+            _fbb,
+            &dict__string__clz_Torappu_StageDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_RuneStageGroupData_RuneStageInstOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -6467,7 +8180,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_RuneStageGroupData_RuneStageIns
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -6493,6 +8206,17 @@ impl<'a> clz_Torappu_RuneStageGroupData_RuneStageInst<'a> {
             builder.add_stageId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_RuneStageGroupData_RuneStageInstT {
+        let stageId = self.stageId().map(|x| x.to_string());
+        let activePackedRuneIds = self
+            .activePackedRuneIds()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        clz_Torappu_RuneStageGroupData_RuneStageInstT {
+            stageId,
+            activePackedRuneIds,
+        }
     }
 
     #[inline]
@@ -6557,6 +8281,27 @@ impl<'a> Default for clz_Torappu_RuneStageGroupData_RuneStageInstArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_RuneStageGroupData_RuneStageInst<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_RuneStageGroupData_RuneStageInst", 2)?;
+        if let Some(f) = self.stageId() {
+            s.serialize_field("stageId", &f)?;
+        } else {
+            s.skip_field("stageId")?;
+        }
+        if let Some(f) = self.activePackedRuneIds() {
+            s.serialize_field("activePackedRuneIds", &f)?;
+        } else {
+            s.skip_field("activePackedRuneIds")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_RuneStageGroupData_RuneStageInstBuilder<
     'a: 'b,
     'b,
@@ -6614,6 +8359,39 @@ impl core::fmt::Debug for clz_Torappu_RuneStageGroupData_RuneStageInst<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_RuneStageGroupData_RuneStageInstT {
+    pub stageId: Option<String>,
+    pub activePackedRuneIds: Option<Vec<String>>,
+}
+impl Default for clz_Torappu_RuneStageGroupData_RuneStageInstT {
+    fn default() -> Self {
+        Self {
+            stageId: None,
+            activePackedRuneIds: None,
+        }
+    }
+}
+impl clz_Torappu_RuneStageGroupData_RuneStageInstT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_RuneStageGroupData_RuneStageInst<'b>> {
+        let stageId = self.stageId.as_ref().map(|x| _fbb.create_string(x));
+        let activePackedRuneIds = self.activePackedRuneIds.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_RuneStageGroupData_RuneStageInst::create(
+            _fbb,
+            &clz_Torappu_RuneStageGroupData_RuneStageInstArgs {
+                stageId,
+                activePackedRuneIds,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_RuneStageGroupDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -6626,7 +8404,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_RuneStageGroupData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -6656,6 +8434,21 @@ impl<'a> clz_Torappu_RuneStageGroupData<'a> {
             builder.add_groupId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_RuneStageGroupDataT {
+        let groupId = self.groupId().map(|x| x.to_string());
+        let activeRuneStages = self
+            .activeRuneStages()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let startTs = self.startTs();
+        let endTs = self.endTs();
+        clz_Torappu_RuneStageGroupDataT {
+            groupId,
+            activeRuneStages,
+            startTs,
+            endTs,
+        }
     }
 
     #[inline]
@@ -6761,6 +8554,28 @@ impl<'a> Default for clz_Torappu_RuneStageGroupDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_RuneStageGroupData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_RuneStageGroupData", 4)?;
+        if let Some(f) = self.groupId() {
+            s.serialize_field("groupId", &f)?;
+        } else {
+            s.skip_field("groupId")?;
+        }
+        if let Some(f) = self.activeRuneStages() {
+            s.serialize_field("activeRuneStages", &f)?;
+        } else {
+            s.skip_field("activeRuneStages")?;
+        }
+        s.serialize_field("startTs", &self.startTs())?;
+        s.serialize_field("endTs", &self.endTs())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_RuneStageGroupDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -6825,6 +8640,47 @@ impl core::fmt::Debug for clz_Torappu_RuneStageGroupData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_RuneStageGroupDataT {
+    pub groupId: Option<String>,
+    pub activeRuneStages: Option<Vec<clz_Torappu_RuneStageGroupData_RuneStageInstT>>,
+    pub startTs: i64,
+    pub endTs: i64,
+}
+impl Default for clz_Torappu_RuneStageGroupDataT {
+    fn default() -> Self {
+        Self {
+            groupId: None,
+            activeRuneStages: None,
+            startTs: 0,
+            endTs: 0,
+        }
+    }
+}
+impl clz_Torappu_RuneStageGroupDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_RuneStageGroupData<'b>> {
+        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
+        let activeRuneStages = self.activeRuneStages.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let startTs = self.startTs;
+        let endTs = self.endTs;
+        clz_Torappu_RuneStageGroupData::create(
+            _fbb,
+            &clz_Torappu_RuneStageGroupDataArgs {
+                groupId,
+                activeRuneStages,
+                startTs,
+                endTs,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_RuneStageGroupDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -6837,7 +8693,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_RuneStageGroupDat
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -6863,6 +8719,15 @@ impl<'a> dict__string__clz_Torappu_RuneStageGroupData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_RuneStageGroupDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_RuneStageGroupDataT { key, value }
     }
 
     #[inline]
@@ -6936,6 +8801,23 @@ impl<'a> Default for dict__string__clz_Torappu_RuneStageGroupDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_RuneStageGroupData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_RuneStageGroupData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_RuneStageGroupDataBuilder<
     'a: 'b,
     'b,
@@ -6994,6 +8876,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_RuneStageGroupData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_RuneStageGroupDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_RuneStageGroupDataT>>,
+}
+impl Default for dict__string__clz_Torappu_RuneStageGroupDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_RuneStageGroupDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_RuneStageGroupData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_RuneStageGroupData::create(
+            _fbb,
+            &dict__string__clz_Torappu_RuneStageGroupDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_MapThemeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -7006,7 +8918,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_MapThemeData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -7048,6 +8960,23 @@ impl<'a> clz_Torappu_MapThemeData<'a> {
             builder.add_themeId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_MapThemeDataT {
+        let themeId = self.themeId().map(|x| x.to_string());
+        let unitColor = self.unitColor().map(|x| x.to_string());
+        let buildableColor = self.buildableColor().map(|x| x.to_string());
+        let themeType = self.themeType().map(|x| x.to_string());
+        let trapTintColor = self.trapTintColor().map(|x| x.to_string());
+        let emissionColor = self.emissionColor().map(|x| x.to_string());
+        clz_Torappu_MapThemeDataT {
+            themeId,
+            unitColor,
+            buildableColor,
+            themeType,
+            trapTintColor,
+            emissionColor,
+        }
     }
 
     #[inline]
@@ -7184,6 +9113,46 @@ impl<'a> Default for clz_Torappu_MapThemeDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_MapThemeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_MapThemeData", 6)?;
+        if let Some(f) = self.themeId() {
+            s.serialize_field("themeId", &f)?;
+        } else {
+            s.skip_field("themeId")?;
+        }
+        if let Some(f) = self.unitColor() {
+            s.serialize_field("unitColor", &f)?;
+        } else {
+            s.skip_field("unitColor")?;
+        }
+        if let Some(f) = self.buildableColor() {
+            s.serialize_field("buildableColor", &f)?;
+        } else {
+            s.skip_field("buildableColor")?;
+        }
+        if let Some(f) = self.themeType() {
+            s.serialize_field("themeType", &f)?;
+        } else {
+            s.skip_field("themeType")?;
+        }
+        if let Some(f) = self.trapTintColor() {
+            s.serialize_field("trapTintColor", &f)?;
+        } else {
+            s.skip_field("trapTintColor")?;
+        }
+        if let Some(f) = self.emissionColor() {
+            s.serialize_field("emissionColor", &f)?;
+        } else {
+            s.skip_field("emissionColor")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_MapThemeDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -7260,6 +9229,52 @@ impl core::fmt::Debug for clz_Torappu_MapThemeData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_MapThemeDataT {
+    pub themeId: Option<String>,
+    pub unitColor: Option<String>,
+    pub buildableColor: Option<String>,
+    pub themeType: Option<String>,
+    pub trapTintColor: Option<String>,
+    pub emissionColor: Option<String>,
+}
+impl Default for clz_Torappu_MapThemeDataT {
+    fn default() -> Self {
+        Self {
+            themeId: None,
+            unitColor: None,
+            buildableColor: None,
+            themeType: None,
+            trapTintColor: None,
+            emissionColor: None,
+        }
+    }
+}
+impl clz_Torappu_MapThemeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_MapThemeData<'b>> {
+        let themeId = self.themeId.as_ref().map(|x| _fbb.create_string(x));
+        let unitColor = self.unitColor.as_ref().map(|x| _fbb.create_string(x));
+        let buildableColor = self.buildableColor.as_ref().map(|x| _fbb.create_string(x));
+        let themeType = self.themeType.as_ref().map(|x| _fbb.create_string(x));
+        let trapTintColor = self.trapTintColor.as_ref().map(|x| _fbb.create_string(x));
+        let emissionColor = self.emissionColor.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_MapThemeData::create(
+            _fbb,
+            &clz_Torappu_MapThemeDataArgs {
+                themeId,
+                unitColor,
+                buildableColor,
+                themeType,
+                trapTintColor,
+                emissionColor,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_MapThemeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -7272,7 +9287,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_MapThemeData<'a> 
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -7298,6 +9313,15 @@ impl<'a> dict__string__clz_Torappu_MapThemeData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_MapThemeDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_MapThemeDataT { key, value }
     }
 
     #[inline]
@@ -7371,6 +9395,22 @@ impl<'a> Default for dict__string__clz_Torappu_MapThemeDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_MapThemeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_MapThemeData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_MapThemeDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -7421,6 +9461,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_MapThemeData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_MapThemeDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_MapThemeDataT>>,
+}
+impl Default for dict__string__clz_Torappu_MapThemeDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_MapThemeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_MapThemeData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_MapThemeData::create(
+            _fbb,
+            &dict__string__clz_Torappu_MapThemeDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_TileAppendInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -7433,7 +9503,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_TileAppendInfo<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -7465,6 +9535,19 @@ impl<'a> clz_Torappu_TileAppendInfo<'a> {
         }
         builder.add_isFunctional(args.isFunctional);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_TileAppendInfoT {
+        let tileKey = self.tileKey().map(|x| x.to_string());
+        let name = self.name().map(|x| x.to_string());
+        let description = self.description().map(|x| x.to_string());
+        let isFunctional = self.isFunctional();
+        clz_Torappu_TileAppendInfoT {
+            tileKey,
+            name,
+            description,
+            isFunctional,
+        }
     }
 
     #[inline]
@@ -7554,6 +9637,32 @@ impl<'a> Default for clz_Torappu_TileAppendInfoArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_TileAppendInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_TileAppendInfo", 4)?;
+        if let Some(f) = self.tileKey() {
+            s.serialize_field("tileKey", &f)?;
+        } else {
+            s.skip_field("tileKey")?;
+        }
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        if let Some(f) = self.description() {
+            s.serialize_field("description", &f)?;
+        } else {
+            s.skip_field("description")?;
+        }
+        s.serialize_field("isFunctional", &self.isFunctional())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_TileAppendInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -7615,6 +9724,44 @@ impl core::fmt::Debug for clz_Torappu_TileAppendInfo<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_TileAppendInfoT {
+    pub tileKey: Option<String>,
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub isFunctional: bool,
+}
+impl Default for clz_Torappu_TileAppendInfoT {
+    fn default() -> Self {
+        Self {
+            tileKey: None,
+            name: None,
+            description: None,
+            isFunctional: false,
+        }
+    }
+}
+impl clz_Torappu_TileAppendInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_TileAppendInfo<'b>> {
+        let tileKey = self.tileKey.as_ref().map(|x| _fbb.create_string(x));
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        let description = self.description.as_ref().map(|x| _fbb.create_string(x));
+        let isFunctional = self.isFunctional;
+        clz_Torappu_TileAppendInfo::create(
+            _fbb,
+            &clz_Torappu_TileAppendInfoArgs {
+                tileKey,
+                name,
+                description,
+                isFunctional,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_TileAppendInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -7627,7 +9774,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_TileAppendInfo<'a
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -7653,6 +9800,15 @@ impl<'a> dict__string__clz_Torappu_TileAppendInfo<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_TileAppendInfoT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_TileAppendInfoT { key, value }
     }
 
     #[inline]
@@ -7726,6 +9882,22 @@ impl<'a> Default for dict__string__clz_Torappu_TileAppendInfoArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_TileAppendInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_TileAppendInfo", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_TileAppendInfoBuilder<
     'a: 'b,
     'b,
@@ -7779,6 +9951,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_TileAppendInfo<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_TileAppendInfoT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_TileAppendInfoT>>,
+}
+impl Default for dict__string__clz_Torappu_TileAppendInfoT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_TileAppendInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_TileAppendInfo<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_TileAppendInfo::create(
+            _fbb,
+            &dict__string__clz_Torappu_TileAppendInfoArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_WeeklyForceOpenTableOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -7791,7 +9993,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_WeeklyForceOpenTable<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -7821,6 +10023,21 @@ impl<'a> clz_Torappu_WeeklyForceOpenTable<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_WeeklyForceOpenTableT {
+        let id = self.id().map(|x| x.to_string());
+        let startTime = self.startTime();
+        let endTime = self.endTime();
+        let forceOpenList = self
+            .forceOpenList()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        clz_Torappu_WeeklyForceOpenTableT {
+            id,
+            startTime,
+            endTime,
+            forceOpenList,
+        }
     }
 
     #[inline]
@@ -7910,6 +10127,28 @@ impl<'a> Default for clz_Torappu_WeeklyForceOpenTableArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_WeeklyForceOpenTable<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_WeeklyForceOpenTable", 4)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        s.serialize_field("startTime", &self.startTime())?;
+        s.serialize_field("endTime", &self.endTime())?;
+        if let Some(f) = self.forceOpenList() {
+            s.serialize_field("forceOpenList", &f)?;
+        } else {
+            s.skip_field("forceOpenList")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_WeeklyForceOpenTableBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -7973,6 +10212,47 @@ impl core::fmt::Debug for clz_Torappu_WeeklyForceOpenTable<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_WeeklyForceOpenTableT {
+    pub id: Option<String>,
+    pub startTime: i64,
+    pub endTime: i64,
+    pub forceOpenList: Option<Vec<String>>,
+}
+impl Default for clz_Torappu_WeeklyForceOpenTableT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            startTime: 0,
+            endTime: 0,
+            forceOpenList: None,
+        }
+    }
+}
+impl clz_Torappu_WeeklyForceOpenTableT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_WeeklyForceOpenTable<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let startTime = self.startTime;
+        let endTime = self.endTime;
+        let forceOpenList = self.forceOpenList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_WeeklyForceOpenTable::create(
+            _fbb,
+            &clz_Torappu_WeeklyForceOpenTableArgs {
+                id,
+                startTime,
+                endTime,
+                forceOpenList,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_WeeklyForceOpenTableOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -7985,7 +10265,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_WeeklyForceOpenTa
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -8011,6 +10291,15 @@ impl<'a> dict__string__clz_Torappu_WeeklyForceOpenTable<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_WeeklyForceOpenTableT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_WeeklyForceOpenTableT { key, value }
     }
 
     #[inline]
@@ -8087,6 +10376,23 @@ impl<'a> Default for dict__string__clz_Torappu_WeeklyForceOpenTableArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_WeeklyForceOpenTable<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_WeeklyForceOpenTable", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_WeeklyForceOpenTableBuilder<
     'a: 'b,
     'b,
@@ -8148,6 +10454,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_WeeklyForceOpenTable<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_WeeklyForceOpenTableT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_WeeklyForceOpenTableT>>,
+}
+impl Default for dict__string__clz_Torappu_WeeklyForceOpenTableT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_WeeklyForceOpenTableT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_WeeklyForceOpenTable<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_WeeklyForceOpenTable::create(
+            _fbb,
+            &dict__string__clz_Torappu_WeeklyForceOpenTableArgs { key, value },
+        )
+    }
+}
 pub enum dict__string__longOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -8160,7 +10496,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__long<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -8184,6 +10520,15 @@ impl<'a> dict__string__long<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__longT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value();
+        dict__string__longT { key, value }
     }
 
     #[inline]
@@ -8248,6 +10593,18 @@ impl<'a> Default for dict__string__longArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__long<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__long", 2)?;
+        s.serialize_field("key", &self.key())?;
+        s.serialize_field("value", &self.value())?;
+        s.end()
+    }
+}
+
 pub struct dict__string__longBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -8289,6 +10646,33 @@ impl core::fmt::Debug for dict__string__long<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__longT {
+    pub key: String,
+    pub value: i64,
+}
+impl Default for dict__string__longT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: 0,
+        }
+    }
+}
+impl dict__string__longT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__long<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value;
+        dict__string__long::create(_fbb, &dict__string__longArgs { key, value })
+    }
+}
 pub enum clz_Torappu_TimelyDropTimeInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -8301,7 +10685,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_TimelyDropTimeInfo<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -8357,6 +10741,35 @@ impl<'a> clz_Torappu_TimelyDropTimeInfo<'a> {
         }
         builder.add_isReplace(args.isReplace);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_TimelyDropTimeInfoT {
+        let startTs = self.startTs();
+        let endTs = self.endTs();
+        let stagePic = self.stagePic().map(|x| x.to_string());
+        let dropPicId = self.dropPicId().map(|x| x.to_string());
+        let stageUnlock = self.stageUnlock().map(|x| x.to_string());
+        let entranceDownPicId = self.entranceDownPicId().map(|x| x.to_string());
+        let entranceUpPicId = self.entranceUpPicId().map(|x| x.to_string());
+        let timelyGroupId = self.timelyGroupId().map(|x| x.to_string());
+        let weeklyPicId = self.weeklyPicId().map(|x| x.to_string());
+        let isReplace = self.isReplace();
+        let apSupplyOutOfDateDict = self
+            .apSupplyOutOfDateDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_TimelyDropTimeInfoT {
+            startTs,
+            endTs,
+            stagePic,
+            dropPicId,
+            stageUnlock,
+            entranceDownPicId,
+            entranceUpPicId,
+            timelyGroupId,
+            weeklyPicId,
+            isReplace,
+            apSupplyOutOfDateDict,
+        }
     }
 
     #[inline]
@@ -8587,6 +11000,59 @@ impl<'a> Default for clz_Torappu_TimelyDropTimeInfoArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_TimelyDropTimeInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_TimelyDropTimeInfo", 11)?;
+        s.serialize_field("startTs", &self.startTs())?;
+        s.serialize_field("endTs", &self.endTs())?;
+        if let Some(f) = self.stagePic() {
+            s.serialize_field("stagePic", &f)?;
+        } else {
+            s.skip_field("stagePic")?;
+        }
+        if let Some(f) = self.dropPicId() {
+            s.serialize_field("dropPicId", &f)?;
+        } else {
+            s.skip_field("dropPicId")?;
+        }
+        if let Some(f) = self.stageUnlock() {
+            s.serialize_field("stageUnlock", &f)?;
+        } else {
+            s.skip_field("stageUnlock")?;
+        }
+        if let Some(f) = self.entranceDownPicId() {
+            s.serialize_field("entranceDownPicId", &f)?;
+        } else {
+            s.skip_field("entranceDownPicId")?;
+        }
+        if let Some(f) = self.entranceUpPicId() {
+            s.serialize_field("entranceUpPicId", &f)?;
+        } else {
+            s.skip_field("entranceUpPicId")?;
+        }
+        if let Some(f) = self.timelyGroupId() {
+            s.serialize_field("timelyGroupId", &f)?;
+        } else {
+            s.skip_field("timelyGroupId")?;
+        }
+        if let Some(f) = self.weeklyPicId() {
+            s.serialize_field("weeklyPicId", &f)?;
+        } else {
+            s.skip_field("weeklyPicId")?;
+        }
+        s.serialize_field("isReplace", &self.isReplace())?;
+        if let Some(f) = self.apSupplyOutOfDateDict() {
+            s.serialize_field("apSupplyOutOfDateDict", &f)?;
+        } else {
+            s.skip_field("apSupplyOutOfDateDict")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_TimelyDropTimeInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -8705,6 +11171,78 @@ impl core::fmt::Debug for clz_Torappu_TimelyDropTimeInfo<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_TimelyDropTimeInfoT {
+    pub startTs: i64,
+    pub endTs: i64,
+    pub stagePic: Option<String>,
+    pub dropPicId: Option<String>,
+    pub stageUnlock: Option<String>,
+    pub entranceDownPicId: Option<String>,
+    pub entranceUpPicId: Option<String>,
+    pub timelyGroupId: Option<String>,
+    pub weeklyPicId: Option<String>,
+    pub isReplace: bool,
+    pub apSupplyOutOfDateDict: Option<Vec<dict__string__longT>>,
+}
+impl Default for clz_Torappu_TimelyDropTimeInfoT {
+    fn default() -> Self {
+        Self {
+            startTs: 0,
+            endTs: 0,
+            stagePic: None,
+            dropPicId: None,
+            stageUnlock: None,
+            entranceDownPicId: None,
+            entranceUpPicId: None,
+            timelyGroupId: None,
+            weeklyPicId: None,
+            isReplace: false,
+            apSupplyOutOfDateDict: None,
+        }
+    }
+}
+impl clz_Torappu_TimelyDropTimeInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_TimelyDropTimeInfo<'b>> {
+        let startTs = self.startTs;
+        let endTs = self.endTs;
+        let stagePic = self.stagePic.as_ref().map(|x| _fbb.create_string(x));
+        let dropPicId = self.dropPicId.as_ref().map(|x| _fbb.create_string(x));
+        let stageUnlock = self.stageUnlock.as_ref().map(|x| _fbb.create_string(x));
+        let entranceDownPicId = self
+            .entranceDownPicId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let entranceUpPicId = self.entranceUpPicId.as_ref().map(|x| _fbb.create_string(x));
+        let timelyGroupId = self.timelyGroupId.as_ref().map(|x| _fbb.create_string(x));
+        let weeklyPicId = self.weeklyPicId.as_ref().map(|x| _fbb.create_string(x));
+        let isReplace = self.isReplace;
+        let apSupplyOutOfDateDict = self.apSupplyOutOfDateDict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_TimelyDropTimeInfo::create(
+            _fbb,
+            &clz_Torappu_TimelyDropTimeInfoArgs {
+                startTs,
+                endTs,
+                stagePic,
+                dropPicId,
+                stageUnlock,
+                entranceDownPicId,
+                entranceUpPicId,
+                timelyGroupId,
+                weeklyPicId,
+                isReplace,
+                apSupplyOutOfDateDict,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_TimelyDropTimeInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -8717,7 +11255,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_TimelyDropTimeInf
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -8743,6 +11281,15 @@ impl<'a> dict__string__clz_Torappu_TimelyDropTimeInfo<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_TimelyDropTimeInfoT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_TimelyDropTimeInfoT { key, value }
     }
 
     #[inline]
@@ -8816,6 +11363,23 @@ impl<'a> Default for dict__string__clz_Torappu_TimelyDropTimeInfoArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_TimelyDropTimeInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_TimelyDropTimeInfo", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_TimelyDropTimeInfoBuilder<
     'a: 'b,
     'b,
@@ -8874,6 +11438,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_TimelyDropTimeInfo<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_TimelyDropTimeInfoT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_TimelyDropTimeInfoT>>,
+}
+impl Default for dict__string__clz_Torappu_TimelyDropTimeInfoT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_TimelyDropTimeInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_TimelyDropTimeInfo<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_TimelyDropTimeInfo::create(
+            _fbb,
+            &dict__string__clz_Torappu_TimelyDropTimeInfoArgs { key, value },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_StageData_StageDropInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -8886,7 +11480,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_StageData_StageDr
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -8912,6 +11506,15 @@ impl<'a> dict__string__clz_Torappu_StageData_StageDropInfo<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_StageData_StageDropInfoT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_StageData_StageDropInfoT { key, value }
     }
 
     #[inline]
@@ -8988,6 +11591,23 @@ impl<'a> Default for dict__string__clz_Torappu_StageData_StageDropInfoArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_StageData_StageDropInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_StageData_StageDropInfo", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_StageData_StageDropInfoBuilder<
     'a: 'b,
     'b,
@@ -9049,6 +11669,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_StageData_StageDropInfo<'_> 
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_StageData_StageDropInfoT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_StageData_StageDropInfoT>>,
+}
+impl Default for dict__string__clz_Torappu_StageData_StageDropInfoT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_StageData_StageDropInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_StageData_StageDropInfo<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_StageData_StageDropInfo::create(
+            _fbb,
+            &dict__string__clz_Torappu_StageData_StageDropInfoArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_OverrideDropInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -9061,7 +11711,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_OverrideDropInfo<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -9125,6 +11775,39 @@ impl<'a> clz_Torappu_OverrideDropInfo<'a> {
             builder.add_itemId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_OverrideDropInfoT {
+        let itemId = self.itemId().map(|x| x.to_string());
+        let startTs = self.startTs();
+        let endTs = self.endTs();
+        let zoneRange = self.zoneRange().map(|x| x.to_string());
+        let times = self.times();
+        let name = self.name().map(|x| x.to_string());
+        let egName = self.egName().map(|x| x.to_string());
+        let desc1 = self.desc1().map(|x| x.to_string());
+        let desc2 = self.desc2().map(|x| x.to_string());
+        let desc3 = self.desc3().map(|x| x.to_string());
+        let dropTag = self.dropTag().map(|x| x.to_string());
+        let dropTypeDesc = self.dropTypeDesc().map(|x| x.to_string());
+        let dropInfo = self
+            .dropInfo()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_OverrideDropInfoT {
+            itemId,
+            startTs,
+            endTs,
+            zoneRange,
+            times,
+            name,
+            egName,
+            desc1,
+            desc2,
+            desc3,
+            dropTag,
+            dropTypeDesc,
+            dropInfo,
+        }
     }
 
     #[inline]
@@ -9372,6 +12055,69 @@ impl<'a> Default for clz_Torappu_OverrideDropInfoArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_OverrideDropInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_OverrideDropInfo", 13)?;
+        if let Some(f) = self.itemId() {
+            s.serialize_field("itemId", &f)?;
+        } else {
+            s.skip_field("itemId")?;
+        }
+        s.serialize_field("startTs", &self.startTs())?;
+        s.serialize_field("endTs", &self.endTs())?;
+        if let Some(f) = self.zoneRange() {
+            s.serialize_field("zoneRange", &f)?;
+        } else {
+            s.skip_field("zoneRange")?;
+        }
+        s.serialize_field("times", &self.times())?;
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        if let Some(f) = self.egName() {
+            s.serialize_field("egName", &f)?;
+        } else {
+            s.skip_field("egName")?;
+        }
+        if let Some(f) = self.desc1() {
+            s.serialize_field("desc1", &f)?;
+        } else {
+            s.skip_field("desc1")?;
+        }
+        if let Some(f) = self.desc2() {
+            s.serialize_field("desc2", &f)?;
+        } else {
+            s.skip_field("desc2")?;
+        }
+        if let Some(f) = self.desc3() {
+            s.serialize_field("desc3", &f)?;
+        } else {
+            s.skip_field("desc3")?;
+        }
+        if let Some(f) = self.dropTag() {
+            s.serialize_field("dropTag", &f)?;
+        } else {
+            s.skip_field("dropTag")?;
+        }
+        if let Some(f) = self.dropTypeDesc() {
+            s.serialize_field("dropTypeDesc", &f)?;
+        } else {
+            s.skip_field("dropTypeDesc")?;
+        }
+        if let Some(f) = self.dropInfo() {
+            s.serialize_field("dropInfo", &f)?;
+        } else {
+            s.skip_field("dropInfo")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_OverrideDropInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -9506,6 +12252,83 @@ impl core::fmt::Debug for clz_Torappu_OverrideDropInfo<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_OverrideDropInfoT {
+    pub itemId: Option<String>,
+    pub startTs: i64,
+    pub endTs: i64,
+    pub zoneRange: Option<String>,
+    pub times: i32,
+    pub name: Option<String>,
+    pub egName: Option<String>,
+    pub desc1: Option<String>,
+    pub desc2: Option<String>,
+    pub desc3: Option<String>,
+    pub dropTag: Option<String>,
+    pub dropTypeDesc: Option<String>,
+    pub dropInfo: Option<Vec<dict__string__clz_Torappu_StageData_StageDropInfoT>>,
+}
+impl Default for clz_Torappu_OverrideDropInfoT {
+    fn default() -> Self {
+        Self {
+            itemId: None,
+            startTs: 0,
+            endTs: 0,
+            zoneRange: None,
+            times: 0,
+            name: None,
+            egName: None,
+            desc1: None,
+            desc2: None,
+            desc3: None,
+            dropTag: None,
+            dropTypeDesc: None,
+            dropInfo: None,
+        }
+    }
+}
+impl clz_Torappu_OverrideDropInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_OverrideDropInfo<'b>> {
+        let itemId = self.itemId.as_ref().map(|x| _fbb.create_string(x));
+        let startTs = self.startTs;
+        let endTs = self.endTs;
+        let zoneRange = self.zoneRange.as_ref().map(|x| _fbb.create_string(x));
+        let times = self.times;
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        let egName = self.egName.as_ref().map(|x| _fbb.create_string(x));
+        let desc1 = self.desc1.as_ref().map(|x| _fbb.create_string(x));
+        let desc2 = self.desc2.as_ref().map(|x| _fbb.create_string(x));
+        let desc3 = self.desc3.as_ref().map(|x| _fbb.create_string(x));
+        let dropTag = self.dropTag.as_ref().map(|x| _fbb.create_string(x));
+        let dropTypeDesc = self.dropTypeDesc.as_ref().map(|x| _fbb.create_string(x));
+        let dropInfo = self.dropInfo.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_OverrideDropInfo::create(
+            _fbb,
+            &clz_Torappu_OverrideDropInfoArgs {
+                itemId,
+                startTs,
+                endTs,
+                zoneRange,
+                times,
+                name,
+                egName,
+                desc1,
+                desc2,
+                desc3,
+                dropTag,
+                dropTypeDesc,
+                dropInfo,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_OverrideDropInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -9518,7 +12341,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_OverrideDropInfo<
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -9544,6 +12367,15 @@ impl<'a> dict__string__clz_Torappu_OverrideDropInfo<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_OverrideDropInfoT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_OverrideDropInfoT { key, value }
     }
 
     #[inline]
@@ -9617,6 +12449,22 @@ impl<'a> Default for dict__string__clz_Torappu_OverrideDropInfoArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_OverrideDropInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_OverrideDropInfo", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_OverrideDropInfoBuilder<
     'a: 'b,
     'b,
@@ -9670,6 +12518,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_OverrideDropInfo<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_OverrideDropInfoT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_OverrideDropInfoT>>,
+}
+impl Default for dict__string__clz_Torappu_OverrideDropInfoT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_OverrideDropInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_OverrideDropInfo<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_OverrideDropInfo::create(
+            _fbb,
+            &dict__string__clz_Torappu_OverrideDropInfoArgs { key, value },
+        )
+    }
+}
 pub enum dict__string__list_clz_Torappu_StageData_ConditionDescOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -9682,7 +12560,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__list_clz_Torappu_StageData_Co
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -9708,6 +12586,15 @@ impl<'a> dict__string__list_clz_Torappu_StageData_ConditionDesc<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__list_clz_Torappu_StageData_ConditionDescT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| x.iter().map(|t| t.unpack()).collect());
+        dict__string__list_clz_Torappu_StageData_ConditionDescT { key, value }
     }
 
     #[inline]
@@ -9803,6 +12690,23 @@ impl<'a> Default for dict__string__list_clz_Torappu_StageData_ConditionDescArgs<
     }
 }
 
+impl Serialize for dict__string__list_clz_Torappu_StageData_ConditionDesc<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("dict__string__list_clz_Torappu_StageData_ConditionDesc", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__list_clz_Torappu_StageData_ConditionDescBuilder<
     'a: 'b,
     'b,
@@ -9868,6 +12772,39 @@ impl core::fmt::Debug for dict__string__list_clz_Torappu_StageData_ConditionDesc
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__list_clz_Torappu_StageData_ConditionDescT {
+    pub key: String,
+    pub value: Option<Vec<clz_Torappu_StageData_ConditionDescT>>,
+}
+impl Default for dict__string__list_clz_Torappu_StageData_ConditionDescT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__list_clz_Torappu_StageData_ConditionDescT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__list_clz_Torappu_StageData_ConditionDesc<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        dict__string__list_clz_Torappu_StageData_ConditionDesc::create(
+            _fbb,
+            &dict__string__list_clz_Torappu_StageData_ConditionDescArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_OverrideUnlockInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -9880,7 +12817,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_OverrideUnlockInfo<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -9910,6 +12847,21 @@ impl<'a> clz_Torappu_OverrideUnlockInfo<'a> {
             builder.add_groupId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_OverrideUnlockInfoT {
+        let groupId = self.groupId().map(|x| x.to_string());
+        let startTime = self.startTime();
+        let endTime = self.endTime();
+        let unlockDict = self
+            .unlockDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_OverrideUnlockInfoT {
+            groupId,
+            startTime,
+            endTime,
+            unlockDict,
+        }
     }
 
     #[inline]
@@ -10023,6 +12975,28 @@ impl<'a> Default for clz_Torappu_OverrideUnlockInfoArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_OverrideUnlockInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_OverrideUnlockInfo", 4)?;
+        if let Some(f) = self.groupId() {
+            s.serialize_field("groupId", &f)?;
+        } else {
+            s.skip_field("groupId")?;
+        }
+        s.serialize_field("startTime", &self.startTime())?;
+        s.serialize_field("endTime", &self.endTime())?;
+        if let Some(f) = self.unlockDict() {
+            s.serialize_field("unlockDict", &f)?;
+        } else {
+            s.skip_field("unlockDict")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_OverrideUnlockInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -10089,6 +13063,47 @@ impl core::fmt::Debug for clz_Torappu_OverrideUnlockInfo<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_OverrideUnlockInfoT {
+    pub groupId: Option<String>,
+    pub startTime: i64,
+    pub endTime: i64,
+    pub unlockDict: Option<Vec<dict__string__list_clz_Torappu_StageData_ConditionDescT>>,
+}
+impl Default for clz_Torappu_OverrideUnlockInfoT {
+    fn default() -> Self {
+        Self {
+            groupId: None,
+            startTime: 0,
+            endTime: 0,
+            unlockDict: None,
+        }
+    }
+}
+impl clz_Torappu_OverrideUnlockInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_OverrideUnlockInfo<'b>> {
+        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
+        let startTime = self.startTime;
+        let endTime = self.endTime;
+        let unlockDict = self.unlockDict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_OverrideUnlockInfo::create(
+            _fbb,
+            &clz_Torappu_OverrideUnlockInfoArgs {
+                groupId,
+                startTime,
+                endTime,
+                unlockDict,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_OverrideUnlockInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -10101,7 +13116,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_OverrideUnlockInf
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -10127,6 +13142,15 @@ impl<'a> dict__string__clz_Torappu_OverrideUnlockInfo<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_OverrideUnlockInfoT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_OverrideUnlockInfoT { key, value }
     }
 
     #[inline]
@@ -10200,6 +13224,23 @@ impl<'a> Default for dict__string__clz_Torappu_OverrideUnlockInfoArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_OverrideUnlockInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_OverrideUnlockInfo", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_OverrideUnlockInfoBuilder<
     'a: 'b,
     'b,
@@ -10258,6 +13299,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_OverrideUnlockInfo<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_OverrideUnlockInfoT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_OverrideUnlockInfoT>>,
+}
+impl Default for dict__string__clz_Torappu_OverrideUnlockInfoT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_OverrideUnlockInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_OverrideUnlockInfo<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_OverrideUnlockInfo::create(
+            _fbb,
+            &dict__string__clz_Torappu_OverrideUnlockInfoArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_TimelyDropInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -10270,7 +13341,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_TimelyDropInfo<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -10292,6 +13363,13 @@ impl<'a> clz_Torappu_TimelyDropInfo<'a> {
             builder.add_dropInfo(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_TimelyDropInfoT {
+        let dropInfo = self
+            .dropInfo()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_TimelyDropInfoT { dropInfo }
     }
 
     #[inline]
@@ -10352,6 +13430,21 @@ impl<'a> Default for clz_Torappu_TimelyDropInfoArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_TimelyDropInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_TimelyDropInfo", 1)?;
+        if let Some(f) = self.dropInfo() {
+            s.serialize_field("dropInfo", &f)?;
+        } else {
+            s.skip_field("dropInfo")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_TimelyDropInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -10396,6 +13489,28 @@ impl core::fmt::Debug for clz_Torappu_TimelyDropInfo<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_TimelyDropInfoT {
+    pub dropInfo: Option<Vec<dict__string__clz_Torappu_StageData_StageDropInfoT>>,
+}
+impl Default for clz_Torappu_TimelyDropInfoT {
+    fn default() -> Self {
+        Self { dropInfo: None }
+    }
+}
+impl clz_Torappu_TimelyDropInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_TimelyDropInfo<'b>> {
+        let dropInfo = self.dropInfo.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_TimelyDropInfo::create(_fbb, &clz_Torappu_TimelyDropInfoArgs { dropInfo })
+    }
+}
 pub enum dict__string__clz_Torappu_TimelyDropInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -10408,7 +13523,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_TimelyDropInfo<'a
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -10434,6 +13549,15 @@ impl<'a> dict__string__clz_Torappu_TimelyDropInfo<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_TimelyDropInfoT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_TimelyDropInfoT { key, value }
     }
 
     #[inline]
@@ -10507,6 +13631,22 @@ impl<'a> Default for dict__string__clz_Torappu_TimelyDropInfoArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_TimelyDropInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_TimelyDropInfo", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_TimelyDropInfoBuilder<
     'a: 'b,
     'b,
@@ -10560,6 +13700,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_TimelyDropInfo<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_TimelyDropInfoT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_TimelyDropInfoT>>,
+}
+impl Default for dict__string__clz_Torappu_TimelyDropInfoT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_TimelyDropInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_TimelyDropInfo<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_TimelyDropInfo::create(
+            _fbb,
+            &dict__string__clz_Torappu_TimelyDropInfoArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_StageValidInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -10572,7 +13742,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StageValidInfo<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -10594,6 +13764,12 @@ impl<'a> clz_Torappu_StageValidInfo<'a> {
         builder.add_endTs(args.endTs);
         builder.add_startTs(args.startTs);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StageValidInfoT {
+        let startTs = self.startTs();
+        let endTs = self.endTs();
+        clz_Torappu_StageValidInfoT { startTs, endTs }
     }
 
     #[inline]
@@ -10648,6 +13824,18 @@ impl<'a> Default for clz_Torappu_StageValidInfoArgs {
     }
 }
 
+impl Serialize for clz_Torappu_StageValidInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_StageValidInfo", 2)?;
+        s.serialize_field("startTs", &self.startTs())?;
+        s.serialize_field("endTs", &self.endTs())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StageValidInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -10688,6 +13876,30 @@ impl core::fmt::Debug for clz_Torappu_StageValidInfo<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StageValidInfoT {
+    pub startTs: i64,
+    pub endTs: i64,
+}
+impl Default for clz_Torappu_StageValidInfoT {
+    fn default() -> Self {
+        Self {
+            startTs: 0,
+            endTs: 0,
+        }
+    }
+}
+impl clz_Torappu_StageValidInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StageValidInfo<'b>> {
+        let startTs = self.startTs;
+        let endTs = self.endTs;
+        clz_Torappu_StageValidInfo::create(_fbb, &clz_Torappu_StageValidInfoArgs { startTs, endTs })
+    }
+}
 pub enum dict__string__clz_Torappu_StageValidInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -10700,7 +13912,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_StageValidInfo<'a
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -10726,6 +13938,15 @@ impl<'a> dict__string__clz_Torappu_StageValidInfo<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_StageValidInfoT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_StageValidInfoT { key, value }
     }
 
     #[inline]
@@ -10799,6 +14020,22 @@ impl<'a> Default for dict__string__clz_Torappu_StageValidInfoArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_StageValidInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_StageValidInfo", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_StageValidInfoBuilder<
     'a: 'b,
     'b,
@@ -10852,6 +14089,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_StageValidInfo<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_StageValidInfoT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_StageValidInfoT>>,
+}
+impl Default for dict__string__clz_Torappu_StageValidInfoT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_StageValidInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_StageValidInfo<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_StageValidInfo::create(
+            _fbb,
+            &dict__string__clz_Torappu_StageValidInfoArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_StageFogInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -10864,7 +14131,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StageFogInfo<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -10918,6 +14185,33 @@ impl<'a> clz_Torappu_StageFogInfo<'a> {
             builder.add_lockId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StageFogInfoT {
+        let lockId = self.lockId().map(|x| x.to_string());
+        let fogType = self.fogType();
+        let stageButtonInFogRenderType = self.stageButtonInFogRenderType();
+        let stageId = self.stageId().map(|x| x.to_string());
+        let lockName = self.lockName().map(|x| x.to_string());
+        let lockDesc = self.lockDesc().map(|x| x.to_string());
+        let unlockItemId = self.unlockItemId().map(|x| x.to_string());
+        let unlockItemType = self.unlockItemType();
+        let unlockItemNum = self.unlockItemNum();
+        let preposedStageId = self.preposedStageId().map(|x| x.to_string());
+        let preposedLockId = self.preposedLockId().map(|x| x.to_string());
+        clz_Torappu_StageFogInfoT {
+            lockId,
+            fogType,
+            stageButtonInFogRenderType,
+            stageId,
+            lockName,
+            lockDesc,
+            unlockItemId,
+            unlockItemType,
+            unlockItemNum,
+            preposedStageId,
+            preposedLockId,
+        }
     }
 
     #[inline]
@@ -11142,6 +14436,58 @@ impl<'a> Default for clz_Torappu_StageFogInfoArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_StageFogInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_StageFogInfo", 11)?;
+        if let Some(f) = self.lockId() {
+            s.serialize_field("lockId", &f)?;
+        } else {
+            s.skip_field("lockId")?;
+        }
+        s.serialize_field("fogType", &self.fogType())?;
+        s.serialize_field(
+            "stageButtonInFogRenderType",
+            &self.stageButtonInFogRenderType(),
+        )?;
+        if let Some(f) = self.stageId() {
+            s.serialize_field("stageId", &f)?;
+        } else {
+            s.skip_field("stageId")?;
+        }
+        if let Some(f) = self.lockName() {
+            s.serialize_field("lockName", &f)?;
+        } else {
+            s.skip_field("lockName")?;
+        }
+        if let Some(f) = self.lockDesc() {
+            s.serialize_field("lockDesc", &f)?;
+        } else {
+            s.skip_field("lockDesc")?;
+        }
+        if let Some(f) = self.unlockItemId() {
+            s.serialize_field("unlockItemId", &f)?;
+        } else {
+            s.skip_field("unlockItemId")?;
+        }
+        s.serialize_field("unlockItemType", &self.unlockItemType())?;
+        s.serialize_field("unlockItemNum", &self.unlockItemNum())?;
+        if let Some(f) = self.preposedStageId() {
+            s.serialize_field("preposedStageId", &f)?;
+        } else {
+            s.skip_field("preposedStageId")?;
+        }
+        if let Some(f) = self.preposedLockId() {
+            s.serialize_field("preposedLockId", &f)?;
+        } else {
+            s.skip_field("preposedLockId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StageFogInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -11266,6 +14612,72 @@ impl core::fmt::Debug for clz_Torappu_StageFogInfo<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StageFogInfoT {
+    pub lockId: Option<String>,
+    pub fogType: enum__Torappu_FogType,
+    pub stageButtonInFogRenderType: enum__Torappu_StageButtonInFogRenderType,
+    pub stageId: Option<String>,
+    pub lockName: Option<String>,
+    pub lockDesc: Option<String>,
+    pub unlockItemId: Option<String>,
+    pub unlockItemType: enum__Torappu_ItemType,
+    pub unlockItemNum: i32,
+    pub preposedStageId: Option<String>,
+    pub preposedLockId: Option<String>,
+}
+impl Default for clz_Torappu_StageFogInfoT {
+    fn default() -> Self {
+        Self {
+            lockId: None,
+            fogType: enum__Torappu_FogType::ZONE,
+            stageButtonInFogRenderType: enum__Torappu_StageButtonInFogRenderType::HIDE,
+            stageId: None,
+            lockName: None,
+            lockDesc: None,
+            unlockItemId: None,
+            unlockItemType: enum__Torappu_ItemType::NONE,
+            unlockItemNum: 0,
+            preposedStageId: None,
+            preposedLockId: None,
+        }
+    }
+}
+impl clz_Torappu_StageFogInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StageFogInfo<'b>> {
+        let lockId = self.lockId.as_ref().map(|x| _fbb.create_string(x));
+        let fogType = self.fogType;
+        let stageButtonInFogRenderType = self.stageButtonInFogRenderType;
+        let stageId = self.stageId.as_ref().map(|x| _fbb.create_string(x));
+        let lockName = self.lockName.as_ref().map(|x| _fbb.create_string(x));
+        let lockDesc = self.lockDesc.as_ref().map(|x| _fbb.create_string(x));
+        let unlockItemId = self.unlockItemId.as_ref().map(|x| _fbb.create_string(x));
+        let unlockItemType = self.unlockItemType;
+        let unlockItemNum = self.unlockItemNum;
+        let preposedStageId = self.preposedStageId.as_ref().map(|x| _fbb.create_string(x));
+        let preposedLockId = self.preposedLockId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_StageFogInfo::create(
+            _fbb,
+            &clz_Torappu_StageFogInfoArgs {
+                lockId,
+                fogType,
+                stageButtonInFogRenderType,
+                stageId,
+                lockName,
+                lockDesc,
+                unlockItemId,
+                unlockItemType,
+                unlockItemNum,
+                preposedStageId,
+                preposedLockId,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_StageFogInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -11278,7 +14690,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_StageFogInfo<'a> 
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -11304,6 +14716,15 @@ impl<'a> dict__string__clz_Torappu_StageFogInfo<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_StageFogInfoT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_StageFogInfoT { key, value }
     }
 
     #[inline]
@@ -11377,6 +14798,22 @@ impl<'a> Default for dict__string__clz_Torappu_StageFogInfoArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_StageFogInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_StageFogInfo", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_StageFogInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -11427,6 +14864,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_StageFogInfo<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_StageFogInfoT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_StageFogInfoT>>,
+}
+impl Default for dict__string__clz_Torappu_StageFogInfoT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_StageFogInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_StageFogInfo<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_StageFogInfo::create(
+            _fbb,
+            &dict__string__clz_Torappu_StageFogInfoArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_StageStartCond_RequireCharOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -11439,7 +14906,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StageStartCond_RequireChar<'a> 
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -11463,6 +14930,15 @@ impl<'a> clz_Torappu_StageStartCond_RequireChar<'a> {
             builder.add_charId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StageStartCond_RequireCharT {
+        let charId = self.charId().map(|x| x.to_string());
+        let evolvePhase = self.evolvePhase();
+        clz_Torappu_StageStartCond_RequireCharT {
+            charId,
+            evolvePhase,
+        }
     }
 
     #[inline]
@@ -11521,6 +14997,22 @@ impl<'a> Default for clz_Torappu_StageStartCond_RequireCharArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_StageStartCond_RequireChar<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_StageStartCond_RequireChar", 2)?;
+        if let Some(f) = self.charId() {
+            s.serialize_field("charId", &f)?;
+        } else {
+            s.skip_field("charId")?;
+        }
+        s.serialize_field("evolvePhase", &self.evolvePhase())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StageStartCond_RequireCharBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -11569,6 +15061,36 @@ impl core::fmt::Debug for clz_Torappu_StageStartCond_RequireChar<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StageStartCond_RequireCharT {
+    pub charId: Option<String>,
+    pub evolvePhase: enum__Torappu_EvolvePhase,
+}
+impl Default for clz_Torappu_StageStartCond_RequireCharT {
+    fn default() -> Self {
+        Self {
+            charId: None,
+            evolvePhase: enum__Torappu_EvolvePhase::PHASE_0,
+        }
+    }
+}
+impl clz_Torappu_StageStartCond_RequireCharT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StageStartCond_RequireChar<'b>> {
+        let charId = self.charId.as_ref().map(|x| _fbb.create_string(x));
+        let evolvePhase = self.evolvePhase;
+        clz_Torappu_StageStartCond_RequireChar::create(
+            _fbb,
+            &clz_Torappu_StageStartCond_RequireCharArgs {
+                charId,
+                evolvePhase,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_StageStartCondOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -11581,7 +15103,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StageStartCond<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -11609,6 +15131,21 @@ impl<'a> clz_Torappu_StageStartCond<'a> {
         }
         builder.add_isNotPass(args.isNotPass);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StageStartCondT {
+        let requireChars = self
+            .requireChars()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let excludeAssists = self
+            .excludeAssists()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let isNotPass = self.isNotPass();
+        clz_Torappu_StageStartCondT {
+            requireChars,
+            excludeAssists,
+            isNotPass,
+        }
     }
 
     #[inline]
@@ -11705,6 +15242,27 @@ impl<'a> Default for clz_Torappu_StageStartCondArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_StageStartCond<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_StageStartCond", 3)?;
+        if let Some(f) = self.requireChars() {
+            s.serialize_field("requireChars", &f)?;
+        } else {
+            s.skip_field("requireChars")?;
+        }
+        if let Some(f) = self.excludeAssists() {
+            s.serialize_field("excludeAssists", &f)?;
+        } else {
+            s.skip_field("excludeAssists")?;
+        }
+        s.serialize_field("isNotPass", &self.isNotPass())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StageStartCondBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -11768,6 +15326,46 @@ impl core::fmt::Debug for clz_Torappu_StageStartCond<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StageStartCondT {
+    pub requireChars: Option<Vec<clz_Torappu_StageStartCond_RequireCharT>>,
+    pub excludeAssists: Option<Vec<String>>,
+    pub isNotPass: bool,
+}
+impl Default for clz_Torappu_StageStartCondT {
+    fn default() -> Self {
+        Self {
+            requireChars: None,
+            excludeAssists: None,
+            isNotPass: false,
+        }
+    }
+}
+impl clz_Torappu_StageStartCondT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StageStartCond<'b>> {
+        let requireChars = self.requireChars.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let excludeAssists = self.excludeAssists.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let isNotPass = self.isNotPass;
+        clz_Torappu_StageStartCond::create(
+            _fbb,
+            &clz_Torappu_StageStartCondArgs {
+                requireChars,
+                excludeAssists,
+                isNotPass,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_StageStartCondOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -11780,7 +15378,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_StageStartCond<'a
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -11806,6 +15404,15 @@ impl<'a> dict__string__clz_Torappu_StageStartCond<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_StageStartCondT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_StageStartCondT { key, value }
     }
 
     #[inline]
@@ -11879,6 +15486,22 @@ impl<'a> Default for dict__string__clz_Torappu_StageStartCondArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_StageStartCond<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_StageStartCond", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_StageStartCondBuilder<
     'a: 'b,
     'b,
@@ -11932,6 +15555,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_StageStartCond<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_StageStartCondT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_StageStartCondT>>,
+}
+impl Default for dict__string__clz_Torappu_StageStartCondT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_StageStartCondT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_StageStartCond<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_StageStartCond::create(
+            _fbb,
+            &dict__string__clz_Torappu_StageStartCondArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_StageDiffGroupTableOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -11944,7 +15597,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StageDiffGroupTable<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -11974,6 +15627,17 @@ impl<'a> clz_Torappu_StageDiffGroupTable<'a> {
             builder.add_normalId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StageDiffGroupTableT {
+        let normalId = self.normalId().map(|x| x.to_string());
+        let toughId = self.toughId().map(|x| x.to_string());
+        let easyId = self.easyId().map(|x| x.to_string());
+        clz_Torappu_StageDiffGroupTableT {
+            normalId,
+            toughId,
+            easyId,
+        }
     }
 
     #[inline]
@@ -12049,6 +15713,31 @@ impl<'a> Default for clz_Torappu_StageDiffGroupTableArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_StageDiffGroupTable<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_StageDiffGroupTable", 3)?;
+        if let Some(f) = self.normalId() {
+            s.serialize_field("normalId", &f)?;
+        } else {
+            s.skip_field("normalId")?;
+        }
+        if let Some(f) = self.toughId() {
+            s.serialize_field("toughId", &f)?;
+        } else {
+            s.skip_field("toughId")?;
+        }
+        if let Some(f) = self.easyId() {
+            s.serialize_field("easyId", &f)?;
+        } else {
+            s.skip_field("easyId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StageDiffGroupTableBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -12101,6 +15790,40 @@ impl core::fmt::Debug for clz_Torappu_StageDiffGroupTable<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StageDiffGroupTableT {
+    pub normalId: Option<String>,
+    pub toughId: Option<String>,
+    pub easyId: Option<String>,
+}
+impl Default for clz_Torappu_StageDiffGroupTableT {
+    fn default() -> Self {
+        Self {
+            normalId: None,
+            toughId: None,
+            easyId: None,
+        }
+    }
+}
+impl clz_Torappu_StageDiffGroupTableT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StageDiffGroupTable<'b>> {
+        let normalId = self.normalId.as_ref().map(|x| _fbb.create_string(x));
+        let toughId = self.toughId.as_ref().map(|x| _fbb.create_string(x));
+        let easyId = self.easyId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_StageDiffGroupTable::create(
+            _fbb,
+            &clz_Torappu_StageDiffGroupTableArgs {
+                normalId,
+                toughId,
+                easyId,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_StageDiffGroupTableOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -12113,7 +15836,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_StageDiffGroupTab
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -12139,6 +15862,15 @@ impl<'a> dict__string__clz_Torappu_StageDiffGroupTable<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_StageDiffGroupTableT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_StageDiffGroupTableT { key, value }
     }
 
     #[inline]
@@ -12212,6 +15944,23 @@ impl<'a> Default for dict__string__clz_Torappu_StageDiffGroupTableArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_StageDiffGroupTable<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_StageDiffGroupTable", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_StageDiffGroupTableBuilder<
     'a: 'b,
     'b,
@@ -12273,6 +16022,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_StageDiffGroupTable<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_StageDiffGroupTableT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_StageDiffGroupTableT>>,
+}
+impl Default for dict__string__clz_Torappu_StageDiffGroupTableT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_StageDiffGroupTableT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_StageDiffGroupTable<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_StageDiffGroupTable::create(
+            _fbb,
+            &dict__string__clz_Torappu_StageDiffGroupTableArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_StoryStageShowGroupOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -12285,7 +16064,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StoryStageShowGroup<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -12317,6 +16096,19 @@ impl<'a> clz_Torappu_StoryStageShowGroup<'a> {
             builder.add_displayRecordId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StoryStageShowGroupT {
+        let displayRecordId = self.displayRecordId().map(|x| x.to_string());
+        let stageId = self.stageId().map(|x| x.to_string());
+        let accordingStageId = self.accordingStageId().map(|x| x.to_string());
+        let diffGroup = self.diffGroup();
+        clz_Torappu_StoryStageShowGroupT {
+            displayRecordId,
+            stageId,
+            accordingStageId,
+            diffGroup,
+        }
     }
 
     #[inline]
@@ -12413,6 +16205,32 @@ impl<'a> Default for clz_Torappu_StoryStageShowGroupArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_StoryStageShowGroup<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_StoryStageShowGroup", 4)?;
+        if let Some(f) = self.displayRecordId() {
+            s.serialize_field("displayRecordId", &f)?;
+        } else {
+            s.skip_field("displayRecordId")?;
+        }
+        if let Some(f) = self.stageId() {
+            s.serialize_field("stageId", &f)?;
+        } else {
+            s.skip_field("stageId")?;
+        }
+        if let Some(f) = self.accordingStageId() {
+            s.serialize_field("accordingStageId", &f)?;
+        } else {
+            s.skip_field("accordingStageId")?;
+        }
+        s.serialize_field("diffGroup", &self.diffGroup())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StoryStageShowGroupBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -12474,6 +16292,47 @@ impl core::fmt::Debug for clz_Torappu_StoryStageShowGroup<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StoryStageShowGroupT {
+    pub displayRecordId: Option<String>,
+    pub stageId: Option<String>,
+    pub accordingStageId: Option<String>,
+    pub diffGroup: enum__Torappu_StageDiffGroup,
+}
+impl Default for clz_Torappu_StoryStageShowGroupT {
+    fn default() -> Self {
+        Self {
+            displayRecordId: None,
+            stageId: None,
+            accordingStageId: None,
+            diffGroup: enum__Torappu_StageDiffGroup::NONE,
+        }
+    }
+}
+impl clz_Torappu_StoryStageShowGroupT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StoryStageShowGroup<'b>> {
+        let displayRecordId = self.displayRecordId.as_ref().map(|x| _fbb.create_string(x));
+        let stageId = self.stageId.as_ref().map(|x| _fbb.create_string(x));
+        let accordingStageId = self
+            .accordingStageId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let diffGroup = self.diffGroup;
+        clz_Torappu_StoryStageShowGroup::create(
+            _fbb,
+            &clz_Torappu_StoryStageShowGroupArgs {
+                displayRecordId,
+                stageId,
+                accordingStageId,
+                diffGroup,
+            },
+        )
+    }
+}
 pub enum dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroupOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -12488,7 +16347,7 @@ impl<'a> flatbuffers::Follow<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -12515,6 +16374,12 @@ impl<'a> dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroup<'a>
         }
         builder.add_key(args.key);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroupT {
+        let key = self.key();
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroupT { key, value }
     }
 
     #[inline]
@@ -12596,6 +16461,25 @@ impl<'a> Default for dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageS
     }
 }
 
+impl Serialize for dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroup<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroup",
+            2,
+        )?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroupBuilder<
     'a: 'b,
     'b,
@@ -12656,6 +16540,35 @@ impl core::fmt::Debug for dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryS
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroupT {
+    pub key: enum__Torappu_StageDiffGroup,
+    pub value: Option<Box<clz_Torappu_StoryStageShowGroupT>>,
+}
+impl Default for dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroupT {
+    fn default() -> Self {
+        Self {
+            key: enum__Torappu_StageDiffGroup::NONE,
+            value: None,
+        }
+    }
+}
+impl dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroupT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<
+        dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroup<'b>,
+    > {
+        let key = self.key;
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroup::create(
+            _fbb,
+            &dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroupArgs { key, value },
+        )
+    }
+}
 pub enum dict__string__list_dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroupOffset
 {}
 #[derive(Copy, Clone, PartialEq)]
@@ -12674,7 +16587,7 @@ impl<'a> flatbuffers::Follow<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -12708,6 +16621,21 @@ impl<'a>
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(
+        &self,
+    ) -> dict__string__list_dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroupT
+    {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| x.iter().map(|t| t.unpack()).collect());
+        dict__string__list_dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroupT {
+            key,
+            value,
+        }
     }
 
     #[inline]
@@ -12804,6 +16732,24 @@ impl<'a> Default
     }
 }
 
+impl Serialize
+    for dict__string__list_dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroup<'_>
+{
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__list_dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroup", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__list_dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroupBuilder<
     'a: 'b,
     'b,
@@ -12867,6 +16813,43 @@ impl core::fmt::Debug
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__list_dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroupT {
+    pub key: String,
+    pub value: Option<Vec<dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroupT>>,
+}
+impl Default
+    for dict__string__list_dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroupT
+{
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__list_dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroupT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<
+        dict__string__list_dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroup<'b>,
+    > {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        dict__string__list_dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroup::create(_fbb, &dict__string__list_dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroupArgs{
+      key,
+      value,
+    })
+    }
+}
 pub enum clz_Torappu_SpecialBattleFinishStageDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -12879,7 +16862,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SpecialBattleFinishStageData<'a
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -12903,6 +16886,15 @@ impl<'a> clz_Torappu_SpecialBattleFinishStageData<'a> {
         }
         builder.add_skipAccomplishPerform(args.skipAccomplishPerform);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SpecialBattleFinishStageDataT {
+        let stageId = self.stageId().map(|x| x.to_string());
+        let skipAccomplishPerform = self.skipAccomplishPerform();
+        clz_Torappu_SpecialBattleFinishStageDataT {
+            stageId,
+            skipAccomplishPerform,
+        }
     }
 
     #[inline]
@@ -12965,6 +16957,22 @@ impl<'a> Default for clz_Torappu_SpecialBattleFinishStageDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SpecialBattleFinishStageData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SpecialBattleFinishStageData", 2)?;
+        if let Some(f) = self.stageId() {
+            s.serialize_field("stageId", &f)?;
+        } else {
+            s.skip_field("stageId")?;
+        }
+        s.serialize_field("skipAccomplishPerform", &self.skipAccomplishPerform())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SpecialBattleFinishStageDataBuilder<
     'a: 'b,
     'b,
@@ -13016,6 +17024,36 @@ impl core::fmt::Debug for clz_Torappu_SpecialBattleFinishStageData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SpecialBattleFinishStageDataT {
+    pub stageId: Option<String>,
+    pub skipAccomplishPerform: bool,
+}
+impl Default for clz_Torappu_SpecialBattleFinishStageDataT {
+    fn default() -> Self {
+        Self {
+            stageId: None,
+            skipAccomplishPerform: false,
+        }
+    }
+}
+impl clz_Torappu_SpecialBattleFinishStageDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SpecialBattleFinishStageData<'b>> {
+        let stageId = self.stageId.as_ref().map(|x| _fbb.create_string(x));
+        let skipAccomplishPerform = self.skipAccomplishPerform;
+        clz_Torappu_SpecialBattleFinishStageData::create(
+            _fbb,
+            &clz_Torappu_SpecialBattleFinishStageDataArgs {
+                stageId,
+                skipAccomplishPerform,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SpecialBattleFinishStageDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -13028,7 +17066,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SpecialBattleFini
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -13054,6 +17092,15 @@ impl<'a> dict__string__clz_Torappu_SpecialBattleFinishStageData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SpecialBattleFinishStageDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SpecialBattleFinishStageDataT { key, value }
     }
 
     #[inline]
@@ -13130,6 +17177,23 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialBattleFinishStageDataArgs<
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SpecialBattleFinishStageData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("dict__string__clz_Torappu_SpecialBattleFinishStageData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SpecialBattleFinishStageDataBuilder<
     'a: 'b,
     'b,
@@ -13191,6 +17255,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SpecialBattleFinishStageData
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SpecialBattleFinishStageDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SpecialBattleFinishStageDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SpecialBattleFinishStageDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SpecialBattleFinishStageDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SpecialBattleFinishStageData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SpecialBattleFinishStageData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SpecialBattleFinishStageDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_RecordRewardServerDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -13203,7 +17297,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_RecordRewardServerData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -13229,6 +17323,14 @@ impl<'a> clz_Torappu_RecordRewardServerData<'a> {
             builder.add_stageId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_RecordRewardServerDataT {
+        let stageId = self.stageId().map(|x| x.to_string());
+        let rewards = self
+            .rewards()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_RecordRewardServerDataT { stageId, rewards }
     }
 
     #[inline]
@@ -13293,6 +17395,26 @@ impl<'a> Default for clz_Torappu_RecordRewardServerDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_RecordRewardServerData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_RecordRewardServerData", 2)?;
+        if let Some(f) = self.stageId() {
+            s.serialize_field("stageId", &f)?;
+        } else {
+            s.skip_field("stageId")?;
+        }
+        if let Some(f) = self.rewards() {
+            s.serialize_field("rewards", &f)?;
+        } else {
+            s.skip_field("rewards")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_RecordRewardServerDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -13344,6 +17466,36 @@ impl core::fmt::Debug for clz_Torappu_RecordRewardServerData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_RecordRewardServerDataT {
+    pub stageId: Option<String>,
+    pub rewards: Option<Vec<clz_Torappu_ItemBundleT>>,
+}
+impl Default for clz_Torappu_RecordRewardServerDataT {
+    fn default() -> Self {
+        Self {
+            stageId: None,
+            rewards: None,
+        }
+    }
+}
+impl clz_Torappu_RecordRewardServerDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_RecordRewardServerData<'b>> {
+        let stageId = self.stageId.as_ref().map(|x| _fbb.create_string(x));
+        let rewards = self.rewards.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_RecordRewardServerData::create(
+            _fbb,
+            &clz_Torappu_RecordRewardServerDataArgs { stageId, rewards },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_RecordRewardServerDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -13356,7 +17508,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_RecordRewardServe
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -13382,6 +17534,15 @@ impl<'a> dict__string__clz_Torappu_RecordRewardServerData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_RecordRewardServerDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_RecordRewardServerDataT { key, value }
     }
 
     #[inline]
@@ -13458,6 +17619,23 @@ impl<'a> Default for dict__string__clz_Torappu_RecordRewardServerDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_RecordRewardServerData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_RecordRewardServerData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_RecordRewardServerDataBuilder<
     'a: 'b,
     'b,
@@ -13519,6 +17697,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_RecordRewardServerData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_RecordRewardServerDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_RecordRewardServerDataT>>,
+}
+impl Default for dict__string__clz_Torappu_RecordRewardServerDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_RecordRewardServerDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_RecordRewardServerData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_RecordRewardServerData::create(
+            _fbb,
+            &dict__string__clz_Torappu_RecordRewardServerDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_ApProtectZoneInfo_TimeRangeOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -13531,7 +17739,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ApProtectZoneInfo_TimeRange<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -13553,6 +17761,12 @@ impl<'a> clz_Torappu_ApProtectZoneInfo_TimeRange<'a> {
         builder.add_endTs(args.endTs);
         builder.add_startTs(args.startTs);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ApProtectZoneInfo_TimeRangeT {
+        let startTs = self.startTs();
+        let endTs = self.endTs();
+        clz_Torappu_ApProtectZoneInfo_TimeRangeT { startTs, endTs }
     }
 
     #[inline]
@@ -13607,6 +17821,18 @@ impl<'a> Default for clz_Torappu_ApProtectZoneInfo_TimeRangeArgs {
     }
 }
 
+impl Serialize for clz_Torappu_ApProtectZoneInfo_TimeRange<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ApProtectZoneInfo_TimeRange", 2)?;
+        s.serialize_field("startTs", &self.startTs())?;
+        s.serialize_field("endTs", &self.endTs())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ApProtectZoneInfo_TimeRangeBuilder<
     'a: 'b,
     'b,
@@ -13656,6 +17882,33 @@ impl core::fmt::Debug for clz_Torappu_ApProtectZoneInfo_TimeRange<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ApProtectZoneInfo_TimeRangeT {
+    pub startTs: i64,
+    pub endTs: i64,
+}
+impl Default for clz_Torappu_ApProtectZoneInfo_TimeRangeT {
+    fn default() -> Self {
+        Self {
+            startTs: 0,
+            endTs: 0,
+        }
+    }
+}
+impl clz_Torappu_ApProtectZoneInfo_TimeRangeT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ApProtectZoneInfo_TimeRange<'b>> {
+        let startTs = self.startTs;
+        let endTs = self.endTs;
+        clz_Torappu_ApProtectZoneInfo_TimeRange::create(
+            _fbb,
+            &clz_Torappu_ApProtectZoneInfo_TimeRangeArgs { startTs, endTs },
+        )
+    }
+}
 pub enum clz_Torappu_ApProtectZoneInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -13668,7 +17921,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ApProtectZoneInfo<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -13694,6 +17947,14 @@ impl<'a> clz_Torappu_ApProtectZoneInfo<'a> {
             builder.add_zoneId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ApProtectZoneInfoT {
+        let zoneId = self.zoneId().map(|x| x.to_string());
+        let timeRanges = self
+            .timeRanges()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_ApProtectZoneInfoT { zoneId, timeRanges }
     }
 
     #[inline]
@@ -13771,6 +18032,26 @@ impl<'a> Default for clz_Torappu_ApProtectZoneInfoArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ApProtectZoneInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ApProtectZoneInfo", 2)?;
+        if let Some(f) = self.zoneId() {
+            s.serialize_field("zoneId", &f)?;
+        } else {
+            s.skip_field("zoneId")?;
+        }
+        if let Some(f) = self.timeRanges() {
+            s.serialize_field("timeRanges", &f)?;
+        } else {
+            s.skip_field("timeRanges")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ApProtectZoneInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -13823,6 +18104,36 @@ impl core::fmt::Debug for clz_Torappu_ApProtectZoneInfo<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ApProtectZoneInfoT {
+    pub zoneId: Option<String>,
+    pub timeRanges: Option<Vec<clz_Torappu_ApProtectZoneInfo_TimeRangeT>>,
+}
+impl Default for clz_Torappu_ApProtectZoneInfoT {
+    fn default() -> Self {
+        Self {
+            zoneId: None,
+            timeRanges: None,
+        }
+    }
+}
+impl clz_Torappu_ApProtectZoneInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ApProtectZoneInfo<'b>> {
+        let zoneId = self.zoneId.as_ref().map(|x| _fbb.create_string(x));
+        let timeRanges = self.timeRanges.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_ApProtectZoneInfo::create(
+            _fbb,
+            &clz_Torappu_ApProtectZoneInfoArgs { zoneId, timeRanges },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_ApProtectZoneInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -13835,7 +18146,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_ApProtectZoneInfo
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -13861,6 +18172,15 @@ impl<'a> dict__string__clz_Torappu_ApProtectZoneInfo<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_ApProtectZoneInfoT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_ApProtectZoneInfoT { key, value }
     }
 
     #[inline]
@@ -13934,6 +18254,23 @@ impl<'a> Default for dict__string__clz_Torappu_ApProtectZoneInfoArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_ApProtectZoneInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_ApProtectZoneInfo", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_ApProtectZoneInfoBuilder<
     'a: 'b,
     'b,
@@ -13990,6 +18327,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_ApProtectZoneInfo<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_ApProtectZoneInfoT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_ApProtectZoneInfoT>>,
+}
+impl Default for dict__string__clz_Torappu_ApProtectZoneInfoT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_ApProtectZoneInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ApProtectZoneInfo<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_ApProtectZoneInfo::create(
+            _fbb,
+            &dict__string__clz_Torappu_ApProtectZoneInfoArgs { key, value },
+        )
+    }
+}
 pub enum dict__string__list_stringOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -14002,7 +18369,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__list_string<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -14028,6 +18395,17 @@ impl<'a> dict__string__list_string<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__list_stringT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self
+            .value()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        dict__string__list_stringT { key, value }
     }
 
     #[inline]
@@ -14096,6 +18474,22 @@ impl<'a> Default for dict__string__list_stringArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__list_string<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__list_string", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__list_stringBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -14145,6 +18539,36 @@ impl core::fmt::Debug for dict__string__list_string<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__list_stringT {
+    pub key: String,
+    pub value: Option<Vec<String>>,
+}
+impl Default for dict__string__list_stringT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__list_stringT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__list_string<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        dict__string__list_string::create(_fbb, &dict__string__list_stringArgs { key, value })
+    }
+}
 pub enum clz_Torappu_ActCustomStageDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -14157,7 +18581,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ActCustomStageData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -14177,6 +18601,11 @@ impl<'a> clz_Torappu_ActCustomStageData<'a> {
         let mut builder = clz_Torappu_ActCustomStageDataBuilder::new(_fbb);
         builder.add_overrideGameMode(args.overrideGameMode);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ActCustomStageDataT {
+        let overrideGameMode = self.overrideGameMode();
+        clz_Torappu_ActCustomStageDataT { overrideGameMode }
     }
 
     #[inline]
@@ -14224,6 +18653,17 @@ impl<'a> Default for clz_Torappu_ActCustomStageDataArgs {
     }
 }
 
+impl Serialize for clz_Torappu_ActCustomStageData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ActCustomStageData", 1)?;
+        s.serialize_field("overrideGameMode", &self.overrideGameMode())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ActCustomStageDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -14261,6 +18701,30 @@ impl core::fmt::Debug for clz_Torappu_ActCustomStageData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ActCustomStageDataT {
+    pub overrideGameMode: enum__Torappu_OverrideGameMode,
+}
+impl Default for clz_Torappu_ActCustomStageDataT {
+    fn default() -> Self {
+        Self {
+            overrideGameMode: enum__Torappu_OverrideGameMode::NONE,
+        }
+    }
+}
+impl clz_Torappu_ActCustomStageDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ActCustomStageData<'b>> {
+        let overrideGameMode = self.overrideGameMode;
+        clz_Torappu_ActCustomStageData::create(
+            _fbb,
+            &clz_Torappu_ActCustomStageDataArgs { overrideGameMode },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_ActCustomStageDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -14273,7 +18737,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_ActCustomStageDat
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -14299,6 +18763,15 @@ impl<'a> dict__string__clz_Torappu_ActCustomStageData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_ActCustomStageDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_ActCustomStageDataT { key, value }
     }
 
     #[inline]
@@ -14372,6 +18845,23 @@ impl<'a> Default for dict__string__clz_Torappu_ActCustomStageDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_ActCustomStageData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_ActCustomStageData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_ActCustomStageDataBuilder<
     'a: 'b,
     'b,
@@ -14430,6 +18920,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_ActCustomStageData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_ActCustomStageDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_ActCustomStageDataT>>,
+}
+impl Default for dict__string__clz_Torappu_ActCustomStageDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_ActCustomStageDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ActCustomStageData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_ActCustomStageData::create(
+            _fbb,
+            &dict__string__clz_Torappu_ActCustomStageDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_StorylineMainlineSplitDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -14442,7 +18962,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StorylineMainlineSplitData<'a> 
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -14468,6 +18988,12 @@ impl<'a> clz_Torappu_StorylineMainlineSplitData<'a> {
             builder.add_iconId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StorylineMainlineSplitDataT {
+        let iconId = self.iconId().map(|x| x.to_string());
+        let subName = self.subName().map(|x| x.to_string());
+        clz_Torappu_StorylineMainlineSplitDataT { iconId, subName }
     }
 
     #[inline]
@@ -14524,6 +19050,26 @@ impl<'a> Default for clz_Torappu_StorylineMainlineSplitDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_StorylineMainlineSplitData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_StorylineMainlineSplitData", 2)?;
+        if let Some(f) = self.iconId() {
+            s.serialize_field("iconId", &f)?;
+        } else {
+            s.skip_field("iconId")?;
+        }
+        if let Some(f) = self.subName() {
+            s.serialize_field("subName", &f)?;
+        } else {
+            s.skip_field("subName")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StorylineMainlineSplitDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -14571,6 +19117,33 @@ impl core::fmt::Debug for clz_Torappu_StorylineMainlineSplitData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StorylineMainlineSplitDataT {
+    pub iconId: Option<String>,
+    pub subName: Option<String>,
+}
+impl Default for clz_Torappu_StorylineMainlineSplitDataT {
+    fn default() -> Self {
+        Self {
+            iconId: None,
+            subName: None,
+        }
+    }
+}
+impl clz_Torappu_StorylineMainlineSplitDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StorylineMainlineSplitData<'b>> {
+        let iconId = self.iconId.as_ref().map(|x| _fbb.create_string(x));
+        let subName = self.subName.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_StorylineMainlineSplitData::create(
+            _fbb,
+            &clz_Torappu_StorylineMainlineSplitDataArgs { iconId, subName },
+        )
+    }
+}
 pub enum clz_Torappu_StorylineLocationDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -14583,7 +19156,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StorylineLocationData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -14627,6 +19200,27 @@ impl<'a> clz_Torappu_StorylineLocationData<'a> {
             builder.add_locationId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StorylineLocationDataT {
+        let locationId = self.locationId().map(|x| x.to_string());
+        let locationType = self.locationType();
+        let sortId = self.sortId();
+        let startTime = self.startTime();
+        let presentStageId = self.presentStageId().map(|x| x.to_string());
+        let unlockStageId = self.unlockStageId().map(|x| x.to_string());
+        let relevantStorySetId = self.relevantStorySetId().map(|x| x.to_string());
+        let mainlineSplitData = self.mainlineSplitData().map(|x| Box::new(x.unpack()));
+        clz_Torappu_StorylineLocationDataT {
+            locationId,
+            locationType,
+            sortId,
+            startTime,
+            presentStageId,
+            unlockStageId,
+            relevantStorySetId,
+            mainlineSplitData,
+        }
     }
 
     #[inline]
@@ -14799,6 +19393,44 @@ impl<'a> Default for clz_Torappu_StorylineLocationDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_StorylineLocationData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_StorylineLocationData", 8)?;
+        if let Some(f) = self.locationId() {
+            s.serialize_field("locationId", &f)?;
+        } else {
+            s.skip_field("locationId")?;
+        }
+        s.serialize_field("locationType", &self.locationType())?;
+        s.serialize_field("sortId", &self.sortId())?;
+        s.serialize_field("startTime", &self.startTime())?;
+        if let Some(f) = self.presentStageId() {
+            s.serialize_field("presentStageId", &f)?;
+        } else {
+            s.skip_field("presentStageId")?;
+        }
+        if let Some(f) = self.unlockStageId() {
+            s.serialize_field("unlockStageId", &f)?;
+        } else {
+            s.skip_field("unlockStageId")?;
+        }
+        if let Some(f) = self.relevantStorySetId() {
+            s.serialize_field("relevantStorySetId", &f)?;
+        } else {
+            s.skip_field("relevantStorySetId")?;
+        }
+        if let Some(f) = self.mainlineSplitData() {
+            s.serialize_field("mainlineSplitData", &f)?;
+        } else {
+            s.skip_field("mainlineSplitData")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StorylineLocationDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -14897,6 +19529,63 @@ impl core::fmt::Debug for clz_Torappu_StorylineLocationData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StorylineLocationDataT {
+    pub locationId: Option<String>,
+    pub locationType: enum__Torappu_StorylineLocationType,
+    pub sortId: i32,
+    pub startTime: i64,
+    pub presentStageId: Option<String>,
+    pub unlockStageId: Option<String>,
+    pub relevantStorySetId: Option<String>,
+    pub mainlineSplitData: Option<Box<clz_Torappu_StorylineMainlineSplitDataT>>,
+}
+impl Default for clz_Torappu_StorylineLocationDataT {
+    fn default() -> Self {
+        Self {
+            locationId: None,
+            locationType: enum__Torappu_StorylineLocationType::STORY_SET,
+            sortId: 0,
+            startTime: 0,
+            presentStageId: None,
+            unlockStageId: None,
+            relevantStorySetId: None,
+            mainlineSplitData: None,
+        }
+    }
+}
+impl clz_Torappu_StorylineLocationDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StorylineLocationData<'b>> {
+        let locationId = self.locationId.as_ref().map(|x| _fbb.create_string(x));
+        let locationType = self.locationType;
+        let sortId = self.sortId;
+        let startTime = self.startTime;
+        let presentStageId = self.presentStageId.as_ref().map(|x| _fbb.create_string(x));
+        let unlockStageId = self.unlockStageId.as_ref().map(|x| _fbb.create_string(x));
+        let relevantStorySetId = self
+            .relevantStorySetId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let mainlineSplitData = self.mainlineSplitData.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_StorylineLocationData::create(
+            _fbb,
+            &clz_Torappu_StorylineLocationDataArgs {
+                locationId,
+                locationType,
+                sortId,
+                startTime,
+                presentStageId,
+                unlockStageId,
+                relevantStorySetId,
+                mainlineSplitData,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_StorylineLocationDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -14909,7 +19598,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_StorylineLocation
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -14935,6 +19624,15 @@ impl<'a> dict__string__clz_Torappu_StorylineLocationData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_StorylineLocationDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_StorylineLocationDataT { key, value }
     }
 
     #[inline]
@@ -15011,6 +19709,23 @@ impl<'a> Default for dict__string__clz_Torappu_StorylineLocationDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_StorylineLocationData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_StorylineLocationData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_StorylineLocationDataBuilder<
     'a: 'b,
     'b,
@@ -15072,6 +19787,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_StorylineLocationData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_StorylineLocationDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_StorylineLocationDataT>>,
+}
+impl Default for dict__string__clz_Torappu_StorylineLocationDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_StorylineLocationDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_StorylineLocationData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_StorylineLocationData::create(
+            _fbb,
+            &dict__string__clz_Torappu_StorylineLocationDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_StorylineDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -15084,7 +19829,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StorylineData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -15134,6 +19879,33 @@ impl<'a> clz_Torappu_StorylineData<'a> {
         }
         builder.add_hasVideoToPlay(args.hasVideoToPlay);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StorylineDataT {
+        let storylineId = self.storylineId().map(|x| x.to_string());
+        let storylineType = self.storylineType();
+        let sortId = self.sortId();
+        let storylineName = self.storylineName().map(|x| x.to_string());
+        let storylineIconId = self.storylineIconId().map(|x| x.to_string());
+        let storylineLogoId = self.storylineLogoId().map(|x| x.to_string());
+        let backgroundId = self.backgroundId().map(|x| x.to_string());
+        let hasVideoToPlay = self.hasVideoToPlay();
+        let startTs = self.startTs();
+        let locations = self
+            .locations()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_StorylineDataT {
+            storylineId,
+            storylineType,
+            sortId,
+            storylineName,
+            storylineIconId,
+            storylineLogoId,
+            backgroundId,
+            hasVideoToPlay,
+            startTs,
+            locations,
+        }
     }
 
     #[inline]
@@ -15354,6 +20126,50 @@ impl<'a> Default for clz_Torappu_StorylineDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_StorylineData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_StorylineData", 10)?;
+        if let Some(f) = self.storylineId() {
+            s.serialize_field("storylineId", &f)?;
+        } else {
+            s.skip_field("storylineId")?;
+        }
+        s.serialize_field("storylineType", &self.storylineType())?;
+        s.serialize_field("sortId", &self.sortId())?;
+        if let Some(f) = self.storylineName() {
+            s.serialize_field("storylineName", &f)?;
+        } else {
+            s.skip_field("storylineName")?;
+        }
+        if let Some(f) = self.storylineIconId() {
+            s.serialize_field("storylineIconId", &f)?;
+        } else {
+            s.skip_field("storylineIconId")?;
+        }
+        if let Some(f) = self.storylineLogoId() {
+            s.serialize_field("storylineLogoId", &f)?;
+        } else {
+            s.skip_field("storylineLogoId")?;
+        }
+        if let Some(f) = self.backgroundId() {
+            s.serialize_field("backgroundId", &f)?;
+        } else {
+            s.skip_field("backgroundId")?;
+        }
+        s.serialize_field("hasVideoToPlay", &self.hasVideoToPlay())?;
+        s.serialize_field("startTs", &self.startTs())?;
+        if let Some(f) = self.locations() {
+            s.serialize_field("locations", &f)?;
+        } else {
+            s.skip_field("locations")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StorylineDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -15468,6 +20284,71 @@ impl core::fmt::Debug for clz_Torappu_StorylineData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StorylineDataT {
+    pub storylineId: Option<String>,
+    pub storylineType: enum__Torappu_StorylineType,
+    pub sortId: i32,
+    pub storylineName: Option<String>,
+    pub storylineIconId: Option<String>,
+    pub storylineLogoId: Option<String>,
+    pub backgroundId: Option<String>,
+    pub hasVideoToPlay: bool,
+    pub startTs: i64,
+    pub locations: Option<Vec<dict__string__clz_Torappu_StorylineLocationDataT>>,
+}
+impl Default for clz_Torappu_StorylineDataT {
+    fn default() -> Self {
+        Self {
+            storylineId: None,
+            storylineType: enum__Torappu_StorylineType::CONTINUE,
+            sortId: 0,
+            storylineName: None,
+            storylineIconId: None,
+            storylineLogoId: None,
+            backgroundId: None,
+            hasVideoToPlay: false,
+            startTs: 0,
+            locations: None,
+        }
+    }
+}
+impl clz_Torappu_StorylineDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StorylineData<'b>> {
+        let storylineId = self.storylineId.as_ref().map(|x| _fbb.create_string(x));
+        let storylineType = self.storylineType;
+        let sortId = self.sortId;
+        let storylineName = self.storylineName.as_ref().map(|x| _fbb.create_string(x));
+        let storylineIconId = self.storylineIconId.as_ref().map(|x| _fbb.create_string(x));
+        let storylineLogoId = self.storylineLogoId.as_ref().map(|x| _fbb.create_string(x));
+        let backgroundId = self.backgroundId.as_ref().map(|x| _fbb.create_string(x));
+        let hasVideoToPlay = self.hasVideoToPlay;
+        let startTs = self.startTs;
+        let locations = self.locations.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_StorylineData::create(
+            _fbb,
+            &clz_Torappu_StorylineDataArgs {
+                storylineId,
+                storylineType,
+                sortId,
+                storylineName,
+                storylineIconId,
+                storylineLogoId,
+                backgroundId,
+                hasVideoToPlay,
+                startTs,
+                locations,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_StorylineDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -15480,7 +20361,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_StorylineData<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -15506,6 +20387,15 @@ impl<'a> dict__string__clz_Torappu_StorylineData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_StorylineDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_StorylineDataT { key, value }
     }
 
     #[inline]
@@ -15579,6 +20469,22 @@ impl<'a> Default for dict__string__clz_Torappu_StorylineDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_StorylineData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_StorylineData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_StorylineDataBuilder<
     'a: 'b,
     'b,
@@ -15632,6 +20538,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_StorylineData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_StorylineDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_StorylineDataT>>,
+}
+impl Default for dict__string__clz_Torappu_StorylineDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_StorylineDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_StorylineData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_StorylineData::create(
+            _fbb,
+            &dict__string__clz_Torappu_StorylineDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_StorylineMainlineDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -15644,7 +20580,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StorylineMainlineData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -15674,6 +20610,17 @@ impl<'a> clz_Torappu_StorylineMainlineData<'a> {
             builder.add_zoneId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StorylineMainlineDataT {
+        let zoneId = self.zoneId().map(|x| x.to_string());
+        let retroId = self.retroId().map(|x| x.to_string());
+        let decoImageId = self.decoImageId().map(|x| x.to_string());
+        clz_Torappu_StorylineMainlineDataT {
+            zoneId,
+            retroId,
+            decoImageId,
+        }
     }
 
     #[inline]
@@ -15749,6 +20696,31 @@ impl<'a> Default for clz_Torappu_StorylineMainlineDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_StorylineMainlineData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_StorylineMainlineData", 3)?;
+        if let Some(f) = self.zoneId() {
+            s.serialize_field("zoneId", &f)?;
+        } else {
+            s.skip_field("zoneId")?;
+        }
+        if let Some(f) = self.retroId() {
+            s.serialize_field("retroId", &f)?;
+        } else {
+            s.skip_field("retroId")?;
+        }
+        if let Some(f) = self.decoImageId() {
+            s.serialize_field("decoImageId", &f)?;
+        } else {
+            s.skip_field("decoImageId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StorylineMainlineDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -15803,6 +20775,40 @@ impl core::fmt::Debug for clz_Torappu_StorylineMainlineData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StorylineMainlineDataT {
+    pub zoneId: Option<String>,
+    pub retroId: Option<String>,
+    pub decoImageId: Option<String>,
+}
+impl Default for clz_Torappu_StorylineMainlineDataT {
+    fn default() -> Self {
+        Self {
+            zoneId: None,
+            retroId: None,
+            decoImageId: None,
+        }
+    }
+}
+impl clz_Torappu_StorylineMainlineDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StorylineMainlineData<'b>> {
+        let zoneId = self.zoneId.as_ref().map(|x| _fbb.create_string(x));
+        let retroId = self.retroId.as_ref().map(|x| _fbb.create_string(x));
+        let decoImageId = self.decoImageId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_StorylineMainlineData::create(
+            _fbb,
+            &clz_Torappu_StorylineMainlineDataArgs {
+                zoneId,
+                retroId,
+                decoImageId,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_StorylineSSDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -15815,7 +20821,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StorylineSSData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -15867,6 +20873,33 @@ impl<'a> clz_Torappu_StorylineSSData<'a> {
         }
         builder.add_isRecommended(args.isRecommended);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StorylineSSDataT {
+        let name = self.name().map(|x| x.to_string());
+        let desc = self.desc().map(|x| x.to_string());
+        let backgroundId = self.backgroundId().map(|x| x.to_string());
+        let tags = self
+            .tags()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let reopenActivityId = self.reopenActivityId().map(|x| x.to_string());
+        let retroActivityId = self.retroActivityId().map(|x| x.to_string());
+        let isRecommended = self.isRecommended();
+        let recommendHideStageId = self.recommendHideStageId().map(|x| x.to_string());
+        let overrideStageList = self
+            .overrideStageList()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        clz_Torappu_StorylineSSDataT {
+            name,
+            desc,
+            backgroundId,
+            tags,
+            reopenActivityId,
+            retroActivityId,
+            isRecommended,
+            recommendHideStageId,
+            overrideStageList,
+        }
     }
 
     #[inline]
@@ -16051,6 +21084,57 @@ impl<'a> Default for clz_Torappu_StorylineSSDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_StorylineSSData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_StorylineSSData", 9)?;
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        if let Some(f) = self.desc() {
+            s.serialize_field("desc", &f)?;
+        } else {
+            s.skip_field("desc")?;
+        }
+        if let Some(f) = self.backgroundId() {
+            s.serialize_field("backgroundId", &f)?;
+        } else {
+            s.skip_field("backgroundId")?;
+        }
+        if let Some(f) = self.tags() {
+            s.serialize_field("tags", &f)?;
+        } else {
+            s.skip_field("tags")?;
+        }
+        if let Some(f) = self.reopenActivityId() {
+            s.serialize_field("reopenActivityId", &f)?;
+        } else {
+            s.skip_field("reopenActivityId")?;
+        }
+        if let Some(f) = self.retroActivityId() {
+            s.serialize_field("retroActivityId", &f)?;
+        } else {
+            s.skip_field("retroActivityId")?;
+        }
+        s.serialize_field("isRecommended", &self.isRecommended())?;
+        if let Some(f) = self.recommendHideStageId() {
+            s.serialize_field("recommendHideStageId", &f)?;
+        } else {
+            s.skip_field("recommendHideStageId")?;
+        }
+        if let Some(f) = self.overrideStageList() {
+            s.serialize_field("overrideStageList", &f)?;
+        } else {
+            s.skip_field("overrideStageList")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StorylineSSDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -16165,6 +21249,76 @@ impl core::fmt::Debug for clz_Torappu_StorylineSSData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StorylineSSDataT {
+    pub name: Option<String>,
+    pub desc: Option<String>,
+    pub backgroundId: Option<String>,
+    pub tags: Option<Vec<String>>,
+    pub reopenActivityId: Option<String>,
+    pub retroActivityId: Option<String>,
+    pub isRecommended: bool,
+    pub recommendHideStageId: Option<String>,
+    pub overrideStageList: Option<Vec<String>>,
+}
+impl Default for clz_Torappu_StorylineSSDataT {
+    fn default() -> Self {
+        Self {
+            name: None,
+            desc: None,
+            backgroundId: None,
+            tags: None,
+            reopenActivityId: None,
+            retroActivityId: None,
+            isRecommended: false,
+            recommendHideStageId: None,
+            overrideStageList: None,
+        }
+    }
+}
+impl clz_Torappu_StorylineSSDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StorylineSSData<'b>> {
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
+        let backgroundId = self.backgroundId.as_ref().map(|x| _fbb.create_string(x));
+        let tags = self.tags.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let reopenActivityId = self
+            .reopenActivityId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let retroActivityId = self.retroActivityId.as_ref().map(|x| _fbb.create_string(x));
+        let isRecommended = self.isRecommended;
+        let recommendHideStageId = self
+            .recommendHideStageId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let overrideStageList = self.overrideStageList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_StorylineSSData::create(
+            _fbb,
+            &clz_Torappu_StorylineSSDataArgs {
+                name,
+                desc,
+                backgroundId,
+                tags,
+                reopenActivityId,
+                retroActivityId,
+                isRecommended,
+                recommendHideStageId,
+                overrideStageList,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_StorylineCollectDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -16177,7 +21331,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StorylineCollectData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -16207,6 +21361,17 @@ impl<'a> clz_Torappu_StorylineCollectData<'a> {
             builder.add_name(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StorylineCollectDataT {
+        let name = self.name().map(|x| x.to_string());
+        let desc = self.desc().map(|x| x.to_string());
+        let backgroundId = self.backgroundId().map(|x| x.to_string());
+        clz_Torappu_StorylineCollectDataT {
+            name,
+            desc,
+            backgroundId,
+        }
     }
 
     #[inline]
@@ -16282,6 +21447,31 @@ impl<'a> Default for clz_Torappu_StorylineCollectDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_StorylineCollectData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_StorylineCollectData", 3)?;
+        if let Some(f) = self.name() {
+            s.serialize_field("name", &f)?;
+        } else {
+            s.skip_field("name")?;
+        }
+        if let Some(f) = self.desc() {
+            s.serialize_field("desc", &f)?;
+        } else {
+            s.skip_field("desc")?;
+        }
+        if let Some(f) = self.backgroundId() {
+            s.serialize_field("backgroundId", &f)?;
+        } else {
+            s.skip_field("backgroundId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StorylineCollectDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -16336,6 +21526,40 @@ impl core::fmt::Debug for clz_Torappu_StorylineCollectData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StorylineCollectDataT {
+    pub name: Option<String>,
+    pub desc: Option<String>,
+    pub backgroundId: Option<String>,
+}
+impl Default for clz_Torappu_StorylineCollectDataT {
+    fn default() -> Self {
+        Self {
+            name: None,
+            desc: None,
+            backgroundId: None,
+        }
+    }
+}
+impl clz_Torappu_StorylineCollectDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StorylineCollectData<'b>> {
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
+        let backgroundId = self.backgroundId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_StorylineCollectData::create(
+            _fbb,
+            &clz_Torappu_StorylineCollectDataArgs {
+                name,
+                desc,
+                backgroundId,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_StorylineStorySetDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -16348,7 +21572,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StorylineStorySetData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -16416,6 +21640,41 @@ impl<'a> clz_Torappu_StorylineStorySetData<'a> {
         }
         builder.add_haveVideoToPlay(args.haveVideoToPlay);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StorylineStorySetDataT {
+        let storySetId = self.storySetId().map(|x| x.to_string());
+        let storySetType = self.storySetType();
+        let sortByYear = self.sortByYear();
+        let sortWithinYear = self.sortWithinYear();
+        let kvImageId = self.kvImageId().map(|x| x.to_string());
+        let titleImageId = self.titleImageId().map(|x| x.to_string());
+        let haveVideoToPlay = self.haveVideoToPlay();
+        let backgroundId = self.backgroundId().map(|x| x.to_string());
+        let gameMusicId = self.gameMusicId().map(|x| x.to_string());
+        let coreRewardType = self.coreRewardType();
+        let coreRewardId = self.coreRewardId().map(|x| x.to_string());
+        let relevantActivityId = self.relevantActivityId().map(|x| x.to_string());
+        let mainlineData = self.mainlineData().map(|x| Box::new(x.unpack()));
+        let ssData = self.ssData().map(|x| Box::new(x.unpack()));
+        let collectData = self.collectData().map(|x| Box::new(x.unpack()));
+        clz_Torappu_StorylineStorySetDataT {
+            storySetId,
+            storySetType,
+            sortByYear,
+            sortWithinYear,
+            kvImageId,
+            titleImageId,
+            haveVideoToPlay,
+            backgroundId,
+            gameMusicId,
+            coreRewardType,
+            coreRewardId,
+            relevantActivityId,
+            mainlineData,
+            ssData,
+            collectData,
+        }
     }
 
     #[inline]
@@ -16725,6 +21984,71 @@ impl<'a> Default for clz_Torappu_StorylineStorySetDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_StorylineStorySetData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_StorylineStorySetData", 15)?;
+        if let Some(f) = self.storySetId() {
+            s.serialize_field("storySetId", &f)?;
+        } else {
+            s.skip_field("storySetId")?;
+        }
+        s.serialize_field("storySetType", &self.storySetType())?;
+        s.serialize_field("sortByYear", &self.sortByYear())?;
+        s.serialize_field("sortWithinYear", &self.sortWithinYear())?;
+        if let Some(f) = self.kvImageId() {
+            s.serialize_field("kvImageId", &f)?;
+        } else {
+            s.skip_field("kvImageId")?;
+        }
+        if let Some(f) = self.titleImageId() {
+            s.serialize_field("titleImageId", &f)?;
+        } else {
+            s.skip_field("titleImageId")?;
+        }
+        s.serialize_field("haveVideoToPlay", &self.haveVideoToPlay())?;
+        if let Some(f) = self.backgroundId() {
+            s.serialize_field("backgroundId", &f)?;
+        } else {
+            s.skip_field("backgroundId")?;
+        }
+        if let Some(f) = self.gameMusicId() {
+            s.serialize_field("gameMusicId", &f)?;
+        } else {
+            s.skip_field("gameMusicId")?;
+        }
+        s.serialize_field("coreRewardType", &self.coreRewardType())?;
+        if let Some(f) = self.coreRewardId() {
+            s.serialize_field("coreRewardId", &f)?;
+        } else {
+            s.skip_field("coreRewardId")?;
+        }
+        if let Some(f) = self.relevantActivityId() {
+            s.serialize_field("relevantActivityId", &f)?;
+        } else {
+            s.skip_field("relevantActivityId")?;
+        }
+        if let Some(f) = self.mainlineData() {
+            s.serialize_field("mainlineData", &f)?;
+        } else {
+            s.skip_field("mainlineData")?;
+        }
+        if let Some(f) = self.ssData() {
+            s.serialize_field("ssData", &f)?;
+        } else {
+            s.skip_field("ssData")?;
+        }
+        if let Some(f) = self.collectData() {
+            s.serialize_field("collectData", &f)?;
+        } else {
+            s.skip_field("collectData")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StorylineStorySetDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -16889,6 +22213,91 @@ impl core::fmt::Debug for clz_Torappu_StorylineStorySetData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StorylineStorySetDataT {
+    pub storySetId: Option<String>,
+    pub storySetType: enum__Torappu_StorylineStorySetType,
+    pub sortByYear: i32,
+    pub sortWithinYear: i32,
+    pub kvImageId: Option<String>,
+    pub titleImageId: Option<String>,
+    pub haveVideoToPlay: bool,
+    pub backgroundId: Option<String>,
+    pub gameMusicId: Option<String>,
+    pub coreRewardType: enum__Torappu_ItemType,
+    pub coreRewardId: Option<String>,
+    pub relevantActivityId: Option<String>,
+    pub mainlineData: Option<Box<clz_Torappu_StorylineMainlineDataT>>,
+    pub ssData: Option<Box<clz_Torappu_StorylineSSDataT>>,
+    pub collectData: Option<Box<clz_Torappu_StorylineCollectDataT>>,
+}
+impl Default for clz_Torappu_StorylineStorySetDataT {
+    fn default() -> Self {
+        Self {
+            storySetId: None,
+            storySetType: enum__Torappu_StorylineStorySetType::MAINLINE,
+            sortByYear: 0,
+            sortWithinYear: 0,
+            kvImageId: None,
+            titleImageId: None,
+            haveVideoToPlay: false,
+            backgroundId: None,
+            gameMusicId: None,
+            coreRewardType: enum__Torappu_ItemType::NONE,
+            coreRewardId: None,
+            relevantActivityId: None,
+            mainlineData: None,
+            ssData: None,
+            collectData: None,
+        }
+    }
+}
+impl clz_Torappu_StorylineStorySetDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StorylineStorySetData<'b>> {
+        let storySetId = self.storySetId.as_ref().map(|x| _fbb.create_string(x));
+        let storySetType = self.storySetType;
+        let sortByYear = self.sortByYear;
+        let sortWithinYear = self.sortWithinYear;
+        let kvImageId = self.kvImageId.as_ref().map(|x| _fbb.create_string(x));
+        let titleImageId = self.titleImageId.as_ref().map(|x| _fbb.create_string(x));
+        let haveVideoToPlay = self.haveVideoToPlay;
+        let backgroundId = self.backgroundId.as_ref().map(|x| _fbb.create_string(x));
+        let gameMusicId = self.gameMusicId.as_ref().map(|x| _fbb.create_string(x));
+        let coreRewardType = self.coreRewardType;
+        let coreRewardId = self.coreRewardId.as_ref().map(|x| _fbb.create_string(x));
+        let relevantActivityId = self
+            .relevantActivityId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let mainlineData = self.mainlineData.as_ref().map(|x| x.pack(_fbb));
+        let ssData = self.ssData.as_ref().map(|x| x.pack(_fbb));
+        let collectData = self.collectData.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_StorylineStorySetData::create(
+            _fbb,
+            &clz_Torappu_StorylineStorySetDataArgs {
+                storySetId,
+                storySetType,
+                sortByYear,
+                sortWithinYear,
+                kvImageId,
+                titleImageId,
+                haveVideoToPlay,
+                backgroundId,
+                gameMusicId,
+                coreRewardType,
+                coreRewardId,
+                relevantActivityId,
+                mainlineData,
+                ssData,
+                collectData,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_StorylineStorySetDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -16901,7 +22310,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_StorylineStorySet
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -16927,6 +22336,15 @@ impl<'a> dict__string__clz_Torappu_StorylineStorySetData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_StorylineStorySetDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_StorylineStorySetDataT { key, value }
     }
 
     #[inline]
@@ -17003,6 +22421,23 @@ impl<'a> Default for dict__string__clz_Torappu_StorylineStorySetDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_StorylineStorySetData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_StorylineStorySetData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_StorylineStorySetDataBuilder<
     'a: 'b,
     'b,
@@ -17064,6 +22499,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_StorylineStorySetData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_StorylineStorySetDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_StorylineStorySetDataT>>,
+}
+impl Default for dict__string__clz_Torappu_StorylineStorySetDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_StorylineStorySetDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_StorylineStorySetData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_StorylineStorySetData::create(
+            _fbb,
+            &dict__string__clz_Torappu_StorylineStorySetDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_StorylineTagDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -17076,7 +22541,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StorylineTagData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -17112,6 +22577,21 @@ impl<'a> clz_Torappu_StorylineTagData<'a> {
             builder.add_tagId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StorylineTagDataT {
+        let tagId = self.tagId().map(|x| x.to_string());
+        let sortId = self.sortId();
+        let tagDesc = self.tagDesc().map(|x| x.to_string());
+        let textColor = self.textColor().map(|x| x.to_string());
+        let bkgColor = self.bkgColor().map(|x| x.to_string());
+        clz_Torappu_StorylineTagDataT {
+            tagId,
+            sortId,
+            tagDesc,
+            textColor,
+            bkgColor,
+        }
     }
 
     #[inline]
@@ -17220,6 +22700,37 @@ impl<'a> Default for clz_Torappu_StorylineTagDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_StorylineTagData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_StorylineTagData", 5)?;
+        if let Some(f) = self.tagId() {
+            s.serialize_field("tagId", &f)?;
+        } else {
+            s.skip_field("tagId")?;
+        }
+        s.serialize_field("sortId", &self.sortId())?;
+        if let Some(f) = self.tagDesc() {
+            s.serialize_field("tagDesc", &f)?;
+        } else {
+            s.skip_field("tagDesc")?;
+        }
+        if let Some(f) = self.textColor() {
+            s.serialize_field("textColor", &f)?;
+        } else {
+            s.skip_field("textColor")?;
+        }
+        if let Some(f) = self.bkgColor() {
+            s.serialize_field("bkgColor", &f)?;
+        } else {
+            s.skip_field("bkgColor")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StorylineTagDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -17286,6 +22797,48 @@ impl core::fmt::Debug for clz_Torappu_StorylineTagData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StorylineTagDataT {
+    pub tagId: Option<String>,
+    pub sortId: i32,
+    pub tagDesc: Option<String>,
+    pub textColor: Option<String>,
+    pub bkgColor: Option<String>,
+}
+impl Default for clz_Torappu_StorylineTagDataT {
+    fn default() -> Self {
+        Self {
+            tagId: None,
+            sortId: 0,
+            tagDesc: None,
+            textColor: None,
+            bkgColor: None,
+        }
+    }
+}
+impl clz_Torappu_StorylineTagDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StorylineTagData<'b>> {
+        let tagId = self.tagId.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        let tagDesc = self.tagDesc.as_ref().map(|x| _fbb.create_string(x));
+        let textColor = self.textColor.as_ref().map(|x| _fbb.create_string(x));
+        let bkgColor = self.bkgColor.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_StorylineTagData::create(
+            _fbb,
+            &clz_Torappu_StorylineTagDataArgs {
+                tagId,
+                sortId,
+                tagDesc,
+                textColor,
+                bkgColor,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_StorylineTagDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -17298,7 +22851,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_StorylineTagData<
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -17324,6 +22877,15 @@ impl<'a> dict__string__clz_Torappu_StorylineTagData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_StorylineTagDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_StorylineTagDataT { key, value }
     }
 
     #[inline]
@@ -17397,6 +22959,22 @@ impl<'a> Default for dict__string__clz_Torappu_StorylineTagDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_StorylineTagData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_StorylineTagData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_StorylineTagDataBuilder<
     'a: 'b,
     'b,
@@ -17450,6 +23028,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_StorylineTagData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_StorylineTagDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_StorylineTagDataT>>,
+}
+impl Default for dict__string__clz_Torappu_StorylineTagDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_StorylineTagDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_StorylineTagData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_StorylineTagData::create(
+            _fbb,
+            &dict__string__clz_Torappu_StorylineTagDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_StorylineConstDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -17462,7 +23070,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StorylineConstData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -17492,6 +23100,17 @@ impl<'a> clz_Torappu_StorylineConstData<'a> {
             builder.add_recommendHideGuideGroupId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StorylineConstDataT {
+        let recommendHideGuideGroupId = self.recommendHideGuideGroupId().map(|x| x.to_string());
+        let tutorialSelectStorylineId = self.tutorialSelectStorylineId().map(|x| x.to_string());
+        let mainlineStorylineId = self.mainlineStorylineId().map(|x| x.to_string());
+        clz_Torappu_StorylineConstDataT {
+            recommendHideGuideGroupId,
+            tutorialSelectStorylineId,
+            mainlineStorylineId,
+        }
     }
 
     #[inline]
@@ -17575,6 +23194,31 @@ impl<'a> Default for clz_Torappu_StorylineConstDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_StorylineConstData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_StorylineConstData", 3)?;
+        if let Some(f) = self.recommendHideGuideGroupId() {
+            s.serialize_field("recommendHideGuideGroupId", &f)?;
+        } else {
+            s.skip_field("recommendHideGuideGroupId")?;
+        }
+        if let Some(f) = self.tutorialSelectStorylineId() {
+            s.serialize_field("tutorialSelectStorylineId", &f)?;
+        } else {
+            s.skip_field("tutorialSelectStorylineId")?;
+        }
+        if let Some(f) = self.mainlineStorylineId() {
+            s.serialize_field("mainlineStorylineId", &f)?;
+        } else {
+            s.skip_field("mainlineStorylineId")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StorylineConstDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -17642,6 +23286,49 @@ impl core::fmt::Debug for clz_Torappu_StorylineConstData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StorylineConstDataT {
+    pub recommendHideGuideGroupId: Option<String>,
+    pub tutorialSelectStorylineId: Option<String>,
+    pub mainlineStorylineId: Option<String>,
+}
+impl Default for clz_Torappu_StorylineConstDataT {
+    fn default() -> Self {
+        Self {
+            recommendHideGuideGroupId: None,
+            tutorialSelectStorylineId: None,
+            mainlineStorylineId: None,
+        }
+    }
+}
+impl clz_Torappu_StorylineConstDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StorylineConstData<'b>> {
+        let recommendHideGuideGroupId = self
+            .recommendHideGuideGroupId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let tutorialSelectStorylineId = self
+            .tutorialSelectStorylineId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let mainlineStorylineId = self
+            .mainlineStorylineId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        clz_Torappu_StorylineConstData::create(
+            _fbb,
+            &clz_Torappu_StorylineConstDataArgs {
+                recommendHideGuideGroupId,
+                tutorialSelectStorylineId,
+                mainlineStorylineId,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_SixStarRuneDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -17654,7 +23341,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SixStarRuneData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -17684,6 +23371,17 @@ impl<'a> clz_Torappu_SixStarRuneData<'a> {
             builder.add_runeId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SixStarRuneDataT {
+        let runeId = self.runeId().map(|x| x.to_string());
+        let runeDesc = self.runeDesc().map(|x| x.to_string());
+        let runeKey = self.runeKey().map(|x| x.to_string());
+        clz_Torappu_SixStarRuneDataT {
+            runeId,
+            runeDesc,
+            runeKey,
+        }
     }
 
     #[inline]
@@ -17759,6 +23457,31 @@ impl<'a> Default for clz_Torappu_SixStarRuneDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SixStarRuneData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SixStarRuneData", 3)?;
+        if let Some(f) = self.runeId() {
+            s.serialize_field("runeId", &f)?;
+        } else {
+            s.skip_field("runeId")?;
+        }
+        if let Some(f) = self.runeDesc() {
+            s.serialize_field("runeDesc", &f)?;
+        } else {
+            s.skip_field("runeDesc")?;
+        }
+        if let Some(f) = self.runeKey() {
+            s.serialize_field("runeKey", &f)?;
+        } else {
+            s.skip_field("runeKey")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SixStarRuneDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -17811,6 +23534,40 @@ impl core::fmt::Debug for clz_Torappu_SixStarRuneData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SixStarRuneDataT {
+    pub runeId: Option<String>,
+    pub runeDesc: Option<String>,
+    pub runeKey: Option<String>,
+}
+impl Default for clz_Torappu_SixStarRuneDataT {
+    fn default() -> Self {
+        Self {
+            runeId: None,
+            runeDesc: None,
+            runeKey: None,
+        }
+    }
+}
+impl clz_Torappu_SixStarRuneDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SixStarRuneData<'b>> {
+        let runeId = self.runeId.as_ref().map(|x| _fbb.create_string(x));
+        let runeDesc = self.runeDesc.as_ref().map(|x| _fbb.create_string(x));
+        let runeKey = self.runeKey.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_SixStarRuneData::create(
+            _fbb,
+            &clz_Torappu_SixStarRuneDataArgs {
+                runeId,
+                runeDesc,
+                runeKey,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SixStarRuneDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -17823,7 +23580,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SixStarRuneData<'
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -17849,6 +23606,15 @@ impl<'a> dict__string__clz_Torappu_SixStarRuneData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SixStarRuneDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SixStarRuneDataT { key, value }
     }
 
     #[inline]
@@ -17922,6 +23688,22 @@ impl<'a> Default for dict__string__clz_Torappu_SixStarRuneDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SixStarRuneData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_SixStarRuneData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SixStarRuneDataBuilder<
     'a: 'b,
     'b,
@@ -17975,6 +23757,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SixStarRuneData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SixStarRuneDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SixStarRuneDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SixStarRuneDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SixStarRuneDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SixStarRuneData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SixStarRuneData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SixStarRuneDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SixStarMilestoneItemDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -17987,7 +23799,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SixStarMilestoneItemData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -18031,6 +23843,29 @@ impl<'a> clz_Torappu_SixStarMilestoneItemData<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SixStarMilestoneItemDataT {
+        let id = self.id().map(|x| x.to_string());
+        let sortId = self.sortId();
+        let nodePoint = self.nodePoint();
+        let rewardType = self.rewardType();
+        let unlockStageFog = self.unlockStageFog().map(|x| x.to_string());
+        let unlockStageId = self.unlockStageId().map(|x| x.to_string());
+        let unlockStageName = self.unlockStageName().map(|x| x.to_string());
+        let rewardList = self
+            .rewardList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_SixStarMilestoneItemDataT {
+            id,
+            sortId,
+            nodePoint,
+            rewardType,
+            unlockStageFog,
+            unlockStageId,
+            unlockStageName,
+            rewardList,
+        }
     }
 
     #[inline]
@@ -18201,6 +24036,44 @@ impl<'a> Default for clz_Torappu_SixStarMilestoneItemDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SixStarMilestoneItemData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SixStarMilestoneItemData", 8)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        s.serialize_field("sortId", &self.sortId())?;
+        s.serialize_field("nodePoint", &self.nodePoint())?;
+        s.serialize_field("rewardType", &self.rewardType())?;
+        if let Some(f) = self.unlockStageFog() {
+            s.serialize_field("unlockStageFog", &f)?;
+        } else {
+            s.skip_field("unlockStageFog")?;
+        }
+        if let Some(f) = self.unlockStageId() {
+            s.serialize_field("unlockStageId", &f)?;
+        } else {
+            s.skip_field("unlockStageId")?;
+        }
+        if let Some(f) = self.unlockStageName() {
+            s.serialize_field("unlockStageName", &f)?;
+        } else {
+            s.skip_field("unlockStageName")?;
+        }
+        if let Some(f) = self.rewardList() {
+            s.serialize_field("rewardList", &f)?;
+        } else {
+            s.skip_field("rewardList")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SixStarMilestoneItemDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -18301,6 +24174,63 @@ impl core::fmt::Debug for clz_Torappu_SixStarMilestoneItemData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SixStarMilestoneItemDataT {
+    pub id: Option<String>,
+    pub sortId: i32,
+    pub nodePoint: i32,
+    pub rewardType: enum__Torappu_SixStarMilestoneRewardType,
+    pub unlockStageFog: Option<String>,
+    pub unlockStageId: Option<String>,
+    pub unlockStageName: Option<String>,
+    pub rewardList: Option<Vec<clz_Torappu_ItemBundleT>>,
+}
+impl Default for clz_Torappu_SixStarMilestoneItemDataT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            sortId: 0,
+            nodePoint: 0,
+            rewardType: enum__Torappu_SixStarMilestoneRewardType::UNLOCK_STAGE,
+            unlockStageFog: None,
+            unlockStageId: None,
+            unlockStageName: None,
+            rewardList: None,
+        }
+    }
+}
+impl clz_Torappu_SixStarMilestoneItemDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SixStarMilestoneItemData<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        let nodePoint = self.nodePoint;
+        let rewardType = self.rewardType;
+        let unlockStageFog = self.unlockStageFog.as_ref().map(|x| _fbb.create_string(x));
+        let unlockStageId = self.unlockStageId.as_ref().map(|x| _fbb.create_string(x));
+        let unlockStageName = self.unlockStageName.as_ref().map(|x| _fbb.create_string(x));
+        let rewardList = self.rewardList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SixStarMilestoneItemData::create(
+            _fbb,
+            &clz_Torappu_SixStarMilestoneItemDataArgs {
+                id,
+                sortId,
+                nodePoint,
+                rewardType,
+                unlockStageFog,
+                unlockStageId,
+                unlockStageName,
+                rewardList,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_SixStarMilestoneGroupDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -18313,7 +24243,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SixStarMilestoneGroupData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -18343,6 +24273,21 @@ impl<'a> clz_Torappu_SixStarMilestoneGroupData<'a> {
             builder.add_groupId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SixStarMilestoneGroupDataT {
+        let groupId = self.groupId().map(|x| x.to_string());
+        let stageIdList = self
+            .stageIdList()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let milestoneDataList = self
+            .milestoneDataList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_SixStarMilestoneGroupDataT {
+            groupId,
+            stageIdList,
+            milestoneDataList,
+        }
     }
 
     #[inline]
@@ -18443,6 +24388,31 @@ impl<'a> Default for clz_Torappu_SixStarMilestoneGroupDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SixStarMilestoneGroupData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_SixStarMilestoneGroupData", 3)?;
+        if let Some(f) = self.groupId() {
+            s.serialize_field("groupId", &f)?;
+        } else {
+            s.skip_field("groupId")?;
+        }
+        if let Some(f) = self.stageIdList() {
+            s.serialize_field("stageIdList", &f)?;
+        } else {
+            s.skip_field("stageIdList")?;
+        }
+        if let Some(f) = self.milestoneDataList() {
+            s.serialize_field("milestoneDataList", &f)?;
+        } else {
+            s.skip_field("milestoneDataList")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SixStarMilestoneGroupDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -18511,6 +24481,46 @@ impl core::fmt::Debug for clz_Torappu_SixStarMilestoneGroupData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SixStarMilestoneGroupDataT {
+    pub groupId: Option<String>,
+    pub stageIdList: Option<Vec<String>>,
+    pub milestoneDataList: Option<Vec<clz_Torappu_SixStarMilestoneItemDataT>>,
+}
+impl Default for clz_Torappu_SixStarMilestoneGroupDataT {
+    fn default() -> Self {
+        Self {
+            groupId: None,
+            stageIdList: None,
+            milestoneDataList: None,
+        }
+    }
+}
+impl clz_Torappu_SixStarMilestoneGroupDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SixStarMilestoneGroupData<'b>> {
+        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
+        let stageIdList = self.stageIdList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let milestoneDataList = self.milestoneDataList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SixStarMilestoneGroupData::create(
+            _fbb,
+            &clz_Torappu_SixStarMilestoneGroupDataArgs {
+                groupId,
+                stageIdList,
+                milestoneDataList,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SixStarMilestoneGroupDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -18523,7 +24533,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_SixStarMilestoneG
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -18549,6 +24559,15 @@ impl<'a> dict__string__clz_Torappu_SixStarMilestoneGroupData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SixStarMilestoneGroupDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SixStarMilestoneGroupDataT { key, value }
     }
 
     #[inline]
@@ -18625,6 +24644,23 @@ impl<'a> Default for dict__string__clz_Torappu_SixStarMilestoneGroupDataArgs<'a>
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SixStarMilestoneGroupData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("dict__string__clz_Torappu_SixStarMilestoneGroupData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SixStarMilestoneGroupDataBuilder<
     'a: 'b,
     'b,
@@ -18686,6 +24722,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SixStarMilestoneGroupData<'_
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SixStarMilestoneGroupDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SixStarMilestoneGroupDataT>>,
+}
+impl Default for dict__string__clz_Torappu_SixStarMilestoneGroupDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SixStarMilestoneGroupDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SixStarMilestoneGroupData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SixStarMilestoneGroupData::create(
+            _fbb,
+            &dict__string__clz_Torappu_SixStarMilestoneGroupDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SixStarLinkedStageCompatibleInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -18698,7 +24764,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SixStarLinkedStageCompatibleInf
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -18726,6 +24792,19 @@ impl<'a> clz_Torappu_SixStarLinkedStageCompatibleInfo<'a> {
             builder.add_stageId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SixStarLinkedStageCompatibleInfoT {
+        let stageId = self.stageId().map(|x| x.to_string());
+        let apCost = self.apCost();
+        let apFailReturn = self.apFailReturn();
+        let dropType = self.dropType();
+        clz_Torappu_SixStarLinkedStageCompatibleInfoT {
+            stageId,
+            apCost,
+            apFailReturn,
+            dropType,
+        }
     }
 
     #[inline]
@@ -18822,6 +24901,25 @@ impl<'a> Default for clz_Torappu_SixStarLinkedStageCompatibleInfoArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SixStarLinkedStageCompatibleInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_SixStarLinkedStageCompatibleInfo", 4)?;
+        if let Some(f) = self.stageId() {
+            s.serialize_field("stageId", &f)?;
+        } else {
+            s.skip_field("stageId")?;
+        }
+        s.serialize_field("apCost", &self.apCost())?;
+        s.serialize_field("apFailReturn", &self.apFailReturn())?;
+        s.serialize_field("dropType", &self.dropType())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SixStarLinkedStageCompatibleInfoBuilder<
     'a: 'b,
     'b,
@@ -18894,6 +24992,44 @@ impl core::fmt::Debug for clz_Torappu_SixStarLinkedStageCompatibleInfo<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SixStarLinkedStageCompatibleInfoT {
+    pub stageId: Option<String>,
+    pub apCost: i32,
+    pub apFailReturn: i32,
+    pub dropType: enum__Torappu_SixStarStageCompatibleDropType,
+}
+impl Default for clz_Torappu_SixStarLinkedStageCompatibleInfoT {
+    fn default() -> Self {
+        Self {
+            stageId: None,
+            apCost: 0,
+            apFailReturn: 0,
+            dropType: enum__Torappu_SixStarStageCompatibleDropType::COMPLETE_ONLY,
+        }
+    }
+}
+impl clz_Torappu_SixStarLinkedStageCompatibleInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SixStarLinkedStageCompatibleInfo<'b>> {
+        let stageId = self.stageId.as_ref().map(|x| _fbb.create_string(x));
+        let apCost = self.apCost;
+        let apFailReturn = self.apFailReturn;
+        let dropType = self.dropType;
+        clz_Torappu_SixStarLinkedStageCompatibleInfo::create(
+            _fbb,
+            &clz_Torappu_SixStarLinkedStageCompatibleInfoArgs {
+                stageId,
+                apCost,
+                apFailReturn,
+                dropType,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_SixStarLinkedStageCompatibleInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -18908,7 +25044,7 @@ impl<'a> flatbuffers::Follow<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -18936,6 +25072,15 @@ impl<'a> dict__string__clz_Torappu_SixStarLinkedStageCompatibleInfo<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_SixStarLinkedStageCompatibleInfoT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_SixStarLinkedStageCompatibleInfoT { key, value }
     }
 
     #[inline]
@@ -19008,6 +25153,25 @@ impl<'a> Default for dict__string__clz_Torappu_SixStarLinkedStageCompatibleInfoA
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_SixStarLinkedStageCompatibleInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct(
+            "dict__string__clz_Torappu_SixStarLinkedStageCompatibleInfo",
+            2,
+        )?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_SixStarLinkedStageCompatibleInfoBuilder<
     'a: 'b,
     'b,
@@ -19066,6 +25230,37 @@ impl core::fmt::Debug for dict__string__clz_Torappu_SixStarLinkedStageCompatible
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_SixStarLinkedStageCompatibleInfoT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_SixStarLinkedStageCompatibleInfoT>>,
+}
+impl Default for dict__string__clz_Torappu_SixStarLinkedStageCompatibleInfoT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_SixStarLinkedStageCompatibleInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_SixStarLinkedStageCompatibleInfo<'b>>
+    {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_SixStarLinkedStageCompatibleInfo::create(
+            _fbb,
+            &dict__string__clz_Torappu_SixStarLinkedStageCompatibleInfoArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_ConditionalDropInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -19078,7 +25273,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ConditionalDropInfo<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -19106,6 +25301,19 @@ impl<'a> clz_Torappu_ConditionalDropInfo<'a> {
             builder.add_template(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ConditionalDropInfoT {
+        let template = self.template().map(|x| x.to_string());
+        let param = self
+            .param()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let countLimit = self.countLimit();
+        clz_Torappu_ConditionalDropInfoT {
+            template,
+            param,
+            countLimit,
+        }
     }
 
     #[inline]
@@ -19183,6 +25391,27 @@ impl<'a> Default for clz_Torappu_ConditionalDropInfoArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ConditionalDropInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ConditionalDropInfo", 3)?;
+        if let Some(f) = self.template() {
+            s.serialize_field("template", &f)?;
+        } else {
+            s.skip_field("template")?;
+        }
+        if let Some(f) = self.param() {
+            s.serialize_field("param", &f)?;
+        } else {
+            s.skip_field("param")?;
+        }
+        s.serialize_field("countLimit", &self.countLimit())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ConditionalDropInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -19241,6 +25470,43 @@ impl core::fmt::Debug for clz_Torappu_ConditionalDropInfo<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ConditionalDropInfoT {
+    pub template: Option<String>,
+    pub param: Option<Vec<String>>,
+    pub countLimit: i32,
+}
+impl Default for clz_Torappu_ConditionalDropInfoT {
+    fn default() -> Self {
+        Self {
+            template: None,
+            param: None,
+            countLimit: 0,
+        }
+    }
+}
+impl clz_Torappu_ConditionalDropInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ConditionalDropInfo<'b>> {
+        let template = self.template.as_ref().map(|x| _fbb.create_string(x));
+        let param = self.param.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let countLimit = self.countLimit;
+        clz_Torappu_ConditionalDropInfo::create(
+            _fbb,
+            &clz_Torappu_ConditionalDropInfoArgs {
+                template,
+                param,
+                countLimit,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_ConditionalDropInfoOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -19253,7 +25519,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_ConditionalDropIn
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -19279,6 +25545,15 @@ impl<'a> dict__string__clz_Torappu_ConditionalDropInfo<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_ConditionalDropInfoT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_ConditionalDropInfoT { key, value }
     }
 
     #[inline]
@@ -19352,6 +25627,23 @@ impl<'a> Default for dict__string__clz_Torappu_ConditionalDropInfoArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_ConditionalDropInfo<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("dict__string__clz_Torappu_ConditionalDropInfo", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_ConditionalDropInfoBuilder<
     'a: 'b,
     'b,
@@ -19413,6 +25705,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_ConditionalDropInfo<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_ConditionalDropInfoT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_ConditionalDropInfoT>>,
+}
+impl Default for dict__string__clz_Torappu_ConditionalDropInfoT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_ConditionalDropInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ConditionalDropInfo<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_ConditionalDropInfo::create(
+            _fbb,
+            &dict__string__clz_Torappu_ConditionalDropInfoArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_StageTableOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -19425,7 +25747,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StageTable<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -19555,6 +25877,121 @@ impl<'a> clz_Torappu_StageTable<'a> {
             builder.add_stages(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_StageTableT {
+        let stages = self
+            .stages()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let runeStageGroups = self
+            .runeStageGroups()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let mapThemes = self
+            .mapThemes()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let tileInfo = self
+            .tileInfo()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let forceOpenTable = self
+            .forceOpenTable()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let timelyStageDropInfo = self
+            .timelyStageDropInfo()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let overrideDropInfo = self
+            .overrideDropInfo()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let overrideUnlockInfo = self
+            .overrideUnlockInfo()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let timelyTable = self
+            .timelyTable()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let stageValidInfo = self
+            .stageValidInfo()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let stageFogInfo = self
+            .stageFogInfo()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let stageStartConds = self
+            .stageStartConds()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let diffGroupTable = self
+            .diffGroupTable()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let storyStageShowGroup = self
+            .storyStageShowGroup()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let specialBattleFinishStageData = self
+            .specialBattleFinishStageData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let recordRewardData = self
+            .recordRewardData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let apProtectZoneInfo = self
+            .apProtectZoneInfo()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let antiSpoilerDict = self
+            .antiSpoilerDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let actCustomStageDatas = self
+            .actCustomStageDatas()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let spNormalStageIdFor4StarList = self
+            .spNormalStageIdFor4StarList()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let storylines = self
+            .storylines()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let storylineStorySets = self
+            .storylineStorySets()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let storylineTags = self
+            .storylineTags()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let storylineConst = self.storylineConst().map(|x| Box::new(x.unpack()));
+        let sixStarRuneData = self
+            .sixStarRuneData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let sixStarMilestoneInfo = self
+            .sixStarMilestoneInfo()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let sixStarCompatibleInfo = self
+            .sixStarCompatibleInfo()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let conditionalDropInfo = self
+            .conditionalDropInfo()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_StageTableT {
+            stages,
+            runeStageGroups,
+            mapThemes,
+            tileInfo,
+            forceOpenTable,
+            timelyStageDropInfo,
+            overrideDropInfo,
+            overrideUnlockInfo,
+            timelyTable,
+            stageValidInfo,
+            stageFogInfo,
+            stageStartConds,
+            diffGroupTable,
+            storyStageShowGroup,
+            specialBattleFinishStageData,
+            recordRewardData,
+            apProtectZoneInfo,
+            antiSpoilerDict,
+            actCustomStageDatas,
+            spNormalStageIdFor4StarList,
+            storylines,
+            storylineStorySets,
+            storylineTags,
+            storylineConst,
+            sixStarRuneData,
+            sixStarMilestoneInfo,
+            sixStarCompatibleInfo,
+            conditionalDropInfo,
+        }
     }
 
     #[inline]
@@ -20231,6 +26668,156 @@ impl<'a> Default for clz_Torappu_StageTableArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_StageTable<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_StageTable", 28)?;
+        if let Some(f) = self.stages() {
+            s.serialize_field("stages", &f)?;
+        } else {
+            s.skip_field("stages")?;
+        }
+        if let Some(f) = self.runeStageGroups() {
+            s.serialize_field("runeStageGroups", &f)?;
+        } else {
+            s.skip_field("runeStageGroups")?;
+        }
+        if let Some(f) = self.mapThemes() {
+            s.serialize_field("mapThemes", &f)?;
+        } else {
+            s.skip_field("mapThemes")?;
+        }
+        if let Some(f) = self.tileInfo() {
+            s.serialize_field("tileInfo", &f)?;
+        } else {
+            s.skip_field("tileInfo")?;
+        }
+        if let Some(f) = self.forceOpenTable() {
+            s.serialize_field("forceOpenTable", &f)?;
+        } else {
+            s.skip_field("forceOpenTable")?;
+        }
+        if let Some(f) = self.timelyStageDropInfo() {
+            s.serialize_field("timelyStageDropInfo", &f)?;
+        } else {
+            s.skip_field("timelyStageDropInfo")?;
+        }
+        if let Some(f) = self.overrideDropInfo() {
+            s.serialize_field("overrideDropInfo", &f)?;
+        } else {
+            s.skip_field("overrideDropInfo")?;
+        }
+        if let Some(f) = self.overrideUnlockInfo() {
+            s.serialize_field("overrideUnlockInfo", &f)?;
+        } else {
+            s.skip_field("overrideUnlockInfo")?;
+        }
+        if let Some(f) = self.timelyTable() {
+            s.serialize_field("timelyTable", &f)?;
+        } else {
+            s.skip_field("timelyTable")?;
+        }
+        if let Some(f) = self.stageValidInfo() {
+            s.serialize_field("stageValidInfo", &f)?;
+        } else {
+            s.skip_field("stageValidInfo")?;
+        }
+        if let Some(f) = self.stageFogInfo() {
+            s.serialize_field("stageFogInfo", &f)?;
+        } else {
+            s.skip_field("stageFogInfo")?;
+        }
+        if let Some(f) = self.stageStartConds() {
+            s.serialize_field("stageStartConds", &f)?;
+        } else {
+            s.skip_field("stageStartConds")?;
+        }
+        if let Some(f) = self.diffGroupTable() {
+            s.serialize_field("diffGroupTable", &f)?;
+        } else {
+            s.skip_field("diffGroupTable")?;
+        }
+        if let Some(f) = self.storyStageShowGroup() {
+            s.serialize_field("storyStageShowGroup", &f)?;
+        } else {
+            s.skip_field("storyStageShowGroup")?;
+        }
+        if let Some(f) = self.specialBattleFinishStageData() {
+            s.serialize_field("specialBattleFinishStageData", &f)?;
+        } else {
+            s.skip_field("specialBattleFinishStageData")?;
+        }
+        if let Some(f) = self.recordRewardData() {
+            s.serialize_field("recordRewardData", &f)?;
+        } else {
+            s.skip_field("recordRewardData")?;
+        }
+        if let Some(f) = self.apProtectZoneInfo() {
+            s.serialize_field("apProtectZoneInfo", &f)?;
+        } else {
+            s.skip_field("apProtectZoneInfo")?;
+        }
+        if let Some(f) = self.antiSpoilerDict() {
+            s.serialize_field("antiSpoilerDict", &f)?;
+        } else {
+            s.skip_field("antiSpoilerDict")?;
+        }
+        if let Some(f) = self.actCustomStageDatas() {
+            s.serialize_field("actCustomStageDatas", &f)?;
+        } else {
+            s.skip_field("actCustomStageDatas")?;
+        }
+        if let Some(f) = self.spNormalStageIdFor4StarList() {
+            s.serialize_field("spNormalStageIdFor4StarList", &f)?;
+        } else {
+            s.skip_field("spNormalStageIdFor4StarList")?;
+        }
+        if let Some(f) = self.storylines() {
+            s.serialize_field("storylines", &f)?;
+        } else {
+            s.skip_field("storylines")?;
+        }
+        if let Some(f) = self.storylineStorySets() {
+            s.serialize_field("storylineStorySets", &f)?;
+        } else {
+            s.skip_field("storylineStorySets")?;
+        }
+        if let Some(f) = self.storylineTags() {
+            s.serialize_field("storylineTags", &f)?;
+        } else {
+            s.skip_field("storylineTags")?;
+        }
+        if let Some(f) = self.storylineConst() {
+            s.serialize_field("storylineConst", &f)?;
+        } else {
+            s.skip_field("storylineConst")?;
+        }
+        if let Some(f) = self.sixStarRuneData() {
+            s.serialize_field("sixStarRuneData", &f)?;
+        } else {
+            s.skip_field("sixStarRuneData")?;
+        }
+        if let Some(f) = self.sixStarMilestoneInfo() {
+            s.serialize_field("sixStarMilestoneInfo", &f)?;
+        } else {
+            s.skip_field("sixStarMilestoneInfo")?;
+        }
+        if let Some(f) = self.sixStarCompatibleInfo() {
+            s.serialize_field("sixStarCompatibleInfo", &f)?;
+        } else {
+            s.skip_field("sixStarCompatibleInfo")?;
+        }
+        if let Some(f) = self.conditionalDropInfo() {
+            s.serialize_field("conditionalDropInfo", &f)?;
+        } else {
+            s.skip_field("conditionalDropInfo")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_StageTableBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -20704,6 +27291,227 @@ impl core::fmt::Debug for clz_Torappu_StageTable<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_StageTableT {
+    pub stages: Option<Vec<dict__string__clz_Torappu_StageDataT>>,
+    pub runeStageGroups: Option<Vec<dict__string__clz_Torappu_RuneStageGroupDataT>>,
+    pub mapThemes: Option<Vec<dict__string__clz_Torappu_MapThemeDataT>>,
+    pub tileInfo: Option<Vec<dict__string__clz_Torappu_TileAppendInfoT>>,
+    pub forceOpenTable: Option<Vec<dict__string__clz_Torappu_WeeklyForceOpenTableT>>,
+    pub timelyStageDropInfo: Option<Vec<dict__string__clz_Torappu_TimelyDropTimeInfoT>>,
+    pub overrideDropInfo: Option<Vec<dict__string__clz_Torappu_OverrideDropInfoT>>,
+    pub overrideUnlockInfo: Option<Vec<dict__string__clz_Torappu_OverrideUnlockInfoT>>,
+    pub timelyTable: Option<Vec<dict__string__clz_Torappu_TimelyDropInfoT>>,
+    pub stageValidInfo: Option<Vec<dict__string__clz_Torappu_StageValidInfoT>>,
+    pub stageFogInfo: Option<Vec<dict__string__clz_Torappu_StageFogInfoT>>,
+    pub stageStartConds: Option<Vec<dict__string__clz_Torappu_StageStartCondT>>,
+    pub diffGroupTable: Option<Vec<dict__string__clz_Torappu_StageDiffGroupTableT>>,
+    pub storyStageShowGroup: Option<
+        Vec<
+            dict__string__list_dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroupT,
+        >,
+    >,
+    pub specialBattleFinishStageData:
+        Option<Vec<dict__string__clz_Torappu_SpecialBattleFinishStageDataT>>,
+    pub recordRewardData: Option<Vec<dict__string__clz_Torappu_RecordRewardServerDataT>>,
+    pub apProtectZoneInfo: Option<Vec<dict__string__clz_Torappu_ApProtectZoneInfoT>>,
+    pub antiSpoilerDict: Option<Vec<dict__string__list_stringT>>,
+    pub actCustomStageDatas: Option<Vec<dict__string__clz_Torappu_ActCustomStageDataT>>,
+    pub spNormalStageIdFor4StarList: Option<Vec<String>>,
+    pub storylines: Option<Vec<dict__string__clz_Torappu_StorylineDataT>>,
+    pub storylineStorySets: Option<Vec<dict__string__clz_Torappu_StorylineStorySetDataT>>,
+    pub storylineTags: Option<Vec<dict__string__clz_Torappu_StorylineTagDataT>>,
+    pub storylineConst: Option<Box<clz_Torappu_StorylineConstDataT>>,
+    pub sixStarRuneData: Option<Vec<dict__string__clz_Torappu_SixStarRuneDataT>>,
+    pub sixStarMilestoneInfo: Option<Vec<dict__string__clz_Torappu_SixStarMilestoneGroupDataT>>,
+    pub sixStarCompatibleInfo:
+        Option<Vec<dict__string__clz_Torappu_SixStarLinkedStageCompatibleInfoT>>,
+    pub conditionalDropInfo: Option<Vec<dict__string__clz_Torappu_ConditionalDropInfoT>>,
+}
+impl Default for clz_Torappu_StageTableT {
+    fn default() -> Self {
+        Self {
+            stages: None,
+            runeStageGroups: None,
+            mapThemes: None,
+            tileInfo: None,
+            forceOpenTable: None,
+            timelyStageDropInfo: None,
+            overrideDropInfo: None,
+            overrideUnlockInfo: None,
+            timelyTable: None,
+            stageValidInfo: None,
+            stageFogInfo: None,
+            stageStartConds: None,
+            diffGroupTable: None,
+            storyStageShowGroup: None,
+            specialBattleFinishStageData: None,
+            recordRewardData: None,
+            apProtectZoneInfo: None,
+            antiSpoilerDict: None,
+            actCustomStageDatas: None,
+            spNormalStageIdFor4StarList: None,
+            storylines: None,
+            storylineStorySets: None,
+            storylineTags: None,
+            storylineConst: None,
+            sixStarRuneData: None,
+            sixStarMilestoneInfo: None,
+            sixStarCompatibleInfo: None,
+            conditionalDropInfo: None,
+        }
+    }
+}
+impl clz_Torappu_StageTableT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_StageTable<'b>> {
+        let stages = self.stages.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let runeStageGroups = self.runeStageGroups.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let mapThemes = self.mapThemes.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let tileInfo = self.tileInfo.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let forceOpenTable = self.forceOpenTable.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let timelyStageDropInfo = self.timelyStageDropInfo.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let overrideDropInfo = self.overrideDropInfo.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let overrideUnlockInfo = self.overrideUnlockInfo.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let timelyTable = self.timelyTable.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let stageValidInfo = self.stageValidInfo.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let stageFogInfo = self.stageFogInfo.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let stageStartConds = self.stageStartConds.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let diffGroupTable = self.diffGroupTable.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let storyStageShowGroup = self.storyStageShowGroup.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let specialBattleFinishStageData = self.specialBattleFinishStageData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let recordRewardData = self.recordRewardData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let apProtectZoneInfo = self.apProtectZoneInfo.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let antiSpoilerDict = self.antiSpoilerDict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let actCustomStageDatas = self.actCustomStageDatas.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let spNormalStageIdFor4StarList = self.spNormalStageIdFor4StarList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let storylines = self.storylines.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let storylineStorySets = self.storylineStorySets.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let storylineTags = self.storylineTags.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let storylineConst = self.storylineConst.as_ref().map(|x| x.pack(_fbb));
+        let sixStarRuneData = self.sixStarRuneData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let sixStarMilestoneInfo = self.sixStarMilestoneInfo.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let sixStarCompatibleInfo = self.sixStarCompatibleInfo.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let conditionalDropInfo = self.conditionalDropInfo.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_StageTable::create(
+            _fbb,
+            &clz_Torappu_StageTableArgs {
+                stages,
+                runeStageGroups,
+                mapThemes,
+                tileInfo,
+                forceOpenTable,
+                timelyStageDropInfo,
+                overrideDropInfo,
+                overrideUnlockInfo,
+                timelyTable,
+                stageValidInfo,
+                stageFogInfo,
+                stageStartConds,
+                diffGroupTable,
+                storyStageShowGroup,
+                specialBattleFinishStageData,
+                recordRewardData,
+                apProtectZoneInfo,
+                antiSpoilerDict,
+                actCustomStageDatas,
+                spNormalStageIdFor4StarList,
+                storylines,
+                storylineStorySets,
+                storylineTags,
+                storylineConst,
+                sixStarRuneData,
+                sixStarMilestoneInfo,
+                sixStarCompatibleInfo,
+                conditionalDropInfo,
+            },
+        )
+    }
+}
 #[inline]
 /// Verifies that a buffer of bytes contains a `clz_Torappu_StageTable`
 /// and returns it.
@@ -20759,7 +27567,7 @@ pub fn size_prefixed_root_as_clz_torappu_stage_table_with_opts<'b, 'o>(
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_StageTable`.
 pub unsafe fn root_as_clz_torappu_stage_table_unchecked(buf: &[u8]) -> clz_Torappu_StageTable {
-    flatbuffers::root_unchecked::<clz_Torappu_StageTable>(buf)
+    unsafe { flatbuffers::root_unchecked::<clz_Torappu_StageTable>(buf) }
 }
 #[inline]
 /// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_StageTable and returns it.
@@ -20768,7 +27576,7 @@ pub unsafe fn root_as_clz_torappu_stage_table_unchecked(buf: &[u8]) -> clz_Torap
 pub unsafe fn size_prefixed_root_as_clz_torappu_stage_table_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_StageTable {
-    flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_StageTable>(buf)
+    unsafe { flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_StageTable>(buf) }
 }
 #[inline]
 pub fn finish_clz_torappu_stage_table_buffer<'a, 'b, A: flatbuffers::Allocator + 'a>(

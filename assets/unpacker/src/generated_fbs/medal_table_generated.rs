@@ -5,6 +5,9 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+use self::serde::ser::{Serialize, SerializeStruct, Serializer};
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
@@ -76,11 +79,24 @@ impl core::fmt::Debug for enum__Torappu_MedalRarity {
         }
     }
 }
+impl Serialize for enum__Torappu_MedalRarity {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_MedalRarity",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_MedalRarity {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -89,7 +105,9 @@ impl flatbuffers::Push for enum__Torappu_MedalRarity {
     type Output = enum__Torappu_MedalRarity;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -174,11 +192,24 @@ impl core::fmt::Debug for enum__Torappu_MedalExpireType {
         }
     }
 }
+impl Serialize for enum__Torappu_MedalExpireType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_MedalExpireType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_MedalExpireType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -187,7 +218,9 @@ impl flatbuffers::Push for enum__Torappu_MedalExpireType {
     type Output = enum__Torappu_MedalExpireType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -625,11 +658,24 @@ impl core::fmt::Debug for enum__Torappu_ItemType {
         }
     }
 }
+impl Serialize for enum__Torappu_ItemType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_ItemType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ItemType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -638,7 +684,9 @@ impl flatbuffers::Push for enum__Torappu_ItemType {
     type Output = enum__Torappu_ItemType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -680,7 +728,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_MedalExpireTime<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -704,6 +752,13 @@ impl<'a> clz_Torappu_MedalExpireTime<'a> {
         builder.add_start(args.start);
         builder.add_type_(args.type_);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_MedalExpireTimeT {
+        let start = self.start();
+        let end = self.end();
+        let type_ = self.type_();
+        clz_Torappu_MedalExpireTimeT { start, end, type_ }
     }
 
     #[inline]
@@ -775,6 +830,19 @@ impl<'a> Default for clz_Torappu_MedalExpireTimeArgs {
     }
 }
 
+impl Serialize for clz_Torappu_MedalExpireTime<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_MedalExpireTime", 3)?;
+        s.serialize_field("start", &self.start())?;
+        s.serialize_field("end", &self.end())?;
+        s.serialize_field("type_", &self.type_())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_MedalExpireTimeBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -824,6 +892,36 @@ impl core::fmt::Debug for clz_Torappu_MedalExpireTime<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_MedalExpireTimeT {
+    pub start: i64,
+    pub end: i64,
+    pub type_: enum__Torappu_MedalExpireType,
+}
+impl Default for clz_Torappu_MedalExpireTimeT {
+    fn default() -> Self {
+        Self {
+            start: 0,
+            end: 0,
+            type_: enum__Torappu_MedalExpireType::NONE,
+        }
+    }
+}
+impl clz_Torappu_MedalExpireTimeT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_MedalExpireTime<'b>> {
+        let start = self.start;
+        let end = self.end;
+        let type_ = self.type_;
+        clz_Torappu_MedalExpireTime::create(
+            _fbb,
+            &clz_Torappu_MedalExpireTimeArgs { start, end, type_ },
+        )
+    }
+}
 pub enum clz_Torappu_ItemBundleOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -836,7 +934,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ItemBundle<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -862,6 +960,13 @@ impl<'a> clz_Torappu_ItemBundle<'a> {
             builder.add_id(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ItemBundleT {
+        let id = self.id().map(|x| x.to_string());
+        let count = self.count();
+        let type_ = self.type_();
+        clz_Torappu_ItemBundleT { id, count, type_ }
     }
 
     #[inline]
@@ -932,6 +1037,23 @@ impl<'a> Default for clz_Torappu_ItemBundleArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_ItemBundle<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_ItemBundle", 3)?;
+        if let Some(f) = self.id() {
+            s.serialize_field("id", &f)?;
+        } else {
+            s.skip_field("id")?;
+        }
+        s.serialize_field("count", &self.count())?;
+        s.serialize_field("type_", &self.type_())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_ItemBundleBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -981,6 +1103,33 @@ impl core::fmt::Debug for clz_Torappu_ItemBundle<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ItemBundleT {
+    pub id: Option<String>,
+    pub count: i32,
+    pub type_: enum__Torappu_ItemType,
+}
+impl Default for clz_Torappu_ItemBundleT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            count: 0,
+            type_: enum__Torappu_ItemType::NONE,
+        }
+    }
+}
+impl clz_Torappu_ItemBundleT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ItemBundle<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let count = self.count;
+        let type_ = self.type_;
+        clz_Torappu_ItemBundle::create(_fbb, &clz_Torappu_ItemBundleArgs { id, count, type_ })
+    }
+}
 pub enum clz_Torappu_MedalRewardGroupDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -993,7 +1142,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_MedalRewardGroupData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1021,6 +1170,19 @@ impl<'a> clz_Torappu_MedalRewardGroupData<'a> {
             builder.add_groupId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_MedalRewardGroupDataT {
+        let groupId = self.groupId().map(|x| x.to_string());
+        let slotId = self.slotId();
+        let itemList = self
+            .itemList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_MedalRewardGroupDataT {
+            groupId,
+            slotId,
+            itemList,
+        }
     }
 
     #[inline]
@@ -1099,6 +1261,27 @@ impl<'a> Default for clz_Torappu_MedalRewardGroupDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_MedalRewardGroupData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_MedalRewardGroupData", 3)?;
+        if let Some(f) = self.groupId() {
+            s.serialize_field("groupId", &f)?;
+        } else {
+            s.skip_field("groupId")?;
+        }
+        s.serialize_field("slotId", &self.slotId())?;
+        if let Some(f) = self.itemList() {
+            s.serialize_field("itemList", &f)?;
+        } else {
+            s.skip_field("itemList")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_MedalRewardGroupDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1156,6 +1339,43 @@ impl core::fmt::Debug for clz_Torappu_MedalRewardGroupData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_MedalRewardGroupDataT {
+    pub groupId: Option<String>,
+    pub slotId: i32,
+    pub itemList: Option<Vec<clz_Torappu_ItemBundleT>>,
+}
+impl Default for clz_Torappu_MedalRewardGroupDataT {
+    fn default() -> Self {
+        Self {
+            groupId: None,
+            slotId: 0,
+            itemList: None,
+        }
+    }
+}
+impl clz_Torappu_MedalRewardGroupDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_MedalRewardGroupData<'b>> {
+        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
+        let slotId = self.slotId;
+        let itemList = self.itemList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_MedalRewardGroupData::create(
+            _fbb,
+            &clz_Torappu_MedalRewardGroupDataArgs {
+                groupId,
+                slotId,
+                itemList,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_MedalPerDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1168,7 +1388,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_MedalPerData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1242,6 +1462,51 @@ impl<'a> clz_Torappu_MedalPerData<'a> {
         }
         builder.add_isHidden(args.isHidden);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_MedalPerDataT {
+        let medalId = self.medalId().map(|x| x.to_string());
+        let medalName = self.medalName().map(|x| x.to_string());
+        let medalType = self.medalType().map(|x| x.to_string());
+        let slotId = self.slotId();
+        let preMedalIdList = self
+            .preMedalIdList()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let rarity = self.rarity();
+        let template = self.template().map(|x| x.to_string());
+        let unlockParam = self
+            .unlockParam()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let getMethod = self.getMethod().map(|x| x.to_string());
+        let description = self.description().map(|x| x.to_string());
+        let advancedMedal = self.advancedMedal().map(|x| x.to_string());
+        let originMedal = self.originMedal().map(|x| x.to_string());
+        let displayTime = self.displayTime();
+        let expireTimes = self
+            .expireTimes()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let medalRewardGroup = self
+            .medalRewardGroup()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let isHidden = self.isHidden();
+        clz_Torappu_MedalPerDataT {
+            medalId,
+            medalName,
+            medalType,
+            slotId,
+            preMedalIdList,
+            rarity,
+            template,
+            unlockParam,
+            getMethod,
+            description,
+            advancedMedal,
+            originMedal,
+            displayTime,
+            expireTimes,
+            medalRewardGroup,
+            isHidden,
+        }
     }
 
     #[inline]
@@ -1572,6 +1837,80 @@ impl<'a> Default for clz_Torappu_MedalPerDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_MedalPerData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_MedalPerData", 16)?;
+        if let Some(f) = self.medalId() {
+            s.serialize_field("medalId", &f)?;
+        } else {
+            s.skip_field("medalId")?;
+        }
+        if let Some(f) = self.medalName() {
+            s.serialize_field("medalName", &f)?;
+        } else {
+            s.skip_field("medalName")?;
+        }
+        if let Some(f) = self.medalType() {
+            s.serialize_field("medalType", &f)?;
+        } else {
+            s.skip_field("medalType")?;
+        }
+        s.serialize_field("slotId", &self.slotId())?;
+        if let Some(f) = self.preMedalIdList() {
+            s.serialize_field("preMedalIdList", &f)?;
+        } else {
+            s.skip_field("preMedalIdList")?;
+        }
+        s.serialize_field("rarity", &self.rarity())?;
+        if let Some(f) = self.template() {
+            s.serialize_field("template", &f)?;
+        } else {
+            s.skip_field("template")?;
+        }
+        if let Some(f) = self.unlockParam() {
+            s.serialize_field("unlockParam", &f)?;
+        } else {
+            s.skip_field("unlockParam")?;
+        }
+        if let Some(f) = self.getMethod() {
+            s.serialize_field("getMethod", &f)?;
+        } else {
+            s.skip_field("getMethod")?;
+        }
+        if let Some(f) = self.description() {
+            s.serialize_field("description", &f)?;
+        } else {
+            s.skip_field("description")?;
+        }
+        if let Some(f) = self.advancedMedal() {
+            s.serialize_field("advancedMedal", &f)?;
+        } else {
+            s.skip_field("advancedMedal")?;
+        }
+        if let Some(f) = self.originMedal() {
+            s.serialize_field("originMedal", &f)?;
+        } else {
+            s.skip_field("originMedal")?;
+        }
+        s.serialize_field("displayTime", &self.displayTime())?;
+        if let Some(f) = self.expireTimes() {
+            s.serialize_field("expireTimes", &f)?;
+        } else {
+            s.skip_field("expireTimes")?;
+        }
+        if let Some(f) = self.medalRewardGroup() {
+            s.serialize_field("medalRewardGroup", &f)?;
+        } else {
+            s.skip_field("medalRewardGroup")?;
+        }
+        s.serialize_field("isHidden", &self.isHidden())?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_MedalPerDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1746,6 +2085,104 @@ impl core::fmt::Debug for clz_Torappu_MedalPerData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_MedalPerDataT {
+    pub medalId: Option<String>,
+    pub medalName: Option<String>,
+    pub medalType: Option<String>,
+    pub slotId: i32,
+    pub preMedalIdList: Option<Vec<String>>,
+    pub rarity: enum__Torappu_MedalRarity,
+    pub template: Option<String>,
+    pub unlockParam: Option<Vec<String>>,
+    pub getMethod: Option<String>,
+    pub description: Option<String>,
+    pub advancedMedal: Option<String>,
+    pub originMedal: Option<String>,
+    pub displayTime: i64,
+    pub expireTimes: Option<Vec<clz_Torappu_MedalExpireTimeT>>,
+    pub medalRewardGroup: Option<Vec<clz_Torappu_MedalRewardGroupDataT>>,
+    pub isHidden: bool,
+}
+impl Default for clz_Torappu_MedalPerDataT {
+    fn default() -> Self {
+        Self {
+            medalId: None,
+            medalName: None,
+            medalType: None,
+            slotId: 0,
+            preMedalIdList: None,
+            rarity: enum__Torappu_MedalRarity::T1,
+            template: None,
+            unlockParam: None,
+            getMethod: None,
+            description: None,
+            advancedMedal: None,
+            originMedal: None,
+            displayTime: 0,
+            expireTimes: None,
+            medalRewardGroup: None,
+            isHidden: false,
+        }
+    }
+}
+impl clz_Torappu_MedalPerDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_MedalPerData<'b>> {
+        let medalId = self.medalId.as_ref().map(|x| _fbb.create_string(x));
+        let medalName = self.medalName.as_ref().map(|x| _fbb.create_string(x));
+        let medalType = self.medalType.as_ref().map(|x| _fbb.create_string(x));
+        let slotId = self.slotId;
+        let preMedalIdList = self.preMedalIdList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let rarity = self.rarity;
+        let template = self.template.as_ref().map(|x| _fbb.create_string(x));
+        let unlockParam = self.unlockParam.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let getMethod = self.getMethod.as_ref().map(|x| _fbb.create_string(x));
+        let description = self.description.as_ref().map(|x| _fbb.create_string(x));
+        let advancedMedal = self.advancedMedal.as_ref().map(|x| _fbb.create_string(x));
+        let originMedal = self.originMedal.as_ref().map(|x| _fbb.create_string(x));
+        let displayTime = self.displayTime;
+        let expireTimes = self.expireTimes.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let medalRewardGroup = self.medalRewardGroup.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let isHidden = self.isHidden;
+        clz_Torappu_MedalPerData::create(
+            _fbb,
+            &clz_Torappu_MedalPerDataArgs {
+                medalId,
+                medalName,
+                medalType,
+                slotId,
+                preMedalIdList,
+                rarity,
+                template,
+                unlockParam,
+                getMethod,
+                description,
+                advancedMedal,
+                originMedal,
+                displayTime,
+                expireTimes,
+                medalRewardGroup,
+                isHidden,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_MedalGroupDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1758,7 +2195,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_MedalGroupData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1804,6 +2241,31 @@ impl<'a> clz_Torappu_MedalGroupData<'a> {
             builder.add_groupId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_MedalGroupDataT {
+        let groupId = self.groupId().map(|x| x.to_string());
+        let groupName = self.groupName().map(|x| x.to_string());
+        let groupDesc = self.groupDesc().map(|x| x.to_string());
+        let medalId = self
+            .medalId()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let sortId = self.sortId();
+        let groupBackColor = self.groupBackColor().map(|x| x.to_string());
+        let groupGetTime = self.groupGetTime();
+        let sharedExpireTimes = self
+            .sharedExpireTimes()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_MedalGroupDataT {
+            groupId,
+            groupName,
+            groupDesc,
+            medalId,
+            sortId,
+            groupBackColor,
+            groupGetTime,
+            sharedExpireTimes,
+        }
     }
 
     #[inline]
@@ -1974,6 +2436,48 @@ impl<'a> Default for clz_Torappu_MedalGroupDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_MedalGroupData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_MedalGroupData", 8)?;
+        if let Some(f) = self.groupId() {
+            s.serialize_field("groupId", &f)?;
+        } else {
+            s.skip_field("groupId")?;
+        }
+        if let Some(f) = self.groupName() {
+            s.serialize_field("groupName", &f)?;
+        } else {
+            s.skip_field("groupName")?;
+        }
+        if let Some(f) = self.groupDesc() {
+            s.serialize_field("groupDesc", &f)?;
+        } else {
+            s.skip_field("groupDesc")?;
+        }
+        if let Some(f) = self.medalId() {
+            s.serialize_field("medalId", &f)?;
+        } else {
+            s.skip_field("medalId")?;
+        }
+        s.serialize_field("sortId", &self.sortId())?;
+        if let Some(f) = self.groupBackColor() {
+            s.serialize_field("groupBackColor", &f)?;
+        } else {
+            s.skip_field("groupBackColor")?;
+        }
+        s.serialize_field("groupGetTime", &self.groupGetTime())?;
+        if let Some(f) = self.sharedExpireTimes() {
+            s.serialize_field("sharedExpireTimes", &f)?;
+        } else {
+            s.skip_field("sharedExpireTimes")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_MedalGroupDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2072,6 +2576,66 @@ impl core::fmt::Debug for clz_Torappu_MedalGroupData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_MedalGroupDataT {
+    pub groupId: Option<String>,
+    pub groupName: Option<String>,
+    pub groupDesc: Option<String>,
+    pub medalId: Option<Vec<String>>,
+    pub sortId: i32,
+    pub groupBackColor: Option<String>,
+    pub groupGetTime: i64,
+    pub sharedExpireTimes: Option<Vec<clz_Torappu_MedalExpireTimeT>>,
+}
+impl Default for clz_Torappu_MedalGroupDataT {
+    fn default() -> Self {
+        Self {
+            groupId: None,
+            groupName: None,
+            groupDesc: None,
+            medalId: None,
+            sortId: 0,
+            groupBackColor: None,
+            groupGetTime: 0,
+            sharedExpireTimes: None,
+        }
+    }
+}
+impl clz_Torappu_MedalGroupDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_MedalGroupData<'b>> {
+        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
+        let groupName = self.groupName.as_ref().map(|x| _fbb.create_string(x));
+        let groupDesc = self.groupDesc.as_ref().map(|x| _fbb.create_string(x));
+        let medalId = self.medalId.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let sortId = self.sortId;
+        let groupBackColor = self.groupBackColor.as_ref().map(|x| _fbb.create_string(x));
+        let groupGetTime = self.groupGetTime;
+        let sharedExpireTimes = self.sharedExpireTimes.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_MedalGroupData::create(
+            _fbb,
+            &clz_Torappu_MedalGroupDataArgs {
+                groupId,
+                groupName,
+                groupDesc,
+                medalId,
+                sortId,
+                groupBackColor,
+                groupGetTime,
+                sharedExpireTimes,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_MedalTypeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2084,7 +2648,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_MedalTypeData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2116,6 +2680,21 @@ impl<'a> clz_Torappu_MedalTypeData<'a> {
             builder.add_medalGroupId(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_MedalTypeDataT {
+        let medalGroupId = self.medalGroupId().map(|x| x.to_string());
+        let sortId = self.sortId();
+        let medalName = self.medalName().map(|x| x.to_string());
+        let groupData = self
+            .groupData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_MedalTypeDataT {
+            medalGroupId,
+            sortId,
+            medalName,
+            groupData,
+        }
     }
 
     #[inline]
@@ -2217,6 +2796,32 @@ impl<'a> Default for clz_Torappu_MedalTypeDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_MedalTypeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_MedalTypeData", 4)?;
+        if let Some(f) = self.medalGroupId() {
+            s.serialize_field("medalGroupId", &f)?;
+        } else {
+            s.skip_field("medalGroupId")?;
+        }
+        s.serialize_field("sortId", &self.sortId())?;
+        if let Some(f) = self.medalName() {
+            s.serialize_field("medalName", &f)?;
+        } else {
+            s.skip_field("medalName")?;
+        }
+        if let Some(f) = self.groupData() {
+            s.serialize_field("groupData", &f)?;
+        } else {
+            s.skip_field("groupData")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_MedalTypeDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2280,6 +2885,47 @@ impl core::fmt::Debug for clz_Torappu_MedalTypeData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_MedalTypeDataT {
+    pub medalGroupId: Option<String>,
+    pub sortId: i32,
+    pub medalName: Option<String>,
+    pub groupData: Option<Vec<clz_Torappu_MedalGroupDataT>>,
+}
+impl Default for clz_Torappu_MedalTypeDataT {
+    fn default() -> Self {
+        Self {
+            medalGroupId: None,
+            sortId: 0,
+            medalName: None,
+            groupData: None,
+        }
+    }
+}
+impl clz_Torappu_MedalTypeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_MedalTypeData<'b>> {
+        let medalGroupId = self.medalGroupId.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        let medalName = self.medalName.as_ref().map(|x| _fbb.create_string(x));
+        let groupData = self.groupData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_MedalTypeData::create(
+            _fbb,
+            &clz_Torappu_MedalTypeDataArgs {
+                medalGroupId,
+                sortId,
+                medalName,
+                groupData,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_MedalTypeDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2292,7 +2938,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_MedalTypeData<'a>
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2318,6 +2964,15 @@ impl<'a> dict__string__clz_Torappu_MedalTypeData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_MedalTypeDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_MedalTypeDataT { key, value }
     }
 
     #[inline]
@@ -2391,6 +3046,22 @@ impl<'a> Default for dict__string__clz_Torappu_MedalTypeDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_MedalTypeData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_MedalTypeData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_MedalTypeDataBuilder<
     'a: 'b,
     'b,
@@ -2444,6 +3115,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_MedalTypeData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_MedalTypeDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_MedalTypeDataT>>,
+}
+impl Default for dict__string__clz_Torappu_MedalTypeDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_MedalTypeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_MedalTypeData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_MedalTypeData::create(
+            _fbb,
+            &dict__string__clz_Torappu_MedalTypeDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_MedalDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2456,7 +3157,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_MedalData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -2482,6 +3183,19 @@ impl<'a> clz_Torappu_MedalData<'a> {
             builder.add_medalList(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_MedalDataT {
+        let medalList = self
+            .medalList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let medalTypeData = self
+            .medalTypeData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_MedalDataT {
+            medalList,
+            medalTypeData,
+        }
     }
 
     #[inline]
@@ -2567,6 +3281,26 @@ impl<'a> Default for clz_Torappu_MedalDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_MedalData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_MedalData", 2)?;
+        if let Some(f) = self.medalList() {
+            s.serialize_field("medalList", &f)?;
+        } else {
+            s.skip_field("medalList")?;
+        }
+        if let Some(f) = self.medalTypeData() {
+            s.serialize_field("medalTypeData", &f)?;
+        } else {
+            s.skip_field("medalTypeData")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_MedalDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2624,6 +3358,42 @@ impl core::fmt::Debug for clz_Torappu_MedalData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_MedalDataT {
+    pub medalList: Option<Vec<clz_Torappu_MedalPerDataT>>,
+    pub medalTypeData: Option<Vec<dict__string__clz_Torappu_MedalTypeDataT>>,
+}
+impl Default for clz_Torappu_MedalDataT {
+    fn default() -> Self {
+        Self {
+            medalList: None,
+            medalTypeData: None,
+        }
+    }
+}
+impl clz_Torappu_MedalDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_MedalData<'b>> {
+        let medalList = self.medalList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let medalTypeData = self.medalTypeData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_MedalData::create(
+            _fbb,
+            &clz_Torappu_MedalDataArgs {
+                medalList,
+                medalTypeData,
+            },
+        )
+    }
+}
 #[inline]
 /// Verifies that a buffer of bytes contains a `clz_Torappu_MedalData`
 /// and returns it.
@@ -2679,7 +3449,7 @@ pub fn size_prefixed_root_as_clz_torappu_medal_data_with_opts<'b, 'o>(
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_MedalData`.
 pub unsafe fn root_as_clz_torappu_medal_data_unchecked(buf: &[u8]) -> clz_Torappu_MedalData {
-    flatbuffers::root_unchecked::<clz_Torappu_MedalData>(buf)
+    unsafe { flatbuffers::root_unchecked::<clz_Torappu_MedalData>(buf) }
 }
 #[inline]
 /// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_MedalData and returns it.
@@ -2688,7 +3458,7 @@ pub unsafe fn root_as_clz_torappu_medal_data_unchecked(buf: &[u8]) -> clz_Torapp
 pub unsafe fn size_prefixed_root_as_clz_torappu_medal_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_MedalData {
-    flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_MedalData>(buf)
+    unsafe { flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_MedalData>(buf) }
 }
 #[inline]
 pub fn finish_clz_torappu_medal_data_buffer<'a, 'b, A: flatbuffers::Allocator + 'a>(

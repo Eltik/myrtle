@@ -5,6 +5,9 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+use self::serde::ser::{Serialize, SerializeStruct, Serializer};
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
@@ -228,11 +231,24 @@ impl core::fmt::Debug for enum__Torappu_AbnormalFlag {
         }
     }
 }
+impl Serialize for enum__Torappu_AbnormalFlag {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_AbnormalFlag",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_AbnormalFlag {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -241,7 +257,9 @@ impl flatbuffers::Push for enum__Torappu_AbnormalFlag {
     type Output = enum__Torappu_AbnormalFlag;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -323,11 +341,24 @@ impl core::fmt::Debug for enum__Torappu_AbnormalCombo {
         }
     }
 }
+impl Serialize for enum__Torappu_AbnormalCombo {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_AbnormalCombo",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_AbnormalCombo {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -336,7 +367,9 @@ impl flatbuffers::Push for enum__Torappu_AbnormalCombo {
     type Output = enum__Torappu_AbnormalCombo;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -560,11 +593,24 @@ impl core::fmt::Debug for enum__Torappu_AttributeType {
         }
     }
 }
+impl Serialize for enum__Torappu_AttributeType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_AttributeType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_AttributeType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -573,7 +619,9 @@ impl flatbuffers::Push for enum__Torappu_AttributeType {
     type Output = enum__Torappu_AttributeType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -666,13 +714,26 @@ impl core::fmt::Debug for enum__Torappu_AttributeModifierData_AttributeModifier_
         }
     }
 }
+impl Serialize for enum__Torappu_AttributeModifierData_AttributeModifier_FormulaItemType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_AttributeModifierData_AttributeModifier_FormulaItemType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a>
     for enum__Torappu_AttributeModifierData_AttributeModifier_FormulaItemType
 {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -681,7 +742,9 @@ impl flatbuffers::Push for enum__Torappu_AttributeModifierData_AttributeModifier
     type Output = enum__Torappu_AttributeModifierData_AttributeModifier_FormulaItemType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -771,11 +834,24 @@ impl core::fmt::Debug for enum__Torappu_BuffData_StatusResistable {
         }
     }
 }
+impl Serialize for enum__Torappu_BuffData_StatusResistable {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_BuffData_StatusResistable",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_BuffData_StatusResistable {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<u8>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<u8>(buf, loc) };
         Self(b)
     }
 }
@@ -784,7 +860,9 @@ impl flatbuffers::Push for enum__Torappu_BuffData_StatusResistable {
     type Output = enum__Torappu_BuffData_StatusResistable;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<u8>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<u8>(dst, self.0);
+        }
     }
 }
 
@@ -879,11 +957,24 @@ impl core::fmt::Debug for enum__Torappu_BuffData_OverrideType {
         }
     }
 }
+impl Serialize for enum__Torappu_BuffData_OverrideType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_BuffData_OverrideType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_BuffData_OverrideType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -892,7 +983,9 @@ impl flatbuffers::Push for enum__Torappu_BuffData_OverrideType {
     type Output = enum__Torappu_BuffData_OverrideType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -991,11 +1084,24 @@ impl core::fmt::Debug for enum__Torappu_BuffData_OnEventPriority {
         }
     }
 }
+impl Serialize for enum__Torappu_BuffData_OnEventPriority {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_BuffData_OnEventPriority",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_BuffData_OnEventPriority {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<i32>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
         Self(b)
     }
 }
@@ -1004,7 +1110,9 @@ impl flatbuffers::Push for enum__Torappu_BuffData_OnEventPriority {
     type Output = enum__Torappu_BuffData_OnEventPriority;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
     }
 }
 
@@ -1094,11 +1202,24 @@ impl core::fmt::Debug for enum__Torappu_LifeType {
         }
     }
 }
+impl Serialize for enum__Torappu_LifeType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_unit_variant(
+            "enum__Torappu_LifeType",
+            self.0 as u32,
+            self.variant_name().unwrap(),
+        )
+    }
+}
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_LifeType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        let b = flatbuffers::read_scalar_at::<u8>(buf, loc);
+        let b = unsafe { flatbuffers::read_scalar_at::<u8>(buf, loc) };
         Self(b)
     }
 }
@@ -1107,7 +1228,9 @@ impl flatbuffers::Push for enum__Torappu_LifeType {
     type Output = enum__Torappu_LifeType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        flatbuffers::emplace_scalar::<u8>(dst, self.0);
+        unsafe {
+            flatbuffers::emplace_scalar::<u8>(dst, self.0);
+        }
     }
 }
 
@@ -1149,7 +1272,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_AttributeModifierData_Attribute
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1177,6 +1300,21 @@ impl<'a> clz_Torappu_AttributeModifierData_AttributeModifier<'a> {
         builder.add_fetchBaseValueFromSourceEntity(args.fetchBaseValueFromSourceEntity);
         builder.add_loadFromBlackboard(args.loadFromBlackboard);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_AttributeModifierData_AttributeModifierT {
+        let attributeType = self.attributeType();
+        let formulaItem = self.formulaItem();
+        let value = self.value();
+        let loadFromBlackboard = self.loadFromBlackboard();
+        let fetchBaseValueFromSourceEntity = self.fetchBaseValueFromSourceEntity();
+        clz_Torappu_AttributeModifierData_AttributeModifierT {
+            attributeType,
+            formulaItem,
+            value,
+            loadFromBlackboard,
+            fetchBaseValueFromSourceEntity,
+        }
     }
 
     #[inline]
@@ -1293,6 +1431,25 @@ impl<'a> Default for clz_Torappu_AttributeModifierData_AttributeModifierArgs {
     }
 }
 
+impl Serialize for clz_Torappu_AttributeModifierData_AttributeModifier<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer
+            .serialize_struct("clz_Torappu_AttributeModifierData_AttributeModifier", 5)?;
+        s.serialize_field("attributeType", &self.attributeType())?;
+        s.serialize_field("formulaItem", &self.formulaItem())?;
+        s.serialize_field("value", &self.value())?;
+        s.serialize_field("loadFromBlackboard", &self.loadFromBlackboard())?;
+        s.serialize_field(
+            "fetchBaseValueFromSourceEntity",
+            &self.fetchBaseValueFromSourceEntity(),
+        )?;
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_AttributeModifierData_AttributeModifierBuilder<
     'a: 'b,
     'b,
@@ -1381,6 +1538,49 @@ impl core::fmt::Debug for clz_Torappu_AttributeModifierData_AttributeModifier<'_
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_AttributeModifierData_AttributeModifierT {
+    pub attributeType: enum__Torappu_AttributeType,
+    pub formulaItem: enum__Torappu_AttributeModifierData_AttributeModifier_FormulaItemType,
+    pub value: f32,
+    pub loadFromBlackboard: bool,
+    pub fetchBaseValueFromSourceEntity: bool,
+}
+impl Default for clz_Torappu_AttributeModifierData_AttributeModifierT {
+    fn default() -> Self {
+        Self {
+            attributeType: enum__Torappu_AttributeType::MAX_HP,
+            formulaItem:
+                enum__Torappu_AttributeModifierData_AttributeModifier_FormulaItemType::ADDITION,
+            value: 0.0,
+            loadFromBlackboard: false,
+            fetchBaseValueFromSourceEntity: false,
+        }
+    }
+}
+impl clz_Torappu_AttributeModifierData_AttributeModifierT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_AttributeModifierData_AttributeModifier<'b>> {
+        let attributeType = self.attributeType;
+        let formulaItem = self.formulaItem;
+        let value = self.value;
+        let loadFromBlackboard = self.loadFromBlackboard;
+        let fetchBaseValueFromSourceEntity = self.fetchBaseValueFromSourceEntity;
+        clz_Torappu_AttributeModifierData_AttributeModifier::create(
+            _fbb,
+            &clz_Torappu_AttributeModifierData_AttributeModifierArgs {
+                attributeType,
+                formulaItem,
+                value,
+                loadFromBlackboard,
+                fetchBaseValueFromSourceEntity,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_AttributeModifierDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1393,7 +1593,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_AttributeModifierData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1435,6 +1635,25 @@ impl<'a> clz_Torappu_AttributeModifierData<'a> {
             builder.add_abnormalFlags(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_AttributeModifierDataT {
+        let abnormalFlags = self.abnormalFlags().map(|x| x.into_iter().collect());
+        let abnormalImmunes = self.abnormalImmunes().map(|x| x.into_iter().collect());
+        let abnormalAntis = self.abnormalAntis().map(|x| x.into_iter().collect());
+        let abnormalCombos = self.abnormalCombos().map(|x| x.into_iter().collect());
+        let abnormalComboImmunes = self.abnormalComboImmunes().map(|x| x.into_iter().collect());
+        let attributeModifiers = self
+            .attributeModifiers()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_AttributeModifierDataT {
+            abnormalFlags,
+            abnormalImmunes,
+            abnormalAntis,
+            abnormalCombos,
+            abnormalComboImmunes,
+            attributeModifiers,
+        }
     }
 
     #[inline]
@@ -1579,6 +1798,46 @@ impl<'a> Default for clz_Torappu_AttributeModifierDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_AttributeModifierData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_AttributeModifierData", 6)?;
+        if let Some(f) = self.abnormalFlags() {
+            s.serialize_field("abnormalFlags", &f)?;
+        } else {
+            s.skip_field("abnormalFlags")?;
+        }
+        if let Some(f) = self.abnormalImmunes() {
+            s.serialize_field("abnormalImmunes", &f)?;
+        } else {
+            s.skip_field("abnormalImmunes")?;
+        }
+        if let Some(f) = self.abnormalAntis() {
+            s.serialize_field("abnormalAntis", &f)?;
+        } else {
+            s.skip_field("abnormalAntis")?;
+        }
+        if let Some(f) = self.abnormalCombos() {
+            s.serialize_field("abnormalCombos", &f)?;
+        } else {
+            s.skip_field("abnormalCombos")?;
+        }
+        if let Some(f) = self.abnormalComboImmunes() {
+            s.serialize_field("abnormalComboImmunes", &f)?;
+        } else {
+            s.skip_field("abnormalComboImmunes")?;
+        }
+        if let Some(f) = self.attributeModifiers() {
+            s.serialize_field("attributeModifiers", &f)?;
+        } else {
+            s.skip_field("attributeModifiers")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_AttributeModifierDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1688,6 +1947,58 @@ impl core::fmt::Debug for clz_Torappu_AttributeModifierData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_AttributeModifierDataT {
+    pub abnormalFlags: Option<Vec<enum__Torappu_AbnormalFlag>>,
+    pub abnormalImmunes: Option<Vec<enum__Torappu_AbnormalFlag>>,
+    pub abnormalAntis: Option<Vec<enum__Torappu_AbnormalFlag>>,
+    pub abnormalCombos: Option<Vec<enum__Torappu_AbnormalCombo>>,
+    pub abnormalComboImmunes: Option<Vec<enum__Torappu_AbnormalCombo>>,
+    pub attributeModifiers: Option<Vec<clz_Torappu_AttributeModifierData_AttributeModifierT>>,
+}
+impl Default for clz_Torappu_AttributeModifierDataT {
+    fn default() -> Self {
+        Self {
+            abnormalFlags: None,
+            abnormalImmunes: None,
+            abnormalAntis: None,
+            abnormalCombos: None,
+            abnormalComboImmunes: None,
+            attributeModifiers: None,
+        }
+    }
+}
+impl clz_Torappu_AttributeModifierDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_AttributeModifierData<'b>> {
+        let abnormalFlags = self.abnormalFlags.as_ref().map(|x| _fbb.create_vector(x));
+        let abnormalImmunes = self.abnormalImmunes.as_ref().map(|x| _fbb.create_vector(x));
+        let abnormalAntis = self.abnormalAntis.as_ref().map(|x| _fbb.create_vector(x));
+        let abnormalCombos = self.abnormalCombos.as_ref().map(|x| _fbb.create_vector(x));
+        let abnormalComboImmunes = self
+            .abnormalComboImmunes
+            .as_ref()
+            .map(|x| _fbb.create_vector(x));
+        let attributeModifiers = self.attributeModifiers.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_AttributeModifierData::create(
+            _fbb,
+            &clz_Torappu_AttributeModifierDataArgs {
+                abnormalFlags,
+                abnormalImmunes,
+                abnormalAntis,
+                abnormalCombos,
+                abnormalComboImmunes,
+                attributeModifiers,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_Blackboard_DataPairOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1700,7 +2011,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_Blackboard_DataPair<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1728,6 +2039,17 @@ impl<'a> clz_Torappu_Blackboard_DataPair<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_Blackboard_DataPairT {
+        let key = self.key().map(|x| x.to_string());
+        let value = self.value();
+        let valueStr = self.valueStr().map(|x| x.to_string());
+        clz_Torappu_Blackboard_DataPairT {
+            key,
+            value,
+            valueStr,
+        }
     }
 
     #[inline]
@@ -1802,6 +2124,27 @@ impl<'a> Default for clz_Torappu_Blackboard_DataPairArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_Blackboard_DataPair<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_Blackboard_DataPair", 3)?;
+        if let Some(f) = self.key() {
+            s.serialize_field("key", &f)?;
+        } else {
+            s.skip_field("key")?;
+        }
+        s.serialize_field("value", &self.value())?;
+        if let Some(f) = self.valueStr() {
+            s.serialize_field("valueStr", &f)?;
+        } else {
+            s.skip_field("valueStr")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_Blackboard_DataPairBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1852,6 +2195,40 @@ impl core::fmt::Debug for clz_Torappu_Blackboard_DataPair<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_Blackboard_DataPairT {
+    pub key: Option<String>,
+    pub value: f32,
+    pub valueStr: Option<String>,
+}
+impl Default for clz_Torappu_Blackboard_DataPairT {
+    fn default() -> Self {
+        Self {
+            key: None,
+            value: 0.0,
+            valueStr: None,
+        }
+    }
+}
+impl clz_Torappu_Blackboard_DataPairT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_Blackboard_DataPair<'b>> {
+        let key = self.key.as_ref().map(|x| _fbb.create_string(x));
+        let value = self.value;
+        let valueStr = self.valueStr.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_Blackboard_DataPair::create(
+            _fbb,
+            &clz_Torappu_Blackboard_DataPairArgs {
+                key,
+                value,
+                valueStr,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_BuffDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1864,7 +2241,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_BuffData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -1972,6 +2349,87 @@ impl<'a> clz_Torappu_BuffData<'a> {
         builder.add_isDurableBuff(args.isDurableBuff);
         builder.add_loadFromDB(args.loadFromDB);
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_BuffDataT {
+        let attributes = self.attributes().map(|x| Box::new(x.unpack()));
+        let buffKey = self.buffKey().map(|x| x.to_string());
+        let loadFromDB = self.loadFromDB();
+        let isDurableBuff = self.isDurableBuff();
+        let isDamageMissable = self.isDamageMissable();
+        let isSilenceable = self.isSilenceable();
+        let isStunnable = self.isStunnable();
+        let isFreezable = self.isFreezable();
+        let isLevitatable = self.isLevitatable();
+        let statusResistable = self.statusResistable();
+        let templateKey = self.templateKey().map(|x| x.to_string());
+        let disableOverride = self.disableOverride();
+        let overrideKey = self.overrideKey().map(|x| x.to_string());
+        let overrideType = self.overrideType();
+        let maxStackCnt = self.maxStackCnt();
+        let refreshRemainingTimeWhenStackMax = self.refreshRemainingTimeWhenStackMax();
+        let clearAllStackCntWhenTimeUp = self.clearAllStackCntWhenTimeUp();
+        let maxValidStackCnt = self.maxValidStackCnt();
+        let independentCharacterSource = self.independentCharacterSource();
+        let overrideEffectKey = self.overrideEffectKey().map(|x| x.to_string());
+        let overrideOnEventPriority = self.overrideOnEventPriority();
+        let onEventPriority = self.onEventPriority();
+        let audioSignal = self.audioSignal().map(|x| x.to_string());
+        let lifeTimeType = self.lifeTimeType();
+        let takeSnapshotWhenExtend = self.takeSnapshotWhenExtend();
+        let durationKey = self.durationKey().map(|x| x.to_string());
+        let lifeTime = self.lifeTime();
+        let triggerLifeType = self.triggerLifeType();
+        let triggerCnt = self.triggerCnt();
+        let triggerInterval = self.triggerInterval();
+        let waitFirstTriggerInterval = self.waitFirstTriggerInterval();
+        let firstTriggerInterval = self.firstTriggerInterval();
+        let priority = self.priority();
+        let priorityBBKeys = self
+            .priorityBBKeys()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let stripBlackboardParamsWithBuffKey = self.stripBlackboardParamsWithBuffKey();
+        let blackboard = self
+            .blackboard()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_BuffDataT {
+            attributes,
+            buffKey,
+            loadFromDB,
+            isDurableBuff,
+            isDamageMissable,
+            isSilenceable,
+            isStunnable,
+            isFreezable,
+            isLevitatable,
+            statusResistable,
+            templateKey,
+            disableOverride,
+            overrideKey,
+            overrideType,
+            maxStackCnt,
+            refreshRemainingTimeWhenStackMax,
+            clearAllStackCntWhenTimeUp,
+            maxValidStackCnt,
+            independentCharacterSource,
+            overrideEffectKey,
+            overrideOnEventPriority,
+            onEventPriority,
+            audioSignal,
+            lifeTimeType,
+            takeSnapshotWhenExtend,
+            durationKey,
+            lifeTime,
+            triggerLifeType,
+            triggerCnt,
+            triggerInterval,
+            waitFirstTriggerInterval,
+            firstTriggerInterval,
+            priority,
+            priorityBBKeys,
+            stripBlackboardParamsWithBuffKey,
+            blackboard,
+        }
     }
 
     #[inline]
@@ -2634,6 +3092,100 @@ impl<'a> Default for clz_Torappu_BuffDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_BuffData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("clz_Torappu_BuffData", 36)?;
+        if let Some(f) = self.attributes() {
+            s.serialize_field("attributes", &f)?;
+        } else {
+            s.skip_field("attributes")?;
+        }
+        if let Some(f) = self.buffKey() {
+            s.serialize_field("buffKey", &f)?;
+        } else {
+            s.skip_field("buffKey")?;
+        }
+        s.serialize_field("loadFromDB", &self.loadFromDB())?;
+        s.serialize_field("isDurableBuff", &self.isDurableBuff())?;
+        s.serialize_field("isDamageMissable", &self.isDamageMissable())?;
+        s.serialize_field("isSilenceable", &self.isSilenceable())?;
+        s.serialize_field("isStunnable", &self.isStunnable())?;
+        s.serialize_field("isFreezable", &self.isFreezable())?;
+        s.serialize_field("isLevitatable", &self.isLevitatable())?;
+        s.serialize_field("statusResistable", &self.statusResistable())?;
+        if let Some(f) = self.templateKey() {
+            s.serialize_field("templateKey", &f)?;
+        } else {
+            s.skip_field("templateKey")?;
+        }
+        s.serialize_field("disableOverride", &self.disableOverride())?;
+        if let Some(f) = self.overrideKey() {
+            s.serialize_field("overrideKey", &f)?;
+        } else {
+            s.skip_field("overrideKey")?;
+        }
+        s.serialize_field("overrideType", &self.overrideType())?;
+        s.serialize_field("maxStackCnt", &self.maxStackCnt())?;
+        s.serialize_field(
+            "refreshRemainingTimeWhenStackMax",
+            &self.refreshRemainingTimeWhenStackMax(),
+        )?;
+        s.serialize_field(
+            "clearAllStackCntWhenTimeUp",
+            &self.clearAllStackCntWhenTimeUp(),
+        )?;
+        s.serialize_field("maxValidStackCnt", &self.maxValidStackCnt())?;
+        s.serialize_field(
+            "independentCharacterSource",
+            &self.independentCharacterSource(),
+        )?;
+        if let Some(f) = self.overrideEffectKey() {
+            s.serialize_field("overrideEffectKey", &f)?;
+        } else {
+            s.skip_field("overrideEffectKey")?;
+        }
+        s.serialize_field("overrideOnEventPriority", &self.overrideOnEventPriority())?;
+        s.serialize_field("onEventPriority", &self.onEventPriority())?;
+        if let Some(f) = self.audioSignal() {
+            s.serialize_field("audioSignal", &f)?;
+        } else {
+            s.skip_field("audioSignal")?;
+        }
+        s.serialize_field("lifeTimeType", &self.lifeTimeType())?;
+        s.serialize_field("takeSnapshotWhenExtend", &self.takeSnapshotWhenExtend())?;
+        if let Some(f) = self.durationKey() {
+            s.serialize_field("durationKey", &f)?;
+        } else {
+            s.skip_field("durationKey")?;
+        }
+        s.serialize_field("lifeTime", &self.lifeTime())?;
+        s.serialize_field("triggerLifeType", &self.triggerLifeType())?;
+        s.serialize_field("triggerCnt", &self.triggerCnt())?;
+        s.serialize_field("triggerInterval", &self.triggerInterval())?;
+        s.serialize_field("waitFirstTriggerInterval", &self.waitFirstTriggerInterval())?;
+        s.serialize_field("firstTriggerInterval", &self.firstTriggerInterval())?;
+        s.serialize_field("priority", &self.priority())?;
+        if let Some(f) = self.priorityBBKeys() {
+            s.serialize_field("priorityBBKeys", &f)?;
+        } else {
+            s.skip_field("priorityBBKeys")?;
+        }
+        s.serialize_field(
+            "stripBlackboardParamsWithBuffKey",
+            &self.stripBlackboardParamsWithBuffKey(),
+        )?;
+        if let Some(f) = self.blackboard() {
+            s.serialize_field("blackboard", &f)?;
+        } else {
+            s.skip_field("blackboard")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_BuffDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2981,6 +3533,181 @@ impl core::fmt::Debug for clz_Torappu_BuffData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_BuffDataT {
+    pub attributes: Option<Box<clz_Torappu_AttributeModifierDataT>>,
+    pub buffKey: Option<String>,
+    pub loadFromDB: bool,
+    pub isDurableBuff: bool,
+    pub isDamageMissable: bool,
+    pub isSilenceable: bool,
+    pub isStunnable: bool,
+    pub isFreezable: bool,
+    pub isLevitatable: bool,
+    pub statusResistable: enum__Torappu_BuffData_StatusResistable,
+    pub templateKey: Option<String>,
+    pub disableOverride: bool,
+    pub overrideKey: Option<String>,
+    pub overrideType: enum__Torappu_BuffData_OverrideType,
+    pub maxStackCnt: i32,
+    pub refreshRemainingTimeWhenStackMax: bool,
+    pub clearAllStackCntWhenTimeUp: bool,
+    pub maxValidStackCnt: i32,
+    pub independentCharacterSource: bool,
+    pub overrideEffectKey: Option<String>,
+    pub overrideOnEventPriority: bool,
+    pub onEventPriority: enum__Torappu_BuffData_OnEventPriority,
+    pub audioSignal: Option<String>,
+    pub lifeTimeType: enum__Torappu_LifeType,
+    pub takeSnapshotWhenExtend: bool,
+    pub durationKey: Option<String>,
+    pub lifeTime: f32,
+    pub triggerLifeType: enum__Torappu_LifeType,
+    pub triggerCnt: i32,
+    pub triggerInterval: f32,
+    pub waitFirstTriggerInterval: bool,
+    pub firstTriggerInterval: f32,
+    pub priority: i32,
+    pub priorityBBKeys: Option<Vec<String>>,
+    pub stripBlackboardParamsWithBuffKey: bool,
+    pub blackboard: Option<Vec<clz_Torappu_Blackboard_DataPairT>>,
+}
+impl Default for clz_Torappu_BuffDataT {
+    fn default() -> Self {
+        Self {
+            attributes: None,
+            buffKey: None,
+            loadFromDB: false,
+            isDurableBuff: false,
+            isDamageMissable: false,
+            isSilenceable: false,
+            isStunnable: false,
+            isFreezable: false,
+            isLevitatable: false,
+            statusResistable: enum__Torappu_BuffData_StatusResistable::NO,
+            templateKey: None,
+            disableOverride: false,
+            overrideKey: None,
+            overrideType: enum__Torappu_BuffData_OverrideType::DEFAULT,
+            maxStackCnt: 0,
+            refreshRemainingTimeWhenStackMax: false,
+            clearAllStackCntWhenTimeUp: false,
+            maxValidStackCnt: 0,
+            independentCharacterSource: false,
+            overrideEffectKey: None,
+            overrideOnEventPriority: false,
+            onEventPriority: enum__Torappu_BuffData_OnEventPriority::DEFAULT,
+            audioSignal: None,
+            lifeTimeType: enum__Torappu_LifeType::IMMEDIATELY,
+            takeSnapshotWhenExtend: false,
+            durationKey: None,
+            lifeTime: 0.0,
+            triggerLifeType: enum__Torappu_LifeType::IMMEDIATELY,
+            triggerCnt: 0,
+            triggerInterval: 0.0,
+            waitFirstTriggerInterval: false,
+            firstTriggerInterval: 0.0,
+            priority: 0,
+            priorityBBKeys: None,
+            stripBlackboardParamsWithBuffKey: false,
+            blackboard: None,
+        }
+    }
+}
+impl clz_Torappu_BuffDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_BuffData<'b>> {
+        let attributes = self.attributes.as_ref().map(|x| x.pack(_fbb));
+        let buffKey = self.buffKey.as_ref().map(|x| _fbb.create_string(x));
+        let loadFromDB = self.loadFromDB;
+        let isDurableBuff = self.isDurableBuff;
+        let isDamageMissable = self.isDamageMissable;
+        let isSilenceable = self.isSilenceable;
+        let isStunnable = self.isStunnable;
+        let isFreezable = self.isFreezable;
+        let isLevitatable = self.isLevitatable;
+        let statusResistable = self.statusResistable;
+        let templateKey = self.templateKey.as_ref().map(|x| _fbb.create_string(x));
+        let disableOverride = self.disableOverride;
+        let overrideKey = self.overrideKey.as_ref().map(|x| _fbb.create_string(x));
+        let overrideType = self.overrideType;
+        let maxStackCnt = self.maxStackCnt;
+        let refreshRemainingTimeWhenStackMax = self.refreshRemainingTimeWhenStackMax;
+        let clearAllStackCntWhenTimeUp = self.clearAllStackCntWhenTimeUp;
+        let maxValidStackCnt = self.maxValidStackCnt;
+        let independentCharacterSource = self.independentCharacterSource;
+        let overrideEffectKey = self
+            .overrideEffectKey
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let overrideOnEventPriority = self.overrideOnEventPriority;
+        let onEventPriority = self.onEventPriority;
+        let audioSignal = self.audioSignal.as_ref().map(|x| _fbb.create_string(x));
+        let lifeTimeType = self.lifeTimeType;
+        let takeSnapshotWhenExtend = self.takeSnapshotWhenExtend;
+        let durationKey = self.durationKey.as_ref().map(|x| _fbb.create_string(x));
+        let lifeTime = self.lifeTime;
+        let triggerLifeType = self.triggerLifeType;
+        let triggerCnt = self.triggerCnt;
+        let triggerInterval = self.triggerInterval;
+        let waitFirstTriggerInterval = self.waitFirstTriggerInterval;
+        let firstTriggerInterval = self.firstTriggerInterval;
+        let priority = self.priority;
+        let priorityBBKeys = self.priorityBBKeys.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let stripBlackboardParamsWithBuffKey = self.stripBlackboardParamsWithBuffKey;
+        let blackboard = self.blackboard.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_BuffData::create(
+            _fbb,
+            &clz_Torappu_BuffDataArgs {
+                attributes,
+                buffKey,
+                loadFromDB,
+                isDurableBuff,
+                isDamageMissable,
+                isSilenceable,
+                isStunnable,
+                isFreezable,
+                isLevitatable,
+                statusResistable,
+                templateKey,
+                disableOverride,
+                overrideKey,
+                overrideType,
+                maxStackCnt,
+                refreshRemainingTimeWhenStackMax,
+                clearAllStackCntWhenTimeUp,
+                maxValidStackCnt,
+                independentCharacterSource,
+                overrideEffectKey,
+                overrideOnEventPriority,
+                onEventPriority,
+                audioSignal,
+                lifeTimeType,
+                takeSnapshotWhenExtend,
+                durationKey,
+                lifeTime,
+                triggerLifeType,
+                triggerCnt,
+                triggerInterval,
+                waitFirstTriggerInterval,
+                firstTriggerInterval,
+                priority,
+                priorityBBKeys,
+                stripBlackboardParamsWithBuffKey,
+                blackboard,
+            },
+        )
+    }
+}
 pub enum dict__string__clz_Torappu_BuffDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -2993,7 +3720,7 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_BuffData<'a> {
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3019,6 +3746,15 @@ impl<'a> dict__string__clz_Torappu_BuffData<'a> {
             builder.add_key(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_BuffDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_BuffDataT { key, value }
     }
 
     #[inline]
@@ -3092,6 +3828,22 @@ impl<'a> Default for dict__string__clz_Torappu_BuffDataArgs<'a> {
     }
 }
 
+impl Serialize for dict__string__clz_Torappu_BuffData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_BuffData", 2)?;
+        s.serialize_field("key", &self.key())?;
+        if let Some(f) = self.value() {
+            s.serialize_field("value", &f)?;
+        } else {
+            s.skip_field("value")?;
+        }
+        s.end()
+    }
+}
+
 pub struct dict__string__clz_Torappu_BuffDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3141,6 +3893,36 @@ impl core::fmt::Debug for dict__string__clz_Torappu_BuffData<'_> {
         ds.finish()
     }
 }
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_BuffDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_BuffDataT>>,
+}
+impl Default for dict__string__clz_Torappu_BuffDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_BuffDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_BuffData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_BuffData::create(
+            _fbb,
+            &dict__string__clz_Torappu_BuffDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_SimpleKVTable_clz_Torappu_BuffDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -3153,7 +3935,7 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_SimpleKVTable_clz_Torappu_BuffD
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
-            _tab: flatbuffers::Table::new(buf, loc),
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
         }
     }
 }
@@ -3175,6 +3957,11 @@ impl<'a> clz_Torappu_SimpleKVTable_clz_Torappu_BuffData<'a> {
             builder.add_buffs(x);
         }
         builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_SimpleKVTable_clz_Torappu_BuffDataT {
+        let buffs = self.buffs().map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_SimpleKVTable_clz_Torappu_BuffDataT { buffs }
     }
 
     #[inline]
@@ -3238,6 +4025,22 @@ impl<'a> Default for clz_Torappu_SimpleKVTable_clz_Torappu_BuffDataArgs<'a> {
     }
 }
 
+impl Serialize for clz_Torappu_SimpleKVTable_clz_Torappu_BuffData<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s =
+            serializer.serialize_struct("clz_Torappu_SimpleKVTable_clz_Torappu_BuffData", 1)?;
+        if let Some(f) = self.buffs() {
+            s.serialize_field("buffs", &f)?;
+        } else {
+            s.skip_field("buffs")?;
+        }
+        s.end()
+    }
+}
+
 pub struct clz_Torappu_SimpleKVTable_clz_Torappu_BuffDataBuilder<
     'a: 'b,
     'b,
@@ -3288,6 +4091,31 @@ impl core::fmt::Debug for clz_Torappu_SimpleKVTable_clz_Torappu_BuffData<'_> {
         let mut ds = f.debug_struct("clz_Torappu_SimpleKVTable_clz_Torappu_BuffData");
         ds.field("buffs", &self.buffs());
         ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_SimpleKVTable_clz_Torappu_BuffDataT {
+    pub buffs: Option<Vec<dict__string__clz_Torappu_BuffDataT>>,
+}
+impl Default for clz_Torappu_SimpleKVTable_clz_Torappu_BuffDataT {
+    fn default() -> Self {
+        Self { buffs: None }
+    }
+}
+impl clz_Torappu_SimpleKVTable_clz_Torappu_BuffDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_SimpleKVTable_clz_Torappu_BuffData<'b>> {
+        let buffs = self.buffs.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_SimpleKVTable_clz_Torappu_BuffData::create(
+            _fbb,
+            &clz_Torappu_SimpleKVTable_clz_Torappu_BuffDataArgs { buffs },
+        )
     }
 }
 #[inline]
@@ -3349,7 +4177,7 @@ pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_buff_data_wi
 pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_buff_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SimpleKVTable_clz_Torappu_BuffData {
-    flatbuffers::root_unchecked::<clz_Torappu_SimpleKVTable_clz_Torappu_BuffData>(buf)
+    unsafe { flatbuffers::root_unchecked::<clz_Torappu_SimpleKVTable_clz_Torappu_BuffData>(buf) }
 }
 #[inline]
 /// Assumes, without verification, that a buffer of bytes contains a size prefixed clz_Torappu_SimpleKVTable_clz_Torappu_BuffData and returns it.
@@ -3358,7 +4186,11 @@ pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_buff_data_unchecked
 pub unsafe fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_buff_data_unchecked(
     buf: &[u8],
 ) -> clz_Torappu_SimpleKVTable_clz_Torappu_BuffData {
-    flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_SimpleKVTable_clz_Torappu_BuffData>(buf)
+    unsafe {
+        flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_SimpleKVTable_clz_Torappu_BuffData>(
+            buf,
+        )
+    }
 }
 #[inline]
 pub fn finish_clz_torappu_simple_kvtable_clz_torappu_buff_data_buffer<
