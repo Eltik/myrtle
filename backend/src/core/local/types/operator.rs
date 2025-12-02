@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use super::handbook::{HandbookItem, OperatorProfile};
 use super::material::{Item, ItemType};
 use super::module::{Module, ModuleData};
+use super::serde_helpers::{deserialize_fb_map, deserialize_fb_map_option};
 use super::skill::SkillLevel;
 
 // ============================================================================
@@ -107,8 +108,11 @@ pub struct UnlockCondition {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Blackboard {
+    #[serde(alias = "key")]
     pub key: String,
+    #[serde(alias = "value")]
     pub value: f64,
+    #[serde(alias = "valueStr")]
     pub value_str: Option<String>,
 }
 
@@ -274,6 +278,7 @@ pub struct Talent {
 pub struct AttributeModifier {
     pub attribute_type: String,
     pub formula_item: String,
+    #[serde(default)]
     pub value: f64,
     pub load_from_blackboard: bool,
     pub fetch_base_value_from_source_entity: bool,
@@ -318,6 +323,7 @@ pub struct AllSkillLevelUp {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct CharacterTable {
+    #[serde(deserialize_with = "deserialize_fb_map")]
     pub characters: HashMap<String, RawOperator>,
 }
 
@@ -374,7 +380,7 @@ pub struct RawOperator {
     pub phases: Vec<Phase>,
     #[serde(default)]
     pub skills: Vec<OperatorSkillRef>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_fb_map_option")]
     pub display_token_dict: Option<HashMap<String, bool>>,
     #[serde(default)]
     pub talents: Option<Vec<Talent>>,

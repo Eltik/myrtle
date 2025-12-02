@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 
-use crate::core::local::types::{material::Materials, operator::Operator, skill::Skill};
+use crate::core::local::types::{
+    handbook::Handbook, material::Materials, module::Modules, operator::Operator, skill::Skill,
+    skin::SkinData,
+};
 
 pub mod enemy;
 pub mod handbook;
@@ -17,7 +20,9 @@ pub struct GameData {
     pub operators: HashMap<String, Operator>,
     pub skills: HashMap<String, Skill>,
     pub materials: Materials,
-    // TODO: Etc.
+    pub modules: Modules,
+    pub skins: SkinData,
+    pub handbook: Handbook,
 }
 
 impl GameData {
@@ -26,7 +31,6 @@ impl GameData {
     }
 
     pub fn is_loaded(&self) -> bool {
-        // TODO: Add as GameData is populated
         !self.operators.is_empty() && !self.skills.is_empty()
     }
 }
