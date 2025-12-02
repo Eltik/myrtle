@@ -40,7 +40,7 @@ pub fn get_operator_modules(
                 unlock_level: raw_module.unlock_level,
                 unlock_favor_point: raw_module.unlock_favor_point,
                 mission_list: raw_module.mission_list.clone(),
-                item_cost: raw_module.item_cost.clone(),
+                item_cost: None, // TODO: Parse from raw_module.item_cost which is Vec<serde_json::Value>
                 module_type: raw_module.module_type.clone(),
                 uni_equip_get_time: raw_module.uni_equip_get_time,
                 char_equip_order: raw_module.char_equip_order,

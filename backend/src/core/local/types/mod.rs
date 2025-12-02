@@ -7,6 +7,7 @@ pub mod handbook;
 pub mod material;
 pub mod module;
 pub mod operator;
+pub mod serde_helpers;
 pub mod skill;
 pub mod skin;
 pub mod voice;
