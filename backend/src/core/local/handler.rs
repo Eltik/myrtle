@@ -6,11 +6,13 @@ use serde::de::DeserializeOwned;
 
 use crate::core::local::gamedata::operators::enrich_all_operators;
 use crate::core::local::gamedata::skills::enrich_all_skills;
-use crate::core::local::types::handbook::Handbook;
-use crate::core::local::types::material::Materials;
-use crate::core::local::types::module::{BattleEquip, RawModules};
-use crate::core::local::types::skill::RawSkill;
-use crate::core::local::types::skin::SkinData;
+use crate::core::local::types::handbook::{Handbook, HandbookTableFile};
+use crate::core::local::types::material::{ItemTableFile, Materials};
+use crate::core::local::types::module::{
+    BattleEquip, BattleEquipTableFile, RawModules, UniequipTableFile,
+};
+use crate::core::local::types::skill::{RawSkill, SkillTableFile};
+use crate::core::local::types::skin::{SkinData, SkinTableFile};
 use crate::core::local::types::{GameData, operator::CharacterTable};
 
 #[derive(Debug)]
@@ -72,12 +74,7 @@ impl DataHandler {
         })
     }
 
-    pub fn load_table_or_empty<K, V>(&self, table_name: &str) -> HashMap<K, V>
-    where
-        K: std::hash::Hash + Eq,
-        V: DeserializeOwned,
-        HashMap<K, V>: DeserializeOwned,
-    {
+    pub fn load_table_or_default<T: DeserializeOwned + Default>(&self, table_name: &str) -> T {
         self.load_table(table_name).unwrap_or_default()
     }
 }
@@ -85,19 +82,92 @@ impl DataHandler {
 pub fn init_game_data(data_dir: &Path) -> Result<GameData, DataError> {
     let handler = DataHandler::new(data_dir);
 
-    // Load character_table with wrapper struct
+    // ============ Load Character Table ============
     let character_table = handler.load_table::<CharacterTable>("character_table")?;
     let raw_operators = character_table.characters;
 
-    // TODO: Load other tables once they're decoded by the unpacker
-    // For now, use empty defaults since only character_table is decoded
-    let raw_skills: HashMap<String, RawSkill> = HashMap::new();
-    let raw_modules = RawModules::default();
-    let battle_equip = BattleEquip::default();
-    let handbook = Handbook::default();
-    let skins = SkinData::default();
-    let materials = Materials::default();
+    // ============ Load Skill Table ============
+    let raw_skills: HashMap<String, RawSkill> =
+        match handler.load_table::<SkillTableFile>("skill_table") {
+            Ok(skill_table) => skill_table.skills,
+            Err(e) => {
+                eprintln!("Warning: Failed to load skill_table: {}", e);
+                HashMap::new()
+            }
+        };
 
+    // ============ Load Uniequip (Module) Table ============
+    let raw_modules: RawModules = match handler.load_table::<UniequipTableFile>("uniequip_table") {
+        Ok(uniequip_table) => RawModules {
+            equip_dict: uniequip_table.equip_dict,
+            mission_list: uniequip_table.mission_list,
+            sub_prof_dict: uniequip_table.sub_prof_dict,
+            char_equip: uniequip_table.char_equip,
+            equip_track_dict: uniequip_table.equip_track_dict,
+        },
+        Err(e) => {
+            eprintln!("Warning: Failed to load uniequip_table: {}", e);
+            RawModules::default()
+        }
+    };
+
+    // ============ Load Battle Equip Table ============
+    let battle_equip: BattleEquip =
+        match handler.load_table::<BattleEquipTableFile>("battle_equip_table") {
+            Ok(battle_equip_table) => battle_equip_table.equips,
+            Err(e) => {
+                eprintln!("Warning: Failed to load battle_equip_table: {}", e);
+                HashMap::new()
+            }
+        };
+
+    // ============ Load Handbook Table ============
+    let handbook: Handbook = match handler.load_table::<HandbookTableFile>("handbook_info_table") {
+        Ok(handbook_table) => Handbook {
+            handbook_dict: handbook_table.handbook_dict,
+            npc_dict: handbook_table.npc_dict,
+            team_mission_list: handbook_table.team_mission_list,
+            handbook_display_condition_list: handbook_table.handbook_display_condition_list,
+            handbook_stage_data: handbook_table.handbook_stage_data,
+            handbook_stage_time: handbook_table.handbook_stage_time,
+        },
+        Err(e) => {
+            eprintln!("Warning: Failed to load handbook_info_table: {}", e);
+            Handbook::default()
+        }
+    };
+
+    // ============ Load Skin Table ============
+    let skins: SkinData = match handler.load_table::<SkinTableFile>("skin_table") {
+        Ok(skin_table) => SkinData {
+            char_skins: skin_table.char_skins,
+            buildin_evolve_map: HashMap::new(), // These have complex nested structures
+            buildin_patch_map: HashMap::new(),
+            brand_list: skin_table.brand_list,
+            special_skin_info_list: skin_table.special_skin_info_list,
+        },
+        Err(e) => {
+            eprintln!("Warning: Failed to load skin_table: {}", e);
+            SkinData::default()
+        }
+    };
+
+    // ============ Load Item Table ============
+    let materials: Materials = match handler.load_table::<ItemTableFile>("item_table") {
+        Ok(item_table) => Materials {
+            items: item_table.items,
+            exp_items: item_table.exp_items,
+            potential_items: HashMap::new(), // Complex nested structure
+            ap_supplies: item_table.ap_supply_out_of_date_dict,
+            char_voucher_items: item_table.char_voucher_items,
+        },
+        Err(e) => {
+            eprintln!("Warning: Failed to load item_table: {}", e);
+            Materials::default()
+        }
+    };
+
+    // ============ Enrich Data ============
     let skills = enrich_all_skills(raw_skills);
 
     let operators = enrich_all_operators(
