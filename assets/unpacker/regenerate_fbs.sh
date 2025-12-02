@@ -44,4 +44,12 @@ for fbs in "$FBS_DIR"/*.fbs; do
     echo "pub mod ${name}_generated;" >> "$OUTPUT_DIR/mod.rs"
 done
 
-echo "Done! Generated $(ls "$OUTPUT_DIR"/*_generated.rs 2>/dev/null | wc -l | tr -d ' ') files"
+echo "Generated $(ls "$OUTPUT_DIR"/*_generated.rs 2>/dev/null | wc -l | tr -d ' ') FlatBuffer files"
+
+# Generate FlatBufferToJson implementations
+echo ""
+echo "Generating FlatBufferToJson implementations..."
+python3 "$SCRIPT_DIR/generate_fb_json_impls.py"
+
+echo ""
+echo "Done! Run 'cargo build --release' to compile."

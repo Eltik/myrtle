@@ -281,6 +281,18 @@ function buildUnpacker() {
     const unpackerDir = path.join(SCRIPT_DIR, "unpacker");
     process.chdir(unpackerDir);
 
+    // Check if fb_json_auto.rs exists - if not, generate it
+    const fbJsonAutoPath = path.join(unpackerDir, "src", "fb_json_auto.rs");
+    if (!existsSync(fbJsonAutoPath)) {
+        printMsg(NC, "  Generating FlatBuffer JSON implementations...");
+        try {
+            execSync("python3 generate_fb_json_impls.py", { stdio: "inherit" });
+        } catch (err) {
+            printWarning("Failed to generate FlatBuffer JSON impls: " + err.message);
+            printMsg(NC, "  Run ./regenerate_fbs.sh manually if FlatBuffer decoding doesn't work");
+        }
+    }
+
     if (BUILD_MODE === "release") {
         printMsg(NC, "  Building in release mode (optimized)...");
         execSync("cargo build --release", { stdio: "inherit" });
@@ -393,6 +405,10 @@ function printUsage(scriptName = process.argv[1]) {
     console.log("  " + scriptName + " --clean              # Clean and rebuild");
     console.log("  " + scriptName + " --lib-only           # Only build unity-rs");
     console.log("  BUILD_MODE=debug " + scriptName + "     # Build in debug mode via env var");
+    console.log("");
+    console.log("FlatBuffer Schemas:");
+    console.log("  If FlatBuffer schemas change, regenerate with:");
+    console.log("    cd unpacker && ./regenerate_fbs.sh");
 }
 
 function printSummary() {
