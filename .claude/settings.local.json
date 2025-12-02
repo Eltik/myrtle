@@ -63,7 +63,8 @@
       "Bash(brew upgrade:*)",
       "Bash(./regenerate_fbs.sh)",
       "WebFetch(domain:crates.io)",
-      "Bash(DYLD_LIBRARY_PATH=/Users/eltik/Documents/Coding/myrtle.moe/assets/unity-rs/src/resources/FMOD/Darwin RUST_LOG=warn ./target/release/assets-unpacker:*)"
+      "Bash(DYLD_LIBRARY_PATH=/Users/eltik/Documents/Coding/myrtle.moe/assets/unity-rs/src/resources/FMOD/Darwin RUST_LOG=warn ./target/release/assets-unpacker:*)",
+      "Bash(node --check:*)"
     ],
     "deny": [],
     "ask": []

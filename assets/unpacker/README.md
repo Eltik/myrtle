@@ -236,12 +236,23 @@ assets-unpacker decode --input <PATH> --output <PATH>
 #### Supported Formats
 
 - **AES-CBC Encrypted**: Game data files with RSA signature (128 bytes) + encrypted content
-- **FlatBuffers**: Binary schema-based format
-  - `character_table` - Character data
+- **FlatBuffers**: Binary schema-based format with 50+ supported tables:
+  - `character_table` - Character data and stats
+  - `skill_table` - Skill definitions
+  - `uniequip_table` - Module/equipment data
+  - `activity_table` - Event/activity data
+  - `stage_table` - Stage definitions
   - `enemy_database` - Enemy definitions
-  - Auto-detects schema from filename
+  - `item_table` - Item data
+  - `gacha_table` - Gacha pool data
+  - `skin_table` - Skin definitions
+  - `building_data` - Base building data
+  - `roguelike_topic_table` - Integrated Strategies data
+  - And 40+ more tables (auto-detected from filename)
 - **BSON**: Binary JSON format
 - **JSON**: Plain JSON (passed through)
+
+The decoder gracefully handles schema mismatches - if a file's actual schema differs from what the filename suggests, it returns the raw encrypted/binary data instead of crashing.
 
 ## Output Structure
 
@@ -393,14 +404,17 @@ src/
 ├── resolve_ab.rs           # Main asset bundle extraction logic
 ├── decode_textasset.rs     # TextAsset decryption/decoding
 ├── flatbuffers_decode.rs   # FlatBuffers schema decoding
+├── fb_json_macros.rs       # FlatBufferToJson trait definitions
+├── fb_json_auto.rs         # Auto-generated JSON serialization (2500+ impls)
 ├── combine_rgb.rs          # RGB+alpha combination
 ├── collect_models.rs       # Spine model collection
 ├── collect_voice.rs        # Audio collection
 ├── utils.rs                # Utility functions
 └── generated_fbs/          # Generated FlatBuffers code
     ├── character_table_generated.rs
-    ├── enemy_database_generated.rs
-    └── ...
+    ├── skill_table_generated.rs
+    ├── activity_table_generated.rs
+    └── ... (50+ schema files)
 ```
 
 ### Key Components
@@ -560,13 +574,37 @@ Assets-Unpacker/
 
 ### Adding New FlatBuffers Schemas
 
-1. Add `.fbs` schema to `OpenArknightsFBS/`
-2. Generate Rust code:
+The project uses auto-generated JSON serialization for all FlatBuffer types. To add a new schema:
+
+1. Add `.fbs` schema to `OpenArknightsFBS/FBS/`
+2. Run the regeneration script:
    ```bash
-   flatc --rust -o src/generated_fbs/ OpenArknightsFBS/schema_name.fbs
+   ./regenerate_fbs.sh
    ```
-3. Add decoder in `flatbuffers_decode.rs`
-4. Update filename detection in `guess_root_type()`
+   This will:
+   - Generate Rust FlatBuffer code with `flatc`
+   - Auto-generate `FlatBufferToJson` implementations via `generate_fb_json_impls.py`
+   - Update `mod.rs` with all schema modules
+
+3. Add filename detection in `flatbuffers_decode.rs`:
+   ```rust
+   // In guess_root_type() function
+   "new_table" => Some("clz_Torappu_NewTableBundle"),
+   ```
+
+4. Rebuild:
+   ```bash
+   cargo build --release
+   ```
+
+#### How Auto-Generation Works
+
+The `generate_fb_json_impls.py` script:
+- Parses all `*_generated.rs` files in `src/generated_fbs/`
+- Extracts struct definitions (`clz_*`, `dict__*`, `list_*`, `kvp__*`)
+- Generates `FlatBufferToJson` trait implementations for each type
+- Handles nested types, vectors, enums, and optional fields
+- Outputs to `src/fb_json_auto.rs` (2500+ implementations, 480+ enums)
 
 ### Dependencies
 

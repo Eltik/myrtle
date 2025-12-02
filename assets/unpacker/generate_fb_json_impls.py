@@ -117,9 +117,12 @@ def parse_file(filepath: Path) -> list[Struct]:
 
     # Find all struct definitions: pub struct name<'a> { pub _tab: ... }
     # Include clz_, dict__, list_, and kvp__ prefixed types
-    struct_pattern = r"pub struct ((?:clz_|dict__|list_|kvp__)\w+)<'a>\s*\{\s*pub _tab:"
+    # Handle both single-line and multi-line definitions (long names get split by rustfmt)
+    # Single-line: pub struct name<'a> { pub _tab:
+    # Multi-line:  pub struct name<\n    'a,\n> {\n    pub _tab:
+    struct_pattern = r"pub struct ((?:clz_|dict__|list_|kvp__)\w+)<\s*'a,?\s*>\s*\{\s*pub _tab:"
 
-    for match in re.finditer(struct_pattern, content):
+    for match in re.finditer(struct_pattern, content, re.DOTALL):
         struct_name = match.group(1)
         fields = parse_struct_fields(content, struct_name)
 
@@ -197,7 +200,12 @@ def generate_impl(struct: Struct, module_name: str) -> str:
 
         lines.append("        Value::Object(map)")
     else:
-        lines.append("        let mut map = Map::new();")
+        # Check if struct has any non-key/value fields
+        has_fields = any(f.name not in ('key', 'value') for f in struct.fields)
+        if has_fields:
+            lines.append("        let mut map = Map::new();")
+        else:
+            lines.append("        let map = Map::new();")
 
         for field in struct.fields:
             if field.name in ('key', 'value'):  # Skip if we're not a dict but have these
