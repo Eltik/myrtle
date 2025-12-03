@@ -17,9 +17,18 @@ use std::process;
 
 fn main() {
     // Parse environment variables for production deployment
-    let server = match std::env::var("ARK_SERVER").as_deref() {
-        Ok("bilibili") => Servers::BILIBILI,
-        _ => Servers::OFFICIAL, // Default to official
+    // Supported values: official, bilibili, en, jp, kr, tw
+    let server = match std::env::var("ARK_SERVER")
+        .as_deref()
+        .map(|s| s.to_lowercase())
+        .as_deref()
+    {
+        Ok("official") | Ok("cn") => Servers::OFFICIAL,
+        Ok("bilibili") | Ok("bili") | Ok("b") => Servers::BILIBILI,
+        Ok("jp") | Ok("japan") => Servers::JP,
+        Ok("kr") | Ok("korea") => Servers::KR,
+        Ok("tw") | Ok("taiwan") => Servers::TW,
+        _ => Servers::EN, // Default to EN (Global)
     };
 
     let savedir = std::env::var("ARK_SAVEDIR").unwrap_or_else(|_| "./ArkAssets".to_string());
@@ -29,7 +38,7 @@ fn main() {
         .unwrap_or(false);
 
     println!("[Monitor] Arknights Update Monitor Starting...");
-    println!("[Monitor] Server: {:?}", server);
+    println!("[Monitor] Server: {}", server.display_name());
     println!("[Monitor] Save Directory: {}", savedir);
     println!("[Monitor] Auto-download: {}", auto_download);
     println!();

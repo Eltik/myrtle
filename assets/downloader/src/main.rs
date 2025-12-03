@@ -6,13 +6,19 @@ use std::process;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Server to download from (official or bilibili)
-    #[arg(short, long, default_value = "official")]
+    /// Server to download from:
+    ///   official  - CN Official (Hypergryph)
+    ///   bilibili  - CN Bilibili
+    ///   en        - Global/EN (Yostar)
+    ///   jp        - Japan (Yostar)
+    ///   kr        - Korea (Yostar)
+    ///   tw        - Taiwan (Gryphline)
+    #[arg(short, long, default_value = "en")]
     server: String,
 
     /// Directory to save downloaded assets
     #[arg(
-        short,
+        short = 'd',
         long,
         default_value = "/Users/eltik/Documents/Coding/Arknights-Downloader/ArkAssets"
     )]
@@ -29,16 +35,22 @@ fn main() {
 
     // Parse server type
     let server = match args.server.to_lowercase().as_str() {
-        "official" => Servers::OFFICIAL,
-        "bilibili" => Servers::BILIBILI,
+        "official" | "cn" => Servers::OFFICIAL,
+        "bilibili" | "bili" | "b" => Servers::BILIBILI,
+        "en" | "global" | "us" => Servers::EN,
+        "jp" | "japan" => Servers::JP,
+        "kr" | "korea" => Servers::KR,
+        "tw" | "taiwan" => Servers::TW,
         _ => {
             eprintln!(
-                "Error: Invalid server type '{}'. Must be 'official' or 'bilibili'",
+                "Error: Invalid server type '{}'. Valid options: official, bilibili, en, jp, kr, tw",
                 args.server
             );
             process::exit(1);
         }
     };
+
+    println!("Selected server: {}", server.display_name());
 
     // Create ArkAssets instance
     let assets = match ArkAssets::new(server) {

@@ -67,7 +67,11 @@
       "Bash(node --check:*)",
       "Bash(timeout 10 cargo run:*)",
       "Bash(pkill:*)",
-      "Bash(timeout 8 ./target/debug/backend:*)"
+      "Bash(timeout 8 ./target/debug/backend:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(./target/release/arknights-downloader:*)",
+      "Bash(DYLD_LIBRARY_PATH=/Users/eltik/Documents/Coding/myrtle.moe/assets/unity-rs/src/resources/FMOD/Darwin ./target/release/arknights-downloader:*)",
+      "Bash(DYLD_LIBRARY_PATH=/Users/eltik/Documents/Coding/myrtle.moe/assets/unity-rs/src/resources/FMOD/Darwin cargo run:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use regex::Regex;
 
 use crate::core::local::types::{
     operator::{EnrichedSkill, OperatorSkillRef, SkillStatic},
@@ -10,17 +11,31 @@ pub fn enrich_all_skills(raw_skills: HashMap<String, RawSkill>) -> HashMap<Strin
     raw_skills
         .into_iter()
         .map(|(id, raw)| {
+            let num = extract(&id)
+                .map(|(_, n)| n)
+                .unwrap_or_else(|| "unknown".to_string());
+
             let skill = Skill {
                 id: Some(id.clone()),
                 skill_id: raw.skill_id,
                 icon_id: raw.icon_id,
-                image: Some(format!("/spritepack/skill_icon_{}.png", id)), // TODO: Investigate as the new Unpacked directory has a folder for each individual skill index (so the path will be different)
+                image: Some(format!("/spritepack/skill_icons_{}/skill_icon_{}.png", num, id)),
                 hidden: raw.hidden,
                 levels: raw.levels,
             };
             (id, skill)
         })
         .collect()
+}
+
+fn extract(s: &str) -> Option<(String, String)> {
+    let re = Regex::new(r"^(.*?)(?:_|\[)?(\d+)\]?$").unwrap();
+
+    let caps = re.captures(s)?;
+    let prefix = caps.get(1)?.as_str().to_string();
+    let num = caps.get(2)?.as_str().to_string();
+
+    Some((prefix, num))
 }
 
 pub fn enrich_skills(
