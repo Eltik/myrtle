@@ -12,9 +12,11 @@ fn main() {
     println!("=== Arknights Version Update Checker ===\n");
 
     // Configuration
-    let server = Servers::OFFICIAL; // or Servers::BILIBILI
+    // Available servers: OFFICIAL, BILIBILI, EN, JP, KR, TW
+    let server = Servers::EN;
     let savedir = "./ArkAssets";
 
+    println!("Server: {}", server.display_name());
     println!("Checking for updates...\n");
 
     match ArkAssets::check_for_updates(server, savedir) {
@@ -35,8 +37,9 @@ fn main() {
                 UpdateStatus::FirstCheck => {
                     println!("✓ First version check - baseline established!");
                     println!(
-                        "  Version cache created at: {}/version_cache_official.json",
-                        savedir
+                        "  Version cache created at: {}/version_cache_{}.json",
+                        savedir,
+                        server.cache_name()
                     );
                     println!("  Run this again later to detect updates.");
 

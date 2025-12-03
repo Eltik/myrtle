@@ -18,6 +18,7 @@ pub fn get_operator_modules(
                 .cloned()
                 .unwrap_or_default();
 
+            // TODO: Fix image
             let module = Module {
                 id: Some(raw_module.uni_equip_id.clone()),
                 uni_equip_id: raw_module.uni_equip_id.clone(),

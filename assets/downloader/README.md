@@ -119,7 +119,7 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/arknights-downloader.git
+git clone https://github.com/Eltik/arknights-downloader.git
 cd arknights-downloader
 
 # Build release binary

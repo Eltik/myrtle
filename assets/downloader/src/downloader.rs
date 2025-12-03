@@ -31,8 +31,96 @@ pub struct ArkAssets {
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub enum Servers {
+    /// CN Official (Hypergryph)
     OFFICIAL = 0,
+    /// CN Bilibili
     BILIBILI = 1,
+    /// Global/EN (Yostar)
+    EN = 2,
+    /// Japan (Yostar)
+    JP = 3,
+    /// Korea (Yostar)
+    KR = 4,
+    /// Taiwan (Gryphline)
+    TW = 5,
+}
+
+impl Servers {
+    /// Returns the CDN base URL for asset downloads
+    pub fn cdn_base_url(&self) -> &'static str {
+        match self {
+            Servers::OFFICIAL | Servers::BILIBILI => "https://ak.hycdn.cn/assetbundle",
+            Servers::EN => "https://ark-us-static-online.yo-star.com/assetbundle",
+            Servers::JP => "https://ark-jp-static-online.yo-star.com/assetbundle",
+            // KR uses a CDN with a tenant ID suffix
+            Servers::KR => "https://ark-kr-static-online-1300509597.yo-star.com/assetbundle",
+            // TW uses Hypergryph's HG CDN
+            Servers::TW => "https://ak-tw.hg-cdn.com/assetbundle",
+        }
+    }
+
+    /// Returns the version API URL
+    pub fn version_url(&self) -> String {
+        match self {
+            Servers::OFFICIAL => {
+                "https://ak-conf.hypergryph.com/config/prod/official/Android/version".to_string()
+            }
+            Servers::BILIBILI => {
+                "https://ak-conf.hypergryph.com/config/prod/b/Android/version".to_string()
+            }
+            Servers::EN => {
+                "https://ark-us-static-online.yo-star.com/assetbundle/official/Android/version"
+                    .to_string()
+            }
+            Servers::JP => {
+                "https://ark-jp-static-online.yo-star.com/assetbundle/official/Android/version"
+                    .to_string()
+            }
+            // KR uses a CDN with a tenant ID suffix
+            Servers::KR => {
+                "https://ark-kr-static-online-1300509597.yo-star.com/assetbundle/official/Android/version"
+                    .to_string()
+            }
+            // TW uses Gryphline's config server for version
+            Servers::TW => {
+                "https://ak-conf-tw.gryphline.com/config/prod/official/Android/version".to_string()
+            }
+        }
+    }
+
+    /// Returns the server tag used in asset URLs
+    pub fn asset_tag(&self) -> &'static str {
+        match self {
+            Servers::OFFICIAL => "official",
+            Servers::BILIBILI => "bilibili",
+            // All Yostar servers use "official" tag
+            Servers::EN | Servers::JP | Servers::KR | Servers::TW => "official",
+        }
+    }
+
+    /// Returns the cache file name suffix for version caching
+    pub fn cache_name(&self) -> &'static str {
+        match self {
+            Servers::OFFICIAL => "official",
+            Servers::BILIBILI => "bilibili",
+            Servers::EN => "en",
+            Servers::JP => "jp",
+            Servers::KR => "kr",
+            Servers::TW => "tw",
+        }
+    }
+
+    /// Returns display name for the server
+    pub fn display_name(&self) -> &'static str {
+        match self {
+            Servers::OFFICIAL => "CN Official",
+            Servers::BILIBILI => "CN Bilibili",
+            Servers::EN => "Global/EN",
+            Servers::JP => "Japan",
+            Servers::KR => "Korea",
+            Servers::TW => "Taiwan",
+        }
+    }
 }
 
 #[derive(Deserialize)]
@@ -172,27 +260,14 @@ impl ArkAssets {
     }
 
     pub fn get_version(server: Servers) -> Result<(String, String), Box<dyn std::error::Error>> {
-        let server_tag = match server {
-            Servers::OFFICIAL => "official",
-            Servers::BILIBILI => "b",
-        };
-
-        let url = format!(
-            "https://ak-conf.hypergryph.com/config/prod/{}/Android/version",
-            server_tag
-        );
-
+        let url = server.version_url();
         let js: VersionResponse = get(&url)?.json()?;
         Ok((js.resVersion, js.clientVersion))
     }
 
     /// Get the path to the version cache file for a given server and savedir
     fn get_version_cache_path(server: Servers, savedir: &str) -> PathBuf {
-        let server_name = match server {
-            Servers::OFFICIAL => "official",
-            Servers::BILIBILI => "bilibili",
-        };
-        PathBuf::from(savedir).join(format!("version_cache_{}.json", server_name))
+        PathBuf::from(savedir).join(format!("version_cache_{}.json", server.cache_name()))
     }
 
     /// Load cached version info from disk
@@ -296,15 +371,11 @@ impl ArkAssets {
         server: &Servers,
         asset_version: &str,
     ) -> Result<(HashMap<String, Value>, i64, i64), Box<dyn std::error::Error>> {
-        let server_tag = if *server == Servers::OFFICIAL {
-            "official"
-        } else {
-            "bilibili"
-        };
-
         let url = format!(
-            "https://ak.hycdn.cn/assetbundle/{}/Android/assets/{}/hot_update_list.json",
-            server_tag, asset_version
+            "{}/{}/Android/assets/{}/hot_update_list.json",
+            server.cdn_base_url(),
+            server.asset_tag(),
+            asset_version
         );
 
         let js: HotUpdateJSON = get(&url)?.json()?;
@@ -712,15 +783,12 @@ impl ArkAssets {
                 let dat_path = re.replace(filename, ".dat");
                 let url_path = dat_path.replace("/", "_").replace("#", "__");
 
-                let server_tag = if server == Servers::OFFICIAL {
-                    "official"
-                } else {
-                    "bilibili"
-                };
-
                 let url = format!(
-                    "https://ak.hycdn.cn/assetbundle/{}/Android/assets/{}/{}",
-                    server_tag, asset_version, url_path
+                    "{}/{}/Android/assets/{}/{}",
+                    server.cdn_base_url(),
+                    server.asset_tag(),
+                    asset_version,
+                    url_path
                 );
 
                 // Python line 393: Create progress bar for this download
@@ -1079,17 +1147,14 @@ impl ArkAssets {
                                                             audio.object_reader = Some(Box::new(obj.clone()));
 
                                                             // Python lines 338-343: Extract all named samples
-                                                            match unity_rs::export::audio_clip_converter::extract_audioclip_samples(&mut audio, true) {
-                                                                Ok(samples) => {
-                                                                    // Python: for aname, adata in data.samples.items()
-                                                                    for (aname, adata) in samples {
-                                                                        // Python lines 339-342
-                                                                        let save_path = unpack_dir.join(&aname);
-                                                                        fs::write(&save_path, adata)?;
-                                                                    }
-                                                                }
-                                                                Err(e) => {
-                                                                    eprintln!("Warning: Failed to extract audio samples: {}", e);
+                                                            // Note: Some audio clips reference external .resS files and will fail
+                                                            // to extract - this is expected behavior (Python silently ignores these)
+                                                            if let Ok(samples) = unity_rs::export::audio_clip_converter::extract_audioclip_samples(&mut audio, true) {
+                                                                // Python: for aname, adata in data.samples.items()
+                                                                for (aname, adata) in samples {
+                                                                    // Python lines 339-342
+                                                                    let save_path = unpack_dir.join(&aname);
+                                                                    let _ = fs::write(&save_path, adata);
                                                                 }
                                                             }
                                                         }
@@ -1246,15 +1311,12 @@ impl ArkAssets {
         let dat_path = re.replace(path, ".dat");
         let url_path = dat_path.replace("/", "_").replace("#", "__");
 
-        let server_tag = if self.server == Servers::OFFICIAL {
-            "official"
-        } else {
-            "bilibili"
-        };
-
         let url = format!(
-            "https://ak.hycdn.cn/assetbundle/{}/Android/assets/{}/{}",
-            server_tag, self.asset_version, url_path
+            "{}/{}/Android/assets/{}/{}",
+            self.server.cdn_base_url(),
+            self.server.asset_tag(),
+            self.asset_version,
+            url_path
         );
 
         // Line 390: Set headers and create client
