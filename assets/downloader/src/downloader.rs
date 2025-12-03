@@ -233,13 +233,43 @@ impl ArkAssets {
         })
     }
 
+    /// Decrypt text asset data using AES-128-CBC.
+    /// Returns the original data if decryption fails (matching Python's behavior
+    /// where the outer try/except catches and ignores decryption errors).
     pub fn text_asset_decrypt(stream: &[u8], has_rsa: bool) -> Vec<u8> {
+        // Try to decrypt, return original data on any failure
+        Self::try_text_asset_decrypt(stream, has_rsa).unwrap_or_else(|| stream.to_vec())
+    }
+
+    /// Internal decryption that can fail
+    fn try_text_asset_decrypt(stream: &[u8], has_rsa: bool) -> Option<Vec<u8>> {
         let aes_key = &Self::CHAT_MASK[..16];
-        let data = if has_rsa { &stream[128..] } else { stream };
+
+        // Skip RSA header if present
+        let data = if has_rsa {
+            if stream.len() <= 128 {
+                return None; // Not enough data for RSA header
+            }
+            &stream[128..]
+        } else {
+            stream
+        };
+
+        // Need at least 16 bytes for IV + some data
+        if data.len() < 32 {
+            return None;
+        }
+
+        // Data after IV must be multiple of 16 for AES
+        let payload_len = data.len() - 16;
+        if payload_len % 16 != 0 {
+            return None;
+        }
 
         let buf = &data[..16];
         let mask = &Self::CHAT_MASK[16..];
 
+        // Derive IV by XORing with mask
         let mut iv = [0u8; 16];
         for i in 0..16 {
             iv[i] = buf[i] ^ mask[i];
@@ -248,15 +278,26 @@ impl ArkAssets {
         let decryptor = Decryptor::<Aes128>::new(aes_key.into(), iv.as_slice().into());
 
         let mut payload = data[16..].to_vec();
-        decryptor
+
+        // Decrypt - NoPadding shouldn't fail, but handle it anyway
+        if decryptor
             .decrypt_padded_mut::<cipher::block_padding::NoPadding>(&mut payload)
-            .expect("AES CBC decrypt failed");
+            .is_err()
+        {
+            return None;
+        }
 
-        let pad = *payload.last().unwrap() as usize;
-        let end = payload.len() - pad;
-        payload.truncate(end);
+        // Manual PKCS7 unpadding (matching Python's: s[0:(len(s) - s[-1])])
+        if let Some(&pad_byte) = payload.last() {
+            let pad = pad_byte as usize;
+            // Validate padding - must be 1-16 and not exceed data length
+            if pad > 0 && pad <= 16 && pad <= payload.len() {
+                payload.truncate(payload.len() - pad);
+            }
+            // If padding is invalid, return data as-is (Python does this too)
+        }
 
-        payload
+        Some(payload)
     }
 
     pub fn get_version(server: Servers) -> Result<(String, String), Box<dyn std::error::Error>> {
@@ -675,7 +716,6 @@ impl ArkAssets {
         let _read_lock = Arc::new(Mutex::new(()));
         let _size_lock = Arc::new(Mutex::new(()));
         let _write_lock = Arc::new(Mutex::new(()));
-        let thread_handles = Arc::new(Mutex::new(Vec::new()));
 
         let per_path = PathBuf::from(savedir).join("persistent_res_list.json");
         let per: HashMap<String, String> = if !per_path.exists() {
@@ -696,7 +736,6 @@ impl ArkAssets {
         };
 
         let mut files = HashMap::new();
-        let _unpack_count = Arc::new(Mutex::new(0usize));
         let mut count = count; // make mutable
 
         for key in keys {
@@ -893,372 +932,289 @@ impl ArkAssets {
                         pbar.set_message(msg);
                     }
 
-                    // Line 268-365: Spawn unzip and unpack threads
-                    {
-                        // Clone all the data we need for the thread
-                        let stream_clone = stream.clone();
-                        let filename_clone = filename.to_string();
-                        let md5_clone = md5.to_string();
-                        let savedir_clone = savedir.to_string();
-                        let lock_clone = Arc::clone(&lock);
-                        let write_lock_clone = Arc::clone(&_write_lock); // Note: use _write_lock
-                        let zipbar_clone = zipbar.clone();
-                        let per_path_clone = per_path.clone();
-                        let unpackbar_clone = unpackbar.clone();
-                        let unpack_count_clone = Arc::clone(&_unpack_count);
-                        let handles_clone = Arc::clone(&thread_handles);
+                    // Line 268-365: Unzip and unpack inline (no separate threads - controlled by rayon)
+                    // This ensures parallelism is bounded by the rayon thread pool
+                    let unzip_unpack_result = (|| -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+                        // === UNZIP ===
+                        // Create cursor and open zip archive
+                        let cursor = Cursor::new(&stream);
+                        let mut archive = ZipArchive::new(cursor)?;
 
-                        // Spawn unzip thread and collect handle
-                        let handle = std::thread::spawn(move || {
-                            // Unzip logic
-                            let unzip_result = (|| -> Result<(), Box<dyn std::error::Error>> {
-                                // Create cursor and open zip archive
-                                let cursor = Cursor::new(&stream_clone);
-                                let mut archive = ZipArchive::new(cursor)?;
+                        // Extract all files
+                        for i in 0..archive.len() {
+                            let mut file = archive.by_index(i)?;
+                            let outpath = PathBuf::from(savedir).join(file.name());
 
-                                // Extract all files
-                                for i in 0..archive.len() {
-                                    let mut file = archive.by_index(i)?;
-                                    let outpath = PathBuf::from(&savedir_clone).join(file.name());
+                            if file.is_dir() {
+                                fs::create_dir_all(&outpath)?;
+                            } else {
+                                if let Some(parent) = outpath.parent() {
+                                    fs::create_dir_all(parent)?;
+                                }
+                                let mut outfile = fs::File::create(&outpath)?;
+                                std::io::copy(&mut file, &mut outfile)?;
+                            }
+                        }
 
-                                    if file.is_dir() {
-                                        fs::create_dir_all(&outpath)?;
-                                    } else {
-                                        if let Some(parent) = outpath.parent() {
-                                            fs::create_dir_all(parent)?;
+                        // Update zipbar
+                        zipbar.inc(1);
+
+                        // === UNPACK ===
+                        let file_path = PathBuf::from(savedir).join(filename);
+
+                        // Load Unity bundle
+                        let mut env = Environment::new();
+                        if env.load_file(
+                            unity_rs::helpers::import_helper::FileSource::Path(
+                                file_path.to_str().unwrap().to_string()
+                            ),
+                            None,
+                            false,
+                        ).is_none() {
+                            // Not a Unity bundle, skip unpacking
+                            unpackbar.inc(1);
+                            return Ok(());
+                        }
+
+                        // Create unpack directory
+                        let unpack_dir = file_path.with_file_name(
+                            format!("[unpack]{}", file_path.file_stem().unwrap().to_str().unwrap())
+                        );
+                        fs::create_dir_all(&unpack_dir)?;
+
+                        // Extract images (Texture2D and Sprite)
+                        let mut images: HashMap<String, PathBuf> = HashMap::new();
+                        let temp_dir = unpack_dir.join("temp");
+                        fs::create_dir_all(&temp_dir)?;
+
+                        // First pass: save all textures to temp directory
+                        for obj in env.objects() {
+                            if obj.obj_type == ClassIDType::Texture2D {
+                                let mut obj_mut = obj.clone();
+                                if let Ok(data) = obj_mut.read(false) {
+                                    if let Ok(mut texture) = serde_json::from_value::<Texture2D>(data) {
+                                        texture.object_reader = Some(Box::new(obj.clone()));
+                                        let name_val = texture.m_Name.as_deref().unwrap_or("unnamed");
+                                        let key = format!("(Texture2D){}", name_val);
+                                        let temp_path = temp_dir.join(format!("{}.png", key));
+
+                                        if unity_rs::export::texture_2d_converter::save_texture_as_png(
+                                            &texture,
+                                            &temp_path,
+                                            true
+                                        ).is_ok() {
+                                            images.insert(key, temp_path);
                                         }
-                                        let mut outfile = fs::File::create(&outpath)?;
-                                        std::io::copy(&mut file, &mut outfile)?;
                                     }
                                 }
+                            } else if obj.obj_type == ClassIDType::Sprite {
+                                let mut obj_mut = obj.clone();
+                                if let Ok(data) = obj_mut.read(false) {
+                                    if let Ok(mut sprite) = serde_json::from_value::<unity_rs::classes::generated::Sprite>(data) {
+                                        sprite.object_reader = Some(Box::new(obj.clone()));
+                                        let name_val = sprite.m_Name.as_deref().unwrap_or("unnamed");
+                                        let key = format!("(Sprite){}", name_val);
+                                        let temp_path = temp_dir.join(format!("{}.png", key));
 
-                                // Spawn unpack thread for each extracted file (Python line 364)
-                                let savedir_unpack = savedir_clone.clone();
-                                let filename_unpack = filename_clone.clone();
-                                let lock_unpack = Arc::clone(&lock_clone);
-                                let unpackbar_unpack = unpackbar_clone.clone();
-                                let unpack_count_unpack = Arc::clone(&unpack_count_clone);
-
-                                std::thread::spawn(move || {
-                                    let file_path = PathBuf::from(&savedir_unpack).join(&filename_unpack);
-
-                                    // Unpack logic (Python lines 286-362)
-                                    let unpack_result = (|| -> Result<(), Box<dyn std::error::Error>> {
-                                        // Line 289: Load Unity bundle
-                                        let mut env = Environment::new();
-                                        if env.load_file(
-                                            unity_rs::helpers::import_helper::FileSource::Path(
-                                                file_path.to_str().unwrap().to_string()
-                                            ),
-                                            None,
-                                            false,
-                                        ).is_none() {
-                                            return Err("Failed to load file".into());
-                                        }
-
-                                        // Line 295: Create unpack directory
-                                        let unpack_dir = file_path.with_file_name(
-                                            format!("[unpack]{}", file_path.file_stem().unwrap().to_str().unwrap())
-                                        );
-                                        fs::create_dir_all(&unpack_dir)?;
-
-                                        // Line 290-307: Extract images (Texture2D and Sprite)
-                                        // Collect images in memory for alpha channel merging
-                                        let mut images: HashMap<String, PathBuf> = HashMap::new();
-                                        let temp_dir = unpack_dir.join("temp");
-                                        fs::create_dir_all(&temp_dir)?;
-
-                                        // First pass: save all textures to temp directory
-                                        for obj in env.objects() {
-                                            if obj.obj_type == ClassIDType::Texture2D {
-                                                let mut obj_mut = obj.clone();
-                                                if let Ok(data) = obj_mut.read(false) {
-                                                    if let Ok(mut texture) = serde_json::from_value::<Texture2D>(data) {
-                                                        texture.object_reader = Some(Box::new(obj.clone()));
-                                                        let name_val = texture.m_Name.as_deref().unwrap_or("unnamed");
-                                                        let key = format!("(Texture2D){}", name_val);
-                                                        let temp_path = temp_dir.join(format!("{}.png", key));
-
-                                                        // Save to temp directory
-                                                        if unity_rs::export::texture_2d_converter::save_texture_as_png(
-                                                            &texture,
-                                                            &temp_path,
-                                                            true
+                                        if let Some(ref obj_reader) = sprite.object_reader {
+                                            if let Some(concrete_reader) = obj_reader
+                                                .as_any()
+                                                .downcast_ref::<unity_rs::files::ObjectReader<()>>() {
+                                                if let Some(ref weak_assets) = concrete_reader.assets_file {
+                                                    if let Some(rc_assets) = weak_assets.upgrade() {
+                                                        if unity_rs::export::sprite_helper::save_sprite(
+                                                            &sprite,
+                                                            &rc_assets,
+                                                            temp_path.to_str().unwrap()
                                                         ).is_ok() {
                                                             images.insert(key, temp_path);
                                                         }
                                                     }
                                                 }
-                                            } else if obj.obj_type == ClassIDType::Sprite {
-                                                // Python line 293: Extract Sprite images with alpha support
-                                                let mut obj_mut = obj.clone();
-                                                if let Ok(data) = obj_mut.read(false) {
-                                                    if let Ok(mut sprite) = serde_json::from_value::<unity_rs::classes::generated::Sprite>(data) {
-                                                        sprite.object_reader = Some(Box::new(obj.clone()));
-                                                        let name_val = sprite.m_Name.as_deref().unwrap_or("unnamed");
-                                                        let key = format!("(Sprite){}", name_val);
-                                                        let temp_path = temp_dir.join(format!("{}.png", key));
-
-                                                        // Get assets_file reference from object_reader (similar to AudioClip)
-                                                        if let Some(ref obj_reader) = sprite.object_reader {
-                                                            if let Some(concrete_reader) = obj_reader
-                                                                .as_any()
-                                                                .downcast_ref::<unity_rs::files::ObjectReader<()>>() {
-                                                                if let Some(ref weak_assets) = concrete_reader.assets_file {
-                                                                    if let Some(rc_assets) = weak_assets.upgrade() {
-                                                                        // Use sprite_helper to save sprite with alpha support
-                                                                        if unity_rs::export::sprite_helper::save_sprite(
-                                                                            &sprite,
-                                                                            &rc_assets,
-                                                                            temp_path.to_str().unwrap()
-                                                                        ).is_ok() {
-                                                                            images.insert(key, temp_path);
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
                                             }
                                         }
-
-                                        // Second pass: merge alpha channels and save final images (Python lines 296-307)
-                                        let image_keys: Vec<String> = images.keys().cloned().collect();
-                                        for name in &image_keys {
-                                            if !name.ends_with("[alpha]") {
-                                                let alpha_key = format!("{}[alpha]", name);
-
-                                                if images.contains_key(&alpha_key) {
-                                                    // Load both images
-                                                    let rgb_img = image::open(&images[name])?.to_rgba8();
-                                                    let alpha_img = image::open(&images[&alpha_key])?.to_luma8();
-
-                                                    // Merge RGB with separate alpha channel
-                                                    let (width, height) = rgb_img.dimensions();
-                                                    let mut merged_img = image::ImageBuffer::new(width, height);
-
-                                                    for y in 0..height {
-                                                        for x in 0..width {
-                                                            let rgb_pixel = rgb_img.get_pixel(x, y);
-                                                            let (a_width, a_height) = alpha_img.dimensions();
-
-                                                            // Resize alpha if dimensions don't match (Python line 301-302)
-                                                            let alpha_pixel = if a_width == width && a_height == height {
-                                                                alpha_img.get_pixel(x, y)[0]
-                                                            } else {
-                                                                // If alpha size mismatch, use full opacity
-                                                                255
-                                                            };
-
-                                                            merged_img.put_pixel(x, y, image::Rgba([
-                                                                rgb_pixel[0],
-                                                                rgb_pixel[1],
-                                                                rgb_pixel[2],
-                                                                alpha_pixel
-                                                            ]));
-                                                        }
-                                                    }
-
-                                                    // Save merged image (Python line 307)
-                                                    let final_path = unpack_dir.join(format!("{}.png", name));
-                                                    image::DynamicImage::ImageRgba8(merged_img).save(&final_path)?;
-                                                } else {
-                                                    // No alpha channel, just copy the image (Python line 305)
-                                                    let final_path = unpack_dir.join(format!("{}.png", name));
-                                                    fs::copy(&images[name], &final_path)?;
-                                                }
-                                            }
-                                        }
-
-                                        // Clean up temp directory
-                                        let _ = fs::remove_dir_all(&temp_dir);
-
-                                        // Line 308-357: Process other asset types
-                                        for obj in env.objects() {
-                                            let mut obj_mut = obj.clone();
-
-                                            match obj.obj_type {
-                                                // Line 311-337: TextAsset
-                                                ClassIDType::TextAsset => {
-                                                    if let Ok(data) = obj_mut.read(false) {
-                                                        if let Ok(text_asset) = serde_json::from_value::<TextAsset>(data) {
-                                                            let script_str = text_asset.m_Script.as_deref().unwrap_or("");
-                                                            let script_bytes = script_str.as_bytes();
-
-                                                            // Decrypt if needed (lines 313-320)
-                                                            let decrypted = {
-                                                                let fpath_str = file_path.to_str().unwrap();
-                                                                if (fpath_str.contains("gamedata\\levels") || fpath_str.contains("gamedata/levels"))
-                                                                    && !fpath_str.contains("enemydata") {
-                                                                    // Skip first 128 bytes
-                                                                    if script_bytes.len() > 128 {
-                                                                        script_bytes[128..].to_vec()
-                                                                    } else {
-                                                                        script_bytes.to_vec()
-                                                                    }
-                                                                } else {
-                                                                    // Use text_asset_decrypt
-                                                                    ArkAssets::text_asset_decrypt(script_bytes, !fpath_str.contains("gamedata/levels"))
-                                                                }
-                                                            };
-
-                                                            let name_val = text_asset.m_Name.as_deref().unwrap_or("unnamed");
-
-                                                            // Try JSON (lines 321-325)
-                                                            if let Ok(json_val) = serde_json::from_slice::<serde_json::Value>(&decrypted) {
-                                                                let json_str = serde_json::to_string_pretty(&json_val)?;
-                                                                let save_path = unpack_dir.join(format!("{}.json", name_val));
-                                                                fs::write(&save_path, json_str)?;
-                                                            } else {
-                                                                // Try BSON (lines 327-333)
-                                                                match bson::from_slice::<Vec<bson::Document>>(&decrypted) {
-                                                                    Ok(docs) => {
-                                                                        for (i, doc) in docs.iter().enumerate() {
-                                                                            let json_val = serde_json::to_value(doc)?;
-                                                                            let json_str = serde_json::to_string_pretty(&json_val)?;
-                                                                            let suffix = if i >= 1 { format!("_{}", i) } else { String::new() };
-                                                                            let save_path = unpack_dir.join(format!("{}{}.json", name_val, suffix));
-                                                                            fs::write(&save_path, json_str)?;
-                                                                        }
-                                                                    }
-                                                                    Err(_) => {
-                                                                        // Save as raw (lines 335-337)
-                                                                        let re_ext = Regex::new(r"\.(lua|atlas|skel)$")?;
-                                                                        let extension = if re_ext.is_match(name_val) {
-                                                                            ""
-                                                                        } else {
-                                                                            ".txt"
-                                                                        };
-                                                                        let save_path = unpack_dir.join(format!("{}{}", name_val, extension));
-                                                                        fs::write(&save_path, decrypted)?;
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-
-                                                // Line 338-343: AudioClip
-                                                ClassIDType::AudioClip => {
-                                                    if let Ok(data) = obj_mut.read(false) {
-                                                        if let Ok(mut audio) = serde_json::from_value::<AudioClip>(data.clone()) {
-                                                            // Set object_reader for resource access
-                                                            audio.object_reader = Some(Box::new(obj.clone()));
-
-                                                            // Python lines 338-343: Extract all named samples
-                                                            // Note: Some audio clips reference external .resS files and will fail
-                                                            // to extract - this is expected behavior (Python silently ignores these)
-                                                            if let Ok(samples) = unity_rs::export::audio_clip_converter::extract_audioclip_samples(&mut audio, true) {
-                                                                // Python: for aname, adata in data.samples.items()
-                                                                for (aname, adata) in samples {
-                                                                    // Python lines 339-342
-                                                                    let save_path = unpack_dir.join(&aname);
-                                                                    let _ = fs::write(&save_path, adata);
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-
-                                                // Line 344-348: Mesh
-                                                ClassIDType::Mesh => {
-                                                    if let Ok(data) = obj_mut.read(false) {
-                                                        if let Ok(mesh) = serde_json::from_value::<Mesh>(data) {
-                                                            let name_val = mesh.m_Name.as_deref().unwrap_or("unnamed");
-                                                            let save_path = unpack_dir.join(format!("{}.obj", name_val));
-
-                                                            // Use mesh exporter
-                                                            if let Ok(obj_str) = unity_rs::export::mesh_exporter::export_mesh_obj(&mesh, None) {
-                                                                fs::write(&save_path, obj_str)?;
-                                                            }
-                                                        }
-                                                    }
-                                                }
-
-                                                // Line 349-357: Font
-                                                ClassIDType::Font => {
-                                                    if let Ok(data) = obj_mut.read(false) {
-                                                        if let Ok(font) = serde_json::from_value::<Font>(data) {
-                                                            if let Some(ref font_data) = font.m_FontData {
-                                                                let font_bytes: Vec<u8> = font_data.iter().map(|&b| b as u8).collect();
-                                                                let extension = if font_bytes.len() >= 4 && &font_bytes[0..4] == b"OTTO" {
-                                                                    ".otf"
-                                                                } else {
-                                                                    ".ttf"
-                                                                };
-
-                                                                let name_val = font.m_Name.as_deref().unwrap_or("unnamed");
-                                                                let save_path = unpack_dir.join(format!("{}{}", name_val, extension));
-                                                                fs::write(&save_path, font_bytes)?;
-                                                            }
-                                                        }
-                                                    }
-                                                }
-
-                                                _ => {}
-                                            }
-                                        }
-
-                                        Ok(())
-                                    })();
-
-                                    // Line 360-362: Finally block - update unpackbar
-                                    {
-                                        let mut count = unpack_count_unpack.lock().unwrap();
-                                        *count += 1;
                                     }
-                                    {
-                                        let _guard = lock_unpack.lock().unwrap();
-                                        unpackbar_unpack.inc(1);
-                                    }
-
-                                    // Line 358-359: Silent error handling (pass)
-                                    if let Err(_e) = unpack_result {
-                                        // Silent - matches Python's "pass"
-                                    }
-                                });
-
-                                // Update persistent_res_list.json
-                                {
-                                    let _write_guard = write_lock_clone.lock().unwrap();
-
-                                    let mut per: HashMap<String, String> = match fs::read_to_string(&per_path_clone) {
-                                        Ok(content) => serde_json::from_str(&content).unwrap_or_default(),
-                                        Err(_) => HashMap::new(),
-                                    };
-
-                                    per.insert(filename_clone.clone(), md5_clone.clone());
-
-                                    let json_str = serde_json::to_string(&per)?;
-                                    fs::write(&per_path_clone, json_str)?;
                                 }
-
-                                // Update zipbar
-                                {
-                                    let _lock_guard = lock_clone.lock().unwrap();
-                                    zipbar_clone.inc(1);
-                                }
-
-                                Ok(())
-                            })();
-
-                            // Handle errors
-                            if let Err(e) = unzip_result {
-                                let _lock_guard = lock_clone.lock().unwrap();
-                                printc(&format!("Unzip error: {}", e), &vec![31]);
                             }
-                        });
+                        }
 
-                        // Store the thread handle for later joining
-                        handles_clone.lock().unwrap().push(handle);
-                    }
+                        // Second pass: merge alpha channels and save final images
+                        let image_keys: Vec<String> = images.keys().cloned().collect();
+                        for name in &image_keys {
+                            if !name.ends_with("[alpha]") {
+                                let alpha_key = format!("{}[alpha]", name);
 
-                    // Line 373: Update main progress bar
-                    {
+                                if images.contains_key(&alpha_key) {
+                                    if let (Ok(rgb_img), Ok(alpha_img)) = (
+                                        image::open(&images[name]).map(|i| i.to_rgba8()),
+                                        image::open(&images[&alpha_key]).map(|i| i.to_luma8())
+                                    ) {
+                                        let (width, height) = rgb_img.dimensions();
+                                        let mut merged_img = image::ImageBuffer::new(width, height);
+
+                                        for y in 0..height {
+                                            for x in 0..width {
+                                                let rgb_pixel = rgb_img.get_pixel(x, y);
+                                                let (a_width, a_height) = alpha_img.dimensions();
+
+                                                let alpha_pixel = if a_width == width && a_height == height {
+                                                    alpha_img.get_pixel(x, y)[0]
+                                                } else {
+                                                    255
+                                                };
+
+                                                merged_img.put_pixel(x, y, image::Rgba([
+                                                    rgb_pixel[0],
+                                                    rgb_pixel[1],
+                                                    rgb_pixel[2],
+                                                    alpha_pixel
+                                                ]));
+                                            }
+                                        }
+
+                                        let final_path = unpack_dir.join(format!("{}.png", name));
+                                        let _ = image::DynamicImage::ImageRgba8(merged_img).save(&final_path);
+                                    }
+                                } else {
+                                    let final_path = unpack_dir.join(format!("{}.png", name));
+                                    let _ = fs::copy(&images[name], &final_path);
+                                }
+                            }
+                        }
+
+                        // Clean up temp directory
+                        let _ = fs::remove_dir_all(&temp_dir);
+
+                        // Process other asset types
+                        for obj in env.objects() {
+                            let mut obj_mut = obj.clone();
+
+                            match obj.obj_type {
+                                ClassIDType::TextAsset => {
+                                    if let Ok(data) = obj_mut.read(false) {
+                                        if let Ok(text_asset) = serde_json::from_value::<TextAsset>(data) {
+                                            let script_str = text_asset.m_Script.as_deref().unwrap_or("");
+                                            let script_bytes = script_str.as_bytes();
+
+                                            let decrypted = {
+                                                let fpath_str = file_path.to_str().unwrap();
+                                                if (fpath_str.contains("gamedata\\levels") || fpath_str.contains("gamedata/levels"))
+                                                    && !fpath_str.contains("enemydata") {
+                                                    if script_bytes.len() > 128 {
+                                                        script_bytes[128..].to_vec()
+                                                    } else {
+                                                        script_bytes.to_vec()
+                                                    }
+                                                } else {
+                                                    ArkAssets::text_asset_decrypt(script_bytes, !fpath_str.contains("gamedata/levels"))
+                                                }
+                                            };
+
+                                            let name_val = text_asset.m_Name.as_deref().unwrap_or("unnamed");
+
+                                            if let Ok(json_val) = serde_json::from_slice::<serde_json::Value>(&decrypted) {
+                                                if let Ok(json_str) = serde_json::to_string_pretty(&json_val) {
+                                                    let save_path = unpack_dir.join(format!("{}.json", name_val));
+                                                    let _ = fs::write(&save_path, json_str);
+                                                }
+                                            } else if let Ok(docs) = bson::from_slice::<Vec<bson::Document>>(&decrypted) {
+                                                for (i, doc) in docs.iter().enumerate() {
+                                                    if let Ok(json_val) = serde_json::to_value(doc) {
+                                                        if let Ok(json_str) = serde_json::to_string_pretty(&json_val) {
+                                                            let suffix = if i >= 1 { format!("_{}", i) } else { String::new() };
+                                                            let save_path = unpack_dir.join(format!("{}{}.json", name_val, suffix));
+                                                            let _ = fs::write(&save_path, json_str);
+                                                        }
+                                                    }
+                                                }
+                                            } else {
+                                                let re_ext = Regex::new(r"\.(lua|atlas|skel)$").unwrap();
+                                                let extension = if re_ext.is_match(name_val) { "" } else { ".txt" };
+                                                let save_path = unpack_dir.join(format!("{}{}", name_val, extension));
+                                                let _ = fs::write(&save_path, decrypted);
+                                            }
+                                        }
+                                    }
+                                }
+
+                                ClassIDType::AudioClip => {
+                                    if let Ok(data) = obj_mut.read(false) {
+                                        if let Ok(mut audio) = serde_json::from_value::<AudioClip>(data.clone()) {
+                                            audio.object_reader = Some(Box::new(obj.clone()));
+                                            if let Ok(samples) = unity_rs::export::audio_clip_converter::extract_audioclip_samples(&mut audio, true) {
+                                                for (aname, adata) in samples {
+                                                    let save_path = unpack_dir.join(&aname);
+                                                    let _ = fs::write(&save_path, adata);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                ClassIDType::Mesh => {
+                                    if let Ok(data) = obj_mut.read(false) {
+                                        if let Ok(mesh) = serde_json::from_value::<Mesh>(data) {
+                                            let name_val = mesh.m_Name.as_deref().unwrap_or("unnamed");
+                                            let save_path = unpack_dir.join(format!("{}.obj", name_val));
+                                            if let Ok(obj_str) = unity_rs::export::mesh_exporter::export_mesh_obj(&mesh, None) {
+                                                let _ = fs::write(&save_path, obj_str);
+                                            }
+                                        }
+                                    }
+                                }
+
+                                ClassIDType::Font => {
+                                    if let Ok(data) = obj_mut.read(false) {
+                                        if let Ok(font) = serde_json::from_value::<Font>(data) {
+                                            if let Some(ref font_data) = font.m_FontData {
+                                                let font_bytes: Vec<u8> = font_data.iter().map(|&b| b as u8).collect();
+                                                let extension = if font_bytes.len() >= 4 && &font_bytes[0..4] == b"OTTO" {
+                                                    ".otf"
+                                                } else {
+                                                    ".ttf"
+                                                };
+                                                let name_val = font.m_Name.as_deref().unwrap_or("unnamed");
+                                                let save_path = unpack_dir.join(format!("{}{}", name_val, extension));
+                                                let _ = fs::write(&save_path, font_bytes);
+                                            }
+                                        }
+                                    }
+                                }
+
+                                _ => {}
+                            }
+                        }
+
+                        // Update unpackbar
+                        unpackbar.inc(1);
+
+                        // Update persistent_res_list.json
+                        {
+                            let _write_guard = _write_lock.lock().unwrap();
+
+                            let mut per: HashMap<String, String> = match fs::read_to_string(&per_path) {
+                                Ok(content) => serde_json::from_str(&content).unwrap_or_default(),
+                                Err(_) => HashMap::new(),
+                            };
+
+                            per.insert(filename.clone(), md5.to_string());
+
+                            if let Ok(json_str) = serde_json::to_string(&per) {
+                                let _ = fs::write(&per_path, json_str);
+                            }
+                        }
+
+                        Ok(())
+                    })();
+
+                    // Silent error handling (matches Python's pass)
+                    if let Err(e) = unzip_unpack_result {
                         let _lock_guard = lock.lock().unwrap();
-                        pbar.inc(1);
+                        printc(&format!("Error processing {}: {}", filename, e), &vec![31]);
                     }
+
+                    // Update main progress bar
+                    pbar.inc(1);
                 }
                 Err(e) => {
                     let _lock_guard = lock.lock().unwrap();
@@ -1268,30 +1224,7 @@ impl ArkAssets {
             }
         });
 
-        // Python lines 378-382: Wait for all unpack threads to complete
-        // First, wait for the counter to reach the expected value
-        loop {
-            let unpack_done = {
-                let current_count = _unpack_count.lock().unwrap();
-                *current_count >= count
-            };
-
-            if unpack_done {
-                break;
-            }
-
-            std::thread::sleep(std::time::Duration::from_millis(100));
-        }
-
-        // Then, join all spawned threads to ensure they've fully completed
-        let handles: Vec<_> = {
-            let mut handles_guard = thread_handles.lock().unwrap();
-            handles_guard.drain(..).collect()
-        };
-
-        for handle in handles {
-            let _ = handle.join();
-        }
+        // All work is done inline now - no thread joining needed
 
         // Close progress bars (Python lines 380-382)
         pbar.finish();

@@ -28,10 +28,32 @@ struct Args {
     /// If not specified, interactive mode will be used
     #[arg(short, long)]
     packages: Option<String>,
+
+    /// Number of threads to use for parallel processing.
+    /// Lower values reduce CPU usage and heat. Default uses half of available cores.
+    /// Use 1 for minimal CPU usage (sequential processing).
+    #[arg(short = 't', long, default_value = None)]
+    threads: Option<usize>,
 }
 
 fn main() {
     let args = Args::parse();
+
+    // Configure thread pool - default to half of available cores for lower CPU usage
+    let num_threads = args.threads.unwrap_or_else(|| {
+        let cores = std::thread::available_parallelism()
+            .map(|p| p.get())
+            .unwrap_or(4);
+        (cores / 2).max(1) // At least 1 thread, default to half cores
+    });
+
+    // Initialize rayon's global thread pool
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(num_threads)
+        .build_global()
+        .unwrap_or_else(|e| eprintln!("Warning: Could not set thread pool size: {}", e));
+
+    println!("Using {} threads for parallel processing", num_threads);
 
     // Parse server type
     let server = match args.server.to_lowercase().as_str() {
