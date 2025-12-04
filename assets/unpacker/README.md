@@ -254,6 +254,19 @@ assets-unpacker decode --input <PATH> --output <PATH>
 
 The decoder gracefully handles schema mismatches - if a file's actual schema differs from what the filename suggests, it returns the raw encrypted/binary data instead of crashing.
 
+#### CN vs Yostar/EN Schema Fallback
+
+Arknights has different game versions (CN, EN/Global, JP, KR) that sometimes have schema differences in their FlatBuffer data. The decoder automatically handles this:
+
+1. **Primary decode**: Tries CN schemas from `OpenArknightsFBS/FBS/`
+2. **Fallback decode**: If CN fails, tries Yostar/EN schemas for supported tables:
+   - `character_table` - EN has fewer fields than CN
+   - `battle_equip_table` - Module/equipment data
+   - `token_table` - Summon/token character data
+   - `ep_breakbuff_table` - Element break buff data
+
+This ensures EN/Global assets decode correctly even when they differ from the CN version.
+
 ## Output Structure
 
 ### Directory Layout
@@ -406,15 +419,21 @@ src/
 ├── flatbuffers_decode.rs   # FlatBuffers schema decoding
 ├── fb_json_macros.rs       # FlatBufferToJson trait definitions
 ├── fb_json_auto.rs         # Auto-generated JSON serialization (2500+ impls)
+├── fb_json_auto_yostar.rs  # Auto-generated JSON for Yostar/EN schemas
 ├── combine_rgb.rs          # RGB+alpha combination
 ├── collect_models.rs       # Spine model collection
 ├── collect_voice.rs        # Audio collection
 ├── utils.rs                # Utility functions
-└── generated_fbs/          # Generated FlatBuffers code
+├── generated_fbs/          # Generated FlatBuffers code (CN schemas)
+│   ├── character_table_generated.rs
+│   ├── skill_table_generated.rs
+│   ├── activity_table_generated.rs
+│   └── ... (50+ schema files)
+└── generated_fbs_yostar/   # Generated FlatBuffers code (Yostar/EN schemas)
     ├── character_table_generated.rs
-    ├── skill_table_generated.rs
-    ├── activity_table_generated.rs
-    └── ... (50+ schema files)
+    ├── battle_equip_table_generated.rs
+    ├── token_table_generated.rs
+    └── ep_breakbuff_table_generated.rs
 ```
 
 ### Key Components
@@ -582,9 +601,12 @@ The project uses auto-generated JSON serialization for all FlatBuffer types. To 
    ./regenerate_fbs.sh
    ```
    This will:
-   - Generate Rust FlatBuffer code with `flatc`
+   - Generate Rust FlatBuffer code with `flatc` (CN schemas)
    - Auto-generate `FlatBufferToJson` implementations via `generate_fb_json_impls.py`
-   - Update `mod.rs` with all schema modules
+   - Clone/update ArknightsFlatbuffers repo for Yostar schemas
+   - Generate Yostar/EN schema variants (if different from CN)
+   - Auto-generate Yostar `FlatBufferToJson` implementations via `generate_fb_json_impls_yostar.py`
+   - Update `mod.rs` files with all schema modules
 
 3. Add filename detection in `flatbuffers_decode.rs`:
    ```rust
@@ -592,19 +614,25 @@ The project uses auto-generated JSON serialization for all FlatBuffer types. To 
    "new_table" => Some("clz_Torappu_NewTableBundle"),
    ```
 
-4. Rebuild:
+4. (Optional) If adding a Yostar/EN fallback schema:
+   - Add the schema name to the `YOSTAR_SCHEMAS` array in `regenerate_fbs.sh`
+   - Add to `has_yostar_schema()` in `flatbuffers_decode.rs`
+   - Add to `decode_flatbuffer_yostar()` match block
+
+5. Rebuild:
    ```bash
    cargo build --release
    ```
 
 #### How Auto-Generation Works
 
-The `generate_fb_json_impls.py` script:
-- Parses all `*_generated.rs` files in `src/generated_fbs/`
+The `generate_fb_json_impls.py` script (and `generate_fb_json_impls_yostar.py` for Yostar):
+- Parses all `*_generated.rs` files in `src/generated_fbs/` (or `src/generated_fbs_yostar/`)
 - Extracts struct definitions (`clz_*`, `dict__*`, `list_*`, `kvp__*`)
 - Generates `FlatBufferToJson` trait implementations for each type
 - Handles nested types, vectors, enums, and optional fields
 - Outputs to `src/fb_json_auto.rs` (2500+ implementations, 480+ enums)
+- Yostar outputs to `src/fb_json_auto_yostar.rs` (subset for EN-specific schemas)
 
 ### Dependencies
 

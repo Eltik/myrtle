@@ -1434,6 +1434,18 @@ fn combine_rgba_with_alpha(rgb: &RgbaImage, alpha: &RgbaImage) -> RgbaImage {
     result
 }
 
+/// Size threshold for "large" files that need special handling (50 MB)
+const LARGE_FILE_THRESHOLD: u64 = 50 * 1024 * 1024;
+
+/// Maximum file size to process by default (500 MB) - larger files are deferred
+const MAX_FILE_SIZE_DEFAULT: u64 = 500 * 1024 * 1024;
+
+/// File with its size for sorting
+struct SizedFile {
+    path: PathBuf,
+    size: u64,
+}
+
 /// Main entry point for asset extraction
 pub fn main(
     src: &Path,
@@ -1447,6 +1459,7 @@ pub fn main(
     separate: bool,
     force: bool,
     threads: usize,
+    skip_large_mb: u64,
 ) -> Result<()> {
     // Configure thread pool based on user preference
     // threads=1: Sequential processing (lowest memory, slowest)
@@ -1463,22 +1476,97 @@ pub fn main(
 
     log::info!("Retrieving file paths...");
 
-    // Collect all AB files
-    let files: Vec<PathBuf> = if src.is_file() {
-        vec![src.to_path_buf()]
+    // Collect all AB files with their sizes
+    let mut sized_files: Vec<SizedFile> = if src.is_file() {
+        let size = std::fs::metadata(src).map(|m| m.len()).unwrap_or(0);
+        vec![SizedFile {
+            path: src.to_path_buf(),
+            size,
+        }]
     } else {
         WalkDir::new(src)
             .into_iter()
             .filter_map(|e| e.ok())
             .map(|e| e.path().to_path_buf())
             .filter(|p| is_ab_file(p))
+            .map(|p| {
+                let size = std::fs::metadata(&p).map(|m| m.len()).unwrap_or(0);
+                SizedFile { path: p, size }
+            })
             .collect()
     };
 
-    if files.is_empty() {
+    if sized_files.is_empty() {
         println!("No AB files found");
         return Ok(());
     }
+
+    // Sort files by size (smallest first) for better progress visibility
+    sized_files.sort_by_key(|f| f.size);
+
+    // Separate normal and large files
+    let (normal_files, large_files): (Vec<_>, Vec<_>) = sized_files
+        .into_iter()
+        .partition(|f| f.size < MAX_FILE_SIZE_DEFAULT);
+
+    let _total_normal = normal_files.len();
+    let total_large = large_files.len();
+
+    if total_large > 0 {
+        log::warn!(
+            "Found {} files larger than {} MB that will be processed last:",
+            total_large,
+            MAX_FILE_SIZE_DEFAULT / 1024 / 1024
+        );
+        for f in &large_files {
+            log::warn!(
+                "  {} ({} MB)",
+                f.path.file_name().unwrap_or_default().to_string_lossy(),
+                f.size / 1024 / 1024
+            );
+        }
+    }
+
+    // Apply skip_large_mb filter if specified
+    let skip_threshold = if skip_large_mb > 0 {
+        skip_large_mb * 1024 * 1024
+    } else {
+        u64::MAX // No skip
+    };
+
+    let (normal_files, skipped_files): (Vec<_>, Vec<_>) = if skip_large_mb > 0 {
+        let (keep, skip): (Vec<_>, Vec<_>) = normal_files
+            .into_iter()
+            .chain(large_files.into_iter())
+            .partition(|f| f.size < skip_threshold);
+
+        if !skip.is_empty() {
+            log::warn!(
+                "Skipping {} files larger than {} MB (use --skip-large-mb=0 to include):",
+                skip.len(),
+                skip_large_mb
+            );
+            for f in &skip {
+                log::warn!(
+                    "  {} ({} MB)",
+                    f.path.file_name().unwrap_or_default().to_string_lossy(),
+                    f.size / 1024 / 1024
+                );
+            }
+        }
+        (keep, skip)
+    } else {
+        // No skip, combine normal and large files
+        let all: Vec<_> = normal_files
+            .into_iter()
+            .chain(large_files.into_iter())
+            .collect();
+        (all, Vec::new())
+    };
+
+    // Combine: process normal files first, then large files
+    let files: Vec<PathBuf> = normal_files.into_iter().map(|f| f.path).collect();
+    let skipped_count = skipped_files.len();
 
     if do_del && destdir.exists() {
         log::info!("Cleaning destination directory...");
@@ -1637,8 +1725,29 @@ pub fn main(
             pb.inc(1);
         }
     } else {
-        // Parallel processing for better performance
-        files_to_process.par_iter().for_each(|file| {
+        // Hybrid processing: parallel for small files, sequential for large files
+        // This prevents memory explosions from processing multiple large files simultaneously
+
+        // Separate files into small and large based on file size
+        let (small_files, large_files): (Vec<_>, Vec<_>) = files_to_process.iter().partition(|f| {
+            std::fs::metadata(f)
+                .map(|m| m.len() < LARGE_FILE_THRESHOLD)
+                .unwrap_or(true)
+        });
+
+        let small_count = small_files.len();
+        let large_count = large_files.len();
+
+        if large_count > 0 {
+            log::info!(
+                "Processing {} small files in parallel, {} large files sequentially",
+                small_count,
+                large_count
+            );
+        }
+
+        // Process small files in parallel
+        small_files.par_iter().for_each(|file| {
             let (upk_subdestdir, cmb_subdestdir) = if separate {
                 let rel_path = file.strip_prefix(&src_path).unwrap_or(file);
                 let parent = rel_path.parent().unwrap_or(Path::new(""));
@@ -1679,6 +1788,78 @@ pub fn main(
 
             pb.inc(1);
         });
+
+        // Process large files sequentially with explicit memory management
+        for file in large_files {
+            let file_size = std::fs::metadata(file).map(|m| m.len()).unwrap_or(0);
+            let file_name = file
+                .file_name()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_string();
+
+            log::warn!(
+                "Processing large file '{}' ({} MB) - this may take a while...",
+                file_name,
+                file_size / 1024 / 1024
+            );
+
+            // Check current memory before processing large file
+            sys.refresh_all();
+            let mem_before = sys.process(pid).map(|p| p.memory()).unwrap_or(0);
+
+            let (upk_subdestdir, cmb_subdestdir) = if separate {
+                let rel_path = file.strip_prefix(&src_path).unwrap_or(file);
+                let parent = rel_path.parent().unwrap_or(Path::new(""));
+                let stem = file.file_stem().unwrap_or_default();
+                (
+                    upk_dir.join(parent).join(stem),
+                    cmb_dir.join(parent).join(stem),
+                )
+            } else {
+                (upk_dir.clone(), cmb_dir.clone())
+            };
+
+            match ab_resolve(
+                file,
+                &upk_subdestdir,
+                &cmb_subdestdir,
+                do_img,
+                do_txt,
+                do_aud,
+                do_spine,
+                merge_alpha,
+            ) {
+                Ok(count) => {
+                    total_saved.fetch_add(count, Ordering::Relaxed);
+                    manifest.lock().unwrap().update(file, count);
+                    save_counter.fetch_add(1, Ordering::Relaxed);
+
+                    // Report memory usage after large file
+                    sys.refresh_all();
+                    if let Some(process) = sys.process(pid) {
+                        let mem_after = process.memory();
+                        let file_growth_mb = (mem_after as i64 - mem_before as i64) / 1024 / 1024;
+                        log::info!(
+                            "Completed '{}': extracted {} assets, memory delta: {} MB",
+                            file_name,
+                            count,
+                            file_growth_mb
+                        );
+                    }
+                }
+                Err(e) => {
+                    log::error!("Failed to process large file '{}': {}", file_name, e);
+                }
+            }
+
+            pb.inc(1);
+
+            // Save manifest after each large file
+            if let Err(e) = manifest.lock().unwrap().save(&manifest_path) {
+                log::warn!("Failed to save manifest: {}", e);
+            }
+        }
     }
 
     pb.finish_with_message("Done!");
@@ -1689,9 +1870,12 @@ pub fn main(
     }
 
     println!("\nExtraction complete!");
-    println!("  Total files: {}", files.len());
-    println!("  Processed {} files", files_to_process.len());
+    println!("  Total files found: {}", files.len() + skipped_count);
+    println!("  Processed: {}", files_to_process.len());
     println!("  Skipped (unchanged): {}", skipped);
+    if skipped_count > 0 {
+        println!("  Skipped (too large): {}", skipped_count);
+    }
     println!("  Exported {} assets", total_saved.load(Ordering::Relaxed));
 
     Ok(())
