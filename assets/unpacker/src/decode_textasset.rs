@@ -184,6 +184,34 @@ fn text_asset_resolve(
         }
     }
 
+    // Final fallback: If it looks like a FlatBuffer but schema failed, extract strings
+    if data.len() > 128 {
+        let fbo_data = &data[128..];
+        if flatbuffers_decode::is_flatbuffer(fbo_data) {
+            let strings = flatbuffers_decode::extract_strings(fbo_data);
+            if !strings.is_empty() {
+                let json = serde_json::json!({
+                    "type": "unknown_flatbuffer",
+                    "note": "Schema mismatch - raw string extraction",
+                    "strings": strings
+                });
+                let json_str = serde_json::to_string_pretty(&json)?;
+
+                if let Some(parent) = output_path.parent() {
+                    mkdir(parent)?;
+                }
+                std::fs::write(&output_path, json_str)?;
+
+                log::debug!(
+                    "Extracted strings from FlatBuffer: {:?} -> {:?}",
+                    fp,
+                    output_path
+                );
+                return Ok(true);
+            }
+        }
+    }
+
     Ok(false)
 }
 
@@ -295,6 +323,11 @@ pub fn main(
     let skipped_count = AtomicUsize::new(0);
     let manifest_ref = manifest.as_deref();
 
+    // Suppress panic output during parallel processing
+    // (FlatBuffer decodes may panic on schema mismatches - this is expected and handled)
+    let prev_hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(|_| {})); // Silent panic hook
+
     // Process files in parallel
     files.par_iter().for_each(|file| {
         match text_asset_resolve(file, destdir, manifest_ref) {
@@ -318,6 +351,9 @@ pub fn main(
     });
 
     pb.finish_with_message("Done!");
+
+    // Restore original panic hook
+    std::panic::set_hook(prev_hook);
 
     let decoded = decoded_count.load(Ordering::Relaxed);
     let skipped = skipped_count.load(Ordering::Relaxed);

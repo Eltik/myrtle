@@ -47,7 +47,11 @@ fn guess_root_type(filename: &str) -> &'static str {
     let lower = filename.to_lowercase();
 
     // Order matters - more specific patterns first
-    if lower.contains("enemy_database") {
+    // Level data files must be checked BEFORE other patterns that might match (e.g., crisis_v2)
+    if lower.starts_with("level_") {
+        // Level data files (prts___levels schema)
+        "level_data"
+    } else if lower.contains("enemy_database") {
         "enemy_database"
     } else if lower.contains("enemy_handbook") {
         "enemy_handbook_table"
@@ -83,6 +87,9 @@ fn guess_root_type(filename: &str) -> &'static str {
         "activity_table"
     } else if lower.contains("audio_data") {
         "audio_data"
+    } else if lower.contains("building_local") {
+        // building_local_data must be before building_data
+        "building_local_data"
     } else if lower.contains("building_data") {
         "building_data"
     } else if lower.contains("campaign_table") {
@@ -139,22 +146,90 @@ fn guess_root_type(filename: &str) -> &'static str {
         "tip_table"
     } else if lower.contains("zone_table") {
         "zone_table"
+    } else if lower.contains("ep_breakbuff") {
+        // ep_breakbuff must be before buff_table
+        "ep_breakbuff_table"
     } else if lower.contains("buff_table") {
         "buff_table"
     } else if lower.contains("cooperate") {
         "cooperate_battle_table"
     } else if lower.contains("init_text") || lower.contains("main_text") {
         "language_data"
-    } else if lower.contains("ep_breakbuff") {
-        "ep_breakbuff_table"
     } else if lower.contains("extra_battlelog") {
         "extra_battlelog_table"
     } else if lower.contains("replicate") {
         "replicate_table"
     } else if lower.contains("legion_mode") {
         "legion_mode_buff_table"
+    } else if lower.contains("token_table") {
+        "token_table"
     } else {
         "unknown"
+    }
+}
+
+/// Check if a schema type has a Yostar variant
+fn has_yostar_schema(schema_type: &str) -> bool {
+    matches!(
+        schema_type,
+        "character_table" | "battle_equip_table" | "token_table" | "ep_breakbuff_table"
+    )
+}
+
+/// Try decoding with Yostar-specific schemas (EN/Global version)
+/// These differ from CN schemas in field structure
+fn decode_flatbuffer_yostar(data: &[u8], schema_type: &str) -> Result<Value> {
+    use crate::fb_json_macros::FlatBufferToJson;
+
+    let data_clone = data.to_vec();
+
+    let decode_result = panic::catch_unwind(AssertUnwindSafe(|| {
+        let data = &data_clone;
+        let result: Result<Value> = match schema_type {
+            "character_table" => {
+                use crate::generated_fbs_yostar::character_table_generated::*;
+                let root = unsafe {
+                    root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_unchecked(data)
+                };
+                Ok(root.to_json())
+            }
+            "battle_equip_table" => {
+                use crate::generated_fbs_yostar::battle_equip_table_generated::*;
+                let root = unsafe {
+                    root_as_clz_torappu_simple_kvtable_clz_torappu_battle_equip_pack_unchecked(data)
+                };
+                Ok(root.to_json())
+            }
+            "token_table" => {
+                use crate::generated_fbs_yostar::token_table_generated::*;
+                let root = unsafe {
+                    root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_unchecked(data)
+                };
+                Ok(root.to_json())
+            }
+            "ep_breakbuff_table" => {
+                use crate::generated_fbs_yostar::ep_breakbuff_table_generated::*;
+                let root = unsafe {
+                    root_as_clz_torappu_simple_kvtable_clz_torappu_epbreak_buff_data_unchecked(data)
+                };
+                Ok(root.to_json())
+            }
+            _ => anyhow::bail!("No Yostar schema for {}", schema_type),
+        };
+        result
+    }));
+
+    match decode_result {
+        Ok(Ok(value)) => {
+            if let Some(obj) = value.as_object() {
+                if obj.is_empty() {
+                    anyhow::bail!("Yostar schema decode returned empty result");
+                }
+            }
+            Ok(value)
+        }
+        Ok(Err(e)) => anyhow::bail!("Yostar schema decode error: {:?}", e),
+        Err(_) => anyhow::bail!("Yostar schema decode panic"),
     }
 }
 
@@ -176,11 +251,8 @@ pub fn decode_flatbuffer(data: &[u8], filename: &str) -> Result<Value> {
 
     // Use catch_unwind to handle schema mismatches gracefully
     // Some files match filename patterns but use different schemas
+    // NOTE: Panic output is suppressed globally in decode_textasset.rs before parallel processing
     let data_clone = data.to_vec();
-
-    // Temporarily suppress panic output
-    let prev_hook = panic::take_hook();
-    panic::set_hook(Box::new(|_| {}));
 
     let decode_result = panic::catch_unwind(AssertUnwindSafe(|| {
         let data = &data_clone;
@@ -294,6 +366,13 @@ pub fn decode_flatbuffer(data: &[u8], filename: &str) -> Result<Value> {
             "building_data" => {
                 use crate::generated_fbs::building_data_generated::*;
                 let root = unsafe { root_as_clz_torappu_building_data_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "building_local_data" => {
+                use crate::generated_fbs::building_local_data_generated::*;
+                let root = unsafe {
+                    root_as_clz_torappu_building_data_building_local_data_unchecked(data)
+                };
                 Ok(root.to_json())
             }
             "campaign_table" => {
@@ -486,27 +565,103 @@ pub fn decode_flatbuffer(data: &[u8], filename: &str) -> Result<Value> {
                 };
                 Ok(root.to_json())
             }
+            "token_table" => {
+                use crate::generated_fbs::token_table_generated::*;
+                let root = unsafe {
+                    root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_unchecked(data)
+                };
+                Ok(root.to_json())
+            }
+            "level_data" => {
+                use crate::generated_fbs::prts___levels_generated::*;
+                let root = unsafe { root_as_clz_torappu_level_data_unchecked(data) };
+                Ok(root.to_json())
+            }
+            "ep_breakbuff_table" => {
+                use crate::generated_fbs::ep_breakbuff_table_generated::*;
+                let root = unsafe {
+                    root_as_clz_torappu_simple_kvtable_clz_torappu_epbreak_buff_data_unchecked(data)
+                };
+                Ok(root.to_json())
+            }
             _ => Err(anyhow::anyhow!("Unknown schema type: {}", schema_type)),
         };
         result
     }));
 
-    // Restore panic hook
-    panic::set_hook(prev_hook);
-
     // Handle the result from catch_unwind
     match decode_result {
-        Ok(Ok(value)) => return Ok(value),
-        Ok(Err(_)) | Err(_) => {
-            // Schema mismatch or unknown type - fall back to string extraction
+        Ok(Ok(value)) => {
+            // Check if the result is an empty object - if so, this is likely not a FlatBuffer
+            // or a complete schema mismatch. Try Yostar schema first, then return error.
+            if let Some(obj) = value.as_object() {
+                if obj.is_empty() {
+                    log::debug!(
+                        "CN schema decode returned empty result for {}, trying Yostar schema",
+                        schema_type
+                    );
+                    // Try Yostar schema if available
+                    if has_yostar_schema(schema_type) {
+                        if let Ok(yostar_value) = decode_flatbuffer_yostar(data, schema_type) {
+                            log::debug!("Yostar schema decode succeeded for {}", schema_type);
+                            return Ok(yostar_value);
+                        }
+                    }
+                    anyhow::bail!(
+                        "FlatBuffer schema mismatch for {} (empty result)",
+                        schema_type
+                    );
+                } else {
+                    return Ok(value);
+                }
+            } else {
+                return Ok(value);
+            }
+        }
+        Ok(Err(e)) => {
+            log::debug!("CN schema decode error for {}: {:?}", schema_type, e);
+            // Try Yostar schema if available
+            if has_yostar_schema(schema_type) {
+                if let Ok(yostar_value) = decode_flatbuffer_yostar(data, schema_type) {
+                    log::debug!("Yostar schema decode succeeded for {}", schema_type);
+                    return Ok(yostar_value);
+                }
+            }
+            // For "unknown" schema type, try string extraction
+            if schema_type == "unknown" {
+                let strings = extract_strings(data);
+                if strings.is_empty() {
+                    anyhow::bail!("Unknown FlatBuffer schema and no strings extractable");
+                }
+                return Ok(json!({
+                    "type": "unknown",
+                    "strings": strings
+                }));
+            }
+            // For known schema that failed, let caller try AES fallback
+            anyhow::bail!("FlatBuffer decode failed for {}: {:?}", schema_type, e);
+        }
+        Err(e) => {
+            // Get panic message if it's a string
+            let panic_msg = if let Some(s) = e.downcast_ref::<&str>() {
+                s.to_string()
+            } else if let Some(s) = e.downcast_ref::<String>() {
+                s.clone()
+            } else {
+                format!("{:?}", e)
+            };
+            log::debug!("CN schema decode panic for {}: {}", schema_type, panic_msg);
+            // Try Yostar schema if available
+            if has_yostar_schema(schema_type) {
+                if let Ok(yostar_value) = decode_flatbuffer_yostar(data, schema_type) {
+                    log::debug!("Yostar schema decode succeeded for {}", schema_type);
+                    return Ok(yostar_value);
+                }
+            }
+            // Let caller try AES fallback
+            anyhow::bail!("FlatBuffer decode panic for {}: {}", schema_type, panic_msg);
         }
     }
-
-    // For unknown schemas or failed decodes, just extract strings (fast fallback)
-    Ok(json!({
-        "type": "unknown",
-        "strings": extract_strings(data)
-    }))
 }
 
 /// Extract strings from FlatBuffer (fallback for unknown types)

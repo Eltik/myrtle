@@ -14,6 +14,11 @@ use std::sync::{Arc, Mutex};
 lazy_static! {
     static ref SYSTEM_INSTANCES: Mutex<HashMap<(i32, Init), Arc<Mutex<System>>>> =
         Mutex::new(HashMap::new());
+
+    // Global lock to serialize FMOD System creation/destruction
+    // FMOD has a hard limit on simultaneous System instances (around 8-16)
+    // This mutex ensures only one FMOD operation happens at a time
+    static ref FMOD_GLOBAL_LOCK: Mutex<()> = Mutex::new(());
 }
 
 /// Create a new FMOD system instance (no caching to avoid resource limits)
@@ -42,6 +47,13 @@ pub fn dump_samples(
     audio_data: &[u8],
     convert_pcm_float: bool,
 ) -> UnityResult<HashMap<String, Vec<u8>>> {
+    // Acquire global lock to prevent concurrent FMOD System creation
+    // FMOD has a limit on simultaneous System instances and will fail with
+    // "Not enough memory or resources" if too many are created at once
+    let _fmod_guard = FMOD_GLOBAL_LOCK.lock().map_err(|e| {
+        UnityError::Other(format!("Failed to acquire FMOD lock: {:?}", e))
+    })?;
+
     // Python lines 136-139: Check if pyfmodex is available
     // In Rust, we try to get the system and fail if FMOD isn't available
 

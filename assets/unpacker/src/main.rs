@@ -57,6 +57,11 @@ enum Commands {
         /// Number of parallel threads (1=sequential, 2-4=moderate, 8+=fast but high memory)
         #[arg(short = 'j', long, default_value = "1")]
         threads: usize,
+
+        /// Skip files larger than this size in MB (default: 0 = no skip)
+        /// Use to speed up initial extraction by deferring huge files like token.ab
+        #[arg(long, default_value = "0")]
+        skip_large_mb: u64,
     },
 
     /// Combine RGB and Alpha images
@@ -126,6 +131,7 @@ fn main() -> Result<()> {
             group,
             force,
             threads,
+            skip_large_mb,
         } => {
             assets_unpacker::resolve_ab::main(
                 &input,
@@ -139,6 +145,7 @@ fn main() -> Result<()> {
                 group,
                 force,
                 threads,
+                skip_large_mb,
             )?;
         }
         Commands::Combine {

@@ -51,5 +51,74 @@ echo ""
 echo "Generating FlatBufferToJson implementations..."
 python3 "$SCRIPT_DIR/generate_fb_json_impls.py"
 
+# ==============================================================================
+# Yostar/EN Schema Generation (fallback for EN-only schemas)
+# ==============================================================================
+echo ""
+echo "=== Yostar/EN Schema Generation ==="
+
+YOSTAR_FBS_DIR="/tmp/ArknightsFlatbuffers/yostar"
+YOSTAR_OUTPUT_DIR="$SCRIPT_DIR/src/generated_fbs_yostar"
+
+# Clone or update ArknightsFlatbuffers repo
+if [ ! -d "/tmp/ArknightsFlatbuffers" ]; then
+    echo "Cloning ArknightsFlatbuffers repository..."
+    git clone --depth 1 https://github.com/ArknightsAssets/ArknightsFlatbuffers.git /tmp/ArknightsFlatbuffers
+else
+    echo "Updating ArknightsFlatbuffers repository..."
+    (cd /tmp/ArknightsFlatbuffers && git pull --rebase) || true
+fi
+
+# Create Yostar output directory
+mkdir -p "$YOSTAR_OUTPUT_DIR"
+
+# Yostar-specific schemas (EN/Global versions that differ from CN)
+YOSTAR_SCHEMAS=(
+    "character_table"
+    "battle_equip_table"
+    "token_table"
+    "ep_breakbuff_table"
+)
+
+echo "Generating Rust files from Yostar FBS schemas..."
+for name in "${YOSTAR_SCHEMAS[@]}"; do
+    fbs="$YOSTAR_FBS_DIR/${name}.fbs"
+    if [ -f "$fbs" ]; then
+        echo "  Processing (Yostar): $name"
+        flatc --rust --gen-object-api --rust-serialize -o "$YOSTAR_OUTPUT_DIR" "$fbs" 2>&1 | grep -v "warning:" || true
+    else
+        echo "  Warning: $fbs not found"
+    fi
+done
+
+# Generate Yostar mod.rs
+echo "Generating Yostar mod.rs..."
+cat > "$YOSTAR_OUTPUT_DIR/mod.rs" << 'EOF'
+// Auto-generated FlatBuffer schemas for Arknights (Yostar/EN version)
+// These schemas are used as fallback when CN schemas fail to decode EN assets
+// Generated with: flatc --rust --gen-object-api --rust-serialize
+
+#![allow(dead_code)]
+#![allow(unused_imports)]
+#![allow(non_snake_case)]
+#![allow(non_camel_case_types)]
+#![allow(unreachable_patterns)]
+#![allow(clippy::all)]
+
+EOF
+
+for name in "${YOSTAR_SCHEMAS[@]}"; do
+    if [ -f "$YOSTAR_OUTPUT_DIR/${name}_generated.rs" ]; then
+        echo "pub mod ${name}_generated;" >> "$YOSTAR_OUTPUT_DIR/mod.rs"
+    fi
+done
+
+echo "Generated $(ls "$YOSTAR_OUTPUT_DIR"/*_generated.rs 2>/dev/null | wc -l | tr -d ' ') Yostar FlatBuffer files"
+
+# Generate Yostar FlatBufferToJson implementations
+echo ""
+echo "Generating Yostar FlatBufferToJson implementations..."
+python3 "$SCRIPT_DIR/generate_fb_json_impls_yostar.py"
+
 echo ""
 echo "Done! Run 'cargo build --release' to compile."

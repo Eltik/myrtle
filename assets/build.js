@@ -284,12 +284,24 @@ function buildUnpacker() {
     // Check if fb_json_auto.rs exists - if not, generate it
     const fbJsonAutoPath = path.join(unpackerDir, "src", "fb_json_auto.rs");
     if (!existsSync(fbJsonAutoPath)) {
-        printMsg(NC, "  Generating FlatBuffer JSON implementations...");
+        printMsg(NC, "  Generating FlatBuffer JSON implementations (CN schemas)...");
         try {
             execSync("python3 generate_fb_json_impls.py", { stdio: "inherit" });
         } catch (err) {
             printWarning("Failed to generate FlatBuffer JSON impls: " + err.message);
             printMsg(NC, "  Run ./regenerate_fbs.sh manually if FlatBuffer decoding doesn't work");
+        }
+    }
+
+    // Check if fb_json_auto_yostar.rs exists - if not, generate it
+    const fbJsonAutoYostarPath = path.join(unpackerDir, "src", "fb_json_auto_yostar.rs");
+    if (!existsSync(fbJsonAutoYostarPath)) {
+        printMsg(NC, "  Generating FlatBuffer JSON implementations (Yostar/EN schemas)...");
+        try {
+            execSync("python3 generate_fb_json_impls_yostar.py", { stdio: "inherit" });
+        } catch (err) {
+            printWarning("Failed to generate Yostar FlatBuffer JSON impls: " + err.message);
+            printMsg(NC, "  Yostar-specific tables (character_table, etc.) may not decode correctly");
         }
     }
 
