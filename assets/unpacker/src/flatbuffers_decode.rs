@@ -577,13 +577,6 @@ pub fn decode_flatbuffer(data: &[u8], filename: &str) -> Result<Value> {
                 let root = unsafe { root_as_clz_torappu_level_data_unchecked(data) };
                 Ok(root.to_json())
             }
-            "ep_breakbuff_table" => {
-                use crate::generated_fbs::ep_breakbuff_table_generated::*;
-                let root = unsafe {
-                    root_as_clz_torappu_simple_kvtable_clz_torappu_epbreak_buff_data_unchecked(data)
-                };
-                Ok(root.to_json())
-            }
             _ => Err(anyhow::anyhow!("Unknown schema type: {}", schema_type)),
         };
         result

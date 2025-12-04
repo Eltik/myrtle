@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use regex::Regex;
+use std::collections::HashMap;
 
 use crate::core::local::types::{
     operator::{EnrichedSkill, OperatorSkillRef, SkillStatic},
@@ -19,7 +19,10 @@ pub fn enrich_all_skills(raw_skills: HashMap<String, RawSkill>) -> HashMap<Strin
                 id: Some(id.clone()),
                 skill_id: raw.skill_id,
                 icon_id: raw.icon_id,
-                image: Some(format!("/spritepack/skill_icons_{}/skill_icon_{}.png", num, id)),
+                image: Some(format!(
+                    "/spritepack/skill_icons_{}/skill_icon_{}.png",
+                    num, id
+                )),
                 hidden: raw.hidden,
                 levels: raw.levels,
             };

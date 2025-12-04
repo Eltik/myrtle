@@ -72,7 +72,9 @@ fn parse_physical_exam(text: &str) -> PhysicalExam {
                 "Physical Resilience" => exam.physical_resilience = value.to_string(),
                 "Tactical Acumen" => exam.tactical_acumen = value.to_string(),
                 "Combat Skill" => exam.combat_skill = value.to_string(),
-                "Originium Arts Assimilation" => exam.originium_arts_assimilation = value.to_string(),
+                "Originium Arts Assimilation" => {
+                    exam.originium_arts_assimilation = value.to_string()
+                }
                 _ => {}
             }
         }
