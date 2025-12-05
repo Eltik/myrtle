@@ -33,6 +33,9 @@ pub fn router() -> Router<AppState> {
         // Ranges
         .route("/ranges", get(endpoints::ranges::get_all_ranges))
         .route("/ranges/{id}", get(endpoints::ranges::get_range_by_id))
+        // Skills
+        .route("/skills", get(endpoints::skills::get_all_skills))
+        .route("/skills/{id}", get(endpoints::skills::get_skill_by_id))
         // ... other endpoints
         // Compression fallback (if not cached as gzip)
         .layer(CompressionLayer::new())
