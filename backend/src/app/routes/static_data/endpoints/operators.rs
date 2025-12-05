@@ -27,7 +27,7 @@ pub async fn get_all_operators(
     Query(params): Query<OperatorQuery>,
     headers: HeaderMap,
 ) -> Result<Response, StatusCode> {
-    let limit = params.pagination.limit.unwrap_or(50).min(100);
+    let limit = params.pagination.limit.unwrap_or(15).min(100);
     let fields = params.fields.to_set();
 
     let cache_key = format!(
