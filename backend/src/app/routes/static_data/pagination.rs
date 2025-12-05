@@ -38,6 +38,7 @@ pub struct PaginatedResponse<T> {
     pub total: usize,
 }
 
+#[allow(dead_code)]
 impl<T: Serialize> PaginatedResponse<T> {
     pub fn new(items: Vec<T>, cursor: Option<String>, total: usize, limit: usize) -> Self {
         let has_more = items.len() == limit;
