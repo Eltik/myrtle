@@ -6,6 +6,7 @@ use serde::de::DeserializeOwned;
 
 use crate::core::local::gamedata::operators::enrich_all_operators;
 use crate::core::local::gamedata::skills::enrich_all_skills;
+use crate::core::local::gamedata::skins::enrich_all_skins;
 use crate::core::local::types::handbook::{Handbook, HandbookTableFile};
 use crate::core::local::types::material::{ItemTableFile, Materials};
 use crate::core::local::types::module::{
@@ -141,13 +142,18 @@ pub fn init_game_data(data_dir: &Path) -> Result<GameData, DataError> {
 
     // ============ Load Skin Table ============
     let skins: SkinData = match handler.load_table::<SkinTableFile>("skin_table") {
-        Ok(skin_table) => SkinData {
-            char_skins: skin_table.char_skins,
-            buildin_evolve_map: HashMap::new(), // These have complex nested structures
-            buildin_patch_map: HashMap::new(),
-            brand_list: skin_table.brand_list,
-            special_skin_info_list: skin_table.special_skin_info_list,
-        },
+        Ok(skin_table) => {
+            let enriched_skins = enrich_all_skins(&skin_table.char_skins);
+
+            SkinData {
+                char_skins: skin_table.char_skins,
+                buildin_evolve_map: HashMap::new(),
+                buildin_patch_map: HashMap::new(),
+                brand_list: skin_table.brand_list,
+                special_skin_info_list: skin_table.special_skin_info_list,
+                enriched_skins,
+            }
+        }
         Err(e) => {
             eprintln!("Warning: Failed to load skin_table: {}", e);
             SkinData::default()
