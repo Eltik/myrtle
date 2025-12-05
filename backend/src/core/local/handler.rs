@@ -218,6 +218,7 @@ pub fn init_game_data(data_dir: &Path) -> Result<GameData, DataError> {
         sub_prof_dict: raw_modules.sub_prof_dict,
         char_equip: raw_modules.char_equip,
         equip_track_dict: std::collections::HashMap::new(),
+        battle_equip,
     };
 
     Ok(GameData {
