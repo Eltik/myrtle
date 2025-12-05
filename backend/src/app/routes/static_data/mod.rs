@@ -30,6 +30,9 @@ pub fn router() -> Router<AppState> {
             get(endpoints::modules::get_module_details),
         )
         .route("/modules/{id}", get(endpoints::modules::get_module_by_id))
+        // Ranges
+        .route("/ranges", get(endpoints::ranges::get_all_ranges))
+        .route("/ranges/{id}", get(endpoints::ranges::get_range_by_id))
         // ... other endpoints
         // Compression fallback (if not cached as gzip)
         .layer(CompressionLayer::new())

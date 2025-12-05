@@ -11,6 +11,7 @@ use crate::core::local::types::material::{ItemTableFile, Materials};
 use crate::core::local::types::module::{
     BattleEquip, BattleEquipTableFile, Modules, RawModules, UniequipTableFile,
 };
+use crate::core::local::types::range::Ranges;
 use crate::core::local::types::skill::{RawSkill, SkillTableFile};
 use crate::core::local::types::skin::{SkinData, SkinTableFile};
 use crate::core::local::types::{GameData, operator::CharacterTable};
@@ -167,6 +168,15 @@ pub fn init_game_data(data_dir: &Path) -> Result<GameData, DataError> {
         }
     };
 
+    // ============ Load Range Table ============
+    let ranges: Ranges = match handler.load_table::<Ranges>("range_table") {
+        Ok(range_data) => range_data,
+        Err(e) => {
+            eprintln!("Warning: Failed to load range_table: {}", e);
+            HashMap::new()
+        }
+    };
+
     // ============ Enrich Data ============
     let skills = enrich_all_skills(raw_skills);
 
@@ -228,6 +238,7 @@ pub fn init_game_data(data_dir: &Path) -> Result<GameData, DataError> {
         modules,
         skins,
         handbook,
+        ranges,
     })
 }
 
