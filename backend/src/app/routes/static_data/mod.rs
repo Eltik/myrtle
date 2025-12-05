@@ -1,0 +1,29 @@
+use axum::{Router, routing::get};
+use tower_http::compression::CompressionLayer;
+
+use crate::app::state::AppState;
+
+mod compression;
+mod endpoints;
+mod fields;
+mod handler;
+mod pagination;
+
+pub fn router() -> Router<AppState> {
+    Router::new()
+        // Operators
+        .route("/operators", get(endpoints::operators::get_all_operators))
+        .route(
+            "/operators/{id}",
+            get(endpoints::operators::get_operator_by_id),
+        )
+        // Materials
+        // .route("/materials", get(endpoints::materials::get_all_materials))
+        // .route(
+        //     "/materials/:id",
+        //     get(endpoints::materials::get_material_by_id),
+        // )
+        // ... other endpoints
+        // Compression fallback (if not cached as gzip)
+        .layer(CompressionLayer::new())
+}

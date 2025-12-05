@@ -13,6 +13,7 @@ use tokio::sync::RwLock;
 use crate::app::middleware::rate_limit::{RateLimitStore, rate_limit};
 use crate::app::middleware::static_assets::serve_asset;
 use crate::app::routes::get_user::{get_user_by_path, get_user_by_query};
+use crate::app::routes::static_data;
 use crate::app::routes::yostar::login::{login_by_query, login_by_server, login_no_server};
 use crate::app::routes::yostar::refresh::{refresh_by_query, refresh_by_server, refresh_no_server};
 use crate::app::routes::yostar::send_code::{
@@ -49,7 +50,9 @@ fn create_router(state: AppState) -> Router {
         .route("/cdn/{*asset_path}", get(serve_asset))
         .with_state(assets_dir);
 
-    let api_router = Router::new()
+    let static_router = static_data::router();
+
+    Router::new()
         .route("/", get(root))
         .route("/health", get(health))
         .route("/get-user", get(get_user_by_query))
@@ -69,13 +72,13 @@ fn create_router(state: AppState) -> Router {
             "/refresh/{uid}/{secret}/{seqnum}/{server}",
             post(refresh_by_server),
         )
+        .nest("/static", static_router)
         .layer(middleware::from_fn_with_state(
             rate_store.clone(),
             rate_limit,
         ))
-        .with_state(state);
-
-    api_router.merge(cdn_router)
+        .with_state(state)
+        .merge(cdn_router)
 }
 
 pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
@@ -133,6 +136,10 @@ pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
         println!("Warning: Running with empty game data");
     }
 
+    let redis_url = std::env::var("REDIS_URL").expect("REDIS_URL must be set");
+    let redis_client = redis::Client::open(redis_url)?;
+    let redis = redis_client.get_multiplexed_async_connection().await?;
+
     // Create app state
     let state = AppState {
         db,
@@ -140,6 +147,7 @@ pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
         events: events.clone(),
         client,
         game_data,
+        redis,
     };
 
     // Start cron jobs

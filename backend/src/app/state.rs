@@ -1,5 +1,6 @@
 use std::sync::{Arc, OnceLock};
 
+use redis::aio::MultiplexedConnection;
 use reqwest::Client;
 use sqlx::PgPool;
 use tokio::sync::RwLock;
@@ -16,6 +17,7 @@ pub struct AppState {
     pub events: Arc<EventEmitter>,
     pub client: Client,
     pub game_data: Arc<GameData>,
+    pub redis: MultiplexedConnection,
 }
 
 static GLOBAL_CONFIG: OnceLock<Arc<RwLock<GlobalConfig>>> = OnceLock::new();
