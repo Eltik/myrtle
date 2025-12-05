@@ -23,6 +23,13 @@ pub fn router() -> Router<AppState> {
             "/materials/{id}",
             get(endpoints::materials::get_material_by_id),
         )
+        // Modules
+        .route("/modules", get(endpoints::modules::get_all_modules))
+        .route(
+            "/modules/details/{id}",
+            get(endpoints::modules::get_module_details),
+        )
+        .route("/modules/{id}", get(endpoints::modules::get_module_by_id))
         // ... other endpoints
         // Compression fallback (if not cached as gzip)
         .layer(CompressionLayer::new())

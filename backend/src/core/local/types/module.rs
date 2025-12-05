@@ -303,6 +303,8 @@ pub struct Modules {
     pub sub_prof_dict: HashMap<String, SubProfession>,
     pub char_equip: HashMap<String, Vec<String>>,
     pub equip_track_dict: HashMap<String, EquipTrack>,
+    #[serde(skip)]
+    pub battle_equip: BattleEquip,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
