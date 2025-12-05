@@ -72,7 +72,10 @@ pub async fn get_all_materials(
 
             // Apply field filtering if requested
             let response = if let Some(ref field_set) = fields {
-                let filtered: Vec<_> = page.iter().map(|op| filter_fields(op, field_set)).collect();
+                let filtered: Vec<_> = page
+                    .iter()
+                    .map(|mat| filter_fields(mat, field_set))
+                    .collect();
                 serde_json::json!({
                     "materials": filtered,
                     "next_cursor": next_cursor,
