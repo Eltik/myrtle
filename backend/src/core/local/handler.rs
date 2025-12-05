@@ -14,6 +14,7 @@ use crate::core::local::types::module::{
 use crate::core::local::types::range::Ranges;
 use crate::core::local::types::skill::{RawSkill, SkillTableFile};
 use crate::core::local::types::skin::{SkinData, SkinTableFile};
+use crate::core::local::types::trust::Favor;
 use crate::core::local::types::{GameData, operator::CharacterTable};
 
 #[derive(Debug)]
@@ -177,6 +178,15 @@ pub fn init_game_data(data_dir: &Path) -> Result<GameData, DataError> {
         }
     };
 
+    // ============ Load Favor Table ============
+    let favor: Favor = match handler.load_table::<Favor>("favor_table") {
+        Ok(favor_data) => favor_data,
+        Err(e) => {
+            eprintln!("Warning: Failed to load favor_table: {}", e);
+            Favor::default()
+        }
+    };
+
     // ============ Enrich Data ============
     let skills = enrich_all_skills(raw_skills);
 
@@ -239,6 +249,7 @@ pub fn init_game_data(data_dir: &Path) -> Result<GameData, DataError> {
         skins,
         handbook,
         ranges,
+        favor,
     })
 }
 

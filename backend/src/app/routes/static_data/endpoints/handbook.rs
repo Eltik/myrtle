@@ -14,24 +14,24 @@ use crate::app::routes::static_data::{
 use crate::app::state::AppState;
 
 #[derive(Deserialize)]
-pub struct ModuleQuery {
+pub struct HandbookQuery {
     #[serde(flatten)]
     pagination: PaginationParams,
     #[serde(flatten)]
     fields: FieldsParam,
 }
 
-/// GET /static/modules
-pub async fn get_all_modules(
+/// GET /static/handbook
+pub async fn get_all_handbook(
     State(state): State<AppState>,
-    Query(params): Query<ModuleQuery>,
+    Query(params): Query<HandbookQuery>,
     headers: HeaderMap,
 ) -> Result<Response, StatusCode> {
     let limit = params.pagination.limit.unwrap_or(50);
     let fields = params.fields.to_set();
 
     let cache_key = format!(
-        "static:modules:all:limit:{}:cursor:{}:fields:{}",
+        "static:handbook:all:limit:{}:cursor:{}:fields:{}",
         limit,
         params.pagination.cursor.as_deref().unwrap_or("start"),
         fields
@@ -46,10 +46,10 @@ pub async fn get_all_modules(
         3600,
         &headers,
         || async {
-            let all_modules = state
+            let all_handbook = state
                 .game_data
-                .modules
-                .equip_dict
+                .handbook
+                .handbook_dict
                 .values()
                 .collect::<Vec<_>>();
 
@@ -62,7 +62,7 @@ pub async fn get_all_modules(
                 .and_then(|s| s.parse::<usize>().ok())
                 .unwrap_or(0);
 
-            let page: Vec<_> = all_modules
+            let page: Vec<_> = all_handbook
                 .iter()
                 .skip(start_idx)
                 .take(limit)
@@ -77,22 +77,19 @@ pub async fn get_all_modules(
 
             // Apply field filtering if requested
             let response = if let Some(ref field_set) = fields {
-                let filtered: Vec<_> = page
-                    .iter()
-                    .map(|module| filter_fields(module, field_set))
-                    .collect();
+                let filtered: Vec<_> = page.iter().map(|hb| filter_fields(hb, field_set)).collect();
                 serde_json::json!({
-                    "modules": filtered,
+                    "handbook": filtered,
                     "next_cursor": next_cursor,
                     "has_more": next_cursor.is_some(),
-                    "total": all_modules.len()
+                    "total": all_handbook.len()
                 })
             } else {
                 serde_json::json!({
-                    "modules": page,
+                    "handbook": page,
                     "next_cursor": next_cursor,
                     "has_more": next_cursor.is_some(),
-                    "total": all_modules.len()
+                    "total": all_handbook.len()
                 })
             };
 
@@ -102,8 +99,8 @@ pub async fn get_all_modules(
     .await
 }
 
-/// GET /static/modules/:id
-pub async fn get_module_by_id(
+/// GET /static/handbook/:id
+pub async fn get_handbook_by_id(
     State(state): State<AppState>,
     Path(id): Path<String>,
     Query(fields): Query<FieldsParam>,
@@ -111,7 +108,7 @@ pub async fn get_module_by_id(
 ) -> Result<Response, StatusCode> {
     let field_set = fields.to_set();
     let cache_key = format!(
-        "static:modules:{}:fields:{}",
+        "static:handbook:{}:fields:{}",
         id,
         field_set
             .as_ref()
@@ -125,38 +122,13 @@ pub async fn get_module_by_id(
         3600,
         &headers,
         || async {
-            state.game_data.modules.equip_dict.get(&id).map(|module| {
+            state.game_data.handbook.handbook_dict.get(&id).map(|hb| {
                 if let Some(ref field_set) = field_set {
-                    serde_json::json!({ "module": filter_fields(module, field_set) })
+                    serde_json::json!({ "handbook": filter_fields(hb, field_set) })
                 } else {
-                    serde_json::json!({ "module": module })
+                    serde_json::json!({ "handbook": hb })
                 }
             })
-        },
-    )
-    .await
-}
-
-/// GET /static/modules/details/{id}
-pub async fn get_module_details(
-    State(state): State<AppState>,
-    Path(id): Path<String>,
-    headers: HeaderMap,
-) -> Result<Response, StatusCode> {
-    let cache_key = format!("static:modules:details:{}", id);
-
-    cached_handler(
-        &mut state.redis.clone(),
-        &cache_key,
-        3600,
-        &headers,
-        || async {
-            state
-                .game_data
-                .modules
-                .battle_equip
-                .get(&id)
-                .map(|details| serde_json::json!({ "details": details }))
         },
     )
     .await

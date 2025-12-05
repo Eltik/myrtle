@@ -36,6 +36,22 @@ pub fn router() -> Router<AppState> {
         // Skills
         .route("/skills", get(endpoints::skills::get_all_skills))
         .route("/skills/{id}", get(endpoints::skills::get_skill_by_id))
+        // Trust
+        .route("/trust", get(endpoints::trust::get_favor_table))
+        .route(
+            "/trust/calculate",
+            get(endpoints::trust::calculate_trust_level),
+        )
+        .route(
+            "/trust/calculate/{trust}",
+            get(endpoints::trust::calculate_trust_by_path),
+        )
+        // Handbook
+        .route("/handbook", get(endpoints::handbook::get_all_handbook))
+        .route(
+            "/handbook/{id}",
+            get(endpoints::handbook::get_handbook_by_id),
+        )
         // ... other endpoints
         // Compression fallback (if not cached as gzip)
         .layer(CompressionLayer::new())
