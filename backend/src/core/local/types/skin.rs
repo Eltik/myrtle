@@ -171,6 +171,26 @@ pub struct SkinData {
     pub buildin_patch_map: HashMap<String, HashMap<String, String>>, // Amiya is special
     pub brand_list: HashMap<String, Brand>,
     pub special_skin_info_list: Vec<SpecialSkinInfo>,
+
+    #[serde(skip)]
+    pub enriched_skins: HashMap<String, EnrichedSkin>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SkinImages {
+    pub avatar: String,
+    pub portrait: String,
+    pub skin: String,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EnrichedSkin {
+    pub id: String,
+    #[serde(flatten)]
+    pub skin: Skin,
+    pub images: SkinImages,
 }
 
 // ============================================================================

@@ -52,6 +52,13 @@ pub fn router() -> Router<AppState> {
             "/handbook/{id}",
             get(endpoints::handbook::get_handbook_by_id),
         )
+        // Handbook
+        .route("/skins", get(endpoints::skins::get_all_skins))
+        .route("/skins/{id}", get(endpoints::skins::get_skin_by_id))
+        .route(
+            "/skins/char/{char_id}",
+            get(endpoints::skins::get_skins_by_char_id),
+        )
         // ... other endpoints
         // Compression fallback (if not cached as gzip)
         .layer(CompressionLayer::new())
