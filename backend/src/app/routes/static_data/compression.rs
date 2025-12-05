@@ -8,6 +8,7 @@ pub fn compress_json(data: &[u8]) -> Vec<u8> {
     encoder.finish().unwrap()
 }
 
+#[allow(dead_code)]
 pub fn decompress(data: &[u8]) -> Vec<u8> {
     let mut decoder = GzDecoder::new(data);
     let mut decompressed = Vec::new();

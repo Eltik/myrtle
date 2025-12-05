@@ -9,6 +9,7 @@ use std::future::Future;
 
 use super::compression::compress_json;
 
+#[allow(dead_code)]
 pub struct CachedResponse {
     pub body: Vec<u8>,
     pub is_compressed: bool,
