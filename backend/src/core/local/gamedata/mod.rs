@@ -5,3 +5,4 @@ pub mod operators;
 pub mod skills;
 pub mod skins;
 pub mod trust;
+pub mod voice;

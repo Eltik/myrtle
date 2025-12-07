@@ -6,3 +6,4 @@ pub mod ranges;
 pub mod skills;
 pub mod skins;
 pub mod trust;
+pub mod voices;
