@@ -1,118 +1,29 @@
-# Frontend
+# Create T3 App
 
-A Next.js frontend application built with the T3 Stack that provides the user interface for myrtle.moe.
+This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
 
-## Table of Contents
-- [Features](#features)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Development](#development)
-  - [Available Scripts](#available-scripts)
-  - [Starting the Development Server](#starting-the-development-server)
-- [Project Structure](#project-structure)
-- [Configuration](#configuration)
-- [Backend Integration](#backend-integration)
-- [Deployment](#deployment)
-- [Learn More](#learn-more)
+## What's next? How do I make an app with this?
 
-## Features
+We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
 
-- **[Next.js Framework](https://nextjs.org)**: React framework for building the UI
-- **[Tailwind CSS](https://tailwindcss.com)**: Utility-first CSS framework
-- **[shadcn/ui](https://ui.shadcn.com/)**: UI component library built with Radix UI and Tailwind
-- **[Zustand](https://zustand-demo.pmnd.rs/)**: State management
-- **[Framer Motion](https://www.framer.com/motion/)**: Animation library
-- **[PixiJS](https://pixijs.com/)**: WebGL rendering for animations
+If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
 
-## Prerequisites
-
-- Node.js 18+ or Bun
-- Backend service running (see backend README)
-
-## Installation
-
-1. Move into the `./frontend` directory:
-```bash
-cd frontend
-```
-
-2. Install dependencies:
-```bash
-npm install
-# or
-bun install
-```
-
-3. Set up environment configuration:
-```bash
-cp .env.example .env
-```
-
-4. Configure the following environment variables in `.env`:
-- `BACKEND_URL`: The URL of the backend API (default: "http://localhost:3060")
-- `REVALIDATION_SECRET`: Secret key for revalidating static pages
-
-## Development
-
-### Available Scripts
-
-- `npm run dev` - Start the development server
-- `npm run build` - Build the production application
-- `npm run start` - Start the production server
-- `npm run lint` - Run ESLint
-- `npm run format:write` - Format code with Prettier
-
-### Starting the Development Server
-
-```bash
-npm run dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser to view the application.
-
-## Project Structure
-
-```
-frontend/
-├── src/
-│   ├── components/  # Reusable UI components
-│   ├── pages/       # Next.js pages and API routes
-│   ├── lib/         # Utility functions and shared code
-│   ├── styles/      # Global styles and Tailwind configuration
-│   ├── hooks/       # Custom React hooks
-│   ├── store/       # Zustand stores for state management
-│   ├── types/       # TypeScript type definitions
-│   └── helper/      # Helper functions
-```
-
-## Configuration
-
-The project uses several configuration files:
-
-- `tsconfig.json` - TypeScript configuration
-- `.prettierrc` - Code formatting rules
-- `.eslintrc.json` - Linting rules
-- `.env` - Environment variables
-
-## Backend Integration
-
-The frontend connects to the backend API through the `BACKEND_URL` environment variable. 
-By default, this points to `http://localhost:3060` in development.
-
-API requests are handled through custom hooks and service functions that communicate 
-with the backend endpoints.
-
-## Deployment
-
-The application can be deployed on platforms like Vercel, Netlify, or using Docker. 
-Make sure to set the appropriate environment variables according to your deployment environment.
+- [Next.js](https://nextjs.org)
+- [NextAuth.js](https://next-auth.js.org)
+- [Prisma](https://prisma.io)
+- [Drizzle](https://orm.drizzle.team)
+- [Tailwind CSS](https://tailwindcss.com)
+- [tRPC](https://trpc.io)
 
 ## Learn More
 
-To learn more about the technologies used in this project:
+To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
 
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
-- [T3 Stack Documentation](https://create.t3.gg/)
+- [Documentation](https://create.t3.gg/)
+- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+
+You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+
+## How do I deploy this?
+
+Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.

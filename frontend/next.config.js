@@ -17,32 +17,6 @@ const config = {
         locales: ["en"],
         defaultLocale: "en",
     },
-    transpilePackages: ["geist"],
-    images: {
-        remotePatterns: [
-            {
-                protocol: "https",
-                hostname: "**.*.*",
-            },
-            {
-                protocol: "https",
-                hostname: "**.**.*.*",
-            },
-            {
-                protocol: "https",
-                hostname: "**.*.*.*",
-            },
-        ],
-    },
-    // Add rewrites for proxying CDN requests
-    async rewrites() {
-        return [
-            {
-                source: "/assets/:path*",
-                destination: `${process.env.BACKEND_URL ?? "http://localhost:3060"}/cdn/:path*`,
-            },
-        ];
-    },
 };
 
 export default config;
