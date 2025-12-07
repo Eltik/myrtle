@@ -2,6 +2,7 @@ use rayon::prelude::*;
 use std::collections::HashMap;
 
 use crate::core::local::{
+    asset_mapping::AssetMappings,
     gamedata::{
         handbook::get_handbook_and_profile, modules::get_operator_modules, skills::enrich_skills,
         skins::get_artists,
@@ -23,12 +24,22 @@ pub fn enrich_all_operators(
     battle_equip: &BattleEquip,
     handbook: &Handbook,
     skins: &SkinData,
+    asset_mappings: &AssetMappings,
 ) -> HashMap<String, Operator> {
     raw_operators
         .par_iter()
         .filter(|(id, _)| id.starts_with("char_"))
         .map(|(id, raw)| {
-            let enriched = enrich_operator(id, raw, skills, modules, battle_equip, handbook, skins);
+            let enriched = enrich_operator(
+                id,
+                raw,
+                skills,
+                modules,
+                battle_equip,
+                handbook,
+                skins,
+                asset_mappings,
+            );
             (id.clone(), enriched)
         })
         .collect()
@@ -42,9 +53,10 @@ fn enrich_operator(
     battle_equip: &BattleEquip,
     handbook: &Handbook,
     skins: &SkinData,
+    asset_mappings: &AssetMappings,
 ) -> Operator {
     let enriched_skills = enrich_skills(&raw.skills, skills);
-    let operator_modules = get_operator_modules(id, modules, battle_equip);
+    let operator_modules = get_operator_modules(id, modules, battle_equip, asset_mappings);
     let (handbook_item, profile) = get_handbook_and_profile(id, handbook);
     let artists = get_artists(id, skins);
 

@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 
 use serde::de::DeserializeOwned;
 
+use crate::core::local::asset_mapping::AssetMappings;
 use crate::core::local::gamedata::operators::enrich_all_operators;
 use crate::core::local::gamedata::skills::enrich_all_skills;
 use crate::core::local::gamedata::skins::enrich_all_skins;
@@ -88,6 +89,9 @@ impl DataHandler {
 pub fn init_game_data(data_dir: &Path) -> Result<GameData, DataError> {
     let handler = DataHandler::new(data_dir);
 
+    // ============ Build Asset Mappings (early, needed for skins/modules) ============
+    let asset_mappings = AssetMappings::build(data_dir.parent().unwrap_or(data_dir));
+
     // ============ Load Character Table ============
     let character_table = handler.load_table::<CharacterTable>("character_table")?;
     let raw_operators = character_table.characters;
@@ -146,7 +150,7 @@ pub fn init_game_data(data_dir: &Path) -> Result<GameData, DataError> {
     // ============ Load Skin Table ============
     let skins: SkinData = match handler.load_table::<SkinTableFile>("skin_table") {
         Ok(skin_table) => {
-            let enriched_skins = enrich_all_skins(&skin_table.char_skins);
+            let enriched_skins = enrich_all_skins(&skin_table.char_skins, &asset_mappings);
 
             SkinData {
                 char_skins: skin_table.char_skins,
@@ -256,6 +260,7 @@ pub fn init_game_data(data_dir: &Path) -> Result<GameData, DataError> {
         &battle_equip,
         &handbook,
         &skins,
+        &asset_mappings,
     );
 
     // Convert raw modules to enriched modules
@@ -264,6 +269,8 @@ pub fn init_game_data(data_dir: &Path) -> Result<GameData, DataError> {
             .equip_dict
             .into_iter()
             .map(|(k, v)| {
+                // Get module image path using asset mappings
+                let image = Some(asset_mappings.get_module_big_path(&v.uni_equip_icon));
                 (
                     k.clone(),
                     crate::core::local::types::module::Module {
@@ -271,7 +278,7 @@ pub fn init_game_data(data_dir: &Path) -> Result<GameData, DataError> {
                         uni_equip_id: v.uni_equip_id,
                         uni_equip_name: v.uni_equip_name,
                         uni_equip_icon: v.uni_equip_icon,
-                        image: None,
+                        image,
                         uni_equip_desc: v.uni_equip_desc,
                         type_icon: v.type_icon,
                         type_name1: v.type_name1,
@@ -311,6 +318,7 @@ pub fn init_game_data(data_dir: &Path) -> Result<GameData, DataError> {
         favor,
         voices,
         gacha,
+        asset_mappings,
     })
 }
 

@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 
-use crate::core::local::types::skin::{EnrichedSkin, Skin, SkinData, SkinImages};
+use crate::core::local::{
+    asset_mapping::AssetMappings,
+    types::skin::{EnrichedSkin, Skin, SkinData, SkinImages},
+};
 
 pub fn get_artists(char_id: &str, skins: &SkinData) -> Vec<String> {
     let mut artists: Vec<String> = skins
@@ -17,15 +20,18 @@ pub fn get_artists(char_id: &str, skins: &SkinData) -> Vec<String> {
 }
 
 /// Generate image paths for a skin using local assets
-pub fn get_skin_images(skin: &Skin, char_id: &str) -> SkinImages {
-    // Avatar - using spritepack (you may need to adjust based on your actual directory)
-    let avatar = format!("/spritepack/{}.png", skin.avatar_id);
+pub fn get_skin_images(skin: &Skin, mappings: &AssetMappings) -> SkinImages {
+    let avatar = mappings.get_avatar_path(&skin.avatar_id);
 
-    // Portrait - using chararts directory
-    let portrait = format!("/chararts/{}/{}.png", char_id, skin.portrait_id);
+    // For portrait, check if it's a skin (has @ or #) or default
+    let portrait = if skin.skin_id.contains('@') || skin.skin_id.contains('#') {
+        mappings.get_skin_portrait_path(&skin.portrait_id)
+    } else {
+        mappings.get_avatar_path(&skin.portrait_id)
+    };
 
-    // Skin image - depends on skin type
-    let skin_url = format_skin_url(&skin.skin_id, char_id);
+    // Skin image path (chararts/skinpack)
+    let skin_url = format_skin_url(&skin.skin_id, &skin.char_id);
 
     SkinImages {
         avatar,
@@ -53,30 +59,28 @@ fn format_skin_url(skin_id: &str, char_id: &str) -> String {
 }
 
 /// Enrich all skins with image URLs
-pub fn enrich_all_skins(char_skins: &HashMap<String, Skin>) -> HashMap<String, EnrichedSkin> {
+pub fn enrich_all_skins(
+    char_skins: &HashMap<String, Skin>,
+    mappings: &AssetMappings,
+) -> HashMap<String, EnrichedSkin> {
     char_skins
         .iter()
         .map(|(id, skin)| {
             let enriched = EnrichedSkin {
                 id: id.clone(),
                 skin: skin.clone(),
-                images: get_skin_images(skin, &skin.char_id),
+                images: get_skin_images(skin, mappings),
             };
             (id.clone(), enriched)
         })
         .collect()
 }
 
-/// Get all skins for a specific character, enriched with images
-pub fn get_character_skins(char_id: &str, skins: &SkinData) -> Vec<EnrichedSkin> {
+/// Get all skins for a specific character, using pre-enriched data
+pub fn get_character_skins<'a>(char_id: &str, skins: &'a SkinData) -> Vec<&'a EnrichedSkin> {
     skins
-        .char_skins
-        .iter()
-        .filter(|(_, skin)| skin.char_id == char_id)
-        .map(|(id, skin)| EnrichedSkin {
-            id: id.clone(),
-            skin: skin.clone(),
-            images: get_skin_images(skin, &skin.char_id),
-        })
+        .enriched_skins
+        .values()
+        .filter(|enriched| enriched.skin.char_id == char_id)
         .collect()
 }
