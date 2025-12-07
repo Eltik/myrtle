@@ -66,6 +66,11 @@ pub fn router() -> Router<AppState> {
             get(endpoints::voices::get_voices_by_char_id),
         )
         .route("/voices/{id}", get(endpoints::voices::get_voice_by_id))
+        // Gacha
+        .route("/gacha", get(endpoints::gacha::get_all_gacha))
+        .route("/gacha/recruitment", get(endpoints::gacha::get_recruitment))
+        .route("/gacha/pools", get(endpoints::gacha::get_gacha_pools))
+        .route("/gacha/tags", get(endpoints::gacha::get_gacha_tags))
         // ... other endpoints
         // Compression fallback (if not cached as gzip)
         .layer(CompressionLayer::new())
