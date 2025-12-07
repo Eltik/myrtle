@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+use super::serde_helpers::deserialize_fb_map;
+
 // ============================================================================
 // Enums
 // ============================================================================
@@ -12,19 +14,26 @@ pub enum PlaceType {
     NewYear,
     Greeting,
     Anniversary,
+    Birthday,
     HomeShow,
     HomeWait,
     Gacha,
     LevelUp,
+    EvolveOne,
+    EvolveTwo,
     Squad,
     SquadFirst,
     BattleStart,
     BattleFaceEnemy,
     BattleSelect,
     BattlePlace,
+    #[serde(rename = "BATTLE_SKILL_1")]
     BattleSkill1,
+    #[serde(rename = "BATTLE_SKILL_2")]
     BattleSkill2,
+    #[serde(rename = "BATTLE_SKILL_3")]
     BattleSkill3,
+    #[serde(rename = "BATTLE_SKILL_4")]
     BattleSkill4,
     FourStar,
     ThreeStar,
@@ -54,6 +63,7 @@ pub enum LangType {
     CnTopolect,
     Linkage,
     Ger,
+    Fre,
 }
 
 impl Default for LangType {
@@ -97,7 +107,9 @@ impl Default for UnlockType {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UnlockParam {
+    #[serde(alias = "ValueStr")]
     pub value_str: Option<String>,
+    #[serde(alias = "ValueInt")]
     pub value_int: Option<i32>,
 }
 
@@ -112,9 +124,13 @@ pub struct VoiceData {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CharExtraWord {
+    #[serde(alias = "WordKey")]
     pub word_key: String,
+    #[serde(alias = "CharId")]
     pub char_id: String,
+    #[serde(alias = "VoiceId")]
     pub voice_id: String,
+    #[serde(alias = "VoiceText")]
     pub voice_text: String,
 }
 
@@ -177,17 +193,24 @@ pub struct ExtraVoiceConfigData {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct VoiceLangDictEntry {
+    #[serde(alias = "Wordkey")]
     pub wordkey: String,
+    #[serde(alias = "VoiceLangType")]
     pub voice_lang_type: LangType,
+    #[serde(alias = "CvName")]
     pub cv_name: Vec<String>,
+    #[serde(alias = "VoicePath")]
     pub voice_path: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct VoiceLang {
+    #[serde(alias = "Wordkeys")]
     pub wordkeys: Vec<String>,
+    #[serde(alias = "CharId")]
     pub char_id: String,
+    #[serde(alias = "Dict", deserialize_with = "deserialize_fb_map", default)]
     pub dict: HashMap<String, VoiceLangDictEntry>,
 }
 
@@ -198,18 +221,31 @@ pub struct VoiceLang {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RawVoice {
+    #[serde(alias = "CharWordId")]
     pub char_word_id: String,
+    #[serde(alias = "WordKey")]
     pub word_key: String,
+    #[serde(alias = "CharId")]
     pub char_id: String,
+    #[serde(alias = "VoiceId")]
     pub voice_id: String,
+    #[serde(alias = "VoiceText")]
     pub voice_text: String,
+    #[serde(alias = "VoiceTitle")]
     pub voice_title: String,
+    #[serde(alias = "VoiceIndex")]
     pub voice_index: i32,
+    #[serde(alias = "VoiceType")]
     pub voice_type: VoiceType,
+    #[serde(alias = "UnlockType")]
     pub unlock_type: UnlockType,
+    #[serde(alias = "UnlockParam")]
     pub unlock_param: Vec<UnlockParam>,
+    #[serde(alias = "LockDescription")]
     pub lock_description: Option<String>,
+    #[serde(alias = "PlaceType")]
     pub place_type: PlaceType,
+    #[serde(alias = "VoiceAsset")]
     pub voice_asset: String,
 }
 
@@ -281,4 +317,19 @@ pub struct RawVoices {
     pub fes_voice_data: HashMap<PlaceType, FesVoiceData>,
     pub fes_voice_weight: HashMap<PlaceType, FesVoiceWeight>,
     pub extra_voice_config_data: HashMap<String, ExtraVoiceConfigData>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct VoicesTableFile {
+    #[serde(deserialize_with = "deserialize_fb_map")]
+    pub char_words: HashMap<String, RawVoice>,
+    #[serde(deserialize_with = "deserialize_fb_map", default)]
+    pub char_extra_words: HashMap<String, CharExtraWord>,
+    #[serde(deserialize_with = "deserialize_fb_map", default)]
+    pub voice_lang_dict: HashMap<String, VoiceLang>,
+    #[serde(default)]
+    pub default_lang_type: String,
+    #[serde(default)]
+    pub new_tag_list: Vec<String>,
 }

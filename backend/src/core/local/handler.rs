@@ -7,6 +7,7 @@ use serde::de::DeserializeOwned;
 use crate::core::local::gamedata::operators::enrich_all_operators;
 use crate::core::local::gamedata::skills::enrich_all_skills;
 use crate::core::local::gamedata::skins::enrich_all_skins;
+use crate::core::local::gamedata::voice::enrich_all_voices;
 use crate::core::local::types::handbook::{Handbook, HandbookTableFile};
 use crate::core::local::types::material::{ItemTableFile, Materials};
 use crate::core::local::types::module::{
@@ -16,6 +17,7 @@ use crate::core::local::types::range::Ranges;
 use crate::core::local::types::skill::{RawSkill, SkillTableFile};
 use crate::core::local::types::skin::{SkinData, SkinTableFile};
 use crate::core::local::types::trust::Favor;
+use crate::core::local::types::voice::{Voices, VoicesTableFile};
 use crate::core::local::types::{GameData, operator::CharacterTable};
 
 #[derive(Debug)]
@@ -193,6 +195,27 @@ pub fn init_game_data(data_dir: &Path) -> Result<GameData, DataError> {
         }
     };
 
+    // ============ Load Charword (Voice) Table ============
+    let voices: Voices = match handler.load_table::<VoicesTableFile>("charword_table") {
+        Ok(voice_table) => {
+            let enriched_char_words =
+                enrich_all_voices(&voice_table.char_words, &voice_table.voice_lang_dict);
+
+            Voices {
+                char_words: enriched_char_words,
+                char_extra_words: voice_table.char_extra_words,
+                voice_lang_dict: voice_table.voice_lang_dict,
+                default_lang_type: voice_table.default_lang_type,
+                // ... populate other fields or use defaults
+                ..Default::default()
+            }
+        }
+        Err(e) => {
+            eprintln!("Warning: Failed to load charword_table: {}", e);
+            Voices::default()
+        }
+    };
+
     // ============ Enrich Data ============
     let skills = enrich_all_skills(raw_skills);
 
@@ -256,6 +279,7 @@ pub fn init_game_data(data_dir: &Path) -> Result<GameData, DataError> {
         handbook,
         ranges,
         favor,
+        voices,
     })
 }
 
