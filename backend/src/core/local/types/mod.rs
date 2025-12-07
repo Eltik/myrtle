@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 
 use crate::core::local::types::{
-    handbook::Handbook, material::Materials, module::Modules, operator::Operator, range::Ranges,
-    skill::Skill, skin::SkinData, trust::Favor, voice::Voices,
+    gacha::GachaData, handbook::Handbook, material::Materials, module::Modules, operator::Operator,
+    range::Ranges, skill::Skill, skin::SkinData, trust::Favor, voice::Voices,
 };
 
 pub mod enemy;
+pub mod gacha;
 pub mod handbook;
 pub mod material;
 pub mod module;
@@ -28,6 +29,7 @@ pub struct GameData {
     pub ranges: Ranges,
     pub favor: Favor,
     pub voices: Voices,
+    pub gacha: GachaData,
 }
 
 impl GameData {

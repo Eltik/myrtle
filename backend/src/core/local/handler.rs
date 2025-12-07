@@ -8,6 +8,7 @@ use crate::core::local::gamedata::operators::enrich_all_operators;
 use crate::core::local::gamedata::skills::enrich_all_skills;
 use crate::core::local::gamedata::skins::enrich_all_skins;
 use crate::core::local::gamedata::voice::enrich_all_voices;
+use crate::core::local::types::gacha::{GachaData, GachaTableFile};
 use crate::core::local::types::handbook::{Handbook, HandbookTableFile};
 use crate::core::local::types::material::{ItemTableFile, Materials};
 use crate::core::local::types::module::{
@@ -216,6 +217,35 @@ pub fn init_game_data(data_dir: &Path) -> Result<GameData, DataError> {
         }
     };
 
+    // ============ Load Gacha Table ============
+    let gacha: GachaData = match handler.load_table::<GachaTableFile>("gacha_table") {
+        Ok(gacha_table) => GachaData {
+            gacha_pool_client: gacha_table.gacha_pool_client,
+            newbee_gacha_pool_client: gacha_table.newbee_gacha_pool_client,
+            special_recruit_pool: gacha_table.special_recruit_pool,
+            gacha_tags: gacha_table.gacha_tags,
+            recruit_pool: gacha_table.recruit_pool,
+            potential_material_converter: gacha_table.potential_material_converter,
+            classic_potential_material_converter: gacha_table.classic_potential_material_converter,
+            recruit_rarity_table: gacha_table.recruit_rarity_table,
+            special_tag_rarity_table: gacha_table.special_tag_rarity_table,
+            recruit_detail: gacha_table.recruit_detail,
+            show_gacha_log_entry: gacha_table.show_gacha_log_entry,
+            carousel: gacha_table.carousel,
+            free_gacha: gacha_table.free_gacha,
+            limit_ten_gacha_item: gacha_table.limit_ten_gacha_item,
+            linkage_ten_gacha_item: gacha_table.linkage_ten_gacha_item,
+            normal_gacha_item: gacha_table.normal_gacha_item,
+            fes_gacha_pool_relate_item: gacha_table.fes_gacha_pool_relate_item,
+            dic_recruit6_star_hint: gacha_table.dic_recruit6_star_hint,
+            special_gacha_percent_dict: gacha_table.special_gacha_percent_dict,
+        },
+        Err(e) => {
+            eprintln!("Warning: Failed to load gacha_table: {}", e);
+            GachaData::default()
+        }
+    };
+
     // ============ Enrich Data ============
     let skills = enrich_all_skills(raw_skills);
 
@@ -280,6 +310,7 @@ pub fn init_game_data(data_dir: &Path) -> Result<GameData, DataError> {
         ranges,
         favor,
         voices,
+        gacha,
     })
 }
 
