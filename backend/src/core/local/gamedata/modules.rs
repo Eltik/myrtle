@@ -1,12 +1,16 @@
-use crate::core::local::types::{
-    module::{BattleEquip, Module, RawModules},
-    operator::OperatorModule,
+use crate::core::local::{
+    asset_mapping::AssetMappings,
+    types::{
+        module::{BattleEquip, Module, RawModules},
+        operator::OperatorModule,
+    },
 };
 
 pub fn get_operator_modules(
     char_id: &str,
     modules: &RawModules,
     battle_equip: &BattleEquip,
+    asset_mappings: &AssetMappings,
 ) -> Vec<OperatorModule> {
     modules
         .equip_dict
@@ -18,16 +22,13 @@ pub fn get_operator_modules(
                 .cloned()
                 .unwrap_or_default();
 
-            // TODO: Fix image
+            // Get module image path using asset mappings
             let module = Module {
                 id: Some(raw_module.uni_equip_id.clone()),
                 uni_equip_id: raw_module.uni_equip_id.clone(),
                 uni_equip_name: raw_module.uni_equip_name.clone(),
                 uni_equip_icon: raw_module.uni_equip_icon.clone(),
-                image: Some(format!(
-                    "/spritepack/{}.png",
-                    urlencoding::encode(&raw_module.uni_equip_icon)
-                )),
+                image: Some(asset_mappings.get_module_big_path(&raw_module.uni_equip_icon)),
                 uni_equip_desc: raw_module.uni_equip_desc.clone(),
                 type_icon: raw_module.type_icon.clone(),
                 type_name1: raw_module.type_name1.clone(),
