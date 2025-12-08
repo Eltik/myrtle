@@ -1,6 +1,7 @@
 import Head from "next/head";
 import { BentoGrid } from "~/components/ui/home/bento";
 import { Header } from "~/components/ui/home/header";
+import { TextLoop } from "~/components/ui/text-loop";
 
 export default function Home() {
     return (
@@ -11,21 +12,34 @@ export default function Home() {
                 <link href="/favicon.ico" rel="icon" />
             </Head>
             <main className="">
-                <div className="flex min-h-screen bg-background relative overflow-hidden">
+                <div className="relative flex min-h-screen overflow-hidden bg-background">
                     <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                        <div className="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-primary/20 blur-[100px]" />
-                        <div className="absolute top-1/2 -left-40 h-80 w-80 rounded-full bg-primary/10 blur-[80px]" />
-                        <div className="absolute -bottom-40 right-1/3 h-72 w-72 rounded-full bg-primary/15 blur-[90px]" />
+                        <div className="-top-40 -right-40 absolute h-96 w-96 rounded-full bg-primary/20 blur-[100px]" />
+                        <div className="-left-40 absolute top-1/2 h-80 w-80 rounded-full bg-primary/10 blur-[80px]" />
+                        <div className="-bottom-40 absolute right-1/3 h-72 w-72 rounded-full bg-primary/15 blur-[90px]" />
                     </div>
 
-                    <div className="flex-1 flex flex-col relative">
+                    <div className="relative flex flex-1 flex-col">
                         <Header />
-                        <main className="flex-1 px-4 md:px-8 py-8 md:py-12 max-w-6xl mx-auto w-full mt-10">
+                        <main className="mx-auto mt-10 w-full max-w-6xl flex-1 px-4 py-8 md:px-8 md:py-12">
                             <section className="mb-12">
-                                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4 text-balance">
-                                    Elevate your <span className="text-primary text-glow">Arknights</span> experience.
+                                <h1 className="mb-4 text-balance font-bold text-3xl text-foreground md:text-4xl lg:text-5xl">
+                                    Elevate your{" "}
+                                    <TextLoop
+                                        className="text-primary"
+                                        interval={3}
+                                        style={{
+                                            textShadow: "0 0 20px oklch(0.75 0.15 25 / 0.5), 0 0 40px oklch(0.75 0.15 25 / 0.3), 0 0 60px oklch(0.75 0.15 25 / 0.15)",
+                                        }}
+                                    >
+                                        <span>Arknights</span>
+                                        <span>Operator</span>
+                                        <span>Farming</span>
+                                        <span>Recruitment</span>
+                                    </TextLoop>{" "}
+                                    experience.
                                 </h1>
-                                <p className="text-muted-foreground text-lg max-w-2xl">An advanced toolkit for the modern Doctor. Track your operators, plan your strategies, and optimize your gameplay.</p>
+                                <p className="max-w-2xl text-lg text-muted-foreground">An advanced toolkit for the modern Doctor. Track your operators, plan your strategies, and optimize your gameplay.</p>
                             </section>
                             <BentoGrid />
                         </main>
