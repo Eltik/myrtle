@@ -118,6 +118,7 @@ const AnimationComponent: React.FC<{
         ) : (
             <motion.span className="inline-block whitespace-pre">
                 {segment.split("").map((char, charIndex) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: Characters are static and don't reorder
                     <motion.span aria-hidden="true" className="inline-block whitespace-pre" key={`char-${charIndex}`} variants={variants}>
                         {char}
                     </motion.span>
