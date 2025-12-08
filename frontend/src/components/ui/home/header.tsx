@@ -238,13 +238,13 @@ export function Header() {
                             {navItems.map((item, index) =>
                                 item.dropdown ? (
                                     <button
-                                        type="button"
-                                        key={typeof item.label === "string" ? item.label : index}
                                         className={`relative z-10 flex items-center gap-1 rounded-full px-3.5 py-1.5 font-medium text-sm transition-colors duration-200 ${hoveredIndex === index || (item.isActive && hoveredIndex === null) ? "text-foreground" : "text-muted-foreground"}`}
+                                        key={typeof item.label === "string" ? item.label : index}
                                         onMouseEnter={() => handleMouseEnter(index)}
                                         ref={(el) => {
                                             itemRefs.current[index] = el;
                                         }}
+                                        type="button"
                                     >
                                         {item.icon && <span className="text-xs opacity-60">{item.icon}</span>}
                                         {item.label}
@@ -258,9 +258,9 @@ export function Header() {
                                     </button>
                                 ) : (
                                     <Link
-                                        key={typeof item.label === "string" ? item.label : index}
                                         className={`relative z-10 flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-medium text-sm transition-colors duration-200 ${hoveredIndex === index || (item.isActive && hoveredIndex === null) ? "text-foreground" : "text-muted-foreground"}`}
                                         href={item.href}
+                                        key={typeof item.label === "string" ? item.label : index}
                                         onMouseEnter={() => handleMouseEnter(index)}
                                         ref={(el) => {
                                             itemRefs.current[index] = el;
@@ -275,8 +275,10 @@ export function Header() {
 
                         {/* Dropdown container - GPU accelerated */}
                         <div
-                            role="menu"
                             className="absolute top-full pt-2 will-change-transform"
+                            onMouseEnter={handleDropdownMouseEnter}
+                            onMouseLeave={handleDropdownMouseLeave}
+                            role="menu"
                             style={{
                                 transform: `translateX(${dropdownStyle.left}px) ${activeDropdown !== null ? "translateY(0)" : "translateY(-8px)"}`,
                                 width: dropdownStyle.width,
@@ -284,8 +286,6 @@ export function Header() {
                                 pointerEvents: activeDropdown !== null ? "auto" : "none",
                                 transition: "transform 200ms ease-out, opacity 150ms ease-out",
                             }}
-                            onMouseEnter={handleDropdownMouseEnter}
-                            onMouseLeave={handleDropdownMouseLeave}
                         >
                             <div
                                 className="overflow-hidden rounded-lg border border-border shadow-lg backdrop-blur-sm"
@@ -297,15 +297,15 @@ export function Header() {
                                     (item, index) =>
                                         item.dropdown && (
                                             <div
-                                                key={typeof item.label === "string" ? item.label : index}
                                                 className="will-change-transform"
+                                                key={typeof item.label === "string" ? item.label : index}
                                                 style={{
                                                     display: activeDropdown === index ? "block" : "none",
                                                 }}
                                             >
                                                 <div className="p-1.5">
                                                     {item.dropdown.map((dropdownItem) => (
-                                                        <Link key={dropdownItem.label} href={dropdownItem.href} className="group/item flex flex-col gap-0.5 rounded-md px-3 py-2 transition-colors hover:bg-secondary">
+                                                        <Link className="group/item flex flex-col gap-0.5 rounded-md px-3 py-2 transition-colors hover:bg-secondary" href={dropdownItem.href} key={dropdownItem.label}>
                                                             <span className="font-medium text-foreground text-sm">{dropdownItem.label}</span>
                                                             <span className="text-muted-foreground text-xs">{dropdownItem.description}</span>
                                                         </Link>
