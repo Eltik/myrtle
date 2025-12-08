@@ -1,16 +1,56 @@
 "use client";
 
-import { Ellipsis, Github, User } from "lucide-react";
+import { ChevronDown, Ellipsis, Github, User } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "~/components/ui/button";
 
-const navItems = [
+type NavItem = {
+    label: string | React.ReactNode;
+    href: string;
+    icon?: string;
+    isActive?: boolean;
+    dropdown?: { label: string; href: string; description: string }[];
+};
+
+const navItems: NavItem[] = [
     { label: "Home", href: "/", icon: "◎", isActive: true },
-    { label: "Operators", href: "#" },
-    { label: "Planner", href: "#" },
-    { label: "Events", href: "#" },
-    { label: <Ellipsis />, href: "#" },
+    {
+        label: "Operators",
+        href: "#",
+        dropdown: [
+            { label: "Collection", href: "/operators/", description: "List of all released operators" },
+            { label: "Tier List", href: "/operators/tier-list", description: "Operator rankings by class" },
+            { label: "Chibi Viewer", href: "/operators/chibis", description: "Arknights chibi viewer" },
+        ],
+    },
+    {
+        label: "Tools",
+        href: "#",
+        dropdown: [
+            { label: "Recruitment Calculator", href: "/tools/recruitment", description: "Calculate recruitment probabilities" },
+            { label: "DPS Charts", href: "/tools/dps", description: "Display DPS to compare multiple operators" },
+            { label: "Squad Randomizer", href: "/tools/squad", description: "Randomize a 12-operator squad" },
+        ],
+    },
+    {
+        label: "Events",
+        href: "#",
+        dropdown: [
+            { label: "Current Events", href: "/events/current", description: "Active event guides" },
+            { label: "Event Archive", href: "/events/archive", description: "Past event information" },
+            { label: "CN Preview", href: "/events/cn-preview", description: "Upcoming content from CN" },
+        ],
+    },
+    {
+        label: <Ellipsis />,
+        href: "#",
+        dropdown: [
+            { label: "About", href: "/about", description: "About this project" },
+            { label: "Changelog", href: "/changelog", description: "Recent updates" },
+            { label: "Terms", href: "/terms", description: "Terms of use" },
+        ],
+    },
 ];
 
 export function Header() {
@@ -18,8 +58,11 @@ export function Header() {
     const [hoverStyle, setHoverStyle] = useState({ left: 0, width: 0, opacity: 0 });
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
     const [isNavHovered, setIsNavHovered] = useState(false);
+    const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
+    const [dropdownStyle, setDropdownStyle] = useState({ left: 0, width: 220 });
     const navRef = useRef<HTMLElement>(null);
-    const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+    const itemRefs = useRef<(HTMLAnchorElement | HTMLButtonElement | null)[]>([]);
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const activeIndex = navItems.findIndex((item) => item.isActive);
 
@@ -34,6 +77,16 @@ export function Header() {
                 width: targetRect.width,
                 opacity,
             });
+
+            // Update dropdown position
+            const item = navItems[index];
+            if (item?.dropdown) {
+                const dropdownWidth = 220;
+                setDropdownStyle({
+                    left: targetRect.left - navRect.left + targetRect.width / 2 - dropdownWidth / 2,
+                    width: dropdownWidth,
+                });
+            }
         }
     }, []);
 
@@ -43,20 +96,58 @@ export function Header() {
         }
     }, [activeIndex, hoveredIndex, updateIndicator]);
 
-    const handleMouseEnter = (index: number) => {
-        updateIndicator(index, 1);
-        setHoveredIndex(index);
-    };
+    const handleMouseEnter = useCallback(
+        (index: number) => {
+            // Clear any pending close timeout
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+                timeoutRef.current = null;
+            }
 
-    const handleMouseLeave = () => {
-        setHoveredIndex(null);
-        setIsNavHovered(false);
-        if (activeIndex >= 0) {
-            updateIndicator(activeIndex, 1);
-        } else {
-            setHoverStyle((prev) => ({ ...prev, opacity: 0 }));
+            updateIndicator(index, 1);
+            setHoveredIndex(index);
+
+            if (navItems[index]?.dropdown) {
+                setActiveDropdown(index);
+            } else {
+                setActiveDropdown(null);
+            }
+        },
+        [updateIndicator],
+    );
+
+    const handleNavMouseLeave = useCallback(() => {
+        timeoutRef.current = setTimeout(() => {
+            setHoveredIndex(null);
+            setIsNavHovered(false);
+            setActiveDropdown(null);
+            if (activeIndex >= 0) {
+                updateIndicator(activeIndex, 1);
+            } else {
+                setHoverStyle((prev) => ({ ...prev, opacity: 0 }));
+            }
+        }, 100);
+    }, [activeIndex, updateIndicator]);
+
+    const handleDropdownMouseEnter = useCallback(() => {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
         }
-    };
+    }, []);
+
+    const handleDropdownMouseLeave = useCallback(() => {
+        timeoutRef.current = setTimeout(() => {
+            setHoveredIndex(null);
+            setIsNavHovered(false);
+            setActiveDropdown(null);
+            if (activeIndex >= 0) {
+                updateIndicator(activeIndex, 1);
+            } else {
+                setHoverStyle((prev) => ({ ...prev, opacity: 0 }));
+            }
+        }, 100);
+    }, [activeIndex, updateIndicator]);
 
     const handleNavMouseMove = (e: React.MouseEvent<HTMLElement>) => {
         const rect = navRef.current?.getBoundingClientRect();
@@ -102,62 +193,130 @@ export function Header() {
                         <span className="font-semibold text-base text-foreground">myrtle.moe</span>
                     </Link>
 
-                    <nav
-                        className="group relative hidden items-center gap-0.5 overflow-hidden rounded-full border border-border px-1 py-1 md:flex"
-                        onMouseLeave={handleMouseLeave}
-                        onMouseMove={handleNavMouseMove}
-                        ref={navRef}
-                        style={{
-                            background: "linear-gradient(180deg, oklch(0.18 0.008 285 / 0.5) 0%, oklch(0.14 0.006 285 / 0.4) 100%)",
-                            boxShadow: "inset 0 1px 1px oklch(1 0 0 / 0.04), inset 0 -1px 2px oklch(0 0 0 / 0.15), 0 1px 3px oklch(0 0 0 / 0.1), 0 0 1px oklch(0 0 0 / 0.1)",
-                        }}
-                    >
-                        <div
-                            className="pointer-events-none absolute inset-0 z-0 rounded-full transition-opacity duration-300"
+                    <div className="relative">
+                        <nav
+                            className="group relative hidden items-center gap-0.5 overflow-hidden rounded-full border border-border px-1 py-1 md:flex"
+                            onMouseLeave={handleNavMouseLeave}
+                            onMouseMove={handleNavMouseMove}
+                            ref={navRef}
                             style={{
-                                background: `radial-gradient(120px circle at ${mousePosition.x}px ${mousePosition.y}px, oklch(0.75 0.15 25 / 0.25) 0%, transparent 65%)`,
-                                opacity: isNavHovered ? 1 : 0,
+                                background: "linear-gradient(180deg, oklch(0.18 0.008 285 / 0.5) 0%, oklch(0.14 0.006 285 / 0.4) 100%)",
+                                boxShadow: "inset 0 1px 1px oklch(1 0 0 / 0.04), inset 0 -1px 2px oklch(0 0 0 / 0.15), 0 1px 3px oklch(0 0 0 / 0.1), 0 0 1px oklch(0 0 0 / 0.1)",
                             }}
-                        />
-                        <div
-                            className="pointer-events-none absolute top-1 bottom-1 z-1 rounded-full"
-                            style={{
-                                left: hoverStyle.left,
-                                width: hoverStyle.width,
-                                opacity: hoverStyle.opacity,
-                                transform: hoverStyle.opacity ? "scale(1)" : "scale(0.95)",
-                                transition: "all 300ms cubic-bezier(0.4, 0, 0.2, 1), opacity 200ms ease-out",
-                                background: "linear-gradient(180deg, oklch(0.24 0.025 25 / 0.5) 0%, oklch(0.20 0.02 25 / 0.35) 100%)",
-                                boxShadow: "inset 0 1px 1px oklch(1 0 0 / 0.05), inset 0 -1px 1px oklch(0 0 0 / 0.1)",
-                            }}
-                        />
-                        <div
-                            className="pointer-events-none absolute bottom-[3px] z-2 h-px rounded-full"
-                            style={{
-                                left: hoverStyle.left + 4,
-                                width: Math.max(0, hoverStyle.width - 8),
-                                opacity: hoverStyle.opacity,
-                                transition: "all 300ms cubic-bezier(0.4, 0, 0.2, 1), opacity 200ms ease-out",
-                                background: "linear-gradient(90deg, oklch(0.75 0.15 25 / 0) 0%, oklch(0.75 0.15 25 / 0.8) 50%, oklch(0.75 0.15 25 / 0) 100%)",
-                                boxShadow: "0 0 6px oklch(0.75 0.15 25 / 0.6), 0 0 2px oklch(0.75 0.15 25 / 0.4)",
-                            }}
-                        />
+                        >
+                            <div
+                                className="pointer-events-none absolute inset-0 z-0 rounded-full transition-opacity duration-300"
+                                style={{
+                                    background: `radial-gradient(120px circle at ${mousePosition.x}px ${mousePosition.y}px, oklch(0.75 0.15 25 / 0.25) 0%, transparent 65%)`,
+                                    opacity: isNavHovered ? 1 : 0,
+                                }}
+                            />
+                            <div
+                                className="pointer-events-none absolute top-1 bottom-1 z-1 rounded-full"
+                                style={{
+                                    left: hoverStyle.left,
+                                    width: hoverStyle.width,
+                                    opacity: hoverStyle.opacity,
+                                    transform: hoverStyle.opacity ? "scale(1)" : "scale(0.95)",
+                                    transition: "all 300ms cubic-bezier(0.4, 0, 0.2, 1), opacity 200ms ease-out",
+                                    background: "linear-gradient(180deg, oklch(0.24 0.025 25 / 0.5) 0%, oklch(0.20 0.02 25 / 0.35) 100%)",
+                                    boxShadow: "inset 0 1px 1px oklch(1 0 0 / 0.05), inset 0 -1px 1px oklch(0 0 0 / 0.1)",
+                                }}
+                            />
+                            <div
+                                className="pointer-events-none absolute bottom-[3px] z-2 h-px rounded-full"
+                                style={{
+                                    left: hoverStyle.left + 4,
+                                    width: Math.max(0, hoverStyle.width - 8),
+                                    opacity: hoverStyle.opacity,
+                                    transition: "all 300ms cubic-bezier(0.4, 0, 0.2, 1), opacity 200ms ease-out",
+                                    background: "linear-gradient(90deg, oklch(0.75 0.15 25 / 0) 0%, oklch(0.75 0.15 25 / 0.8) 50%, oklch(0.75 0.15 25 / 0) 100%)",
+                                    boxShadow: "0 0 6px oklch(0.75 0.15 25 / 0.6), 0 0 2px oklch(0.75 0.15 25 / 0.4)",
+                                }}
+                            />
 
-                        {navItems.map((item, index) => (
-                            <Link
-                                className={`relative z-10 flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-medium text-sm transition-colors duration-200 ${hoveredIndex === index || (item.isActive && hoveredIndex === null) ? "text-foreground" : "text-muted-foreground"}`}
-                                href={item.href}
-                                key={item.label.toString()}
-                                onMouseEnter={() => handleMouseEnter(index)}
-                                ref={(el) => {
-                                    itemRefs.current[index] = el;
+                            {navItems.map((item, index) =>
+                                item.dropdown ? (
+                                    <button
+                                        type="button"
+                                        key={typeof item.label === "string" ? item.label : index}
+                                        className={`relative z-10 flex items-center gap-1 rounded-full px-3.5 py-1.5 font-medium text-sm transition-colors duration-200 ${hoveredIndex === index || (item.isActive && hoveredIndex === null) ? "text-foreground" : "text-muted-foreground"}`}
+                                        onMouseEnter={() => handleMouseEnter(index)}
+                                        ref={(el) => {
+                                            itemRefs.current[index] = el;
+                                        }}
+                                    >
+                                        {item.icon && <span className="text-xs opacity-60">{item.icon}</span>}
+                                        {item.label}
+                                        <ChevronDown
+                                            className="h-3 w-3 will-change-transform"
+                                            style={{
+                                                transform: activeDropdown === index ? "rotate(180deg)" : "rotate(0deg)",
+                                                transition: "transform 200ms ease-out",
+                                            }}
+                                        />
+                                    </button>
+                                ) : (
+                                    <Link
+                                        key={typeof item.label === "string" ? item.label : index}
+                                        className={`relative z-10 flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-medium text-sm transition-colors duration-200 ${hoveredIndex === index || (item.isActive && hoveredIndex === null) ? "text-foreground" : "text-muted-foreground"}`}
+                                        href={item.href}
+                                        onMouseEnter={() => handleMouseEnter(index)}
+                                        ref={(el) => {
+                                            itemRefs.current[index] = el;
+                                        }}
+                                    >
+                                        {item.icon && <span className="text-xs opacity-60">{item.icon}</span>}
+                                        {item.label}
+                                    </Link>
+                                ),
+                            )}
+                        </nav>
+
+                        {/* Dropdown container - GPU accelerated */}
+                        <div
+                            role="menu"
+                            className="absolute top-full pt-2 will-change-transform"
+                            style={{
+                                transform: `translateX(${dropdownStyle.left}px) ${activeDropdown !== null ? "translateY(0)" : "translateY(-8px)"}`,
+                                width: dropdownStyle.width,
+                                opacity: activeDropdown !== null ? 1 : 0,
+                                pointerEvents: activeDropdown !== null ? "auto" : "none",
+                                transition: "transform 200ms ease-out, opacity 150ms ease-out",
+                            }}
+                            onMouseEnter={handleDropdownMouseEnter}
+                            onMouseLeave={handleDropdownMouseLeave}
+                        >
+                            <div
+                                className="overflow-hidden rounded-lg border border-border shadow-lg backdrop-blur-sm"
+                                style={{
+                                    background: "linear-gradient(180deg, oklch(0.18 0.008 285 / 0.95) 0%, oklch(0.14 0.006 285 / 0.95) 100%)",
                                 }}
                             >
-                                {item.icon && <span className="text-xs opacity-60">{item.icon}</span>}
-                                {item.label}
-                            </Link>
-                        ))}
-                    </nav>
+                                {navItems.map(
+                                    (item, index) =>
+                                        item.dropdown && (
+                                            <div
+                                                key={typeof item.label === "string" ? item.label : index}
+                                                className="will-change-transform"
+                                                style={{
+                                                    display: activeDropdown === index ? "block" : "none",
+                                                }}
+                                            >
+                                                <div className="p-1.5">
+                                                    {item.dropdown.map((dropdownItem) => (
+                                                        <Link key={dropdownItem.label} href={dropdownItem.href} className="group/item flex flex-col gap-0.5 rounded-md px-3 py-2 transition-colors hover:bg-secondary">
+                                                            <span className="font-medium text-foreground text-sm">{dropdownItem.label}</span>
+                                                            <span className="text-muted-foreground text-xs">{dropdownItem.description}</span>
+                                                        </Link>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ),
+                                )}
+                            </div>
+                        </div>
+                    </div>
                     <div className="flex items-center gap-2">
                         <Button asChild className="h-8 w-8" size="icon" variant="ghost">
                             <Link href="https://github.com" rel="noopener noreferrer" target="_blank">

@@ -11,7 +11,7 @@ export function EventsTimeline() {
                     </div>
                     <ArrowRight className="h-5 w-5 text-muted-foreground transition-all duration-200 ease-out group-hover:translate-x-1 group-hover:text-primary" />
                 </div>
-                <CardTitle className="text-lg text-card-foreground transition-transform duration-200 ease-out group-hover:-translate-y-0.5">Event Timeline</CardTitle>
+                <CardTitle className="group-hover:-translate-y-0.5 text-card-foreground text-lg transition-transform duration-200 ease-out">Event Timeline</CardTitle>
                 <CardDescription>Stay updated with ongoing and upcoming events, banners, and rewards.</CardDescription>
             </CardHeader>
         </Card>
