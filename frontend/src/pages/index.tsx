@@ -20,7 +20,7 @@ export default function Home() {
 
                     <div className="flex-1 flex flex-col relative">
                         <Header />
-                        <main className="flex-1 px-4 md:px-8 py-8 md:py-12 max-w-6xl mx-auto w-full">
+                        <main className="flex-1 px-4 md:px-8 py-8 md:py-12 max-w-6xl mx-auto w-full mt-10">
                             <section className="mb-12">
                                 <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4 text-balance">
                                     Elevate your <span className="text-primary text-glow">Arknights</span> experience.
