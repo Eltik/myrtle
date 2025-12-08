@@ -3,15 +3,15 @@ import { Card, CardDescription, CardHeader, CardTitle } from "~/components/ui/ca
 
 export function Planner() {
     return (
-        <Card className="group cursor-pointer border-border bg-card">
+        <Card className="card-glow-hover group cursor-pointer border-border bg-card will-change-transform">
             <CardHeader>
                 <div className="flex items-center justify-between">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 transition-transform duration-200 ease-out group-hover:scale-110">
                         <Target className="h-5 w-5 text-primary" />
                     </div>
-                    <ArrowRight className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary" />
+                    <ArrowRight className="h-5 w-5 text-muted-foreground transition-all duration-200 ease-out group-hover:translate-x-1 group-hover:text-primary" />
                 </div>
-                <CardTitle className="text-card-foreground text-lg">Material Planner</CardTitle>
+                <CardTitle className="text-lg text-card-foreground transition-transform duration-200 ease-out group-hover:-translate-y-0.5">Material Planner</CardTitle>
                 <CardDescription>Calculate resources needed for operator upgrades and mastery training.</CardDescription>
             </CardHeader>
         </Card>

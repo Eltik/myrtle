@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/com
 
 export function Community() {
     return (
-        <Card className="card-glow-hover border-border bg-card md:col-span-2 lg:col-span-2">
+        <Card className="border-border bg-card md:col-span-2 lg:col-span-2">
             <CardHeader>
                 <CardTitle className="text-card-foreground text-xl">Join the Community</CardTitle>
                 <CardDescription>Connect with fellow Doctors. Share strategies, discuss meta, and get help.</CardDescription>

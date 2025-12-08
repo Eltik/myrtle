@@ -128,3 +128,23 @@
         @apply bg-background text-foreground;
     }
 }
+
+.card-glow-hover {
+    position: relative;
+}
+
+.card-glow-hover::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: 0 0 10px 2px var(--glow-primary);
+    opacity: 0;
+    transition: opacity 200ms ease-out;
+    will-change: opacity;
+    pointer-events: none;
+}
+
+.card-glow-hover:hover::before {
+    opacity: 0.75;
+}
