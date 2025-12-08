@@ -1,11 +1,9 @@
 "use client";
 
-import type React from "react";
-
 import Link from "next/link";
 import { Button } from "~/components/ui/button";
 import { Github, User } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useLayoutEffect, useCallback } from "react";
 
 const navItems = [
     { label: "Home", href: "/", icon: "◎", isActive: true },
@@ -19,25 +17,42 @@ export function Header() {
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
     const [hoverStyle, setHoverStyle] = useState({ left: 0, width: 0, opacity: 0 });
     const navRef = useRef<HTMLElement>(null);
+    const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
 
-    const handleMouseEnter = (e: React.MouseEvent<HTMLAnchorElement>, index: number) => {
-        const target = e.currentTarget;
+    const activeIndex = navItems.findIndex((item) => item.isActive);
+
+    const updateIndicator = useCallback((index: number, opacity: number) => {
+        const target = itemRefs.current[index];
         const navRect = navRef.current?.getBoundingClientRect();
-        const targetRect = target.getBoundingClientRect();
+        const targetRect = target?.getBoundingClientRect();
 
-        if (navRect) {
+        if (navRect && targetRect) {
             setHoverStyle({
                 left: targetRect.left - navRect.left,
                 width: targetRect.width,
-                opacity: 1,
+                opacity,
             });
         }
+    }, []);
+
+    useLayoutEffect(() => {
+        if (activeIndex >= 0 && hoveredIndex === null) {
+            updateIndicator(activeIndex, 1);
+        }
+    }, [activeIndex, hoveredIndex, updateIndicator]);
+
+    const handleMouseEnter = (index: number) => {
+        updateIndicator(index, 1);
         setHoveredIndex(index);
     };
 
     const handleMouseLeave = () => {
         setHoveredIndex(null);
-        setHoverStyle((prev) => ({ ...prev, opacity: 0 }));
+        if (activeIndex >= 0) {
+            updateIndicator(activeIndex, 1);
+        } else {
+            setHoverStyle((prev) => ({ ...prev, opacity: 0 }));
+        }
     };
 
     return (
@@ -76,26 +91,29 @@ export function Header() {
                         <span className="text-base font-semibold text-foreground">myrtle.moe</span>
                     </Link>
 
-                    <nav ref={navRef} className="relative hidden md:flex items-center gap-1 rounded-full border border-border bg-card/50 px-1.5 py-1" onMouseLeave={handleMouseLeave}>
+                    <nav ref={navRef} className="relative hidden md:flex items-center gap-0.5 rounded-full border border-border bg-card/30 px-1 py-1" onMouseLeave={handleMouseLeave}>
                         <div
-                            className="absolute top-1 bottom-1 rounded-full bg-secondary transition-all duration-200 ease-out"
+                            className="absolute top-1 bottom-1 rounded-full bg-secondary/80 pointer-events-none"
                             style={{
                                 left: hoverStyle.left,
                                 width: hoverStyle.width,
                                 opacity: hoverStyle.opacity,
+                                transform: hoverStyle.opacity ? "scale(1)" : "scale(0.95)",
+                                transition: "all 300ms cubic-bezier(0.4, 0, 0.2, 1), opacity 200ms ease-out",
                             }}
                         />
 
                         {navItems.map((item, index) => (
                             <Link
                                 key={item.label}
+                                ref={(el) => {
+                                    itemRefs.current[index] = el;
+                                }}
                                 href={item.href}
-                                onMouseEnter={(e) => handleMouseEnter(e, index)}
-                                className={`relative z-10 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-                                    item.isActive && hoveredIndex === null ? "bg-secondary text-foreground" : hoveredIndex === index ? "text-foreground" : "text-muted-foreground hover:text-foreground"
-                                } ${item.isActive && hoveredIndex !== null ? "bg-transparent" : ""}`}
+                                onMouseEnter={() => handleMouseEnter(index)}
+                                className={`relative z-10 flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors duration-200 ${hoveredIndex === index || (item.isActive && hoveredIndex === null) ? "text-foreground" : "text-muted-foreground"}`}
                             >
-                                {item.icon && <span className="text-xs">{item.icon}</span>}
+                                {item.icon && <span className="text-xs opacity-60">{item.icon}</span>}
                                 {item.label}
                             </Link>
                         ))}
