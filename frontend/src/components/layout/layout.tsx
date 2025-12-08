@@ -1,6 +1,7 @@
 "use client";
 
-import { Header } from "~/components/ui/home/header";
+import { Header } from "~/components/ui/header";
+import { Footer } from "../ui/footer";
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -18,6 +19,7 @@ export function Layout({ children }: LayoutProps) {
             <div className="relative flex flex-1 flex-col">
                 <Header />
                 <main className="mx-auto mt-14 w-full max-w-6xl flex-1 px-4 py-8 md:px-8 md:py-12">{children}</main>
+                <Footer />
             </div>
         </div>
     );
