@@ -11,7 +11,7 @@ export function OperatorDatabase() {
                     </div>
                     <ArrowRight className="h-5 w-5 text-muted-foreground transition-all duration-200 ease-out group-hover:translate-x-1 group-hover:text-primary" />
                 </div>
-                <CardTitle className="text-lg text-card-foreground transition-transform duration-200 ease-out group-hover:-translate-y-0.5">Operator Database</CardTitle>
+                <CardTitle className="group-hover:-translate-y-0.5 text-card-foreground text-lg transition-transform duration-200 ease-out">Operator Database</CardTitle>
                 <CardDescription>Browse all operators with detailed stats, skills, and recommended builds.</CardDescription>
             </CardHeader>
         </Card>
