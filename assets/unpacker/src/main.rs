@@ -112,6 +112,21 @@ enum Commands {
         #[arg(long, default_value = "false")]
         is_custom: bool,
     },
+
+    /// Extract individual portraits from SpritePacker (charportraits)
+    Portraits {
+        /// Input directory containing charportraits pack*.ab files
+        #[arg(short, long)]
+        input: PathBuf,
+
+        /// Output directory for extracted portraits
+        #[arg(short, long)]
+        output: PathBuf,
+
+        /// Delete existing output directory
+        #[arg(short, long, default_value = "false")]
+        delete: bool,
+    },
 }
 
 fn main() -> Result<()> {
@@ -177,6 +192,73 @@ fn main() -> Result<()> {
             is_custom: _,
         } => {
             assets_unpacker::collect_voice::main(&srcdir, &destdir, merge)?;
+        }
+        Commands::Portraits {
+            input,
+            output,
+            delete,
+        } => {
+            use std::cell::RefCell;
+            use std::rc::Rc;
+            use unity_rs::helpers::import_helper::FileSource;
+            use unity_rs::Environment;
+            use walkdir::WalkDir;
+
+            if delete && output.exists() {
+                std::fs::remove_dir_all(&output)?;
+            }
+            std::fs::create_dir_all(&output)?;
+
+            let mut total_extracted = 0usize;
+
+            // Find all pack*.ab files in the input directory
+            let files: Vec<_> = if input.is_file() {
+                vec![input.clone()]
+            } else {
+                WalkDir::new(&input)
+                    .into_iter()
+                    .filter_map(|e| e.ok())
+                    .filter(|e| {
+                        let name = e.file_name().to_string_lossy();
+                        name.starts_with("pack") && name.ends_with(".ab")
+                    })
+                    .map(|e| e.path().to_path_buf())
+                    .collect()
+            };
+
+            println!("Found {} pack files to process", files.len());
+
+            for file in files {
+                println!("Processing: {}", file.display());
+
+                let mut env = Environment::new();
+                env.load_file(
+                    FileSource::Path(file.to_string_lossy().to_string()),
+                    None,
+                    false,
+                );
+
+                let env_rc = Rc::new(RefCell::new(env));
+                if Environment::set_environment_references(&env_rc).is_err() {
+                    log::warn!(
+                        "Failed to set environment references for {}",
+                        file.display()
+                    );
+                    continue;
+                }
+
+                match assets_unpacker::resolve_ab::extract_sprite_packer(&env_rc, &output) {
+                    Ok(count) => {
+                        println!("  Extracted {} portraits", count);
+                        total_extracted += count;
+                    }
+                    Err(e) => {
+                        log::warn!("Failed to extract from {}: {}", file.display(), e);
+                    }
+                }
+            }
+
+            println!("\nTotal portraits extracted: {}", total_extracted);
         }
     }
 

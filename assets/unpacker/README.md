@@ -11,6 +11,7 @@ A high-performance Rust implementation of an Arknights game asset extractor and 
   - [Extract Command](#extract-command)
   - [Combine Command](#combine-command)
   - [Decode Command](#decode-command)
+  - [Portraits Command](#portraits-command)
 - [Output Structure](#output-structure)
 - [How It Works](#how-it-works)
 - [Architecture](#architecture)
@@ -33,6 +34,13 @@ A high-performance Rust implementation of an Arknights game asset extractor and 
   - Numbered sprite extraction grouped by texture (e.g., `texture$0.png`, `texture$1.png`)
   - Supports tight packing with mesh-based rendering
   - Handles sprite rotation and packing modes
+
+- **Character Portrait Extraction**: Extracts individual portraits from SpritePacker atlases
+  - Parses Arknights' custom SpritePacker MonoBehaviour format
+  - Extracts 180x360 character portraits from packed 1024x1024 atlases
+  - Automatic RGB+alpha texture merging for proper transparency
+  - Handles rotated sprites in atlas
+  - Preserves operator naming (e.g., `char_002_amiya_1.png`, `char_002_amiya_winter#1.png`)
 
 - **Spine Animation Assets**: Organizes Spine 2D animation data
   - Automatic classification into `BattleFront`, `BattleBack`, `Building`, and `DynIllust` categories
@@ -150,6 +158,12 @@ install_name_tool -add_rpath /usr/local/lib target/release/assets-unpacker
 ./target/release/assets-unpacker combine \
   --input ./extracted/upk \
   --output ./combined
+
+# Extract character portraits from charportraits
+./target/release/assets-unpacker portraits \
+  --input /path/to/ArkAssets/arts/charportraits \
+  --output ./portraits \
+  --delete
 ```
 
 ## Usage
@@ -172,9 +186,12 @@ assets-unpacker extract [OPTIONS] --input <PATH> --output <PATH>
 | `--text` | Extract text assets | `true` |
 | `--audio` | Extract audio clips | `true` |
 | `--spine` | Extract and organize Spine assets | `true` |
+| `--merge-alpha` | Merge alpha textures into RGBA instead of saving separately | `false` |
 | `--group` | Group output by source file | `true` |
 | `--delete, -d` | Delete output directory before extraction | `false` |
 | `--force` | Force re-extraction (ignore cache) | `false` |
+| `--threads, -j <N>` | Number of parallel threads (1=sequential, 8+=fast but high memory) | `1` |
+| `--skip-large-mb <N>` | Skip files larger than N MB (0=no skip) | `0` |
 
 #### Examples
 
@@ -197,6 +214,18 @@ assets-unpacker extract \
   --input ./assets \
   --output ./output \
   --delete
+
+# Fast parallel extraction (use 8 threads)
+assets-unpacker extract \
+  --input ./assets \
+  --output ./output \
+  --threads 8
+
+# Skip large files for initial quick extraction
+assets-unpacker extract \
+  --input ./assets \
+  --output ./output \
+  --skip-large-mb 50
 ```
 
 ### Combine Command
@@ -253,6 +282,81 @@ assets-unpacker decode --input <PATH> --output <PATH>
 - **JSON**: Plain JSON (passed through)
 
 The decoder gracefully handles schema mismatches - if a file's actual schema differs from what the filename suggests, it returns the raw encrypted/binary data instead of crashing.
+
+### Portraits Command
+
+Extracts individual character portraits from Arknights' SpritePacker format. This is specifically designed for the `charportraits` asset bundles which pack multiple 180x360 portraits into 1024x1024 texture atlases.
+
+```bash
+assets-unpacker portraits --input <PATH> --output <PATH>
+```
+
+#### Options
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--input, -i <PATH>` | Input directory containing `pack*.ab` files or single .ab file | Required |
+| `--output, -o <PATH>` | Output directory for extracted portraits | Required |
+| `--delete, -d` | Delete output directory first | `false` |
+
+#### How SpritePacker Works
+
+Arknights stores character portraits in a custom format:
+
+1. **Pack Files** (`pack0.ab` - `pack12.ab`): Each contains 8 sprite atlases (portraits#0 through portraits#7)
+2. **SpritePacker MonoBehaviour**: Contains metadata about sprite positions:
+   - `_sprites`: Array of sprite definitions (name, rect, rotation)
+   - `_atlas`: References to RGB texture and alpha texture
+3. **Textures**: 1024x1024 atlases with ~12 portraits each
+
+The portraits command:
+1. Parses the TypeTree to read SpritePacker MonoBehaviour data
+2. Loads both RGB and alpha textures (handling streamed `.resS` data)
+3. Crops individual portraits using sprite rect coordinates
+4. Applies rotation correction for rotated sprites
+5. Merges alpha channel for proper transparency
+6. Saves as individual PNG files
+
+#### Examples
+
+```bash
+# Extract all portraits from charportraits directory
+assets-unpacker portraits \
+  -i /path/to/ArkAssets/arts/charportraits \
+  -o ./portraits \
+  -d
+
+# Extract from a single pack file
+assets-unpacker portraits \
+  -i /path/to/ArkAssets/arts/charportraits/pack0.ab \
+  -o ./portraits
+
+# With debug logging to see progress
+RUST_LOG=debug assets-unpacker portraits \
+  -i ./charportraits \
+  -o ./portraits
+```
+
+#### Output
+
+Portraits are saved as individual PNG files with their original names:
+
+```
+portraits/
+├── char_002_amiya_1.png      # Base E0 portrait
+├── char_002_amiya_2.png      # E2 portrait
+├── char_002_amiya_1+.png     # Alternate variant
+├── char_002_amiya_winter#1.png  # Winter skin
+├── char_002_amiya_epoque#4.png  # Epoque skin
+├── char_003_kalts_1.png
+├── char_003_kalts_2.png
+└── ... (1161 total portraits)
+```
+
+Portrait naming convention:
+- `char_<id>_<name>_1.png` - E0/E1 portrait
+- `char_<id>_<name>_2.png` - E2 portrait
+- `char_<id>_<name>_<skin>#<num>.png` - Skin portrait
 
 #### CN vs Yostar/EN Schema Fallback
 
@@ -415,6 +519,7 @@ src/
 ├── main.rs                 # CLI entry point
 ├── lib.rs                  # Library exports
 ├── resolve_ab.rs           # Main asset bundle extraction logic
+├── sprite_packer.rs        # SpritePacker parsing and portrait extraction
 ├── decode_textasset.rs     # TextAsset decryption/decoding
 ├── flatbuffers_decode.rs   # FlatBuffers schema decoding
 ├── fb_json_macros.rs       # FlatBufferToJson trait definitions
@@ -423,6 +528,8 @@ src/
 ├── combine_rgb.rs          # RGB+alpha combination
 ├── collect_models.rs       # Spine model collection
 ├── collect_voice.rs        # Audio collection
+├── config.rs               # Configuration constants
+├── resource_manifest.rs    # Resource manifest parsing
 ├── utils.rs                # Utility functions
 ├── generated_fbs/          # Generated FlatBuffers code (CN schemas)
 │   ├── character_table_generated.rs

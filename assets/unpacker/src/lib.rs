@@ -8,6 +8,7 @@ pub mod generated_fbs;
 pub mod generated_fbs_yostar;
 pub mod resolve_ab;
 pub mod resource_manifest;
+pub mod sprite_packer;
 pub mod utils;
 
 // FlatBuffer JSON serialization (handles unknown enum values gracefully)
