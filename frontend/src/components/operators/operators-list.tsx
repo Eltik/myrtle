@@ -1,15 +1,16 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Grid3X3, LayoutList, Search, SlidersHorizontal } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Grid3X3, LayoutList, Search, SlidersHorizontal } from "lucide-react";
 import { useMemo, useState } from "react";
 import { cn, rarityToNumber } from "~/lib/utils";
 import type { OperatorFromList } from "~/types/api/operators";
 import { OperatorCard } from "./operator-card";
 import { OperatorFilters } from "./operator-filters";
 
-const CLASSES = ["Guard", "Sniper", "Defender", "Medic", "Supporter", "Caster", "Specialist", "Vanguard"];
+// Internal profession names as used in the data
+const CLASSES = ["WARRIOR", "SNIPER", "TANK", "MEDIC", "SUPPORT", "CASTER", "SPECIAL", "PIONEER"];
 const RARITIES = [6, 5, 4, 3, 2, 1];
-const ELEMENTS = ["Physical", "Arts", "Healing"];
+const GENDERS = ["Male", "Female", "Conviction"];
 
 const ITEMS_PER_PAGE = 48;
 
@@ -18,13 +19,63 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
     const [showFilters, setShowFilters] = useState(false);
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
     const [currentPage, setCurrentPage] = useState(1);
+    const [pageInput, setPageInput] = useState("1");
     const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
+    const [selectedSubclasses, setSelectedSubclasses] = useState<string[]>([]);
     const [selectedRarities, setSelectedRarities] = useState<number[]>([]);
-    const [selectedElements, setSelectedElements] = useState<string[]>([]);
+    const [selectedBirthPlaces, setSelectedBirthPlaces] = useState<string[]>([]);
+    const [selectedNations, setSelectedNations] = useState<string[]>([]);
+    const [selectedFactions, setSelectedFactions] = useState<string[]>([]);
+    const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
+    const [selectedRaces, setSelectedRaces] = useState<string[]>([]);
+    const [selectedArtists, setSelectedArtists] = useState<string[]>([]);
     const [sortBy, setSortBy] = useState<"name" | "rarity">("rarity");
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
     const [hoveredOperator, setHoveredOperator] = useState<string | null>(null);
     const [isGrayscaleActive, setIsGrayscaleActive] = useState(false);
+
+    // Compute available filter options from data
+    const filterOptions = useMemo(() => {
+        const subclasses = new Set<string>();
+        const birthPlaces = new Set<string>();
+        const nations = new Set<string>();
+        const factions = new Set<string>();
+        const races = new Set<string>();
+        const artists = new Set<string>();
+
+        data.forEach((op) => {
+            if (op.subProfessionId) {
+                subclasses.add(op.subProfessionId.toLowerCase());
+            }
+            if (op.profile?.basicInfo?.placeOfBirth && op.profile.basicInfo.placeOfBirth !== "Unknown" && op.profile.basicInfo.placeOfBirth !== "Undisclosed") {
+                birthPlaces.add(op.profile.basicInfo.placeOfBirth);
+            }
+            if (op.nationId) {
+                nations.add(op.nationId);
+            }
+            if (op.groupId) {
+                factions.add(op.groupId);
+            }
+            if (op.teamId) {
+                factions.add(op.teamId);
+            }
+            if (op.profile?.basicInfo?.race && op.profile.basicInfo.race !== "Unknown" && op.profile.basicInfo.race !== "Undisclosed") {
+                races.add(op.profile.basicInfo.race);
+            }
+            op.artists?.forEach((artist) => {
+                if (artist) artists.add(artist);
+            });
+        });
+
+        return {
+            subclasses: Array.from(subclasses).sort(),
+            birthPlaces: Array.from(birthPlaces).sort(),
+            nations: Array.from(nations).sort(),
+            factions: Array.from(factions).sort(),
+            races: Array.from(races).sort(),
+            artists: Array.from(artists).sort(),
+        };
+    }, [data]);
 
     const filteredOperators = useMemo(() => {
         let result = [...data];
@@ -40,14 +91,44 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
             result = result.filter((op) => selectedClasses.includes(op.profession));
         }
 
+        // Subclass filter
+        if (selectedSubclasses.length > 0) {
+            result = result.filter((op) => selectedSubclasses.includes(op.subProfessionId.toLowerCase()));
+        }
+
         // Rarity filter
         if (selectedRarities.length > 0) {
             result = result.filter((op) => selectedRarities.includes(rarityToNumber(op.rarity)));
         }
 
-        // Element filter
-        if (selectedElements.length > 0) {
-            result = result.filter((_op) => selectedElements.includes(""));
+        // Birth place filter
+        if (selectedBirthPlaces.length > 0) {
+            result = result.filter((op) => op.profile?.basicInfo?.placeOfBirth && selectedBirthPlaces.includes(op.profile.basicInfo.placeOfBirth));
+        }
+
+        // Nation filter
+        if (selectedNations.length > 0) {
+            result = result.filter((op) => op.nationId && selectedNations.includes(op.nationId));
+        }
+
+        // Faction filter
+        if (selectedFactions.length > 0) {
+            result = result.filter((op) => (op.groupId && selectedFactions.includes(op.groupId)) || (op.teamId && selectedFactions.includes(op.teamId)));
+        }
+
+        // Gender filter
+        if (selectedGenders.length > 0) {
+            result = result.filter((op) => op.profile?.basicInfo?.gender && selectedGenders.includes(op.profile.basicInfo.gender));
+        }
+
+        // Race filter
+        if (selectedRaces.length > 0) {
+            result = result.filter((op) => op.profile?.basicInfo?.race && selectedRaces.includes(op.profile.basicInfo.race));
+        }
+
+        // Artists filter
+        if (selectedArtists.length > 0) {
+            result = result.filter((op) => op.artists?.some((artist) => selectedArtists.includes(artist)));
         }
 
         // Sorting
@@ -62,25 +143,35 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
         });
 
         return result;
-    }, [searchQuery, selectedClasses, selectedRarities, selectedElements, sortBy, sortOrder, data]);
+    }, [searchQuery, selectedClasses, selectedSubclasses, selectedRarities, selectedBirthPlaces, selectedNations, selectedFactions, selectedGenders, selectedRaces, selectedArtists, sortBy, sortOrder, data]);
 
     const totalPages = Math.ceil(filteredOperators.length / ITEMS_PER_PAGE);
     const paginatedOperators = filteredOperators.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
     const handlePageChange = (page: number) => {
-        setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+        const newPage = Math.max(1, Math.min(page, totalPages));
+        setCurrentPage(newPage);
+        setPageInput(newPage.toString());
         window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
     const clearFilters = () => {
         setSelectedClasses([]);
+        setSelectedSubclasses([]);
         setSelectedRarities([]);
-        setSelectedElements([]);
+        setSelectedBirthPlaces([]);
+        setSelectedNations([]);
+        setSelectedFactions([]);
+        setSelectedGenders([]);
+        setSelectedRaces([]);
+        setSelectedArtists([]);
         setSearchQuery("");
         setCurrentPage(1);
+        setPageInput("1");
     };
 
-    const hasActiveFilters = selectedClasses.length > 0 || selectedRarities.length > 0 || selectedElements.length > 0 || searchQuery.length > 0;
+    const activeFilterCount = selectedClasses.length + selectedSubclasses.length + selectedRarities.length + selectedBirthPlaces.length + selectedNations.length + selectedFactions.length + selectedGenders.length + selectedRaces.length + selectedArtists.length + (searchQuery ? 1 : 0);
+    const hasActiveFilters = activeFilterCount > 0;
 
     return (
         <div className="space-y-6">
@@ -121,7 +212,7 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                     <button className={cn("flex h-10 items-center gap-2 rounded-lg border px-3 transition-colors", showFilters || hasActiveFilters ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary/50 text-muted-foreground hover:text-foreground")} onClick={() => setShowFilters(!showFilters)}>
                         <SlidersHorizontal className="h-4 w-4" />
                         <span className="font-medium text-sm">Filters</span>
-                        {hasActiveFilters && <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">{selectedClasses.length + selectedRarities.length + selectedElements.length + (searchQuery ? 1 : 0)}</span>}
+                        {hasActiveFilters && <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">{activeFilterCount}</span>}
                     </button>
                 </div>
             </div>
@@ -129,17 +220,35 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
             {/* Filters Panel */}
             <OperatorFilters
                 classes={CLASSES}
-                elements={ELEMENTS}
+                subclasses={filterOptions.subclasses}
+                genders={GENDERS}
+                birthPlaces={filterOptions.birthPlaces}
+                nations={filterOptions.nations}
+                factions={filterOptions.factions}
+                races={filterOptions.races}
+                artists={filterOptions.artists}
                 isOpen={showFilters}
                 onClassChange={setSelectedClasses}
+                onSubclassChange={setSelectedSubclasses}
                 onClearFilters={clearFilters}
-                onElementChange={setSelectedElements}
+                onGenderChange={setSelectedGenders}
+                onBirthPlaceChange={setSelectedBirthPlaces}
+                onNationChange={setSelectedNations}
+                onFactionChange={setSelectedFactions}
+                onRaceChange={setSelectedRaces}
+                onArtistChange={setSelectedArtists}
                 onRarityChange={setSelectedRarities}
                 onSortByChange={setSortBy}
                 onSortOrderChange={setSortOrder}
                 rarities={RARITIES}
                 selectedClasses={selectedClasses}
-                selectedElements={selectedElements}
+                selectedSubclasses={selectedSubclasses}
+                selectedGenders={selectedGenders}
+                selectedBirthPlaces={selectedBirthPlaces}
+                selectedNations={selectedNations}
+                selectedFactions={selectedFactions}
+                selectedRaces={selectedRaces}
+                selectedArtists={selectedArtists}
                 selectedRarities={selectedRarities}
                 sortBy={sortBy}
                 sortOrder={sortOrder}
@@ -191,50 +300,118 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
             {/* Pagination */}
             {totalPages > 1 && (
                 <div className="flex flex-col items-center gap-4 pt-6 sm:flex-row sm:justify-between">
-                    <div className="text-muted-foreground text-sm">
-                        Page {currentPage} of {totalPages}
+                    <div className="flex items-center gap-3">
+                        <span className="text-muted-foreground text-sm">
+                            Page {currentPage} of {totalPages}
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-muted-foreground text-sm">Go to:</span>
+                            <input
+                                className="h-8 w-14 rounded-md border border-border bg-secondary/50 px-2 text-center text-foreground text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                                type="number"
+                                min={1}
+                                max={totalPages}
+                                value={pageInput}
+                                onChange={(e) => setPageInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                        const page = parseInt(pageInput, 10);
+                                        if (!Number.isNaN(page) && page >= 1 && page <= totalPages) {
+                                            handlePageChange(page);
+                                        } else {
+                                            setPageInput(currentPage.toString());
+                                        }
+                                    }
+                                }}
+                                onBlur={() => {
+                                    const page = parseInt(pageInput, 10);
+                                    if (!Number.isNaN(page) && page >= 1 && page <= totalPages) {
+                                        handlePageChange(page);
+                                    } else {
+                                        setPageInput(currentPage.toString());
+                                    }
+                                }}
+                            />
+                        </div>
                     </div>
                     <div className="flex items-center gap-1">
                         <button
                             className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-secondary/50 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
                             disabled={currentPage === 1}
+                            onClick={() => handlePageChange(1)}
+                            title="First page"
+                        >
+                            <ChevronsLeft className="h-4 w-4" />
+                        </button>
+                        <button
+                            className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-secondary/50 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                            disabled={currentPage === 1}
                             onClick={() => handlePageChange(currentPage - 1)}
+                            title="Previous page"
                         >
                             <ChevronLeft className="h-4 w-4" />
                         </button>
 
-                        {/* Page numbers */}
+                        {/* Page numbers with ellipsis */}
                         <div className="flex items-center gap-1">
-                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                                let pageNum: number;
-                                if (totalPages <= 5) {
-                                    pageNum = i + 1;
-                                } else if (currentPage <= 3) {
-                                    pageNum = i + 1;
-                                } else if (currentPage >= totalPages - 2) {
-                                    pageNum = totalPages - 4 + i;
+                            {(() => {
+                                const pages: (number | "ellipsis-start" | "ellipsis-end")[] = [];
+
+                                if (totalPages <= 7) {
+                                    // Show all pages if 7 or fewer
+                                    for (let i = 1; i <= totalPages; i++) pages.push(i);
                                 } else {
-                                    pageNum = currentPage - 2 + i;
+                                    // Always show first page
+                                    pages.push(1);
+
+                                    if (currentPage <= 3) {
+                                        // Near start: 1, 2, 3, 4, ..., last
+                                        pages.push(2, 3, 4, "ellipsis-end", totalPages);
+                                    } else if (currentPage >= totalPages - 2) {
+                                        // Near end: 1, ..., n-3, n-2, n-1, n
+                                        pages.push("ellipsis-start", totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+                                    } else {
+                                        // Middle: 1, ..., current-1, current, current+1, ..., last
+                                        pages.push("ellipsis-start", currentPage - 1, currentPage, currentPage + 1, "ellipsis-end", totalPages);
+                                    }
                                 }
 
-                                return (
-                                    <button
-                                        className={cn("flex h-9 w-9 items-center justify-center rounded-lg font-medium text-sm transition-colors", currentPage === pageNum ? "bg-primary text-primary-foreground" : "border border-border bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground")}
-                                        key={pageNum}
-                                        onClick={() => handlePageChange(pageNum)}
-                                    >
-                                        {pageNum}
-                                    </button>
-                                );
-                            })}
+                                return pages.map((page, idx) => {
+                                    if (page === "ellipsis-start" || page === "ellipsis-end") {
+                                        return (
+                                            <span key={page} className="flex h-9 w-9 items-center justify-center text-muted-foreground">
+                                                ...
+                                            </span>
+                                        );
+                                    }
+                                    return (
+                                        <button
+                                            className={cn("flex h-9 w-9 items-center justify-center rounded-lg font-medium text-sm transition-colors", currentPage === page ? "bg-primary text-primary-foreground" : "border border-border bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground")}
+                                            key={idx}
+                                            onClick={() => handlePageChange(page)}
+                                        >
+                                            {page}
+                                        </button>
+                                    );
+                                });
+                            })()}
                         </div>
 
                         <button
                             className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-secondary/50 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
                             disabled={currentPage === totalPages}
                             onClick={() => handlePageChange(currentPage + 1)}
+                            title="Next page"
                         >
                             <ChevronRight className="h-4 w-4" />
+                        </button>
+                        <button
+                            className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-secondary/50 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                            disabled={currentPage === totalPages}
+                            onClick={() => handlePageChange(totalPages)}
+                            title="Last page"
+                        >
+                            <ChevronsRight className="h-4 w-4" />
                         </button>
                     </div>
                 </div>
