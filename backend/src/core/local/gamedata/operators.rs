@@ -59,6 +59,7 @@ fn enrich_operator(
     let operator_modules = get_operator_modules(id, modules, battle_equip, asset_mappings);
     let (handbook_item, profile) = get_handbook_and_profile(id, handbook);
     let artists = get_artists(id, skins);
+    let portrait = asset_mappings.get_portrait_path(id);
 
     Operator {
         id: Some(id.to_string()),
@@ -97,5 +98,6 @@ fn enrich_operator(
         handbook: handbook_item,
         profile,
         artists,
+        portrait,
     }
 }
