@@ -201,8 +201,8 @@ export function OperatorFilters({
     if (!isOpen) return null;
 
     return (
-        <div className="overflow-hidden rounded-lg border border-border bg-card/50 backdrop-blur-sm">
-            <div className="p-4">
+        <div className="min-w-0 overflow-hidden rounded-lg border border-border bg-card/50 backdrop-blur-sm">
+            <div className="p-3 sm:p-4">
                 <div className="mb-4 flex items-center justify-between">
                     <h3 className="font-semibold text-foreground">Filters & Sorting</h3>
                     {hasFilters && (
@@ -215,7 +215,7 @@ export function OperatorFilters({
 
                 <div className="space-y-6">
                     {/* Row 1: Class, Subclass and Rarity */}
-                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                    <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
                         {/* Class Filter */}
                         <div className="space-y-3">
                             <label className="font-medium text-muted-foreground text-sm">Class</label>
@@ -306,7 +306,7 @@ export function OperatorFilters({
                     </div>
 
                     {/* Row 2: Gender, Race and Dropdown Filters */}
-                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {/* Gender Filter */}
                         <div className="space-y-3">
                             <label className="font-medium text-muted-foreground text-sm">Gender</label>
