@@ -57,7 +57,7 @@ export const formatSubProfession = (subProfession: string): string => {
         case "executor":
             return "Executor";
         case "fastshot":
-            return "Marksman";
+            return "Marksman Sniper";
         case "bombarder":
             return "Flinger";
         case "bard":
@@ -91,7 +91,7 @@ export const formatSubProfession = (subProfession: string): string => {
         case "reaperrange":
             return "Spreadshooter";
         case "longrange":
-            return "Deadeye";
+            return "Deadeye Sniper";
         case "closerange":
             return "Heavyshooter";
         case "siegesniper":
@@ -106,7 +106,7 @@ export const formatSubProfession = (subProfession: string): string => {
             return "Instructor";
         case "lord":
             return "Lord";
-        case "artsfighter":
+        case "artsfghter":
             return "Arts Fighter";
         case "sword":
             return "Swordmaster";
@@ -144,7 +144,7 @@ export const formatSubProfession = (subProfession: string): string => {
             return "Agent";
         case "fighter":
             return "Brawler";
-        case "liberator":
+        case "librator":
             return "Liberator";
         case "hammer":
             return "Earthshaker";
@@ -178,6 +178,109 @@ export const formatSubProfession = (subProfession: string): string => {
             return "Alchemist";
         default:
             return subProfession;
+    }
+};
+
+export const formatNationId = (nationId: string) => {
+    switch (nationId.toLowerCase()) {
+        case "rhodes":
+            return "Rhodes Island";
+        case "kazimierz":
+            return "Kazimierz";
+        case "columbia":
+            return "Columbia";
+        case "laterano":
+            return "Laterano";
+        case "victoria":
+            return "Victoria";
+        case "sami":
+            return "Sami";
+        case "bolivar":
+            return "Bolivar";
+        case "iberia":
+            return "Iberia";
+        case "siracusa":
+            return "Siracusa";
+        case "higashi":
+            return "Higashi";
+        case "sargon":
+            return "Sargon";
+        case "kjerag":
+            return "Kjerag";
+        case "minos":
+            return "Minos";
+        case "yan":
+            return "Yan";
+        case "lungmen":
+            return "Lungmen";
+        case "ursus":
+            return "Ursus";
+        case "egir":
+            return "Ægir";
+        case "leithanien":
+            return "Leithanien";
+        case "rim":
+            return "Rim Billiton";
+        default:
+            return capitalize(nationId);
+    }
+};
+
+export const formatGroupId = (groupId: string) => {
+    switch (groupId.toLowerCase()) {
+        case "pinus":
+            return "Pinus Sylvestris";
+        case "blacksteel":
+            return "Blacksteel";
+        case "karlan":
+            return "Karlan Trade";
+        case "sweep":
+            return "S.W.E.E.P.";
+        case "rhine":
+            return "Rhine Lab";
+        case "penguin":
+            return "Penguin Logistics";
+        case "siesta":
+            return "Siesta";
+        case "lgd":
+            return "L.G.D.";
+        case "glasgow":
+            return "Glasgow Gang";
+        case "abyssal":
+            return "Abyssal Hunters";
+        case "dublinn":
+            return "Dublinn";
+        case "elite":
+            return "Elite Operators";
+        case "sui":
+            return "Yan Sui";
+        default:
+            return groupId;
+    }
+};
+
+export const formatTeamId = (teamId: string) => {
+    switch (teamId.toLowerCase()) {
+        case "action4":
+            return "Action Team A4";
+        case "reserve1":
+            return "Reserve Op Team A1";
+        case "reserve4":
+            return "Reserve Op Team A4";
+        case "reserve6":
+            return "Reserve Op Team A6";
+        case "student":
+            return "Ursus Student Self-Governing Group";
+        case "chiave":
+            return "Chiave's Gang";
+        case "rainbow":
+            return "Team Rainbow";
+        case "followers":
+            return "Followers";
+        case "lee":
+            return "Lee's Detective Agency";
+        default:
+            return capitalize(teamId);
     }
 };
 
