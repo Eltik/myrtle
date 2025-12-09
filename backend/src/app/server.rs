@@ -118,9 +118,14 @@ pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
         .map(PathBuf::from)
         .unwrap_or_else(|_| PathBuf::from("data"));
 
-    println!("Loading game data from: {:?}", data_dir);
+    let assets_dir = std::env::var("ASSETS_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| PathBuf::from("assets"));
 
-    let game_data = Arc::new(init_game_data_or_default(&data_dir));
+    println!("Loading game data from: {:?}", data_dir);
+    println!("Loading assets from: {:?}", assets_dir);
+
+    let game_data = Arc::new(init_game_data_or_default(&data_dir, &assets_dir));
 
     if game_data.is_loaded() {
         println!(

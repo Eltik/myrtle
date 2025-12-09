@@ -20,7 +20,7 @@ pub fn enrich_all_skills(raw_skills: HashMap<String, RawSkill>) -> HashMap<Strin
                 skill_id: raw.skill_id,
                 icon_id: raw.icon_id,
                 image: Some(format!(
-                    "/spritepack/skill_icons_{}/skill_icon_{}.png",
+                    "/upk/spritepack/skill_icons_{}/skill_icon_{}.png",
                     num, id
                 )),
                 hidden: raw.hidden,

@@ -460,6 +460,7 @@ pub struct Operator {
     pub handbook: HandbookItem,
     pub profile: Option<OperatorProfile>,
     pub artists: Vec<String>,
+    pub portrait: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

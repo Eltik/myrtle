@@ -45,16 +45,16 @@ pub fn get_skin_images(skin: &Skin, mappings: &AssetMappings) -> SkinImages {
 /// - Only has `#`: Base skin in chararts (replace # with _)
 fn format_skin_url(skin_id: &str, char_id: &str) -> String {
     if skin_id.contains('@') {
-        // Special skin: char_002_amiya@epoque#4 → /skinpack/char_002_amiya/char_002_amiya_epoque#4.png
+        // Special skin: char_002_amiya@epoque#4 → /upk/skinpack/char_002_amiya/char_002_amiya_epoque#4.png
         let formatted = skin_id.replace('@', "_");
-        format!("/skinpack/{}/{}.png", char_id, formatted)
+        format!("/upk/skinpack/{}/{}.png", char_id, formatted)
     } else if skin_id.contains('#') {
-        // Base skin: char_285_medic2#1 → /chararts/char_285_medic2/char_285_medic2_1.png
+        // Base skin: char_285_medic2#1 → /upk/chararts/char_285_medic2/char_285_medic2_1.png
         let formatted = skin_id.replace('#', "_");
-        format!("/chararts/{}/{}.png", char_id, formatted)
+        format!("/upk/chararts/{}/{}.png", char_id, formatted)
     } else {
         // Fallback (shouldn't happen)
-        format!("/chararts/{}/{}.png", char_id, skin_id)
+        format!("/upk/chararts/{}/{}.png", char_id, skin_id)
     }
 }
 

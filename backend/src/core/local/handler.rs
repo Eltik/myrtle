@@ -86,11 +86,11 @@ impl DataHandler {
     }
 }
 
-pub fn init_game_data(data_dir: &Path) -> Result<GameData, DataError> {
+pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, DataError> {
     let handler = DataHandler::new(data_dir);
 
     // ============ Build Asset Mappings (early, needed for skins/modules) ============
-    let asset_mappings = AssetMappings::build(data_dir.parent().unwrap_or(data_dir));
+    let asset_mappings = AssetMappings::build(assets_dir);
 
     // ============ Load Character Table ============
     let character_table = handler.load_table::<CharacterTable>("character_table")?;
@@ -322,8 +322,8 @@ pub fn init_game_data(data_dir: &Path) -> Result<GameData, DataError> {
     })
 }
 
-pub fn init_game_data_or_default(data_dir: &Path) -> GameData {
-    match init_game_data(data_dir) {
+pub fn init_game_data_or_default(data_dir: &Path, assets_dir: &Path) -> GameData {
+    match init_game_data(data_dir, assets_dir) {
         Ok(data) => data,
         Err(e) => {
             eprintln!("Warning: Failed to load game data: {}", e);
