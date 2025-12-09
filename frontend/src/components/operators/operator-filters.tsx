@@ -1,6 +1,6 @@
 "use client";
 
-import { X, ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowDown, ArrowUp, X } from "lucide-react";
 import { cn } from "~/lib/utils";
 
 interface OperatorFiltersProps {
@@ -64,10 +64,10 @@ export function OperatorFilters({ isOpen, classes, rarities, elements, selectedC
     return (
         <div className="overflow-hidden rounded-lg border border-border bg-card/50 backdrop-blur-sm">
             <div className="p-4">
-                <div className="flex items-center justify-between mb-4">
+                <div className="mb-4 flex items-center justify-between">
                     <h3 className="font-semibold text-foreground">Filters & Sorting</h3>
                     {hasFilters && (
-                        <button onClick={onClearFilters} className="flex items-center gap-1 text-muted-foreground text-sm hover:text-foreground transition-colors">
+                        <button className="flex items-center gap-1 text-muted-foreground text-sm transition-colors hover:text-foreground" onClick={onClearFilters}>
                             <X className="h-3 w-3" />
                             Clear all
                         </button>
@@ -77,13 +77,13 @@ export function OperatorFilters({ isOpen, classes, rarities, elements, selectedC
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                     {/* Class Filter */}
                     <div className="space-y-3">
-                        <label className="text-muted-foreground text-sm font-medium">Class</label>
+                        <label className="font-medium text-muted-foreground text-sm">Class</label>
                         <div className="flex flex-wrap gap-2">
                             {classes.map((cls) => (
                                 <button
+                                    className={cn("flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-sm transition-all", selectedClasses.includes(cls) ? "border-primary bg-primary/20 text-foreground" : "border-border bg-secondary/50 text-muted-foreground hover:border-primary/50 hover:text-foreground")}
                                     key={cls}
                                     onClick={() => toggleClass(cls)}
-                                    className={cn("flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-sm transition-all", selectedClasses.includes(cls) ? "border-primary bg-primary/20 text-foreground" : "border-border bg-secondary/50 text-muted-foreground hover:border-primary/50 hover:text-foreground")}
                                 >
                                     <span>{CLASS_ICONS[cls]}</span>
                                     <span>{cls}</span>
@@ -94,16 +94,16 @@ export function OperatorFilters({ isOpen, classes, rarities, elements, selectedC
 
                     {/* Rarity Filter */}
                     <div className="space-y-3">
-                        <label className="text-muted-foreground text-sm font-medium">Rarity</label>
+                        <label className="font-medium text-muted-foreground text-sm">Rarity</label>
                         <div className="flex flex-wrap gap-2">
                             {rarities.map((rarity) => (
                                 <button
-                                    key={rarity}
-                                    onClick={() => toggleRarity(rarity)}
                                     className={cn(
-                                        "flex items-center justify-center rounded-lg border px-3 py-1.5 text-sm font-medium transition-all",
+                                        "flex items-center justify-center rounded-lg border px-3 py-1.5 font-medium text-sm transition-all",
                                         selectedRarities.includes(rarity) ? "border-amber-500 bg-amber-500/20 text-amber-400" : "border-border bg-secondary/50 text-muted-foreground hover:border-amber-500/50 hover:text-amber-400",
                                     )}
+                                    key={rarity}
+                                    onClick={() => toggleRarity(rarity)}
                                 >
                                     {rarity}★
                                 </button>
@@ -113,12 +113,10 @@ export function OperatorFilters({ isOpen, classes, rarities, elements, selectedC
 
                     {/* Element Filter */}
                     <div className="space-y-3">
-                        <label className="text-muted-foreground text-sm font-medium">Damage Type</label>
+                        <label className="font-medium text-muted-foreground text-sm">Damage Type</label>
                         <div className="flex flex-wrap gap-2">
                             {elements.map((element) => (
                                 <button
-                                    key={element}
-                                    onClick={() => toggleElement(element)}
                                     className={cn(
                                         "rounded-lg border px-3 py-1.5 text-sm transition-all",
                                         selectedElements.includes(element)
@@ -129,6 +127,8 @@ export function OperatorFilters({ isOpen, classes, rarities, elements, selectedC
                                                   : "border-green-500 bg-green-500/20 text-green-400"
                                             : "border-border bg-secondary/50 text-muted-foreground hover:text-foreground",
                                     )}
+                                    key={element}
+                                    onClick={() => toggleElement(element)}
                                 >
                                     {element}
                                 </button>
@@ -138,15 +138,15 @@ export function OperatorFilters({ isOpen, classes, rarities, elements, selectedC
 
                     {/* Sorting */}
                     <div className="space-y-3">
-                        <label className="text-muted-foreground text-sm font-medium">Sort By</label>
+                        <label className="font-medium text-muted-foreground text-sm">Sort By</label>
                         <div className="flex gap-2">
-                            <button onClick={() => onSortByChange("rarity")} className={cn("flex-1 rounded-lg border px-3 py-1.5 text-sm transition-all", sortBy === "rarity" ? "border-primary bg-primary/20 text-foreground" : "border-border bg-secondary/50 text-muted-foreground hover:text-foreground")}>
+                            <button className={cn("flex-1 rounded-lg border px-3 py-1.5 text-sm transition-all", sortBy === "rarity" ? "border-primary bg-primary/20 text-foreground" : "border-border bg-secondary/50 text-muted-foreground hover:text-foreground")} onClick={() => onSortByChange("rarity")}>
                                 Rarity
                             </button>
-                            <button onClick={() => onSortByChange("name")} className={cn("flex-1 rounded-lg border px-3 py-1.5 text-sm transition-all", sortBy === "name" ? "border-primary bg-primary/20 text-foreground" : "border-border bg-secondary/50 text-muted-foreground hover:text-foreground")}>
+                            <button className={cn("flex-1 rounded-lg border px-3 py-1.5 text-sm transition-all", sortBy === "name" ? "border-primary bg-primary/20 text-foreground" : "border-border bg-secondary/50 text-muted-foreground hover:text-foreground")} onClick={() => onSortByChange("name")}>
                                 Name
                             </button>
-                            <button onClick={() => onSortOrderChange(sortOrder === "asc" ? "desc" : "asc")} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-secondary/50 text-muted-foreground transition-colors hover:text-foreground">
+                            <button className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-secondary/50 text-muted-foreground transition-colors hover:text-foreground" onClick={() => onSortOrderChange(sortOrder === "asc" ? "desc" : "asc")}>
                                 {sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
                             </button>
                         </div>

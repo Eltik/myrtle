@@ -1,310 +1,19 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Search, SlidersHorizontal, Grid3X3, LayoutList, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Grid3X3, LayoutList, Search, SlidersHorizontal } from "lucide-react";
+import { useMemo, useState } from "react";
+import { cn, rarityToNumber } from "~/lib/utils";
+import type { OperatorFromList } from "~/types/api/operators";
 import { OperatorCard } from "./operator-card";
 import { OperatorFilters } from "./operator-filters";
-import { cn } from "~/lib/utils";
-
-// Mock operator data - in production this would come from an API
-const OPERATORS = [
-    {
-        id: "surtr",
-        name: "Surtr",
-        rarity: 6,
-        class: "Guard",
-        subclass: "Arts Fighter",
-        element: "Arts",
-        image: "/surtr-arknights-operator-anime-girl-red-hair.jpg",
-    },
-    {
-        id: "silverash",
-        name: "SilverAsh",
-        rarity: 6,
-        class: "Guard",
-        subclass: "Ranged Guard",
-        element: "Physical",
-        image: "/silverash-arknights-operator-white-hair-male.jpg",
-    },
-    {
-        id: "eyjafjalla",
-        name: "Eyjafjalla",
-        rarity: 6,
-        class: "Caster",
-        subclass: "Core Caster",
-        element: "Arts",
-        image: "/eyjafjalla-arknights-operator-white-hair-sheep-hor.jpg",
-    },
-    {
-        id: "saria",
-        name: "Saria",
-        rarity: 6,
-        class: "Defender",
-        subclass: "Healing Defender",
-        element: "Physical",
-        image: "/saria-arknights-operator-white-hair-stern.jpg",
-    },
-    {
-        id: "blaze",
-        name: "Blaze",
-        rarity: 6,
-        class: "Guard",
-        subclass: "AoE Guard",
-        element: "Physical",
-        image: "/blaze-arknights-operator-orange-hair-chainsaw.jpg",
-    },
-    {
-        id: "chen",
-        name: "Ch'en",
-        rarity: 6,
-        class: "Guard",
-        subclass: "Dualstrike Guard",
-        element: "Physical",
-        image: "/chen-arknights-operator-blue-hair-dragon-horns-swo.jpg",
-    },
-    {
-        id: "mudrock",
-        name: "Mudrock",
-        rarity: 6,
-        class: "Defender",
-        subclass: "Enmity Defender",
-        element: "Physical",
-        image: "/mudrock-arknights-operator-dark-armor-knight.jpg",
-    },
-    {
-        id: "thorns",
-        name: "Thorns",
-        rarity: 6,
-        class: "Guard",
-        subclass: "Ranged Guard",
-        element: "Physical",
-        image: "/thorns-arknights-operator-white-hair-male-spear.jpg",
-    },
-    {
-        id: "mountain",
-        name: "Mountain",
-        rarity: 6,
-        class: "Guard",
-        subclass: "Brawler",
-        element: "Physical",
-        image: "/mountain-arknights-operator-white-hair-feline.jpg",
-    },
-    {
-        id: "exusiai",
-        name: "Exusiai",
-        rarity: 6,
-        class: "Sniper",
-        subclass: "Marksman",
-        element: "Physical",
-        image: "/exusiai-arknights-operator-red-hair-angel-halo.jpg",
-    },
-    {
-        id: "schwarz",
-        name: "Schwarz",
-        rarity: 6,
-        class: "Sniper",
-        subclass: "Heavyshooter",
-        element: "Physical",
-        image: "/schwarz-arknights-operator-black-hair-crossbow.jpg",
-    },
-    {
-        id: "w",
-        name: "W",
-        rarity: 6,
-        class: "Sniper",
-        subclass: "Bombardier",
-        element: "Physical",
-        image: "/w-arknights-operator-dark-hair-sarkaz-demon-girl.jpg",
-    },
-    {
-        id: "ifrit",
-        name: "Ifrit",
-        rarity: 6,
-        class: "Caster",
-        subclass: "Blast Caster",
-        element: "Arts",
-        image: "/ifrit-arknights-operator-orange-hair-fire.jpg",
-    },
-    {
-        id: "ceobe",
-        name: "Ceobe",
-        rarity: 6,
-        class: "Caster",
-        subclass: "Core Caster",
-        element: "Arts",
-        image: "/ceobe-arknights-operator-blonde-dog-ears-staff.jpg",
-    },
-    {
-        id: "saga",
-        name: "Saga",
-        rarity: 6,
-        class: "Vanguard",
-        subclass: "Pioneer",
-        element: "Physical",
-        image: "/saga-arknights-operator-orange-hair-dog-ears-nagin.jpg",
-    },
-    {
-        id: "bagpipe",
-        name: "Bagpipe",
-        rarity: 6,
-        class: "Vanguard",
-        subclass: "Charger",
-        element: "Physical",
-        image: "/placeholder.svg?height=160&width=160",
-    },
-    {
-        id: "texas",
-        name: "Texas",
-        rarity: 5,
-        class: "Vanguard",
-        subclass: "Pioneer",
-        element: "Physical",
-        image: "/placeholder.svg?height=160&width=160",
-    },
-    {
-        id: "lappland",
-        name: "Lappland",
-        rarity: 5,
-        class: "Guard",
-        subclass: "Ranged Guard",
-        element: "Arts",
-        image: "/placeholder.svg?height=160&width=160",
-    },
-    {
-        id: "specter",
-        name: "Specter",
-        rarity: 5,
-        class: "Guard",
-        subclass: "AoE Guard",
-        element: "Physical",
-        image: "/placeholder.svg?height=160&width=160",
-    },
-    {
-        id: "ptilopsis",
-        name: "Ptilopsis",
-        rarity: 5,
-        class: "Medic",
-        subclass: "AoE Medic",
-        element: "Healing",
-        image: "/placeholder.svg?height=160&width=160",
-    },
-    {
-        id: "warfarin",
-        name: "Warfarin",
-        rarity: 5,
-        class: "Medic",
-        subclass: "ST Medic",
-        element: "Healing",
-        image: "/placeholder.svg?height=160&width=160",
-    },
-    {
-        id: "blue-poison",
-        name: "Blue Poison",
-        rarity: 5,
-        class: "Sniper",
-        subclass: "Marksman",
-        element: "Physical",
-        image: "/placeholder.svg?height=160&width=160",
-    },
-    {
-        id: "meteorite",
-        name: "Meteorite",
-        rarity: 5,
-        class: "Sniper",
-        subclass: "Artilleryman",
-        element: "Physical",
-        image: "/placeholder.svg?height=160&width=160",
-    },
-    {
-        id: "nearl",
-        name: "Nearl",
-        rarity: 5,
-        class: "Defender",
-        subclass: "Healing Defender",
-        element: "Physical",
-        image: "/placeholder.svg?height=160&width=160",
-    },
-    {
-        id: "projekt-red",
-        name: "Projekt Red",
-        rarity: 5,
-        class: "Specialist",
-        subclass: "Executor",
-        element: "Physical",
-        image: "/placeholder.svg?height=160&width=160",
-    },
-    {
-        id: "kroos",
-        name: "Kroos",
-        rarity: 3,
-        class: "Sniper",
-        subclass: "Marksman",
-        element: "Physical",
-        image: "/placeholder.svg?height=160&width=160",
-    },
-    {
-        id: "melantha",
-        name: "Melantha",
-        rarity: 3,
-        class: "Guard",
-        subclass: "Dreadnought",
-        element: "Physical",
-        image: "/placeholder.svg?height=160&width=160",
-    },
-    {
-        id: "ansel",
-        name: "Ansel",
-        rarity: 3,
-        class: "Medic",
-        subclass: "ST Medic",
-        element: "Healing",
-        image: "/placeholder.svg?height=160&width=160",
-    },
-    {
-        id: "fang",
-        name: "Fang",
-        rarity: 3,
-        class: "Vanguard",
-        subclass: "Pioneer",
-        element: "Physical",
-        image: "/placeholder.svg?height=160&width=160",
-    },
-    {
-        id: "beagle",
-        name: "Beagle",
-        rarity: 3,
-        class: "Defender",
-        subclass: "Protector",
-        element: "Physical",
-        image: "/placeholder.svg?height=160&width=160",
-    },
-    {
-        id: "hibiscus",
-        name: "Hibiscus",
-        rarity: 3,
-        class: "Medic",
-        subclass: "ST Medic",
-        element: "Healing",
-        image: "/placeholder.svg?height=160&width=160",
-    },
-    {
-        id: "lava",
-        name: "Lava",
-        rarity: 3,
-        class: "Caster",
-        subclass: "Splash Caster",
-        element: "Arts",
-        image: "/placeholder.svg?height=160&width=160",
-    },
-];
 
 const CLASSES = ["Guard", "Sniper", "Defender", "Medic", "Supporter", "Caster", "Specialist", "Vanguard"];
 const RARITIES = [6, 5, 4, 3, 2, 1];
 const ELEMENTS = ["Physical", "Arts", "Healing"];
 
-const ITEMS_PER_PAGE = 24;
+const ITEMS_PER_PAGE = 48;
 
-export function OperatorsList() {
+export function OperatorsList({ data }: { data: OperatorFromList[] }) {
     const [searchQuery, setSearchQuery] = useState("");
     const [showFilters, setShowFilters] = useState(false);
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -314,29 +23,31 @@ export function OperatorsList() {
     const [selectedElements, setSelectedElements] = useState<string[]>([]);
     const [sortBy, setSortBy] = useState<"name" | "rarity">("rarity");
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+    const [hoveredOperator, setHoveredOperator] = useState<string | null>(null);
+    const [isGrayscaleActive, setIsGrayscaleActive] = useState(false);
 
     const filteredOperators = useMemo(() => {
-        let result = [...OPERATORS];
+        let result = [...data];
 
         // Search filter
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
-            result = result.filter((op) => op.name.toLowerCase().includes(query) || op.class.toLowerCase().includes(query) || op.subclass.toLowerCase().includes(query));
+            result = result.filter((op) => op.name.toLowerCase().includes(query) || op.profession.toLowerCase().includes(query) || op.subProfessionId.toLowerCase().includes(query));
         }
 
         // Class filter
         if (selectedClasses.length > 0) {
-            result = result.filter((op) => selectedClasses.includes(op.class));
+            result = result.filter((op) => selectedClasses.includes(op.profession));
         }
 
         // Rarity filter
         if (selectedRarities.length > 0) {
-            result = result.filter((op) => selectedRarities.includes(op.rarity));
+            result = result.filter((op) => selectedRarities.includes(rarityToNumber(op.rarity)));
         }
 
         // Element filter
         if (selectedElements.length > 0) {
-            result = result.filter((op) => selectedElements.includes(op.element));
+            result = result.filter((_op) => selectedElements.includes(""));
         }
 
         // Sorting
@@ -344,11 +55,14 @@ export function OperatorsList() {
             if (sortBy === "name") {
                 return sortOrder === "asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
             }
-            return sortOrder === "asc" ? a.rarity - b.rarity : b.rarity - a.rarity;
+
+            const aRarity = rarityToNumber(a.rarity);
+            const bRarity = rarityToNumber(b.rarity);
+            return sortOrder === "asc" ? aRarity - bRarity : bRarity - aRarity;
         });
 
         return result;
-    }, [searchQuery, selectedClasses, selectedRarities, selectedElements, sortBy, sortOrder]);
+    }, [searchQuery, selectedClasses, selectedRarities, selectedElements, sortBy, sortOrder, data]);
 
     const totalPages = Math.ceil(filteredOperators.length / ITEMS_PER_PAGE);
     const paginatedOperators = filteredOperators.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
@@ -378,61 +92,61 @@ export function OperatorsList() {
 
             {/* Search and Controls */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="relative flex-1 max-w-md">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <div className="relative max-w-md flex-1">
+                    <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
                     <input
-                        type="text"
-                        placeholder="Search operators..."
-                        value={searchQuery}
+                        className="h-10 w-full rounded-lg border border-border bg-secondary/50 pr-4 pl-10 text-foreground text-sm transition-colors placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                         onChange={(e) => {
                             setSearchQuery(e.target.value);
                             setCurrentPage(1);
                         }}
-                        className="h-10 w-full rounded-lg border border-border bg-secondary/50 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
+                        placeholder="Search operators..."
+                        type="text"
+                        value={searchQuery}
                     />
                 </div>
 
                 <div className="flex items-center gap-2">
                     {/* View Toggle */}
                     <div className="flex items-center rounded-lg border border-border bg-secondary/50 p-1">
-                        <button onClick={() => setViewMode("grid")} className={cn("flex h-8 w-8 items-center justify-center rounded-md transition-colors", viewMode === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}>
+                        <button className={cn("flex h-8 w-8 items-center justify-center rounded-md transition-colors", viewMode === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")} onClick={() => setViewMode("grid")}>
                             <Grid3X3 className="h-4 w-4" />
                         </button>
-                        <button onClick={() => setViewMode("list")} className={cn("flex h-8 w-8 items-center justify-center rounded-md transition-colors", viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}>
+                        <button className={cn("flex h-8 w-8 items-center justify-center rounded-md transition-colors", viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")} onClick={() => setViewMode("list")}>
                             <LayoutList className="h-4 w-4" />
                         </button>
                     </div>
 
                     {/* Filter Toggle */}
-                    <button onClick={() => setShowFilters(!showFilters)} className={cn("flex h-10 items-center gap-2 rounded-lg border px-3 transition-colors", showFilters || hasActiveFilters ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary/50 text-muted-foreground hover:text-foreground")}>
+                    <button className={cn("flex h-10 items-center gap-2 rounded-lg border px-3 transition-colors", showFilters || hasActiveFilters ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary/50 text-muted-foreground hover:text-foreground")} onClick={() => setShowFilters(!showFilters)}>
                         <SlidersHorizontal className="h-4 w-4" />
-                        <span className="text-sm font-medium">Filters</span>
-                        {hasActiveFilters && <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">{selectedClasses.length + selectedRarities.length + selectedElements.length + (searchQuery ? 1 : 0)}</span>}
+                        <span className="font-medium text-sm">Filters</span>
+                        {hasActiveFilters && <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">{selectedClasses.length + selectedRarities.length + selectedElements.length + (searchQuery ? 1 : 0)}</span>}
                     </button>
                 </div>
             </div>
 
             {/* Filters Panel */}
             <OperatorFilters
-                isOpen={showFilters}
                 classes={CLASSES}
-                rarities={RARITIES}
                 elements={ELEMENTS}
-                selectedClasses={selectedClasses}
-                selectedRarities={selectedRarities}
-                selectedElements={selectedElements}
-                sortBy={sortBy}
-                sortOrder={sortOrder}
+                isOpen={showFilters}
                 onClassChange={setSelectedClasses}
-                onRarityChange={setSelectedRarities}
+                onClearFilters={clearFilters}
                 onElementChange={setSelectedElements}
+                onRarityChange={setSelectedRarities}
                 onSortByChange={setSortBy}
                 onSortOrderChange={setSortOrder}
-                onClearFilters={clearFilters}
+                rarities={RARITIES}
+                selectedClasses={selectedClasses}
+                selectedElements={selectedElements}
+                selectedRarities={selectedRarities}
+                sortBy={sortBy}
+                sortOrder={sortOrder}
             />
 
             {/* Results Count */}
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <div className="flex items-center justify-between text-muted-foreground text-sm">
                 <span>
                     Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredOperators.length)} of {filteredOperators.length} operators
                 </span>
@@ -440,10 +154,26 @@ export function OperatorsList() {
 
             {/* Operators Grid */}
             {paginatedOperators.length > 0 ? (
-                <div className={cn(viewMode === "grid" ? "grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6" : "flex flex-col gap-2")}>
-                    {paginatedOperators.map((operator) => (
-                        <OperatorCard key={operator.id} operator={operator} viewMode={viewMode} />
-                    ))}
+                <div className={cn(viewMode === "grid" ? "grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-6 lg:gap-3 xl:grid-cols-8 xl:gap-4" : "flex flex-col gap-2")}>
+                    {paginatedOperators.map((operator) => {
+                        const operatorId = operator.id!;
+                        const isCurrentlyHovered = hoveredOperator === operatorId;
+                        const shouldGrayscale = isGrayscaleActive && !isCurrentlyHovered;
+
+                        const handleHoverChange = (isOpen: boolean) => {
+                            if (isOpen) {
+                                setHoveredOperator(operatorId);
+                                setIsGrayscaleActive(true);
+                            } else {
+                                if (hoveredOperator === operatorId) {
+                                    setHoveredOperator(null);
+                                    setIsGrayscaleActive(false);
+                                }
+                            }
+                        };
+
+                        return <OperatorCard isHovered={isCurrentlyHovered} key={operatorId} onHoverChange={handleHoverChange} operator={operator} shouldGrayscale={shouldGrayscale} viewMode={viewMode} />;
+                    })}
                 </div>
             ) : (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -452,7 +182,7 @@ export function OperatorsList() {
                     </div>
                     <h3 className="mb-2 font-semibold text-foreground text-lg">No operators found</h3>
                     <p className="mb-4 max-w-sm text-muted-foreground text-sm">Try adjusting your search or filter criteria to find what you're looking for.</p>
-                    <button onClick={clearFilters} className="text-primary text-sm hover:underline">
+                    <button className="text-primary text-sm hover:underline" onClick={clearFilters}>
                         Clear all filters
                     </button>
                 </div>
@@ -466,9 +196,9 @@ export function OperatorsList() {
                     </div>
                     <div className="flex items-center gap-1">
                         <button
-                            onClick={() => handlePageChange(currentPage - 1)}
-                            disabled={currentPage === 1}
                             className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-secondary/50 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                            disabled={currentPage === 1}
+                            onClick={() => handlePageChange(currentPage - 1)}
                         >
                             <ChevronLeft className="h-4 w-4" />
                         </button>
@@ -489,9 +219,9 @@ export function OperatorsList() {
 
                                 return (
                                     <button
+                                        className={cn("flex h-9 w-9 items-center justify-center rounded-lg font-medium text-sm transition-colors", currentPage === pageNum ? "bg-primary text-primary-foreground" : "border border-border bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground")}
                                         key={pageNum}
                                         onClick={() => handlePageChange(pageNum)}
-                                        className={cn("flex h-9 w-9 items-center justify-center rounded-lg text-sm font-medium transition-colors", currentPage === pageNum ? "bg-primary text-primary-foreground" : "border border-border bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground")}
                                     >
                                         {pageNum}
                                     </button>
@@ -500,9 +230,9 @@ export function OperatorsList() {
                         </div>
 
                         <button
-                            onClick={() => handlePageChange(currentPage + 1)}
-                            disabled={currentPage === totalPages}
                             className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-secondary/50 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                            disabled={currentPage === totalPages}
+                            onClick={() => handlePageChange(currentPage + 1)}
                         >
                             <ChevronRight className="h-4 w-4" />
                         </button>

@@ -257,6 +257,7 @@ export interface Operator {
     handbook: HandbookItem;
     profile: OperatorProfile | null;
     artists: string[];
+    portrait: string;
 }
 
 export type Elite = "E0" | "E1" | "E2";
