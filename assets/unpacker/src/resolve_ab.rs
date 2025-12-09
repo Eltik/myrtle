@@ -1880,3 +1880,128 @@ pub fn main(
 
     Ok(())
 }
+
+/// Extract individual sprites from SpritePacker MonoBehaviours (used for charportraits)
+///
+/// This handles Arknights' custom SpritePacker format where portraits are packed
+/// into texture atlases with a MonoBehaviour describing the sprite positions.
+pub fn extract_sprite_packer(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Result<usize> {
+    use crate::sprite_packer::{is_sprite_packer, SpriteExtractor, SpritePackerData};
+    use std::collections::HashMap;
+
+    let mut saved_count = 0;
+    let env = env_rc.borrow();
+
+    // First, collect all textures by PathID
+    let mut textures: HashMap<i64, (String, RgbaImage)> = HashMap::new();
+
+    for mut obj in env.objects() {
+        if obj.obj_type == ClassIDType::Texture2D {
+            if let Ok(data) = obj.read(false) {
+                let name = data
+                    .get("m_Name")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
+
+                // Parse texture using the proper Texture2D struct with stream data support
+                if let Ok(mut texture) =
+                    serde_json::from_value::<unity_rs::generated::Texture2D>(data.clone())
+                {
+                    texture.object_reader = Some(Box::new(obj.clone()));
+                    if let Ok(img) = texture_to_image(&texture) {
+                        textures.insert(obj.path_id, (name, img));
+                    }
+                }
+            }
+        }
+    }
+
+    // Now find and process SpritePacker MonoBehaviours
+    for mut obj in env.objects() {
+        if obj.obj_type != ClassIDType::MonoBehaviour {
+            continue;
+        }
+
+        // Get the TypeTree node
+        let node_clone = obj.serialized_type.as_ref().and_then(|st| st.node.clone());
+        if node_clone.is_none() {
+            continue;
+        }
+
+        // Try to read with full TypeTree
+        obj.reset();
+        let json = match obj.read_typetree(node_clone, false, false) {
+            Ok(j) => j,
+            Err(_) => continue,
+        };
+
+        // Check if this is a SpritePacker
+        if !is_sprite_packer(&json) {
+            continue;
+        }
+
+        // Parse SpritePacker data
+        let packer = match SpritePackerData::from_json(&json) {
+            Ok(p) => p,
+            Err(e) => {
+                log::warn!("Failed to parse SpritePacker: {}", e);
+                continue;
+            }
+        };
+
+        log::debug!(
+            "Found SpritePacker '{}' with {} sprites",
+            packer.name,
+            packer.sprites.len()
+        );
+
+        // Get the texture and alpha textures
+        let texture_path_id = packer.atlas.texture.path_id;
+        let alpha_path_id = packer.atlas.alpha.path_id;
+
+        let texture = textures.get(&texture_path_id);
+        let alpha = textures.get(&alpha_path_id);
+
+        if texture.is_none() {
+            log::warn!(
+                "SpritePacker '{}': texture {} not found",
+                packer.name,
+                texture_path_id
+            );
+            continue;
+        }
+
+        let (_, tex_img) = texture.unwrap();
+        let alpha_img = alpha.map(|(_, img)| img.clone());
+
+        // Create extractor
+        let extractor = SpriteExtractor::new(tex_img.clone(), alpha_img);
+
+        // Extract each sprite
+        for sprite in &packer.sprites {
+            match extractor.extract_sprite(sprite) {
+                Ok(img) => {
+                    // Save the sprite
+                    let sprite_path = destdir.join(format!("{}.png", sprite.name));
+
+                    // Ensure parent directory exists
+                    if let Some(parent) = sprite_path.parent() {
+                        std::fs::create_dir_all(parent)?;
+                    }
+
+                    if let Err(e) = img.save(&sprite_path) {
+                        log::warn!("Failed to save sprite {}: {}", sprite.name, e);
+                    } else {
+                        saved_count += 1;
+                    }
+                }
+                Err(e) => {
+                    log::warn!("Failed to extract sprite {}: {}", sprite.name, e);
+                }
+            }
+        }
+    }
+
+    Ok(saved_count)
+}
