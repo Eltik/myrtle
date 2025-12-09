@@ -174,7 +174,7 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
     const hasActiveFilters = activeFilterCount > 0;
 
     return (
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
             {/* Header */}
             <div className="space-y-2">
                 <h1 className="font-bold text-3xl text-foreground md:text-4xl">Operators</h1>
@@ -300,7 +300,7 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
             {/* Pagination */}
             {totalPages > 1 && (
                 <div className="flex flex-col items-center gap-4 pt-6 sm:flex-row sm:justify-between">
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center justify-center gap-3">
                         <span className="text-muted-foreground text-sm">
                             Page {currentPage} of {totalPages}
                         </span>
@@ -352,34 +352,39 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                             <ChevronLeft className="h-4 w-4" />
                         </button>
 
-                        {/* Page numbers with ellipsis */}
-                        <div className="flex items-center gap-1">
-                            {(() => {
+                        {/* Page numbers - responsive based on screen size */}
+                        {(() => {
+                            const getPages = (maxVisible: number): (number | "ellipsis-start" | "ellipsis-end")[] => {
                                 const pages: (number | "ellipsis-start" | "ellipsis-end")[] = [];
 
-                                if (totalPages <= 7) {
-                                    // Show all pages if 7 or fewer
+                                if (totalPages <= maxVisible) {
                                     for (let i = 1; i <= totalPages; i++) pages.push(i);
                                 } else {
-                                    // Always show first page
                                     pages.push(1);
-
-                                    if (currentPage <= 3) {
-                                        // Near start: 1, 2, 3, 4, ..., last
-                                        pages.push(2, 3, 4, "ellipsis-end", totalPages);
-                                    } else if (currentPage >= totalPages - 2) {
-                                        // Near end: 1, ..., n-3, n-2, n-1, n
-                                        pages.push("ellipsis-start", totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+                                    if (currentPage <= Math.ceil(maxVisible / 2)) {
+                                        // Near start
+                                        for (let i = 2; i < maxVisible - 1; i++) pages.push(i);
+                                        pages.push("ellipsis-end", totalPages);
+                                    } else if (currentPage >= totalPages - Math.floor(maxVisible / 2)) {
+                                        // Near end
+                                        pages.push("ellipsis-start");
+                                        for (let i = totalPages - maxVisible + 3; i <= totalPages; i++) pages.push(i);
                                     } else {
-                                        // Middle: 1, ..., current-1, current, current+1, ..., last
-                                        pages.push("ellipsis-start", currentPage - 1, currentPage, currentPage + 1, "ellipsis-end", totalPages);
+                                        // Middle
+                                        pages.push("ellipsis-start");
+                                        const sideCount = Math.floor((maxVisible - 4) / 2);
+                                        for (let i = currentPage - sideCount; i <= currentPage + sideCount; i++) pages.push(i);
+                                        pages.push("ellipsis-end", totalPages);
                                     }
                                 }
+                                return pages;
+                            };
 
-                                return pages.map((page, idx) => {
+                            const renderPages = (pages: (number | "ellipsis-start" | "ellipsis-end")[]) =>
+                                pages.map((page, idx) => {
                                     if (page === "ellipsis-start" || page === "ellipsis-end") {
                                         return (
-                                            <span key={page} className="flex h-9 w-9 items-center justify-center text-muted-foreground">
+                                            <span key={`${page}-${idx}`} className="flex h-9 w-9 items-center justify-center text-muted-foreground">
                                                 ...
                                             </span>
                                         );
@@ -394,8 +399,18 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                                         </button>
                                     );
                                 });
-                            })()}
-                        </div>
+
+                            return (
+                                <>
+                                    {/* Mobile: compact pagination (5 items max) */}
+                                    <div className="flex items-center gap-1 sm:hidden">{renderPages(getPages(5))}</div>
+                                    {/* Tablet: medium pagination (6 items max) */}
+                                    <div className="hidden items-center gap-1 sm:flex md:hidden">{renderPages(getPages(6))}</div>
+                                    {/* Desktop: full pagination (7 items max) */}
+                                    <div className="hidden items-center gap-1 md:flex">{renderPages(getPages(7))}</div>
+                                </>
+                            );
+                        })()}
 
                         <button
                             className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-secondary/50 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"

@@ -19,7 +19,7 @@ const navItems: NavItem[] = [
         label: "Operators",
         href: "#",
         dropdown: [
-            { label: "Collection", href: "/operators/", description: "List of all released operators" },
+            { label: "Collection", href: "/operators/list", description: "List of all released operators" },
             { label: "Tier List", href: "/operators/tier-list", description: "Operator rankings by class" },
             { label: "Chibi Viewer", href: "/operators/chibis", description: "Arknights chibi viewer" },
         ],
