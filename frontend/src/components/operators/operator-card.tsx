@@ -1,135 +1,147 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
-import { cn } from "~/lib/utils";
-
-interface Operator {
-    id: string;
-    name: string;
-    rarity: number;
-    class: string;
-    subclass: string;
-    element: string;
-    image: string;
-}
+import Link from "next/link";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "~/components/ui/hover-card";
+import { capitalize, cn, formatProfession, formatSubProfession, rarityToNumber } from "~/lib/utils";
+import type { OperatorFromList } from "~/types/api/operators";
 
 interface OperatorCardProps {
-    operator: Operator;
+    operator: OperatorFromList;
     viewMode: "grid" | "list";
+    isHovered?: boolean;
+    shouldGrayscale?: boolean;
+    onHoverChange?: (isOpen: boolean) => void;
 }
 
-const RARITY_COLORS: Record<number, { border: string; bg: string; glow: string }> = {
-    6: {
-        border: "border-amber-500/60",
-        bg: "from-amber-500/20 via-orange-500/10 to-transparent",
-        glow: "group-hover:shadow-[0_0_20px_rgba(245,158,11,0.3)]",
-    },
-    5: {
-        border: "border-yellow-400/50",
-        bg: "from-yellow-400/15 via-yellow-500/5 to-transparent",
-        glow: "group-hover:shadow-[0_0_15px_rgba(250,204,21,0.25)]",
-    },
-    4: {
-        border: "border-purple-400/40",
-        bg: "from-purple-400/10 via-purple-500/5 to-transparent",
-        glow: "group-hover:shadow-[0_0_12px_rgba(192,132,252,0.2)]",
-    },
-    3: {
-        border: "border-blue-400/30",
-        bg: "from-blue-400/10 via-blue-500/5 to-transparent",
-        glow: "group-hover:shadow-[0_0_10px_rgba(96,165,250,0.15)]",
-    },
-    2: {
-        border: "border-green-400/25",
-        bg: "from-green-400/8 via-green-500/4 to-transparent",
-        glow: "",
-    },
-    1: {
-        border: "border-gray-400/20",
-        bg: "from-gray-400/5 to-transparent",
-        glow: "",
-    },
+const RarityColors: Record<number, string> = {
+    6: "#f7a452",
+    5: "#f7e79e",
+    4: "#bcabdb",
+    3: "#88c8e3",
+    2: "#7ef2a3",
+    1: "#ffffff",
 };
 
-const CLASS_ICONS: Record<string, string> = {
-    Guard: "⚔️",
-    Sniper: "🎯",
-    Defender: "🛡️",
-    Medic: "💚",
-    Supporter: "🔮",
-    Caster: "✨",
-    Specialist: "🗡️",
-    Vanguard: "⚡",
+const RarityBlurColors: Record<number, string> = {
+    6: "#cc9b6a",
+    5: "#d6c474",
+    4: "#9e87c7",
+    3: "#62a2bd",
+    2: "#57ab72",
+    1: "#aaaaaa",
 };
 
-export function OperatorCard({ operator, viewMode }: OperatorCardProps) {
-    const rarityStyle = RARITY_COLORS[operator.rarity] ?? RARITY_COLORS[1];
+const HOVER_DELAY = 500;
+
+export function OperatorCard({ operator, viewMode, isHovered = false, shouldGrayscale = false, onHoverChange }: OperatorCardProps) {
+    const rarityNum = rarityToNumber(operator.rarity);
+    const rarityColor = RarityColors[rarityNum] ?? "#ffffff";
+    const rarityBlurColor = RarityBlurColors[rarityNum] ?? "#aaaaaa";
+    const operatorId = operator.id!;
 
     if (viewMode === "list") {
         return (
-            <Link href={`/operators/${operator.id}`} className={cn("group flex items-center gap-4 rounded-lg border bg-card p-3 transition-all duration-200", rarityStyle?.border, "hover:bg-card/80 hover:scale-[1.01]", rarityStyle?.glow)}>
+            <Link className={cn("group flex items-center gap-4 rounded-lg border border-muted/50 bg-card p-3 transition-all duration-200 hover:bg-card/80", shouldGrayscale && "grayscale", isHovered && "grayscale-0")} href={`/operators/${operatorId}`}>
                 <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg">
-                    <Image src={operator.image || "/placeholder.svg"} alt={operator.name} fill className="object-cover" />
+                    <Image alt={operator.name} className="object-cover" fill src={`/api/cdn${operator.portrait}`} />
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                        <span className="font-semibold text-foreground truncate">{operator.name}</span>
-                        <span className="text-amber-400 text-sm">{"★".repeat(operator.rarity)}</span>
+                        <span className="truncate font-semibold text-foreground">{operator.name}</span>
+                        <span className="text-amber-400 text-sm">{"★".repeat(rarityNum)}</span>
                     </div>
                     <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                        <span>{CLASS_ICONS[operator.class]}</span>
-                        <span>{operator.class}</span>
+                        <span>{formatProfession(operator.profession)}</span>
                         <span className="text-border">•</span>
-                        <span>{operator.subclass}</span>
+                        <span>{capitalize(formatSubProfession(operator.subProfessionId.toLowerCase()))}</span>
                     </div>
-                </div>
-                <div className={cn("shrink-0 rounded-full px-2 py-0.5 text-xs font-medium", operator.element === "Arts" && "bg-purple-500/20 text-purple-400", operator.element === "Physical" && "bg-orange-500/20 text-orange-400", operator.element === "Healing" && "bg-green-500/20 text-green-400")}>
-                    {operator.element}
                 </div>
             </Link>
         );
     }
 
-    return (
-        <Link href={`/operators/${operator.id}`} className={cn("group relative flex flex-col overflow-hidden rounded-lg border bg-card transition-all duration-200", rarityStyle?.border, "hover:scale-[1.03] hover:-translate-y-1", rarityStyle?.glow)}>
-            {/* Rarity gradient overlay */}
-            <div className={cn("pointer-events-none absolute inset-0 bg-gradient-to-t", rarityStyle?.bg)} />
-
-            {/* Class icon badge */}
-            <div className="absolute top-2 right-2 z-10 flex h-6 w-6 items-center justify-center rounded-md bg-background/80 text-sm backdrop-blur-sm">{CLASS_ICONS[operator.class]}</div>
-
-            {/* Element badge */}
-            <div
-                className={cn(
-                    "absolute top-2 left-2 z-10 rounded-full px-1.5 py-0.5 text-[10px] font-medium backdrop-blur-sm",
-                    operator.element === "Arts" && "bg-purple-500/30 text-purple-300",
-                    operator.element === "Physical" && "bg-orange-500/30 text-orange-300",
-                    operator.element === "Healing" && "bg-green-500/30 text-green-300",
-                )}
-            >
-                {operator.element}
+    const cardContent = (
+        <Link aria-label={`View details for ${operator.name}`} className="group relative flex aspect-2/3 overflow-clip rounded-md border border-muted/50 bg-card transition hover:rounded-lg" href={`/operators/${operatorId}`}>
+            {/* Faction background */}
+            <div className="-translate-x-8 -translate-y-4 absolute">
+                <Image
+                    alt={String(operator.nationId ?? operator.teamId ?? "Rhodes Island")}
+                    className="opacity-5 transition-opacity group-hover:opacity-10"
+                    decoding="async"
+                    height={360}
+                    loading="lazy"
+                    src={operator.nationId ? `/api/cdn/upk/spritepack/ui_camp_logo_0/logo_${String(operator.nationId)}.png` : operator.teamId ? `/api/cdn/upk/spritepack/ui_camp_logo_0/logo_${operator.teamId}.png` : `/api/cdn/upk/spritepack/ui_camp_logo_0/logo_rhodes.png`}
+                    width={360}
+                />
             </div>
 
-            {/* Image container */}
-            <div className="relative aspect-square overflow-hidden">
-                <Image src={operator.image || "/placeholder.svg"} alt={operator.name} fill className="object-cover transition-transform duration-300 group-hover:scale-110" />
-                {/* Bottom gradient for text readability */}
-                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-card via-card/50 to-transparent" />
-            </div>
-
-            {/* Info section */}
-            <div className="relative -mt-6 z-10 p-3 pt-0">
-                <div className="mb-1 flex items-center gap-1">
-                    {Array.from({ length: operator.rarity }).map((_, i) => (
-                        <span key={i} className="text-[10px] text-amber-400">
-                            ★
-                        </span>
-                    ))}
+            {/* Portrait */}
+            <div className="absolute inset-0">
+                <div className={cn("relative h-full w-full scale-100 transition-all duration-150 group-hover:scale-105", shouldGrayscale && "grayscale", isHovered && "grayscale-0")}>
+                    <Image alt={`${operator.name} Portrait`} className="h-full w-full rounded-lg object-contain" decoding="async" fill loading="lazy" src={`/api/cdn${operator.portrait}`} />
                 </div>
-                <h3 className="font-semibold text-foreground text-sm leading-tight truncate">{operator.name}</h3>
-                <p className="mt-0.5 text-muted-foreground text-xs truncate">{operator.subclass}</p>
+            </div>
+
+            {/* Bottom info bar */}
+            <div className="absolute inset-x-0 bottom-0 z-10">
+                <div className="relative">
+                    <div className="h-12 w-full bg-background/80 backdrop-blur-sm" />
+                    <h2 className="absolute bottom-1 left-1 line-clamp-2 max-w-[85%] pr-8 font-bold text-xs uppercase opacity-60 transition-opacity group-hover:opacity-100 sm:text-sm md:text-sm">{operator.name}</h2>
+                    {/* Class icon */}
+                    <div className="absolute right-1 bottom-1 flex scale-75 items-center opacity-0 transition-all duration-200 group-hover:scale-100 group-hover:opacity-100">
+                        <div className="h-4 w-4 md:h-6 md:w-6">
+                            <Image alt={formatProfession(operator.profession)} decoding="async" height={160} loading="lazy" src={`/api/cdn/upk/arts/ui/[uc]charcommon/icon_profession_${operator.profession.toLowerCase()}.png`} width={160} />
+                        </div>
+                    </div>
+                    {/* Rarity color bar */}
+                    <div className={cn("absolute bottom-0 h-0.5 w-full", shouldGrayscale && "grayscale", isHovered && "grayscale-0")} style={{ backgroundColor: rarityColor }} />
+                    <div className={cn("-bottom-0.5 absolute h-1 w-full blur-sm", shouldGrayscale && "grayscale", isHovered && "grayscale-0")} style={{ backgroundColor: rarityBlurColor }} />
+                </div>
             </div>
         </Link>
+    );
+
+    return (
+        <HoverCard closeDelay={50} onOpenChange={onHoverChange} openDelay={HOVER_DELAY}>
+            <HoverCardTrigger asChild>{cardContent}</HoverCardTrigger>
+            <HoverCardContent className="w-80 p-4" side="top">
+                <div className="flex items-start space-x-4">
+                    {/* Avatar */}
+                    <div className="relative h-16 w-16 shrink-0">
+                        <Image alt={`${operator.name} Avatar`} className="rounded-md object-cover" fill src={`/api/cdn${operator.portrait}`} />
+                    </div>
+                    <div className="grow space-y-1">
+                        {/* Name and faction */}
+                        <div className="flex items-center justify-between">
+                            <h4 className="font-semibold text-base">{operator.name}</h4>
+                            <div className="h-6 w-6 shrink-0">
+                                <Image
+                                    alt={String(operator.nationId ?? operator.teamId ?? "Rhodes Island")}
+                                    className="object-contain"
+                                    height={24}
+                                    src={operator.nationId ? `/api/cdn/upk/spritepack/ui_camp_logo_0/logo_${String(operator.nationId)}.png` : operator.teamId ? `/api/cdn/upk/spritepack/ui_camp_logo_0/logo_${operator.teamId}.png` : `/api/cdn/upk/spritepack/ui_camp_logo_0/logo_rhodes.png`}
+                                    width={24}
+                                />
+                            </div>
+                        </div>
+                        {/* Rarity and class info */}
+                        <p className="font-semibold text-xs" style={{ color: rarityColor }}>
+                            {`${rarityNum}★ ${capitalize(formatSubProfession(operator.subProfessionId.toLowerCase()))} ${formatProfession(operator.profession)}`}
+                        </p>
+                        {/* Position and race */}
+                        <div className="flex space-x-2 pt-1 text-muted-foreground text-xs">
+                            <span>{capitalize(operator.position?.toLowerCase() ?? "Unknown")}</span>
+                            {operator.profile?.basicInfo?.race && (
+                                <>
+                                    <span>•</span>
+                                    <span>{operator.profile.basicInfo.race}</span>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </HoverCardContent>
+        </HoverCard>
     );
 }
