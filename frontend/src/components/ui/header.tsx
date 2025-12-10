@@ -2,19 +2,19 @@
 
 import { ChevronDown, Ellipsis, Github, User } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { useRouter } from "next/router";
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Button } from "~/components/ui/button";
 
 type NavItem = {
     label: string | React.ReactNode;
     href: string;
     icon?: string;
-    isActive?: boolean;
     dropdown?: { label: string; href: string; description: string }[];
 };
 
 const navItems: NavItem[] = [
-    { label: "Home", href: "/", icon: "◎", isActive: true },
+    { label: "Home", href: "/", icon: "◎" },
     {
         label: "Operators",
         href: "#",
@@ -53,7 +53,17 @@ const navItems: NavItem[] = [
     },
 ];
 
+function isNavItemActive(item: NavItem, pathname: string): boolean {
+    // For direct links (no dropdown), check exact match
+    if (!item.dropdown) {
+        return item.href === pathname;
+    }
+    // For dropdown items, check if current path matches any dropdown href
+    return item.dropdown.some((dropdownItem) => pathname === dropdownItem.href || pathname.startsWith(dropdownItem.href + "/"));
+}
+
 export function Header() {
+    const router = useRouter();
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
     const [hoverStyle, setHoverStyle] = useState({ left: 0, width: 0, opacity: 0 });
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -64,7 +74,9 @@ export function Header() {
     const itemRefs = useRef<(HTMLAnchorElement | HTMLButtonElement | null)[]>([]);
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    const activeIndex = navItems.findIndex((item) => item.isActive);
+    const activeIndex = useMemo(() => {
+        return navItems.findIndex((item) => isNavItemActive(item, router.pathname));
+    }, [router.pathname]);
 
     const updateIndicator = useCallback((index: number, opacity: number) => {
         const target = itemRefs.current[index];
@@ -238,7 +250,7 @@ export function Header() {
                             {navItems.map((item, index) =>
                                 item.dropdown ? (
                                     <button
-                                        className={`relative z-10 flex items-center gap-1 rounded-full px-3.5 py-1.5 font-medium text-sm transition-colors duration-200 ${hoveredIndex === index || (item.isActive && hoveredIndex === null) ? "text-foreground" : "text-muted-foreground"}`}
+                                        className={`relative z-10 flex items-center gap-1 rounded-full px-3.5 py-1.5 font-medium text-sm transition-colors duration-200 ${hoveredIndex === index || (activeIndex === index && hoveredIndex === null) ? "text-foreground" : "text-muted-foreground"}`}
                                         key={typeof item.label === "string" ? item.label : index}
                                         onMouseEnter={() => handleMouseEnter(index)}
                                         ref={(el) => {
@@ -258,7 +270,7 @@ export function Header() {
                                     </button>
                                 ) : (
                                     <Link
-                                        className={`relative z-10 flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-medium text-sm transition-colors duration-200 ${hoveredIndex === index || (item.isActive && hoveredIndex === null) ? "text-foreground" : "text-muted-foreground"}`}
+                                        className={`relative z-10 flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-medium text-sm transition-colors duration-200 ${hoveredIndex === index || (activeIndex === index && hoveredIndex === null) ? "text-foreground" : "text-muted-foreground"}`}
                                         href={item.href}
                                         key={typeof item.label === "string" ? item.label : index}
                                         onMouseEnter={() => handleMouseEnter(index)}
