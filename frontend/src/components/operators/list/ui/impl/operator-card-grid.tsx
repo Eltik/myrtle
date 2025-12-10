@@ -21,7 +21,7 @@ export function OperatorCardGrid({ operator, isHovered = false, shouldGrayscale 
     const operatorId = operator.id ?? "";
 
     const cardContent = (
-        <Link aria-label={`View details for ${operator.name}`} className="group relative flex aspect-2/3 overflow-clip rounded-md border border-muted/50 bg-card transition hover:rounded-lg" href={`/operators/${operatorId}`}>
+        <Link aria-label={`View details for ${operator.name}`} className="group relative flex aspect-2/3 overflow-clip rounded-md border border-muted/50 bg-card transition hover:rounded-lg" href={`/operators?id=${operatorId}`}>
             {/* Faction background */}
             <div className="-translate-x-8 -translate-y-4 absolute">
                 <FactionLogo className="opacity-5 transition-opacity group-hover:opacity-10" nationId={operator.nationId} size={360} teamId={operator.teamId} />
