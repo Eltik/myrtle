@@ -1,10 +1,11 @@
 "use client";
 
+import { useState, useId, useRef, useEffect, createContext, useContext, isValidElement } from "react";
 import { AnimatePresence, MotionConfig, motion, type Transition, type Variants } from "motion/react";
-import { createContext, type RefObject, useContext, useEffect, useRef, useState } from "react";
+import useClickOutside from "~/hooks/useClickOutside";
 import { cn } from "~/lib/utils";
 
-const TRANSITION: Transition = {
+const TRANSITION = {
     type: "spring",
     bounce: 0.1,
     duration: 0.4,
@@ -14,16 +15,15 @@ type MorphingPopoverContextValue = {
     isOpen: boolean;
     open: () => void;
     close: () => void;
-    toggle: () => void;
-    triggerRef: RefObject<HTMLDivElement | null>;
+    uniqueId: string;
     variants?: Variants;
 };
 
 const MorphingPopoverContext = createContext<MorphingPopoverContextValue | null>(null);
 
 function usePopoverLogic({ defaultOpen = false, open: controlledOpen, onOpenChange }: { defaultOpen?: boolean; open?: boolean; onOpenChange?: (open: boolean) => void } = {}) {
+    const uniqueId = useId();
     const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
-    const triggerRef = useRef<HTMLDivElement>(null);
 
     const isOpen = controlledOpen ?? uncontrolledOpen;
 
@@ -41,15 +41,7 @@ function usePopoverLogic({ defaultOpen = false, open: controlledOpen, onOpenChan
         onOpenChange?.(false);
     };
 
-    const toggle = () => {
-        if (isOpen) {
-            close();
-        } else {
-            open();
-        }
-    };
-
-    return { isOpen, open, close, toggle, triggerRef };
+    return { isOpen, open, close, uniqueId };
 }
 
 export type MorphingPopoverProps = {
@@ -68,7 +60,7 @@ function MorphingPopover({ children, transition = TRANSITION, defaultOpen, open,
     return (
         <MorphingPopoverContext.Provider value={{ ...popoverLogic, variants }}>
             <MotionConfig transition={transition}>
-                <div className={cn("relative", className)} {...props}>
+                <div className={cn("relative flex items-center justify-center", className)} key={popoverLogic.uniqueId} {...props}>
                     {children}
                 </div>
             </MotionConfig>
@@ -77,33 +69,30 @@ function MorphingPopover({ children, transition = TRANSITION, defaultOpen, open,
 }
 
 export type MorphingPopoverTriggerProps = {
+    asChild?: boolean;
     children: React.ReactNode;
     className?: string;
-};
+} & React.ComponentProps<typeof motion.button>;
 
-function MorphingPopoverTrigger({ children, className }: MorphingPopoverTriggerProps) {
+function MorphingPopoverTrigger({ children, className, asChild = false, ...props }: MorphingPopoverTriggerProps) {
     const context = useContext(MorphingPopoverContext);
     if (!context) {
         throw new Error("MorphingPopoverTrigger must be used within MorphingPopover");
     }
 
+    if (asChild && isValidElement(children)) {
+        const MotionComponent = motion.create(children.type as React.ForwardRefExoticComponent<any>);
+        const childProps = children.props as Record<string, unknown>;
+
+        return <MotionComponent {...childProps} onClick={context.open} layoutId={`popover-trigger-${context.uniqueId}`} className={childProps.className} key={context.uniqueId} aria-expanded={context.isOpen} aria-controls={`popover-content-${context.uniqueId}`} />;
+    }
+
     return (
-        // biome-ignore lint/a11y/useSemanticElements: This wraps arbitrary children which may include buttons, using a semantic button could cause nested button issues
-        <div
-            className={cn("cursor-pointer", className)}
-            onClick={context.toggle}
-            onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    context.toggle();
-                }
-            }}
-            ref={context.triggerRef}
-            role="button"
-            tabIndex={0}
-        >
-            {children}
-        </div>
+        <motion.div key={context.uniqueId} layoutId={`popover-trigger-${context.uniqueId}`} onClick={context.open}>
+            <motion.button {...props} layoutId={`popover-label-${context.uniqueId}`} key={context.uniqueId} className={className} aria-expanded={context.isOpen} aria-controls={`popover-content-${context.uniqueId}`}>
+                {children}
+            </motion.button>
+        </motion.div>
     );
 }
 
@@ -117,58 +106,40 @@ function MorphingPopoverContent({ children, className, ...props }: MorphingPopov
     if (!context) throw new Error("MorphingPopoverContent must be used within MorphingPopover");
 
     const ref = useRef<HTMLDivElement>(null);
+    useClickOutside(ref, context.close);
 
     useEffect(() => {
         if (!context.isOpen) return;
-
-        const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-            const target = event.target as Node;
-
-            // Don't close if clicking inside the content
-            if (ref.current?.contains(target)) {
-                return;
-            }
-
-            // Don't close if clicking the trigger (toggle will handle it)
-            if (context.triggerRef.current?.contains(target)) {
-                return;
-            }
-
-            context.close();
-        };
 
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.key === "Escape") context.close();
         };
 
-        // Use mousedown to match click timing
-        document.addEventListener("mousedown", handleClickOutside);
-        document.addEventListener("touchstart", handleClickOutside);
         document.addEventListener("keydown", handleKeyDown);
-
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-            document.removeEventListener("touchstart", handleClickOutside);
-            document.removeEventListener("keydown", handleKeyDown);
-        };
-    }, [context.isOpen, context.close, context.triggerRef]);
+        return () => document.removeEventListener("keydown", handleKeyDown);
+    }, [context.isOpen, context.close]);
 
     return (
         <AnimatePresence>
             {context.isOpen && (
-                <motion.div
-                    {...props}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    aria-modal="true"
-                    className={cn("absolute top-full right-0 z-50 mt-2 overflow-hidden rounded-lg border border-border bg-card shadow-lg", className)}
-                    exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                    initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                    ref={ref}
-                    role="dialog"
-                    variants={context.variants}
-                >
-                    {children}
-                </motion.div>
+                <>
+                    <motion.div
+                        {...props}
+                        ref={ref}
+                        layoutId={`popover-trigger-${context.uniqueId}`}
+                        key={context.uniqueId}
+                        id={`popover-content-${context.uniqueId}`}
+                        role="dialog"
+                        aria-modal="true"
+                        className={cn("absolute overflow-hidden rounded-md border border-zinc-950/10 bg-white p-2 text-zinc-950 shadow-md dark:border-zinc-50/10 dark:bg-zinc-700 dark:text-zinc-50", className)}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        variants={context.variants}
+                    >
+                        {children}
+                    </motion.div>
+                </>
             )}
         </AnimatePresence>
     );

@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "~/components/ui/hover-card";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "~/components/ui/shadcn/hover-card";
 import { capitalize, cn, formatProfession, formatSubProfession, rarityToNumber } from "~/lib/utils";
 import type { OperatorFromList } from "~/types/api/operators";
 import { HOVER_DELAY, RARITY_BLUR_COLORS, RARITY_COLORS } from "../../constants";

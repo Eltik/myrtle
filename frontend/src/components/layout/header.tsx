@@ -4,7 +4,7 @@ import { ChevronDown, Ellipsis, Github, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Button } from "~/components/ui/button";
+import { Button } from "~/components/ui/shadcn/button";
 
 type NavItem = {
     label: string | React.ReactNode;

@@ -2,7 +2,7 @@
 
 import { ArrowDown, ArrowUp, X } from "lucide-react";
 import Image from "next/image";
-import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/shadcn/tooltip";
 import { capitalize, cn, formatNationId, formatSubProfession } from "~/lib/utils";
 import { CLASS_DISPLAY, CLASS_ICON, NATION_DISPLAY } from "./constants";
 import { FilterDropdown } from "./ui/impl/filter-dropdown";
