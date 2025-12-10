@@ -35,6 +35,7 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
     const [hoveredOperator, setHoveredOperator] = useState<string | null>(null);
     const [isGrayscaleActive, setIsGrayscaleActive] = useState(false);
 
+    // Compute available filter options from data
     const filterOptions = useMemo(() => {
         const subclasses = new Set<string>();
         const birthPlaces = new Set<string>();
@@ -217,7 +218,7 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                                 {hasActiveFilters && <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">{activeFilterCount}</span>}
                             </button>
                         </MorphingPopoverTrigger>
-                        <MorphingPopoverContent className="w-[calc(100vw-2rem)] max-w-4xl bg-card/95 p-0 backdrop-blur-sm sm:w-[600px] md:w-[700px] lg:w-[900px] drop-shadow-2xl">
+                        <MorphingPopoverContent className="w-[calc(100vw-2rem)] max-w-4xl bg-card/95 p-0 drop-shadow-2xl backdrop-blur-sm sm:w-[600px] md:w-[700px] lg:w-[900px]">
                             <OperatorFilters
                                 classes={CLASSES}
                                 subclasses={filterOptions.subclasses}
@@ -264,9 +265,30 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                 </span>
             </div>
 
-            {/* Operators Grid */}
+            {viewMode === "list" && paginatedOperators.length > 0 && (
+                <div className="hidden items-center gap-3 border-border/50 border-b px-3 pb-2 text-muted-foreground text-xs uppercase tracking-wider md:flex">
+                    {/* Portrait column */}
+                    <div className="w-12 shrink-0" />
+                    {/* Name column - flex-1 */}
+                    <div className="min-w-0 flex-1">Name</div>
+                    {/* Rarity column - w-24 */}
+                    <div className="w-24 shrink-0">Rarity</div>
+                    {/* Class column - w-32 */}
+                    <div className="w-32 shrink-0">Class</div>
+                    {/* Archetype column - w-40, hidden on smaller screens */}
+                    <div className="hidden w-40 shrink-0 lg:block">Archetype</div>
+                    {/* Faction column - w-8, hidden until xl */}
+                    <div className="hidden w-8 shrink-0 text-center xl:block">Faction</div>
+                </div>
+            )}
+
+            {/* Operators Grid/List */}
             {paginatedOperators.length > 0 ? (
-                <div className={cn(viewMode === "grid" ? "grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-6 lg:gap-3 xl:grid-cols-8 xl:gap-4" : "flex flex-col gap-2")}>
+                <div
+                    className={cn(
+                        viewMode === "grid" ? "grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-6 lg:gap-3 xl:grid-cols-8 xl:gap-4" : "flex flex-col gap-1", // Reduced gap for tighter list rows
+                    )}
+                >
                     {paginatedOperators.map((operator) => {
                         const operatorId = operator.id!;
                         const isCurrentlyHovered = hoveredOperator === operatorId;
@@ -318,7 +340,7 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                                 onChange={(e) => setPageInput(e.target.value)}
                                 onKeyDown={(e) => {
                                     if (e.key === "Enter") {
-                                        const page = parseInt(pageInput, 10);
+                                        const page = Number.parseInt(pageInput, 10);
                                         if (!Number.isNaN(page) && page >= 1 && page <= totalPages) {
                                             handlePageChange(page);
                                         } else {
@@ -327,7 +349,7 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                                     }
                                 }}
                                 onBlur={() => {
-                                    const page = parseInt(pageInput, 10);
+                                    const page = Number.parseInt(pageInput, 10);
                                     if (!Number.isNaN(page) && page >= 1 && page <= totalPages) {
                                         handlePageChange(page);
                                     } else {
@@ -362,55 +384,72 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
 
                                 if (totalPages <= maxVisible) {
                                     for (let i = 1; i <= totalPages; i++) pages.push(i);
-                                } else {
-                                    pages.push(1);
-                                    if (currentPage <= Math.ceil(maxVisible / 2)) {
-                                        // Near start
-                                        for (let i = 2; i < maxVisible - 1; i++) pages.push(i);
-                                        pages.push("ellipsis-end", totalPages);
-                                    } else if (currentPage >= totalPages - Math.floor(maxVisible / 2)) {
-                                        // Near end
-                                        pages.push("ellipsis-start");
-                                        for (let i = totalPages - maxVisible + 3; i <= totalPages; i++) pages.push(i);
-                                    } else {
-                                        // Middle
-                                        pages.push("ellipsis-start");
-                                        const sideCount = Math.floor((maxVisible - 4) / 2);
-                                        for (let i = currentPage - sideCount; i <= currentPage + sideCount; i++) pages.push(i);
-                                        pages.push("ellipsis-end", totalPages);
-                                    }
+                                    return pages;
                                 }
+
+                                pages.push(1);
+                                const sideCount = Math.floor((maxVisible - 3) / 2);
+
+                                if (currentPage <= sideCount + 2) {
+                                    for (let i = 2; i <= Math.min(maxVisible - 2, totalPages - 1); i++) pages.push(i);
+                                    if (totalPages > maxVisible - 1) pages.push("ellipsis-end");
+                                } else if (currentPage >= totalPages - sideCount - 1) {
+                                    pages.push("ellipsis-start");
+                                    for (let i = Math.max(totalPages - maxVisible + 3, 2); i <= totalPages - 1; i++) pages.push(i);
+                                } else {
+                                    pages.push("ellipsis-start");
+                                    for (let i = currentPage - sideCount; i <= currentPage + sideCount; i++) pages.push(i);
+                                    pages.push("ellipsis-end");
+                                }
+
+                                pages.push(totalPages);
                                 return pages;
                             };
 
-                            const renderPages = (pages: (number | "ellipsis-start" | "ellipsis-end")[]) =>
-                                pages.map((page, idx) => {
-                                    if (page === "ellipsis-start" || page === "ellipsis-end") {
-                                        return (
-                                            <span key={`${page}-${idx}`} className="flex h-9 w-9 items-center justify-center text-muted-foreground">
-                                                ...
-                                            </span>
-                                        );
-                                    }
-                                    return (
-                                        <button
-                                            className={cn("flex h-9 w-9 items-center justify-center rounded-lg font-medium text-sm transition-colors", currentPage === page ? "bg-primary text-primary-foreground" : "border border-border bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground")}
-                                            key={idx}
-                                            onClick={() => handlePageChange(page)}
-                                        >
-                                            {page}
-                                        </button>
-                                    );
-                                });
-
                             return (
                                 <>
-                                    {/* Mobile: compact pagination (5 items max) */}
-                                    <div className="flex items-center gap-1 sm:hidden">{renderPages(getPages(5))}</div>
-                                    {/* Tablet: medium pagination (6 items max) */}
-                                    <div className="hidden items-center gap-1 sm:flex md:hidden">{renderPages(getPages(6))}</div>
-                                    {/* Desktop: full pagination (7 items max) */}
-                                    <div className="hidden items-center gap-1 md:flex">{renderPages(getPages(7))}</div>
+                                    {/* Mobile: fewer pages */}
+                                    <div className="flex items-center gap-1 sm:hidden">
+                                        {getPages(5).map((page, idx) =>
+                                            page === "ellipsis-start" || page === "ellipsis-end" ? (
+                                                <span key={`${page}-${idx}`} className="px-1 text-muted-foreground">
+                                                    ...
+                                                </span>
+                                            ) : (
+                                                <button
+                                                    key={page}
+                                                    className={cn(
+                                                        "flex h-9 w-9 items-center justify-center rounded-lg border text-sm transition-colors",
+                                                        currentPage === page ? "border-primary bg-primary text-primary-foreground" : "border-border bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground",
+                                                    )}
+                                                    onClick={() => handlePageChange(page)}
+                                                >
+                                                    {page}
+                                                </button>
+                                            ),
+                                        )}
+                                    </div>
+                                    {/* Desktop: more pages */}
+                                    <div className="hidden items-center gap-1 sm:flex">
+                                        {getPages(7).map((page, idx) =>
+                                            page === "ellipsis-start" || page === "ellipsis-end" ? (
+                                                <span key={`${page}-${idx}`} className="px-1 text-muted-foreground">
+                                                    ...
+                                                </span>
+                                            ) : (
+                                                <button
+                                                    key={page}
+                                                    className={cn(
+                                                        "flex h-9 w-9 items-center justify-center rounded-lg border text-sm transition-colors",
+                                                        currentPage === page ? "border-primary bg-primary text-primary-foreground" : "border-border bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground",
+                                                    )}
+                                                    onClick={() => handlePageChange(page)}
+                                                >
+                                                    {page}
+                                                </button>
+                                            ),
+                                        )}
+                                    </div>
                                 </>
                             );
                         })()}

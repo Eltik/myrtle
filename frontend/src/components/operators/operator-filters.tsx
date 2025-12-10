@@ -197,7 +197,7 @@ export function OperatorFilters({
     const hasFilters = selectedClasses.length > 0 || selectedSubclasses.length > 0 || selectedRarities.length > 0 || selectedGenders.length > 0 || selectedBirthPlaces.length > 0 || selectedNations.length > 0 || selectedFactions.length > 0 || selectedRaces.length > 0 || selectedArtists.length > 0;
 
     return (
-        <div className="z-[99] min-w-0 overflow-hidden rounded-lg text-foreground">
+        <div className="z-99 min-w-0 overflow-hidden rounded-lg text-foreground">
             <div className="p-3 sm:p-4">
                 <div className="mb-4 flex items-center justify-between">
                     <h3 className="font-semibold text-foreground">Filters & Sorting</h3>

@@ -42,19 +42,96 @@ export function OperatorCard({ operator, viewMode, isHovered = false, shouldGray
 
     if (viewMode === "list") {
         return (
-            <Link className={cn("group flex items-center gap-4 rounded-lg border border-muted/50 bg-card p-3 transition-all duration-200 hover:bg-card/80", shouldGrayscale && "grayscale", isHovered && "grayscale-0")} href={`/operators/${operatorId}`}>
-                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg">
-                    <Image alt={operator.name} className="object-cover" fill src={`/api/cdn${operator.portrait}`} />
+            <Link className={cn("group relative flex items-center gap-3 rounded-lg border border-transparent bg-card/50 px-3 py-2.5 transition-all duration-200 hover:border-border hover:bg-card", shouldGrayscale && "grayscale", isHovered && "grayscale-0")} href={`/operators/${operatorId}`}>
+                {/* Rarity indicator line on left */}
+                <div className="-translate-y-1/2 absolute top-1/2 left-0 h-8 w-0.5 rounded-full opacity-60 transition-opacity group-hover:opacity-100" style={{ backgroundColor: rarityColor }} />
+
+                {/* Portrait - fixed width for alignment */}
+                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md border border-border/50 bg-background">
+                    <Image alt={operator.name} className="object-cover transition-transform duration-200 group-hover:scale-110" fill src={`/api/cdn${operator.portrait}`} />
                 </div>
-                <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                        <span className="truncate font-semibold text-foreground">{operator.name}</span>
-                        <span className="text-amber-400 text-sm">{"★".repeat(rarityNum)}</span>
+
+                {/* Desktop Layout: Name column */}
+                <div className="hidden min-w-0 flex-1 md:block">
+                    <span className="truncate font-semibold text-foreground text-sm uppercase tracking-wide">{operator.name}</span>
+                </div>
+
+                {/* Desktop: Rarity stars - w-24 to match header */}
+                <div className="hidden w-24 shrink-0 items-center gap-0.5 md:flex">
+                    {Array.from({ length: rarityNum }).map((_, i) => (
+                        <span key={i} className="text-sm" style={{ color: rarityColor }}>
+                            ★
+                        </span>
+                    ))}
+                </div>
+
+                {/* Desktop: Class info - w-32 to match header */}
+                <div className="hidden w-32 shrink-0 items-center gap-2 md:flex">
+                    <div className="flex h-5 w-5 items-center justify-center">
+                        <Image alt={formatProfession(operator.profession)} className="opacity-60 transition-opacity group-hover:opacity-100" height={20} width={20} src={`/api/cdn/upk/arts/ui/[uc]charcommon/icon_profession_${operator.profession.toLowerCase()}.png`} />
                     </div>
-                    <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                        <span>{formatProfession(operator.profession)}</span>
-                        <span className="text-border">•</span>
-                        <span>{capitalize(formatSubProfession(operator.subProfessionId.toLowerCase()))}</span>
+                    <span className="text-muted-foreground text-sm">{formatProfession(operator.profession)}</span>
+                </div>
+
+                {/* Desktop: Archetype - w-40 to match header */}
+                <div className="hidden w-40 shrink-0 lg:block">
+                    <span className="truncate text-muted-foreground text-sm">{capitalize(formatSubProfession(operator.subProfessionId.toLowerCase()))}</span>
+                </div>
+
+                {/* Desktop: Faction logo - w-8 to match header */}
+                <div className="hidden w-8 shrink-0 justify-center xl:flex">
+                    <div className="flex h-6 w-6 items-center justify-center opacity-40 transition-opacity group-hover:opacity-70">
+                        <Image
+                            alt={String(operator.nationId ?? operator.teamId ?? "Rhodes Island")}
+                            className="object-contain"
+                            height={24}
+                            width={24}
+                            src={operator.nationId ? `/api/cdn/upk/spritepack/ui_camp_logo_0/logo_${String(operator.nationId)}.png` : operator.teamId ? `/api/cdn/upk/spritepack/ui_camp_logo_0/logo_${operator.teamId}.png` : `/api/cdn/upk/spritepack/ui_camp_logo_0/logo_rhodes.png`}
+                        />
+                    </div>
+                </div>
+
+                {/* Mobile Layout: Comprehensive info display */}
+                <div className="flex min-w-0 flex-1 flex-col gap-1 md:hidden">
+                    {/* Name row with faction icon */}
+                    <div className="flex items-center gap-2">
+                        <span className="truncate font-semibold text-foreground text-sm uppercase tracking-wide">{operator.name}</span>
+                        <div className="flex h-4 w-4 shrink-0 items-center justify-center opacity-50">
+                            <Image
+                                alt={String(operator.nationId ?? operator.teamId ?? "Rhodes Island")}
+                                className="object-contain"
+                                height={16}
+                                width={16}
+                                src={operator.nationId ? `/api/cdn/upk/spritepack/ui_camp_logo_0/logo_${String(operator.nationId)}.png` : operator.teamId ? `/api/cdn/upk/spritepack/ui_camp_logo_0/logo_${operator.teamId}.png` : `/api/cdn/upk/spritepack/ui_camp_logo_0/logo_rhodes.png`}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Info row: Rarity, Class, Archetype */}
+                    <div className="flex items-center gap-2 text-xs">
+                        {/* Rarity stars */}
+                        <div className="flex items-center gap-0.5">
+                            {Array.from({ length: rarityNum }).map((_, i) => (
+                                <span key={i} style={{ color: rarityColor }}>
+                                    ★
+                                </span>
+                            ))}
+                        </div>
+
+                        <span className="text-muted-foreground/50">·</span>
+
+                        {/* Class with icon */}
+                        <div className="flex items-center gap-1">
+                            <div className="flex h-4 w-4 items-center justify-center">
+                                <Image alt={formatProfession(operator.profession)} className="opacity-60" height={14} width={14} src={`/api/cdn/upk/arts/ui/[uc]charcommon/icon_profession_${operator.profession.toLowerCase()}.png`} />
+                            </div>
+                            <span className="text-muted-foreground">{formatProfession(operator.profession)}</span>
+                        </div>
+
+                        <span className="text-muted-foreground/50">·</span>
+
+                        {/* Archetype */}
+                        <span className="truncate text-muted-foreground">{capitalize(formatSubProfession(operator.subProfessionId.toLowerCase()))}</span>
                     </div>
                 </div>
             </Link>
