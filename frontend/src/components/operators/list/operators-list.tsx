@@ -2,7 +2,7 @@
 
 import { Grid3X3, LayoutList, Search, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
-import { MorphingPopover, MorphingPopoverContent, MorphingPopoverTrigger } from "~/components/ui/morphing-popover";
+import { MorphingPopover, MorphingPopoverContent, MorphingPopoverTrigger } from "~/components/ui/motion-primitives/morphing-popover";
 import { cn } from "~/lib/utils";
 import type { OperatorFromList } from "~/types/api/operators";
 import { CLASSES, GENDERS, ITEMS_PER_PAGE, RARITIES } from "./constants";

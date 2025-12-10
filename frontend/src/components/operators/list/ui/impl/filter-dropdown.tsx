@@ -1,6 +1,6 @@
 import { ChevronDown } from "lucide-react";
-import { Button } from "~/components/ui/button";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
+import { Button } from "~/components/ui/shadcn/button";
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "~/components/ui/shadcn/dropdown-menu";
 import { FilterTag } from "./filter-tag";
 
 interface FilterDropdownProps<T extends string> {
