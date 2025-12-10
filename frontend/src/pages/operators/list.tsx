@@ -1,6 +1,6 @@
 import type { NextPage } from "next";
 import Head from "next/head";
-import { OperatorsList } from "~/components/operators/operators-list";
+import { OperatorsList } from "~/components/operators/list/operators-list";
 import { env } from "~/env";
 import type { Operator } from "~/types/api";
 import type { OperatorFromList } from "~/types/api/operators";
