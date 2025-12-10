@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Grid3X3, Layout
 import { useMemo, useState } from "react";
 import { cn, rarityToNumber } from "~/lib/utils";
 import type { OperatorFromList } from "~/types/api/operators";
+import { MorphingPopover, MorphingPopoverContent, MorphingPopoverTrigger } from "~/components/ui/morphing-popover";
 import { OperatorCard } from "./operator-card";
 import { OperatorFilters } from "./operator-filters";
 
@@ -34,7 +35,6 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
     const [hoveredOperator, setHoveredOperator] = useState<string | null>(null);
     const [isGrayscaleActive, setIsGrayscaleActive] = useState(false);
 
-    // Compute available filter options from data
     const filterOptions = useMemo(() => {
         const subclasses = new Set<string>();
         const birthPlaces = new Set<string>();
@@ -208,51 +208,54 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                         </button>
                     </div>
 
-                    {/* Filter Toggle */}
-                    <button className={cn("flex h-10 items-center gap-2 rounded-lg border px-3 transition-colors", showFilters || hasActiveFilters ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary/50 text-muted-foreground hover:text-foreground")} onClick={() => setShowFilters(!showFilters)}>
-                        <SlidersHorizontal className="h-4 w-4" />
-                        <span className="font-medium text-sm">Filters</span>
-                        {hasActiveFilters && <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">{activeFilterCount}</span>}
-                    </button>
+                    {/* Filter Toggle with Morphing Popover */}
+                    <MorphingPopover open={showFilters} onOpenChange={setShowFilters}>
+                        <MorphingPopoverTrigger>
+                            <button className={cn("flex h-10 items-center gap-2 rounded-lg border px-3 transition-colors", showFilters || hasActiveFilters ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary/50 text-muted-foreground hover:text-foreground")} type="button">
+                                <SlidersHorizontal className="h-4 w-4" />
+                                <span className="font-medium text-sm">Filters</span>
+                                {hasActiveFilters && <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">{activeFilterCount}</span>}
+                            </button>
+                        </MorphingPopoverTrigger>
+                        <MorphingPopoverContent className="w-[calc(100vw-2rem)] max-w-4xl bg-card/95 p-0 backdrop-blur-sm sm:w-[600px] md:w-[700px] lg:w-[900px] drop-shadow-2xl">
+                            <OperatorFilters
+                                classes={CLASSES}
+                                subclasses={filterOptions.subclasses}
+                                genders={GENDERS}
+                                birthPlaces={filterOptions.birthPlaces}
+                                nations={filterOptions.nations}
+                                factions={filterOptions.factions}
+                                races={filterOptions.races}
+                                artists={filterOptions.artists}
+                                onClassChange={setSelectedClasses}
+                                onSubclassChange={setSelectedSubclasses}
+                                onClearFilters={clearFilters}
+                                onGenderChange={setSelectedGenders}
+                                onBirthPlaceChange={setSelectedBirthPlaces}
+                                onNationChange={setSelectedNations}
+                                onFactionChange={setSelectedFactions}
+                                onRaceChange={setSelectedRaces}
+                                onArtistChange={setSelectedArtists}
+                                onRarityChange={setSelectedRarities}
+                                onSortByChange={setSortBy}
+                                onSortOrderChange={setSortOrder}
+                                rarities={RARITIES}
+                                selectedClasses={selectedClasses}
+                                selectedSubclasses={selectedSubclasses}
+                                selectedGenders={selectedGenders}
+                                selectedBirthPlaces={selectedBirthPlaces}
+                                selectedNations={selectedNations}
+                                selectedFactions={selectedFactions}
+                                selectedRaces={selectedRaces}
+                                selectedArtists={selectedArtists}
+                                selectedRarities={selectedRarities}
+                                sortBy={sortBy}
+                                sortOrder={sortOrder}
+                            />
+                        </MorphingPopoverContent>
+                    </MorphingPopover>
                 </div>
             </div>
-
-            {/* Filters Panel */}
-            <OperatorFilters
-                classes={CLASSES}
-                subclasses={filterOptions.subclasses}
-                genders={GENDERS}
-                birthPlaces={filterOptions.birthPlaces}
-                nations={filterOptions.nations}
-                factions={filterOptions.factions}
-                races={filterOptions.races}
-                artists={filterOptions.artists}
-                isOpen={showFilters}
-                onClassChange={setSelectedClasses}
-                onSubclassChange={setSelectedSubclasses}
-                onClearFilters={clearFilters}
-                onGenderChange={setSelectedGenders}
-                onBirthPlaceChange={setSelectedBirthPlaces}
-                onNationChange={setSelectedNations}
-                onFactionChange={setSelectedFactions}
-                onRaceChange={setSelectedRaces}
-                onArtistChange={setSelectedArtists}
-                onRarityChange={setSelectedRarities}
-                onSortByChange={setSortBy}
-                onSortOrderChange={setSortOrder}
-                rarities={RARITIES}
-                selectedClasses={selectedClasses}
-                selectedSubclasses={selectedSubclasses}
-                selectedGenders={selectedGenders}
-                selectedBirthPlaces={selectedBirthPlaces}
-                selectedNations={selectedNations}
-                selectedFactions={selectedFactions}
-                selectedRaces={selectedRaces}
-                selectedArtists={selectedArtists}
-                selectedRarities={selectedRarities}
-                sortBy={sortBy}
-                sortOrder={sortOrder}
-            />
 
             {/* Results Count */}
             <div className="flex items-center justify-between text-muted-foreground text-sm">

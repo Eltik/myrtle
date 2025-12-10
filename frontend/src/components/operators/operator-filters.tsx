@@ -8,7 +8,6 @@ import { Button } from "~/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 
 interface OperatorFiltersProps {
-    isOpen: boolean;
     classes: string[];
     subclasses: string[];
     rarities: number[];
@@ -90,7 +89,6 @@ const NATION_DISPLAY: Record<string, string> = {
 };
 
 export function OperatorFilters({
-    isOpen,
     classes,
     subclasses,
     rarities,
@@ -198,10 +196,8 @@ export function OperatorFilters({
 
     const hasFilters = selectedClasses.length > 0 || selectedSubclasses.length > 0 || selectedRarities.length > 0 || selectedGenders.length > 0 || selectedBirthPlaces.length > 0 || selectedNations.length > 0 || selectedFactions.length > 0 || selectedRaces.length > 0 || selectedArtists.length > 0;
 
-    if (!isOpen) return null;
-
     return (
-        <div className="min-w-0 overflow-hidden rounded-lg border border-border bg-card/50 backdrop-blur-sm">
+        <div className="z-[99] min-w-0 overflow-hidden rounded-lg text-foreground">
             <div className="p-3 sm:p-4">
                 <div className="mb-4 flex items-center justify-between">
                     <h3 className="font-semibold text-foreground">Filters & Sorting</h3>
