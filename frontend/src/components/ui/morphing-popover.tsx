@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect, createContext, useContext, type RefObject } from "react";
 import { AnimatePresence, MotionConfig, motion, type Transition, type Variants } from "motion/react";
+import { createContext, type RefObject, useContext, useEffect, useRef, useState } from "react";
 import { cn } from "~/lib/utils";
 
 const TRANSITION: Transition = {
@@ -88,8 +88,9 @@ function MorphingPopoverTrigger({ children, className }: MorphingPopoverTriggerP
     }
 
     return (
+        // biome-ignore lint/a11y/useSemanticElements: This wraps arbitrary children which may include buttons, using a semantic button could cause nested button issues
         <div
-            ref={context.triggerRef}
+            className={cn("cursor-pointer", className)}
             onClick={context.toggle}
             onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
@@ -97,9 +98,9 @@ function MorphingPopoverTrigger({ children, className }: MorphingPopoverTriggerP
                     context.toggle();
                 }
             }}
-            className={cn("cursor-pointer", className)}
+            ref={context.triggerRef}
+            role="button"
             tabIndex={0}
-            aria-expanded={context.isOpen}
         >
             {children}
         </div>
@@ -157,13 +158,13 @@ function MorphingPopoverContent({ children, className, ...props }: MorphingPopov
             {context.isOpen && (
                 <motion.div
                     {...props}
-                    ref={ref}
-                    role="dialog"
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
                     aria-modal="true"
                     className={cn("absolute top-full right-0 z-50 mt-2 overflow-hidden rounded-lg border border-border bg-card shadow-lg", className)}
-                    initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                    initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                    ref={ref}
+                    role="dialog"
                     variants={context.variants}
                 >
                     {children}

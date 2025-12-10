@@ -59,7 +59,7 @@ function isNavItemActive(item: NavItem, pathname: string): boolean {
         return item.href === pathname;
     }
     // For dropdown items, check if current path matches any dropdown href
-    return item.dropdown.some((dropdownItem) => pathname === dropdownItem.href || pathname.startsWith(dropdownItem.href + "/"));
+    return item.dropdown.some((dropdownItem) => pathname === dropdownItem.href || pathname.startsWith(`${dropdownItem.href}/`));
 }
 
 export function Header() {

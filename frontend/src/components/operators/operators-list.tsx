@@ -2,9 +2,9 @@
 
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Grid3X3, LayoutList, Search, SlidersHorizontal } from "lucide-react";
 import { useMemo, useState } from "react";
+import { MorphingPopover, MorphingPopoverContent, MorphingPopoverTrigger } from "~/components/ui/morphing-popover";
 import { cn, rarityToNumber } from "~/lib/utils";
 import type { OperatorFromList } from "~/types/api/operators";
-import { MorphingPopover, MorphingPopoverContent, MorphingPopoverTrigger } from "~/components/ui/morphing-popover";
 import { OperatorCard } from "./operator-card";
 import { OperatorFilters } from "./operator-filters";
 
@@ -201,16 +201,16 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                 <div className="flex items-center gap-2">
                     {/* View Toggle */}
                     <div className="flex items-center rounded-lg border border-border bg-secondary/50 p-1">
-                        <button className={cn("flex h-8 w-8 items-center justify-center rounded-md transition-colors", viewMode === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")} onClick={() => setViewMode("grid")}>
+                        <button className={cn("flex h-8 w-8 items-center justify-center rounded-md transition-colors", viewMode === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")} onClick={() => setViewMode("grid")} type="button">
                             <Grid3X3 className="h-4 w-4" />
                         </button>
-                        <button className={cn("flex h-8 w-8 items-center justify-center rounded-md transition-colors", viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")} onClick={() => setViewMode("list")}>
+                        <button className={cn("flex h-8 w-8 items-center justify-center rounded-md transition-colors", viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")} onClick={() => setViewMode("list")} type="button">
                             <LayoutList className="h-4 w-4" />
                         </button>
                     </div>
 
                     {/* Filter Toggle with Morphing Popover */}
-                    <MorphingPopover open={showFilters} onOpenChange={setShowFilters}>
+                    <MorphingPopover onOpenChange={setShowFilters} open={showFilters}>
                         <MorphingPopoverTrigger>
                             <button className={cn("flex h-10 items-center gap-2 rounded-lg border px-3 transition-colors", showFilters || hasActiveFilters ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary/50 text-muted-foreground hover:text-foreground")} type="button">
                                 <SlidersHorizontal className="h-4 w-4" />
@@ -220,38 +220,38 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                         </MorphingPopoverTrigger>
                         <MorphingPopoverContent className="w-[calc(100vw-2rem)] max-w-4xl bg-card/95 p-0 drop-shadow-2xl backdrop-blur-sm sm:w-[600px] md:w-[700px] lg:w-[900px]">
                             <OperatorFilters
-                                classes={CLASSES}
-                                subclasses={filterOptions.subclasses}
-                                genders={GENDERS}
-                                birthPlaces={filterOptions.birthPlaces}
-                                nations={filterOptions.nations}
-                                factions={filterOptions.factions}
-                                races={filterOptions.races}
                                 artists={filterOptions.artists}
-                                onClassChange={setSelectedClasses}
-                                onSubclassChange={setSelectedSubclasses}
-                                onClearFilters={clearFilters}
-                                onGenderChange={setSelectedGenders}
-                                onBirthPlaceChange={setSelectedBirthPlaces}
-                                onNationChange={setSelectedNations}
-                                onFactionChange={setSelectedFactions}
-                                onRaceChange={setSelectedRaces}
+                                birthPlaces={filterOptions.birthPlaces}
+                                classes={CLASSES}
+                                factions={filterOptions.factions}
+                                genders={GENDERS}
+                                nations={filterOptions.nations}
                                 onArtistChange={setSelectedArtists}
+                                onBirthPlaceChange={setSelectedBirthPlaces}
+                                onClassChange={setSelectedClasses}
+                                onClearFilters={clearFilters}
+                                onFactionChange={setSelectedFactions}
+                                onGenderChange={setSelectedGenders}
+                                onNationChange={setSelectedNations}
+                                onRaceChange={setSelectedRaces}
                                 onRarityChange={setSelectedRarities}
                                 onSortByChange={setSortBy}
                                 onSortOrderChange={setSortOrder}
+                                onSubclassChange={setSelectedSubclasses}
+                                races={filterOptions.races}
                                 rarities={RARITIES}
-                                selectedClasses={selectedClasses}
-                                selectedSubclasses={selectedSubclasses}
-                                selectedGenders={selectedGenders}
-                                selectedBirthPlaces={selectedBirthPlaces}
-                                selectedNations={selectedNations}
-                                selectedFactions={selectedFactions}
-                                selectedRaces={selectedRaces}
                                 selectedArtists={selectedArtists}
+                                selectedBirthPlaces={selectedBirthPlaces}
+                                selectedClasses={selectedClasses}
+                                selectedFactions={selectedFactions}
+                                selectedGenders={selectedGenders}
+                                selectedNations={selectedNations}
+                                selectedRaces={selectedRaces}
                                 selectedRarities={selectedRarities}
+                                selectedSubclasses={selectedSubclasses}
                                 sortBy={sortBy}
                                 sortOrder={sortOrder}
+                                subclasses={filterOptions.subclasses}
                             />
                         </MorphingPopoverContent>
                     </MorphingPopover>
@@ -290,7 +290,7 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                     )}
                 >
                     {paginatedOperators.map((operator) => {
-                        const operatorId = operator.id!;
+                        const operatorId = operator.id ?? "";
                         const isCurrentlyHovered = hoveredOperator === operatorId;
                         const shouldGrayscale = isGrayscaleActive && !isCurrentlyHovered;
 
@@ -316,7 +316,7 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                     </div>
                     <h3 className="mb-2 font-semibold text-foreground text-lg">No operators found</h3>
                     <p className="mb-4 max-w-sm text-muted-foreground text-sm">Try adjusting your search or filter criteria to find what you're looking for.</p>
-                    <button className="text-primary text-sm hover:underline" onClick={clearFilters}>
+                    <button className="text-primary text-sm hover:underline" onClick={clearFilters} type="button">
                         Clear all filters
                     </button>
                 </div>
@@ -333,10 +333,16 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                             <span className="text-muted-foreground text-sm">Go to:</span>
                             <input
                                 className="h-8 w-14 rounded-md border border-border bg-secondary/50 px-2 text-center text-foreground text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                                type="number"
-                                min={1}
                                 max={totalPages}
-                                value={pageInput}
+                                min={1}
+                                onBlur={() => {
+                                    const page = Number.parseInt(pageInput, 10);
+                                    if (!Number.isNaN(page) && page >= 1 && page <= totalPages) {
+                                        handlePageChange(page);
+                                    } else {
+                                        setPageInput(currentPage.toString());
+                                    }
+                                }}
                                 onChange={(e) => setPageInput(e.target.value)}
                                 onKeyDown={(e) => {
                                     if (e.key === "Enter") {
@@ -348,14 +354,8 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                                         }
                                     }
                                 }}
-                                onBlur={() => {
-                                    const page = Number.parseInt(pageInput, 10);
-                                    if (!Number.isNaN(page) && page >= 1 && page <= totalPages) {
-                                        handlePageChange(page);
-                                    } else {
-                                        setPageInput(currentPage.toString());
-                                    }
-                                }}
+                                type="number"
+                                value={pageInput}
                             />
                         </div>
                     </div>
@@ -365,6 +365,7 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                             disabled={currentPage === 1}
                             onClick={() => handlePageChange(1)}
                             title="First page"
+                            type="button"
                         >
                             <ChevronsLeft className="h-4 w-4" />
                         </button>
@@ -373,6 +374,7 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                             disabled={currentPage === 1}
                             onClick={() => handlePageChange(currentPage - 1)}
                             title="Previous page"
+                            type="button"
                         >
                             <ChevronLeft className="h-4 w-4" />
                         </button>
@@ -410,19 +412,20 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                                 <>
                                     {/* Mobile: fewer pages */}
                                     <div className="flex items-center gap-1 sm:hidden">
-                                        {getPages(5).map((page, idx) =>
+                                        {getPages(5).map((page) =>
                                             page === "ellipsis-start" || page === "ellipsis-end" ? (
-                                                <span key={`${page}-${idx}`} className="px-1 text-muted-foreground">
+                                                <span className="px-1 text-muted-foreground" key={page}>
                                                     ...
                                                 </span>
                                             ) : (
                                                 <button
-                                                    key={page}
                                                     className={cn(
                                                         "flex h-9 w-9 items-center justify-center rounded-lg border text-sm transition-colors",
                                                         currentPage === page ? "border-primary bg-primary text-primary-foreground" : "border-border bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground",
                                                     )}
+                                                    key={page}
                                                     onClick={() => handlePageChange(page)}
+                                                    type="button"
                                                 >
                                                     {page}
                                                 </button>
@@ -431,19 +434,20 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                                     </div>
                                     {/* Desktop: more pages */}
                                     <div className="hidden items-center gap-1 sm:flex">
-                                        {getPages(7).map((page, idx) =>
+                                        {getPages(7).map((page) =>
                                             page === "ellipsis-start" || page === "ellipsis-end" ? (
-                                                <span key={`${page}-${idx}`} className="px-1 text-muted-foreground">
+                                                <span className="px-1 text-muted-foreground" key={page}>
                                                     ...
                                                 </span>
                                             ) : (
                                                 <button
-                                                    key={page}
                                                     className={cn(
                                                         "flex h-9 w-9 items-center justify-center rounded-lg border text-sm transition-colors",
                                                         currentPage === page ? "border-primary bg-primary text-primary-foreground" : "border-border bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground",
                                                     )}
+                                                    key={page}
                                                     onClick={() => handlePageChange(page)}
+                                                    type="button"
                                                 >
                                                     {page}
                                                 </button>
@@ -459,6 +463,7 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                             disabled={currentPage === totalPages}
                             onClick={() => handlePageChange(currentPage + 1)}
                             title="Next page"
+                            type="button"
                         >
                             <ChevronRight className="h-4 w-4" />
                         </button>
@@ -467,6 +472,7 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                             disabled={currentPage === totalPages}
                             onClick={() => handlePageChange(totalPages)}
                             title="Last page"
+                            type="button"
                         >
                             <ChevronsRight className="h-4 w-4" />
                         </button>

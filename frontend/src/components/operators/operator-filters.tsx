@@ -2,10 +2,10 @@
 
 import { ArrowDown, ArrowUp, ChevronDown, X } from "lucide-react";
 import Image from "next/image";
-import { cn, formatSubProfession, capitalize, formatNationId } from "~/lib/utils";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
 import { Button } from "~/components/ui/button";
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
+import { capitalize, cn, formatNationId, formatSubProfession } from "~/lib/utils";
 
 interface OperatorFiltersProps {
     classes: string[];
@@ -202,7 +202,7 @@ export function OperatorFilters({
                 <div className="mb-4 flex items-center justify-between">
                     <h3 className="font-semibold text-foreground">Filters & Sorting</h3>
                     {hasFilters && (
-                        <button className="flex items-center gap-1 text-muted-foreground text-sm transition-colors hover:text-foreground" onClick={onClearFilters}>
+                        <button className="flex items-center gap-1 text-muted-foreground text-sm transition-colors hover:text-foreground" onClick={onClearFilters} type="button">
                             <X className="h-3 w-3" />
                             Clear all
                         </button>
@@ -214,12 +214,12 @@ export function OperatorFilters({
                     <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
                         {/* Class Filter */}
                         <div className="space-y-3">
-                            <label className="font-medium text-muted-foreground text-sm">Class</label>
+                            <span className="font-medium text-muted-foreground text-sm">Class</span>
                             <div className="flex flex-wrap gap-1.5">
                                 {classes.map((cls) => (
                                     <Tooltip key={cls}>
                                         <TooltipTrigger asChild>
-                                            <button className={cn("flex h-10 w-10 items-center justify-center rounded-lg border transition-all", selectedClasses.includes(cls) ? "border-primary bg-primary/20" : "border-border bg-secondary/50 hover:border-primary/50")} onClick={() => toggleClass(cls)}>
+                                            <button className={cn("flex h-10 w-10 items-center justify-center rounded-lg border transition-all", selectedClasses.includes(cls) ? "border-primary bg-primary/20" : "border-border bg-secondary/50 hover:border-primary/50")} onClick={() => toggleClass(cls)} type="button">
                                                 <Image alt={CLASS_DISPLAY[cls] ?? cls} className={cn("h-6 w-6", selectedClasses.includes(cls) ? "opacity-100" : "opacity-60")} height={24} src={`/api/cdn/upk/arts/ui/[uc]charcommon/icon_profession_${CLASS_ICON[cls] ?? cls.toLowerCase()}.png`} width={24} />
                                             </button>
                                         </TooltipTrigger>
@@ -233,10 +233,10 @@ export function OperatorFilters({
 
                         {/* Subclass Filter */}
                         <div className="space-y-3">
-                            <label className="font-medium text-muted-foreground text-sm">Archetype</label>
+                            <span className="font-medium text-muted-foreground text-sm">Archetype</span>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="w-full justify-between">
+                                    <Button className="w-full justify-between" variant="outline">
                                         <span className="truncate">{selectedSubclasses.length > 0 ? selectedSubclasses.map((s) => capitalize(formatSubProfession(s))).join(", ") : "Select archetype"}</span>
                                         <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                     </Button>
@@ -245,7 +245,7 @@ export function OperatorFilters({
                                     <DropdownMenuLabel>Archetypes</DropdownMenuLabel>
                                     <DropdownMenuSeparator />
                                     {subclasses.map((subclass) => (
-                                        <DropdownMenuCheckboxItem key={subclass} checked={selectedSubclasses.includes(subclass)} onCheckedChange={() => toggleSubclass(subclass)} onSelect={(e) => e.preventDefault()}>
+                                        <DropdownMenuCheckboxItem checked={selectedSubclasses.includes(subclass)} key={subclass} onCheckedChange={() => toggleSubclass(subclass)} onSelect={(e) => e.preventDefault()}>
                                             {formatSubProfession(subclass)}
                                         </DropdownMenuCheckboxItem>
                                     ))}
@@ -254,9 +254,9 @@ export function OperatorFilters({
                             {selectedSubclasses.length > 0 && (
                                 <div className="flex flex-wrap gap-1">
                                     {selectedSubclasses.map((subclass) => (
-                                        <span key={subclass} className="inline-flex items-center gap-1 rounded-md bg-primary/20 px-2 py-0.5 text-foreground text-xs">
+                                        <span className="inline-flex items-center gap-1 rounded-md bg-primary/20 px-2 py-0.5 text-foreground text-xs" key={subclass}>
                                             {capitalize(formatSubProfession(subclass))}
-                                            <button onClick={() => onSubclassChange(selectedSubclasses.filter((s) => s !== subclass))} className="hover:text-destructive">
+                                            <button className="hover:text-destructive" onClick={() => onSubclassChange(selectedSubclasses.filter((s) => s !== subclass))} type="button">
                                                 <X className="h-3 w-3" />
                                             </button>
                                         </span>
@@ -267,7 +267,7 @@ export function OperatorFilters({
 
                         {/* Rarity Filter */}
                         <div className="space-y-3">
-                            <label className="font-medium text-muted-foreground text-sm">Rarity</label>
+                            <span className="font-medium text-muted-foreground text-sm">Rarity</span>
                             <div className="flex flex-wrap gap-2">
                                 {rarities.map((rarity) => (
                                     <button
@@ -277,6 +277,7 @@ export function OperatorFilters({
                                         )}
                                         key={rarity}
                                         onClick={() => toggleRarity(rarity)}
+                                        type="button"
                                     >
                                         {rarity}★
                                     </button>
@@ -286,15 +287,19 @@ export function OperatorFilters({
 
                         {/* Sorting */}
                         <div className="space-y-3">
-                            <label className="font-medium text-muted-foreground text-sm">Sort By</label>
+                            <span className="font-medium text-muted-foreground text-sm">Sort By</span>
                             <div className="flex gap-2">
-                                <button className={cn("flex-1 rounded-lg border px-3 py-1.5 text-sm transition-all", sortBy === "rarity" ? "border-primary bg-primary/20 text-foreground" : "border-border bg-secondary/50 text-muted-foreground hover:text-foreground")} onClick={() => onSortByChange("rarity")}>
+                                <button
+                                    className={cn("flex-1 rounded-lg border px-3 py-1.5 text-sm transition-all", sortBy === "rarity" ? "border-primary bg-primary/20 text-foreground" : "border-border bg-secondary/50 text-muted-foreground hover:text-foreground")}
+                                    onClick={() => onSortByChange("rarity")}
+                                    type="button"
+                                >
                                     Rarity
                                 </button>
-                                <button className={cn("flex-1 rounded-lg border px-3 py-1.5 text-sm transition-all", sortBy === "name" ? "border-primary bg-primary/20 text-foreground" : "border-border bg-secondary/50 text-muted-foreground hover:text-foreground")} onClick={() => onSortByChange("name")}>
+                                <button className={cn("flex-1 rounded-lg border px-3 py-1.5 text-sm transition-all", sortBy === "name" ? "border-primary bg-primary/20 text-foreground" : "border-border bg-secondary/50 text-muted-foreground hover:text-foreground")} onClick={() => onSortByChange("name")} type="button">
                                     Name
                                 </button>
-                                <button className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-secondary/50 text-muted-foreground transition-colors hover:text-foreground" onClick={() => onSortOrderChange(sortOrder === "asc" ? "desc" : "asc")}>
+                                <button className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-secondary/50 text-muted-foreground transition-colors hover:text-foreground" onClick={() => onSortOrderChange(sortOrder === "asc" ? "desc" : "asc")} type="button">
                                     {sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
                                 </button>
                             </div>
@@ -305,13 +310,14 @@ export function OperatorFilters({
                     <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {/* Gender Filter */}
                         <div className="space-y-3">
-                            <label className="font-medium text-muted-foreground text-sm">Gender</label>
+                            <span className="font-medium text-muted-foreground text-sm">Gender</span>
                             <div className="flex flex-wrap gap-2">
                                 {genders.map((gender) => (
                                     <button
                                         className={cn("rounded-lg border px-3 py-1.5 text-sm transition-all", selectedGenders.includes(gender) ? "border-primary bg-primary/20 text-foreground" : "border-border bg-secondary/50 text-muted-foreground hover:text-foreground")}
                                         key={gender}
                                         onClick={() => toggleGender(gender)}
+                                        type="button"
                                     >
                                         {gender}
                                     </button>
@@ -321,10 +327,10 @@ export function OperatorFilters({
 
                         {/* Race Filter */}
                         <div className="space-y-3">
-                            <label className="font-medium text-muted-foreground text-sm">Race</label>
+                            <span className="font-medium text-muted-foreground text-sm">Race</span>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="w-full justify-between">
+                                    <Button className="w-full justify-between" variant="outline">
                                         <span className="truncate">{selectedRaces.length > 0 ? selectedRaces.join(", ") : "Select race"}</span>
                                         <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                     </Button>
@@ -333,7 +339,7 @@ export function OperatorFilters({
                                     <DropdownMenuLabel>Races</DropdownMenuLabel>
                                     <DropdownMenuSeparator />
                                     {races.map((race) => (
-                                        <DropdownMenuCheckboxItem key={race} checked={selectedRaces.includes(race)} onCheckedChange={() => toggleRace(race)} onSelect={(e) => e.preventDefault()}>
+                                        <DropdownMenuCheckboxItem checked={selectedRaces.includes(race)} key={race} onCheckedChange={() => toggleRace(race)} onSelect={(e) => e.preventDefault()}>
                                             {race}
                                         </DropdownMenuCheckboxItem>
                                     ))}
@@ -342,9 +348,9 @@ export function OperatorFilters({
                             {selectedRaces.length > 0 && (
                                 <div className="flex flex-wrap gap-1">
                                     {selectedRaces.map((race) => (
-                                        <span key={race} className="inline-flex items-center gap-1 rounded-md bg-primary/20 px-2 py-0.5 text-foreground text-xs">
+                                        <span className="inline-flex items-center gap-1 rounded-md bg-primary/20 px-2 py-0.5 text-foreground text-xs" key={race}>
                                             {race}
-                                            <button onClick={() => onRaceChange(selectedRaces.filter((r) => r !== race))} className="hover:text-destructive">
+                                            <button className="hover:text-destructive" onClick={() => onRaceChange(selectedRaces.filter((r) => r !== race))} type="button">
                                                 <X className="h-3 w-3" />
                                             </button>
                                         </span>
@@ -355,10 +361,10 @@ export function OperatorFilters({
 
                         {/* Birth Place Filter */}
                         <div className="space-y-3">
-                            <label className="font-medium text-muted-foreground text-sm">Place of Birth</label>
+                            <span className="font-medium text-muted-foreground text-sm">Place of Birth</span>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="w-full justify-between">
+                                    <Button className="w-full justify-between" variant="outline">
                                         <span className="truncate">{selectedBirthPlaces.length > 0 ? selectedBirthPlaces.join(", ") : "Select birth place"}</span>
                                         <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                     </Button>
@@ -367,7 +373,7 @@ export function OperatorFilters({
                                     <DropdownMenuLabel>Places of Birth</DropdownMenuLabel>
                                     <DropdownMenuSeparator />
                                     {birthPlaces.map((place) => (
-                                        <DropdownMenuCheckboxItem key={place} checked={selectedBirthPlaces.includes(place)} onCheckedChange={() => toggleBirthPlace(place)} onSelect={(e) => e.preventDefault()}>
+                                        <DropdownMenuCheckboxItem checked={selectedBirthPlaces.includes(place)} key={place} onCheckedChange={() => toggleBirthPlace(place)} onSelect={(e) => e.preventDefault()}>
                                             {place}
                                         </DropdownMenuCheckboxItem>
                                     ))}
@@ -376,9 +382,9 @@ export function OperatorFilters({
                             {selectedBirthPlaces.length > 0 && (
                                 <div className="flex flex-wrap gap-1">
                                     {selectedBirthPlaces.map((place) => (
-                                        <span key={place} className="inline-flex items-center gap-1 rounded-md bg-primary/20 px-2 py-0.5 text-foreground text-xs">
+                                        <span className="inline-flex items-center gap-1 rounded-md bg-primary/20 px-2 py-0.5 text-foreground text-xs" key={place}>
                                             {place}
-                                            <button onClick={() => onBirthPlaceChange(selectedBirthPlaces.filter((b) => b !== place))} className="hover:text-destructive">
+                                            <button className="hover:text-destructive" onClick={() => onBirthPlaceChange(selectedBirthPlaces.filter((b) => b !== place))} type="button">
                                                 <X className="h-3 w-3" />
                                             </button>
                                         </span>
@@ -389,10 +395,10 @@ export function OperatorFilters({
 
                         {/* Nation Filter */}
                         <div className="space-y-3">
-                            <label className="font-medium text-muted-foreground text-sm">Nation</label>
+                            <span className="font-medium text-muted-foreground text-sm">Nation</span>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="w-full justify-between">
+                                    <Button className="w-full justify-between" variant="outline">
                                         <span className="truncate">{selectedNations.length > 0 ? selectedNations.map((n) => NATION_DISPLAY[n] ?? n).join(", ") : "Select nation"}</span>
                                         <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                     </Button>
@@ -401,7 +407,7 @@ export function OperatorFilters({
                                     <DropdownMenuLabel>Nations</DropdownMenuLabel>
                                     <DropdownMenuSeparator />
                                     {nations.map((nation) => (
-                                        <DropdownMenuCheckboxItem key={nation} checked={selectedNations.includes(nation)} onCheckedChange={() => toggleNation(nation)} onSelect={(e) => e.preventDefault()}>
+                                        <DropdownMenuCheckboxItem checked={selectedNations.includes(nation)} key={nation} onCheckedChange={() => toggleNation(nation)} onSelect={(e) => e.preventDefault()}>
                                             {NATION_DISPLAY[nation] ?? nation}
                                         </DropdownMenuCheckboxItem>
                                     ))}
@@ -410,9 +416,9 @@ export function OperatorFilters({
                             {selectedNations.length > 0 && (
                                 <div className="flex flex-wrap gap-1">
                                     {selectedNations.map((nation) => (
-                                        <span key={nation} className="inline-flex items-center gap-1 rounded-md bg-primary/20 px-2 py-0.5 text-foreground text-xs">
+                                        <span className="inline-flex items-center gap-1 rounded-md bg-primary/20 px-2 py-0.5 text-foreground text-xs" key={nation}>
                                             {NATION_DISPLAY[nation] ?? nation}
-                                            <button onClick={() => onNationChange(selectedNations.filter((n) => n !== nation))} className="hover:text-destructive">
+                                            <button className="hover:text-destructive" onClick={() => onNationChange(selectedNations.filter((n) => n !== nation))} type="button">
                                                 <X className="h-3 w-3" />
                                             </button>
                                         </span>
@@ -423,10 +429,10 @@ export function OperatorFilters({
 
                         {/* Faction Filter */}
                         <div className="space-y-3">
-                            <label className="font-medium text-muted-foreground text-sm">Faction</label>
+                            <span className="font-medium text-muted-foreground text-sm">Faction</span>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="w-full justify-between">
+                                    <Button className="w-full justify-between" variant="outline">
                                         <span className="truncate">{selectedFactions.length > 0 ? selectedFactions.map((faction) => formatNationId(faction)).join(", ") : "Select faction"}</span>
                                         <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                     </Button>
@@ -435,7 +441,7 @@ export function OperatorFilters({
                                     <DropdownMenuLabel>Factions</DropdownMenuLabel>
                                     <DropdownMenuSeparator />
                                     {factions.map((faction) => (
-                                        <DropdownMenuCheckboxItem key={faction} checked={selectedFactions.includes(faction)} onCheckedChange={() => toggleFaction(faction)} onSelect={(e) => e.preventDefault()}>
+                                        <DropdownMenuCheckboxItem checked={selectedFactions.includes(faction)} key={faction} onCheckedChange={() => toggleFaction(faction)} onSelect={(e) => e.preventDefault()}>
                                             {formatNationId(faction)}
                                         </DropdownMenuCheckboxItem>
                                     ))}
@@ -444,9 +450,9 @@ export function OperatorFilters({
                             {selectedFactions.length > 0 && (
                                 <div className="flex flex-wrap gap-1">
                                     {selectedFactions.map((faction) => (
-                                        <span key={faction} className="inline-flex items-center gap-1 rounded-md bg-primary/20 px-2 py-0.5 text-foreground text-xs">
+                                        <span className="inline-flex items-center gap-1 rounded-md bg-primary/20 px-2 py-0.5 text-foreground text-xs" key={faction}>
                                             {formatNationId(faction)}
-                                            <button onClick={() => onFactionChange(selectedFactions.filter((f) => f !== faction))} className="hover:text-destructive">
+                                            <button className="hover:text-destructive" onClick={() => onFactionChange(selectedFactions.filter((f) => f !== faction))} type="button">
                                                 <X className="h-3 w-3" />
                                             </button>
                                         </span>
@@ -457,10 +463,10 @@ export function OperatorFilters({
 
                         {/* Artist Filter */}
                         <div className="space-y-3">
-                            <label className="font-medium text-muted-foreground text-sm">Artist</label>
+                            <span className="font-medium text-muted-foreground text-sm">Artist</span>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="w-full justify-between">
+                                    <Button className="w-full justify-between" variant="outline">
                                         <span className="truncate">{selectedArtists.length > 0 ? selectedArtists.join(", ") : "Select artist"}</span>
                                         <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                     </Button>
@@ -469,7 +475,7 @@ export function OperatorFilters({
                                     <DropdownMenuLabel>Artists</DropdownMenuLabel>
                                     <DropdownMenuSeparator />
                                     {artists.map((artist) => (
-                                        <DropdownMenuCheckboxItem key={artist} checked={selectedArtists.includes(artist)} onCheckedChange={() => toggleArtist(artist)} onSelect={(e) => e.preventDefault()}>
+                                        <DropdownMenuCheckboxItem checked={selectedArtists.includes(artist)} key={artist} onCheckedChange={() => toggleArtist(artist)} onSelect={(e) => e.preventDefault()}>
                                             {artist}
                                         </DropdownMenuCheckboxItem>
                                     ))}
@@ -478,9 +484,9 @@ export function OperatorFilters({
                             {selectedArtists.length > 0 && (
                                 <div className="flex flex-wrap gap-1">
                                     {selectedArtists.map((artist) => (
-                                        <span key={artist} className="inline-flex items-center gap-1 rounded-md bg-primary/20 px-2 py-0.5 text-foreground text-xs">
+                                        <span className="inline-flex items-center gap-1 rounded-md bg-primary/20 px-2 py-0.5 text-foreground text-xs" key={artist}>
                                             {artist}
-                                            <button onClick={() => onArtistChange(selectedArtists.filter((a) => a !== artist))} className="hover:text-destructive">
+                                            <button className="hover:text-destructive" onClick={() => onArtistChange(selectedArtists.filter((a) => a !== artist))} type="button">
                                                 <X className="h-3 w-3" />
                                             </button>
                                         </span>

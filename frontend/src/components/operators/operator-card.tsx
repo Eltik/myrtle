@@ -38,7 +38,7 @@ export function OperatorCard({ operator, viewMode, isHovered = false, shouldGray
     const rarityNum = rarityToNumber(operator.rarity);
     const rarityColor = RarityColors[rarityNum] ?? "#ffffff";
     const rarityBlurColor = RarityBlurColors[rarityNum] ?? "#aaaaaa";
-    const operatorId = operator.id!;
+    const operatorId = operator.id ?? "";
 
     if (viewMode === "list") {
         return (
@@ -59,7 +59,8 @@ export function OperatorCard({ operator, viewMode, isHovered = false, shouldGray
                 {/* Desktop: Rarity stars - w-24 to match header */}
                 <div className="hidden w-24 shrink-0 items-center gap-0.5 md:flex">
                     {Array.from({ length: rarityNum }).map((_, i) => (
-                        <span key={i} className="text-sm" style={{ color: rarityColor }}>
+                        // biome-ignore lint/suspicious/noArrayIndexKey: Static array of stars based on rarity count, order never changes
+                        <span className="text-sm" key={i} style={{ color: rarityColor }}>
                             ★
                         </span>
                     ))}
@@ -68,7 +69,7 @@ export function OperatorCard({ operator, viewMode, isHovered = false, shouldGray
                 {/* Desktop: Class info - w-32 to match header */}
                 <div className="hidden w-32 shrink-0 items-center gap-2 md:flex">
                     <div className="flex h-5 w-5 items-center justify-center">
-                        <Image alt={formatProfession(operator.profession)} className="opacity-60 transition-opacity group-hover:opacity-100" height={20} width={20} src={`/api/cdn/upk/arts/ui/[uc]charcommon/icon_profession_${operator.profession.toLowerCase()}.png`} />
+                        <Image alt={formatProfession(operator.profession)} className="opacity-60 transition-opacity group-hover:opacity-100" height={20} src={`/api/cdn/upk/arts/ui/[uc]charcommon/icon_profession_${operator.profession.toLowerCase()}.png`} width={20} />
                     </div>
                     <span className="text-muted-foreground text-sm">{formatProfession(operator.profession)}</span>
                 </div>
@@ -85,8 +86,8 @@ export function OperatorCard({ operator, viewMode, isHovered = false, shouldGray
                             alt={String(operator.nationId ?? operator.teamId ?? "Rhodes Island")}
                             className="object-contain"
                             height={24}
-                            width={24}
                             src={operator.nationId ? `/api/cdn/upk/spritepack/ui_camp_logo_0/logo_${String(operator.nationId)}.png` : operator.teamId ? `/api/cdn/upk/spritepack/ui_camp_logo_0/logo_${operator.teamId}.png` : `/api/cdn/upk/spritepack/ui_camp_logo_0/logo_rhodes.png`}
+                            width={24}
                         />
                     </div>
                 </div>
@@ -101,8 +102,8 @@ export function OperatorCard({ operator, viewMode, isHovered = false, shouldGray
                                 alt={String(operator.nationId ?? operator.teamId ?? "Rhodes Island")}
                                 className="object-contain"
                                 height={16}
-                                width={16}
                                 src={operator.nationId ? `/api/cdn/upk/spritepack/ui_camp_logo_0/logo_${String(operator.nationId)}.png` : operator.teamId ? `/api/cdn/upk/spritepack/ui_camp_logo_0/logo_${operator.teamId}.png` : `/api/cdn/upk/spritepack/ui_camp_logo_0/logo_rhodes.png`}
+                                width={16}
                             />
                         </div>
                     </div>
@@ -112,6 +113,7 @@ export function OperatorCard({ operator, viewMode, isHovered = false, shouldGray
                         {/* Rarity stars */}
                         <div className="flex items-center gap-0.5">
                             {Array.from({ length: rarityNum }).map((_, i) => (
+                                // biome-ignore lint/suspicious/noArrayIndexKey: Static array of stars based on rarity count, order never changes
                                 <span key={i} style={{ color: rarityColor }}>
                                     ★
                                 </span>
@@ -123,7 +125,7 @@ export function OperatorCard({ operator, viewMode, isHovered = false, shouldGray
                         {/* Class with icon */}
                         <div className="flex items-center gap-1">
                             <div className="flex h-4 w-4 items-center justify-center">
-                                <Image alt={formatProfession(operator.profession)} className="opacity-60" height={14} width={14} src={`/api/cdn/upk/arts/ui/[uc]charcommon/icon_profession_${operator.profession.toLowerCase()}.png`} />
+                                <Image alt={formatProfession(operator.profession)} className="opacity-60" height={14} src={`/api/cdn/upk/arts/ui/[uc]charcommon/icon_profession_${operator.profession.toLowerCase()}.png`} width={14} />
                             </div>
                             <span className="text-muted-foreground">{formatProfession(operator.profession)}</span>
                         </div>

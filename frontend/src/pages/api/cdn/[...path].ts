@@ -23,7 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     try {
         // Get raw URL to handle special characters properly
-        const rawUrl = req.url!;
+        const rawUrl = req.url ?? "";
         const urlParts = rawUrl.split("/api/cdn/")[1];
         if (!urlParts) {
             return res.status(400).json({ error: "Invalid path" });
@@ -65,8 +65,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 // Forward specific headers from client request if needed
                 Accept: req.headers.accept ?? "*/*",
                 "Accept-Encoding": (req.headers["accept-encoding"] as string) ?? "",
-                "User-Agent": req.headers["user-agent"]! ?? "",
-                "X-Forwarded-For": (req.headers["x-forwarded-for"] as string) ?? req.socket.remoteAddress! ?? "",
+                "User-Agent": req.headers["user-agent"] ?? "",
+                "X-Forwarded-For": (req.headers["x-forwarded-for"] as string) ?? req.socket.remoteAddress ?? "",
             },
         });
 
