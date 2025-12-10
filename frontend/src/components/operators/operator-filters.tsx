@@ -1,11 +1,11 @@
 "use client";
 
-import { ArrowDown, ArrowUp, ChevronDown, X } from "lucide-react";
+import { ArrowDown, ArrowUp, X } from "lucide-react";
 import Image from "next/image";
-import { Button } from "~/components/ui/button";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import { capitalize, cn, formatNationId, formatSubProfession } from "~/lib/utils";
+import { CLASS_DISPLAY, CLASS_ICON, NATION_DISPLAY } from "./constants";
+import { FilterDropdown } from "./ui/impl/filter-dropdown";
 
 interface OperatorFiltersProps {
     classes: string[];
@@ -42,51 +42,16 @@ interface OperatorFiltersProps {
     onClearFilters: () => void;
 }
 
-// Maps internal profession names to display names
-const CLASS_DISPLAY: Record<string, string> = {
-    WARRIOR: "Guard",
-    SNIPER: "Sniper",
-    TANK: "Defender",
-    MEDIC: "Medic",
-    SUPPORT: "Supporter",
-    CASTER: "Caster",
-    SPECIAL: "Specialist",
-    PIONEER: "Vanguard",
-};
-
-// Maps internal profession names to icon file names
-const CLASS_ICON: Record<string, string> = {
-    WARRIOR: "warrior",
-    SNIPER: "sniper",
-    TANK: "tank",
-    MEDIC: "medic",
-    SUPPORT: "support",
-    CASTER: "caster",
-    SPECIAL: "special",
-    PIONEER: "pioneer",
-};
-
-const NATION_DISPLAY: Record<string, string> = {
-    rhodes: "Rhodes Island",
-    kazimierz: "Kazimierz",
-    columbia: "Columbia",
-    laterano: "Laterano",
-    victoria: "Victoria",
-    sami: "Sami",
-    bolivar: "Bolivar",
-    iberia: "Iberia",
-    siracusa: "Siracusa",
-    higashi: "Higashi",
-    sargon: "Sargon",
-    kjerag: "Kjerag",
-    minos: "Minos",
-    yan: "Yan",
-    lungmen: "Lungmen",
-    ursus: "Ursus",
-    egir: "Ægir",
-    leithanien: "Leithanien",
-    rim: "Rim Billiton",
-};
+// Helper to create toggle functions for array state
+function createToggle<T>(selected: T[], onChange: (items: T[]) => void) {
+    return (item: T) => {
+        if (selected.includes(item)) {
+            onChange(selected.filter((i) => i !== item));
+        } else {
+            onChange([...selected, item]);
+        }
+    };
+}
 
 export function OperatorFilters({
     classes,
@@ -122,83 +87,16 @@ export function OperatorFilters({
     onSortOrderChange,
     onClearFilters,
 }: OperatorFiltersProps) {
-    const toggleClass = (cls: string) => {
-        if (selectedClasses.includes(cls)) {
-            onClassChange(selectedClasses.filter((c) => c !== cls));
-        } else {
-            onClassChange([...selectedClasses, cls]);
-        }
-    };
-
-    const toggleSubclass = (subclass: string) => {
-        if (selectedSubclasses.includes(subclass)) {
-            onSubclassChange(selectedSubclasses.filter((s) => s !== subclass));
-        } else {
-            onSubclassChange([...selectedSubclasses, subclass]);
-        }
-    };
-
-    const toggleRarity = (rarity: number) => {
-        if (selectedRarities.includes(rarity)) {
-            onRarityChange(selectedRarities.filter((r) => r !== rarity));
-        } else {
-            onRarityChange([...selectedRarities, rarity]);
-        }
-    };
-
-    const toggleGender = (gender: string) => {
-        if (selectedGenders.includes(gender)) {
-            onGenderChange(selectedGenders.filter((g) => g !== gender));
-        } else {
-            onGenderChange([...selectedGenders, gender]);
-        }
-    };
-
-    const toggleBirthPlace = (place: string) => {
-        if (selectedBirthPlaces.includes(place)) {
-            onBirthPlaceChange(selectedBirthPlaces.filter((p) => p !== place));
-        } else {
-            onBirthPlaceChange([...selectedBirthPlaces, place]);
-        }
-    };
-
-    const toggleNation = (nation: string) => {
-        if (selectedNations.includes(nation)) {
-            onNationChange(selectedNations.filter((n) => n !== nation));
-        } else {
-            onNationChange([...selectedNations, nation]);
-        }
-    };
-
-    const toggleFaction = (faction: string) => {
-        if (selectedFactions.includes(faction)) {
-            onFactionChange(selectedFactions.filter((f) => f !== faction));
-        } else {
-            onFactionChange([...selectedFactions, faction]);
-        }
-    };
-
-    const toggleRace = (race: string) => {
-        if (selectedRaces.includes(race)) {
-            onRaceChange(selectedRaces.filter((r) => r !== race));
-        } else {
-            onRaceChange([...selectedRaces, race]);
-        }
-    };
-
-    const toggleArtist = (artist: string) => {
-        if (selectedArtists.includes(artist)) {
-            onArtistChange(selectedArtists.filter((a) => a !== artist));
-        } else {
-            onArtistChange([...selectedArtists, artist]);
-        }
-    };
+    const toggleClass = createToggle(selectedClasses, onClassChange);
+    const toggleRarity = createToggle(selectedRarities, onRarityChange);
+    const toggleGender = createToggle(selectedGenders, onGenderChange);
 
     const hasFilters = selectedClasses.length > 0 || selectedSubclasses.length > 0 || selectedRarities.length > 0 || selectedGenders.length > 0 || selectedBirthPlaces.length > 0 || selectedNations.length > 0 || selectedFactions.length > 0 || selectedRaces.length > 0 || selectedArtists.length > 0;
 
     return (
         <div className="z-99 min-w-0 overflow-hidden rounded-lg text-foreground">
             <div className="p-3 sm:p-4">
+                {/* Header */}
                 <div className="mb-4 flex items-center justify-between">
                     <h3 className="font-semibold text-foreground">Filters & Sorting</h3>
                     {hasFilters && (
@@ -210,9 +108,9 @@ export function OperatorFilters({
                 </div>
 
                 <div className="space-y-6">
-                    {/* Row 1: Class, Subclass and Rarity */}
+                    {/* Row 1: Class, Subclass, Rarity, Sorting */}
                     <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
-                        {/* Class Filter */}
+                        {/* Class Filter - Icon buttons */}
                         <div className="space-y-3">
                             <span className="font-medium text-muted-foreground text-sm">Class</span>
                             <div className="flex flex-wrap gap-1.5">
@@ -231,41 +129,19 @@ export function OperatorFilters({
                             </div>
                         </div>
 
-                        {/* Subclass Filter */}
-                        <div className="space-y-3">
-                            <span className="font-medium text-muted-foreground text-sm">Archetype</span>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button className="w-full justify-between" variant="outline">
-                                        <span className="truncate">{selectedSubclasses.length > 0 ? selectedSubclasses.map((s) => capitalize(formatSubProfession(s))).join(", ") : "Select archetype"}</span>
-                                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="max-h-64 w-56 overflow-y-auto">
-                                    <DropdownMenuLabel>Archetypes</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    {subclasses.map((subclass) => (
-                                        <DropdownMenuCheckboxItem checked={selectedSubclasses.includes(subclass)} key={subclass} onCheckedChange={() => toggleSubclass(subclass)} onSelect={(e) => e.preventDefault()}>
-                                            {formatSubProfession(subclass)}
-                                        </DropdownMenuCheckboxItem>
-                                    ))}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            {selectedSubclasses.length > 0 && (
-                                <div className="flex flex-wrap gap-1">
-                                    {selectedSubclasses.map((subclass) => (
-                                        <span className="inline-flex items-center gap-1 rounded-md bg-primary/20 px-2 py-0.5 text-foreground text-xs" key={subclass}>
-                                            {capitalize(formatSubProfession(subclass))}
-                                            <button className="hover:text-destructive" onClick={() => onSubclassChange(selectedSubclasses.filter((s) => s !== subclass))} type="button">
-                                                <X className="h-3 w-3" />
-                                            </button>
-                                        </span>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                        {/* Subclass Filter - Dropdown */}
+                        <FilterDropdown
+                            formatOption={(s) => formatSubProfession(s)}
+                            formatSelected={(s) => capitalize(formatSubProfession(s))}
+                            label="Archetype"
+                            onRemove={(s) => onSubclassChange(selectedSubclasses.filter((x) => x !== s))}
+                            onToggle={createToggle(selectedSubclasses, onSubclassChange)}
+                            options={subclasses}
+                            placeholder="Select archetype"
+                            selectedOptions={selectedSubclasses}
+                        />
 
-                        {/* Rarity Filter */}
+                        {/* Rarity Filter - Buttons */}
                         <div className="space-y-3">
                             <span className="font-medium text-muted-foreground text-sm">Rarity</span>
                             <div className="flex flex-wrap gap-2">
@@ -306,9 +182,9 @@ export function OperatorFilters({
                         </div>
                     </div>
 
-                    {/* Row 2: Gender, Race and Dropdown Filters */}
+                    {/* Row 2: Gender, Race, and Dropdown Filters */}
                     <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                        {/* Gender Filter */}
+                        {/* Gender Filter - Buttons */}
                         <div className="space-y-3">
                             <span className="font-medium text-muted-foreground text-sm">Gender</span>
                             <div className="flex flex-wrap gap-2">
@@ -325,175 +201,20 @@ export function OperatorFilters({
                             </div>
                         </div>
 
-                        {/* Race Filter */}
-                        <div className="space-y-3">
-                            <span className="font-medium text-muted-foreground text-sm">Race</span>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button className="w-full justify-between" variant="outline">
-                                        <span className="truncate">{selectedRaces.length > 0 ? selectedRaces.join(", ") : "Select race"}</span>
-                                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="max-h-64 w-56 overflow-y-auto">
-                                    <DropdownMenuLabel>Races</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    {races.map((race) => (
-                                        <DropdownMenuCheckboxItem checked={selectedRaces.includes(race)} key={race} onCheckedChange={() => toggleRace(race)} onSelect={(e) => e.preventDefault()}>
-                                            {race}
-                                        </DropdownMenuCheckboxItem>
-                                    ))}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            {selectedRaces.length > 0 && (
-                                <div className="flex flex-wrap gap-1">
-                                    {selectedRaces.map((race) => (
-                                        <span className="inline-flex items-center gap-1 rounded-md bg-primary/20 px-2 py-0.5 text-foreground text-xs" key={race}>
-                                            {race}
-                                            <button className="hover:text-destructive" onClick={() => onRaceChange(selectedRaces.filter((r) => r !== race))} type="button">
-                                                <X className="h-3 w-3" />
-                                            </button>
-                                        </span>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                        {/* Race Filter - Dropdown */}
+                        <FilterDropdown label="Race" onRemove={(r) => onRaceChange(selectedRaces.filter((x) => x !== r))} onToggle={createToggle(selectedRaces, onRaceChange)} options={races} placeholder="Select race" selectedOptions={selectedRaces} />
 
-                        {/* Birth Place Filter */}
-                        <div className="space-y-3">
-                            <span className="font-medium text-muted-foreground text-sm">Place of Birth</span>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button className="w-full justify-between" variant="outline">
-                                        <span className="truncate">{selectedBirthPlaces.length > 0 ? selectedBirthPlaces.join(", ") : "Select birth place"}</span>
-                                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="max-h-64 w-56 overflow-y-auto">
-                                    <DropdownMenuLabel>Places of Birth</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    {birthPlaces.map((place) => (
-                                        <DropdownMenuCheckboxItem checked={selectedBirthPlaces.includes(place)} key={place} onCheckedChange={() => toggleBirthPlace(place)} onSelect={(e) => e.preventDefault()}>
-                                            {place}
-                                        </DropdownMenuCheckboxItem>
-                                    ))}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            {selectedBirthPlaces.length > 0 && (
-                                <div className="flex flex-wrap gap-1">
-                                    {selectedBirthPlaces.map((place) => (
-                                        <span className="inline-flex items-center gap-1 rounded-md bg-primary/20 px-2 py-0.5 text-foreground text-xs" key={place}>
-                                            {place}
-                                            <button className="hover:text-destructive" onClick={() => onBirthPlaceChange(selectedBirthPlaces.filter((b) => b !== place))} type="button">
-                                                <X className="h-3 w-3" />
-                                            </button>
-                                        </span>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                        {/* Birth Place Filter - Dropdown */}
+                        <FilterDropdown label="Place of Birth" onRemove={(p) => onBirthPlaceChange(selectedBirthPlaces.filter((x) => x !== p))} onToggle={createToggle(selectedBirthPlaces, onBirthPlaceChange)} options={birthPlaces} placeholder="Select birth place" selectedOptions={selectedBirthPlaces} />
 
-                        {/* Nation Filter */}
-                        <div className="space-y-3">
-                            <span className="font-medium text-muted-foreground text-sm">Nation</span>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button className="w-full justify-between" variant="outline">
-                                        <span className="truncate">{selectedNations.length > 0 ? selectedNations.map((n) => NATION_DISPLAY[n] ?? n).join(", ") : "Select nation"}</span>
-                                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="max-h-64 w-56 overflow-y-auto">
-                                    <DropdownMenuLabel>Nations</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    {nations.map((nation) => (
-                                        <DropdownMenuCheckboxItem checked={selectedNations.includes(nation)} key={nation} onCheckedChange={() => toggleNation(nation)} onSelect={(e) => e.preventDefault()}>
-                                            {NATION_DISPLAY[nation] ?? nation}
-                                        </DropdownMenuCheckboxItem>
-                                    ))}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            {selectedNations.length > 0 && (
-                                <div className="flex flex-wrap gap-1">
-                                    {selectedNations.map((nation) => (
-                                        <span className="inline-flex items-center gap-1 rounded-md bg-primary/20 px-2 py-0.5 text-foreground text-xs" key={nation}>
-                                            {NATION_DISPLAY[nation] ?? nation}
-                                            <button className="hover:text-destructive" onClick={() => onNationChange(selectedNations.filter((n) => n !== nation))} type="button">
-                                                <X className="h-3 w-3" />
-                                            </button>
-                                        </span>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                        {/* Nation Filter - Dropdown */}
+                        <FilterDropdown formatOption={(n) => NATION_DISPLAY[n] ?? n} label="Nation" onRemove={(n) => onNationChange(selectedNations.filter((x) => x !== n))} onToggle={createToggle(selectedNations, onNationChange)} options={nations} placeholder="Select nation" selectedOptions={selectedNations} />
 
-                        {/* Faction Filter */}
-                        <div className="space-y-3">
-                            <span className="font-medium text-muted-foreground text-sm">Faction</span>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button className="w-full justify-between" variant="outline">
-                                        <span className="truncate">{selectedFactions.length > 0 ? selectedFactions.map((faction) => formatNationId(faction)).join(", ") : "Select faction"}</span>
-                                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="max-h-64 w-56 overflow-y-auto">
-                                    <DropdownMenuLabel>Factions</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    {factions.map((faction) => (
-                                        <DropdownMenuCheckboxItem checked={selectedFactions.includes(faction)} key={faction} onCheckedChange={() => toggleFaction(faction)} onSelect={(e) => e.preventDefault()}>
-                                            {formatNationId(faction)}
-                                        </DropdownMenuCheckboxItem>
-                                    ))}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            {selectedFactions.length > 0 && (
-                                <div className="flex flex-wrap gap-1">
-                                    {selectedFactions.map((faction) => (
-                                        <span className="inline-flex items-center gap-1 rounded-md bg-primary/20 px-2 py-0.5 text-foreground text-xs" key={faction}>
-                                            {formatNationId(faction)}
-                                            <button className="hover:text-destructive" onClick={() => onFactionChange(selectedFactions.filter((f) => f !== faction))} type="button">
-                                                <X className="h-3 w-3" />
-                                            </button>
-                                        </span>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                        {/* Faction Filter - Dropdown */}
+                        <FilterDropdown formatOption={formatNationId} label="Faction" onRemove={(f) => onFactionChange(selectedFactions.filter((x) => x !== f))} onToggle={createToggle(selectedFactions, onFactionChange)} options={factions} placeholder="Select faction" selectedOptions={selectedFactions} />
 
-                        {/* Artist Filter */}
-                        <div className="space-y-3">
-                            <span className="font-medium text-muted-foreground text-sm">Artist</span>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button className="w-full justify-between" variant="outline">
-                                        <span className="truncate">{selectedArtists.length > 0 ? selectedArtists.join(", ") : "Select artist"}</span>
-                                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="max-h-64 w-56 overflow-y-auto">
-                                    <DropdownMenuLabel>Artists</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    {artists.map((artist) => (
-                                        <DropdownMenuCheckboxItem checked={selectedArtists.includes(artist)} key={artist} onCheckedChange={() => toggleArtist(artist)} onSelect={(e) => e.preventDefault()}>
-                                            {artist}
-                                        </DropdownMenuCheckboxItem>
-                                    ))}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            {selectedArtists.length > 0 && (
-                                <div className="flex flex-wrap gap-1">
-                                    {selectedArtists.map((artist) => (
-                                        <span className="inline-flex items-center gap-1 rounded-md bg-primary/20 px-2 py-0.5 text-foreground text-xs" key={artist}>
-                                            {artist}
-                                            <button className="hover:text-destructive" onClick={() => onArtistChange(selectedArtists.filter((a) => a !== artist))} type="button">
-                                                <X className="h-3 w-3" />
-                                            </button>
-                                        </span>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                        {/* Artist Filter - Dropdown */}
+                        <FilterDropdown label="Artist" onRemove={(a) => onArtistChange(selectedArtists.filter((x) => x !== a))} onToggle={createToggle(selectedArtists, onArtistChange)} options={artists} placeholder="Select artist" selectedOptions={selectedArtists} />
                     </div>
                 </div>
             </div>

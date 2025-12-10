@@ -1,0 +1,91 @@
+import Image from "next/image";
+import Link from "next/link";
+import { capitalize, cn, formatProfession, formatSubProfession, rarityToNumber } from "~/lib/utils";
+import type { OperatorFromList } from "~/types/api/operators";
+import { RARITY_COLORS } from "../../constants";
+import { ClassIcon } from "./class-icon";
+import { FactionLogo } from "./faction-logo";
+import { RarityStars } from "./rarity-stars";
+
+interface OperatorCardListProps {
+    operator: OperatorFromList;
+    isHovered?: boolean;
+    shouldGrayscale?: boolean;
+}
+
+export function OperatorCardList({ operator, isHovered = false, shouldGrayscale = false }: OperatorCardListProps) {
+    const rarityNum = rarityToNumber(operator.rarity);
+    const rarityColor = RARITY_COLORS[rarityNum] ?? "#ffffff";
+    const operatorId = operator.id ?? "";
+
+    return (
+        <Link className={cn("group relative flex items-center gap-3 rounded-lg border border-transparent bg-card/50 px-3 py-2.5 transition-all duration-200 hover:border-border hover:bg-card", shouldGrayscale && "grayscale", isHovered && "grayscale-0")} href={`/operators/${operatorId}`}>
+            {/* Rarity indicator line on left */}
+            <div className="-translate-y-1/2 absolute top-1/2 left-0 h-8 w-0.5 rounded-full opacity-60 transition-opacity group-hover:opacity-100" style={{ backgroundColor: rarityColor }} />
+
+            {/* Portrait */}
+            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md border border-border/50 bg-background">
+                <Image alt={operator.name} className="object-cover transition-transform duration-200 group-hover:scale-110" fill src={`/api/cdn${operator.portrait}`} />
+            </div>
+
+            {/* Desktop Layout: Name column */}
+            <div className="hidden min-w-0 flex-1 md:block">
+                <span className="truncate font-semibold text-foreground text-sm uppercase tracking-wide">{operator.name}</span>
+            </div>
+
+            {/* Desktop: Rarity stars */}
+            <RarityStars className="hidden w-24 shrink-0 items-center gap-0.5 md:flex" rarity={rarityNum} starClassName="text-sm" />
+
+            {/* Desktop: Class info */}
+            <div className="hidden w-32 shrink-0 items-center gap-2 md:flex">
+                <div className="flex h-5 w-5 items-center justify-center">
+                    <ClassIcon className="opacity-60 transition-opacity group-hover:opacity-100" profession={operator.profession} size={20} />
+                </div>
+                <span className="text-muted-foreground text-sm">{formatProfession(operator.profession)}</span>
+            </div>
+
+            {/* Desktop: Archetype */}
+            <div className="hidden w-40 shrink-0 lg:block">
+                <span className="truncate text-muted-foreground text-sm">{capitalize(formatSubProfession(operator.subProfessionId.toLowerCase()))}</span>
+            </div>
+
+            {/* Desktop: Faction logo */}
+            <div className="hidden w-8 shrink-0 justify-center xl:flex">
+                <div className="flex h-6 w-6 items-center justify-center opacity-40 transition-opacity group-hover:opacity-70">
+                    <FactionLogo className="object-contain" nationId={operator.nationId} size={24} teamId={operator.teamId} />
+                </div>
+            </div>
+
+            {/* Mobile Layout */}
+            <div className="flex min-w-0 flex-1 flex-col gap-1 md:hidden">
+                {/* Name row with faction icon */}
+                <div className="flex items-center gap-2">
+                    <span className="truncate font-semibold text-foreground text-sm uppercase tracking-wide">{operator.name}</span>
+                    <div className="flex h-4 w-4 shrink-0 items-center justify-center opacity-50">
+                        <FactionLogo className="object-contain" nationId={operator.nationId} size={16} teamId={operator.teamId} />
+                    </div>
+                </div>
+
+                {/* Info row: Rarity, Class, Archetype */}
+                <div className="flex items-center gap-2 text-xs">
+                    <RarityStars className="flex items-center gap-0.5" rarity={rarityNum} />
+
+                    <span className="text-muted-foreground/50">·</span>
+
+                    {/* Class with icon */}
+                    <div className="flex items-center gap-1">
+                        <div className="flex h-4 w-4 items-center justify-center">
+                            <ClassIcon className="opacity-60" profession={operator.profession} size={14} />
+                        </div>
+                        <span className="text-muted-foreground">{formatProfession(operator.profession)}</span>
+                    </div>
+
+                    <span className="text-muted-foreground/50">·</span>
+
+                    {/* Archetype */}
+                    <span className="truncate text-muted-foreground">{capitalize(formatSubProfession(operator.subProfessionId.toLowerCase()))}</span>
+                </div>
+            </div>
+        </Link>
+    );
+}
