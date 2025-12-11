@@ -1,7 +1,7 @@
 "use client";
+import { AnimatePresence, type AnimatePresenceProps, motion, type Transition, type Variants } from "motion/react";
+import { Children, useEffect, useState } from "react";
 import { cn } from "~/lib/utils";
-import { motion, AnimatePresence, type Transition, type Variants, type AnimatePresenceProps } from "motion/react";
-import { useState, useEffect, Children } from "react";
 
 export type TextLoopProps = {
     children: React.ReactNode[];
@@ -41,8 +41,8 @@ export function TextLoop({ children, className, style, interval = 2, transition 
 
     return (
         <div className={cn("relative inline-block whitespace-nowrap", className)} style={style}>
-            <AnimatePresence mode={mode} initial={false}>
-                <motion.div key={currentIndex} initial="initial" animate="animate" exit="exit" transition={transition} variants={variants || motionVariants}>
+            <AnimatePresence initial={false} mode={mode}>
+                <motion.div animate="animate" exit="exit" initial="initial" key={currentIndex} transition={transition} variants={variants || motionVariants}>
                     {items[currentIndex]}
                 </motion.div>
             </AnimatePresence>

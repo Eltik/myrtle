@@ -1,7 +1,7 @@
 "use client";
+import { AnimatePresence, MotionConfig, motion, type Transition, type Variant, type Variants } from "motion/react";
 import * as React from "react";
-import { AnimatePresence, motion, MotionConfig, type Transition, type Variant, type Variants } from "motion/react";
-import { createContext, useContext, useState, useId, useEffect } from "react";
+import { createContext, useContext, useEffect, useId, useState } from "react";
 import { cn } from "~/lib/utils";
 
 export type DisclosureContextType = {
@@ -68,7 +68,7 @@ export function Disclosure({ open: openProp = false, onOpenChange, children, cla
     return (
         <MotionConfig transition={transition}>
             <div className={className}>
-                <DisclosureProvider open={openProp} onOpenChange={onOpenChange} variants={variants}>
+                <DisclosureProvider onOpenChange={onOpenChange} open={openProp} variants={variants}>
                     {React.Children.toArray(children)[0]}
                     {React.Children.toArray(children)[1]}
                 </DisclosureProvider>
@@ -128,7 +128,7 @@ export function DisclosureContent({ children, className }: { children: React.Rea
         <div className={cn("overflow-hidden", className)}>
             <AnimatePresence initial={false}>
                 {open && (
-                    <motion.div id={uniqueId} initial="collapsed" animate="expanded" exit="collapsed" variants={combinedVariants}>
+                    <motion.div animate="expanded" exit="collapsed" id={uniqueId} initial="collapsed" variants={combinedVariants}>
                         {children}
                     </motion.div>
                 )}

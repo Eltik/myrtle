@@ -1,11 +1,9 @@
-import type { Skin } from "~/types/impl/api/static/skins";
-import type { UISkin } from "~/types/impl/frontend/impl/operators";
-import type { ChibisSimplified } from "~/types/impl/api/impl/chibis";
-import { type AnimationType, type SkinData } from "~/types/impl/frontend/impl/chibis";
-import { type ChibiAnimation } from "~/types/impl/frontend/impl/chibis";
-import { type FormattedChibis } from "~/types/impl/frontend/impl/chibis";
 import { getCDNURL } from "~/lib/cdn";
-import { type Operator } from "~/types/impl/api/static/operator";
+import type { ChibisSimplified } from "~/types/impl/api/impl/chibis";
+import type { Operator } from "~/types/impl/api/static/operator";
+import type { Skin } from "~/types/impl/api/static/skins";
+import type { AnimationType, ChibiAnimation, FormattedChibis, SkinData } from "~/types/impl/frontend/impl/chibis";
+import type { UISkin } from "~/types/impl/frontend/impl/operators";
 
 // Fetch skins data from API
 export async function fetchSkins(id: string) {

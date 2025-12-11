@@ -1,9 +1,9 @@
-import { type ISkeletonData, Spine, type TextureAtlas } from "pixi-spine";
 import * as PIXI from "pixi.js";
+import { type ISkeletonData, Spine, type TextureAtlas } from "pixi-spine";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Card, CardContent } from "~/components/ui/card";
-import type { ChibiAnimation, FormattedChibis } from "~/types/impl/frontend/impl/chibis";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import type { ChibiAnimation, FormattedChibis } from "~/types/impl/frontend/impl/chibis";
 import { encodeURL, getSkinData } from "./helper";
 
 const CHIBI_OFFSET_X = 0.25;
@@ -279,7 +279,7 @@ export function ChibiViewer({ chibi, skinId }: { chibi: FormattedChibis; skinId:
     useEffect(() => {
         // Only run if animations are loaded and the selected one is no longer valid
         if (availableAnimations.length > 0 && !availableAnimations.includes(selectedAnimation)) {
-            let newAnimation: string | undefined = undefined;
+            let newAnimation: string | undefined;
 
             if (viewType === "dorm") {
                 if (availableAnimations.includes("Relax")) {
@@ -333,10 +333,10 @@ export function ChibiViewer({ chibi, skinId }: { chibi: FormattedChibis; skinId:
 
     return (
         <Card className="w-full">
-            <CardContent className="pb-4 pt-6">
+            <CardContent className="pt-6 pb-4">
                 <div className="mb-4 flex flex-col gap-4">
                     <div className="flex items-center gap-2">
-                        <Select value={selectedAnimation} onValueChange={handleAnimationChange} disabled={!spineRef.current || availableAnimations.length === 0 || isLoading}>
+                        <Select disabled={!spineRef.current || availableAnimations.length === 0 || isLoading} onValueChange={handleAnimationChange} value={selectedAnimation}>
                             <SelectTrigger className="w-[180px]">
                                 <SelectValue placeholder="Select Animation" />
                             </SelectTrigger>
@@ -351,7 +351,7 @@ export function ChibiViewer({ chibi, skinId }: { chibi: FormattedChibis; skinId:
 
                         {/* View Type Selector */}
                         <div className="flex items-center gap-2">
-                            <Select value={viewType} onValueChange={handleViewTypeChange} disabled={isLoading}>
+                            <Select disabled={isLoading} onValueChange={handleViewTypeChange} value={viewType}>
                                 <SelectTrigger className="w-[120px]">
                                     <SelectValue placeholder="View Type" />
                                 </SelectTrigger>
@@ -366,10 +366,10 @@ export function ChibiViewer({ chibi, skinId }: { chibi: FormattedChibis; skinId:
                 </div>
 
                 <div className="relative h-[200px] w-full">
-                    <div ref={canvasContainerRef} className="h-full w-full" />
+                    <div className="h-full w-full" ref={canvasContainerRef} />
                     {isLoading && (
                         <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                            <div className="text-lg font-semibold text-white">Loading...</div>
+                            <div className="font-semibold text-lg text-white">Loading...</div>
                         </div>
                     )}
                     {error && (

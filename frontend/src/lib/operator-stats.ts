@@ -1,5 +1,5 @@
-import { range, isEqual } from "lodash-es";
-import type { Operator, AttributeData } from "~/types/api";
+import { isEqual, range } from "lodash-es";
+import type { AttributeData, Operator } from "~/types/api";
 
 /**
  * Get operator attribute stats based on level, phase, trust, potential, and module

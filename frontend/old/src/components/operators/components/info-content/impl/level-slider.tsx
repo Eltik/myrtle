@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Info } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Input } from "~/components/ui/input";
 import { Slider } from "~/components/ui/slider";
-import { Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
 
 interface LevelSliderProps {
@@ -19,7 +19,7 @@ export function LevelSlider({ phaseIndex, maxLevels, onLevelChange }: LevelSlide
     useEffect(() => {
         setLevel(maxLevel);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [phaseIndex]);
+    }, [maxLevel]);
 
     const handleSliderChange = (value: number[]) => {
         const newLevel = value[0];
@@ -29,7 +29,7 @@ export function LevelSlider({ phaseIndex, maxLevels, onLevelChange }: LevelSlide
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const newLevel = parseInt(event.target.value, 10);
-        if (!isNaN(newLevel)) {
+        if (!Number.isNaN(newLevel)) {
             updateLevel(newLevel);
         }
     };
@@ -44,7 +44,7 @@ export function LevelSlider({ phaseIndex, maxLevels, onLevelChange }: LevelSlide
         <div className="w-full max-w-md">
             <div className="mb-2 flex items-center justify-between">
                 <div className="flex items-center gap-1">
-                    <span className="text-sm font-medium">Level</span>
+                    <span className="font-medium text-sm">Level</span>
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
@@ -56,24 +56,24 @@ export function LevelSlider({ phaseIndex, maxLevels, onLevelChange }: LevelSlide
                         </Tooltip>
                     </TooltipProvider>
                 </div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-muted-foreground text-xs">
                     {level} / {maxLevel}
                 </div>
             </div>
 
-            <Slider min={1} max={maxLevel} step={1} value={[level]} onValueChange={handleSliderChange} className="mb-2" />
+            <Slider className="mb-2" max={maxLevel} min={1} onValueChange={handleSliderChange} step={1} value={[level]} />
 
             <div className="flex flex-row items-center gap-3 text-sm">
                 <div className="flex items-center gap-2">
-                    <Input type="number" min={1} max={maxLevel} value={level} onChange={handleInputChange} className="w-16" />
+                    <Input className="w-16" max={maxLevel} min={1} onChange={handleInputChange} type="number" value={level} />
                     <span className="text-muted-foreground">/ {maxLevel}</span>
                 </div>
 
                 <div className="ml-auto flex gap-2">
-                    <button onClick={() => updateLevel(1)} className="rounded-md bg-muted px-2 py-1 text-xs hover:bg-muted/80">
+                    <button className="rounded-md bg-muted px-2 py-1 text-xs hover:bg-muted/80" onClick={() => updateLevel(1)}>
                         Min
                     </button>
-                    <button onClick={() => updateLevel(maxLevel)} className="rounded-md bg-muted px-2 py-1 text-xs hover:bg-muted/80">
+                    <button className="rounded-md bg-muted px-2 py-1 text-xs hover:bg-muted/80" onClick={() => updateLevel(maxLevel)}>
                         Max
                     </button>
                 </div>

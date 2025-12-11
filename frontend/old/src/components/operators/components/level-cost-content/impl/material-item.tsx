@@ -20,13 +20,13 @@ export const MaterialItem = ({ material, materials }: MaterialItemProps) => {
                     <div className="flex flex-col items-center">
                         <div className="relative">
                             {materialData ? (
-                                <Image src={`https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/item/${materialData.iconId}.png`} alt={materialData.name ?? material.material.name} width={50} height={50} className="rounded-md" />
+                                <Image alt={materialData.name ?? material.material.name} className="rounded-md" height={50} src={`https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/item/${materialData.iconId}.png`} width={50} />
                             ) : (
                                 <div className="flex h-[50px] w-[50px] items-center justify-center rounded-md bg-gray-200">
                                     <span className="text-xs">Loading...</span>
                                 </div>
                             )}
-                            <Badge className="absolute -bottom-2 -right-2 flex h-5 min-w-5 items-center justify-center rounded-full p-0 px-1 text-xs">{material.quantity}</Badge>
+                            <Badge className="-bottom-2 -right-2 absolute flex h-5 min-w-5 items-center justify-center rounded-full p-0 px-1 text-xs">{material.quantity}</Badge>
                         </div>
                         <span className="mt-2 line-clamp-1 text-xs">{materialData?.name ?? material.material.name}</span>
                     </div>

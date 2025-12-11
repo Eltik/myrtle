@@ -1,7 +1,7 @@
 "use client";
-import { motion, AnimatePresence, type Transition, type Variants, type Variant, MotionConfig } from "motion/react";
+import { AnimatePresence, MotionConfig, motion, type Transition, type Variant, type Variants } from "motion/react";
+import React, { createContext, type ReactNode, useContext, useState } from "react";
 import { cn } from "~/lib/utils";
-import React, { createContext, useContext, useState, type ReactNode } from "react";
 
 export type AccordionContextType = {
     expandedValue: React.Key | null;
@@ -55,8 +55,8 @@ export type AccordionProps = {
 function Accordion({ children, className, transition, variants, expandedValue, onValueChange }: AccordionProps) {
     return (
         <MotionConfig transition={transition}>
-            <div className={cn("relative", className)} aria-orientation="vertical">
-                <AccordionProvider variants={variants} expandedValue={expandedValue} onValueChange={onValueChange}>
+            <div aria-orientation="vertical" className={cn("relative", className)}>
+                <AccordionProvider expandedValue={expandedValue} onValueChange={onValueChange} variants={variants}>
                     {children}
                 </AccordionProvider>
             </div>
@@ -101,7 +101,7 @@ function AccordionTrigger({ children, className, ...props }: AccordionTriggerPro
     const isExpanded = value === expandedValue;
 
     return (
-        <button onClick={() => value !== undefined && toggleItem(value)} aria-expanded={isExpanded} type="button" className={cn("group", className)} {...(isExpanded ? { "data-expanded": "" } : { "data-closed": "" })}>
+        <button aria-expanded={isExpanded} className={cn("group", className)} onClick={() => value !== undefined && toggleItem(value)} type="button" {...(isExpanded ? { "data-expanded": "" } : { "data-closed": "" })}>
             {children}
         </button>
     );
@@ -130,7 +130,7 @@ function AccordionContent({ children, className, ...props }: AccordionContentPro
     return (
         <AnimatePresence initial={false}>
             {isExpanded && (
-                <motion.div initial="collapsed" animate="expanded" exit="collapsed" variants={combinedVariants} className={className}>
+                <motion.div animate="expanded" className={className} exit="collapsed" initial="collapsed" variants={combinedVariants}>
                     {children}
                 </motion.div>
             )}

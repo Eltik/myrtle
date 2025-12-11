@@ -1,15 +1,13 @@
-import { Zap } from "lucide-react";
-import { useState } from "react";
-import { Card, CardHeader, CardTitle } from "~/components/ui/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/collapsible";
-import type { Operator } from "~/types/impl/api/static/operator";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown } from "lucide-react";
-import { CardContent } from "~/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "~/components/ui/tabs";
-import { Slider } from "~/components/ui/slider";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "~/components/ui/select";
+import { ChevronDown, Zap } from "lucide-react";
 import Image from "next/image";
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/collapsible";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import { Slider } from "~/components/ui/slider";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import type { Operator } from "~/types/impl/api/static/operator";
 import SkillCard from "./skill-card";
 
 function SkillsContent({ operator }: { operator: Operator }) {
@@ -45,84 +43,82 @@ function SkillsContent({ operator }: { operator: Operator }) {
     };
 
     return (
-        <>
-            <Collapsible defaultOpen={true} open={isSkillsOpen} onOpenChange={setIsSkillsOpen}>
-                <Card>
-                    <CollapsibleTrigger className="w-full cursor-pointer" asChild>
-                        <CardHeader className="flex w-full flex-row items-center justify-between space-y-0 p-4">
-                            <CardTitle className="flex items-center gap-2">
-                                <Zap className="h-5 w-5 text-blue-400" />
-                                Skills
-                            </CardTitle>
-                            <ChevronDown className={`ml-auto h-6 w-6 transition-transform ${isSkillsOpen ? "rotate-180" : ""}`} />
-                        </CardHeader>
-                    </CollapsibleTrigger>
-                    <AnimatePresence initial={false}>
-                        {isSkillsOpen && (
-                            <motion.div key="skills-content" initial="collapsed" animate="open" exit="collapsed" variants={motionVariants} transition={{ duration: 0.3, ease: [0.04, 0.62, 0.23, 0.98] }}>
-                                <CollapsibleContent forceMount>
-                                    <CardContent>
-                                        <Tabs defaultValue={operator.skills[operator.skills.length - 1]?.skillId} className="w-full">
-                                            <TabsList className={`grid w-full ${getGridColumns(operator.skills.length)}`}>
-                                                {operator.skills.map((skill) => (
-                                                    <TabsTrigger value={skill.skillId} key={skill.skillId} className="truncate px-2 text-sm">
-                                                        <span className="truncate" title={skill.static?.levels[0]?.name}>
-                                                            {skill.static?.levels[0]?.name}
-                                                        </span>
-                                                    </TabsTrigger>
-                                                ))}
-                                            </TabsList>
-                                            <div className="mb-6 mt-4 flex flex-col">
-                                                <div className="flex flex-col">
-                                                    <span className="text-lg font-bold">Skill Level</span>
-                                                    <span className="text-sm text-muted-foreground">Drag the slider to change the skill level</span>
-                                                </div>
-                                                <div className="flex max-w-[80%] flex-col items-center gap-2 md:flex-row">
-                                                    <Slider className="w-full" defaultValue={[skillLevel]} value={[skillLevel]} onValueChange={(value) => setSkillLevel(value[0] ?? 0)} min={0} max={(operator.skills[0]?.static?.levels ?? []).length - 1} step={1} />
-                                                    <div className="flex w-full flex-row">
-                                                        <Select value={skillLevel.toString()} onValueChange={(e) => setSkillLevel(parseInt(e))}>
-                                                            <SelectTrigger className="w-[180px]">
-                                                                <SelectValue placeholder={skillLevel} />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {(operator.skills[0]?.static?.levels ?? []).map((_, i) => (
-                                                                    <SelectItem key={i} value={i.toString()}>
-                                                                        {i < 7 ? <span>Lv.{i + 1}</span> : <span>M{i === 7 ? "1" : i === 8 ? "2" : "3"}</span>}
-                                                                    </SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                        </Select>
-                                                        {skillLevel >= 7 && (
-                                                            <Image
-                                                                src={`/m-${skillLevel === 7 ? "1" : skillLevel === 8 ? "2" : "3"}_0.webp`}
-                                                                className="h-8 w-9"
-                                                                width={50}
-                                                                height={50}
-                                                                alt="M1"
-                                                                style={{
-                                                                    maxWidth: "100%",
-                                                                    height: "auto",
-                                                                }}
-                                                            />
-                                                        )}
-                                                    </div>
+        <Collapsible defaultOpen={true} onOpenChange={setIsSkillsOpen} open={isSkillsOpen}>
+            <Card>
+                <CollapsibleTrigger asChild className="w-full cursor-pointer">
+                    <CardHeader className="flex w-full flex-row items-center justify-between space-y-0 p-4">
+                        <CardTitle className="flex items-center gap-2">
+                            <Zap className="h-5 w-5 text-blue-400" />
+                            Skills
+                        </CardTitle>
+                        <ChevronDown className={`ml-auto h-6 w-6 transition-transform ${isSkillsOpen ? "rotate-180" : ""}`} />
+                    </CardHeader>
+                </CollapsibleTrigger>
+                <AnimatePresence initial={false}>
+                    {isSkillsOpen && (
+                        <motion.div animate="open" exit="collapsed" initial="collapsed" key="skills-content" transition={{ duration: 0.3, ease: [0.04, 0.62, 0.23, 0.98] }} variants={motionVariants}>
+                            <CollapsibleContent forceMount>
+                                <CardContent>
+                                    <Tabs className="w-full" defaultValue={operator.skills[operator.skills.length - 1]?.skillId}>
+                                        <TabsList className={`grid w-full ${getGridColumns(operator.skills.length)}`}>
+                                            {operator.skills.map((skill) => (
+                                                <TabsTrigger className="truncate px-2 text-sm" key={skill.skillId} value={skill.skillId}>
+                                                    <span className="truncate" title={skill.static?.levels[0]?.name}>
+                                                        {skill.static?.levels[0]?.name}
+                                                    </span>
+                                                </TabsTrigger>
+                                            ))}
+                                        </TabsList>
+                                        <div className="mt-4 mb-6 flex flex-col">
+                                            <div className="flex flex-col">
+                                                <span className="font-bold text-lg">Skill Level</span>
+                                                <span className="text-muted-foreground text-sm">Drag the slider to change the skill level</span>
+                                            </div>
+                                            <div className="flex max-w-[80%] flex-col items-center gap-2 md:flex-row">
+                                                <Slider className="w-full" defaultValue={[skillLevel]} max={(operator.skills[0]?.static?.levels ?? []).length - 1} min={0} onValueChange={(value) => setSkillLevel(value[0] ?? 0)} step={1} value={[skillLevel]} />
+                                                <div className="flex w-full flex-row">
+                                                    <Select onValueChange={(e) => setSkillLevel(parseInt(e, 10))} value={skillLevel.toString()}>
+                                                        <SelectTrigger className="w-[180px]">
+                                                            <SelectValue placeholder={skillLevel} />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {(operator.skills[0]?.static?.levels ?? []).map((_, i) => (
+                                                                <SelectItem key={i} value={i.toString()}>
+                                                                    {i < 7 ? <span>Lv.{i + 1}</span> : <span>M{i === 7 ? "1" : i === 8 ? "2" : "3"}</span>}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    {skillLevel >= 7 && (
+                                                        <Image
+                                                            alt="M1"
+                                                            className="h-8 w-9"
+                                                            height={50}
+                                                            src={`/m-${skillLevel === 7 ? "1" : skillLevel === 8 ? "2" : "3"}_0.webp`}
+                                                            style={{
+                                                                maxWidth: "100%",
+                                                                height: "auto",
+                                                            }}
+                                                            width={50}
+                                                        />
+                                                    )}
                                                 </div>
                                             </div>
-                                            {operator.skills.map((skill) => (
-                                                <TabsContent value={skill.skillId} key={skill.skillId}>
-                                                    <SkillCard skill={skill} level={skillLevel} />
-                                                    {/* Damage Calculation */}
-                                                </TabsContent>
-                                            ))}
-                                        </Tabs>
-                                    </CardContent>
-                                </CollapsibleContent>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </Card>
-            </Collapsible>
-        </>
+                                        </div>
+                                        {operator.skills.map((skill) => (
+                                            <TabsContent key={skill.skillId} value={skill.skillId}>
+                                                <SkillCard level={skillLevel} skill={skill} />
+                                                {/* Damage Calculation */}
+                                            </TabsContent>
+                                        ))}
+                                    </Tabs>
+                                </CardContent>
+                            </CollapsibleContent>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </Card>
+        </Collapsible>
     );
 }
 

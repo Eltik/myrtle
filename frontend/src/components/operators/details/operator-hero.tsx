@@ -2,10 +2,10 @@
 
 import { motion } from "motion/react";
 import Image from "next/image";
-import type { Operator } from "~/types/api";
-import { getOperatorImage } from "~/lib/operator-helpers";
 import { TextEffect } from "~/components/ui/motion-primitives/text-effect";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "~/components/ui/shadcn/breadcrumb";
+import { getOperatorImage } from "~/lib/operator-helpers";
+import type { Operator } from "~/types/api";
 import { ChibiViewerPlaceholder } from "./chibi-viewer-placeholder";
 
 interface OperatorHeroProps {
@@ -19,8 +19,8 @@ export function OperatorHero({ operator }: OperatorHeroProps) {
     return (
         <div className="relative h-[600px] w-full overflow-hidden md:h-[700px]">
             {/* Background Image */}
-            <motion.div initial={{ scale: 1.1, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.8, ease: "easeOut" }} className="absolute inset-0">
-                <Image src={imageUrl || "/placeholder.svg"} alt={operator.name} fill className="object-cover object-top" priority />
+            <motion.div animate={{ scale: 1, opacity: 1 }} className="absolute inset-0" initial={{ scale: 1.1, opacity: 0 }} transition={{ duration: 0.8, ease: "easeOut" }}>
+                <Image alt={operator.name} className="object-cover object-top" fill priority src={imageUrl || "/placeholder.svg"} />
             </motion.div>
 
             {/* Gradient Overlays */}
@@ -39,30 +39,30 @@ export function OperatorHero({ operator }: OperatorHeroProps) {
 
             {/* Content */}
             <div className="container relative z-20 mx-auto flex h-full flex-col justify-end px-4 pb-40">
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.5 }}>
+                <motion.div animate={{ opacity: 1, y: 0 }} initial={{ opacity: 0, y: 20 }} transition={{ delay: 0.3, duration: 0.5 }}>
                     <Breadcrumb className="mb-4">
                         <BreadcrumbList>
                             <BreadcrumbItem>
-                                <BreadcrumbLink href="/operators" className="text-muted-foreground hover:text-foreground">
+                                <BreadcrumbLink className="text-muted-foreground hover:text-foreground" href="/operators">
                                     Operators
                                 </BreadcrumbLink>
                             </BreadcrumbItem>
                             <BreadcrumbSeparator />
                             <BreadcrumbItem>
-                                <BreadcrumbLink href={`/operators?id=${operator.id}`} className="text-foreground">
+                                <BreadcrumbLink className="text-foreground" href={`/operators?id=${operator.id}`}>
                                     {operator.name}
                                 </BreadcrumbLink>
                             </BreadcrumbItem>
                         </BreadcrumbList>
                     </Breadcrumb>
 
-                    <TextEffect preset="fade-in-blur" per="char" as="h1" className="text-4xl font-bold tracking-tight text-foreground md:text-6xl lg:text-7xl" speedReveal={1.5}>
+                    <TextEffect as="h1" className="font-bold text-4xl text-foreground tracking-tight md:text-6xl lg:text-7xl" per="char" preset="fade-in-blur" speedReveal={1.5}>
                         {operator.name}
                     </TextEffect>
                 </motion.div>
 
                 {/* Chibi Viewer Placeholder */}
-                <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5, duration: 0.5 }} className="absolute bottom-32 right-4 hidden md:right-8 lg:block">
+                <motion.div animate={{ opacity: 1, scale: 1 }} className="absolute right-4 bottom-32 hidden md:right-8 lg:block" initial={{ opacity: 0, scale: 0.9 }} transition={{ delay: 0.5, duration: 0.5 }}>
                     <ChibiViewerPlaceholder />
                 </motion.div>
             </div>

@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo, useRef } from "react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, BarChart, Bar, type TooltipProps } from "recharts";
-import type { Operator } from "~/types/impl/api/static/operator";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, type TooltipProps, XAxis, YAxis } from "recharts";
+import type { NameType, ValueType } from "recharts/types/component/DefaultTooltipContent";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
-import { type NameType, type ValueType } from "recharts/types/component/DefaultTooltipContent";
+import type { Operator } from "~/types/impl/api/static/operator";
 
 // Define SelectedOperator type matching the one in dps-calculator.tsx
 interface SelectedOperator extends Operator {
@@ -49,15 +49,15 @@ const CustomTooltip = ({ active, payload, label, xAxisLabel }: TooltipProps<Valu
     if (active && payload?.length) {
         return (
             <div className="max-w-[300px] rounded-md border border-border bg-background p-4 shadow-md">
-                <p className="mb-2 border-b pb-1 text-sm font-medium">
+                <p className="mb-2 border-b pb-1 font-medium text-sm">
                     {xAxisLabel}: {label}
                 </p>
                 <div className="space-y-1.5">
                     {payload.map((entry, index) => (
-                        <div key={`item-${index}`} className="flex items-center justify-between gap-4">
+                        <div className="flex items-center justify-between gap-4" key={`item-${index}`}>
                             <div className="flex items-center gap-2">
                                 <div className="h-3 w-3 rounded-full" style={{ backgroundColor: entry.color }} />
-                                <span className="text-xs font-medium">{entry.name}</span>
+                                <span className="font-medium text-xs">{entry.name}</span>
                             </div>
                             <span className="font-mono text-xs">{Number(entry.value).toLocaleString()} DPS</span>
                         </div>
@@ -153,15 +153,7 @@ export function DPSChart({ operators, generateChartData, xAxisLabel, chartType, 
         return () => {
             isMounted = false;
         };
-    }, [
-        operators,
-        generateChartData,
-        chartType,
-        // Only include data-affecting settings, not display-only settings
-        chartSettings.targets,
-        chartSettings.maxValue,
-        chartSettings.stepSize,
-    ]);
+    }, [operators, generateChartData, chartType]);
 
     const xDataKey = chartType === "defense" ? "defense" : "resistance";
 
@@ -187,7 +179,7 @@ export function DPSChart({ operators, generateChartData, xAxisLabel, chartType, 
 
         const axesProps = (
             <>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                <CartesianGrid opacity={0.2} strokeDasharray="3 3" />
                 <XAxis
                     dataKey={xDataKey}
                     label={{
@@ -206,7 +198,7 @@ export function DPSChart({ operators, generateChartData, xAxisLabel, chartType, 
                     tickFormatter={formatValue}
                 />
                 <Tooltip content={<CustomTooltip xAxisLabel={xAxisLabel} />} cursor={{ strokeDasharray: "3 3", stroke: "#9ca3af", strokeWidth: 1 }} />
-                <Legend layout="horizontal" verticalAlign="bottom" wrapperStyle={{ paddingTop: 20 }} formatter={(value: string) => <span className="text-sm font-medium">{value}</span>} />
+                <Legend formatter={(value: string) => <span className="font-medium text-sm">{value}</span>} layout="horizontal" verticalAlign="bottom" wrapperStyle={{ paddingTop: 20 }} />
             </>
         );
 
@@ -226,30 +218,28 @@ export function DPSChart({ operators, generateChartData, xAxisLabel, chartType, 
                             if (!operator.displayName) return null;
                             const color = operatorColors[operator.displayName];
 
-                            return <Area key={operator.instanceId} type={curveType} dataKey={operator.displayName} stroke={color} fill={color} fillOpacity={0.3} strokeWidth={2} {...dotProps} {...activeDotProps} animationDuration={300} />;
+                            return <Area dataKey={operator.displayName} fill={color} fillOpacity={0.3} key={operator.instanceId} stroke={color} strokeWidth={2} type={curveType} {...dotProps} {...activeDotProps} animationDuration={300} />;
                         })}
                     </AreaChart>
                 );
 
             case "bar":
                 return (
-                    <BarChart {...chartProps} barGap={0} barCategoryGap={5}>
+                    <BarChart {...chartProps} barCategoryGap={5} barGap={0}>
                         {axesProps}
                         {operators.map((operator) => {
                             if (!operator.displayName) return null;
-                            return <Bar key={operator.instanceId} dataKey={operator.displayName} fill={operatorColors[operator.displayName]} animationDuration={300} />;
+                            return <Bar animationDuration={300} dataKey={operator.displayName} fill={operatorColors[operator.displayName]} key={operator.instanceId} />;
                         })}
                     </BarChart>
                 );
-
-            case "line":
             default:
                 return (
                     <LineChart {...chartProps}>
                         {axesProps}
                         {operators.map((operator) => {
                             if (!operator.displayName) return null;
-                            return <Line key={operator.instanceId} type={curveType} dataKey={operator.displayName} stroke={operatorColors[operator.displayName]} strokeWidth={2} {...dotProps} {...activeDotProps} animationDuration={300} />;
+                            return <Line dataKey={operator.displayName} key={operator.instanceId} stroke={operatorColors[operator.displayName]} strokeWidth={2} type={curveType} {...dotProps} {...activeDotProps} animationDuration={300} />;
                         })}
                     </LineChart>
                 );
@@ -268,7 +258,7 @@ export function DPSChart({ operators, generateChartData, xAxisLabel, chartType, 
                     </div>
                 ) : operators.length > 0 ? (
                     <div className="h-[450px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer height="100%" width="100%">
                             {renderChart()}
                         </ResponsiveContainer>
                     </div>

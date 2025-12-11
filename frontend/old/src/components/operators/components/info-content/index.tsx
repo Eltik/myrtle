@@ -2,20 +2,20 @@
 import { ChevronDown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { LevelSlider } from "~/components/operators/components/info-content/impl/level-slider";
+import { Button } from "~/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/collapsible";
 import { Separator } from "~/components/ui/separator";
 import { getOperatorAttributeStats } from "~/helper/getAttributeStats";
 import type { Module, ModuleData } from "~/types/impl/api/static/modules";
-import { type Operator } from "~/types/impl/api/static/operator";
+import type { Operator } from "~/types/impl/api/static/operator";
 import type { Range } from "~/types/impl/api/static/ranges";
 import OperatorRange from "../operator-range";
-import { Button } from "~/components/ui/button";
+import { Handbook } from "./impl/handbook";
 import { ModuleDetails } from "./impl/module-details";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/collapsible";
-import { TopInfoContent } from "./impl/top-info";
-import { TopDescription } from "./impl/top-description";
 import { ModuleInfo } from "./impl/module-info";
 import { Stats } from "./impl/stats";
-import { Handbook } from "./impl/handbook";
+import { TopDescription } from "./impl/top-description";
+import { TopInfoContent } from "./impl/top-info";
 
 // Credit to:
 // https://aceship.github.io/AN-EN-Tags/akhrchars.html?opname=Projekt_Red
@@ -53,7 +53,7 @@ function InfoContent({ operator }: { operator: Operator }) {
         void fetchModules();
 
         setLevel(operator.phases[operator.phases.length - 1]?.maxLevel ?? 1);
-    }, [operator]);
+    }, [operator, fetchModules]);
 
     /**
      * @description On changing the level, phase, module, trust, etc.
@@ -104,7 +104,7 @@ function InfoContent({ operator }: { operator: Operator }) {
             level,
             currentModule,
         );
-    }, [ranges, level, phaseIndex, favorPoint, potentialRank, currentModuleLevel, currentModule]);
+    }, [ranges, level, phaseIndex, favorPoint, potentialRank, currentModuleLevel, currentModule, fetchAttributeStats, moduleData?.find, modules.length, modules[modules.length - 1]?.id, operator.phases[phaseIndex]]);
 
     /**
      * @description Fetches all info on modules, module data, and ranges.
@@ -127,7 +127,7 @@ function InfoContent({ operator }: { operator: Operator }) {
         setModuleData(moduleData);
 
         if (data.modules[data.modules.length - 1]?.id !== undefined) {
-            setCurrentModule(data.modules[data.modules.length - 1]!.id!);
+            setCurrentModule(data.modules[data.modules.length - 1]?.id!);
             setCurrentModuleLevel(moduleData?.find((module) => module.id === data.modules[data.modules.length - 1]?.id)?.phases[(moduleData?.find((module) => module.id === data.modules[data.modules.length - 1]?.id)?.phases ?? []).length - 1]?.equipLevel ?? 0);
         }
 
@@ -244,7 +244,7 @@ function InfoContent({ operator }: { operator: Operator }) {
     return (
         <div className="w-full overflow-x-hidden">
             <div className="p-2 px-4 backdrop-blur-2xl">
-                <span className="text-xl font-bold md:text-3xl">Operator Info</span>
+                <span className="font-bold text-xl md:text-3xl">Operator Info</span>
             </div>
             <Separator />
             <div className="mx-auto max-w-4xl px-3 py-4 md:p-4">
@@ -260,8 +260,8 @@ function InfoContent({ operator }: { operator: Operator }) {
                     {/* Controls Section with improved visibility and organization */}
                     <div className="mt-4 rounded-md border p-4">
                         <div className="mb-2 flex items-center justify-between">
-                            <h3 className="text-lg font-semibold">Operator Controls</h3>
-                            <Button variant={"outline"} onClick={() => setShowControls(!showControls)} className="flex flex-row items-center" size="sm">
+                            <h3 className="font-semibold text-lg">Operator Controls</h3>
+                            <Button className="flex flex-row items-center" onClick={() => setShowControls(!showControls)} size="sm" variant={"outline"}>
                                 {showControls ? "Hide" : "Show"} Controls
                                 <ChevronDown className={`ml-auto h-4 w-4 transition-transform ${showControls ? "rotate-180" : ""}`} />
                             </Button>
@@ -273,50 +273,48 @@ function InfoContent({ operator }: { operator: Operator }) {
                             </div>
 
                             <ModuleInfo
-                                phaseIndex={phaseIndex}
+                                currentModule={currentModule}
+                                currentModuleLevel={currentModuleLevel}
+                                favorPoint={favorPoint}
+                                handleFavorPointChange={handleFavorPointChange}
                                 moduleData={moduleData}
                                 modules={modules}
-                                currentModule={currentModule}
-                                setCurrentModule={setCurrentModule}
-                                currentModuleLevel={currentModuleLevel}
-                                setCurrentModuleLevel={setCurrentModuleLevel}
-                                favorPoint={favorPoint}
-                                setFavorPoint={setFavorPoint}
                                 operator={operator}
+                                phaseIndex={phaseIndex}
+                                setCurrentModule={setCurrentModule}
+                                setCurrentModuleLevel={setCurrentModuleLevel}
+                                setFavorPoint={setFavorPoint}
                                 setPotentialRank={setPotentialRank}
-                                handleFavorPointChange={handleFavorPointChange}
                             />
 
                             <div className="mt-3 max-w-md">
-                                <div className="mb-2 text-sm font-medium">Operator Level</div>
-                                <LevelSlider phaseIndex={phaseIndex} maxLevels={operator.phases.map((phase) => phase.maxLevel)} onLevelChange={handleLevelChange} />
+                                <div className="mb-2 font-medium text-sm">Operator Level</div>
+                                <LevelSlider maxLevels={operator.phases.map((phase) => phase.maxLevel)} onLevelChange={handleLevelChange} phaseIndex={phaseIndex} />
                             </div>
                         </div>
                     </div>
 
-                    <Stats operator={operator} attributeStats={attributeStats} setPhaseIndex={setPhaseIndex} setLevel={setLevel} />
+                    <Stats attributeStats={attributeStats} operator={operator} setLevel={setLevel} setPhaseIndex={setPhaseIndex} />
                 </div>
                 <div className="mt-2 w-full">
                     <div className="mt-2">
-                        <h2 className="text-md font-bold md:text-lg">Tags</h2>
+                        <h2 className="font-bold text-md md:text-lg">Tags</h2>
                         <div className="flex flex-wrap gap-2 text-sm md:text-base">
                             {operator.tagList.map((tag, index) => (
-                                <span key={index} className="rounded-md bg-muted p-1 px-2">
+                                <span className="rounded-md bg-muted p-1 px-2" key={index}>
                                     {tag}
                                 </span>
                             ))}
                         </div>
                     </div>
                     <div className="mt-2">
-                        <h2 className="text-md font-bold md:text-lg">Range</h2>
+                        <h2 className="font-bold text-md md:text-lg">Range</h2>
                         {currentRange ? (
-                            <OperatorRange range={currentRange} key={currentRangeId} />
+                            <OperatorRange key={currentRangeId} range={currentRange} />
                         ) : (
-                            <>
-                                <div className="flex flex-row items-center gap-2 text-sm md:text-base">
-                                    <span className="text-muted-foreground">No range data available.</span>
-                                </div>
-                            </>
+                            <div className="flex flex-row items-center gap-2 text-sm md:text-base">
+                                <span className="text-muted-foreground">No range data available.</span>
+                            </div>
                         )}
                     </div>
                     {currentModule.length > 0 && (
@@ -324,20 +322,20 @@ function InfoContent({ operator }: { operator: Operator }) {
                             <Collapsible defaultOpen={isModuleDetailsExpanded} onOpenChange={() => setIsModuleDetailsExpanded(!isModuleDetailsExpanded)}>
                                 <CollapsibleTrigger asChild>
                                     <div className="flex cursor-pointer flex-row items-center rounded-md px-2 py-1 transition-all duration-150 hover:bg-primary-foreground">
-                                        <h2 className="text-lg font-bold">Module Details</h2>
+                                        <h2 className="font-bold text-lg">Module Details</h2>
                                         <ChevronDown className={`ml-auto h-5 w-5 transition-transform ${isModuleDetailsExpanded ? "rotate-180" : ""}`} />
                                     </div>
                                 </CollapsibleTrigger>
                                 <CollapsibleContent>
                                     <div className="mt-2 rounded-md border">
-                                        <ModuleDetails currentModule={currentModule} modules={modules} moduleData={moduleData} />
+                                        <ModuleDetails currentModule={currentModule} moduleData={moduleData} modules={modules} />
                                     </div>
                                 </CollapsibleContent>
                             </Collapsible>
                         </div>
                     )}
 
-                    <Handbook operator={operator} isHandbookExpanded={isHandbookExpanded} setIsHandbookExpanded={setIsHandbookExpanded} />
+                    <Handbook isHandbookExpanded={isHandbookExpanded} operator={operator} setIsHandbookExpanded={setIsHandbookExpanded} />
                 </div>
             </div>
         </div>

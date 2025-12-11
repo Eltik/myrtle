@@ -22,25 +22,25 @@ export function OperatorNav({ tabs, activeTab, onTabChange }: OperatorNavProps) 
             {/* Mobile: Horizontal scrollable tabs */}
             <div className="w-full md:hidden">
                 <ScrollArea className="w-full whitespace-nowrap">
-                    <div className="flex gap-1 p-1 rounded-lg bg-muted/50 backdrop-blur-sm">
-                        <AnimatedBackground defaultValue={activeTab} onValueChange={handleValueChange} className="rounded-md bg-primary" transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}>
+                    <div className="flex gap-1 rounded-lg bg-muted/50 p-1 backdrop-blur-sm">
+                        <AnimatedBackground className="rounded-md bg-primary" defaultValue={activeTab} onValueChange={handleValueChange} transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}>
                             {tabs.map((tab) => (
-                                <button key={tab.type} data-id={tab.type} type="button" className="relative z-10 px-4 py-2 text-sm font-medium transition-colors data-[checked=true]:text-primary-foreground">
+                                <button className="relative z-10 px-4 py-2 font-medium text-sm transition-colors data-[checked=true]:text-primary-foreground" data-id={tab.type} key={tab.type} type="button">
                                     {tab.label}
                                 </button>
                             ))}
                         </AnimatedBackground>
                     </div>
-                    <ScrollBar orientation="horizontal" className="h-0" />
+                    <ScrollBar className="h-0" orientation="horizontal" />
                 </ScrollArea>
             </div>
 
             {/* Desktop: Vertical sidebar navigation */}
             <div className="hidden w-52 flex-shrink-0 md:block">
                 <div className="sticky top-4 rounded-lg border border-border bg-card/80 p-2 backdrop-blur-md">
-                    <AnimatedBackground defaultValue={activeTab} onValueChange={handleValueChange} className="rounded-md bg-primary" transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}>
+                    <AnimatedBackground className="rounded-md bg-primary" defaultValue={activeTab} onValueChange={handleValueChange} transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}>
                         {tabs.map((tab) => (
-                            <button key={tab.type} data-id={tab.type} type="button" className="relative z-10 flex w-full items-center justify-start rounded-md px-4 py-3 text-sm font-medium transition-colors data-[checked=true]:text-primary-foreground">
+                            <button className="relative z-10 flex w-full items-center justify-start rounded-md px-4 py-3 font-medium text-sm transition-colors data-[checked=true]:text-primary-foreground" data-id={tab.type} key={tab.type} type="button">
                                 {tab.label}
                             </button>
                         ))}

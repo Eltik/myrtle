@@ -1,15 +1,15 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { Badge } from "~/components/ui/badge";
 import Image from "next/image";
-import { Slider } from "~/components/ui/slider";
+import { useEffect, useState } from "react";
+import { Badge } from "~/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Label } from "~/components/ui/label";
+import { Slider } from "~/components/ui/slider";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import type { Item } from "~/types/impl/api/static/material";
 import type { Operator } from "~/types/impl/api/static/operator";
 import type { MaterialCost } from "~/types/impl/frontend/impl/operators";
-import { getGridColumns, calculateTotalModuleMaterials } from "./helper";
+import { calculateTotalModuleMaterials, getGridColumns } from "./helper";
 import { MaterialItem } from "./material-item";
 
 interface ModuleTabProps {
@@ -44,7 +44,7 @@ export const ModuleTab = ({ operator, moduleCosts, materials }: ModuleTabProps) 
         if (maxModuleLevel >= 0 && moduleLevel > maxModuleLevel) {
             setModuleLevel(maxModuleLevel);
         }
-    }, [activeModuleTab, maxModuleLevel, moduleLevel]);
+    }, [maxModuleLevel, moduleLevel]);
 
     // Get the current module level costs
     const currentModuleLevelCosts = currentModuleCosts[moduleLevel] ?? [];
@@ -54,14 +54,14 @@ export const ModuleTab = ({ operator, moduleCosts, materials }: ModuleTabProps) 
 
     return (
         <div className="space-y-4">
-            <h2 className="text-xl font-bold">Module Level Up Costs</h2>
+            <h2 className="font-bold text-xl">Module Level Up Costs</h2>
 
             {!operator.modules || operator.modules.length === 0 ? (
                 <p className="text-muted-foreground">No modules available for this operator.</p>
             ) : (
                 <div className="space-y-4">
                     {/* Module Tabs */}
-                    <Tabs defaultValue={operator.modules[0]?.uniEquipId} value={activeModuleTab} onValueChange={setActiveModuleTab} className="w-full">
+                    <Tabs className="w-full" defaultValue={operator.modules[0]?.uniEquipId} onValueChange={setActiveModuleTab} value={activeModuleTab}>
                         <TabsList
                             className="grid w-full"
                             style={{
@@ -69,7 +69,7 @@ export const ModuleTab = ({ operator, moduleCosts, materials }: ModuleTabProps) 
                             }}
                         >
                             {operator.modules.map((module) => (
-                                <TabsTrigger value={module.uniEquipId} key={module.uniEquipId} className="truncate px-2 text-sm">
+                                <TabsTrigger className="truncate px-2 text-sm" key={module.uniEquipId} value={module.uniEquipId}>
                                     <span className="truncate" title={module.uniEquipName}>
                                         {module.uniEquipName}
                                     </span>
@@ -78,15 +78,15 @@ export const ModuleTab = ({ operator, moduleCosts, materials }: ModuleTabProps) 
                         </TabsList>
 
                         {/* Module Level Slider */}
-                        <div className="mb-6 mt-4 flex flex-col">
+                        <div className="mt-4 mb-6 flex flex-col">
                             <div className="flex flex-col">
-                                <span className="text-lg font-bold">Module Level</span>
-                                <span className="text-sm text-muted-foreground">Drag the slider to view costs for different module levels</span>
+                                <span className="font-bold text-lg">Module Level</span>
+                                <span className="text-muted-foreground text-sm">Drag the slider to view costs for different module levels</span>
                             </div>
                             <div className="flex max-w-[80%] flex-row items-center gap-2">
-                                <Slider className="w-full" defaultValue={[0]} value={[moduleLevel]} onValueChange={(value) => setModuleLevel(value[0] ?? 0)} min={0} max={maxModuleLevel >= 0 ? maxModuleLevel : 0} step={1} disabled={maxModuleLevel < 0} />
+                                <Slider className="w-full" defaultValue={[0]} disabled={maxModuleLevel < 0} max={maxModuleLevel >= 0 ? maxModuleLevel : 0} min={0} onValueChange={(value) => setModuleLevel(value[0] ?? 0)} step={1} value={[moduleLevel]} />
                                 <div className="flex items-center gap-2">
-                                    <Badge variant="outline" className="flex h-8 min-w-20 items-center justify-center text-center">
+                                    <Badge className="flex h-8 min-w-20 items-center justify-center text-center" variant="outline">
                                         <span>Stage {moduleLevel + 1}</span>
                                     </Badge>
                                 </div>
@@ -94,8 +94,8 @@ export const ModuleTab = ({ operator, moduleCosts, materials }: ModuleTabProps) 
 
                             {/* Total Cost Checkbox */}
                             <div className="mt-4 flex items-center space-x-2">
-                                <Checkbox id="showTotalModuleCost" checked={showTotalModuleCost} onCheckedChange={(checked) => setShowTotalModuleCost(checked === true)} disabled={maxModuleLevel < 0} />
-                                <Label htmlFor="showTotalModuleCost" className={maxModuleLevel < 0 ? "text-muted-foreground" : ""}>
+                                <Checkbox checked={showTotalModuleCost} disabled={maxModuleLevel < 0} id="showTotalModuleCost" onCheckedChange={(checked) => setShowTotalModuleCost(checked === true)} />
+                                <Label className={maxModuleLevel < 0 ? "text-muted-foreground" : ""} htmlFor="showTotalModuleCost">
                                     Show total cost from Stage 1 to Stage {moduleLevel + 1}
                                 </Label>
                             </div>
@@ -103,21 +103,21 @@ export const ModuleTab = ({ operator, moduleCosts, materials }: ModuleTabProps) 
 
                         {/* Module Cost Content */}
                         {operator.modules.map((module) => (
-                            <TabsContent value={module.uniEquipId} key={module.uniEquipId}>
+                            <TabsContent key={module.uniEquipId} value={module.uniEquipId}>
                                 <Card>
                                     <CardHeader>
                                         <CardTitle className="flex items-center gap-2">
                                             {showTotalModuleCost ? "Total Cost" : "Level Up Cost"}
                                             <Image
-                                                src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/equip/type/${module.typeIcon}.png`}
-                                                width={24}
-                                                height={24}
                                                 alt={module.typeName1}
+                                                height={24}
+                                                src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/equip/type/${module.typeIcon}.png`}
                                                 style={{
                                                     maxWidth: "100%",
                                                     height: "auto",
                                                     objectFit: "contain",
                                                 }}
+                                                width={24}
                                             />
                                             <span className="text-sm">
                                                 {module.typeName1} {module.typeName2 ? `- ${module.typeName2}` : ""}

@@ -1,7 +1,7 @@
-import { range, isEqual } from "lodash-es";
+import { isEqual, range } from "lodash-es";
 import type { CharacterData } from "~/types/impl/api";
-import { type BattleEquip } from "~/types/impl/api/static/modules";
-import { type Operator } from "~/types/impl/api/static/operator";
+import type { BattleEquip } from "~/types/impl/api/static/modules";
+import type { Operator } from "~/types/impl/api/static/operator";
 
 /**
  * @author Huge thanks and credit to
@@ -31,8 +31,8 @@ export const getAttributeStats = (character: CharacterData, level: number, modul
     const startingKeyFrame = phase.attributesKeyFrames[0];
     const finalKeyFrame = phase.attributesKeyFrames[phase.attributesKeyFrames.length - 1];
 
-    const { maxHp, atk, def, magicResistance: res, cost: dp, blockCnt, respawnTime: redeploy, baseAttackTime } = startingKeyFrame!.data;
-    const { maxHp: finalMaxHp, atk: finalMaxAtk, def: finalMaxDef, magicResistance: finalMaxRes } = finalKeyFrame!.data;
+    const { maxHp, atk, def, magicResistance: res, cost: dp, blockCnt, respawnTime: redeploy, baseAttackTime } = startingKeyFrame?.data;
+    const { maxHp: finalMaxHp, atk: finalMaxAtk, def: finalMaxDef, magicResistance: finalMaxRes } = finalKeyFrame?.data;
 
     const {
         maxHp: trustHp,
@@ -106,26 +106,26 @@ export const getAttributeStats = (character: CharacterData, level: number, modul
         atk: attackPower,
         attackSpeed: secondsPerAttack,
         baseAttackTime,
-        baseForceLevel: finalKeyFrame!.data.baseForceLevel,
+        baseForceLevel: finalKeyFrame?.data.baseForceLevel,
         blockCnt: blockCount,
         cost: dpCost,
         def: defense,
-        disarmedCombatImmune: finalKeyFrame!.data.disarmedCombatImmune,
-        frozenImmune: finalKeyFrame!.data.frozenImmune,
-        hpRecoveryPerSec: finalKeyFrame!.data.hpRecoveryPerSec,
-        levitateImmune: finalKeyFrame!.data.levitateImmune,
+        disarmedCombatImmune: finalKeyFrame?.data.disarmedCombatImmune,
+        frozenImmune: finalKeyFrame?.data.frozenImmune,
+        hpRecoveryPerSec: finalKeyFrame?.data.hpRecoveryPerSec,
+        levitateImmune: finalKeyFrame?.data.levitateImmune,
         magicResistance: artsResistance,
-        massLevel: finalKeyFrame!.data.massLevel,
-        maxDeckStackCnt: finalKeyFrame!.data.maxDeckStackCnt,
-        maxDeployCount: finalKeyFrame!.data.maxDeployCount,
+        massLevel: finalKeyFrame?.data.massLevel,
+        maxDeckStackCnt: finalKeyFrame?.data.maxDeckStackCnt,
+        maxDeployCount: finalKeyFrame?.data.maxDeployCount,
         maxHp: health,
-        moveSpeed: finalKeyFrame!.data.moveSpeed,
+        moveSpeed: finalKeyFrame?.data.moveSpeed,
         respawnTime: redeployTimeInSeconds,
-        silenceImmune: finalKeyFrame!.data.silenceImmune,
-        sleepImmune: finalKeyFrame!.data.sleepImmune,
-        spRecoveryPerSec: finalKeyFrame!.data.spRecoveryPerSec,
-        stunImmune: finalKeyFrame!.data.stunImmune,
-        tauntLevel: finalKeyFrame!.data.tauntLevel,
+        silenceImmune: finalKeyFrame?.data.silenceImmune,
+        sleepImmune: finalKeyFrame?.data.sleepImmune,
+        spRecoveryPerSec: finalKeyFrame?.data.spRecoveryPerSec,
+        stunImmune: finalKeyFrame?.data.stunImmune,
+        tauntLevel: finalKeyFrame?.data.tauntLevel,
     };
 
     return stats;
@@ -174,8 +174,8 @@ export const getOperatorAttributeStats = (
     const startingKeyFrame = phase.attributesKeyFrames[0];
     const finalKeyFrame = phase.attributesKeyFrames[phase.attributesKeyFrames.length - 1];
 
-    const { maxHp, atk, def, magicResistance: res, cost: dp, blockCnt, respawnTime: redeploy, baseAttackTime } = startingKeyFrame!.data;
-    const { maxHp: finalMaxHp, atk: finalMaxAtk, def: finalMaxDef, magicResistance: finalMaxRes } = finalKeyFrame!.data;
+    const { maxHp, atk, def, magicResistance: res, cost: dp, blockCnt, respawnTime: redeploy, baseAttackTime } = startingKeyFrame?.data;
+    const { maxHp: finalMaxHp, atk: finalMaxAtk, def: finalMaxDef, magicResistance: finalMaxRes } = finalKeyFrame?.data;
 
     const {
         maxHp: trustHp,
@@ -249,26 +249,26 @@ export const getOperatorAttributeStats = (
         atk: attackPower,
         attackSpeed: secondsPerAttack,
         baseAttackTime,
-        baseForceLevel: finalKeyFrame!.data.baseForceLevel,
+        baseForceLevel: finalKeyFrame?.data.baseForceLevel,
         blockCnt: blockCount,
         cost: dpCost,
         def: defense,
-        disarmedCombatImmune: finalKeyFrame!.data.disarmedCombatImmune,
-        frozenImmune: finalKeyFrame!.data.frozenImmune,
-        hpRecoveryPerSec: finalKeyFrame!.data.hpRecoveryPerSec,
-        levitateImmune: finalKeyFrame!.data.levitateImmune,
+        disarmedCombatImmune: finalKeyFrame?.data.disarmedCombatImmune,
+        frozenImmune: finalKeyFrame?.data.frozenImmune,
+        hpRecoveryPerSec: finalKeyFrame?.data.hpRecoveryPerSec,
+        levitateImmune: finalKeyFrame?.data.levitateImmune,
         magicResistance: artsResistance,
-        massLevel: finalKeyFrame!.data.massLevel,
-        maxDeckStackCnt: finalKeyFrame!.data.maxDeckStackCnt,
-        maxDeployCount: finalKeyFrame!.data.maxDeployCount,
+        massLevel: finalKeyFrame?.data.massLevel,
+        maxDeckStackCnt: finalKeyFrame?.data.maxDeckStackCnt,
+        maxDeployCount: finalKeyFrame?.data.maxDeployCount,
         maxHp: health,
-        moveSpeed: finalKeyFrame!.data.moveSpeed,
+        moveSpeed: finalKeyFrame?.data.moveSpeed,
         respawnTime: redeployTimeInSeconds,
-        silenceImmune: finalKeyFrame!.data.silenceImmune,
-        sleepImmune: finalKeyFrame!.data.sleepImmune,
-        spRecoveryPerSec: finalKeyFrame!.data.spRecoveryPerSec,
-        stunImmune: finalKeyFrame!.data.stunImmune,
-        tauntLevel: finalKeyFrame!.data.tauntLevel,
+        silenceImmune: finalKeyFrame?.data.silenceImmune,
+        sleepImmune: finalKeyFrame?.data.sleepImmune,
+        spRecoveryPerSec: finalKeyFrame?.data.spRecoveryPerSec,
+        stunImmune: finalKeyFrame?.data.stunImmune,
+        tauntLevel: finalKeyFrame?.data.tauntLevel,
     };
 
     return stats;
@@ -446,7 +446,7 @@ const getPotentialStatIncrease = (
     if (pot?.buff == null) {
         let desc = pot?.description ?? "";
         if (desc.startsWith("Improves ")) {
-            desc = desc.replace("Improves ", "") + " Enhancement";
+            desc = `${desc.replace("Improves ", "")} Enhancement`;
         } else if (desc === "天赋效果增强") {
             desc = "Talent Enhancement";
         } else if (desc === "第一天赋效果增强") {

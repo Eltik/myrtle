@@ -1,8 +1,8 @@
 "use client";
-import { cn } from "~/lib/utils";
-import { AnimatePresence, motion } from "motion/react";
 import type { TargetAndTransition, Transition, Variant, Variants } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import React from "react";
+import { cn } from "~/lib/utils";
 
 export type PresetType = "blur" | "fade-in-blur" | "scale" | "fade" | "slide";
 
@@ -108,17 +108,17 @@ const AnimationComponent: React.FC<{
 }> = React.memo(({ segment, variants, per, segmentWrapperClassName }) => {
     const content =
         per === "line" ? (
-            <motion.span variants={variants} className="block">
+            <motion.span className="block" variants={variants}>
                 {segment}
             </motion.span>
         ) : per === "word" ? (
-            <motion.span aria-hidden="true" variants={variants} className="inline-block whitespace-pre">
+            <motion.span aria-hidden="true" className="inline-block whitespace-pre" variants={variants}>
                 {segment}
             </motion.span>
         ) : (
             <motion.span className="inline-block whitespace-pre">
                 {segment.split("").map((char, charIndex) => (
-                    <motion.span key={`char-${charIndex}`} aria-hidden="true" variants={variants} className="inline-block whitespace-pre">
+                    <motion.span aria-hidden="true" className="inline-block whitespace-pre" key={`char-${charIndex}`} variants={variants}>
                         {char}
                     </motion.span>
                 ))}
@@ -204,10 +204,10 @@ export function TextEffect({ children, per = "word", as = "p", variants, classNa
     return (
         <AnimatePresence mode="popLayout">
             {trigger && (
-                <MotionTag initial="hidden" animate="visible" exit="exit" variants={computedVariants.container} className={className} onAnimationComplete={onAnimationComplete} onAnimationStart={onAnimationStart} style={style}>
+                <MotionTag animate="visible" className={className} exit="exit" initial="hidden" onAnimationComplete={onAnimationComplete} onAnimationStart={onAnimationStart} style={style} variants={computedVariants.container}>
                     {per !== "line" ? <span className="sr-only">{children}</span> : null}
                     {segments.map((segment, index) => (
-                        <AnimationComponent key={`${per}-${index}-${segment}`} segment={segment} variants={computedVariants.item} per={per} segmentWrapperClassName={segmentWrapperClassName} />
+                        <AnimationComponent key={`${per}-${index}-${segment}`} per={per} segment={segment} segmentWrapperClassName={segmentWrapperClassName} variants={computedVariants.item} />
                     ))}
                 </MotionTag>
             )}

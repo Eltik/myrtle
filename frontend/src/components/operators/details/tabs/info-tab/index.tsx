@@ -1,17 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { Operator, Range } from "~/types/api";
 import { AnimatedGroup } from "~/components/ui/motion-primitives/animated-group";
 import { Separator } from "~/components/ui/shadcn/separator";
-import { TopInfo } from "./top-info";
-import { TopDescription } from "./top-description";
-import { OperatorControls } from "./operator-controls";
-import { StatsDisplay } from "./stats-display";
-import { OperatorRange } from "./operator-range";
-import { TagsDisplay } from "./tags-display";
-import { ModuleDetails } from "./module-details";
+import type { Operator, Range } from "~/types/api";
 import { HandbookSection } from "./handbook-section";
+import { ModuleDetails } from "./module-details";
+import { OperatorControls } from "./operator-controls";
+import { OperatorRange } from "./operator-range";
+import { StatsDisplay } from "./stats-display";
+import { TagsDisplay } from "./tags-display";
+import { TopDescription } from "./top-description";
+import { TopInfo } from "./top-info";
 
 interface InfoTabProps {
     operator: Operator;
@@ -21,9 +21,9 @@ export function InfoTab({ operator }: InfoTabProps) {
     const [phaseIndex, setPhaseIndex] = useState(operator.phases.length - 1);
     const [level, setLevel] = useState(operator.phases[operator.phases.length - 1]?.MaxLevel ?? 1);
     const [favorPoint, setFavorPoint] = useState(100);
-    const [potentialRank, setPotentialRank] = useState(0);
-    const [currentModule, setCurrentModule] = useState("");
-    const [currentModuleLevel, setCurrentModuleLevel] = useState(0);
+    const [_potentialRank, _setPotentialRank] = useState(0);
+    const [_currentModule, _setCurrentModule] = useState("");
+    const [_currentModuleLevel, _setCurrentModuleLevel] = useState(0);
     const [ranges, setRanges] = useState<Range[]>([]);
     const [currentRangeId, setCurrentRangeId] = useState("");
     const [showControls, setShowControls] = useState(true);
@@ -99,11 +99,11 @@ export function InfoTab({ operator }: InfoTabProps) {
         <div className="w-full space-y-6">
             {/* Header */}
             <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold md:text-3xl">Operator Info</h2>
+                <h2 className="font-bold text-2xl md:text-3xl">Operator Info</h2>
             </div>
             <Separator />
 
-            <AnimatedGroup preset="blur-slide" className="space-y-6">
+            <AnimatedGroup className="space-y-6" preset="blur-slide">
                 {/* Top Info Section */}
                 <TopInfo operator={operator} />
 
@@ -111,17 +111,17 @@ export function InfoTab({ operator }: InfoTabProps) {
                 <TopDescription operator={operator} />
 
                 {/* Controls */}
-                <OperatorControls operator={operator} phaseIndex={phaseIndex} level={level} favorPoint={favorPoint} showControls={showControls} onPhaseChange={setPhaseIndex} onLevelChange={setLevel} onFavorPointChange={setFavorPoint} onToggleControls={() => setShowControls(!showControls)} />
+                <OperatorControls favorPoint={favorPoint} level={level} onFavorPointChange={setFavorPoint} onLevelChange={setLevel} onPhaseChange={setPhaseIndex} onToggleControls={() => setShowControls(!showControls)} operator={operator} phaseIndex={phaseIndex} showControls={showControls} />
 
                 {/* Stats */}
                 <StatsDisplay
-                    operator={operator}
                     attributeStats={attributeStats}
-                    phaseIndex={phaseIndex}
                     onPhaseChange={(idx) => {
                         setPhaseIndex(idx);
                         setLevel(operator.phases[idx]?.MaxLevel ?? 1);
                     }}
+                    operator={operator}
+                    phaseIndex={phaseIndex}
                 />
 
                 {/* Tags */}
@@ -130,7 +130,7 @@ export function InfoTab({ operator }: InfoTabProps) {
                 {/* Range */}
                 {currentRange && (
                     <div className="space-y-2">
-                        <h3 className="text-lg font-semibold">Attack Range</h3>
+                        <h3 className="font-semibold text-lg">Attack Range</h3>
                         <OperatorRange range={currentRange} />
                     </div>
                 )}

@@ -1,7 +1,7 @@
 "use client";
+import { type MotionValue, motion, type SpringOptions, useMotionValue, useSpring, useTransform } from "motion/react";
+import { createContext, useContext, useState } from "react";
 import { cn } from "~/lib/utils";
-import { useState, createContext, useContext } from "react";
-import { motion, type MotionValue, type SpringOptions, useMotionValue, useSpring, useTransform } from "motion/react";
 
 const ImageComparisonContext = createContext<
     | {
@@ -45,13 +45,13 @@ function ImageComparison({ children, className, enableHover, springOptions }: Im
         <ImageComparisonContext.Provider value={{ sliderPosition, setSliderPosition, motionSliderPosition }}>
             <div
                 className={cn("relative select-none overflow-hidden", enableHover && "cursor-ew-resize", className)}
-                onMouseMove={handleDrag}
                 onMouseDown={() => !enableHover && setIsDragging(true)}
-                onMouseUp={() => !enableHover && setIsDragging(false)}
                 onMouseLeave={() => !enableHover && setIsDragging(false)}
+                onMouseMove={handleDrag}
+                onMouseUp={() => !enableHover && setIsDragging(false)}
+                onTouchEnd={() => !enableHover && setIsDragging(false)}
                 onTouchMove={handleDrag}
                 onTouchStart={() => !enableHover && setIsDragging(true)}
-                onTouchEnd={() => !enableHover && setIsDragging(false)}
             >
                 {children}
             </div>
@@ -66,9 +66,9 @@ const ImageComparisonImage = ({ className, alt, src, position }: { className?: s
 
     return (
         <motion.img
-            src={src}
             alt={alt}
             className={cn("absolute inset-0 h-full w-full object-cover", className)}
+            src={src}
             style={{
                 clipPath: position === "left" ? leftClipPath : rightClipPath,
             }}

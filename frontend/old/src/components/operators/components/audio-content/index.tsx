@@ -1,17 +1,16 @@
-import { useState, useRef, useEffect, useCallback } from "react";
-import { Card, CardContent } from "~/components/ui/card";
-import { ScrollArea, ScrollBar } from "~/components/ui/scroll-area";
-import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { ChevronDown, Download, PauseCircle, PlayCircle, Volume1, Volume2, VolumeX } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "~/components/ui/button";
-import { Separator } from "~/components/ui/separator";
-import { PlayCircle, PauseCircle, Download, Volume2, VolumeX, Volume1, ChevronDown } from "lucide-react";
-import type { Operator } from "~/types/impl/api/static/operator";
-import { type Voice, LangType } from "~/types/impl/api/static/voices";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import { Card, CardContent } from "~/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
+import { ScrollArea, ScrollBar } from "~/components/ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import { Separator } from "~/components/ui/separator";
+import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import type { Operator } from "~/types/impl/api/static/operator";
+import { LangType, type Voice } from "~/types/impl/api/static/voices";
 import type { VoiceCategory, VoiceLine } from "~/types/impl/frontend/impl/operators";
-import { getCategoryName, getLangTypeName } from "./impl/helper";
-import { getVoiceDescription } from "./impl/helper";
+import { getCategoryName, getLangTypeName, getVoiceDescription } from "./impl/helper";
 import { Waveform } from "./impl/waveform";
 
 function AudioContent({ operator }: { operator: Operator }) {
@@ -267,7 +266,7 @@ function AudioContent({ operator }: { operator: Operator }) {
                 audioElement.removeEventListener("ended", handleAudioEnd);
             }
         };
-    }, [activeLine]);
+    }, []);
 
     const handleLanguageChange = (index: number) => {
         setSelectedLanguageIndex(index);
@@ -309,7 +308,7 @@ function AudioContent({ operator }: { operator: Operator }) {
     return (
         <>
             <div className="p-2 px-4 backdrop-blur-2xl">
-                <span className="text-lg font-bold sm:text-xl md:text-3xl">Voice Lines</span>
+                <span className="font-bold text-lg sm:text-xl md:text-3xl">Voice Lines</span>
             </div>
 
             <Separator />
@@ -319,24 +318,24 @@ function AudioContent({ operator }: { operator: Operator }) {
                     <CardContent className="pt-6">
                         <div>
                             <div className="flex items-center justify-between">
-                                <h2 className="text-lg font-semibold sm:text-xl">Voice Information</h2>
+                                <h2 className="font-semibold text-lg sm:text-xl">Voice Information</h2>
                             </div>
                             <Separator className="my-2" />
                             <div className="grid grid-cols-[100px_1fr] gap-2 pb-2 sm:grid-cols-[120px_1fr]">
-                                <span className="text-sm text-muted-foreground sm:text-base">Voice Actor:</span>
+                                <span className="text-muted-foreground text-sm sm:text-base">Voice Actor:</span>
                                 <span className="text-sm sm:text-base">{voiceActor.name.join(", ")}</span>
-                                <span className="text-sm text-muted-foreground sm:text-base">Language:</span>
+                                <span className="text-muted-foreground text-sm sm:text-base">Language:</span>
                                 <span className="text-sm sm:text-base">{voiceActor.language}</span>
                             </div>
 
                             {/* Language selector - responsive version */}
                             {availableLanguages.length > 1 && (
                                 <div className="mt-2 flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0">
-                                    <span className="text-sm text-muted-foreground">Language:</span>
+                                    <span className="text-muted-foreground text-sm">Language:</span>
 
                                     {/* Mobile dropdown selector */}
                                     <div className="w-full sm:hidden">
-                                        <Select value={selectedLanguageIndex.toString()} onValueChange={(value) => handleLanguageChange(parseInt(value))}>
+                                        <Select onValueChange={(value) => handleLanguageChange(parseInt(value, 10))} value={selectedLanguageIndex.toString()}>
                                             <SelectTrigger className="w-full">
                                                 <SelectValue placeholder="Select Language" />
                                             </SelectTrigger>
@@ -353,7 +352,7 @@ function AudioContent({ operator }: { operator: Operator }) {
                                     {/* Desktop button group */}
                                     <div className="hidden space-x-1 sm:flex">
                                         {availableLanguages.map((lang, index) => (
-                                            <Button key={lang.langType} variant={index === selectedLanguageIndex ? "secondary" : "outline"} size="sm" onClick={() => handleLanguageChange(index)} className="h-8 text-xs">
+                                            <Button className="h-8 text-xs" key={lang.langType} onClick={() => handleLanguageChange(index)} size="sm" variant={index === selectedLanguageIndex ? "secondary" : "outline"}>
                                                 {lang.label}
                                             </Button>
                                         ))}
@@ -380,16 +379,16 @@ function AudioContent({ operator }: { operator: Operator }) {
                                 <div className="hidden w-full flex-1 lg:block">
                                     <div className="w-full flex-1 border-b px-4 pt-2">
                                         <ScrollArea className="w-full whitespace-nowrap rounded-md pb-2">
-                                            <Tabs defaultValue={activeCategory} onValueChange={setActiveCategory} className="w-full">
+                                            <Tabs className="w-full" defaultValue={activeCategory} onValueChange={setActiveCategory}>
                                                 <TabsList className="inline-flex h-10 w-full items-center justify-center rounded-md bg-transparent p-1 text-muted-foreground">
                                                     {voiceCategories.map((category) => (
-                                                        <TabsTrigger key={category.id} value={category.id} className="hover:bg-accent/50 data-[state=active]:bg-secondary">
+                                                        <TabsTrigger className="hover:bg-accent/50 data-[state=active]:bg-secondary" key={category.id} value={category.id}>
                                                             {category.name}
                                                         </TabsTrigger>
                                                     ))}
                                                 </TabsList>
                                             </Tabs>
-                                            <ScrollBar orientation="horizontal" className="h-0" />
+                                            <ScrollBar className="h-0" orientation="horizontal" />
                                         </ScrollArea>
                                     </div>
                                 </div>
@@ -398,14 +397,14 @@ function AudioContent({ operator }: { operator: Operator }) {
                                 <div className="px-4 py-3 lg:hidden">
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <Button variant="outline" className="w-full justify-between">
+                                            <Button className="w-full justify-between" variant="outline">
                                                 {currentCategory?.name ?? "Select Category"}
                                                 <ChevronDown className="ml-2 h-4 w-4" />
                                             </Button>
                                         </DropdownMenuTrigger>
-                                        <DropdownMenuContent className="w-full" align="start">
+                                        <DropdownMenuContent align="start" className="w-full">
                                             {voiceCategories.map((category) => (
-                                                <DropdownMenuItem key={category.id} onClick={() => setActiveCategory(category.id)} className={category.id === activeCategory ? "bg-secondary/20" : ""}>
+                                                <DropdownMenuItem className={category.id === activeCategory ? "bg-secondary/20" : ""} key={category.id} onClick={() => setActiveCategory(category.id)}>
                                                     {category.name}
                                                 </DropdownMenuItem>
                                             ))}
@@ -415,9 +414,9 @@ function AudioContent({ operator }: { operator: Operator }) {
 
                                 <div className="flex-1">
                                     {voiceCategories.map((category) => (
-                                        <div key={category.id} className={`mt-0 ${category.id === activeCategory ? "block" : "hidden"}`}>
+                                        <div className={`mt-0 ${category.id === activeCategory ? "block" : "hidden"}`} key={category.id}>
                                             <div className="p-2 sm:p-4">
-                                                <h3 className="mb-2 text-base font-medium sm:mb-4 sm:text-lg">{category.name} Voice Lines</h3>
+                                                <h3 className="mb-2 font-medium text-base sm:mb-4 sm:text-lg">{category.name} Voice Lines</h3>
                                                 <ScrollArea className="h-[40vh] pr-2 sm:h-[50vh] sm:pr-4 md:h-[60vh]">
                                                     <div className="space-y-2 sm:space-y-3">
                                                         {category.lines.map((line) => {
@@ -425,19 +424,19 @@ function AudioContent({ operator }: { operator: Operator }) {
                                                                 return null;
                                                             }
                                                             return (
-                                                                <div key={line.id} className={`cursor-pointer rounded-lg border p-2 transition-colors sm:p-3 ${activeLine === line.id ? "bg-secondary/20" : "hover:bg-accent/50"}`} onClick={() => handleLineSelect(line.id)}>
+                                                                <div className={`cursor-pointer rounded-lg border p-2 transition-colors sm:p-3 ${activeLine === line.id ? "bg-secondary/20" : "hover:bg-accent/50"}`} key={line.id} onClick={() => handleLineSelect(line.id)}>
                                                                     <div className="flex items-center justify-between">
                                                                         <div className="flex flex-1 items-center gap-1 sm:gap-2">
-                                                                            <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full sm:h-8 sm:w-8">
+                                                                            <Button className="h-6 w-6 rounded-full sm:h-8 sm:w-8" size="icon" variant="ghost">
                                                                                 {isPlaying && activeLine === line.id ? <PauseCircle className="h-4 w-4 sm:h-6 sm:w-6" /> : <PlayCircle className="h-4 w-4 sm:h-6 sm:w-6" />}
                                                                             </Button>
                                                                             <div>
-                                                                                <div className="text-sm font-medium sm:text-base">{line.name}</div>
-                                                                                <div className="text-xs text-muted-foreground">{line.description}</div>
+                                                                                <div className="font-medium text-sm sm:text-base">{line.name}</div>
+                                                                                <div className="text-muted-foreground text-xs">{line.description}</div>
                                                                             </div>
                                                                         </div>
-                                                                        <div onClick={(e) => e.stopPropagation()} className="pointer-events-auto">
-                                                                            <Button variant="ghost" size="icon" className="h-6 w-6 sm:h-8 sm:w-8" disabled={line.url === "#"} onClick={(e) => handleDownload(e, line)}>
+                                                                        <div className="pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+                                                                            <Button className="h-6 w-6 sm:h-8 sm:w-8" disabled={line.url === "#"} onClick={(e) => handleDownload(e, line)} size="icon" variant="ghost">
                                                                                 <Download className="h-3 w-3 sm:h-4 sm:w-4" />
                                                                             </Button>
                                                                         </div>
@@ -465,34 +464,32 @@ function AudioContent({ operator }: { operator: Operator }) {
 
                 {/* Audio playback controls - fixed at bottom */}
                 {activeLine && (
-                    <div className="fixed bottom-0 left-0 right-0 z-10 border-t bg-background/80 p-2 backdrop-blur-md">
+                    <div className="fixed right-0 bottom-0 left-0 z-10 border-t bg-background/80 p-2 backdrop-blur-md">
                         <div className="container mx-auto flex max-w-full flex-col px-2 sm:px-4">
                             {/* Waveform visualization */}
-                            <Waveform audioUrl={currentLine?.url ?? "#"} isPlaying={isPlaying} onSeek={handleSeek} audioRef={audioRef} />
+                            <Waveform audioRef={audioRef} audioUrl={currentLine?.url ?? "#"} isPlaying={isPlaying} onSeek={handleSeek} />
 
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10" onClick={togglePlayPause}>
+                                    <Button className="h-8 w-8 sm:h-10 sm:w-10" onClick={togglePlayPause} size="icon" variant="ghost">
                                         {isPlaying ? <PauseCircle className="h-5 w-5 sm:h-6 sm:w-6" /> : <PlayCircle className="h-5 w-5 sm:h-6 sm:w-6" />}
                                     </Button>
 
                                     <div className="flex max-w-[120px] flex-col sm:max-w-none">
-                                        <span className="truncate text-xs font-medium sm:text-sm">{currentLine?.name}</span>
-                                        <span className="truncate text-xs text-muted-foreground">{currentCategory?.name}</span>
+                                        <span className="truncate font-medium text-xs sm:text-sm">{currentLine?.name}</span>
+                                        <span className="truncate text-muted-foreground text-xs">{currentCategory?.name}</span>
                                     </div>
                                 </div>
 
                                 <div className="flex items-center gap-1 sm:gap-2">
-                                    <Button variant="ghost" size="icon" onClick={toggleMute} className="h-8 w-8 sm:h-auto sm:w-auto">
+                                    <Button className="h-8 w-8 sm:h-auto sm:w-auto" onClick={toggleMute} size="icon" variant="ghost">
                                         {isMuted || volume === 0 ? <VolumeX className="h-4 w-4 sm:h-5 sm:w-5" /> : volume > 0.5 ? <Volume2 className="h-4 w-4 sm:h-5 sm:w-5" /> : <Volume1 className="h-4 w-4 sm:h-5 sm:w-5" />}
                                     </Button>
 
                                     <input
-                                        type="range"
-                                        min="0"
+                                        className="h-1.5 w-16 appearance-none rounded-full bg-secondary sm:h-2 sm:w-24"
                                         max="1"
-                                        step="0.01"
-                                        value={volume}
+                                        min="0"
                                         onChange={(e) => {
                                             const newVolume = parseFloat(e.target.value);
                                             setVolume(newVolume);
@@ -500,7 +497,9 @@ function AudioContent({ operator }: { operator: Operator }) {
                                                 audioRef.current.volume = newVolume;
                                             }
                                         }}
-                                        className="h-1.5 w-16 appearance-none rounded-full bg-secondary sm:h-2 sm:w-24"
+                                        step="0.01"
+                                        type="range"
+                                        value={volume}
                                     />
                                 </div>
                             </div>
@@ -509,7 +508,7 @@ function AudioContent({ operator }: { operator: Operator }) {
                 )}
 
                 {/* Hidden audio element */}
-                <audio ref={audioRef} src={currentLine?.url} style={{ display: "none" }} controls />
+                <audio controls ref={audioRef} src={currentLine?.url} style={{ display: "none" }} />
             </div>
         </>
     );

@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useCallback, useContext, useEffect, useId, useMemo, useRef, useState } from "react";
-import { motion, AnimatePresence, MotionConfig, type Transition, type Variant } from "motion/react";
-import { createPortal } from "react-dom";
-import { cn } from "~/lib/utils";
 import { XIcon } from "lucide-react";
+import { AnimatePresence, MotionConfig, motion, type Transition, type Variant } from "motion/react";
+import React, { useCallback, useContext, useEffect, useId, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import useClickOutside from "~/hooks/useClickOutside";
+import { cn } from "~/lib/utils";
 
 export type MorphingDialogContextType = {
     isOpen: boolean;
@@ -90,16 +90,16 @@ function MorphingDialogTrigger({ children, className, style, triggerRef }: Morph
 
     return (
         <motion.button
-            ref={triggerRef}
-            layoutId={`dialog-${uniqueId}`}
+            aria-controls={`motion-ui-morphing-dialog-content-${uniqueId}`}
+            aria-expanded={isOpen}
+            aria-haspopup="dialog"
+            aria-label={`Open dialog ${uniqueId}`}
             className={cn("relative cursor-pointer", className)}
+            layoutId={`dialog-${uniqueId}`}
             onClick={handleClick}
             onKeyDown={handleKeyDown}
+            ref={triggerRef}
             style={style}
-            aria-haspopup="dialog"
-            aria-expanded={isOpen}
-            aria-controls={`motion-ui-morphing-dialog-content-${uniqueId}`}
-            aria-label={`Open dialog ${uniqueId}`}
         >
             {children}
         </motion.button>
@@ -169,7 +169,7 @@ function MorphingDialogContent({ children, className, style }: MorphingDialogCon
     });
 
     return (
-        <motion.div ref={containerRef} layoutId={`dialog-${uniqueId}`} className={cn("overflow-hidden", className)} style={style} role="dialog" aria-modal="true" aria-labelledby={`motion-ui-morphing-dialog-title-${uniqueId}`} aria-describedby={`motion-ui-morphing-dialog-description-${uniqueId}`}>
+        <motion.div aria-describedby={`motion-ui-morphing-dialog-description-${uniqueId}`} aria-labelledby={`motion-ui-morphing-dialog-title-${uniqueId}`} aria-modal="true" className={cn("overflow-hidden", className)} layoutId={`dialog-${uniqueId}`} ref={containerRef} role="dialog" style={style}>
             {children}
         </motion.div>
     );
@@ -196,7 +196,7 @@ function MorphingDialogContainer({ children }: MorphingDialogContainerProps) {
         <AnimatePresence initial={false} mode="sync">
             {isOpen && (
                 <>
-                    <motion.div key={`backdrop-${uniqueId}`} className="fixed inset-0 h-full w-full bg-white/40 backdrop-blur-xs dark:bg-black/40" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
+                    <motion.div animate={{ opacity: 1 }} className="fixed inset-0 h-full w-full bg-white/40 backdrop-blur-xs dark:bg-black/40" exit={{ opacity: 0 }} initial={{ opacity: 0 }} key={`backdrop-${uniqueId}`} />
                     <div className="fixed inset-0 z-50 flex items-center justify-center">{children}</div>
                 </>
             )}
@@ -215,7 +215,7 @@ function MorphingDialogTitle({ children, className, style }: MorphingDialogTitle
     const { uniqueId } = useMorphingDialog();
 
     return (
-        <motion.div layoutId={`dialog-title-container-${uniqueId}`} className={className} style={style} layout>
+        <motion.div className={className} layout layoutId={`dialog-title-container-${uniqueId}`} style={style}>
             {children}
         </motion.div>
     );
@@ -231,7 +231,7 @@ function MorphingDialogSubtitle({ children, className, style }: MorphingDialogSu
     const { uniqueId } = useMorphingDialog();
 
     return (
-        <motion.div layoutId={`dialog-subtitle-container-${uniqueId}`} className={className} style={style}>
+        <motion.div className={className} layoutId={`dialog-subtitle-container-${uniqueId}`} style={style}>
             {children}
         </motion.div>
     );
@@ -252,7 +252,7 @@ function MorphingDialogDescription({ children, className, variants, disableLayou
     const { uniqueId } = useMorphingDialog();
 
     return (
-        <motion.div key={`dialog-description-${uniqueId}`} layoutId={disableLayoutAnimation ? undefined : `dialog-description-content-${uniqueId}`} variants={variants} className={className} initial="initial" animate="animate" exit="exit" id={`dialog-description-${uniqueId}`}>
+        <motion.div animate="animate" className={className} exit="exit" id={`dialog-description-${uniqueId}`} initial="initial" key={`dialog-description-${uniqueId}`} layoutId={disableLayoutAnimation ? undefined : `dialog-description-content-${uniqueId}`} variants={variants}>
             {children}
         </motion.div>
     );
@@ -268,7 +268,7 @@ export type MorphingDialogImageProps = {
 function MorphingDialogImage({ src, alt, className, style }: MorphingDialogImageProps) {
     const { uniqueId } = useMorphingDialog();
 
-    return <motion.img src={src} alt={alt} className={cn(className)} layoutId={`dialog-img-${uniqueId}`} style={style} />;
+    return <motion.img alt={alt} className={cn(className)} layoutId={`dialog-img-${uniqueId}`} src={src} style={style} />;
 }
 
 export type MorphingDialogCloseProps = {
@@ -289,7 +289,7 @@ function MorphingDialogClose({ children, className, variants }: MorphingDialogCl
     }, [setIsOpen]);
 
     return (
-        <motion.button onClick={handleClose} type="button" aria-label="Close dialog" key={`dialog-close-${uniqueId}`} className={cn("absolute top-6 right-6", className)} initial="initial" animate="animate" exit="exit" variants={variants}>
+        <motion.button animate="animate" aria-label="Close dialog" className={cn("absolute top-6 right-6", className)} exit="exit" initial="initial" key={`dialog-close-${uniqueId}`} onClick={handleClose} type="button" variants={variants}>
             {children || <XIcon size={24} />}
         </motion.button>
     );

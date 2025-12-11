@@ -1,7 +1,7 @@
-import Image from "next/image";
 import { Maximize2 } from "lucide-react";
-import type { UISkin } from "~/types/impl/frontend/impl/operators";
+import Image from "next/image";
 import { getCDNURL } from "~/lib/cdn";
+import type { UISkin } from "~/types/impl/frontend/impl/operators";
 
 interface SkinImageViewerProps {
     operator: {
@@ -24,27 +24,27 @@ export function SkinImageViewer({ operator, selectedSkinData, imageSrc, isImageL
                 </div>
             )}
             <Image
-                src={getCDNURL(imageSrc, true)}
                 alt={`${operator.name} - ${selectedSkinData.name}`}
+                className="transition-opacity duration-300"
                 fill
+                onError={handleImageError}
+                onLoad={handleImageLoad}
+                src={getCDNURL(imageSrc, true)}
                 style={{
                     objectFit: "contain",
                     opacity: isImageLoading ? 0 : 1,
                 }}
-                className="transition-opacity duration-300"
-                onLoad={handleImageLoad}
-                onError={handleImageError}
                 unoptimized
             />
 
             {/* Fullscreen button with better touch target */}
-            <button onClick={openFullscreen} className="absolute right-2 top-2 translate-x-4 rounded-full bg-black/50 p-1.5 text-white opacity-0 transition-all duration-300 ease-out hover:bg-black/70 group-hover:translate-x-0 group-hover:opacity-100 sm:p-2" aria-label="View fullscreen">
-                <Maximize2 size={16} className="" />
+            <button aria-label="View fullscreen" className="absolute top-2 right-2 translate-x-4 rounded-full bg-black/50 p-1.5 text-white opacity-0 transition-all duration-300 ease-out hover:bg-black/70 group-hover:translate-x-0 group-hover:opacity-100 sm:p-2" onClick={openFullscreen}>
+                <Maximize2 className="" size={16} />
             </button>
 
             {/* Info overlay with improved text truncation and responsive sizes */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent px-3 py-2 text-white shadow-lg backdrop-blur-sm transition-transform duration-300 ease-in-out group-hover:translate-y-full sm:px-4">
-                <h3 className="text-shadow-sm line-clamp-1 text-base font-bold sm:text-lg md:text-xl">{selectedSkinData.name}</h3>
+            <div className="absolute right-0 bottom-0 left-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent px-3 py-2 text-white shadow-lg backdrop-blur-sm transition-transform duration-300 ease-in-out group-hover:translate-y-full sm:px-4">
+                <h3 className="line-clamp-1 font-bold text-base text-shadow-sm sm:text-lg md:text-xl">{selectedSkinData.name}</h3>
                 <p className="line-clamp-2 text-xs opacity-95 drop-shadow-md sm:text-sm">{selectedSkinData.description}</p>
             </div>
         </div>

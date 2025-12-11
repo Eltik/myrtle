@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import useMeasure from "react-use-measure";
-import { AnimatePresence, motion, MotionConfig } from "motion/react";
-import { cn } from "~/lib/utils";
-import useClickOutside from "~/hooks/useClickOutside";
 import { Folder, MessageCircle, User, WalletCards } from "lucide-react";
+import { AnimatePresence, MotionConfig, motion } from "motion/react";
+import { useEffect, useRef, useState } from "react";
+import useMeasure from "react-use-measure";
+import useClickOutside from "~/hooks/useClickOutside";
+import { cn } from "~/lib/utils";
 
 const transition = {
     type: "spring",
@@ -107,20 +107,20 @@ export default function ToolbarExpandable() {
                         <AnimatePresence initial={false} mode="sync">
                             {isOpen ? (
                                 <motion.div
-                                    key="content"
-                                    initial={{ height: 0 }}
                                     animate={{ height: heightContent || 0 }}
                                     exit={{ height: 0 }}
+                                    initial={{ height: 0 }}
+                                    key="content"
                                     style={{
                                         width: maxWidth,
                                     }}
                                 >
-                                    <div ref={contentRef} className="p-2">
+                                    <div className="p-2" ref={contentRef}>
                                         {ITEMS.map((item) => {
                                             const isSelected = active === item.id;
 
                                             return (
-                                                <motion.div key={item.id} initial={{ opacity: 0 }} animate={{ opacity: isSelected ? 1 : 0 }} exit={{ opacity: 0 }}>
+                                                <motion.div animate={{ opacity: isSelected ? 1 : 0 }} exit={{ opacity: 0 }} initial={{ opacity: 0 }} key={item.id}>
                                                     <div className={cn("px-2 pt-2 text-sm", isSelected ? "block" : "hidden")}>{item.content}</div>
                                                 </motion.div>
                                             );
@@ -133,13 +133,12 @@ export default function ToolbarExpandable() {
                     <div className="flex space-x-2 p-2" ref={menuRef}>
                         {ITEMS.map((item) => (
                             <button
-                                key={item.id}
                                 aria-label={item.label}
                                 className={cn(
                                     "relative flex h-9 w-9 shrink-0 scale-100 select-none appearance-none items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 focus-visible:ring-2 active:scale-[0.98]",
                                     active === item.id ? "bg-zinc-100 text-zinc-800" : "",
                                 )}
-                                type="button"
+                                key={item.id}
                                 onClick={() => {
                                     if (!isOpen) setIsOpen(true);
                                     if (active === item.id) {
@@ -150,6 +149,7 @@ export default function ToolbarExpandable() {
 
                                     setActive(item.id);
                                 }}
+                                type="button"
                             >
                                 {item.title}
                             </button>

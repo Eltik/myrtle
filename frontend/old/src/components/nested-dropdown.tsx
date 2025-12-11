@@ -1,9 +1,9 @@
 "use client";
 
 import { ChevronsUpDown } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuRadioGroup, DropdownMenuRadioItem } from "~/components/ui/dropdown-menu";
-import { Button } from "./ui/button";
 import { useCallback, useEffect, useState } from "react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "~/components/ui/dropdown-menu";
+import { Button } from "./ui/button";
 
 interface Option {
     label: string;
@@ -79,7 +79,7 @@ export function NestedDropdown({ options, placeholder = "Select an option", onSe
                                 <span>{item.label}</span>
                             </DropdownMenuSubTrigger>
                             <DropdownMenuSubContent>
-                                <DropdownMenuRadioGroup value={selectedOption ?? ""} onValueChange={handleSelect}>
+                                <DropdownMenuRadioGroup onValueChange={handleSelect} value={selectedOption ?? ""}>
                                     {renderOptions(item.subOptions)}
                                 </DropdownMenuRadioGroup>
                             </DropdownMenuSubContent>
@@ -87,7 +87,7 @@ export function NestedDropdown({ options, placeholder = "Select an option", onSe
                     );
                 } else {
                     return (
-                        <DropdownMenuRadioItem key={item.value} value={item.value} className="group pl-2">
+                        <DropdownMenuRadioItem className="group pl-2" key={item.value} value={item.value}>
                             <span className="group-aria-checked:pl-4">{item.label}</span>
                         </DropdownMenuRadioItem>
                     );
@@ -102,13 +102,13 @@ export function NestedDropdown({ options, placeholder = "Select an option", onSe
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-[200px] justify-between">
+                <Button className="w-[200px] justify-between" variant="outline">
                     {selectedLabel ?? placeholder}
                     <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-[200px]">
-                <DropdownMenuRadioGroup value={selectedOption ?? ""} onValueChange={handleSelect}>
+                <DropdownMenuRadioGroup onValueChange={handleSelect} value={selectedOption ?? ""}>
                     {renderOptions(options)}
                 </DropdownMenuRadioGroup>
             </DropdownMenuContent>

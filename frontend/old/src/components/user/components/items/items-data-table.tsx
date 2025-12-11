@@ -1,15 +1,15 @@
-import { flexRender, type ColumnFiltersState, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable, type SortingState } from "@tanstack/react-table";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
-import type { DataTableProps } from "~/types/impl/frontend/impl/users";
+import { type ColumnFiltersState, flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, type SortingState, useReactTable } from "@tanstack/react-table";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useState } from "react";
-import ItemDialogueCard from "./item-dialogue-card";
-import { type Item } from "~/types/impl/api/static/material";
+import { Button } from "~/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "~/components/ui/dialog";
 import { Input } from "~/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink } from "~/components/ui/pagination";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
-import { Button } from "~/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
+import type { Item } from "~/types/impl/api/static/material";
+import type { DataTableProps } from "~/types/impl/frontend/impl/users";
+import ItemDialogueCard from "./item-dialogue-card";
 
 export function ItemsDataTable<TData, TValue>({ columns, data }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = useState<SortingState>([]);
@@ -77,10 +77,10 @@ export function ItemsDataTable<TData, TValue>({ columns, data }: DataTableProps<
     return (
         <>
             <div className="flex items-center justify-between py-4">
-                <Input className="max-w-sm" placeholder="Filter items..." value={(table.getColumn("name")?.getFilterValue() as string) ?? ""} onChange={(event) => table.getColumn("name")?.setFilterValue(event.target.value)} />
+                <Input className="max-w-sm" onChange={(event) => table.getColumn("name")?.setFilterValue(event.target.value)} placeholder="Filter items..." value={(table.getColumn("name")?.getFilterValue() as string) ?? ""} />
                 <div className="flex items-center space-x-2">
-                    <span className="text-sm text-muted-foreground">Rows per page:</span>
-                    <Select value={pageSize === data.length ? "all" : pageSize.toString()} onValueChange={handlePageSizeChange}>
+                    <span className="text-muted-foreground text-sm">Rows per page:</span>
+                    <Select onValueChange={handlePageSizeChange} value={pageSize === data.length ? "all" : pageSize.toString()}>
                         <SelectTrigger className="h-8 w-[70px]">
                             <SelectValue placeholder={pageSize} />
                         </SelectTrigger>
@@ -110,7 +110,7 @@ export function ItemsDataTable<TData, TValue>({ columns, data }: DataTableProps<
                             table.getRowModel().rows.map((row) => (
                                 <Dialog key={row.id}>
                                     <DialogTrigger asChild>
-                                        <TableRow data-state={row.getIsSelected() && "selected"} className="cursor-pointer">
+                                        <TableRow className="cursor-pointer" data-state={row.getIsSelected() && "selected"}>
                                             {row.getVisibleCells().map((cell) => (
                                                 <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
                                             ))}
@@ -123,7 +123,7 @@ export function ItemsDataTable<TData, TValue>({ columns, data }: DataTableProps<
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={columns.length} className="h-24 text-center">
+                                <TableCell className="h-24 text-center" colSpan={columns.length}>
                                     No results.
                                 </TableCell>
                             </TableRow>
@@ -136,7 +136,7 @@ export function ItemsDataTable<TData, TValue>({ columns, data }: DataTableProps<
                     <Pagination>
                         <PaginationContent>
                             <PaginationItem>
-                                <Button variant="outline" size="icon" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
+                                <Button disabled={!table.getCanPreviousPage()} onClick={() => table.previousPage()} size="icon" variant="outline">
                                     <span className="sr-only">Go to previous page</span>
                                     <ChevronLeftIcon className="h-4 w-4" />
                                 </Button>
@@ -169,7 +169,7 @@ export function ItemsDataTable<TData, TValue>({ columns, data }: DataTableProps<
                                 </>
                             )}
                             <PaginationItem>
-                                <Button variant="outline" size="icon" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+                                <Button disabled={!table.getCanNextPage()} onClick={() => table.nextPage()} size="icon" variant="outline">
                                     <span className="sr-only">Go to next page</span>
                                     <ChevronRightIcon className="h-4 w-4" />
                                 </Button>

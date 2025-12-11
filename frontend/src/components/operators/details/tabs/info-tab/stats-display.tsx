@@ -1,11 +1,11 @@
 "use client";
 
+import { BadgeDollarSign, CircleGauge, Cross, Diamond, Hourglass, Shield, ShieldBan, Swords } from "lucide-react";
 import { motion } from "motion/react";
 import Image from "next/image";
-import { Cross, Swords, Shield, CircleGauge, Diamond, ShieldBan, Hourglass, BadgeDollarSign } from "lucide-react";
-import type { Operator } from "~/types/api";
 import { AnimatedNumber } from "~/components/ui/motion-primitives/animated-number";
 import { getEliteImage } from "~/lib/operator-helpers";
+import type { Operator } from "~/types/api";
 
 interface StatsDisplayProps {
     operator: Operator;
@@ -40,9 +40,9 @@ export function StatsDisplay({ operator, attributeStats, phaseIndex, onPhaseChan
             {/* Phase Selector */}
             <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-2">
                 {operator.phases.map((_, index) => (
-                    <motion.button key={index} onClick={() => onPhaseChange(index)} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className={`relative rounded-md p-2 transition-colors ${phaseIndex === index ? "bg-card shadow-md" : "hover:bg-card/50"}`}>
-                        <Image src={getEliteImage(index) || "/placeholder.svg"} alt={`Elite ${index}`} width={35} height={35} className="h-8 w-8 object-contain" />
-                        {phaseIndex === index && <motion.div layoutId="phase-indicator" className="absolute inset-0 rounded-md border-2 border-primary" transition={{ type: "spring", bounce: 0.2, duration: 0.4 }} />}
+                    <motion.button className={`relative rounded-md p-2 transition-colors ${phaseIndex === index ? "bg-card shadow-md" : "hover:bg-card/50"}`} key={index} onClick={() => onPhaseChange(index)} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                        <Image alt={`Elite ${index}`} className="h-8 w-8 object-contain" height={35} src={getEliteImage(index) || "/placeholder.svg"} width={35} />
+                        {phaseIndex === index && <motion.div className="absolute inset-0 rounded-md border-2 border-primary" layoutId="phase-indicator" transition={{ type: "spring", bounce: 0.2, duration: 0.4 }} />}
                     </motion.button>
                 ))}
             </div>
@@ -52,12 +52,12 @@ export function StatsDisplay({ operator, attributeStats, phaseIndex, onPhaseChan
                 {statConfig.map(({ key, label, icon: Icon, decimal }) => {
                     const value = attributeStats?.[key] ?? 0;
                     return (
-                        <motion.div key={key} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between rounded-lg bg-muted/50 p-3">
+                        <motion.div animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between rounded-lg bg-muted/50 p-3" initial={{ opacity: 0, y: 10 }} key={key}>
                             <div className="flex items-center gap-2">
                                 <Icon className="h-5 w-5 text-muted-foreground" />
-                                <span className="text-sm text-muted-foreground">{label}</span>
+                                <span className="text-muted-foreground text-sm">{label}</span>
                             </div>
-                            <span className="font-bold tabular-nums">{decimal ? value.toFixed(2) : <AnimatedNumber value={Math.round(value)} springOptions={{ bounce: 0, duration: 500 }} />}</span>
+                            <span className="font-bold tabular-nums">{decimal ? value.toFixed(2) : <AnimatedNumber springOptions={{ bounce: 0, duration: 500 }} value={Math.round(value)} />}</span>
                         </motion.div>
                     );
                 })}

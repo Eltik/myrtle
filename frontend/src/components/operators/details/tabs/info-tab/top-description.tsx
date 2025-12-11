@@ -1,7 +1,7 @@
 "use client";
 
-import type { Operator } from "~/types/api";
 import { insertBlackboard } from "~/lib/operator-helpers";
+import type { Operator } from "~/types/api";
 
 interface TopDescriptionProps {
     operator: Operator;
@@ -24,8 +24,8 @@ export function TopDescription({ operator }: TopDescriptionProps) {
 
     return (
         <div className="rounded-lg border border-border bg-muted/30 p-4">
-            <h4 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Trait</h4>
-            <p className="text-sm leading-relaxed text-foreground" dangerouslySetInnerHTML={{ __html: traitDescription ?? "" }} />
+            <h4 className="mb-2 font-semibold text-muted-foreground text-sm uppercase tracking-wide">Trait</h4>
+            <p className="text-foreground text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: traitDescription ?? "" }} />
         </div>
     );
 }

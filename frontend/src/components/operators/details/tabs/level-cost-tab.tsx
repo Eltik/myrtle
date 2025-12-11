@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import Image from "next/image";
-import type { Item, Operator } from "~/types/api";
-import { Separator } from "~/components/ui/shadcn/separator";
+import { useEffect, useState } from "react";
 import { AnimatedGroup } from "~/components/ui/motion-primitives/animated-group";
+import { Separator } from "~/components/ui/shadcn/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/shadcn/tabs";
+import type { Item, Operator } from "~/types/api";
 
 interface LevelCostTabProps {
     operator: Operator;
@@ -63,11 +63,11 @@ export function LevelCostTab({ operator }: LevelCostTabProps) {
     return (
         <div className="w-full space-y-6">
             <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold md:text-3xl">Level-Up Cost</h2>
+                <h2 className="font-bold text-2xl md:text-3xl">Level-Up Cost</h2>
             </div>
             <Separator />
 
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <Tabs onValueChange={setActiveTab} value={activeTab}>
                 <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="elite">Elite Promotion</TabsTrigger>
                     <TabsTrigger value="skill">Skill Level Up</TabsTrigger>
@@ -75,15 +75,15 @@ export function LevelCostTab({ operator }: LevelCostTabProps) {
                 </TabsList>
 
                 {/* Elite Promotion Tab */}
-                <TabsContent value="elite" className="mt-4">
-                    <AnimatedGroup preset="blur-slide" className="space-y-4">
+                <TabsContent className="mt-4" value="elite">
+                    <AnimatedGroup className="space-y-4" preset="blur-slide">
                         {eliteCosts.length > 0 ? (
                             eliteCosts.map((elite, index) => (
-                                <motion.div key={elite.elite} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }} className="rounded-lg border border-border bg-card/50 p-4">
+                                <motion.div animate={{ opacity: 1, y: 0 }} className="rounded-lg border border-border bg-card/50 p-4" initial={{ opacity: 0, y: 10 }} key={elite.elite} transition={{ delay: index * 0.1 }}>
                                     <h4 className="mb-3 font-semibold text-primary">{elite.elite} Promotion</h4>
                                     <div className="flex flex-wrap gap-2">
                                         {elite.costs.map((cost: MaterialCost, i: number) => (
-                                            <MaterialItem key={i} material={materials[cost.id]} count={cost.count} />
+                                            <MaterialItem count={cost.count} key={i} material={materials[cost.id]} />
                                         ))}
                                     </div>
                                 </motion.div>
@@ -95,19 +95,19 @@ export function LevelCostTab({ operator }: LevelCostTabProps) {
                 </TabsContent>
 
                 {/* Skill Level Up Tab */}
-                <TabsContent value="skill" className="mt-4">
-                    <AnimatedGroup preset="blur-slide" className="space-y-4">
+                <TabsContent className="mt-4" value="skill">
+                    <AnimatedGroup className="space-y-4" preset="blur-slide">
                         {/* Skill Levels 2-7 */}
                         {skillLevelCosts.length > 0 && (
                             <div className="rounded-lg border border-border bg-card/50 p-4">
                                 <h4 className="mb-3 font-semibold text-primary">Skill Levels 2-7</h4>
                                 <div className="space-y-3">
                                     {skillLevelCosts.map((levelCost, index) => (
-                                        <div key={index} className="flex items-center gap-3">
-                                            <span className="w-12 text-sm text-muted-foreground">Lv{index + 2}</span>
+                                        <div className="flex items-center gap-3" key={index}>
+                                            <span className="w-12 text-muted-foreground text-sm">Lv{index + 2}</span>
                                             <div className="flex flex-wrap gap-2">
                                                 {levelCost.LvlUpCost?.map((cost: MaterialCost, i: number) => (
-                                                    <MaterialItem key={i} material={materials[cost.id]} count={cost.count} />
+                                                    <MaterialItem count={cost.count} key={i} material={materials[cost.id]} />
                                                 ))}
                                             </div>
                                         </div>
@@ -122,14 +122,14 @@ export function LevelCostTab({ operator }: LevelCostTabProps) {
                                 <h4 className="mb-3 font-semibold text-primary">Skill Mastery</h4>
                                 <div className="space-y-4">
                                     {masterySkills.map((skill, skillIndex) => (
-                                        <div key={skill.skillId} className="space-y-2">
-                                            <h5 className="text-sm font-medium">{skill.static?.Levels?.[0]?.name ?? `Skill ${skillIndex + 1}`}</h5>
+                                        <div className="space-y-2" key={skill.skillId}>
+                                            <h5 className="font-medium text-sm">{skill.static?.Levels?.[0]?.name ?? `Skill ${skillIndex + 1}`}</h5>
                                             {skill.levelUpCostCond?.map((mastery, mIndex) => (
-                                                <div key={mIndex} className="flex items-center gap-3">
-                                                    <span className="w-12 text-sm text-muted-foreground">M{mIndex + 1}</span>
+                                                <div className="flex items-center gap-3" key={mIndex}>
+                                                    <span className="w-12 text-muted-foreground text-sm">M{mIndex + 1}</span>
                                                     <div className="flex flex-wrap gap-2">
                                                         {mastery.LevelUpCost?.map((cost: MaterialCost, i: number) => (
-                                                            <MaterialItem key={i} material={materials[cost.id]} count={cost.count} />
+                                                            <MaterialItem count={cost.count} key={i} material={materials[cost.id]} />
                                                         ))}
                                                     </div>
                                                 </div>
@@ -145,20 +145,20 @@ export function LevelCostTab({ operator }: LevelCostTabProps) {
                 </TabsContent>
 
                 {/* Module Tab */}
-                <TabsContent value="module" className="mt-4">
-                    <AnimatedGroup preset="blur-slide" className="space-y-4">
+                <TabsContent className="mt-4" value="module">
+                    <AnimatedGroup className="space-y-4" preset="blur-slide">
                         {operator.modules && operator.modules.length > 0 ? (
                             operator.modules
                                 .filter((m) => m.type !== "INITIAL")
                                 .map((module, index) => (
-                                    <motion.div key={module.uniEquipId} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }} className="rounded-lg border border-border bg-card/50 p-4">
+                                    <motion.div animate={{ opacity: 1, y: 0 }} className="rounded-lg border border-border bg-card/50 p-4" initial={{ opacity: 0, y: 10 }} key={module.uniEquipId} transition={{ delay: index * 0.1 }}>
                                         <h4 className="mb-3 font-semibold text-primary">{module.uniEquipName}</h4>
                                         {module.itemCost &&
                                             Object.entries(module.itemCost).map(([stage, costs]) => (
-                                                <div key={stage} className="mb-2 flex items-center gap-3">
-                                                    <span className="w-16 text-sm text-muted-foreground">Stage {stage}</span>
+                                                <div className="mb-2 flex items-center gap-3" key={stage}>
+                                                    <span className="w-16 text-muted-foreground text-sm">Stage {stage}</span>
                                                     <div className="flex flex-wrap gap-2">
-                                                        {Array.isArray(costs) ? costs.map((cost: MaterialCost, i: number) => <MaterialItem key={i} material={materials[cost.id]} count={cost.count} />) : <MaterialItem material={materials[(costs as MaterialCost).id]} count={(costs as MaterialCost).count} />}
+                                                        {Array.isArray(costs) ? costs.map((cost: MaterialCost, i: number) => <MaterialItem count={cost.count} key={i} material={materials[cost.id]} />) : <MaterialItem count={(costs as MaterialCost).count} material={materials[(costs as MaterialCost).id]} />}
                                                     </div>
                                                 </div>
                                             ))}
@@ -180,9 +180,9 @@ function MaterialItem({ material, count }: { material?: Item; count: number }) {
     return (
         <div className="flex items-center gap-1.5 rounded-md bg-muted/50 px-2 py-1">
             <div className="relative h-8 w-8">
-                <Image src={iconUrl || "/placeholder.svg"} alt={material?.name ?? "Material"} fill className="object-contain" />
+                <Image alt={material?.name ?? "Material"} className="object-contain" fill src={iconUrl || "/placeholder.svg"} />
             </div>
-            <span className="text-sm font-medium">x{count}</span>
+            <span className="font-medium text-sm">x{count}</span>
         </div>
     );
 }

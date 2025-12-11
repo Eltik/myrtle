@@ -1,17 +1,17 @@
 "use client";
 
-import { useState } from "react";
 import { motion } from "motion/react";
+import { useState } from "react";
+import { TransitionPanel } from "~/components/ui/motion-primitives/transition-panel";
+import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
 import type { Operator } from "~/types/api";
 import { OperatorHero } from "./operator-hero";
 import { OperatorNav } from "./operator-nav";
-import { TransitionPanel } from "~/components/ui/motion-primitives/transition-panel";
-import { InfoTab } from "./tabs/info-tab";
-import { SkillsTab } from "./tabs/skills-tab";
-import { LevelCostTab } from "./tabs/level-cost-tab";
-import { SkinsTab } from "./tabs/skins-tab";
 import { AudioTab } from "./tabs/audio-tab";
-import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
+import { InfoTab } from "./tabs/info-tab";
+import { LevelCostTab } from "./tabs/level-cost-tab";
+import { SkillsTab } from "./tabs/skills-tab";
+import { SkinsTab } from "./tabs/skins-tab";
 
 export type TabType = "info" | "skills" | "levelup" | "skins" | "audio";
 
@@ -41,20 +41,20 @@ export function OperatorDetail({ operator }: OperatorDetailProps) {
     const tabContent = [<InfoTab key="info" operator={operator} />, <SkillsTab key="skills" operator={operator} />, <LevelCostTab key="levelup" operator={operator} />, <SkinsTab key="skins" operator={operator} />, <AudioTab key="audio" operator={operator} />];
 
     return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }} className="min-h-screen w-full">
+        <motion.div animate={{ opacity: 1 }} className="min-h-screen w-full" initial={{ opacity: 0 }} transition={{ duration: 0.5 }}>
             {/* Hero Section */}
             <OperatorHero operator={operator} />
 
             {/* Main Content */}
-            <div className="container relative z-20 mx-auto -mt-32 px-4 pb-16">
+            <div className="-mt-32 container relative z-20 mx-auto px-4 pb-16">
                 <div className="flex w-full flex-col gap-4 md:flex-row md:gap-6">
                     {/* Navigation */}
-                    <OperatorNav tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+                    <OperatorNav activeTab={activeTab} onTabChange={setActiveTab} tabs={tabs} />
 
                     {/* Content Area */}
                     <div className="flex-1 overflow-hidden rounded-lg border border-border bg-card/80 backdrop-blur-md">
                         <ScrollArea className="h-full max-h-[calc(100vh-200px)]">
-                            <TransitionPanel activeIndex={tabIndex} variants={tabVariants} transition={{ duration: 0.3, ease: "easeInOut" }} className="p-4 md:p-6">
+                            <TransitionPanel activeIndex={tabIndex} className="p-4 md:p-6" transition={{ duration: 0.3, ease: "easeInOut" }} variants={tabVariants}>
                                 {tabContent}
                             </TransitionPanel>
                         </ScrollArea>

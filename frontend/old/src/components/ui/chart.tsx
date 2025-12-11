@@ -43,15 +43,15 @@ const ChartContainer = React.forwardRef<
     return (
         <ChartContext.Provider value={{ config }}>
             <div
-                data-chart={chartId}
-                ref={ref}
                 className={cn(
                     "flex aspect-video justify-center text-xs [&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-none [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-border [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-sector]:outline-none [&_.recharts-surface]:outline-none",
                     className,
                 )}
+                data-chart={chartId}
+                ref={ref}
                 {...props}
             >
-                <ChartStyle id={chartId} config={config} />
+                <ChartStyle config={config} id={chartId} />
                 <RechartsPrimitive.ResponsiveContainer>{children}</RechartsPrimitive.ResponsiveContainer>
             </div>
         </ChartContext.Provider>
@@ -131,7 +131,7 @@ const ChartTooltipContent = React.forwardRef<
     const nestLabel = payload.length === 1 && indicator !== "dot";
 
     return (
-        <div ref={ref} className={cn("grid min-w-[8rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl", className)}>
+        <div className={cn("grid min-w-[8rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl", className)} ref={ref}>
             {!nestLabel ? tooltipLabel : null}
             <div className="grid gap-1.5">
                 {payload.map((item, index) => {
@@ -141,7 +141,7 @@ const ChartTooltipContent = React.forwardRef<
                     const indicatorColor = (color ?? (item.payload as { fill: string }).fill) || item.color;
 
                     return (
-                        <div key={item.dataKey} className={cn("flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5 [&>svg]:text-muted-foreground", indicator === "dot" && "items-center")}>
+                        <div className={cn("flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5 [&>svg]:text-muted-foreground", indicator === "dot" && "items-center")} key={item.dataKey}>
                             {formatter && item?.value !== undefined && item.name ? (
                                 formatter(
                                     item.value,
@@ -178,7 +178,7 @@ const ChartTooltipContent = React.forwardRef<
                                             {nestLabel ? tooltipLabel : null}
                                             <span className="text-muted-foreground">{itemConfig?.label ?? item.name}</span>
                                         </div>
-                                        {item.value && <span className="font-mono font-medium tabular-nums text-foreground">{item.value.toLocaleString()}</span>}
+                                        {item.value && <span className="font-medium font-mono text-foreground tabular-nums">{item.value.toLocaleString()}</span>}
                                     </div>
                                 </>
                             )}
@@ -208,7 +208,7 @@ const ChartLegendContent = React.forwardRef<
     }
 
     return (
-        <div ref={ref} className={cn("flex items-center justify-center gap-4", verticalAlign === "top" ? "pb-3" : "pt-3", className)}>
+        <div className={cn("flex items-center justify-center gap-4", verticalAlign === "top" ? "pb-3" : "pt-3", className)} ref={ref}>
             {payload.map((item) => {
                 // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
                 const key = `${nameKey ?? item.dataKey ?? "value"}`;
@@ -217,8 +217,8 @@ const ChartLegendContent = React.forwardRef<
                 return (
                     <div
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                        key={item.value}
                         className={cn("flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-muted-foreground")}
+                        key={item.value}
                     >
                         {itemConfig?.icon && !hideIcon ? (
                             <itemConfig.icon />

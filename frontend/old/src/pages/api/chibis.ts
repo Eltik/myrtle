@@ -1,4 +1,4 @@
-import { type ServerResponse } from "http";
+import type { ServerResponse } from "node:http";
 import { env } from "~/env.js";
 import type { ChibiOperatorList, Chibis, ChibisSimplified } from "~/types/impl/api/impl/chibis";
 

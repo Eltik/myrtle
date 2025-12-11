@@ -1,18 +1,18 @@
+import { motion } from "framer-motion";
 import { LayoutGrid, List } from "lucide-react";
 import type { NextPage } from "next";
 import Head from "next/head";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { env } from "~/env";
-import type { User } from "~/types/impl/api";
-import CharactersGrid from "~/components/user/charactersGrid";
-import Items from "~/components/user/items";
-import Base from "~/components/user/base";
-import type { ViewType } from "~/types/impl/frontend/impl/users";
 import { useState } from "react";
 import { Button } from "~/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import Base from "~/components/user/base";
+import CharactersGrid from "~/components/user/charactersGrid";
 import CharactersList from "~/components/user/charactersList";
 import UserHeader from "~/components/user/header";
-import { motion } from "framer-motion";
+import Items from "~/components/user/items";
+import { env } from "~/env";
+import type { User } from "~/types/impl/api";
+import type { ViewType } from "~/types/impl/frontend/impl/users";
 
 const User: NextPage<Props> = ({ data }: { data: User }) => {
     const fadeIn = {
@@ -34,40 +34,40 @@ const User: NextPage<Props> = ({ data }: { data: User }) => {
         <>
             <Head>
                 <title>{data.status.nickName.endsWith("s") ? `${data.status.nickName}'` : `${data.status.nickName}'s`} Arknights Profile</title>
-                <meta name="description" content={`View ${data.status.nickName.endsWith("s") ? `${data.status.nickName}'` : `${data.status.nickName}'s`} Arknights profile on myrtle.moe.`} />
-                <link rel="icon" href="/favicon.ico" />
+                <meta content={`View ${data.status.nickName.endsWith("s") ? `${data.status.nickName}'` : `${data.status.nickName}'s`} Arknights profile on myrtle.moe.`} name="description" />
+                <link href="/favicon.ico" rel="icon" />
             </Head>
             <div className="container mx-auto p-4">
-                <motion.div initial="hidden" animate="visible" exit={"hidden"} variants={fadeIn}>
+                <motion.div animate="visible" exit={"hidden"} initial="hidden" variants={fadeIn}>
                     <UserHeader data={data} />
                 </motion.div>
-                <motion.div initial="hidden" animate="visible" exit={"hidden"} variants={fadeIn}>
-                    <Tabs defaultValue="characters" className="space-y-4">
+                <motion.div animate="visible" exit={"hidden"} initial="hidden" variants={fadeIn}>
+                    <Tabs className="space-y-4" defaultValue="characters">
                         <TabsList>
                             <TabsTrigger value="characters">Characters</TabsTrigger>
                             <TabsTrigger value="items">Items</TabsTrigger>
                             <TabsTrigger value="base">Base</TabsTrigger>
                         </TabsList>
-                        <TabsContent value="characters" className="space-y-4">
+                        <TabsContent className="space-y-4" value="characters">
                             <div className="flex flex-row gap-4">
-                                <h2 className="text-2xl font-bold">Characters</h2>
+                                <h2 className="font-bold text-2xl">Characters</h2>
                                 <div className="flex rounded-md shadow-sm" role="group">
-                                    <Button variant={currentView === "grid" ? "default" : "outline"} className="rounded-l-md rounded-r-none border-r-0" onClick={() => handleViewChange("grid")} aria-label="Grid view">
+                                    <Button aria-label="Grid view" className="rounded-r-none rounded-l-md border-r-0" onClick={() => handleViewChange("grid")} variant={currentView === "grid" ? "default" : "outline"}>
                                         <LayoutGrid className="h-4 w-4" />
                                     </Button>
-                                    <Button variant={currentView === "list" ? "default" : "outline"} className="rounded-l-none rounded-r-md border-l-0" onClick={() => handleViewChange("list")} aria-label="List view">
+                                    <Button aria-label="List view" className="rounded-r-md rounded-l-none border-l-0" onClick={() => handleViewChange("list")} variant={currentView === "list" ? "default" : "outline"}>
                                         <List className="h-4 w-4" />
                                     </Button>
                                 </div>
                             </div>
                             {currentView === "grid" ? <CharactersGrid data={data} /> : <CharactersList data={data} />}
                         </TabsContent>
-                        <TabsContent value="items" className="space-y-4">
-                            <h2 className="text-2xl font-bold">Items</h2>
+                        <TabsContent className="space-y-4" value="items">
+                            <h2 className="font-bold text-2xl">Items</h2>
                             <Items data={data} />
                         </TabsContent>
-                        <TabsContent value="base" className="space-y-4">
-                            <h2 className="text-2xl font-bold">Base</h2>
+                        <TabsContent className="space-y-4" value="base">
+                            <h2 className="font-bold text-2xl">Base</h2>
                             <Base data={data} />
                         </TabsContent>
                     </Tabs>

@@ -1,13 +1,10 @@
-import React, { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
+import { RecruitOutcome } from "~/components/recruitment-calculator/impl/recruit-outcome";
+import { TagSelector } from "~/components/recruitment-calculator/impl/tag-selector";
 import { Card, CardContent } from "~/components/ui/card";
 import { Separator } from "~/components/ui/separator";
-import Link from "next/link";
-import type { ApiResponse, ErrorResponse, OperatorOutcome } from "~/types/impl/frontend/impl/recruitment-calculator";
-import type { SelectedOpInfo } from "~/types/impl/frontend/impl/recruitment-calculator";
-import type { Tag } from "~/types/impl/frontend/impl/recruitment-calculator";
-import type { GroupedTags } from "~/types/impl/frontend/impl/recruitment-calculator";
-import { TagSelector } from "~/components/recruitment-calculator/impl/tag-selector";
-import { RecruitOutcome } from "~/components/recruitment-calculator/impl/recruit-outcome";
+import type { ApiResponse, ErrorResponse, GroupedTags, OperatorOutcome, SelectedOpInfo, Tag } from "~/types/impl/frontend/impl/recruitment-calculator";
 
 export const Recruitment = () => {
     const [allTagsMap, setAllTagsMap] = useState<Record<string, Tag>>({}); // For easy lookup
@@ -181,26 +178,24 @@ export const Recruitment = () => {
     }, [selectedTags, calculateOutcomes]); // Dependencies remain the same
 
     return (
-        <>
-            <div className="container mx-auto p-4">
-                <h1 className="mt-2 text-2xl font-bold">Arknights Recruitment Calculator</h1>
-                <p className="mb-4 text-xs md:text-sm">
-                    Calculate the probability of getting a specific operator or operators in a recruitment. Please note that the calculator may not have all operators available.
-                    <br />
-                    <b>Note:</b> This calculator uses calculations from{" "}
-                    <Link href={"https://github.com/akgcc/akgcc.github.io"} className="text-blue-500 hover:underline">
-                        akgcc/akgcc.github.io
-                    </Link>
-                    . All credit for the recruitment calculations goes to them.
-                </p>
-                <Card>
-                    <CardContent>
-                        <TagSelector isLoadingTags={isLoadingTags} errorTags={errorTags} groupedTags={groupedTags} selectedTags={selectedTags} setSelectedTags={setSelectedTags} setSelectedOpInfo={setSelectedOpInfo} />
-                        <Separator className="my-6" />
-                        <RecruitOutcome allTagsMap={allTagsMap} selectedOpInfo={selectedOpInfo} setSelectedOpInfo={setSelectedOpInfo} possibleOutcomes={possibleOutcomes} isLoadingOutcomes={isLoadingOutcomes} errorOutcomes={errorOutcomes} selectedTags={selectedTags} />
-                    </CardContent>
-                </Card>
-            </div>
-        </>
+        <div className="container mx-auto p-4">
+            <h1 className="mt-2 font-bold text-2xl">Arknights Recruitment Calculator</h1>
+            <p className="mb-4 text-xs md:text-sm">
+                Calculate the probability of getting a specific operator or operators in a recruitment. Please note that the calculator may not have all operators available.
+                <br />
+                <b>Note:</b> This calculator uses calculations from{" "}
+                <Link className="text-blue-500 hover:underline" href={"https://github.com/akgcc/akgcc.github.io"}>
+                    akgcc/akgcc.github.io
+                </Link>
+                . All credit for the recruitment calculations goes to them.
+            </p>
+            <Card>
+                <CardContent>
+                    <TagSelector errorTags={errorTags} groupedTags={groupedTags} isLoadingTags={isLoadingTags} selectedTags={selectedTags} setSelectedOpInfo={setSelectedOpInfo} setSelectedTags={setSelectedTags} />
+                    <Separator className="my-6" />
+                    <RecruitOutcome allTagsMap={allTagsMap} errorOutcomes={errorOutcomes} isLoadingOutcomes={isLoadingOutcomes} possibleOutcomes={possibleOutcomes} selectedOpInfo={selectedOpInfo} selectedTags={selectedTags} setSelectedOpInfo={setSelectedOpInfo} />
+                </CardContent>
+            </Card>
+        </div>
     );
 };

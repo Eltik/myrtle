@@ -1,16 +1,15 @@
 "use client";
 
-import type React from "react";
-
-import { useCallback, useEffect, useRef, useState } from "react";
+import { ChevronDown, Download, Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { motion } from "motion/react";
-import { Play, Pause, Volume2, VolumeX, Download, ChevronDown } from "lucide-react";
-import type { Operator, Voice, LangType } from "~/types/api";
-import { Separator } from "~/components/ui/shadcn/separator";
+import type React from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatedGroup } from "~/components/ui/motion-primitives/animated-group";
 import { Button } from "~/components/ui/shadcn/button";
-import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "~/components/ui/shadcn/dropdown-menu";
+import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
+import { Separator } from "~/components/ui/shadcn/separator";
+import type { LangType, Operator, Voice } from "~/types/api";
 
 interface AudioTabProps {
     operator: Operator;
@@ -79,7 +78,7 @@ export function AudioTab({ operator }: AudioTabProps) {
                     if (!categoryMap.has(categoryName)) {
                         categoryMap.set(categoryName, []);
                     }
-                    categoryMap.get(categoryName)!.push(line);
+                    categoryMap.get(categoryName)?.push(line);
                 });
 
                 const cats: VoiceCategory[] = [];
@@ -101,7 +100,7 @@ export function AudioTab({ operator }: AudioTabProps) {
 
                 setCategories(cats);
                 if (cats.length > 0) {
-                    setActiveCategory(cats[0]!.id);
+                    setActiveCategory(cats[0]?.id);
                 }
             } catch (error) {
                 console.error("Failed to fetch voices:", error);
@@ -113,7 +112,7 @@ export function AudioTab({ operator }: AudioTabProps) {
     }, [operator.id]);
 
     const currentCategory = categories.find((c) => c.id === activeCategory);
-    const currentLine = currentCategory?.lines.find((l) => l.id === activeLine);
+    const _currentLine = currentCategory?.lines.find((l) => l.id === activeLine);
 
     const handleLineSelect = (lineId: string, url: string) => {
         if (activeLine === lineId && isPlaying) {
@@ -164,7 +163,7 @@ export function AudioTab({ operator }: AudioTabProps) {
     return (
         <div className="w-full space-y-6">
             <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold md:text-3xl">Voice Lines</h2>
+                <h2 className="font-bold text-2xl md:text-3xl">Voice Lines</h2>
             </div>
             <Separator />
 
@@ -175,14 +174,14 @@ export function AudioTab({ operator }: AudioTabProps) {
                     <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                 </div>
             ) : categories.length > 0 ? (
-                <AnimatedGroup preset="blur-slide" className="space-y-4">
+                <AnimatedGroup className="space-y-4" preset="blur-slide">
                     {/* Language Selector */}
                     {availableLanguages.length > 1 && (
                         <div className="flex items-center gap-2">
-                            <span className="text-sm text-muted-foreground">Language:</span>
+                            <span className="text-muted-foreground text-sm">Language:</span>
                             <div className="flex gap-1">
                                 {availableLanguages.map((lang) => (
-                                    <Button key={lang} variant={selectedLanguage === lang ? "default" : "outline"} size="sm" onClick={() => setSelectedLanguage(lang)}>
+                                    <Button key={lang} onClick={() => setSelectedLanguage(lang)} size="sm" variant={selectedLanguage === lang ? "default" : "outline"}>
                                         {getLangLabel(lang)}
                                     </Button>
                                 ))}
@@ -194,7 +193,7 @@ export function AudioTab({ operator }: AudioTabProps) {
                     <div className="lg:hidden">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="w-full justify-between bg-transparent">
+                                <Button className="w-full justify-between bg-transparent" variant="outline">
                                     {currentCategory?.name ?? "Select Category"}
                                     <ChevronDown className="ml-2 h-4 w-4" />
                                 </Button>
@@ -212,9 +211,9 @@ export function AudioTab({ operator }: AudioTabProps) {
                     {/* Category Tabs - Desktop */}
                     <div className="hidden lg:block">
                         <ScrollArea className="w-full">
-                            <div className="flex gap-1 border-b border-border pb-2">
+                            <div className="flex gap-1 border-border border-b pb-2">
                                 {categories.map((cat) => (
-                                    <button key={cat.id} onClick={() => setActiveCategory(cat.id)} className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${activeCategory === cat.id ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}>
+                                    <button className={`rounded-md px-4 py-2 font-medium text-sm transition-colors ${activeCategory === cat.id ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`} key={cat.id} onClick={() => setActiveCategory(cat.id)}>
                                         {cat.name}
                                     </button>
                                 ))}
@@ -227,10 +226,10 @@ export function AudioTab({ operator }: AudioTabProps) {
                         <div className="space-y-2 pr-4">
                             {currentCategory?.lines.map((line) => (
                                 <motion.div
-                                    key={line.id}
-                                    initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     className={`cursor-pointer rounded-lg border p-4 transition-colors ${activeLine === line.id ? "border-primary bg-primary/10" : "border-border bg-card/50 hover:border-primary/50"}`}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    key={line.id}
                                     onClick={() => handleLineSelect(line.id, line.url)}
                                 >
                                     <div className="flex items-start justify-between gap-3">
@@ -239,13 +238,13 @@ export function AudioTab({ operator }: AudioTabProps) {
                                                 <button className="rounded-full bg-primary/20 p-1.5">{activeLine === line.id && isPlaying ? <Pause className="h-4 w-4 text-primary" /> : <Play className="h-4 w-4 text-primary" />}</button>
                                                 <h4 className="font-medium">{line.name}</h4>
                                             </div>
-                                            <p className="mt-2 text-sm text-muted-foreground">{line.transcript}</p>
+                                            <p className="mt-2 text-muted-foreground text-sm">{line.transcript}</p>
                                         </div>
                                         <div className="flex gap-1">
-                                            <Button variant="ghost" size="icon" onClick={toggleMute}>
+                                            <Button onClick={toggleMute} size="icon" variant="ghost">
                                                 {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
                                             </Button>
-                                            <Button variant="ghost" size="icon" onClick={(e) => handleDownload(e, line)}>
+                                            <Button onClick={(e) => handleDownload(e, line)} size="icon" variant="ghost">
                                                 <Download className="h-4 w-4" />
                                             </Button>
                                         </div>

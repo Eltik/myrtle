@@ -1,6 +1,6 @@
 "use client";
-import type { ReactNode } from "react";
 import { motion, type Variants } from "motion/react";
+import type { ReactNode } from "react";
 import React from "react";
 
 export type PresetType = "fade" | "slide" | "scale" | "blur" | "blur-slide" | "zoom" | "flip" | "bounce" | "rotate" | "swing";
@@ -102,7 +102,7 @@ function AnimatedGroup({ children, className, variants, preset, as = "div", asCh
     const MotionChild = React.useMemo(() => motion.create(asChild as keyof JSX.IntrinsicElements), [asChild]);
 
     return (
-        <MotionComponent initial="hidden" animate="visible" variants={containerVariants} className={className}>
+        <MotionComponent animate="visible" className={className} initial="hidden" variants={containerVariants}>
             {React.Children.map(children, (child, index) => (
                 <MotionChild key={index} variants={itemVariants}>
                     {child}

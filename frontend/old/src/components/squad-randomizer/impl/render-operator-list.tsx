@@ -1,14 +1,12 @@
-import { formatSubProfession } from "~/helper";
-
-import { formatProfession } from "~/helper";
-import type { Operator } from "~/types/impl/api/static/operator";
-import { RARITY_COLORS } from "./helper";
 import Image from "next/image";
-import { cn } from "~/lib/utils";
-import { renderStars } from "./render-stars";
+import type { Dispatch, SetStateAction } from "react";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import type { Dispatch, SetStateAction } from "react";
+import { formatProfession, formatSubProfession } from "~/helper";
+import { cn } from "~/lib/utils";
+import type { Operator } from "~/types/impl/api/static/operator";
+import { RARITY_COLORS } from "./helper";
+import { renderStars } from "./render-stars";
 
 // Updated List View Renderer
 export const renderOperatorListItem = (op: Operator, excludedOperators: Set<string>, setExcludedOperators: Dispatch<SetStateAction<Set<string>>>, lastCharacterRef: ((node: HTMLDivElement) => void) | null) => {
@@ -33,17 +31,17 @@ export const renderOperatorListItem = (op: Operator, excludedOperators: Set<stri
     };
 
     return (
-        <div key={op.id} ref={lastCharacterRef} className={cn("flex items-center border-b p-2 last:border-b-0", isExcluded && "bg-muted/30 opacity-60")}>
+        <div className={cn("flex items-center border-b p-2 last:border-b-0", isExcluded && "bg-muted/30 opacity-60")} key={op.id} ref={lastCharacterRef}>
             <div className="mr-2 flex min-w-0 items-center space-x-3">
-                <Image src={imageUrl} alt={op.name} width={40} height={40} className={cn("flex-shrink-0 rounded-full", isExcluded && "grayscale")} unoptimized />
+                <Image alt={op.name} className={cn("flex-shrink-0 rounded-full", isExcluded && "grayscale")} height={40} src={imageUrl} unoptimized width={40} />
                 <div className="min-w-0 overflow-hidden">
                     <p className={`truncate font-semibold ${displayRarityColor}`}>{op.name}</p>
-                    <p className="truncate text-xs text-muted-foreground">
+                    <p className="truncate text-muted-foreground text-xs">
                         {renderStars(op.rarity)} {displaySubProfession} <span className="mx-1">|</span> {displayProfession}
                     </p>
                     <div className="mt-1 flex flex-wrap gap-1">
                         {op.tagList?.slice(0, 4).map((tag) => (
-                            <Badge key={tag} variant="secondary" className="px-1 py-0 text-xs">
+                            <Badge className="px-1 py-0 text-xs" key={tag} variant="secondary">
                                 {tag}
                             </Badge>
                         ))}
@@ -52,13 +50,13 @@ export const renderOperatorListItem = (op: Operator, excludedOperators: Set<stri
             </div>
             <div className="ml-auto flex flex-shrink-0 items-center space-x-1 sm:space-x-2">
                 <Button
-                    variant={isExcluded ? "secondary" : "outline"}
-                    size="sm"
+                    className={cn("h-auto px-2 py-1 text-xs", isExcluded ? "text-muted-foreground hover:bg-muted hover:text-foreground" : "text-destructive hover:bg-destructive/10")}
                     onClick={() => {
                         handleToggleExclude(op.id);
                     }}
+                    size="sm"
                     title={isExcluded ? "Allow in squad" : "Exclude from squad"}
-                    className={cn("h-auto px-2 py-1 text-xs", isExcluded ? "text-muted-foreground hover:bg-muted hover:text-foreground" : "text-destructive hover:bg-destructive/10")}
+                    variant={isExcluded ? "secondary" : "outline"}
                 >
                     {isExcluded ? "Allow" : "Exclude"}
                 </Button>

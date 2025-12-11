@@ -1,14 +1,14 @@
+import { ArrowDownIcon, ArrowUpIcon } from "lucide-react";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
 import { capitalize, formatSkillType } from "~/helper";
 import { descriptionToHtml } from "~/helper/descriptionParser";
-import { type Operator } from "~/types/impl/api/static/operator";
-import OperatorRange from "../../operator-range";
-import type { Range } from "~/types/impl/api/static/ranges";
-import { useEffect, useState } from "react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
-import { ArrowDownIcon, ArrowUpIcon } from "lucide-react";
 import { getCDNURL } from "~/lib/cdn";
+import type { Operator } from "~/types/impl/api/static/operator";
+import type { Range } from "~/types/impl/api/static/ranges";
+import OperatorRange from "../../operator-range";
 
 function SkillCard({ skill, level }: { skill: Operator["skills"][0]; level: number }) {
     const [currentRange, setCurrentRange] = useState<Range | null>(null);
@@ -22,7 +22,7 @@ function SkillCard({ skill, level }: { skill: Operator["skills"][0]; level: numb
                 setCurrentRange(range);
             });
         }
-    }, [skill, level]);
+    }, [skill, level, fetchRange]);
 
     async function fetchRange(id: string) {
         const data = (await (
@@ -61,17 +61,17 @@ function SkillCard({ skill, level }: { skill: Operator["skills"][0]; level: numb
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="flex flex-row items-center gap-2 text-xl font-bold">
+                <CardTitle className="flex flex-row items-center gap-2 font-bold text-xl">
                     <Image
-                        src={getCDNURL(`${skill.static?.image ?? ""}`)}
-                        width={50}
-                        height={50}
                         alt="Skill"
+                        className="rounded-sm"
+                        height={50}
+                        src={getCDNURL(`${skill.static?.image ?? ""}`)}
                         style={{
                             maxWidth: "100%",
                             height: "auto",
                         }}
-                        className="rounded-sm"
+                        width={50}
                     />
                     <div className="flex flex-col justify-start">
                         {skill.static?.levels[level]?.name}
@@ -81,7 +81,7 @@ function SkillCard({ skill, level }: { skill: Operator["skills"][0]; level: numb
                                 color: (skill.static?.levels[level]?.spData.spType ?? "") === 8 ? "#9c9a9a" : (skill.static?.levels[level]?.spData.spType ?? "") === "INCREASE_WITH_TIME" ? "#a7e855" : (skill.static?.levels[level]?.spData.spType ?? "") === "INCREASE_WHEN_ATTACK" ? "#f98d3f" : "#ffcf53",
                             }}
                         >
-                            {formatSkillType(skill.static?.levels[level]?.spData.spType ?? "") !== "Passive" ? formatSkillType(skill.static?.levels[level]?.spData.spType ?? "") + " Recovery" : "Passive"}
+                            {formatSkillType(skill.static?.levels[level]?.spData.spType ?? "") !== "Passive" ? `${formatSkillType(skill.static?.levels[level]?.spData.spType ?? "")} Recovery` : "Passive"}
                         </span>
                     </div>
                 </CardTitle>
@@ -96,8 +96,8 @@ function SkillCard({ skill, level }: { skill: Operator["skills"][0]; level: numb
             <CardContent>
                 <div className="grid grid-cols-2">
                     <div className="rounded-tl-md border p-2">
-                        <p className="flex flex-row items-center gap-1 text-sm text-muted-foreground">
-                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" className="inline-block">
+                        <p className="flex flex-row items-center gap-1 text-muted-foreground text-sm">
+                            <svg className="inline-block" fill="none" height="14" viewBox="0 0 14 14" width="14" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M2 13V1L12 7L2 13Z" fill="#D6D6E2" />
                             </svg>
                             SP Cost
@@ -105,8 +105,8 @@ function SkillCard({ skill, level }: { skill: Operator["skills"][0]; level: numb
                         <p className="font-bold">{skill.static?.levels[level]?.spData.spCost}</p>
                     </div>
                     <div className="rounded-tr-md border p-2">
-                        <p className="flex flex-row items-center gap-1 text-sm text-muted-foreground">
-                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" className="inline-block">
+                        <p className="flex flex-row items-center gap-1 text-muted-foreground text-sm">
+                            <svg className="inline-block" fill="none" height="14" viewBox="0 0 14 14" width="14" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M1 8.4L8.5 0L7.3 5.6H13L5.5 14L6.7 8.4H1Z" fill="#a7e855" />
                             </svg>
                             Initial SP
@@ -114,16 +114,16 @@ function SkillCard({ skill, level }: { skill: Operator["skills"][0]; level: numb
                         <p className="font-bold">{skill.static?.levels[level]?.spData.initSp}</p>
                     </div>
                     <div className="rounded-bl-md border p-2">
-                        <p className="text-sm text-muted-foreground">Duration</p>
+                        <p className="text-muted-foreground text-sm">Duration</p>
                         <p className="font-bold">{skill.static?.levels[level]?.duration === 0 ? "Instant" : skill.static?.levels[level]?.duration === -1 ? "Ammo" : `${skill.static?.levels[level]?.duration}s`}</p>
                     </div>
                     <div className="rounded-br-md border p-2">
-                        <p className="text-sm text-muted-foreground">Skill Type</p>
+                        <p className="text-muted-foreground text-sm">Skill Type</p>
                         <p className="font-bold">{capitalize(skill.static?.levels[level]?.skillType ?? "")}</p>
                     </div>
                 </div>
                 <div>
-                    <h2 className="mb-1 mt-4 text-lg font-bold">Stats Change</h2>
+                    <h2 className="mt-4 mb-1 font-bold text-lg">Stats Change</h2>
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                         {blackboard.map((bb) => (
                             <TooltipProvider key={bb.key}>
@@ -131,7 +131,7 @@ function SkillCard({ skill, level }: { skill: Operator["skills"][0]; level: numb
                                     <TooltipTrigger asChild>
                                         <div className="cursor-pointer rounded-lg bg-secondary px-2 py-1 transition-all hover:bg-secondary/80">
                                             <div className="flex items-center justify-between">
-                                                <span className="truncate text-sm font-medium">{bb.key}</span>
+                                                <span className="truncate font-medium text-sm">{bb.key}</span>
                                                 {(bb.value > 0 && bb.key !== "base_attack_time") || (bb.key === "base_attack_time" && bb.value < 0) ? <ArrowUpIcon className="h-4 w-4 text-green-500" /> : <ArrowDownIcon className="h-4 w-4 text-red-500" />}
                                             </div>
                                             <p className="mt-1 font-bold">{formatBlackboardValue(bb.key, bb.value)}</p>
@@ -147,7 +147,7 @@ function SkillCard({ skill, level }: { skill: Operator["skills"][0]; level: numb
                 </div>
                 {currentRange && (
                     <div className="mt-2 p-2">
-                        <p className="text-sm text-muted-foreground">Range</p>
+                        <p className="text-muted-foreground text-sm">Range</p>
                         <OperatorRange range={currentRange} />
                     </div>
                 )}

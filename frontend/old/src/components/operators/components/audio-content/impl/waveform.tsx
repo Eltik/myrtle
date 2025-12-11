@@ -1,6 +1,4 @@
-import { useEffect } from "react";
-import { useRef } from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export const Waveform = ({ audioUrl, isPlaying, onSeek, audioRef }: { audioUrl: string; isPlaying: boolean; onSeek: (time: number) => void; audioRef: React.RefObject<HTMLAudioElement> }) => {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -153,7 +151,7 @@ export const Waveform = ({ audioUrl, isPlaying, onSeek, audioRef }: { audioUrl: 
 
     return (
         <div className="relative my-2 h-20 w-full">
-            <canvas ref={canvasRef} width={800} height={80} className="h-full w-full cursor-pointer rounded-sm" onClick={handleCanvasClick} />
+            <canvas className="h-full w-full cursor-pointer rounded-sm" height={80} onClick={handleCanvasClick} ref={canvasRef} width={800} />
             {!audioBuffer && audioUrl !== "#" && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>

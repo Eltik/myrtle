@@ -1,11 +1,8 @@
-import { CommandGroup, CommandItem, CommandSeparator } from "~/components/ui/command";
-import { CommandEmpty } from "~/components/ui/command";
 import { CheckIcon, StarIcon } from "lucide-react";
-import { CommandList } from "~/components/ui/command";
 import { type Dispatch, type SetStateAction, useState } from "react";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import { Command } from "~/components/ui/command";
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList, CommandSeparator } from "~/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { cn } from "~/lib/utils";
 
@@ -28,19 +25,19 @@ export const RarityFilter = ({ filterRarityNumeric, setFilterRarityNumeric }: { 
     return (
         <>
             {/* Rarity Filter Popover */}
-            <Popover open={rarityPopoverOpen} onOpenChange={setRarityPopoverOpen}>
+            <Popover onOpenChange={setRarityPopoverOpen} open={rarityPopoverOpen}>
                 <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="w-[150px] justify-start">
+                    <Button className="w-[150px] justify-start" size="sm" variant="outline">
                         <StarIcon className="mr-2 h-4 w-4" />
                         Rarity
                         {filterRarityNumeric.size > 0 && filterRarityNumeric.size < 6 && (
-                            <Badge variant="secondary" className="ml-auto">
+                            <Badge className="ml-auto" variant="secondary">
                                 {filterRarityNumeric.size}
                             </Badge>
                         )}
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[150px] p-0" align="start">
+                <PopoverContent align="start" className="w-[150px] p-0">
                     <Command>
                         <CommandList>
                             <CommandEmpty>No results found.</CommandEmpty>
@@ -49,7 +46,7 @@ export const RarityFilter = ({ filterRarityNumeric, setFilterRarityNumeric }: { 
                                     const isSelected = filterRarityNumeric.has(rarityNum);
 
                                     return (
-                                        <CommandItem key={rarityNum} onSelect={() => handleRarityChange(rarityNum)} className="text-sm">
+                                        <CommandItem className="text-sm" key={rarityNum} onSelect={() => handleRarityChange(rarityNum)}>
                                             <div className={cn("mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary", isSelected ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible")}>
                                                 <CheckIcon className={cn("h-4 w-4")} />
                                             </div>
@@ -62,7 +59,7 @@ export const RarityFilter = ({ filterRarityNumeric, setFilterRarityNumeric }: { 
                                 <>
                                     <CommandSeparator />
                                     <CommandGroup>
-                                        <CommandItem onSelect={() => setFilterRarityNumeric(new Set([1, 2, 3, 4, 5, 6]))} className="justify-center text-center text-xs text-muted-foreground">
+                                        <CommandItem className="justify-center text-center text-muted-foreground text-xs" onSelect={() => setFilterRarityNumeric(new Set([1, 2, 3, 4, 5, 6]))}>
                                             Clear filters
                                         </CommandItem>
                                     </CommandGroup>

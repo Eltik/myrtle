@@ -10,8 +10,8 @@ const Operators: NextPage<Props> = ({ data, id }) => {
         <>
             <Head>
                 <title>{id ? `${(data as unknown as Operator).name}` : "Operators List"}</title>
-                <meta name="description" content="Elevate your Arknights experience to the next level." />
-                <link rel="icon" href="/favicon.ico" />
+                <meta content="Elevate your Arknights experience to the next level." name="description" />
+                <link href="/favicon.ico" rel="icon" />
             </Head>
             <div className="mx-auto md:container">{id ? <OperatorsInfo operator={data as unknown as Operator} /> : <OperatorsWrapper operators={data} />}</div>
         </>
