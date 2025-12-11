@@ -207,10 +207,7 @@ export interface RawOperator {
     SpTargetType: string | null;
 }
 
-export interface OperatorModule {
-    module: Module;
-    data: ModuleData;
-}
+export type OperatorModule = Module;
 
 export interface EnrichedSkill {
     skillId: string;

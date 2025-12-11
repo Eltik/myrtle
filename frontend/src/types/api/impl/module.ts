@@ -146,6 +146,7 @@ export interface Module {
     type: ModuleType;
     uniEquipGetTime: number;
     charEquipOrder: number;
+    data: ModuleData;
 }
 
 export interface Modules {
