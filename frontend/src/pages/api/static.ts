@@ -18,7 +18,7 @@ interface ModuleDetailsResponse {
     details: ModuleData;
 }
 interface SingleModuleResponse {
-    modules: Module;
+    module: Module;
 }
 interface AllModulesResponse {
     modules: Modules;
@@ -52,14 +52,19 @@ const CACHE_TTL = 3600; // Cache lifetime in seconds (1 hour)
 // Determine if we're in development mode
 const isDevelopment = env.NODE_ENV === "development";
 
-// Function to fetch data from backend without caching
-const fetchWithoutCache = async <T>(endpoint: string, body: object): Promise<T> => {
-    const response = await fetch(`${env.BACKEND_URL}${endpoint}`, {
-        method: "POST",
+// Function to fetch data from backend using GET requests
+const fetchWithoutCache = async <T>(endpoint: string): Promise<T> => {
+    const url = `${env.BACKEND_URL}${endpoint}`;
+    if (isDevelopment) {
+        console.log(`[DEV MODE] Fetching GET ${url}`);
+    }
+
+    const response = await fetch(url, {
+        method: "GET",
         headers: {
             "Content-Type": "application/json",
+            "Accept-Encoding": "gzip, deflate",
         },
-        body: JSON.stringify(body),
     });
 
     if (!response.ok) {
@@ -73,23 +78,22 @@ const fetchWithoutCache = async <T>(endpoint: string, body: object): Promise<T> 
 };
 
 // Function that decides whether to use cache or not based on environment
-const fetchData = async <T>(endpoint: string, body: object, cacheKey?: string): Promise<T> => {
+const fetchData = async <T>(endpoint: string, cacheKey?: string): Promise<T> => {
     // In development mode, always bypass cache
     if (isDevelopment) {
-        console.log(`[DEV MODE] Fetching ${endpoint} without cache for body:`, body);
-        return fetchWithoutCache<T>(endpoint, body);
+        return fetchWithoutCache<T>(endpoint);
     }
 
     // In production, use cache if a cache key is provided
     if (cacheKey) {
         console.log(`[PROD MODE] Attempting fetch with cache key: ${cacheKey}`);
-        const cachedFetch = unstable_cache(async () => fetchWithoutCache<T>(endpoint, body), [cacheKey], { tags: [CACHE_TAG, cacheKey], revalidate: CACHE_TTL });
+        const cachedFetch = unstable_cache(async () => fetchWithoutCache<T>(endpoint), [cacheKey], { tags: [CACHE_TAG, cacheKey], revalidate: CACHE_TTL });
         return cachedFetch();
     }
 
     // Default fallback to non-cached fetch if no cache key specified in production
-    console.log(`[PROD MODE] Fetching ${endpoint} without cache (no key) for body:`, body);
-    return fetchWithoutCache<T>(endpoint, body);
+    console.log(`[PROD MODE] Fetching ${endpoint} without cache (no key)`);
+    return fetchWithoutCache<T>(endpoint);
 };
 
 // Request body type definition
@@ -116,104 +120,122 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         switch (body.type) {
             case "materials": {
-                const requestBody = {
-                    type: body.type,
-                    id: body.id,
-                };
+                const endpoint = body.id ? `/static/materials/${body.id}` : "/static/materials";
                 const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-materials-${body.id ?? "all"}`;
-                const materials = await fetchData<{ materials: Item[] }>("/static", requestBody, cacheKey);
+                const materials = await fetchData<{ materials?: Item[]; material?: Item }>(endpoint, cacheKey);
 
-                return res.status(200).json({ data: materials.materials });
+                // Handle both single material and list responses
+                const data = materials.material ? materials.material : materials.materials;
+                return res.status(200).json({ data });
             }
             case "modules": {
-                const requestBody = {
-                    type: body.type,
-                    id: body.id,
-                    method: body.method,
-                };
+                let endpoint: string;
+                if (body.method === "details" && body.id) {
+                    // GET /static/modules/details/{id}
+                    endpoint = `/static/modules/details/${body.id}`;
+                } else if (body.id) {
+                    // GET /static/modules/{id}
+                    endpoint = `/static/modules/${body.id}`;
+                } else {
+                    // GET /static/modules
+                    endpoint = "/static/modules";
+                }
                 const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-modules-${body.id ?? "all"}-${body.method ?? "default"}`;
-                const modules = await fetchData<ModulesApiResponse>("/static", requestBody, cacheKey);
+                const modules = await fetchData<ModulesApiResponse>(endpoint, cacheKey);
 
                 return res.status(200).json(modules);
             }
             case "operators": {
-                const requestBody = {
-                    type: body.type,
-                    id: body.id,
-                    fields: body.fields,
-                };
+                let endpoint = body.id ? `/static/operators/${body.id}` : "/static/operators";
+                // Add fields query parameter if specified
+                if (body.fields && body.fields.length > 0) {
+                    const fieldsParam = body.fields.join(",");
+                    endpoint += `?fields=${encodeURIComponent(fieldsParam)}`;
+                }
 
                 const fieldsKey = body.fields ? [...body.fields].sort().join(",") : "all";
                 const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-operators-${body.id ?? "all"}-fields-${fieldsKey}`;
-                const operators = await fetchData<{ operators: Partial<Operator>[] | Partial<Operator> }>("/static", requestBody, cacheKey);
+                const operators = await fetchData<{ operators?: Partial<Operator>[]; operator?: Partial<Operator> }>(endpoint, cacheKey);
 
-                return res.status(200).json({ data: operators.operators });
+                // Handle both single operator and list responses
+                const data = operators.operator ? operators.operator : operators.operators;
+                return res.status(200).json({ data });
             }
             case "ranges": {
-                const requestBody = {
-                    type: body.type,
-                    id: body.id,
-                };
+                const endpoint = body.id ? `/static/ranges/${body.id}` : "/static/ranges";
                 const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-ranges-${body.id ?? "all"}`;
-                const ranges = await fetchData<{ range: Ranges }>("/static", requestBody, cacheKey);
+                const ranges = await fetchData<{ range?: Ranges; ranges?: Ranges[] }>(endpoint, cacheKey);
 
-                return res.status(200).json({ data: ranges.range });
+                // Handle both single range and list responses
+                const data = ranges.range ? ranges.range : ranges.ranges;
+                return res.status(200).json({ data });
             }
             case "skills": {
-                const requestBody = {
-                    type: body.type,
-                    id: body.id,
-                };
+                const endpoint = body.id ? `/static/skills/${body.id}` : "/static/skills";
                 const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-skills-${body.id ?? "all"}`;
-                const skills = await fetchData<{ skills: Skill[] }>("/static", requestBody, cacheKey);
+                const skills = await fetchData<{ skills?: Skill[]; skill?: Skill }>(endpoint, cacheKey);
 
-                return res.status(200).json({ data: skills.skills });
+                // Handle both single skill and list responses
+                const data = skills.skill ? skills.skill : skills.skills;
+                return res.status(200).json({ data });
             }
             case "trust": {
-                const requestBody = {
-                    type: body.type,
-                    trust: body.trust,
-                };
+                let endpoint = "/static/trust";
+                if (body.trust !== undefined) {
+                    endpoint = `/static/trust/calculate?trust=${body.trust}`;
+                }
                 const cacheKey = body.trust === undefined && !isDevelopment ? `${CACHE_TAG}-trust-base` : undefined;
-                const trust = await fetchData<{ trust: number | null }>("/static", requestBody, cacheKey);
-                return res.status(200).json({ data: trust.trust });
+                const trust = await fetchData<{ trust?: number; level?: number; favor?: unknown }>(endpoint, cacheKey);
+
+                // For calculate endpoint, return the level; for base endpoint, return favor data
+                const data = trust.level !== undefined ? trust.level : trust.favor;
+                return res.status(200).json({ data: trust });
             }
             case "handbook": {
-                const requestBody = {
-                    type: body.type,
-                    id: body.id,
-                };
+                const endpoint = body.id ? `/static/handbook/${body.id}` : "/static/handbook";
                 const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-handbook-${body.id ?? "all"}`;
-                const handbook = await fetchData<{ handbook: unknown }>("/static", requestBody, cacheKey);
+                const handbook = await fetchData<{ handbook: unknown }>(endpoint, cacheKey);
                 return res.status(200).json({ data: handbook.handbook });
             }
             case "skins": {
-                const requestBody = {
-                    type: body.type,
-                    id: body.id,
-                };
+                let endpoint: string;
+                if (body.id) {
+                    // Check if this looks like a character ID (starts with char_)
+                    if (body.id.startsWith("char_")) {
+                        endpoint = `/static/skins/char/${body.id}`;
+                    } else {
+                        endpoint = `/static/skins/${body.id}`;
+                    }
+                } else {
+                    endpoint = "/static/skins";
+                }
                 const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-skins-${body.id ?? "all"}`;
-                const skins = await fetchData<{ skins: Skin[] | SkinData }>("/static", requestBody, cacheKey);
+                const skins = await fetchData<{ skins: Skin[] | SkinData }>(endpoint, cacheKey);
 
                 return res.status(200).json(skins);
             }
             case "voices": {
-                const requestBody = {
-                    type: body.type,
-                    id: body.id,
-                };
-                const voices = await fetchWithoutCache<{ voices: Voice[] | Voices }>("/static", requestBody);
+                let endpoint: string;
+                if (body.id) {
+                    // Check if this looks like a character ID (starts with char_)
+                    if (body.id.startsWith("char_")) {
+                        endpoint = `/static/voices/char/${body.id}`;
+                    } else {
+                        endpoint = `/static/voices/${body.id}`;
+                    }
+                } else {
+                    endpoint = "/static/voices";
+                }
+                const voices = await fetchData<{ voices: Voice[] | Voices }>(endpoint);
                 return res.status(200).json(voices);
             }
             case "gacha": {
                 if (body.method === "recruitment") {
-                    const requestBody = {
-                        type: "gacha",
-                        method: "recruitment",
-                    };
+                    // GET /static/gacha/recruitment
+                    const endpoint = "/static/gacha/recruitment";
                     const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-gacha-recruitment-tags`;
 
-                    const gachaData = await fetchData<{ recruitment: BackendRecruitmentData }>("/static", requestBody, cacheKey);
+                    const gachaData = await fetchData<{ recruitment: BackendRecruitmentData }>(endpoint, cacheKey);
 
                     if (!gachaData.recruitment?.TAG_MAP) {
                         console.error("Invalid recruitment data structure received from backend:", gachaData);
@@ -229,13 +251,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     }
 
                     const recruitmentString = [...body.tags].sort().join(",");
-                    const requestBody = {
-                        type: "gacha",
-                        method: "calculate",
-                        recruitment: recruitmentString,
-                    };
+                    // GET /static/gacha/calculate?recruitment={tags}
+                    const endpoint = `/static/gacha/calculate?recruitment=${encodeURIComponent(recruitmentString)}`;
                     const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-gacha-calculate-${recruitmentString}`;
-                    const calcResult = await fetchData<{ recruitment: OperatorOutcome[] }>("/static", requestBody, cacheKey);
+                    const calcResult = await fetchData<{ recruitment: OperatorOutcome[] }>(endpoint, cacheKey);
 
                     if (!calcResult.recruitment) {
                         console.error("Invalid calculation result structure received from backend:", calcResult);
