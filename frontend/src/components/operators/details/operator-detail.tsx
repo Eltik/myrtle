@@ -46,7 +46,7 @@ export function OperatorDetail({ operator }: OperatorDetailProps) {
             <OperatorHero operator={operator} />
 
             {/* Main Content */}
-            <div className="-mt-32 container relative z-20 mx-auto px-4 pb-16">
+            <div className="-mt-20 container relative z-20 mx-auto px-4 pb-16">
                 <div className="flex w-full flex-col gap-4 md:flex-row md:gap-6">
                     {/* Navigation */}
                     <OperatorNav activeTab={activeTab} onTabChange={setActiveTab} tabs={tabs} />
