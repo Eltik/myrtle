@@ -1,4 +1,6 @@
-import type Module from "module";
+import type Module from "node:module";
+// Import necessary types for recruitment - adjust paths/definitions as needed
+import type { NextApiRequest, NextApiResponse } from "next";
 import { unstable_cache } from "next/cache";
 import { env } from "~/env.js";
 import type { Item } from "~/types/impl/api/static/material";
@@ -8,9 +10,6 @@ import type { Ranges } from "~/types/impl/api/static/ranges";
 import type { Skill } from "~/types/impl/api/static/skills";
 import type { Skin, SkinData } from "~/types/impl/api/static/skins";
 import type { Voice, Voices } from "~/types/impl/api/static/voices";
-
-// Import necessary types for recruitment - adjust paths/definitions as needed
-import type { NextApiRequest, NextApiResponse } from "next";
 
 // Define specific module response structures if known, otherwise keep broad
 // Example structures (adjust based on actual backend responses):
@@ -265,11 +264,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 }
             }
             // --- END: Gacha Handling ---
-            default:
+            default: {
                 // Cast body.type to string for logging
                 const unknownType = body.type as string;
                 console.warn(`Received unknown request type: ${unknownType}`);
                 return res.status(400).json({ error: "Invalid type." });
+            }
         }
     } catch (error: unknown) {
         console.error("API error in /api/static:", error);

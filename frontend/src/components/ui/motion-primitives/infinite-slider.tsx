@@ -1,8 +1,8 @@
 "use client";
-import { cn } from "~/lib/utils";
-import { useMotionValue, animate, motion } from "motion/react";
-import { useState, useEffect } from "react";
+import { animate, motion, useMotionValue } from "motion/react";
+import { useEffect, useState } from "react";
 import useMeasure from "react-use-measure";
+import { cn } from "~/lib/utils";
 
 export type InfiniteSliderProps = {
     children: React.ReactNode;
@@ -19,7 +19,7 @@ export function InfiniteSlider({ children, gap = 16, speed = 100, speedOnHover, 
     const [ref, { width, height }] = useMeasure();
     const translation = useMotionValue(0);
     const [isTransitioning, setIsTransitioning] = useState(false);
-    const [key, setKey] = useState(0);
+    const [_key, setKey] = useState(0);
 
     useEffect(() => {
         let controls;
@@ -57,7 +57,7 @@ export function InfiniteSlider({ children, gap = 16, speed = 100, speedOnHover, 
         }
 
         return controls?.stop;
-    }, [key, translation, currentSpeed, width, height, gap, isTransitioning, direction, reverse]);
+    }, [translation, currentSpeed, width, height, gap, isTransitioning, direction, reverse]);
 
     const hoverProps = speedOnHover
         ? {
@@ -76,12 +76,12 @@ export function InfiniteSlider({ children, gap = 16, speed = 100, speedOnHover, 
         <div className={cn("overflow-hidden", className)}>
             <motion.div
                 className="flex w-max"
+                ref={ref}
                 style={{
                     ...(direction === "horizontal" ? { x: translation } : { y: translation }),
                     gap: `${gap}px`,
                     flexDirection: direction === "horizontal" ? "row" : "column",
                 }}
-                ref={ref}
                 {...hoverProps}
             >
                 {children}

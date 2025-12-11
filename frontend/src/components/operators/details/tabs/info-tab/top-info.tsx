@@ -1,10 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import { Star } from "lucide-react";
 import { motion } from "motion/react";
+import Image from "next/image";
+import { formatGroupId, formatNationId, formatProfession, formatSubProfession, getAvatarById, getProfessionImage, getSubProfessionImage, rarityToNumber } from "~/lib/operator-helpers";
 import type { Operator } from "~/types/api";
-import { rarityToNumber, formatNationId, formatGroupId, formatProfession, formatSubProfession, getAvatarById, getProfessionImage, getSubProfessionImage } from "~/lib/operator-helpers";
 
 interface TopInfoProps {
     operator: Operator;
@@ -18,28 +18,28 @@ export function TopInfo({ operator }: TopInfoProps) {
             {/* Avatar and Name Section */}
             <div className="flex items-start gap-4">
                 {/* Avatar */}
-                <motion.div whileHover={{ scale: 1.05 }} className="relative flex-shrink-0">
+                <motion.div className="relative flex-shrink-0" whileHover={{ scale: 1.05 }}>
                     <div className="relative h-24 w-24 overflow-hidden rounded-lg border-2 border-border bg-muted/50 md:h-28 md:w-28">
-                        <Image src={getAvatarById(operator.id ?? "")} alt={operator.name} fill className="object-cover" />
+                        <Image alt={operator.name} className="object-cover" fill src={getAvatarById(operator.id ?? "")} />
                     </div>
                     {/* Rarity Stars */}
-                    <div className="absolute -bottom-2 left-1/2 flex -translate-x-1/2 gap-0.5">
+                    <div className="-bottom-2 -translate-x-1/2 absolute left-1/2 flex gap-0.5">
                         {Array.from({ length: rarity }).map((_, i) => (
-                            <Star key={i} size={14} className="fill-primary stroke-background" strokeWidth={2} />
+                            <Star className="fill-primary stroke-background" key={i} size={14} strokeWidth={2} />
                         ))}
                     </div>
                 </motion.div>
 
                 {/* Name and Class */}
                 <div className="flex flex-col gap-2">
-                    <h3 className="text-2xl font-bold md:text-3xl">{operator.name}</h3>
-                    <div className="flex items-center gap-2 rounded-md border border-border overflow-hidden">
+                    <h3 className="font-bold text-2xl md:text-3xl">{operator.name}</h3>
+                    <div className="flex items-center gap-2 overflow-hidden rounded-md border border-border">
                         <div className="flex items-center justify-center bg-card p-2">
-                            <Image src={getProfessionImage(operator.profession) || "/placeholder.svg"} alt={formatProfession(operator.profession)} width={32} height={32} className="h-8 w-8" />
+                            <Image alt={formatProfession(operator.profession)} className="h-8 w-8" height={32} src={getProfessionImage(operator.profession) || "/placeholder.svg"} width={32} />
                         </div>
                         <div className="flex items-center gap-2 bg-muted px-3 py-2">
-                            <Image src={getSubProfessionImage(operator.subProfessionId) || "/placeholder.svg"} alt={formatSubProfession(operator.subProfessionId)} width={24} height={24} className="h-6 w-6" />
-                            <span className="text-sm font-medium">{formatSubProfession(operator.subProfessionId)}</span>
+                            <Image alt={formatSubProfession(operator.subProfessionId)} className="h-6 w-6" height={24} src={getSubProfessionImage(operator.subProfessionId) || "/placeholder.svg"} width={24} />
+                            <span className="font-medium text-sm">{formatSubProfession(operator.subProfessionId)}</span>
                         </div>
                     </div>
                 </div>
@@ -58,8 +58,8 @@ export function TopInfo({ operator }: TopInfoProps) {
 function InfoItem({ label, value }: { label: string; value: string }) {
     return (
         <div className="flex flex-col rounded-md bg-muted/50 p-3">
-            <span className="text-xs text-muted-foreground">{label}</span>
-            <span className="truncate text-sm font-medium">{value}</span>
+            <span className="text-muted-foreground text-xs">{label}</span>
+            <span className="truncate font-medium text-sm">{value}</span>
         </div>
     );
 }

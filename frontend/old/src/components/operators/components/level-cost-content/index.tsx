@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Separator } from "~/components/ui/separator";
-import type { Operator } from "~/types/impl/api/static/operator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import type { Item } from "~/types/impl/api/static/material";
+import type { Operator } from "~/types/impl/api/static/operator";
 import type { MaterialCost, SkillLevelCost } from "~/types/impl/frontend/impl/operators";
 import { ElitePromotionTab } from "./impl/elite-promotion-tab";
-import { SkillLevelUpTab } from "./impl/skill-level-up-tab";
 import { ModuleTab } from "./impl/module-tab";
+import { SkillLevelUpTab } from "./impl/skill-level-up-tab";
 
 function LevelUpContent({ operator }: { operator: Operator }) {
     const [materials, setMaterials] = useState<Item[]>([]);
@@ -80,7 +80,7 @@ function LevelUpContent({ operator }: { operator: Operator }) {
                     })) ?? [];
 
                 // We know this exists since we just initialized it above
-                skillCosts[skill.skillId]!.push(...masteryCosts);
+                skillCosts[skill.skillId]?.push(...masteryCosts);
             }
         });
 
@@ -164,27 +164,27 @@ function LevelUpContent({ operator }: { operator: Operator }) {
     return (
         <>
             <div className="p-2 px-4 backdrop-blur-2xl">
-                <span className="text-xl font-bold md:text-3xl">Level-Up Cost</span>
+                <span className="font-bold text-xl md:text-3xl">Level-Up Cost</span>
             </div>
             <Separator />
             <div className="p-4">
-                <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "elite" | "skill" | "module")}>
+                <Tabs onValueChange={(value) => setActiveTab(value as "elite" | "skill" | "module")} value={activeTab}>
                     <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="elite">Elite Promotion</TabsTrigger>
                         <TabsTrigger value="skill">Skill Level Up</TabsTrigger>
                         <TabsTrigger value="module">Module</TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value="elite" className="mt-4">
+                    <TabsContent className="mt-4" value="elite">
                         <ElitePromotionTab elitePromotionCosts={elitePromotionCosts} materials={materials} />
                     </TabsContent>
 
-                    <TabsContent value="skill" className="mt-4">
-                        <SkillLevelUpTab operator={operator} skillLevelCosts={skillLevelCosts} materials={materials} />
+                    <TabsContent className="mt-4" value="skill">
+                        <SkillLevelUpTab materials={materials} operator={operator} skillLevelCosts={skillLevelCosts} />
                     </TabsContent>
 
-                    <TabsContent value="module" className="mt-4">
-                        <ModuleTab operator={operator} moduleCosts={moduleCosts} materials={materials} />
+                    <TabsContent className="mt-4" value="module">
+                        <ModuleTab materials={materials} moduleCosts={moduleCosts} operator={operator} />
                     </TabsContent>
                 </Tabs>
             </div>

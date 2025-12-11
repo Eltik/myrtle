@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, type MotionValue, useMotionValue, useSpring, useTransform, type SpringOptions, AnimatePresence } from "motion/react";
+import { AnimatePresence, type MotionValue, motion, type SpringOptions, useMotionValue, useSpring, useTransform } from "motion/react";
 import { Children, cloneElement, createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "~/lib/utils";
 
@@ -73,25 +73,25 @@ function Dock({ children, className, spring = { mass: 0.1, stiffness: 150, dampi
 
     return (
         <motion.div
+            className="mx-2 flex max-w-full items-end overflow-x-auto"
             style={{
                 height: height,
                 scrollbarWidth: "none",
             }}
-            className="mx-2 flex max-w-full items-end overflow-x-auto"
         >
             <motion.div
-                onMouseMove={({ pageX }) => {
-                    isHovered.set(1);
-                    mouseX.set(pageX);
-                }}
+                aria-label="Application dock"
+                className={cn("mx-auto flex w-fit gap-4 rounded-2xl bg-gray-50 px-4 dark:bg-neutral-900", className)}
                 onMouseLeave={() => {
                     isHovered.set(0);
                     mouseX.set(Infinity);
                 }}
-                className={cn("mx-auto flex w-fit gap-4 rounded-2xl bg-gray-50 px-4 dark:bg-neutral-900", className)}
-                style={{ height: panelHeight }}
+                onMouseMove={({ pageX }) => {
+                    isHovered.set(1);
+                    mouseX.set(pageX);
+                }}
                 role="toolbar"
-                aria-label="Application dock"
+                style={{ height: panelHeight }}
             >
                 <DockProvider value={{ mouseX, spring, distance, magnification }}>{children}</DockProvider>
             </motion.div>
@@ -117,17 +117,17 @@ function DockItem({ children, className, onClick }: DockItemProps) {
 
     return (
         <motion.div
-            ref={ref}
-            style={{ width }}
-            onHoverStart={() => isHovered.set(1)}
-            onHoverEnd={() => isHovered.set(0)}
-            onFocus={() => isHovered.set(1)}
-            onBlur={() => isHovered.set(0)}
-            className={cn("relative inline-flex items-center justify-center", className)}
-            tabIndex={0}
-            role="button"
             aria-haspopup="true"
+            className={cn("relative inline-flex items-center justify-center", className)}
+            onBlur={() => isHovered.set(0)}
             onClick={onClick}
+            onFocus={() => isHovered.set(1)}
+            onHoverEnd={() => isHovered.set(0)}
+            onHoverStart={() => isHovered.set(1)}
+            ref={ref}
+            role="button"
+            style={{ width }}
+            tabIndex={0}
         >
             {Children.map(children, (child) => cloneElement(child as React.ReactElement, { width, isHovered }))}
         </motion.div>
@@ -136,7 +136,7 @@ function DockItem({ children, className, onClick }: DockItemProps) {
 
 function DockLabel({ children, className, ...rest }: DockLabelProps) {
     const restProps = rest as Record<string, unknown>;
-    const isHovered = restProps["isHovered"] as MotionValue<number>;
+    const isHovered = restProps.isHovered as MotionValue<number>;
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
@@ -151,13 +151,13 @@ function DockLabel({ children, className, ...rest }: DockLabelProps) {
         <AnimatePresence>
             {isVisible && (
                 <motion.div
-                    initial={{ opacity: 0, y: 0 }}
                     animate={{ opacity: 1, y: -10 }}
-                    exit={{ opacity: 0, y: 0 }}
-                    transition={{ duration: 0.2 }}
                     className={cn("-top-6 absolute left-1/2 w-fit whitespace-pre rounded-md border border-gray-200 bg-gray-100 px-2 py-0.5 text-neutral-700 text-xs dark:border-neutral-900 dark:bg-neutral-800 dark:text-white", className)}
+                    exit={{ opacity: 0, y: 0 }}
+                    initial={{ opacity: 0, y: 0 }}
                     role="tooltip"
                     style={{ x: "-50%" }}
+                    transition={{ duration: 0.2 }}
                 >
                     {children}
                 </motion.div>
@@ -168,12 +168,12 @@ function DockLabel({ children, className, ...rest }: DockLabelProps) {
 
 function DockIcon({ children, className, ...rest }: DockIconProps) {
     const restProps = rest as Record<string, unknown>;
-    const width = restProps["width"] as MotionValue<number>;
+    const width = restProps.width as MotionValue<number>;
 
     const widthTransform = useTransform(width, (val) => val / 2);
 
     return (
-        <motion.div style={{ width: widthTransform }} className={cn("flex items-center justify-center", className)}>
+        <motion.div className={cn("flex items-center justify-center", className)} style={{ width: widthTransform }}>
             {children}
         </motion.div>
     );

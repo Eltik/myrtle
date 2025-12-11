@@ -1,24 +1,24 @@
-import Head from "next/head";
-import { motion, AnimatePresence } from "framer-motion";
-import { useCallback, useEffect, useState } from "react";
-import type { Operator } from "~/types/impl/api/static/operator";
-import { Button } from "~/components/ui/button";
-import OperatorSelector from "~/components/dps-calculator/operator-selector";
-import { env } from "~/env";
-import type { NextPage } from "next";
-import OperatorListItem from "~/components/dps-calculator/operator-list-item";
-import type { DPSCalculatorResponse, DPSOperator, DPSOperatorResponse, OperatorParams } from "~/types/impl/api/impl/dps-calculator";
-import { DPSChart } from "~/components/dps-calculator/dps-chart";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Separator } from "~/components/ui/separator";
-import { Label } from "~/components/ui/label";
-import { Switch } from "~/components/ui/switch";
-import { Slider } from "~/components/ui/slider";
-import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
-import Link from "next/link";
+import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
+import type { NextPage } from "next";
+import Head from "next/head";
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
+import { DPSChart } from "~/components/dps-calculator/dps-chart";
+import OperatorListItem from "~/components/dps-calculator/operator-list-item";
+import OperatorSelector from "~/components/dps-calculator/operator-selector";
+import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
+import { Separator } from "~/components/ui/separator";
+import { Slider } from "~/components/ui/slider";
+import { Switch } from "~/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { env } from "~/env";
+import type { DPSCalculatorResponse, DPSOperator, DPSOperatorResponse, OperatorParams } from "~/types/impl/api/impl/dps-calculator";
+import type { Operator } from "~/types/impl/api/static/operator";
 
 type ChartDataType = "defense" | "resistance";
 type ChartDisplayMode = "line" | "area" | "bar";
@@ -170,7 +170,7 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
 
     useEffect(() => {
         void getDPSOperators();
-    }, [selectedOperators, getDPSOperators]);
+    }, [getDPSOperators]);
 
     const handleOperatorParamsChange = (instanceId: string, params: OperatorParams) => {
         setOperatorParams((prevParams) => ({
@@ -350,14 +350,15 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
         <>
             <Head>
                 <title>DPS Calculator</title>
-                <meta name="title" content="myrtle.moe" />
-                <meta name="description" content="Calculate DPS for Arknights operators." />
-                <link rel="icon" href="/favicon.ico" />
+                <meta content="myrtle.moe" name="title" />
+                <meta content="Calculate DPS for Arknights operators." name="description" />
+                <link href="/favicon.ico" rel="icon" />
             </Head>
             <motion.div
-                initial="hidden"
                 animate="visible"
+                className="container mx-auto p-4"
                 exit={"hidden"}
+                initial="hidden"
                 variants={{
                     hidden: { opacity: 0 },
                     visible: {
@@ -365,14 +366,13 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
                         transition: { staggerChildren: 0.2 },
                     },
                 }}
-                className="container mx-auto p-4"
             >
-                <h1 className="mt-2 text-2xl font-bold">Arknights DPS Calculator</h1>
+                <h1 className="mt-2 font-bold text-2xl">Arknights DPS Calculator</h1>
                 <p className="mb-4 text-xs md:text-sm">
                     Display DPS for a single operator or compare multiple operators. Please note that the calculator may not have all operators available.
                     <br />
                     <b>Note:</b> This DPS calculator uses calculations from{" "}
-                    <Link href={"http://github.com/WhoAteMyCQQkie/ArknightsDpsCompare/"} className="text-blue-500 hover:underline">
+                    <Link className="text-blue-500 hover:underline" href={"http://github.com/WhoAteMyCQQkie/ArknightsDpsCompare/"}>
                         WhoAteMyCQQkie/ArknightsDpsCompare
                     </Link>
                     . All credit for the DPS calculations goes to them.
@@ -380,21 +380,21 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div className="flex flex-col gap-2">
                         <div>
-                            <Button variant={"outline"} onClick={() => setIsOperatorSelectorOpen(true)}>
+                            <Button onClick={() => setIsOperatorSelectorOpen(true)} variant={"outline"}>
                                 Add Operators
                             </Button>
                         </div>
                         <OperatorSelector
-                            operators={data}
-                            selectedOperators={selectedOperators} // Pass SelectedOperator[]
                             isOpen={isOperatorSelectorOpen}
-                            onClose={() => setIsOperatorSelectorOpen(false)}
+                            onClose={() => setIsOperatorSelectorOpen(false)} // Pass SelectedOperator[]
                             onSelect={handleOperatorSelectionChange}
+                            operators={data}
+                            selectedOperators={selectedOperators}
                         />
 
                         {/* Collapsible Chart settings card */}
                         <Card className={`mb-4 w-full ${isChartSettingsOpen ? "" : "transition-all duration-150 hover:bg-primary-foreground"}`}>
-                            <button className="w-full text-left focus:outline-none" onClick={() => setIsChartSettingsOpen(!isChartSettingsOpen)} aria-expanded={isChartSettingsOpen}>
+                            <button aria-expanded={isChartSettingsOpen} className="w-full text-left focus:outline-none" onClick={() => setIsChartSettingsOpen(!isChartSettingsOpen)}>
                                 <CardHeader className="flex flex-row items-center justify-between">
                                     <CardTitle className="text-lg">Chart Settings</CardTitle>
                                     <motion.div animate={{ rotate: isChartSettingsOpen ? 180 : 0 }} transition={{ duration: 0.3 }}>
@@ -405,19 +405,19 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
                             <AnimatePresence initial={false}>
                                 {isChartSettingsOpen && (
                                     <motion.div
-                                        initial="collapsed"
                                         animate="open"
                                         exit="collapsed"
+                                        initial="collapsed"
+                                        transition={{ duration: 0.3, ease: "easeInOut" }}
                                         variants={{
                                             open: { opacity: 1, height: "auto" },
                                             collapsed: { opacity: 0, height: 0 },
                                         }}
-                                        transition={{ duration: 0.3, ease: "easeInOut" }}
                                     >
                                         <CardContent className="space-y-4">
                                             <div className="space-y-2">
                                                 <Label>Number of Enemy Targets</Label>
-                                                <Input type="number" min={1} max={99} value={chartSettings.targets} onChange={(e) => handleChartSettingChange("targets", Math.max(1, Math.min(99, parseInt(e.target.value) || 1)))} className="w-24" />
+                                                <Input className="w-24" max={99} min={1} onChange={(e) => handleChartSettingChange("targets", Math.max(1, Math.min(99, parseInt(e.target.value, 10) || 1)))} type="number" value={chartSettings.targets} />
                                             </div>
 
                                             <Separator />
@@ -426,11 +426,11 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
                                                 <Label>Display Options</Label>
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div className="flex items-center space-x-2">
-                                                        <Switch id="show-average" checked={chartSettings.showAverage} onCheckedChange={(checked) => handleChartSettingChange("showAverage", checked)} />
+                                                        <Switch checked={chartSettings.showAverage} id="show-average" onCheckedChange={(checked) => handleChartSettingChange("showAverage", checked)} />
                                                         <Label htmlFor="show-average">Show Average DPS</Label>
                                                     </div>
                                                     <div className="flex items-center space-x-2">
-                                                        <Switch id="show-total" checked={chartSettings.showTotal} onCheckedChange={(checked) => handleChartSettingChange("showTotal", checked)} />
+                                                        <Switch checked={chartSettings.showTotal} id="show-total" onCheckedChange={(checked) => handleChartSettingChange("showTotal", checked)} />
                                                         <Label htmlFor="show-total">Show Total DPS</Label>
                                                     </div>
                                                 </div>
@@ -442,7 +442,7 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
                                                             if (!stats) return null;
 
                                                             return (
-                                                                <div key={operator.instanceId} className="flex justify-between">
+                                                                <div className="flex justify-between" key={operator.instanceId}>
                                                                     <span className="font-medium">{operator.displayName}:</span>
                                                                     <div className="space-x-4">
                                                                         {chartSettings.showAverage && <span>Avg: {stats.averageDPS.toLocaleString()}</span>}
@@ -466,13 +466,13 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
                                                                 Maximum {chartDataType === "defense" ? "DEF" : "RES"} Value: {chartSettings.maxValue}
                                                             </Label>
                                                         </div>
-                                                        <Slider id="max-value" min={500} max={5000} step={500} value={[chartSettings.maxValue]} onValueChange={(values) => handleChartSettingChange("maxValue", values[0] ?? 2000)} />
+                                                        <Slider id="max-value" max={5000} min={500} onValueChange={(values) => handleChartSettingChange("maxValue", values[0] ?? 2000)} step={500} value={[chartSettings.maxValue]} />
                                                     </div>
                                                     <div className="space-y-2">
                                                         <div className="flex justify-between">
                                                             <Label htmlFor="step-size">Step Size: {chartSettings.stepSize}</Label>
                                                         </div>
-                                                        <Slider id="step-size" min={50} max={500} step={50} value={[chartSettings.stepSize]} onValueChange={(values) => handleChartSettingChange("stepSize", values[0] ?? 100)} />
+                                                        <Slider id="step-size" max={500} min={50} onValueChange={(values) => handleChartSettingChange("stepSize", values[0] ?? 100)} step={50} value={[chartSettings.stepSize]} />
                                                     </div>
                                                 </div>
                                             </div>
@@ -481,28 +481,28 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
 
                                             <div className="space-y-2">
                                                 <Label>Chart Style</Label>
-                                                <RadioGroup defaultValue={chartSettings.displayMode} onValueChange={(value: string) => handleChartSettingChange("displayMode", value as ChartDisplayMode)} className="grid grid-cols-3 gap-4">
+                                                <RadioGroup className="grid grid-cols-3 gap-4" defaultValue={chartSettings.displayMode} onValueChange={(value: string) => handleChartSettingChange("displayMode", value as ChartDisplayMode)}>
                                                     <div className="flex items-center space-x-2">
-                                                        <RadioGroupItem value="line" id="chart-line" />
+                                                        <RadioGroupItem id="chart-line" value="line" />
                                                         <Label htmlFor="chart-line">Line</Label>
                                                     </div>
                                                     <div className="flex items-center space-x-2">
-                                                        <RadioGroupItem value="area" id="chart-area" />
+                                                        <RadioGroupItem id="chart-area" value="area" />
                                                         <Label htmlFor="chart-area">Area</Label>
                                                     </div>
                                                     <div className="flex items-center space-x-2">
-                                                        <RadioGroupItem value="bar" id="chart-bar" />
+                                                        <RadioGroupItem id="chart-bar" value="bar" />
                                                         <Label htmlFor="chart-bar">Bar</Label>
                                                     </div>
                                                 </RadioGroup>
 
                                                 <div className="mt-2 grid grid-cols-2 gap-4">
                                                     <div className="flex items-center space-x-2">
-                                                        <Switch id="show-dots" checked={chartSettings.showDots} onCheckedChange={(checked) => handleChartSettingChange("showDots", checked)} />
+                                                        <Switch checked={chartSettings.showDots} id="show-dots" onCheckedChange={(checked) => handleChartSettingChange("showDots", checked)} />
                                                         <Label htmlFor="show-dots">Show Data Points</Label>
                                                     </div>
                                                     <div className="flex items-center space-x-2">
-                                                        <Switch id="smooth-curves" checked={chartSettings.smoothCurves} onCheckedChange={(checked) => handleChartSettingChange("smoothCurves", checked)} />
+                                                        <Switch checked={chartSettings.smoothCurves} id="smooth-curves" onCheckedChange={(checked) => handleChartSettingChange("smoothCurves", checked)} />
                                                         <Label htmlFor="smooth-curves">Smooth Curves</Label>
                                                     </div>
                                                 </div>
@@ -515,34 +515,34 @@ const DPSCalculator: NextPage<Props> = ({ data }) => {
 
                         <div className="space-y-4">
                             {dpsOperators.map((operator) => (
-                                <OperatorListItem key={operator.instanceId} operator={operator} onParamsChange={(params) => handleOperatorParamsChange(operator.instanceId, params)} onRemove={handleRemoveOperator} onDuplicate={handleDuplicateOperator} />
+                                <OperatorListItem key={operator.instanceId} onDuplicate={handleDuplicateOperator} onParamsChange={(params) => handleOperatorParamsChange(operator.instanceId, params)} onRemove={handleRemoveOperator} operator={operator} />
                             ))}
                         </div>
                     </div>
                     <div>
-                        <Tabs defaultValue="defense" className="w-full" onValueChange={handleChartTypeChange}>
+                        <Tabs className="w-full" defaultValue="defense" onValueChange={handleChartTypeChange}>
                             <div className="mb-4 flex items-center justify-between">
                                 <TabsList>
                                     <TabsTrigger value="defense">Defense</TabsTrigger>
                                     <TabsTrigger value="resistance">Resistance</TabsTrigger>
                                 </TabsList>
                             </div>
-                            <TabsContent value="defense" className="mt-0">
+                            <TabsContent className="mt-0" value="defense">
                                 <DPSChart
-                                    operators={selectedOperators} // Pass SelectedOperator[]
-                                    generateChartData={generateChartData}
-                                    xAxisLabel="Defense"
+                                    chartSettings={chartSettings} // Pass SelectedOperator[]
                                     chartType="defense"
-                                    chartSettings={chartSettings}
+                                    generateChartData={generateChartData}
+                                    operators={selectedOperators}
+                                    xAxisLabel="Defense"
                                 />
                             </TabsContent>
-                            <TabsContent value="resistance" className="mt-0">
+                            <TabsContent className="mt-0" value="resistance">
                                 <DPSChart
-                                    operators={selectedOperators} // Pass SelectedOperator[]
-                                    generateChartData={generateChartData}
-                                    xAxisLabel="Resistance"
+                                    chartSettings={chartSettings} // Pass SelectedOperator[]
                                     chartType="resistance"
-                                    chartSettings={chartSettings}
+                                    generateChartData={generateChartData}
+                                    operators={selectedOperators}
+                                    xAxisLabel="Resistance"
                                 />
                             </TabsContent>
                         </Tabs>

@@ -1,17 +1,16 @@
 "use client";
 
-import React, { useState } from "react";
 import { ChevronDown, ChevronUp, Hammer, MapPin, Package } from "lucide-react";
-
-// Import the types from the provided type definitions
-import { type Item, ItemRarity, ItemClass, ItemType, ItemOccPer, BuildingRoomType, VoucherItemType } from "~/types/impl/api/static/material";
 import Image from "next/image";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
+import { useState } from "react";
 import { Badge } from "~/components/ui/badge";
-import { Separator } from "~/components/ui/separator";
-import { ScrollArea } from "~/components/ui/scroll-area";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
 import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
+import { ScrollArea } from "~/components/ui/scroll-area";
+import { Separator } from "~/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
+// Import the types from the provided type definitions
+import { BuildingRoomType, type Item, ItemClass, ItemOccPer, ItemRarity, ItemType, VoucherItemType } from "~/types/impl/api/static/material";
 
 const rarityColors = {
     [ItemRarity.TIER_1]: "bg-gray-200 text-gray-800",
@@ -37,18 +36,18 @@ export default function ItemDialogueCard({ item }: { item: Item }) {
             <CardHeader className={`${rarityColors[item.rarity]} rounded-t-lg`}>
                 <div className="flex items-center space-x-4">
                     <Image
-                        src={`https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/item/${item.iconId}.png`}
                         alt={item.name}
                         className="h-16 w-16 rounded-full bg-background p-1"
-                        width={100}
                         height={100}
+                        src={`https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/item/${item.iconId}.png`}
                         style={{
                             maxWidth: "100%",
                             height: "auto",
                         }}
+                        width={100}
                     />
                     <div>
-                        <CardTitle className="text-2xl font-bold">{item.name}</CardTitle>
+                        <CardTitle className="font-bold text-2xl">{item.name}</CardTitle>
                         <CardDescription>
                             <span className="text-muted-foreground">Amount: {(item as unknown as { amount: number }).amount}</span>
                             <span className="line-clamp-2 text-sm opacity-90 sm:line-clamp-none">{item.description}</span>
@@ -66,7 +65,7 @@ export default function ItemDialogueCard({ item }: { item: Item }) {
                 <ScrollArea className="h-64 sm:h-full">
                     <div>
                         <h3 className="mb-2 font-semibold">Usage</h3>
-                        <p className="text-sm text-muted-foreground">{item.usage}</p>
+                        <p className="text-muted-foreground text-sm">{item.usage}</p>
                     </div>
                     <br />
                     {item.buildingProductList.length > 0 ? (
@@ -74,7 +73,7 @@ export default function ItemDialogueCard({ item }: { item: Item }) {
                             <h3 className="mb-2 font-semibold">Building Production</h3>
                             <ul className="space-y-2">
                                 {item.buildingProductList.map((product) => (
-                                    <li key={product.formulaId} className="flex items-center text-sm">
+                                    <li className="flex items-center text-sm" key={product.formulaId}>
                                         <Hammer className="mr-2 h-4 w-4" />
                                         {BuildingRoomType[product.roomType]}: {product.formulaId}
                                     </li>
@@ -84,7 +83,7 @@ export default function ItemDialogueCard({ item }: { item: Item }) {
                     ) : (
                         <div>
                             <h3 className="mb-2 font-semibold">Building Production</h3>
-                            <p className="text-sm text-muted-foreground">This item is not used in any building production.</p>
+                            <p className="text-muted-foreground text-sm">This item is not used in any building production.</p>
                         </div>
                     )}
                 </ScrollArea>
@@ -93,7 +92,7 @@ export default function ItemDialogueCard({ item }: { item: Item }) {
                 <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="outline" className="w-full" onClick={() => setShowDetails(!showDetails)}>
+                            <Button className="w-full" onClick={() => setShowDetails(!showDetails)} variant="outline">
                                 {showDetails ? (
                                     <>
                                         <ChevronUp className="mr-2 h-4 w-4" />
@@ -118,11 +117,11 @@ export default function ItemDialogueCard({ item }: { item: Item }) {
                     <Separator className="my-4" />
                     <ScrollArea className="max-h-32">
                         <div className="space-y-4">
-                            {!item.obtainApproach && item.stageDropList.length === 0 && <p className="text-sm text-muted-foreground">No additional details available.</p>}
+                            {!item.obtainApproach && item.stageDropList.length === 0 && <p className="text-muted-foreground text-sm">No additional details available.</p>}
                             {item.obtainApproach && (
                                 <div>
                                     <h3 className="mb-2 font-semibold">How to Obtain</h3>
-                                    <p className="text-sm text-muted-foreground">{item.obtainApproach}</p>
+                                    <p className="text-muted-foreground text-sm">{item.obtainApproach}</p>
                                 </div>
                             )}
                             {item.stageDropList.length > 0 && (
@@ -131,7 +130,7 @@ export default function ItemDialogueCard({ item }: { item: Item }) {
                                     <ScrollArea className="max-h-32 sm:h-24">
                                         <ul className="space-y-2">
                                             {item.stageDropList.map((drop) => (
-                                                <li key={drop.stageId} className="flex items-center justify-between text-sm">
+                                                <li className="flex items-center justify-between text-sm" key={drop.stageId}>
                                                     <span className="flex items-center">
                                                         <MapPin className="mr-2 h-4 w-4" />
                                                         {drop.stageId}
@@ -148,7 +147,7 @@ export default function ItemDialogueCard({ item }: { item: Item }) {
                                     <h3 className="mb-2 font-semibold">Related Vouchers</h3>
                                     <ul className="space-y-2">
                                         {item.voucherRelateList.map((voucher) => (
-                                            <li key={voucher.voucherId} className="flex items-center text-sm">
+                                            <li className="flex items-center text-sm" key={voucher.voucherId}>
                                                 <Package className="mr-2 h-4 w-4" />
                                                 {voucher.voucherId} ({VoucherItemType[voucher.voucherItemType]})
                                             </li>

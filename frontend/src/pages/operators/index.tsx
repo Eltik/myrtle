@@ -1,8 +1,8 @@
 import type { GetServerSideProps, NextPage } from "next";
 import Head from "next/head";
+import { OperatorDetail } from "~/components/operators/details";
 import { env } from "~/env.js";
 import type { Operator } from "~/types/api";
-import { OperatorDetail } from "~/components/operators/details";
 
 interface Props {
     operator: Operator;

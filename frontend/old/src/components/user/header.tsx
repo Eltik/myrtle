@@ -1,18 +1,18 @@
-import type { User } from "~/types/impl/api";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { toast } from "~/hooks/use-toast";
 import { Clipboard } from "lucide-react";
-import Stat from "./components/stat";
 import { getAvatarSkinId } from "~/helper";
+import { toast } from "~/hooks/use-toast";
+import type { User } from "~/types/impl/api";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import Stat from "./components/stat";
 
 function UserHeader({ data }: { data: User }) {
     return (
-        <Card className="mx-auto mb-8 mt-5">
+        <Card className="mx-auto mt-5 mb-8">
             <CardHeader>
                 <div className="flex items-center space-x-4">
                     <Avatar className="h-20 w-20">
-                        <AvatarImage src={getAvatarSkinId(data)} alt="@shadcn" />
+                        <AvatarImage alt="@shadcn" src={getAvatarSkinId(data)} />
                         <AvatarFallback>{data.status?.nickName?.slice(0, 1) ?? "E"}</AvatarFallback>
                     </Avatar>
                     <div>

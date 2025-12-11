@@ -15,7 +15,7 @@ export function fetchMaterial(itemId: string, materials: Item[]): Item | null {
 /**
  * Calculates total materials needed up to a specific level for a specific skill
  */
-export function calculateTotalMaterials(costs: SkillLevelCost[], skillId: string, upToIndex: number) {
+export function calculateTotalMaterials(costs: SkillLevelCost[], _skillId: string, upToIndex: number) {
     if (!costs || upToIndex < 0 || costs.length === 0) {
         return [];
     }
@@ -43,7 +43,7 @@ export function calculateTotalMaterials(costs: SkillLevelCost[], skillId: string
 /**
  * Calculates total module materials needed
  */
-export function calculateTotalModuleMaterials(costs: MaterialCost[][], moduleId: string, upToLevel: number) {
+export function calculateTotalModuleMaterials(costs: MaterialCost[][], _moduleId: string, upToLevel: number) {
     if (!costs || upToLevel < 0 || costs.length === 0) {
         return [];
     }

@@ -1,17 +1,17 @@
-import { Button } from "../ui/button";
-import { DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
-import { Label } from "~/components/ui/label";
-import { Input } from "../ui/input";
-import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { useToast } from "~/hooks/use-toast";
+import { useState } from "react";
 import { useCookies } from "react-cookie";
+import { Label } from "~/components/ui/label";
+import { useToast } from "~/hooks/use-toast";
 import { usePlayer } from "~/store";
 import type { AKServer, StoredUser, User } from "~/types/impl/api";
-import type { SendCodeResponse } from "~/types/impl/api/impl/send-code";
 import type { LoginResponse } from "~/types/impl/api/impl/login";
-import type { RefreshResponse } from "~/types/impl/api/impl/refresh";
 import type { PlayerResponse } from "~/types/impl/api/impl/player";
+import type { RefreshResponse } from "~/types/impl/api/impl/refresh";
+import type { SendCodeResponse } from "~/types/impl/api/impl/send-code";
+import { Button } from "../ui/button";
+import { DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
+import { Input } from "../ui/input";
 
 export function LoginDialogue() {
     const [email, setEmail] = useState("");
@@ -210,29 +210,29 @@ export function LoginDialogue() {
                 <div className="grid w-full items-center gap-4">
                     <div className="flex flex-col space-y-1.5">
                         <Label htmlFor="email">Email</Label>
-                        <Input id="email" value={email} type="email" placeholder="doctor@rhodes.island" onChange={(e) => setEmail(e.target.value)} required />
+                        <Input id="email" onChange={(e) => setEmail(e.target.value)} placeholder="doctor@rhodes.island" required type="email" value={email} />
                     </div>
                     {isOtpSent && (
                         <div className="flex flex-col space-y-1.5">
                             <Label htmlFor="otp">Code</Label>
-                            <Input id="otp" type="number" placeholder="Enter OTP..." value={otp} onChange={(e) => setOTP(String(e.target.value))} required />
+                            <Input id="otp" onChange={(e) => setOTP(String(e.target.value))} placeholder="Enter OTP..." required type="number" value={otp} />
                         </div>
                     )}
                 </div>
                 <DialogFooter className="mt-4 flex flex-col items-start space-y-2">
                     <div className="flex flex-row items-center gap-4">
                         <button
-                            type="button"
                             className="hover:underline"
                             onClick={() => {
                                 setIsOtpSent(false);
                                 setCooldown(0);
                                 setOTP("");
                             }}
+                            type="button"
                         >
                             Retry
                         </button>
-                        <Button type="submit" className="w-full" onClick={isOtpSent ? handleSubmit : sendOtp} disabled={isLoading || (isLoading && cooldown > 0) || (isOtpSent && otp.length === 0)}>
+                        <Button className="w-full" disabled={isLoading || (isLoading && cooldown > 0) || (isOtpSent && otp.length === 0)} onClick={isOtpSent ? handleSubmit : sendOtp} type="submit">
                             {isLoading ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

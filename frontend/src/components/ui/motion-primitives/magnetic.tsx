@@ -1,8 +1,8 @@
 "use client";
 
+import { motion, type SpringOptions, useMotionValue, useSpring } from "motion/react";
 import type React from "react";
-import { useState, useEffect, useRef } from "react";
-import { motion, useMotionValue, useSpring, type SpringOptions } from "motion/react";
+import { useEffect, useRef, useState } from "react";
 
 const SPRING_CONFIG = { stiffness: 26.7, damping: 4.1, mass: 0.2 };
 
@@ -51,7 +51,7 @@ export function Magnetic({ children, intensity = 0.6, range = 100, actionArea = 
         return () => {
             document.removeEventListener("mousemove", calculateDistance);
         };
-    }, [ref, isHovered, intensity, range]);
+    }, [isHovered, intensity, range, x.set, y.set]);
 
     useEffect(() => {
         if (actionArea === "parent" && ref.current?.parentElement) {
@@ -88,9 +88,9 @@ export function Magnetic({ children, intensity = 0.6, range = 100, actionArea = 
 
     return (
         <motion.div
-            ref={ref}
             onMouseEnter={actionArea === "self" ? handleMouseEnter : undefined}
             onMouseLeave={actionArea === "self" ? handleMouseLeave : undefined}
+            ref={ref}
             style={{
                 x: springX,
                 y: springY,

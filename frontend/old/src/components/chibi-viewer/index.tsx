@@ -1,15 +1,15 @@
-import { useState, useEffect, useCallback } from "react";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
-import { Button } from "~/components/ui/button";
 import { Skeleton } from "~/components/ui/skeleton";
-import type { ChibisSimplified } from "~/types/impl/api/impl/chibis";
-import type { AnimationType, FormattedChibis, SkinData } from "~/types/impl/frontend/impl/chibis";
-import { type Operator } from "~/types/impl/api/static/operator";
-import { ChibiRenderer } from "./impl/renderer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { cn } from "~/lib/utils";
+import type { ChibisSimplified } from "~/types/impl/api/impl/chibis";
+import type { Operator } from "~/types/impl/api/static/operator";
+import type { AnimationType, FormattedChibis, SkinData } from "~/types/impl/frontend/impl/chibis";
+import { ChibiRenderer } from "./impl/renderer";
 
 export function ChibiViewer() {
     const [chibis, setChibis] = useState<FormattedChibis[]>([]);
@@ -183,34 +183,34 @@ export function ChibiViewer() {
                     <div className="sticky top-4 flex">
                         <div className={cn("flex flex-col gap-4 transition-all duration-300 ease-in-out", isListCollapsed ? "w-0 overflow-hidden opacity-0" : "w-full opacity-100")}>
                             <div className="relative">
-                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                <Input placeholder="Search operators..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-9" />
+                                <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
+                                <Input className="pl-9" onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search operators..." value={searchTerm} />
                             </div>
                             <div className="h-[70vh] overflow-y-auto rounded-lg border bg-card">
                                 {loading ? (
                                     Array.from({ length: 10 }).map((_, i) => (
-                                        <div key={i} className="border-b p-3">
+                                        <div className="border-b p-3" key={i}>
                                             <Skeleton className="h-12 w-full" />
                                         </div>
                                     ))
                                 ) : filteredChibis.length > 0 ? (
                                     <>
                                         <div className="sticky top-0 border-b bg-card/95 p-2 backdrop-blur supports-[backdrop-filter]:bg-card/75">
-                                            <p className="text-sm text-muted-foreground">
+                                            <p className="text-muted-foreground text-sm">
                                                 {filteredChibis.length} operator{filteredChibis.length !== 1 ? "s" : ""} found
                                             </p>
                                         </div>
                                         <div className="divide-y">
                                             {filteredChibis.map((chibi) => (
                                                 <Button
-                                                    key={chibi.operatorCode}
-                                                    variant={selectedOperator?.operatorCode === chibi.operatorCode ? "default" : "ghost"}
                                                     className={cn("h-auto w-full justify-start p-3 transition-colors", selectedOperator?.operatorCode === chibi.operatorCode ? "bg-primary/10 hover:bg-primary/20" : "hover:bg-accent")}
+                                                    key={chibi.operatorCode}
                                                     onClick={() => handleOperatorSelect(chibi)}
+                                                    variant={selectedOperator?.operatorCode === chibi.operatorCode ? "default" : "ghost"}
                                                 >
                                                     <div className="text-left">
                                                         <div className="font-medium text-primary">{chibi.data?.name ?? chibi.name}</div>
-                                                        <div className="line-clamp-1 truncate text-sm text-muted-foreground">{chibi.operatorCode}</div>
+                                                        <div className="line-clamp-1 truncate text-muted-foreground text-sm">{chibi.operatorCode}</div>
                                                     </div>
                                                 </Button>
                                             ))}
@@ -221,7 +221,7 @@ export function ChibiViewer() {
                                 )}
                             </div>
                         </div>
-                        <Button variant="ghost" size="icon" className={`h-auto shrink-0 ${isListCollapsed ? "rounded-r-none" : "rounded-l-none"}`} onClick={() => setIsListCollapsed(!isListCollapsed)}>
+                        <Button className={`h-auto shrink-0 ${isListCollapsed ? "rounded-r-none" : "rounded-l-none"}`} onClick={() => setIsListCollapsed(!isListCollapsed)} size="icon" variant="ghost">
                             {isListCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
                         </Button>
                     </div>
@@ -235,7 +235,7 @@ export function ChibiViewer() {
                                 <div className="space-y-6">
                                     <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
                                         <div>
-                                            <h2 className="text-2xl font-bold">{selectedOperator.data?.name ?? selectedOperator.name}</h2>
+                                            <h2 className="font-bold text-2xl">{selectedOperator.data?.name ?? selectedOperator.name}</h2>
                                             <p className="text-muted-foreground">{selectedOperator.operatorCode}</p>
                                         </div>
 
@@ -244,7 +244,7 @@ export function ChibiViewer() {
                                             {selectedOperator.skins && selectedOperator.skins.length > 0 && (
                                                 <div className="flex flex-wrap gap-2">
                                                     {selectedOperator.skins.map((skin, index) => (
-                                                        <Button key={index} variant={selectedSkin === skin.dorm.path ? "default" : "outline"} onClick={() => setSelectedSkin(skin.front.path)} size="sm">
+                                                        <Button key={index} onClick={() => setSelectedSkin(skin.front.path)} size="sm" variant={selectedSkin === skin.dorm.path ? "default" : "outline"}>
                                                             Skin {index + 1}
                                                         </Button>
                                                     ))}
@@ -253,32 +253,32 @@ export function ChibiViewer() {
                                         </div>
                                     </div>
 
-                                    <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "info" | "canvas")}>
+                                    <Tabs onValueChange={(value) => setActiveTab(value as "info" | "canvas")} value={activeTab}>
                                         <TabsList className="mb-4">
                                             <TabsTrigger value="canvas">Canvas Renderer</TabsTrigger>
                                             <TabsTrigger value="info">Spine Info</TabsTrigger>
                                         </TabsList>
 
-                                        <TabsContent value="canvas" className="mt-0">
+                                        <TabsContent className="mt-0" value="canvas">
                                             <ChibiRenderer selectedOperator={selectedOperator} selectedSkin={selectedSkin} />
                                         </TabsContent>
 
-                                        <TabsContent value="info" className="mt-0">
+                                        <TabsContent className="mt-0" value="info">
                                             {selectedSkin && selectedOperator.skins?.find((skin) => skin.dorm.path === selectedSkin) && (
                                                 <div className="space-y-2 text-sm">
                                                     <div className="font-medium">Spine Data Files:</div>
                                                     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                                                         <div className="rounded-lg border p-3">
                                                             <div className="font-medium">Atlas:</div>
-                                                            <div className="truncate text-xs text-muted-foreground">{selectedOperator.skins.find((skin) => skin.dorm.path === selectedSkin)?.dorm.atlas ?? "N/A"}</div>
+                                                            <div className="truncate text-muted-foreground text-xs">{selectedOperator.skins.find((skin) => skin.dorm.path === selectedSkin)?.dorm.atlas ?? "N/A"}</div>
                                                         </div>
                                                         <div className="rounded-lg border p-3">
                                                             <div className="font-medium">Skeleton:</div>
-                                                            <div className="truncate text-xs text-muted-foreground">{selectedOperator.skins.find((skin) => skin.dorm.path === selectedSkin)?.dorm.skel ?? "N/A"}</div>
+                                                            <div className="truncate text-muted-foreground text-xs">{selectedOperator.skins.find((skin) => skin.dorm.path === selectedSkin)?.dorm.skel ?? "N/A"}</div>
                                                         </div>
                                                         <div className="rounded-lg border p-3">
                                                             <div className="font-medium">Image:</div>
-                                                            <div className="truncate text-xs text-muted-foreground">{selectedOperator.skins.find((skin) => skin.dorm.path === selectedSkin)?.dorm.png ?? "N/A"}</div>
+                                                            <div className="truncate text-muted-foreground text-xs">{selectedOperator.skins.find((skin) => skin.dorm.path === selectedSkin)?.dorm.png ?? "N/A"}</div>
                                                         </div>
                                                     </div>
                                                 </div>

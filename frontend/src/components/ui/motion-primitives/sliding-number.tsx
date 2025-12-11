@@ -1,6 +1,6 @@
 "use client";
+import { type MotionValue, motion, motionValue, useSpring, useTransform } from "motion/react";
 import { useEffect, useId } from "react";
-import { type MotionValue, motion, useSpring, useTransform, motionValue } from "motion/react";
 import useMeasure from "react-use-measure";
 
 const TRANSITION = {
@@ -49,14 +49,14 @@ function Number({ mv, number }: { mv: MotionValue<number>; number: number }) {
     // don't render the animated number until we know the height
     if (!bounds.height) {
         return (
-            <span ref={ref} className="invisible absolute">
+            <span className="invisible absolute" ref={ref}>
                 {number}
             </span>
         );
     }
 
     return (
-        <motion.span style={{ y }} layoutId={`${uniqueId}-${number}`} className="absolute inset-0 flex items-center justify-center" transition={TRANSITION} ref={ref}>
+        <motion.span className="absolute inset-0 flex items-center justify-center" layoutId={`${uniqueId}-${number}`} ref={ref} style={{ y }} transition={TRANSITION}>
             {number}
         </motion.span>
     );
@@ -80,13 +80,13 @@ export function SlidingNumber({ value, padStart = false, decimalSeparator = "." 
         <div className="flex items-center">
             {value < 0 && "-"}
             {integerDigits.map((_, index) => (
-                <Digit key={`pos-${integerPlaces[index]}`} value={integerValue} place={integerPlaces[index]} />
+                <Digit key={`pos-${integerPlaces[index]}`} place={integerPlaces[index]} value={integerValue} />
             ))}
             {decimalPart && (
                 <>
                     <span>{decimalSeparator}</span>
                     {decimalPart.split("").map((_, index) => (
-                        <Digit key={`decimal-${index}`} value={parseInt(decimalPart, 10)} place={10 ** (decimalPart.length - index - 1)} />
+                        <Digit key={`decimal-${index}`} place={10 ** (decimalPart.length - index - 1)} value={parseInt(decimalPart, 10)} />
                     ))}
                 </>
             )}

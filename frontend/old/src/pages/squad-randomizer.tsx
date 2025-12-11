@@ -1,11 +1,7 @@
 import Randomizer from "~/components/squad-randomizer";
 
 const SquadRandomizer = () => {
-    return (
-        <>
-            <Randomizer />
-        </>
-    );
+    return <Randomizer />;
 };
 
 export default SquadRandomizer;

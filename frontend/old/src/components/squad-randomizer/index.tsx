@@ -1,19 +1,19 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { Input } from "~/components/ui/input";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowUpIcon, ChevronUpIcon, GridIcon, ListIcon } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { DisplayFilters } from "~/components/squad-randomizer/impl/display-filters";
+import { ProfessionFilter } from "~/components/squad-randomizer/impl/profession-filter";
+import { RarityFilter } from "~/components/squad-randomizer/impl/rarity-filter";
+import { renderOperatorGridItem } from "~/components/squad-randomizer/impl/render-operator-grid-item";
+import { renderOperatorListItem } from "~/components/squad-randomizer/impl/render-operator-list";
+import { TagFilter } from "~/components/squad-randomizer/impl/tag-filter";
+import { TopSection } from "~/components/squad-randomizer/impl/top-section";
 import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
 import { ScrollArea } from "~/components/ui/scroll-area";
+import { rarityToNumber } from "~/helper"; // Import helpers
 import type { Operator } from "~/types/impl/api/static/operator";
 import { OperatorProfession } from "~/types/impl/api/static/operator";
-import { ListIcon, GridIcon, ArrowUpIcon, ChevronUpIcon } from "lucide-react";
-import { rarityToNumber } from "~/helper"; // Import helpers
-import { renderOperatorListItem } from "~/components/squad-randomizer/impl/render-operator-list";
-import { renderOperatorGridItem } from "~/components/squad-randomizer/impl/render-operator-grid-item";
-import { TopSection } from "~/components/squad-randomizer/impl/top-section";
-import { RarityFilter } from "~/components/squad-randomizer/impl/rarity-filter";
-import { ProfessionFilter } from "~/components/squad-randomizer/impl/profession-filter";
-import { TagFilter } from "~/components/squad-randomizer/impl/tag-filter";
-import { DisplayFilters } from "~/components/squad-randomizer/impl/display-filters";
-import { motion, AnimatePresence } from "framer-motion";
 
 const Randomizer = () => {
     const [allOperators, setAllOperators] = useState<Operator[]>([]);
@@ -176,7 +176,7 @@ const Randomizer = () => {
 
     const handleSquadSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const size = parseInt(e.target.value, 10);
-        if (!isNaN(size) && size > 0) {
+        if (!Number.isNaN(size) && size > 0) {
             setSquadSize(size);
         }
     };
@@ -217,64 +217,64 @@ const Randomizer = () => {
 
     return (
         <div className="container mx-auto flex flex-col p-4">
-            <h1 className="mb-6 flex-shrink-0 text-3xl font-bold">Arknights Squad Randomizer</h1>
+            <h1 className="mb-6 flex-shrink-0 font-bold text-3xl">Arknights Squad Randomizer</h1>
 
             {error && <p className="mb-4 flex-shrink-0 text-red-500">Error loading operators: {error}</p>}
 
             <TopSection
                 allOperators={allOperators}
-                squadSize={squadSize}
-                handleSquadSizeChange={handleSquadSizeChange}
-                handleRandomize={handleRandomize}
-                isLoading={isLoading}
-                filteredOperators={filteredOperators}
                 excludedOperators={excludedOperators}
+                filteredOperators={filteredOperators}
+                handleRandomize={handleRandomize}
+                handleSquadSizeChange={handleSquadSizeChange}
+                isLoading={isLoading}
                 randomizedSquad={randomizedSquad}
                 setExcludedOperators={setExcludedOperators}
+                squadSize={squadSize}
             />
 
             {/* Bottom Section: Filters and Operator List */}
             <div className="flex min-h-0 flex-grow flex-col border-t pt-4">
-                <h2 className="mb-3 flex-shrink-0 text-xl font-semibold">Filter & Select Operators</h2>
+                <h2 className="mb-3 flex-shrink-0 font-semibold text-xl">Filter & Select Operators</h2>
                 {/* Filter Controls Row */}
                 <div className="sticky top-14 z-30 rounded-b-md bg-background/50 shadow-md backdrop-blur-md">
                     <AnimatePresence initial={false}>
-                        <motion.div initial="collapsed" animate={isFiltersCollapsed ? "collapsed" : "expanded"} variants={filterVariants} className="overflow-hidden">
+                        <motion.div animate={isFiltersCollapsed ? "collapsed" : "expanded"} className="overflow-hidden" initial="collapsed" variants={filterVariants}>
                             <div className="mb-1 flex flex-shrink-0 flex-wrap items-center gap-2 p-2">
-                                <Input type="text" placeholder="Search operators..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="h-9 max-w-xs bg-background" />
+                                <Input className="h-9 max-w-xs bg-background" onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search operators..." type="text" value={searchTerm} />
                                 <RarityFilter filterRarityNumeric={filterRarityNumeric} setFilterRarityNumeric={setFilterRarityNumeric} />
                                 <ProfessionFilter filterProfession={filterProfession} setFilterProfession={setFilterProfession} />
-                                <TagFilter selectedTags={selectedTags} setSelectedTags={setSelectedTags} allTags={allTags} />
+                                <TagFilter allTags={allTags} selectedTags={selectedTags} setSelectedTags={setSelectedTags} />
 
                                 {/* View Toggle Buttons */}
                                 <div className="ml-auto flex items-center space-x-1">
-                                    <Button variant={viewMode === "list" ? "secondary" : "outline"} size="icon" onClick={() => setViewMode("list")} title="List View">
+                                    <Button onClick={() => setViewMode("list")} size="icon" title="List View" variant={viewMode === "list" ? "secondary" : "outline"}>
                                         <ListIcon className="h-4 w-4" />
                                     </Button>
-                                    <Button variant={viewMode === "grid" ? "secondary" : "outline"} size="icon" onClick={() => setViewMode("grid")} title="Grid View">
+                                    <Button onClick={() => setViewMode("grid")} size="icon" title="Grid View" variant={viewMode === "grid" ? "secondary" : "outline"}>
                                         <GridIcon className="h-4 w-4" />
                                     </Button>
                                 </div>
-                                <p className="mt-2 flex-shrink-0 text-sm text-muted-foreground">
+                                <p className="mt-2 flex-shrink-0 text-muted-foreground text-sm">
                                     Showing {filteredOperators.filter((op) => op.id?.startsWith("char_")).length} / {allOperators.filter((op) => op.id?.startsWith("char_")).length} operators.
                                     {excludedOperators.size > 0 && ` ${excludedOperators.size} excluded.`}
                                 </p>
                             </div>
                             <DisplayFilters
-                                filterRarityNumeric={filterRarityNumeric}
-                                filterProfession={filterProfession}
-                                selectedTags={selectedTags}
-                                filteredOperators={filteredOperators}
                                 excludedOperators={excludedOperators}
-                                setFilterRarityNumeric={setFilterRarityNumeric}
-                                setFilterProfession={setFilterProfession}
-                                setSelectedTags={setSelectedTags}
+                                filteredOperators={filteredOperators}
+                                filterProfession={filterProfession}
+                                filterRarityNumeric={filterRarityNumeric}
+                                selectedTags={selectedTags}
                                 setExcludedOperators={setExcludedOperators}
+                                setFilterProfession={setFilterProfession}
+                                setFilterRarityNumeric={setFilterRarityNumeric}
+                                setSelectedTags={setSelectedTags}
                             />
                         </motion.div>
                     </AnimatePresence>
-                    <Button onClick={() => setIsFiltersCollapsed(!isFiltersCollapsed)} className="flex w-full items-center justify-center gap-2 rounded-b-md bg-muted/40 text-sm text-muted-foreground transition-all hover:bg-muted/70 hover:text-foreground">
-                        <motion.div variants={buttonVariants} animate={isFiltersCollapsed ? "collapsed" : "expanded"}>
+                    <Button className="flex w-full items-center justify-center gap-2 rounded-b-md bg-muted/40 text-muted-foreground text-sm transition-all hover:bg-muted/70 hover:text-foreground" onClick={() => setIsFiltersCollapsed(!isFiltersCollapsed)}>
+                        <motion.div animate={isFiltersCollapsed ? "collapsed" : "expanded"} variants={buttonVariants}>
                             <ChevronUpIcon className="h-4 w-4" />
                         </motion.div>
                     </Button>
@@ -301,7 +301,7 @@ const Randomizer = () => {
             </div>
 
             {/* Add Scroll to Top Button */}
-            <Button onClick={scrollToTop} className={`fixed bottom-8 right-8 z-50 rounded-full shadow-lg transition-all duration-300 ${showScrollTop ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-4 opacity-0"}`} size="icon" variant="secondary">
+            <Button className={`fixed right-8 bottom-8 z-50 rounded-full shadow-lg transition-all duration-300 ${showScrollTop ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-4 opacity-0"}`} onClick={scrollToTop} size="icon" variant="secondary">
                 <ArrowUpIcon className="h-4 w-4" />
             </Button>
         </div>

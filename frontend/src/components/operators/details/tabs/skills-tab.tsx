@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import { motion } from "motion/react";
 import Image from "next/image";
-import type { Operator } from "~/types/api";
-import { Separator } from "~/components/ui/shadcn/separator";
-import { AnimatedGroup } from "~/components/ui/motion-primitives/animated-group";
+import { useState } from "react";
 import { AnimatedBackground } from "~/components/ui/motion-primitives/animated-background";
+import { AnimatedGroup } from "~/components/ui/motion-primitives/animated-group";
+import { Separator } from "~/components/ui/shadcn/separator";
 import { insertBlackboard } from "~/lib/operator-helpers";
+import type { Operator } from "~/types/api";
 
 interface SkillsTabProps {
     operator: Operator;
@@ -52,7 +52,7 @@ export function SkillsTab({ operator }: SkillsTabProps) {
     const handleSkillChange = (value: string | null) => {
         if (value) {
             const index = Number.parseInt(value.replace("skill-", ""), 10);
-            if (!isNaN(index)) {
+            if (!Number.isNaN(index)) {
                 setSelectedSkillIndex(index);
             }
         }
@@ -61,28 +61,28 @@ export function SkillsTab({ operator }: SkillsTabProps) {
     return (
         <div className="w-full space-y-6">
             <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold md:text-3xl">Skills & Talents</h2>
+                <h2 className="font-bold text-2xl md:text-3xl">Skills & Talents</h2>
             </div>
             <Separator />
 
-            <AnimatedGroup preset="blur-slide" className="space-y-6">
+            <AnimatedGroup className="space-y-6" preset="blur-slide">
                 {/* Skills Section */}
                 <div className="space-y-4">
-                    <h3 className="text-xl font-semibold">Skills</h3>
+                    <h3 className="font-semibold text-xl">Skills</h3>
 
                     {skills.length > 0 ? (
                         <>
                             {/* Skill Selector */}
                             <div className="flex flex-wrap gap-2">
-                                <AnimatedBackground defaultValue={`skill-${selectedSkillIndex}`} onValueChange={handleSkillChange} className="rounded-lg bg-primary" transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}>
+                                <AnimatedBackground className="rounded-lg bg-primary" defaultValue={`skill-${selectedSkillIndex}`} onValueChange={handleSkillChange} transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}>
                                     {skills.map((skill, index) => (
-                                        <button key={skill.skillId} data-id={`skill-${index}`} type="button" className="relative z-10 flex items-center gap-2 rounded-lg px-4 py-2 transition-colors data-[checked=true]:text-primary-foreground">
+                                        <button className="relative z-10 flex items-center gap-2 rounded-lg px-4 py-2 transition-colors data-[checked=true]:text-primary-foreground" data-id={`skill-${index}`} key={skill.skillId} type="button">
                                             {skill.static?.IconId && (
                                                 <div className="relative h-8 w-8 overflow-hidden rounded-md bg-muted">
-                                                    <Image src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/skills/skill_icon_${skill.static.IconId}.png`} alt={skill.static?.Levels?.[0]?.name ?? "Skill"} fill className="object-contain p-0.5" />
+                                                    <Image alt={skill.static?.Levels?.[0]?.name ?? "Skill"} className="object-contain p-0.5" fill src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/skills/skill_icon_${skill.static.IconId}.png`} />
                                                 </div>
                                             )}
-                                            <span className="text-sm font-medium">{skill.static?.Levels?.[0]?.name ?? `Skill ${index + 1}`}</span>
+                                            <span className="font-medium text-sm">{skill.static?.Levels?.[0]?.name ?? `Skill ${index + 1}`}</span>
                                         </button>
                                     ))}
                                 </AnimatedBackground>
@@ -95,10 +95,10 @@ export function SkillsTab({ operator }: SkillsTabProps) {
                                     const label = i < 7 ? `Lv${i + 1}` : `M${i - 6}`;
                                     return (
                                         <button
+                                            className={`rounded-md px-3 py-1.5 font-medium text-xs transition-colors ${skillLevel === i ? "bg-primary text-primary-foreground" : isAvailable ? "bg-muted hover:bg-muted/80" : "cursor-not-allowed bg-muted/30 text-muted-foreground/50"}`}
+                                            disabled={!isAvailable}
                                             key={i}
                                             onClick={() => isAvailable && setSkillLevel(i)}
-                                            disabled={!isAvailable}
-                                            className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${skillLevel === i ? "bg-primary text-primary-foreground" : isAvailable ? "bg-muted hover:bg-muted/80" : "cursor-not-allowed bg-muted/30 text-muted-foreground/50"}`}
                                         >
                                             {label}
                                         </button>
@@ -108,16 +108,16 @@ export function SkillsTab({ operator }: SkillsTabProps) {
 
                             {/* Skill Details */}
                             {currentLevel && (
-                                <motion.div key={`${selectedSkillIndex}-${skillLevel}`} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-lg border border-border bg-card/50 p-4">
+                                <motion.div animate={{ opacity: 1, y: 0 }} className="rounded-lg border border-border bg-card/50 p-4" initial={{ opacity: 0, y: 10 }} key={`${selectedSkillIndex}-${skillLevel}`}>
                                     <div className="mb-4 flex items-center gap-3">
                                         {skillStatic?.IconId && (
                                             <div className="relative h-14 w-14 overflow-hidden rounded-lg bg-muted">
-                                                <Image src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/skills/skill_icon_${skillStatic.IconId}.png`} alt={currentLevel.name} fill className="object-contain p-1" />
+                                                <Image alt={currentLevel.name} className="object-contain p-1" fill src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/skills/skill_icon_${skillStatic.IconId}.png`} />
                                             </div>
                                         )}
                                         <div>
-                                            <h4 className="text-lg font-semibold">{currentLevel.name}</h4>
-                                            <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                                            <h4 className="font-semibold text-lg">{currentLevel.name}</h4>
+                                            <div className="flex flex-wrap gap-2 text-muted-foreground text-xs">
                                                 <span className="rounded-md bg-muted px-2 py-0.5">{getSkillType(currentLevel.durationType)}</span>
                                                 <span className="rounded-md bg-muted px-2 py-0.5">{getSpType(currentLevel.spData.spType)}</span>
                                             </div>
@@ -150,7 +150,7 @@ export function SkillsTab({ operator }: SkillsTabProps) {
 
                 {/* Talents Section */}
                 <div className="space-y-4">
-                    <h3 className="text-xl font-semibold">Talents</h3>
+                    <h3 className="font-semibold text-xl">Talents</h3>
                     {operator.talents && operator.talents.length > 0 ? (
                         <div className="space-y-3">
                             {operator.talents.map((talent, index) => {
@@ -160,10 +160,10 @@ export function SkillsTab({ operator }: SkillsTabProps) {
                                 const description = candidate.Blackboard ? insertBlackboard(candidate.Description ?? "", candidate.Blackboard) : candidate.Description;
 
                                 return (
-                                    <motion.div key={index} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }} className="rounded-lg border border-border bg-card/50 p-4">
+                                    <motion.div animate={{ opacity: 1, y: 0 }} className="rounded-lg border border-border bg-card/50 p-4" initial={{ opacity: 0, y: 10 }} key={index} transition={{ delay: index * 0.1 }}>
                                         <h4 className="mb-2 font-semibold text-primary">{candidate.Name}</h4>
                                         <p
-                                            className="text-sm leading-relaxed text-muted-foreground"
+                                            className="text-muted-foreground text-sm leading-relaxed"
                                             dangerouslySetInnerHTML={{
                                                 __html: description ?? "",
                                             }}
@@ -184,7 +184,7 @@ export function SkillsTab({ operator }: SkillsTabProps) {
 function StatBox({ label, value }: { label: string; value: number | string }) {
     return (
         <div className="rounded-md bg-muted/50 p-2 text-center">
-            <div className="text-xs text-muted-foreground">{label}</div>
+            <div className="text-muted-foreground text-xs">{label}</div>
             <div className="font-semibold">{value}</div>
         </div>
     );

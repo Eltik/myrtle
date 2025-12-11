@@ -1,6 +1,6 @@
 "use client";
-import React, { useMemo, type JSX } from "react";
 import { motion } from "motion/react";
+import React, { type JSX, useMemo } from "react";
 import { cn } from "~/lib/utils";
 
 export type TextShimmerProps = {
@@ -20,6 +20,7 @@ function TextShimmerComponent({ children, as: Component = "p", className, durati
 
     return (
         <MotionComponent
+            animate={{ backgroundPosition: "0% center" }}
             className={cn(
                 "relative inline-block bg-[length:250%_100%,auto] bg-clip-text",
                 "text-transparent [--base-color:#a1a1aa] [--base-gradient-color:#000]",
@@ -28,18 +29,17 @@ function TextShimmerComponent({ children, as: Component = "p", className, durati
                 className,
             )}
             initial={{ backgroundPosition: "100% center" }}
-            animate={{ backgroundPosition: "0% center" }}
-            transition={{
-                repeat: Infinity,
-                duration,
-                ease: "linear",
-            }}
             style={
                 {
                     "--spread": `${dynamicSpread}px`,
                     backgroundImage: `var(--bg), linear-gradient(var(--base-color), var(--base-color))`,
                 } as React.CSSProperties
             }
+            transition={{
+                repeat: Infinity,
+                duration,
+                ease: "linear",
+            }}
         >
             {children}
         </MotionComponent>

@@ -1,6 +1,6 @@
 "use client";
-import React, { useRef, useState, useCallback, useEffect } from "react";
-import { motion, useSpring, useTransform, type SpringOptions } from "motion/react";
+import { motion, type SpringOptions, useSpring, useTransform } from "motion/react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "~/lib/utils";
 
 export type SpotlightProps = {
@@ -63,13 +63,13 @@ export function Spotlight({ className, size = 200, springOptions = { bounce: 0 }
 
     return (
         <motion.div
-            ref={containerRef}
             className={cn(
                 "pointer-events-none absolute rounded-full bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops),transparent_80%)] blur-xl transition-opacity duration-200",
                 "from-zinc-100 via-zinc-200 to-zinc-400 dark:from-zinc-50 dark:via-zinc-100 dark:to-zinc-200",
                 isHovered ? "opacity-100" : "opacity-0",
                 className,
             )}
+            ref={containerRef}
             style={{
                 width: size,
                 height: size,

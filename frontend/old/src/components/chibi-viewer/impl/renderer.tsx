@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
 import * as PIXI from "pixi.js";
 import { type ISkeletonData, Spine, type TextureAtlas } from "pixi-spine";
-import { encodeURL, getSkinData } from "./helper";
-
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Card, CardContent } from "~/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import type { ChibiAnimation, FormattedChibis } from "~/types/impl/frontend/impl/chibis";
+import { encodeURL, getSkinData } from "./helper";
 
 type ChibiRendererProps = {
     selectedOperator: FormattedChibis | null;
@@ -332,7 +331,7 @@ export function ChibiRenderer({ selectedOperator, selectedSkin }: ChibiRendererP
     useEffect(() => {
         // Only run if animations are loaded and the selected one is no longer valid
         if (availableAnimations.length > 0 && !availableAnimations.includes(selectedAnimation)) {
-            let newAnimation: string | undefined = undefined;
+            let newAnimation: string | undefined;
 
             if (viewType === "dorm") {
                 if (availableAnimations.includes("Relax")) {
@@ -385,67 +384,65 @@ export function ChibiRenderer({ selectedOperator, selectedSkin }: ChibiRendererP
     };
 
     return (
-        <>
-            <Card className="w-full">
-                <CardContent className="pb-4 pt-6">
-                    <div className="mb-4 flex flex-col gap-4">
-                        <div className="flex items-center gap-2">
-                            <Select value={selectedAnimation} onValueChange={handleAnimationChange} disabled={availableAnimations.length === 0 || isLoading}>
-                                <SelectTrigger className="w-[180px]">
-                                    <SelectValue placeholder="Select Animation" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {availableAnimations.map((anim) => (
-                                        <SelectItem key={anim} value={anim}>
-                                            {anim.charAt(0).toUpperCase() + anim.slice(1)}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        {/* View Type Selector */}
-                        <div className="flex items-center gap-2">
-                            <span className="w-10 text-sm">View:</span>
-                            <Select value={viewType} onValueChange={handleViewTypeChange} disabled={isLoading}>
-                                <SelectTrigger className="w-[120px]">
-                                    <SelectValue placeholder="View Type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="dorm">Dorm</SelectItem>
-                                    <SelectItem value="front">Front</SelectItem>
-                                    <SelectItem value="back">Back</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        {/* Reset Position Button */}
-                        <div className="flex justify-end">
-                            <button onClick={resetPosition} className="rounded-md bg-gray-200 px-3 py-1 text-sm hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600" disabled={isLoading}>
-                                Center
-                            </button>
-                        </div>
+        <Card className="w-full">
+            <CardContent className="pt-6 pb-4">
+                <div className="mb-4 flex flex-col gap-4">
+                    <div className="flex items-center gap-2">
+                        <Select disabled={availableAnimations.length === 0 || isLoading} onValueChange={handleAnimationChange} value={selectedAnimation}>
+                            <SelectTrigger className="w-[180px]">
+                                <SelectValue placeholder="Select Animation" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {availableAnimations.map((anim) => (
+                                    <SelectItem key={anim} value={anim}>
+                                        {anim.charAt(0).toUpperCase() + anim.slice(1)}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
-                    {/* Display area */}
-                    <div className="relative h-[400px] w-full overflow-hidden bg-[#111014]" onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}>
-                        <div ref={canvasContainerRef} className="h-full w-full" style={{ cursor: isDragging ? "grabbing" : "grab" }} />
-                        {isLoading && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                                <div className="text-lg font-semibold text-white">Loading...</div>
-                            </div>
-                        )}
-                        {error && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                                <div className="max-w-md rounded-md bg-red-500 p-4 text-white">
-                                    <div className="font-semibold">Error loading animation:</div>
-                                    <div>{error}</div>
-                                </div>
-                            </div>
-                        )}
-                        <div className="absolute bottom-2 right-2 text-xs text-gray-500">Drag to reposition • Click &quot;Center&quot; to reset</div>
+
+                    {/* View Type Selector */}
+                    <div className="flex items-center gap-2">
+                        <span className="w-10 text-sm">View:</span>
+                        <Select disabled={isLoading} onValueChange={handleViewTypeChange} value={viewType}>
+                            <SelectTrigger className="w-[120px]">
+                                <SelectValue placeholder="View Type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="dorm">Dorm</SelectItem>
+                                <SelectItem value="front">Front</SelectItem>
+                                <SelectItem value="back">Back</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
-                </CardContent>
-            </Card>
-        </>
+
+                    {/* Reset Position Button */}
+                    <div className="flex justify-end">
+                        <button className="rounded-md bg-gray-200 px-3 py-1 text-sm hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600" disabled={isLoading} onClick={resetPosition}>
+                            Center
+                        </button>
+                    </div>
+                </div>
+                {/* Display area */}
+                <div className="relative h-[400px] w-full overflow-hidden bg-[#111014]" onMouseDown={handleMouseDown} onMouseLeave={handleMouseUp} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}>
+                    <div className="h-full w-full" ref={canvasContainerRef} style={{ cursor: isDragging ? "grabbing" : "grab" }} />
+                    {isLoading && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                            <div className="font-semibold text-lg text-white">Loading...</div>
+                        </div>
+                    )}
+                    {error && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                            <div className="max-w-md rounded-md bg-red-500 p-4 text-white">
+                                <div className="font-semibold">Error loading animation:</div>
+                                <div>{error}</div>
+                            </div>
+                        </div>
+                    )}
+                    <div className="absolute right-2 bottom-2 text-gray-500 text-xs">Drag to reposition • Click &quot;Center&quot; to reset</div>
+                </div>
+            </CardContent>
+        </Card>
     );
 }

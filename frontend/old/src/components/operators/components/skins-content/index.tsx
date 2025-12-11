@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import { Separator } from "~/components/ui/separator";
 import type { Operator } from "~/types/impl/api/static/operator";
-import type { UISkin } from "~/types/impl/frontend/impl/operators";
-import { fetchSkins, fetchChibi, convertToUISkins } from "./impl/helper";
-import { SkinImageViewer } from "./impl/skin-image-viewer";
-import { SkinDetailsPanel } from "./impl/skin-details-panel";
-import { SkinSelector } from "./impl/skin-selector";
-import { FullscreenDialog } from "./impl/fullscreen-dialog";
-import { InfoSection } from "./impl/info-section";
 import type { FormattedChibis } from "~/types/impl/frontend/impl/chibis";
+import type { UISkin } from "~/types/impl/frontend/impl/operators";
+import { FullscreenDialog } from "./impl/fullscreen-dialog";
+import { convertToUISkins, fetchChibi, fetchSkins } from "./impl/helper";
+import { InfoSection } from "./impl/info-section";
+import { SkinDetailsPanel } from "./impl/skin-details-panel";
+import { SkinImageViewer } from "./impl/skin-image-viewer";
+import { SkinSelector } from "./impl/skin-selector";
 
 function SkinsContent({ operator }: { operator: Operator }) {
     // State for the currently selected skin
@@ -58,14 +58,14 @@ function SkinsContent({ operator }: { operator: Operator }) {
     const selectedSkinData = skins.find((skin) => skin.id === selectedSkin) ?? skins[0];
 
     // Function to handle thumbnail image errors
-    const handleThumbnailError = (skin: UISkin, e: React.SyntheticEvent<HTMLImageElement>) => {
+    const handleThumbnailError = (_skin: UISkin, e: React.SyntheticEvent<HTMLImageElement>) => {
         e.currentTarget.src = "";
     };
 
     return (
         <div className="w-full overflow-x-hidden">
             <div className="p-2 px-4 backdrop-blur-2xl">
-                <span className="text-lg font-bold sm:text-xl md:text-3xl">{operator.name} Skins</span>
+                <span className="font-bold text-lg sm:text-xl md:text-3xl">{operator.name} Skins</span>
             </div>
 
             <Separator />
@@ -73,21 +73,21 @@ function SkinsContent({ operator }: { operator: Operator }) {
                 {/* Main skin viewer with improved responsive design */}
                 <div className="grid grid-cols-1 gap-3 sm:gap-4 md:gap-5 lg:grid-cols-[1.5fr,1fr] xl:grid-cols-[2fr,1fr]">
                     {/* Left side - Skin image */}
-                    {selectedSkinData && <SkinImageViewer operator={operator} selectedSkinData={selectedSkinData} imageSrc={imageSrc} isImageLoading={isImageLoading} handleImageLoad={handleImageLoad} handleImageError={handleImageError} openFullscreen={openFullscreen} />}
+                    {selectedSkinData && <SkinImageViewer handleImageError={handleImageError} handleImageLoad={handleImageLoad} imageSrc={imageSrc} isImageLoading={isImageLoading} openFullscreen={openFullscreen} operator={operator} selectedSkinData={selectedSkinData} />}
 
                     {/* Right side - Skin details */}
-                    {selectedSkinData && <SkinDetailsPanel selectedSkinData={selectedSkinData} chibi={chibi} />}
+                    {selectedSkinData && <SkinDetailsPanel chibi={chibi} selectedSkinData={selectedSkinData} />}
                 </div>
 
                 {/* Skin selector */}
-                <SkinSelector skins={skins} selectedSkin={selectedSkin} setSelectedSkin={setSelectedSkin} setIsImageLoading={setIsImageLoading} handleThumbnailError={handleThumbnailError} />
+                <SkinSelector handleThumbnailError={handleThumbnailError} selectedSkin={selectedSkin} setIsImageLoading={setIsImageLoading} setSelectedSkin={setSelectedSkin} skins={skins} />
 
                 {/* Additional information */}
                 <InfoSection />
             </div>
 
             {/* Fullscreen popup */}
-            {selectedSkinData && <FullscreenDialog open={fullscreenOpen} onOpenChange={setFullscreenOpen} imageSrc={imageSrc} operator={operator} selectedSkinData={selectedSkinData} />}
+            {selectedSkinData && <FullscreenDialog imageSrc={imageSrc} onOpenChange={setFullscreenOpen} open={fullscreenOpen} operator={operator} selectedSkinData={selectedSkinData} />}
         </div>
     );
 }

@@ -1,20 +1,19 @@
-import { OperatorNation, OperatorRarity, type OperatorSubProfession, type Operator } from "~/types/impl/api/static/operator";
-import { capitalize, formatGroupId, formatProfession, formatSubProfession, formatTeamId, rarityToNumber, sortProfessions } from "~/helper";
-import { ArrowDownFromLine, ArrowUpFromLine, ChevronDown, ChevronLeft, ChevronRight, Filter, List, Table2 } from "lucide-react";
-import { Button } from "../ui/button";
-import { useMemo, useState } from "react";
-import { Input } from "../ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { NestedDropdown } from "../nested-dropdown";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import type { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu";
-import { OperatorProfession } from "~/types/impl/api/static/operator";
+import { ArrowDownFromLine, ArrowUpFromLine, ChevronDown, ChevronLeft, ChevronRight, Filter, List, Table2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { capitalize, formatGroupId, formatProfession, formatSubProfession, formatTeamId, rarityToNumber, sortProfessions } from "~/helper";
+import { OperatorBirthPlace, OperatorRace } from "~/types/impl/api/static/handbook";
+import { type Operator, OperatorNation, OperatorProfession, OperatorRarity, type OperatorSubProfession } from "~/types/impl/api/static/operator";
+import { NestedDropdown } from "../nested-dropdown";
+import { Button } from "../ui/button";
+import { Checkbox } from "../ui/checkbox";
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { OperatorsGrid } from "./operators-grid";
 import { OperatorsTable } from "./operators-table";
-import { Checkbox } from "../ui/checkbox";
-import { Label } from "../ui/label";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import { OperatorBirthPlace, OperatorRace } from "~/types/impl/api/static/handbook";
 
 /**
  * @author https://wuwatracker.com/resonator
@@ -485,7 +484,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                             return classComparison;
                         }
                         break;
-                    case "class":
+                    case "class": {
                         const classOrder = [OperatorProfession.VANGUARD, OperatorProfession.GUARD, OperatorProfession.DEFENDER, OperatorProfession.SNIPER, OperatorProfession.CASTER, OperatorProfession.SUPPORTER, OperatorProfession.MEDIC, OperatorProfession.SPECIALIST];
                         comparison = classOrder.indexOf(a.profession) - classOrder.indexOf(b.profession);
                         if (comparison === 0) {
@@ -493,15 +492,17 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                             return a.name.localeCompare(b.name);
                         }
                         break;
+                    }
                     case "limited":
                         comparison = (b.handbook?.isLimited ? 1 : 0) - (a.handbook?.isLimited ? 1 : 0);
                         break;
-                    case "stats":
+                    case "stats": {
                         const bEvolvePhase = b.phases[b.phases.length - 1]?.attributesKeyFrames[(b.phases[b.phases.length - 1]?.attributesKeyFrames.length ?? 0) - 1]?.data;
                         const aEvolvePhase = a.phases[a.phases.length - 1]?.attributesKeyFrames[(a.phases[a.phases.length - 1]?.attributesKeyFrames.length ?? 0) - 1]?.data;
 
                         comparison = (Number(bEvolvePhase?.[statsSortBy as keyof typeof bEvolvePhase]) ?? 0) - (Number(aEvolvePhase?.[statsSortBy as keyof typeof aEvolvePhase]) ?? 0);
                         break;
+                    }
                     default:
                         comparison = 0;
                         break;
@@ -540,8 +541,8 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
     };
 
     const navigateToInputPage = () => {
-        const pageNumber = parseInt(pageInput);
-        if (!isNaN(pageNumber) && pageNumber >= 1 && pageNumber <= totalPages) {
+        const pageNumber = parseInt(pageInput, 10);
+        if (!Number.isNaN(pageNumber) && pageNumber >= 1 && pageNumber <= totalPages) {
             setCurrentPage(pageNumber);
         } else {
             // Reset to current page if invalid
@@ -566,26 +567,26 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                     <div className="flex flex-col gap-4 pb-8">
                         <div className="flex w-full flex-col justify-between gap-4 md:flex-row">
                             <div className="flex items-center justify-between gap-3">
-                                <h1 className="relative flex scroll-m-20 items-center gap-2 text-xl font-bold tracking-tight sm:justify-start lg:text-2xl xl:text-3xl">Operators</h1>
-                                <Button variant="outline" className="flex flex-row" onClick={() => setViewOption(viewOption === "grid" ? "table" : "grid")}>
+                                <h1 className="relative flex scroll-m-20 items-center gap-2 font-bold text-xl tracking-tight sm:justify-start lg:text-2xl xl:text-3xl">Operators</h1>
+                                <Button className="flex flex-row" onClick={() => setViewOption(viewOption === "grid" ? "table" : "grid")} variant="outline">
                                     {viewOption === "grid" ? <Table2 className="h-4 w-4" /> : <List className="h-4 w-4" />}
                                 </Button>
                             </div>
                             <div className="flex flex-col gap-4">
                                 <div className="relative flex gap-2">
-                                    <Input className="flex w-full" placeholder="Search by name..." value={searchTerm} onChange={(e) => setSearchTermWithReset(e.target.value)} />
-                                    <Button variant="secondary" className="absolute right-0 inline-flex items-center justify-center rounded-l-none p-2 px-3" onClick={() => setShowOptions(!showOptions)}>
+                                    <Input className="flex w-full" onChange={(e) => setSearchTermWithReset(e.target.value)} placeholder="Search by name..." value={searchTerm} />
+                                    <Button className="absolute right-0 inline-flex items-center justify-center rounded-l-none p-2 px-3" onClick={() => setShowOptions(!showOptions)} variant="secondary">
                                         <Filter className="h-4 w-4" />
                                     </Button>
                                 </div>
                             </div>
                         </div>
-                        <div className={`${showOptions ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none hidden h-0 -translate-y-5 opacity-0"} flex w-full flex-col flex-wrap gap-3 transition-all duration-150 md:gap-4 lg:flex-nowrap xl:flex-row`}>
+                        <div className={`${showOptions ? "pointer-events-auto translate-y-0 opacity-100" : "-translate-y-5 pointer-events-none hidden h-0 opacity-0"} flex w-full flex-col flex-wrap gap-3 transition-all duration-150 md:gap-4 lg:flex-nowrap xl:flex-row`}>
                             <div className="flex flex-row flex-wrap gap-4">
-                                <NestedDropdown options={options} onSelect={handleSelect} />
+                                <NestedDropdown onSelect={handleSelect} options={options} />
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="outline" className="w-[200px] justify-between">
+                                        <Button className="w-[200px] justify-between" variant="outline">
                                             <span className="mr-2 truncate">{filterClasses.length === 0 ? <span className="font-normal">Filter Classes</span> : filterClasses.map((v) => formatProfession(v)).join(", ")}</span>
                                             <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                                         </Button>
@@ -594,7 +595,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                         <DropdownMenuLabel>Classes</DropdownMenuLabel>
                                         <DropdownMenuSeparator />
                                         {sortProfessions(Object.keys(OperatorProfession).map((key: string) => OperatorProfession[key as keyof typeof OperatorProfession])).map((value: OperatorProfession) => (
-                                            <DropdownMenuCheckboxItem key={value} checked={isClassChecked(value)} onCheckedChange={() => handleClassCheck(value)}>
+                                            <DropdownMenuCheckboxItem checked={isClassChecked(value)} key={value} onCheckedChange={() => handleClassCheck(value)}>
                                                 {formatProfession(value)}
                                             </DropdownMenuCheckboxItem>
                                         ))}
@@ -602,7 +603,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                 </DropdownMenu>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="outline" className="w-[200px] justify-between">
+                                        <Button className="w-[200px] justify-between" variant="outline">
                                             <span className="mr-2 truncate">{filterSubClasses.length === 0 ? <span className="font-normal">Filter Subclasses</span> : filterSubClasses.map((v) => formatSubProfession(v.toLowerCase())).join(", ")}</span>
                                             <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                                         </Button>
@@ -614,7 +615,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                             <div key={profession}>
                                                 <DropdownMenuLabel className="font-semibold">{formatProfession(profession)}</DropdownMenuLabel>
                                                 {Object.keys(groupedProfessions[profession]).map((subclass) => (
-                                                    <DropdownMenuCheckboxItem key={subclass} checked={isSubClassChecked(subclass as OperatorSubProfession)} onCheckedChange={() => handleSubClassCheck(subclass as OperatorSubProfession)}>
+                                                    <DropdownMenuCheckboxItem checked={isSubClassChecked(subclass as OperatorSubProfession)} key={subclass} onCheckedChange={() => handleSubClassCheck(subclass as OperatorSubProfession)}>
                                                         {formatSubProfession(subclass.toLowerCase())}
                                                     </DropdownMenuCheckboxItem>
                                                 ))}
@@ -625,7 +626,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                 </DropdownMenu>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="outline" className="w-[200px] justify-between">
+                                        <Button className="w-[200px] justify-between" variant="outline">
                                             <span className="mr-2 truncate">{filterGender.length === 0 ? <span className="font-normal">Filter by Gender</span> : filterGender.map((v) => v).join(", ")}</span>
                                             <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                                         </Button>
@@ -633,23 +634,23 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                     <DropdownMenuContent className="max-h-64 w-[200px] overflow-y-scroll">
                                         <DropdownMenuLabel>Genders</DropdownMenuLabel>
                                         <DropdownMenuSeparator />
-                                        <DropdownMenuCheckboxItem key="Male" checked={isGenderChecked("Male")} onCheckedChange={() => handleGenderCheck("Male")}>
+                                        <DropdownMenuCheckboxItem checked={isGenderChecked("Male")} key="Male" onCheckedChange={() => handleGenderCheck("Male")}>
                                             Male
                                         </DropdownMenuCheckboxItem>
-                                        <DropdownMenuCheckboxItem key="Female" checked={isGenderChecked("Female")} onCheckedChange={() => handleGenderCheck("Female")}>
+                                        <DropdownMenuCheckboxItem checked={isGenderChecked("Female")} key="Female" onCheckedChange={() => handleGenderCheck("Female")}>
                                             Female
                                         </DropdownMenuCheckboxItem>
-                                        <DropdownMenuCheckboxItem key="Conviction" checked={isGenderChecked("Conviction")} onCheckedChange={() => handleGenderCheck("Conviction")}>
+                                        <DropdownMenuCheckboxItem checked={isGenderChecked("Conviction")} key="Conviction" onCheckedChange={() => handleGenderCheck("Conviction")}>
                                             Conviction
                                         </DropdownMenuCheckboxItem>
-                                        <DropdownMenuCheckboxItem key="Unknown" checked={isGenderChecked("Unknown")} onCheckedChange={() => handleGenderCheck("Unknown")}>
+                                        <DropdownMenuCheckboxItem checked={isGenderChecked("Unknown")} key="Unknown" onCheckedChange={() => handleGenderCheck("Unknown")}>
                                             Unknown
                                         </DropdownMenuCheckboxItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="outline" className="w-[200px] justify-between">
+                                        <Button className="w-[200px] justify-between" variant="outline">
                                             <span className="mr-2 truncate">{filterBirthPlace.length === 0 ? <span className="font-normal">Filter Place of Birth</span> : filterBirthPlace.map((v) => v).join(", ")}</span>
                                             <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                                         </Button>
@@ -658,11 +659,11 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                         <DropdownMenuLabel>Nations</DropdownMenuLabel>
                                         <DropdownMenuSeparator />
                                         {Object.keys(OperatorBirthPlace)
-                                            .filter((key) => !isNaN(key as unknown as number))
+                                            .filter((key) => !Number.isNaN(key as unknown as number))
                                             .map((key) => OperatorBirthPlace[key as keyof typeof OperatorBirthPlace])
                                             .sort((a, b) => String(a).localeCompare(String(b)))
                                             .map((value) => (
-                                                <DropdownMenuCheckboxItem key={value} checked={isBirthPlaceChecked(value)} onCheckedChange={() => handleBirthPlaceCheck(value)}>
+                                                <DropdownMenuCheckboxItem checked={isBirthPlaceChecked(value)} key={value} onCheckedChange={() => handleBirthPlaceCheck(value)}>
                                                     {value}
                                                 </DropdownMenuCheckboxItem>
                                             ))}
@@ -670,7 +671,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                 </DropdownMenu>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="outline" className="w-[200px] justify-between">
+                                        <Button className="w-[200px] justify-between" variant="outline">
                                             <span className="mr-2 truncate">{filterFaction.length === 0 ? <span className="font-normal">Filter Faction</span> : filterFaction.map((v) => formatGroupId(formatTeamId(v))).join(", ")}</span>
                                             <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                                         </Button>
@@ -682,7 +683,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                             .filter(Boolean)
                                             .sort((a, b) => String(a).localeCompare(String(b)))
                                             .map((value) => (
-                                                <DropdownMenuCheckboxItem key={value} checked={isFactionChecked(value)} onCheckedChange={() => handleFactionCheck(value)}>
+                                                <DropdownMenuCheckboxItem checked={isFactionChecked(value)} key={value} onCheckedChange={() => handleFactionCheck(value)}>
                                                     {formatGroupId(formatTeamId(value))}
                                                 </DropdownMenuCheckboxItem>
                                             ))}
@@ -690,7 +691,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                 </DropdownMenu>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="outline" className="w-[200px] justify-between">
+                                        <Button className="w-[200px] justify-between" variant="outline">
                                             <span className="mr-2 truncate">{filterRace.length === 0 ? <span className="font-normal">Filter by Race</span> : filterRace.map((v) => v).join(", ")}</span>
                                             <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                                         </Button>
@@ -699,11 +700,11 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                         <DropdownMenuLabel>Races</DropdownMenuLabel>
                                         <DropdownMenuSeparator />
                                         {Object.keys(OperatorRace)
-                                            .filter((key) => !isNaN(key as unknown as number))
+                                            .filter((key) => !Number.isNaN(key as unknown as number))
                                             .map((key) => OperatorRace[key as keyof typeof OperatorRace])
                                             .sort((a, b) => String(a).localeCompare(String(b)))
                                             .map((value) => (
-                                                <DropdownMenuCheckboxItem key={value} checked={isRaceChecked(value)} onCheckedChange={() => handleRaceCheck(value)}>
+                                                <DropdownMenuCheckboxItem checked={isRaceChecked(value)} key={value} onCheckedChange={() => handleRaceCheck(value)}>
                                                     {value}
                                                 </DropdownMenuCheckboxItem>
                                             ))}
@@ -711,7 +712,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                 </DropdownMenu>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="outline" className="w-[200px] justify-between">
+                                        <Button className="w-[200px] justify-between" variant="outline">
                                             <span className="mr-2 truncate">{filterNation.length === 0 ? <span className="font-normal">Filter by Nation</span> : filterNation.map((v) => OperatorNation[v as keyof typeof OperatorNation]).join(", ")}</span>
                                             <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                                         </Button>
@@ -724,7 +725,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                             .map((key) => {
                                                 const value = OperatorNation[key as keyof typeof OperatorNation];
                                                 return (
-                                                    <DropdownMenuCheckboxItem key={key} checked={isNationChecked(key as keyof OperatorNation)} onCheckedChange={() => handleNationChecked(key as keyof OperatorNation)}>
+                                                    <DropdownMenuCheckboxItem checked={isNationChecked(key as keyof OperatorNation)} key={key} onCheckedChange={() => handleNationChecked(key as keyof OperatorNation)}>
                                                         {value}
                                                     </DropdownMenuCheckboxItem>
                                                 );
@@ -733,7 +734,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                 </DropdownMenu>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="outline" className="w-[200px] justify-between">
+                                        <Button className="w-[200px] justify-between" variant="outline">
                                             <span className="mr-2 truncate">{filterArtists.length === 0 ? <span className="font-normal">Filter by Artist</span> : filterArtists.join(", ")}</span>
                                             <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                                         </Button>
@@ -744,7 +745,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                         {Object.keys(groupedArtists)
                                             .sort((a, b) => a.localeCompare(b))
                                             .map((artist) => (
-                                                <DropdownMenuCheckboxItem key={artist} checked={isArtistChecked(artist)} onCheckedChange={() => handleArtistCheck(artist)}>
+                                                <DropdownMenuCheckboxItem checked={isArtistChecked(artist)} key={artist} onCheckedChange={() => handleArtistCheck(artist)}>
                                                     {artist}
                                                 </DropdownMenuCheckboxItem>
                                             ))}
@@ -753,37 +754,37 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                             </div>
                             <div className="flex flex-col gap-2">
                                 <div className="flex flex-row flex-wrap gap-4 xl:flex-nowrap">
-                                    <Select value={filterRarity} onValueChange={(value) => setFilterRarityWithReset(value as OperatorRarity | "all")}>
+                                    <Select onValueChange={(value) => setFilterRarityWithReset(value as OperatorRarity | "all")} value={filterRarity}>
                                         <SelectTrigger className="w-[200px] transition-all duration-150 hover:bg-secondary">
                                             <SelectValue placeholder="Filter by Rarity" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="all" className="cursor-pointer">
+                                            <SelectItem className="cursor-pointer" value="all">
                                                 All Rarities
                                             </SelectItem>
-                                            <SelectItem value={OperatorRarity.sixStar} className="cursor-pointer">
+                                            <SelectItem className="cursor-pointer" value={OperatorRarity.sixStar}>
                                                 6 Star
                                             </SelectItem>
-                                            <SelectItem value={OperatorRarity.fiveStar} className="cursor-pointer">
+                                            <SelectItem className="cursor-pointer" value={OperatorRarity.fiveStar}>
                                                 5 Star
                                             </SelectItem>
-                                            <SelectItem value={OperatorRarity.fourStar} className="cursor-pointer">
+                                            <SelectItem className="cursor-pointer" value={OperatorRarity.fourStar}>
                                                 4 Star
                                             </SelectItem>
-                                            <SelectItem value={OperatorRarity.threeStar} className="cursor-pointer">
+                                            <SelectItem className="cursor-pointer" value={OperatorRarity.threeStar}>
                                                 3 Star
                                             </SelectItem>
-                                            <SelectItem value={OperatorRarity.twoStar} className="cursor-pointer">
+                                            <SelectItem className="cursor-pointer" value={OperatorRarity.twoStar}>
                                                 2 Star
                                             </SelectItem>
-                                            <SelectItem value={OperatorRarity.oneStar} className="cursor-pointer">
+                                            <SelectItem className="cursor-pointer" value={OperatorRarity.oneStar}>
                                                 1 Star
                                             </SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <Button variant="outline" className="w-[200px] justify-between">
+                                            <Button className="w-[200px] justify-between" variant="outline">
                                                 <span className="mr-2 truncate">{filterSkillTypes.length === 0 ? <span className="font-normal">Filter Skill Types</span> : filterSkillTypes.map((v) => capitalize(v)).join(", ")}</span>
                                                 <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                                             </Button>
@@ -804,7 +805,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                     </DropdownMenu>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <Button variant="outline" className="w-[200px] justify-between">
+                                            <Button className="w-[200px] justify-between" variant="outline">
                                                 <span className="mr-2 truncate">{filterSkillChargeTypes.length === 0 ? <span className="font-normal">Filter Skill Charge Types</span> : filterSkillChargeTypes.map((v) => capitalize(v)).join(", ")}</span>
                                                 <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                                             </Button>
@@ -828,8 +829,8 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <div className="flex flex-row">
-                                                <Checkbox checked={isModule} onCheckedChange={() => setIsModule(!isModule)} id="is-module" />
-                                                <Label htmlFor="is-module" className="ml-2">
+                                                <Checkbox checked={isModule} id="is-module" onCheckedChange={() => setIsModule(!isModule)} />
+                                                <Label className="ml-2" htmlFor="is-module">
                                                     Include Modules
                                                 </Label>
                                             </div>
@@ -839,8 +840,8 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <div className="flex flex-row">
-                                                <Checkbox checked={canActivateSkill} onCheckedChange={() => setCanActivateSkill(!canActivateSkill)} id="can-activate-skill" />
-                                                <Label htmlFor="can-activate-skill" className="ml-2">
+                                                <Checkbox checked={canActivateSkill} id="can-activate-skill" onCheckedChange={() => setCanActivateSkill(!canActivateSkill)} />
+                                                <Label className="ml-2" htmlFor="can-activate-skill">
                                                     100% Skill Activation
                                                 </Label>
                                             </div>
@@ -850,8 +851,8 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <div className="flex flex-row">
-                                                <Checkbox checked={showLimited} onCheckedChange={() => setShowLimited(!showLimited)} id="show-limited" />
-                                                <Label htmlFor="show-limited" className="ml-2">
+                                                <Checkbox checked={showLimited} id="show-limited" onCheckedChange={() => setShowLimited(!showLimited)} />
+                                                <Label className="ml-2" htmlFor="show-limited">
                                                     Show Limited
                                                 </Label>
                                             </div>
@@ -860,7 +861,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                                     </Tooltip>
                                 </div>
                             </div>
-                            <Button variant="outline" className="flex flex-row" onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}>
+                            <Button className="flex flex-row" onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")} variant="outline">
                                 <span>{sortOrder.toUpperCase()}</span>
                                 {sortOrder === "asc" ? <ArrowUpFromLine className="h-4 w-4" /> : <ArrowDownFromLine className="h-4 w-4" />}
                             </Button>
@@ -869,14 +870,14 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                 </div>
             </div>
             <div className={`transition-all duration-150 ${showOptions ? "" : "-mt-8"}`}>
-                {viewOption === "grid" ? <OperatorsGrid operators={validOperators} currentPage={currentPage} pageSize={pageSize} /> : <OperatorsTable operators={validOperators} currentPage={currentPage} pageSize={pageSize} />}
+                {viewOption === "grid" ? <OperatorsGrid currentPage={currentPage} operators={validOperators} pageSize={pageSize} /> : <OperatorsTable currentPage={currentPage} operators={validOperators} pageSize={pageSize} />}
 
                 {/* Pagination Controls */}
                 <div className="mt-8 flex items-center justify-center gap-2">
                     <div className="flex flex-col items-center space-y-4 sm:flex-row sm:space-x-6 sm:space-y-0">
                         <div className="flex items-center space-x-2">
-                            <span className="text-sm font-medium">Rows per page:</span>
-                            <Select value={String(pageSize)} onValueChange={handlePageSizeChange}>
+                            <span className="font-medium text-sm">Rows per page:</span>
+                            <Select onValueChange={handlePageSizeChange} value={String(pageSize)}>
                                 <SelectTrigger className="h-8 w-[70px]">
                                     <SelectValue placeholder={pageSize} />
                                 </SelectTrigger>
@@ -890,20 +891,20 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                             </Select>
                         </div>
 
-                        <div className="flex w-[140px] items-center justify-center text-sm font-medium sm:w-[170px]">
-                            <form onSubmit={handlePageInputSubmit} className="flex items-center">
+                        <div className="flex w-[140px] items-center justify-center font-medium text-sm sm:w-[170px]">
+                            <form className="flex items-center" onSubmit={handlePageInputSubmit}>
                                 <span className="mr-1">Page</span>
-                                <Input type="tel" inputMode="numeric" pattern="[0-9]*" value={pageInput} onChange={handlePageInputChange} onBlur={handlePageInputBlur} className="h-8 w-12 px-1 text-center sm:w-14" aria-label="Go to page" />
+                                <Input aria-label="Go to page" className="h-8 w-12 px-1 text-center sm:w-14" inputMode="numeric" onBlur={handlePageInputBlur} onChange={handlePageInputChange} pattern="[0-9]*" type="tel" value={pageInput} />
                                 <span className="ml-1">of {totalPages}</span>
                             </form>
                         </div>
 
                         <div className="flex items-center space-x-2">
-                            <Button variant="outline" className="h-8 w-8 p-0" onClick={goToPreviousPage} disabled={currentPage === 1}>
+                            <Button className="h-8 w-8 p-0" disabled={currentPage === 1} onClick={goToPreviousPage} variant="outline">
                                 <span className="sr-only">Go to previous page</span>
                                 <ChevronLeft className="h-4 w-4" />
                             </Button>
-                            <Button variant="outline" className="h-8 w-8 p-0" onClick={goToNextPage} disabled={currentPage === totalPages}>
+                            <Button className="h-8 w-8 p-0" disabled={currentPage === totalPages} onClick={goToNextPage} variant="outline">
                                 <span className="sr-only">Go to next page</span>
                                 <ChevronRight className="h-4 w-4" />
                             </Button>
@@ -912,7 +913,7 @@ export function OperatorsWrapper({ operators }: { operators: Operator[] }) {
                 </div>
 
                 {/* Display total results count */}
-                <div className="mt-4 text-center text-sm text-muted-foreground">
+                <div className="mt-4 text-center text-muted-foreground text-sm">
                     Showing {Math.min((currentPage - 1) * pageSize + 1, validOperators.length)} to {Math.min(currentPage * pageSize, validOperators.length)} of {validOperators.length} operators
                 </div>
             </div>

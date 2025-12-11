@@ -1,3 +1,4 @@
+import type { NextApiRequest, NextApiResponse } from "next";
 import { unstable_cache } from "next/cache";
 import { env } from "~/env";
 import type { Item } from "~/types/api/impl/material";
@@ -7,8 +8,6 @@ import type { Ranges } from "~/types/api/impl/range";
 import type { Skill } from "~/types/api/impl/skill";
 import type { Skin, SkinData } from "~/types/api/impl/skin";
 import type { Voice, Voices } from "~/types/api/impl/voice";
-
-import type { NextApiRequest, NextApiResponse } from "next";
 
 // Define specific module response structures
 interface ModulesListResponse {
@@ -188,7 +187,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 const trust = await fetchData<{ trust?: number; level?: number; favor?: unknown }>(endpoint, cacheKey);
 
                 // For calculate endpoint, return the level; for base endpoint, return favor data
-                const data = trust.level !== undefined ? trust.level : trust.favor;
+                const _data = trust.level !== undefined ? trust.level : trust.favor;
                 return res.status(200).json({ data: trust });
             }
             case "handbook": {

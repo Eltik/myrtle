@@ -1,11 +1,11 @@
+import { ArrowDown, ArrowUp } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { capitalize, rarityToNumber, stringToOperatorRarity } from "~/helper";
 import type { User } from "~/types/impl/api";
 import { OperatorRarity } from "~/types/impl/api/static/operator";
+import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { Button } from "../ui/button";
-import { ArrowDown, ArrowUp } from "lucide-react";
 import CharacterCard from "./components/characters/character-card";
 
 function CharactersGrid({ data }: { data: User }) {
@@ -62,14 +62,14 @@ function CharactersGrid({ data }: { data: User }) {
 
     useEffect(() => {
         setDisplayCount(40);
-    }, [sortBy, sortOrder, filterRarity, searchTerm]);
+    }, []);
 
     return (
         <div className="flex w-full flex-col space-y-6">
             <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex w-full flex-col gap-4 sm:w-auto sm:flex-row sm:items-center">
-                    <Input placeholder="Search operators..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full sm:w-[300px]" />
-                    <Select value={sortBy} onValueChange={(value: "level" | "rarity" | "obtained" | "potential") => setSortBy(value)}>
+                    <Input className="w-full sm:w-[300px]" onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search operators..." value={searchTerm} />
+                    <Select onValueChange={(value: "level" | "rarity" | "obtained" | "potential") => setSortBy(value)} value={sortBy}>
                         <SelectTrigger className="w-full sm:w-[200px]">
                             <SelectValue placeholder="Sort by" />
                         </SelectTrigger>
@@ -80,7 +80,7 @@ function CharactersGrid({ data }: { data: User }) {
                             <SelectItem value="potential">Sort by Potential</SelectItem>
                         </SelectContent>
                     </Select>
-                    <Select value={filterRarity.toString()} onValueChange={(value) => setFilterRarity(value === "all" ? "all" : stringToOperatorRarity(value))}>
+                    <Select onValueChange={(value) => setFilterRarity(value === "all" ? "all" : stringToOperatorRarity(value))} value={filterRarity.toString()}>
                         <SelectTrigger className="w-full sm:w-[200px]">
                             <SelectValue placeholder="Filter by Rarity" />
                         </SelectTrigger>
@@ -94,7 +94,7 @@ function CharactersGrid({ data }: { data: User }) {
                             <SelectItem value="TIER_1">1 Star</SelectItem>
                         </SelectContent>
                     </Select>
-                    <Button onClick={toggleSortOrder} variant="outline" className="flex w-full items-center justify-center gap-2 sm:w-auto">
+                    <Button className="flex w-full items-center justify-center gap-2 sm:w-auto" onClick={toggleSortOrder} variant="outline">
                         <span>{capitalize(sortOrder)}</span>
                         {sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
                     </Button>
@@ -103,7 +103,7 @@ function CharactersGrid({ data }: { data: User }) {
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {sortedAndFilteredCharacters.slice(0, displayCount).map((char, index) => (
-                    <div key={char.charId} ref={index === displayCount - 1 ? lastCharacterRef : null} className="w-full">
+                    <div className="w-full" key={char.charId} ref={index === displayCount - 1 ? lastCharacterRef : null}>
                         <CharacterCard data={char} />
                     </div>
                 ))}

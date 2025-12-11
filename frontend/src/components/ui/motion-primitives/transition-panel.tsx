@@ -1,5 +1,5 @@
 "use client";
-import { AnimatePresence, type Transition, type Variant, motion, type MotionProps } from "motion/react";
+import { AnimatePresence, type MotionProps, motion, type Transition, type Variant } from "motion/react";
 import { cn } from "~/lib/utils";
 
 export type TransitionPanelProps = {
@@ -13,8 +13,8 @@ export type TransitionPanelProps = {
 export function TransitionPanel({ children, className, transition, variants, activeIndex, ...motionProps }: TransitionPanelProps) {
     return (
         <div className={cn("relative", className)}>
-            <AnimatePresence initial={false} mode="popLayout" custom={motionProps.custom}>
-                <motion.div key={activeIndex} variants={variants} transition={transition} initial="enter" animate="center" exit="exit" {...motionProps}>
+            <AnimatePresence custom={motionProps.custom} initial={false} mode="popLayout">
+                <motion.div animate="center" exit="exit" initial="enter" key={activeIndex} transition={transition} variants={variants} {...motionProps}>
                     {children[activeIndex]}
                 </motion.div>
             </AnimatePresence>

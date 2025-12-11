@@ -1,15 +1,15 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { Badge } from "~/components/ui/badge";
 import Image from "next/image";
-import { Slider } from "~/components/ui/slider";
+import { useEffect, useState } from "react";
+import { Badge } from "~/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Label } from "~/components/ui/label";
+import { Slider } from "~/components/ui/slider";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import type { Item } from "~/types/impl/api/static/material";
 import type { Operator } from "~/types/impl/api/static/operator";
 import type { SkillLevelCost } from "~/types/impl/frontend/impl/operators";
-import { getGridColumns, calculateTotalMaterials } from "./helper";
+import { calculateTotalMaterials, getGridColumns } from "./helper";
 import { MaterialItem } from "./material-item";
 
 interface SkillLevelUpTabProps {
@@ -44,7 +44,7 @@ export const SkillLevelUpTab = ({ operator, skillLevelCosts, materials }: SkillL
         if (maxSkillLevel >= 0 && skillLevel > maxSkillLevel) {
             setSkillLevel(maxSkillLevel);
         }
-    }, [activeSkillTab, maxSkillLevel, skillLevel]);
+    }, [maxSkillLevel, skillLevel]);
 
     // Get the current level cost to display
     const currentLevelCost = currentSkillCosts[skillLevel];
@@ -54,14 +54,14 @@ export const SkillLevelUpTab = ({ operator, skillLevelCosts, materials }: SkillL
 
     return (
         <div className="space-y-4">
-            <h2 className="text-xl font-bold">Skill Level Up Costs</h2>
+            <h2 className="font-bold text-xl">Skill Level Up Costs</h2>
 
             {!operator.skills || operator.skills.length === 0 ? (
                 <p className="text-muted-foreground">No skills available for this operator.</p>
             ) : (
                 <div className="space-y-4">
                     {/* Skill Tabs */}
-                    <Tabs defaultValue={operator.skills[0]?.skillId} value={activeSkillTab} onValueChange={setActiveSkillTab} className="w-full">
+                    <Tabs className="w-full" defaultValue={operator.skills[0]?.skillId} onValueChange={setActiveSkillTab} value={activeSkillTab}>
                         <TabsList
                             className="grid w-full"
                             style={{
@@ -69,7 +69,7 @@ export const SkillLevelUpTab = ({ operator, skillLevelCosts, materials }: SkillL
                             }}
                         >
                             {operator.skills.map((skill) => (
-                                <TabsTrigger value={skill.skillId} key={skill.skillId} className="truncate px-2 text-sm">
+                                <TabsTrigger className="truncate px-2 text-sm" key={skill.skillId} value={skill.skillId}>
                                     <span className="truncate" title={skill.static?.levels[0]?.name}>
                                         {skill.static?.levels[0]?.name}
                                     </span>
@@ -78,43 +78,43 @@ export const SkillLevelUpTab = ({ operator, skillLevelCosts, materials }: SkillL
                         </TabsList>
 
                         {/* Skill Level Slider */}
-                        <div className="mb-6 mt-4 flex flex-col">
+                        <div className="mt-4 mb-6 flex flex-col">
                             <div className="flex flex-col">
-                                <span className="text-lg font-bold">Skill Level</span>
-                                <span className="text-sm text-muted-foreground">Drag the slider to view costs for different skill levels</span>
+                                <span className="font-bold text-lg">Skill Level</span>
+                                <span className="text-muted-foreground text-sm">Drag the slider to view costs for different skill levels</span>
                             </div>
                             <div className="flex max-w-[80%] flex-col items-center gap-2 md:flex-row">
-                                <Slider className="w-full" defaultValue={[0]} value={[skillLevel]} onValueChange={(value) => setSkillLevel(value[0] ?? 0)} min={0} max={maxSkillLevel >= 0 ? maxSkillLevel : 0} step={1} disabled={maxSkillLevel < 0} />
+                                <Slider className="w-full" defaultValue={[0]} disabled={maxSkillLevel < 0} max={maxSkillLevel >= 0 ? maxSkillLevel : 0} min={0} onValueChange={(value) => setSkillLevel(value[0] ?? 0)} step={1} value={[skillLevel]} />
                                 <div className="flex items-center gap-2">
-                                    <Badge variant="outline" className="flex h-8 min-w-16 items-center justify-center text-center">
+                                    <Badge className="flex h-8 min-w-16 items-center justify-center text-center" variant="outline">
                                         {currentLevelCost && currentLevelCost?.level <= 7 ? (
                                             <span>Level {currentLevelCost?.level}</span>
                                         ) : (
                                             <Image
-                                                src={`/m-${currentLevelCost?.level === 8 ? "1" : currentLevelCost?.level === 9 ? "2" : "3"}_0.webp`}
-                                                className="h-8 w-9"
-                                                width={40}
-                                                height={40}
                                                 alt="M1"
+                                                className="h-8 w-9"
+                                                height={40}
+                                                src={`/m-${currentLevelCost?.level === 8 ? "1" : currentLevelCost?.level === 9 ? "2" : "3"}_0.webp`}
                                                 style={{
                                                     maxWidth: "100%",
                                                     height: "auto",
                                                 }}
+                                                width={40}
                                             />
                                         )}
                                     </Badge>
                                     {currentLevelCost?.phase && (
-                                        <Badge variant="outline" className="flex min-w-12 items-center justify-center text-center">
+                                        <Badge className="flex min-w-12 items-center justify-center text-center" variant="outline">
                                             <Image
-                                                src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/elite/${currentLevelCost.phase.replace("PHASE_", "")}.png`}
-                                                width={35}
-                                                height={35}
                                                 alt="Promotion"
+                                                height={35}
+                                                src={`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/ui/elite/${currentLevelCost.phase.replace("PHASE_", "")}.png`}
                                                 style={{
                                                     maxWidth: "100%",
                                                     height: "auto",
                                                     objectFit: "contain",
                                                 }}
+                                                width={35}
                                             />
                                         </Badge>
                                     )}
@@ -123,8 +123,8 @@ export const SkillLevelUpTab = ({ operator, skillLevelCosts, materials }: SkillL
 
                             {/* Total Cost Checkbox */}
                             <div className="mt-4 flex items-center space-x-2">
-                                <Checkbox id="showTotalCost" checked={showTotalCost} onCheckedChange={(checked) => setShowTotalCost(checked === true)} disabled={maxSkillLevel < 0} />
-                                <Label htmlFor="showTotalCost" className={maxSkillLevel < 0 ? "text-muted-foreground" : ""}>
+                                <Checkbox checked={showTotalCost} disabled={maxSkillLevel < 0} id="showTotalCost" onCheckedChange={(checked) => setShowTotalCost(checked === true)} />
+                                <Label className={maxSkillLevel < 0 ? "text-muted-foreground" : ""} htmlFor="showTotalCost">
                                     Show total cost from Level 2 to {currentLevelCost && currentLevelCost?.level > 7 ? `M${currentLevelCost.level - 7}` : `Level ${currentLevelCost?.level}`}
                                 </Label>
                             </div>
@@ -132,7 +132,7 @@ export const SkillLevelUpTab = ({ operator, skillLevelCosts, materials }: SkillL
 
                         {/* Skill Cost Content */}
                         {operator.skills.map((skill) => (
-                            <TabsContent value={skill.skillId} key={skill.skillId}>
+                            <TabsContent key={skill.skillId} value={skill.skillId}>
                                 <Card>
                                     <CardHeader>
                                         <CardTitle>{showTotalCost ? "Total Cost" : "Level Up Cost"}</CardTitle>

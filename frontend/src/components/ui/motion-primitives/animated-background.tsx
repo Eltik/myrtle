@@ -1,7 +1,7 @@
 "use client";
+import { AnimatePresence, motion, type Transition } from "motion/react";
+import { Children, cloneElement, type ReactElement, useEffect, useId, useState } from "react";
 import { cn } from "~/lib/utils";
-import { AnimatePresence, type Transition, motion } from "motion/react";
-import { Children, cloneElement, type ReactElement, useEffect, useState, useId } from "react";
 
 export type AnimatedBackgroundProps = {
     children: ReactElement<{ "data-id": string }>[] | ReactElement<{ "data-id": string }>;
@@ -54,16 +54,16 @@ export function AnimatedBackground({ children, defaultValue, onValueChange, clas
                 <AnimatePresence initial={false}>
                     {activeId === id && (
                         <motion.div
-                            layoutId={`background-${uniqueId}`}
-                            className={cn("absolute inset-0", className)}
-                            transition={transition}
-                            initial={{ opacity: defaultValue ? 1 : 0 }}
                             animate={{
                                 opacity: 1,
                             }}
+                            className={cn("absolute inset-0", className)}
                             exit={{
                                 opacity: 0,
                             }}
+                            initial={{ opacity: defaultValue ? 1 : 0 }}
+                            layoutId={`background-${uniqueId}`}
+                            transition={transition}
                         />
                     )}
                 </AnimatePresence>

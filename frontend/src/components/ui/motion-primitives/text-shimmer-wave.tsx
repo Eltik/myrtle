@@ -1,6 +1,6 @@
 "use client";
-import type { JSX } from "react";
 import { motion, type Transition } from "motion/react";
+import type { JSX } from "react";
 import { cn } from "~/lib/utils";
 
 export type TextShimmerWaveProps = {
@@ -27,14 +27,6 @@ export function TextShimmerWave({ children, as: Component = "p", className, dura
 
                 return (
                     <motion.span
-                        key={i}
-                        className={cn("inline-block whitespace-pre [transform-style:preserve-3d]")}
-                        initial={{
-                            translateZ: 0,
-                            scale: 1,
-                            rotateY: 0,
-                            color: "var(--base-color)",
-                        }}
                         animate={{
                             translateZ: [0, zDistance, 0],
                             translateX: [0, xDistance, 0],
@@ -43,6 +35,14 @@ export function TextShimmerWave({ children, as: Component = "p", className, dura
                             rotateY: [0, rotateYDistance, 0],
                             color: ["var(--base-color)", "var(--base-gradient-color)", "var(--base-color)"],
                         }}
+                        className={cn("inline-block whitespace-pre [transform-style:preserve-3d]")}
+                        initial={{
+                            translateZ: 0,
+                            scale: 1,
+                            rotateY: 0,
+                            color: "var(--base-color)",
+                        }}
+                        key={i}
                         transition={{
                             duration: duration,
                             repeat: Infinity,

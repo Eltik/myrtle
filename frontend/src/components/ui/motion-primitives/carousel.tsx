@@ -1,8 +1,8 @@
 "use client";
-import { Children, type ReactNode, createContext, useContext, useEffect, useRef, useState } from "react";
-import { motion, type Transition, useMotionValue } from "motion/react";
-import { cn } from "~/lib/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { motion, type Transition, useMotionValue } from "motion/react";
+import { Children, createContext, type ReactNode, useContext, useEffect, useRef, useState } from "react";
+import { cn } from "~/lib/utils";
 
 export type CarouselContextType = {
     index: number;
@@ -79,7 +79,7 @@ function Carousel({ children, className, initialIndex = 0, index: externalIndex,
     };
 
     return (
-        <CarouselProvider initialIndex={currentIndex} onIndexChange={handleIndexChange} disableDrag={disableDrag}>
+        <CarouselProvider disableDrag={disableDrag} initialIndex={currentIndex} onIndexChange={handleIndexChange}>
             <div className={cn("group/hover relative", className)}>
                 <div className="overflow-hidden">{children}</div>
             </div>
@@ -99,7 +99,6 @@ function CarouselNavigation({ className, classNameButton, alwaysShow }: Carousel
     return (
         <div className={cn("-translate-y-1/2 pointer-events-none absolute top-1/2 left-[-12.5%] flex w-[125%] justify-between px-2", className)}>
             <button
-                type="button"
                 aria-label="Previous slide"
                 className={cn("pointer-events-auto h-fit w-fit rounded-full bg-zinc-50 p-2 transition-opacity duration-300 dark:bg-zinc-950", alwaysShow ? "opacity-100" : "opacity-0 group-hover/hover:opacity-100", alwaysShow ? "disabled:opacity-40" : "group-hover/hover:disabled:opacity-40", classNameButton)}
                 disabled={index === 0}
@@ -108,19 +107,20 @@ function CarouselNavigation({ className, classNameButton, alwaysShow }: Carousel
                         setIndex(index - 1);
                     }
                 }}
+                type="button"
             >
                 <ChevronLeft className="stroke-zinc-600 dark:stroke-zinc-50" size={16} />
             </button>
             <button
-                type="button"
-                className={cn("pointer-events-auto h-fit w-fit rounded-full bg-zinc-50 p-2 transition-opacity duration-300 dark:bg-zinc-950", alwaysShow ? "opacity-100" : "opacity-0 group-hover/hover:opacity-100", alwaysShow ? "disabled:opacity-40" : "group-hover/hover:disabled:opacity-40", classNameButton)}
                 aria-label="Next slide"
+                className={cn("pointer-events-auto h-fit w-fit rounded-full bg-zinc-50 p-2 transition-opacity duration-300 dark:bg-zinc-950", alwaysShow ? "opacity-100" : "opacity-0 group-hover/hover:opacity-100", alwaysShow ? "disabled:opacity-40" : "group-hover/hover:disabled:opacity-40", classNameButton)}
                 disabled={index + 1 === itemsCount}
                 onClick={() => {
                     if (index < itemsCount - 1) {
                         setIndex(index + 1);
                     }
                 }}
+                type="button"
             >
                 <ChevronRight className="stroke-zinc-600 dark:stroke-zinc-50" size={16} />
             </button>
@@ -140,7 +140,7 @@ function CarouselIndicator({ className, classNameButton }: CarouselIndicatorProp
         <div className={cn("absolute bottom-0 z-10 flex w-full items-center justify-center", className)}>
             <div className="flex space-x-2">
                 {Array.from({ length: itemsCount }, (_, i) => (
-                    <button key={i} type="button" aria-label={`Go to slide ${i + 1}`} onClick={() => setIndex(i)} className={cn("h-2 w-2 rounded-full transition-opacity duration-300", index === i ? "bg-zinc-950 dark:bg-zinc-50" : "bg-zinc-900/50 dark:bg-zinc-100/50", classNameButton)} />
+                    <button aria-label={`Go to slide ${i + 1}`} className={cn("h-2 w-2 rounded-full transition-opacity duration-300", index === i ? "bg-zinc-950 dark:bg-zinc-50" : "bg-zinc-900/50 dark:bg-zinc-100/50", classNameButton)} key={i} onClick={() => setIndex(i)} type="button" />
                 ))}
             </div>
         </div>
@@ -179,7 +179,7 @@ function CarouselContent({ children, className, transition }: CarouselContentPro
         Array.from(childNodes).forEach((child) => observer.observe(child));
 
         return () => observer.disconnect();
-    }, [children, setItemsCount]);
+    }, []);
 
     useEffect(() => {
         if (!itemsLength) {
@@ -201,6 +201,10 @@ function CarouselContent({ children, className, transition }: CarouselContentPro
 
     return (
         <motion.div
+            animate={{
+                translateX: `-${index * (100 / visibleItemsCount)}%`,
+            }}
+            className={cn("flex items-center", !disableDrag && "cursor-grab active:cursor-grabbing", className)}
             drag={disableDrag ? false : "x"}
             dragConstraints={
                 disableDrag
@@ -211,13 +215,11 @@ function CarouselContent({ children, className, transition }: CarouselContentPro
                       }
             }
             dragMomentum={disableDrag ? undefined : false}
+            onDragEnd={disableDrag ? undefined : onDragEnd}
+            ref={containerRef}
             style={{
                 x: disableDrag ? undefined : dragX,
             }}
-            animate={{
-                translateX: `-${index * (100 / visibleItemsCount)}%`,
-            }}
-            onDragEnd={disableDrag ? undefined : onDragEnd}
             transition={
                 transition || {
                     damping: 18,
@@ -226,8 +228,6 @@ function CarouselContent({ children, className, transition }: CarouselContentPro
                     duration: 0.2,
                 }
             }
-            className={cn("flex items-center", !disableDrag && "cursor-grab active:cursor-grabbing", className)}
-            ref={containerRef}
         >
             {children}
         </motion.div>

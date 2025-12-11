@@ -407,7 +407,7 @@ export function getAvatar(char: CharacterData) {
     if (!char.skin || char.skin.endsWith("#1")) {
         skinId = normalizeSkinId(char.charId);
     } else if (char.skin.endsWith("#2")) {
-        skinId = normalizeSkinId(char.charId) + "_2";
+        skinId = `${normalizeSkinId(char.charId)}_2`;
     } else if (char.skin.includes("@")) {
         skinId = normalizeSkinId(char.skin);
     } else {

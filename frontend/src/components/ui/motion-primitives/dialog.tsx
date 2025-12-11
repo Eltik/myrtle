@@ -1,10 +1,9 @@
 "use client";
-import { AnimatePresence, motion, type Transition, type Variants } from "motion/react";
-import React, { createContext, useContext, useEffect, useRef } from "react";
-import { cn } from "~/lib/utils";
-import { useId } from "react";
-import { createPortal } from "react-dom";
 import { X } from "lucide-react";
+import { AnimatePresence, motion, type Transition, type Variants } from "motion/react";
+import React, { createContext, useContext, useEffect, useId, useRef } from "react";
+import { createPortal } from "react-dom";
+import { cn } from "~/lib/utils";
 import { usePreventScroll } from "./usePreventScroll";
 
 const DialogContext = createContext<{
@@ -88,7 +87,7 @@ function Dialog({ children, variants = defaultVariants, transition = defaultTran
             dialog.removeEventListener("cancel", handleCancel);
             document.body.classList.remove("overflow-hidden");
         };
-    }, [dialogRef, isOpen, setIsOpen]);
+    }, [isOpen, setIsOpen]);
 
     useEffect(() => {
         if (isOpen && dialogRef.current) {
@@ -141,7 +140,7 @@ function DialogTrigger({ children, className }: DialogTriggerProps) {
     if (!context) throw new Error("DialogTrigger must be used within Dialog");
 
     return (
-        <button onClick={context.handleTrigger} className={cn("inline-flex items-center justify-center rounded-md font-medium text-sm", "transition-colors focus-visible:outline-hidden focus-visible:ring-2", "focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50", className)}>
+        <button className={cn("inline-flex items-center justify-center rounded-md font-medium text-sm", "transition-colors focus-visible:outline-hidden focus-visible:ring-2", "focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50", className)} onClick={context.handleTrigger}>
             {children}
         </button>
     );
@@ -183,25 +182,25 @@ function DialogContent({ children, className, container }: DialogContentProps) {
         <AnimatePresence mode="wait">
             {isOpen && (
                 <motion.dialog
-                    key={ids.dialog}
-                    ref={dialogRef as React.RefObject<HTMLDialogElement>}
-                    id={ids.dialog}
-                    aria-labelledby={ids.title}
+                    animate="animate"
                     aria-describedby={ids.description}
+                    aria-labelledby={ids.title}
                     aria-modal="true"
-                    role="dialog"
+                    className={cn("-translate-x-1/2 -translate-y-1/2 fixed top-1/2 left-1/2 transform rounded-lg border border-zinc-200 p-0 shadow-lg dark:border dark:border-zinc-700", "backdrop:bg-black/50 backdrop:backdrop-blur-xs", "open:flex open:flex-col", className)}
+                    exit="exit"
+                    id={ids.dialog}
+                    initial="initial"
+                    key={ids.dialog}
+                    onAnimationComplete={onAnimationComplete}
                     onClick={(e) => {
                         if (e.target === dialogRef.current) {
                             setIsOpen(false);
                         }
                     }}
-                    initial="initial"
-                    animate="animate"
-                    exit="exit"
-                    variants={variants}
+                    ref={dialogRef as React.RefObject<HTMLDialogElement>}
+                    role="dialog"
                     transition={transition}
-                    onAnimationComplete={onAnimationComplete}
-                    className={cn("-translate-x-1/2 -translate-y-1/2 fixed top-1/2 left-1/2 transform rounded-lg border border-zinc-200 p-0 shadow-lg dark:border dark:border-zinc-700", "backdrop:bg-black/50 backdrop:backdrop-blur-xs", "open:flex open:flex-col", className)}
+                    variants={variants}
                 >
                     <div className="w-full">{children}</div>
                 </motion.dialog>
@@ -231,7 +230,7 @@ function DialogTitle({ children, className }: DialogTitleProps) {
     if (!context) throw new Error("DialogTitle must be used within Dialog");
 
     return (
-        <h2 id={context.ids.title} className={cn("font-medium text-base", className)}>
+        <h2 className={cn("font-medium text-base", className)} id={context.ids.title}>
             {children}
         </h2>
     );
@@ -247,7 +246,7 @@ function DialogDescription({ children, className }: DialogDescriptionProps) {
     if (!context) throw new Error("DialogDescription must be used within Dialog");
 
     return (
-        <p id={context.ids.description} className={cn("text-base text-zinc-500", className)}>
+        <p className={cn("text-base text-zinc-500", className)} id={context.ids.description}>
             {children}
         </p>
     );
@@ -265,11 +264,11 @@ function DialogClose({ className, children, disabled }: DialogCloseProps) {
 
     return (
         <button
-            onClick={() => context.setIsOpen(false)}
-            type="button"
             aria-label="Close dialog"
             className={cn("absolute top-4 right-4 rounded-xs opacity-70 transition-opacity", "hover:opacity-100 focus:outline-hidden focus:ring-2", "focus:ring-zinc-500 focus:ring-offset-2 disabled:pointer-events-none", className)}
             disabled={disabled}
+            onClick={() => context.setIsOpen(false)}
+            type="button"
         >
             {children || <X className="h-4 w-4" />}
             <span className="sr-only">Close</span>

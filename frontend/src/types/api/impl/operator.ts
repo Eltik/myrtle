@@ -2,7 +2,7 @@
 
 import type { HandbookItem, OperatorProfile } from "./handbook";
 import type { Item, ItemType } from "./material";
-import type { Module, ModuleData } from "./module";
+import type { Module } from "./module";
 import type { SkillLevel } from "./skill";
 
 export type OperatorPosition = "RANGED" | "MELEE" | "ALL" | "NONE";

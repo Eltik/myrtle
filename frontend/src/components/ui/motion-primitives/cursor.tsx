@@ -1,7 +1,7 @@
 "use client";
+import { AnimatePresence, motion, type SpringOptions, type Transition, useMotionValue, useSpring, type Variant } from "motion/react";
 import type React from "react";
-import { useEffect, useState, useRef } from "react";
-import { motion, type SpringOptions, useMotionValue, useSpring, AnimatePresence, type Transition, type Variant } from "motion/react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "~/lib/utils";
 
 export type CursorProps = {
@@ -29,7 +29,7 @@ export function Cursor({ children, className, springConfig, attachToParent, vari
             cursorX.set(window.innerWidth / 2);
             cursorY.set(window.innerHeight / 2);
         }
-    }, []);
+    }, [cursorX.set, cursorY.set]);
 
     useEffect(() => {
         if (!attachToParent) {
@@ -49,7 +49,7 @@ export function Cursor({ children, className, springConfig, attachToParent, vari
         return () => {
             document.removeEventListener("mousemove", updatePosition);
         };
-    }, [cursorX, cursorY, onPositionChange]);
+    }, [cursorX, cursorY, onPositionChange, attachToParent]);
 
     const cursorXSpring = useSpring(cursorX, springConfig || { duration: 0 });
     const cursorYSpring = useSpring(cursorY, springConfig || { duration: 0 });
@@ -92,8 +92,8 @@ export function Cursor({ children, className, springConfig, attachToParent, vari
 
     return (
         <motion.div
-            ref={cursorRef}
             className={cn("pointer-events-none fixed top-0 left-0 z-50", className)}
+            ref={cursorRef}
             style={{
                 x: cursorXSpring,
                 y: cursorYSpring,
@@ -103,7 +103,7 @@ export function Cursor({ children, className, springConfig, attachToParent, vari
         >
             <AnimatePresence>
                 {isVisible && (
-                    <motion.div initial="initial" animate="animate" exit="exit" variants={variants} transition={transition}>
+                    <motion.div animate="animate" exit="exit" initial="initial" transition={transition} variants={variants}>
                         {children}
                     </motion.div>
                 )}

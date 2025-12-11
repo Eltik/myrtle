@@ -1,13 +1,13 @@
-import { flexRender, type ColumnFiltersState, getCoreRowModel, getFilteredRowModel, getSortedRowModel, useReactTable, type SortingState } from "@tanstack/react-table";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
-import type { Operator } from "~/types/impl/api/static/operator";
-import { Button } from "~/components/ui/button";
-import { ArrowUpDown } from "lucide-react";
-import { formatProfession, formatSubProfession, rarityToNumber } from "~/helper";
-import { OperatorRarity } from "~/types/impl/api/static/operator";
 import type { ColumnDef } from "@tanstack/react-table";
-import { useState } from "react";
+import { type ColumnFiltersState, flexRender, getCoreRowModel, getFilteredRowModel, getSortedRowModel, type SortingState, useReactTable } from "@tanstack/react-table";
+import { ArrowUpDown } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { Button } from "~/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
+import { formatProfession, formatSubProfession, rarityToNumber } from "~/helper";
+import type { Operator } from "~/types/impl/api/static/operator";
+import { OperatorRarity } from "~/types/impl/api/static/operator";
 
 interface OperatorsTableProps {
     operators: Operator[];
@@ -31,7 +31,7 @@ export function OperatorsTable({ operators, currentPage, pageSize }: OperatorsTa
             accessorKey: "name",
             header: ({ column }) => {
                 return (
-                    <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+                    <Button onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} variant="ghost">
                         Name
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
@@ -42,7 +42,7 @@ export function OperatorsTable({ operators, currentPage, pageSize }: OperatorsTa
             accessorKey: "rarity",
             header: ({ column }) => {
                 return (
-                    <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+                    <Button onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} variant="ghost">
                         Rarity
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
@@ -65,7 +65,7 @@ export function OperatorsTable({ operators, currentPage, pageSize }: OperatorsTa
             accessorKey: "profession",
             header: ({ column }) => {
                 return (
-                    <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+                    <Button onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} variant="ghost">
                         Class
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
@@ -80,7 +80,7 @@ export function OperatorsTable({ operators, currentPage, pageSize }: OperatorsTa
             accessorKey: "subProfessionId",
             header: ({ column }) => {
                 return (
-                    <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+                    <Button onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} variant="ghost">
                         Subclass
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
@@ -95,7 +95,7 @@ export function OperatorsTable({ operators, currentPage, pageSize }: OperatorsTa
             accessorKey: "nationId",
             header: ({ column }) => {
                 return (
-                    <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+                    <Button onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} variant="ghost">
                         Nation
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
@@ -106,7 +106,7 @@ export function OperatorsTable({ operators, currentPage, pageSize }: OperatorsTa
             accessorKey: "profile.basicInfo.race",
             header: ({ column }) => {
                 return (
-                    <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+                    <Button onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} variant="ghost">
                         Race
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
@@ -149,7 +149,7 @@ export function OperatorsTable({ operators, currentPage, pageSize }: OperatorsTa
                 <TableBody>
                     {paginatedData.length ? (
                         paginatedData.map((row) => (
-                            <TableRow key={row.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleRowClick(row.original.id)}>
+                            <TableRow className="cursor-pointer hover:bg-muted/50" key={row.id} onClick={() => handleRowClick(row.original.id)}>
                                 {row.getVisibleCells().map((cell) => (
                                     <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
                                 ))}
@@ -157,7 +157,7 @@ export function OperatorsTable({ operators, currentPage, pageSize }: OperatorsTa
                         ))
                     ) : (
                         <TableRow>
-                            <TableCell colSpan={columns.length} className="h-24 text-center">
+                            <TableCell className="h-24 text-center" colSpan={columns.length}>
                                 No results.
                             </TableCell>
                         </TableRow>

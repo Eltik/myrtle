@@ -117,105 +117,103 @@ export const TagSelector = ({
     };
 
     return (
-        <>
-            <div className="mb-4 pt-2">
-                <h3 className="mb-2 text-lg font-semibold">Select Tags (Up to 5)</h3>
-                {isLoadingTags ? (
-                    <div className="mb-4 flex h-72 w-full items-center justify-center rounded-md border p-4">
-                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                        <span className="ml-2">Loading tags...</span>
+        <div className="mb-4 pt-2">
+            <h3 className="mb-2 font-semibold text-lg">Select Tags (Up to 5)</h3>
+            {isLoadingTags ? (
+                <div className="mb-4 flex h-72 w-full items-center justify-center rounded-md border p-4">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    <span className="ml-2">Loading tags...</span>
+                </div>
+            ) : errorTags ? (
+                <Alert className="mb-4" variant="destructive">
+                    <AlertTitle>Error Loading Tags</AlertTitle>
+                    <AlertDescription>{errorTags}</AlertDescription>
+                </Alert>
+            ) : (
+                <>
+                    <div className="relative mb-3 flex items-center gap-2">
+                        {" "}
+                        {/* Flex container for input and icons */}
+                        <Search className="-translate-y-1/2 absolute top-1/2 left-2.5 h-4 w-4 text-muted-foreground" /> {/* Search Icon */}
+                        <Input
+                            className="flex-grow pl-8"
+                            onChange={(e) => setTagSearchQuery(e.target.value)}
+                            placeholder="Search tags..."
+                            type="text"
+                            value={tagSearchQuery} // Add padding for the icon and allow input to grow
+                        />
                     </div>
-                ) : errorTags ? (
-                    <Alert variant="destructive" className="mb-4">
-                        <AlertTitle>Error Loading Tags</AlertTitle>
-                        <AlertDescription>{errorTags}</AlertDescription>
-                    </Alert>
-                ) : (
-                    <>
-                        <div className="relative mb-3 flex items-center gap-2">
-                            {" "}
-                            {/* Flex container for input and icons */}
-                            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /> {/* Search Icon */}
-                            <Input
-                                type="text"
-                                placeholder="Search tags..."
-                                value={tagSearchQuery}
-                                onChange={(e) => setTagSearchQuery(e.target.value)}
-                                className="flex-grow pl-8" // Add padding for the icon and allow input to grow
-                            />
-                        </div>
-                        <ScrollArea ref={scrollAreaRef} className="w-full overflow-auto rounded-t-md border border-b-0 p-4" style={{ height: `${tagAreaHeight}px` }}>
-                            {Object.entries(groupedTags).length > 0 ? (
-                                Object.entries(groupedTags).map(([type, tags]) => {
-                                    const filteredTags = tags.filter((tag) => tag.tagName.toLowerCase().includes(tagSearchQuery.toLowerCase()));
+                    <ScrollArea className="w-full overflow-auto rounded-t-md border border-b-0 p-4" ref={scrollAreaRef} style={{ height: `${tagAreaHeight}px` }}>
+                        {Object.entries(groupedTags).length > 0 ? (
+                            Object.entries(groupedTags).map(([type, tags]) => {
+                                const filteredTags = tags.filter((tag) => tag.tagName.toLowerCase().includes(tagSearchQuery.toLowerCase()));
 
-                                    if (filteredTags.length === 0) {
-                                        return null; // Don't render the group if no tags match the search
-                                    }
+                                if (filteredTags.length === 0) {
+                                    return null; // Don't render the group if no tags match the search
+                                }
 
-                                    return (
-                                        <div key={type} className="mb-4">
-                                            <h4 className="mb-2 font-medium text-primary">{type}</h4>
-                                            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                                                {filteredTags.map((tag) => {
-                                                    const isDisabled = selectedTags.size >= 5 && !selectedTags.has(tag.tagId);
-                                                    const isChecked = selectedTags.has(tag.tagId);
+                                return (
+                                    <div className="mb-4" key={type}>
+                                        <h4 className="mb-2 font-medium text-primary">{type}</h4>
+                                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                                            {filteredTags.map((tag) => {
+                                                const isDisabled = selectedTags.size >= 5 && !selectedTags.has(tag.tagId);
+                                                const isChecked = selectedTags.has(tag.tagId);
 
-                                                    return (
-                                                        <div
-                                                            key={tag.tagId}
-                                                            className={cn(
-                                                                "flex items-center space-x-2 rounded-md border p-2 transition-colors hover:bg-accent",
-                                                                !isDisabled && "cursor-pointer", // Add cursor-pointer if not disabled
-                                                                isDisabled && "cursor-not-allowed opacity-70", // Style disabled state
-                                                            )}
-                                                            onClick={() => {
-                                                                if (!isDisabled) {
-                                                                    handleTagChange(tag.tagId, !isChecked); // Toggle based on current state
-                                                                }
-                                                            }}
+                                                return (
+                                                    <div
+                                                        className={cn(
+                                                            "flex items-center space-x-2 rounded-md border p-2 transition-colors hover:bg-accent",
+                                                            !isDisabled && "cursor-pointer", // Add cursor-pointer if not disabled
+                                                            isDisabled && "cursor-not-allowed opacity-70", // Style disabled state
+                                                        )}
+                                                        key={tag.tagId}
+                                                        onClick={() => {
+                                                            if (!isDisabled) {
+                                                                handleTagChange(tag.tagId, !isChecked); // Toggle based on current state
+                                                            }
+                                                        }}
+                                                    >
+                                                        <Checkbox
+                                                            aria-labelledby={`${tag.tagId}-label`}
+                                                            checked={isChecked}
+                                                            // Keep onCheckedChange for accessibility and direct checkbox clicks
+                                                            disabled={isDisabled}
+                                                            id={tag.tagId}
+                                                            onCheckedChange={(checked: boolean | "indeterminate") => handleTagChange(tag.tagId, checked)} // Associate checkbox with label for screen readers
+                                                        />
+                                                        <label
+                                                            className={`select-none font-medium text-sm leading-none ${isDisabled ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer"}`} // Add id for aria-labelledby
+                                                            htmlFor={tag.tagId} // Keep htmlFor for label-checkbox association
+                                                            id={`${tag.tagId}-label`} // Remove explicit cursor-pointer here
+                                                            // Prevent label click from propagating to the div's onClick
+                                                            onClick={(e) => e.stopPropagation()}
                                                         >
-                                                            <Checkbox
-                                                                id={tag.tagId}
-                                                                checked={isChecked}
-                                                                // Keep onCheckedChange for accessibility and direct checkbox clicks
-                                                                onCheckedChange={(checked: boolean | "indeterminate") => handleTagChange(tag.tagId, checked)}
-                                                                disabled={isDisabled}
-                                                                aria-labelledby={`${tag.tagId}-label`} // Associate checkbox with label for screen readers
-                                                            />
-                                                            <label
-                                                                id={`${tag.tagId}-label`} // Add id for aria-labelledby
-                                                                htmlFor={tag.tagId} // Keep htmlFor for label-checkbox association
-                                                                className={`select-none text-sm font-medium leading-none ${isDisabled ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer"}`} // Remove explicit cursor-pointer here
-                                                                // Prevent label click from propagating to the div's onClick
-                                                                onClick={(e) => e.stopPropagation()}
-                                                            >
-                                                                {tag.tagName}
-                                                            </label>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
+                                                            {tag.tagName}
+                                                        </label>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
-                                    );
-                                })
-                            ) : (
-                                <p className="text-muted-foreground">No tags found or failed to load.</p>
-                            )}
-                        </ScrollArea>
-                        {/* Draggable Grabber Handle */}
-                        <div onMouseDown={handleMouseDownOnGrabber} className="mb-4 h-2 w-full cursor-ns-resize rounded-b-md border border-t-0 bg-muted transition-colors hover:bg-muted-foreground/20 active:bg-muted-foreground/30" title="Drag to resize tags area">
-                            {/* Optional: Add visual indicator like dots */}
-                            <div className="flex h-full items-center justify-center">
-                                <span className="h-1 w-8 rounded-full bg-muted-foreground/40"></span>
-                            </div>
+                                    </div>
+                                );
+                            })
+                        ) : (
+                            <p className="text-muted-foreground">No tags found or failed to load.</p>
+                        )}
+                    </ScrollArea>
+                    {/* Draggable Grabber Handle */}
+                    <div className="mb-4 h-2 w-full cursor-ns-resize rounded-b-md border border-t-0 bg-muted transition-colors hover:bg-muted-foreground/20 active:bg-muted-foreground/30" onMouseDown={handleMouseDownOnGrabber} title="Drag to resize tags area">
+                        {/* Optional: Add visual indicator like dots */}
+                        <div className="flex h-full items-center justify-center">
+                            <span className="h-1 w-8 rounded-full bg-muted-foreground/40"></span>
                         </div>
-                    </>
-                )}
-                <Button onClick={resetSelection} variant="outline" disabled={selectedTags.size === 0}>
-                    Reset Selection
-                </Button>
-            </div>
-        </>
+                    </div>
+                </>
+            )}
+            <Button disabled={selectedTags.size === 0} onClick={resetSelection} variant="outline">
+                Reset Selection
+            </Button>
+        </div>
     );
 };

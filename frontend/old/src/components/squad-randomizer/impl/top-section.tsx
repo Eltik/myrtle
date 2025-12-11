@@ -1,21 +1,19 @@
-import { rarityToNumber } from "~/helper";
+import { Loader2 } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 import { useMemo, useState } from "react";
-
+import { useStore } from "zustand";
 import { Button } from "~/components/ui/button";
+import { Checkbox } from "~/components/ui/checkbox";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { formatProfession } from "~/helper";
-import type { Operator } from "~/types/impl/api/static/operator";
-import Image from "next/image";
+import { formatProfession, rarityToNumber } from "~/helper";
 import { cn } from "~/lib/utils";
-import { getRarityBorderColor } from "./helper";
-import { useStore } from "zustand";
-import type { StoredUser } from "~/types/impl/api";
 import { usePlayer } from "~/store";
+import type { StoredUser } from "~/types/impl/api";
 import type { PlayerResponse } from "~/types/impl/api/impl/player";
-import { Loader2 } from "lucide-react";
-import Link from "next/link";
-import { Checkbox } from "~/components/ui/checkbox";
+import type { Operator } from "~/types/impl/api/static/operator";
+import { getRarityBorderColor } from "./helper";
 
 export const TopSection = ({
     allOperators,
@@ -84,7 +82,7 @@ export const TopSection = ({
 
             // Add operators the player doesn't own to the exclusion set
             for (const operator of allOperators) {
-                if (operator.id && operator.id.startsWith("char_") && !playerOwnedOperatorIds.has(operator.id)) {
+                if (operator.id?.startsWith("char_") && !playerOwnedOperatorIds.has(operator.id)) {
                     updatedExcludedOperators.add(operator.id);
                 }
             }
@@ -109,23 +107,23 @@ export const TopSection = ({
             <div className="mb-6 grid flex-shrink-0 grid-cols-1 gap-6 md:grid-cols-3">
                 {/* Column 1: Options */}
                 <div className="space-y-4 md:col-span-1">
-                    <h2 className="mb-3 text-xl font-semibold">Options</h2>
+                    <h2 className="mb-3 font-semibold text-xl">Options</h2>
                     <div>
                         <Label htmlFor="squadSize">Squad Size</Label>
-                        <Input id="squadSize" type="number" value={squadSize} onChange={handleSquadSizeChange} min="1" max={allOperators.length > 0 ? allOperators.length : 12} className="mt-1" />
+                        <Input className="mt-1" id="squadSize" max={allOperators.length > 0 ? allOperators.length : 12} min="1" onChange={handleSquadSizeChange} type="number" value={squadSize} />
                     </div>
-                    <Button onClick={handleRandomize} disabled={isLoading || availableOperatorsCount < squadSize} className="w-full">
+                    <Button className="w-full" disabled={isLoading || availableOperatorsCount < squadSize} onClick={handleRandomize}>
                         Randomize Squad
                     </Button>
                     {playerData && (
                         <>
                             <div className="flex items-center space-x-2">
-                                <Checkbox id="onlyE1" checked={onlyE1 || onlyE2} onCheckedChange={(checked) => setOnlyE1(checked === "indeterminate" ? false : checked)} />
+                                <Checkbox checked={onlyE1 || onlyE2} id="onlyE1" onCheckedChange={(checked) => setOnlyE1(checked === "indeterminate" ? false : checked)} />
                                 <Label htmlFor="onlyE1">{"> E1"}</Label>
-                                <Checkbox id="onlyE2" checked={onlyE2} onCheckedChange={(checked) => setOnlyE2(checked === "indeterminate" ? false : checked)} />
+                                <Checkbox checked={onlyE2} id="onlyE2" onCheckedChange={(checked) => setOnlyE2(checked === "indeterminate" ? false : checked)} />
                                 <Label htmlFor="onlyE2">Only E2</Label>
                             </div>
-                            <Button onClick={importUserOperators} disabled={isImporting} className="mt-2 w-full">
+                            <Button className="mt-2 w-full" disabled={isImporting} onClick={importUserOperators}>
                                 {isImporting ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -141,7 +139,7 @@ export const TopSection = ({
 
                 {/* Column 2 & 3: Randomized Squad */}
                 <div className="md:col-span-2">
-                    <h2 className="mb-3 text-xl font-semibold">
+                    <h2 className="mb-3 font-semibold text-xl">
                         Randomized Squad ({randomizedSquad.length} / {squadSize})
                     </h2>
                     {randomizedSquad.length > 0 ? (
@@ -153,15 +151,15 @@ export const TopSection = ({
                                 const rarityNum = rarityToNumber(op.rarity);
 
                                 return (
-                                    <Link href={`/operators?id=${op.id}`} key={op.id} className={cn("relative aspect-square overflow-hidden rounded-md bg-card text-card-foreground shadow-sm", getRarityBorderColor(rarityNum))} title={`${op.name} (${displayProfession})`}>
-                                        <Image src={imageUrl} alt={op.name} fill sizes="(max-width: 640px) 20vw, 10vw" className={cn("object-cover")} unoptimized />
-                                        <div className="absolute inset-x-0 bottom-0 truncate bg-black/60 px-1 py-0.5 text-center text-[10px] font-medium backdrop-blur-sm">{op.name}</div>
+                                    <Link className={cn("relative aspect-square overflow-hidden rounded-md bg-card text-card-foreground shadow-sm", getRarityBorderColor(rarityNum))} href={`/operators?id=${op.id}`} key={op.id} title={`${op.name} (${displayProfession})`}>
+                                        <Image alt={op.name} className={cn("object-cover")} fill sizes="(max-width: 640px) 20vw, 10vw" src={imageUrl} unoptimized />
+                                        <div className="absolute inset-x-0 bottom-0 truncate bg-black/60 px-1 py-0.5 text-center font-medium text-[10px] backdrop-blur-sm">{op.name}</div>
                                     </Link>
                                 );
                             })}
                         </div>
                     ) : (
-                        <p className="italic text-gray-500">Click &quot;Randomize Squad&quot; to generate a squad.</p>
+                        <p className="text-gray-500 italic">Click &quot;Randomize Squad&quot; to generate a squad.</p>
                     )}
                 </div>
             </div>

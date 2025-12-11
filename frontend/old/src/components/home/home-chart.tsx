@@ -25,10 +25,10 @@ const chartConfig = {
 
 export function HomeChart() {
     return (
-        <ChartContainer config={chartConfig} className="min-h-[200px] w-full transition-all duration-150">
+        <ChartContainer className="min-h-[200px] w-full transition-all duration-150" config={chartConfig}>
             <BarChart accessibilityLayer data={chartData}>
                 <CartesianGrid vertical={false} />
-                <XAxis dataKey="month" tickLine={false} tickMargin={10} axisLine={false} tickFormatter={(value: string) => value.slice(0, 3)} />
+                <XAxis axisLine={false} dataKey="month" tickFormatter={(value: string) => value.slice(0, 3)} tickLine={false} tickMargin={10} />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Bar dataKey="desktop" fill="var(--color-desktop)" radius={4} />
                 <Bar dataKey="mobile" fill="var(--color-mobile)" radius={4} />
