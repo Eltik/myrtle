@@ -5,33 +5,24 @@ import { motion } from "motion/react";
 import Image from "next/image";
 import { AnimatedNumber } from "~/components/ui/motion-primitives/animated-number";
 import { getEliteImage } from "~/lib/operator-helpers";
-import type { Operator } from "~/types/api";
+import type { AttributeData, Operator } from "~/types/api";
 
 interface StatsDisplayProps {
     operator: Operator;
-    attributeStats: {
-        maxHp: number;
-        atk: number;
-        def: number;
-        magicResistance: number;
-        attackSpeed: number;
-        blockCnt: number;
-        respawnTime: number;
-        cost: number;
-    } | null;
+    attributeStats: AttributeData | null;
     phaseIndex: number;
     onPhaseChange: (index: number) => void;
 }
 
 const statConfig = [
-    { key: "maxHp", label: "Health", icon: Cross },
-    { key: "atk", label: "ATK", icon: Swords },
-    { key: "def", label: "DEF", icon: Shield },
-    { key: "attackSpeed", label: "ATK Interval", icon: CircleGauge, decimal: true },
-    { key: "magicResistance", label: "RES", icon: Diamond },
-    { key: "blockCnt", label: "Block", icon: ShieldBan },
-    { key: "respawnTime", label: "Redeploy", icon: Hourglass },
-    { key: "cost", label: "DP Cost", icon: BadgeDollarSign },
+    { key: "MaxHp", label: "Health", icon: Cross },
+    { key: "Atk", label: "ATK", icon: Swords },
+    { key: "Def", label: "DEF", icon: Shield },
+    { key: "BaseAttackTime", label: "ATK Interval", icon: CircleGauge, decimal: true },
+    { key: "MagicResistance", label: "RES", icon: Diamond },
+    { key: "BlockCnt", label: "Block", icon: ShieldBan },
+    { key: "RespawnTime", label: "Redeploy", icon: Hourglass },
+    { key: "Cost", label: "DP Cost", icon: BadgeDollarSign },
 ] as const;
 
 export function StatsDisplay({ operator, attributeStats, phaseIndex, onPhaseChange }: StatsDisplayProps) {
@@ -57,7 +48,7 @@ export function StatsDisplay({ operator, attributeStats, phaseIndex, onPhaseChan
                                 <Icon className="h-5 w-5 text-muted-foreground" />
                                 <span className="text-muted-foreground text-sm">{label}</span>
                             </div>
-                            <span className="font-bold tabular-nums">{decimal ? value.toFixed(2) : <AnimatedNumber springOptions={{ bounce: 0, duration: 500 }} value={Math.round(value)} />}</span>
+                            <span className="font-bold tabular-nums">{decimal ? Number(value).toFixed(2) : <AnimatedNumber springOptions={{ bounce: 0, duration: 500 }} value={Math.round(value)} />}</span>
                         </motion.div>
                     );
                 })}

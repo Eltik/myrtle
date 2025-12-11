@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { AnimatedGroup } from "~/components/ui/motion-primitives/animated-group";
 import { Separator } from "~/components/ui/shadcn/separator";
-import type { Operator, Range } from "~/types/api";
+import { getOperatorAttributeStats } from "~/lib/operator-stats";
+import type { AttributeData, Operator, Range } from "~/types/api";
 import { HandbookSection } from "./handbook-section";
 import { ModuleDetails } from "./module-details";
 import { OperatorControls } from "./operator-controls";
@@ -21,9 +22,9 @@ export function InfoTab({ operator }: InfoTabProps) {
     const [phaseIndex, setPhaseIndex] = useState(operator.phases.length - 1);
     const [level, setLevel] = useState(operator.phases[operator.phases.length - 1]?.MaxLevel ?? 1);
     const [favorPoint, setFavorPoint] = useState(100);
-    const [_potentialRank, _setPotentialRank] = useState(0);
-    const [_currentModule, _setCurrentModule] = useState("");
-    const [_currentModuleLevel, _setCurrentModuleLevel] = useState(0);
+    const [potentialRank, setPotentialRank] = useState(0);
+    const [currentModule, setCurrentModule] = useState("");
+    const [currentModuleLevel, setCurrentModuleLevel] = useState(0);
     const [ranges, setRanges] = useState<Range[]>([]);
     const [currentRangeId, setCurrentRangeId] = useState("");
     const [showControls, setShowControls] = useState(true);
@@ -70,30 +71,19 @@ export function InfoTab({ operator }: InfoTabProps) {
         }
     }, [operator.phases, phaseIndex]);
 
-    // Calculate attribute stats
-    const attributeStats = useMemo(() => {
-        const phase = operator.phases[phaseIndex];
-        if (!phase?.AttributesKeyFrames?.length) return null;
-
-        const maxLevel = phase.MaxLevel;
-        const start = phase.AttributesKeyFrames[0]?.Data;
-        const end = phase.AttributesKeyFrames[phase.AttributesKeyFrames.length - 1]?.Data;
-
-        if (!start || !end) return null;
-
-        const lerp = (a: number, b: number) => Math.round(a + ((level - 1) * (b - a)) / (maxLevel - 1));
-
-        return {
-            maxHp: lerp(start.MaxHp, end.MaxHp),
-            atk: lerp(start.Atk, end.Atk),
-            def: lerp(start.Def, end.Def),
-            magicResistance: lerp(start.MagicResistance, end.MagicResistance),
-            attackSpeed: start.AttackSpeed,
-            blockCnt: start.BlockCnt,
-            respawnTime: start.RespawnTime,
-            cost: start.Cost,
-        };
-    }, [operator.phases, phaseIndex, level]);
+    const attributeStats: AttributeData | null = useMemo(() => {
+        return getOperatorAttributeStats(
+            operator,
+            {
+                phaseIndex,
+                favorPoint,
+                potentialRank,
+                moduleId: currentModule,
+                moduleLevel: currentModuleLevel,
+            },
+            level,
+        );
+    }, [operator, phaseIndex, level, favorPoint, potentialRank, currentModule, currentModuleLevel]);
 
     return (
         <div className="w-full space-y-6">
@@ -111,7 +101,23 @@ export function InfoTab({ operator }: InfoTabProps) {
                 <TopDescription operator={operator} />
 
                 {/* Controls */}
-                <OperatorControls favorPoint={favorPoint} level={level} onFavorPointChange={setFavorPoint} onLevelChange={setLevel} onPhaseChange={setPhaseIndex} onToggleControls={() => setShowControls(!showControls)} operator={operator} phaseIndex={phaseIndex} showControls={showControls} />
+                <OperatorControls
+                    currentModule={currentModule}
+                    currentModuleLevel={currentModuleLevel}
+                    favorPoint={favorPoint}
+                    level={level}
+                    onFavorPointChange={setFavorPoint}
+                    onLevelChange={setLevel}
+                    onModuleChange={setCurrentModule}
+                    onModuleLevelChange={setCurrentModuleLevel}
+                    onPhaseChange={setPhaseIndex}
+                    onPotentialChange={setPotentialRank}
+                    onToggleControls={() => setShowControls(!showControls)}
+                    operator={operator}
+                    phaseIndex={phaseIndex}
+                    potentialRank={potentialRank}
+                    showControls={showControls}
+                />
 
                 {/* Stats */}
                 <StatsDisplay
