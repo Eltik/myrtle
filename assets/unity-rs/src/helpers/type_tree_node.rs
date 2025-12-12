@@ -15,7 +15,7 @@ static COMMONSTRING_CACHE: Lazy<Mutex<HashMap<Option<UnityVersion>, HashMap<usiz
     Lazy::new(|| Mutex::new(HashMap::new()));
 
 /// Represents a node in Unity's type tree
-#[derive(Debug, Clone, PartialEq, serde::Deserialize, serde::Serialize)]
+#[derive(PartialEq, serde::Deserialize, serde::Serialize)]
 pub struct TypeTreeNode {
     pub m_level: i32,
     pub m_type: String,
@@ -32,6 +32,112 @@ pub struct TypeTreeNode {
     // Computed field
     #[serde(skip)]
     pub clean_name: String,
+}
+
+/// Manual Clone implementation using iterative approach to avoid stack overflow
+/// on deeply nested type trees (common in Unity 2021+ files)
+impl Clone for TypeTreeNode {
+    fn clone(&self) -> Self {
+        // Clone scalar fields for root
+        let mut root = TypeTreeNode {
+            m_level: self.m_level,
+            m_type: self.m_type.clone(),
+            m_name: self.m_name.clone(),
+            m_byte_size: self.m_byte_size,
+            m_version: self.m_version,
+            m_children: Vec::with_capacity(self.m_children.len()),
+            m_type_flags: self.m_type_flags,
+            m_variable_count: self.m_variable_count,
+            m_index: self.m_index,
+            m_meta_flag: self.m_meta_flag,
+            m_ref_type_hash: self.m_ref_type_hash,
+            clean_name: self.clean_name.clone(),
+        };
+
+        if self.m_children.is_empty() {
+            return root;
+        }
+
+        // Work stack: (source_children, target_parent_ptr, child_index)
+        // We process children iteratively to avoid deep recursion
+        let mut work_stack: Vec<(&[TypeTreeNode], *mut TypeTreeNode, usize)> = vec![];
+        work_stack.push((&self.m_children, &mut root as *mut TypeTreeNode, 0));
+
+        while let Some((src_children, target_parent, idx)) = work_stack.pop() {
+            if idx >= src_children.len() {
+                continue;
+            }
+
+            // Push next sibling back onto stack
+            if idx + 1 < src_children.len() {
+                work_stack.push((src_children, target_parent, idx + 1));
+            }
+
+            let src_node = &src_children[idx];
+
+            // Clone scalar fields for this node
+            let new_node = TypeTreeNode {
+                m_level: src_node.m_level,
+                m_type: src_node.m_type.clone(),
+                m_name: src_node.m_name.clone(),
+                m_byte_size: src_node.m_byte_size,
+                m_version: src_node.m_version,
+                m_children: Vec::with_capacity(src_node.m_children.len()),
+                m_type_flags: src_node.m_type_flags,
+                m_variable_count: src_node.m_variable_count,
+                m_index: src_node.m_index,
+                m_meta_flag: src_node.m_meta_flag,
+                m_ref_type_hash: src_node.m_ref_type_hash,
+                clean_name: src_node.clean_name.clone(),
+            };
+
+            // Add to parent's children
+            // SAFETY: We maintain exclusive access to target_parent through our stack discipline
+            unsafe {
+                (*target_parent).m_children.push(new_node);
+
+                // If this node has children, push them onto the work stack
+                if !src_node.m_children.is_empty() {
+                    let new_node_ptr =
+                        (*target_parent).m_children.last_mut().unwrap() as *mut TypeTreeNode;
+                    work_stack.push((&src_node.m_children, new_node_ptr, 0));
+                }
+            }
+        }
+
+        root
+    }
+}
+
+/// Manual Debug implementation to avoid stack overflow on deeply nested trees
+impl std::fmt::Debug for TypeTreeNode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // Count total nodes iteratively to avoid recursion
+        let mut total_nodes = 1;
+        let mut stack: Vec<&TypeTreeNode> = self.m_children.iter().collect();
+        while let Some(node) = stack.pop() {
+            total_nodes += 1;
+            stack.extend(node.m_children.iter());
+        }
+
+        f.debug_struct("TypeTreeNode")
+            .field("m_level", &self.m_level)
+            .field("m_type", &self.m_type)
+            .field("m_name", &self.m_name)
+            .field("m_byte_size", &self.m_byte_size)
+            .field("m_version", &self.m_version)
+            .field(
+                "m_children",
+                &format!(
+                    "[{} children, {} total nodes]",
+                    self.m_children.len(),
+                    total_nodes
+                ),
+            )
+            .field("m_type_flags", &self.m_type_flags)
+            .field("m_meta_flag", &self.m_meta_flag)
+            .finish()
+    }
 }
 
 impl TypeTreeNode {
