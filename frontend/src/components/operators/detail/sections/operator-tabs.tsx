@@ -1,0 +1,103 @@
+"use client";
+
+import type React from "react";
+
+import { motion } from "motion/react";
+import { BookOpen, Coins, Music, Palette, Sparkles } from "lucide-react";
+import type { Operator } from "~/types/api";
+import { cn } from "~/lib/utils";
+import { TransitionPanel } from "~/components/ui/motion-primitives/transition-panel";
+import { InfoContent } from "./tabs/info-content";
+import { SkillsContent } from "./tabs/skills-content";
+import { LevelUpContent } from "./tabs/levelup-content";
+import { SkinsContent } from "./tabs/skins-content";
+import { AudioContent } from "./tabs/audio-content";
+
+type TabType = "info" | "skills" | "levelup" | "skins" | "audio";
+
+interface OperatorTabsProps {
+    operator: Operator;
+    activeTab: TabType;
+    onTabChange: (tab: TabType) => void;
+}
+
+const TABS: { type: TabType; label: string; icon: React.ElementType }[] = [
+    { type: "info", label: "Information", icon: BookOpen },
+    { type: "skills", label: "Skills & Talents", icon: Sparkles },
+    { type: "levelup", label: "Level-Up Cost", icon: Coins },
+    { type: "skins", label: "Skins", icon: Palette },
+    { type: "audio", label: "Audio/SFX", icon: Music },
+];
+
+export function OperatorTabs({ operator, activeTab, onTabChange }: OperatorTabsProps) {
+    const activeIndex = TABS.findIndex((t) => t.type === activeTab);
+
+    return (
+        <div className="flex flex-col gap-6 lg:flex-row">
+            {/* Tab Navigation - Sidebar on desktop, horizontal scroll on mobile */}
+            <nav className="shrink-0 lg:w-48">
+                {/* Mobile: Horizontal scroll */}
+                <div className="flex gap-2 overflow-x-auto pb-2 lg:hidden">
+                    {TABS.map((tab) => {
+                        const Icon = tab.icon;
+                        const isActive = activeTab === tab.type;
+                        return (
+                            <button
+                                className={cn("flex shrink-0 items-center gap-2 rounded-lg border px-4 py-2 font-medium text-sm transition-all", isActive ? "border-primary bg-primary/10 text-primary" : "border-border bg-card/50 text-muted-foreground hover:border-primary/50 hover:text-foreground")}
+                                key={tab.type}
+                                onClick={() => onTabChange(tab.type)}
+                                type="button"
+                            >
+                                <Icon className="h-4 w-4" />
+                                {tab.label}
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* Desktop: Vertical sidebar */}
+                <div className="sticky top-20 hidden flex-col gap-1 lg:flex">
+                    {TABS.map((tab) => {
+                        const Icon = tab.icon;
+                        const isActive = activeTab === tab.type;
+                        return (
+                            <motion.button
+                                className={cn("relative flex items-center gap-3 rounded-lg px-4 py-3 text-left font-medium text-sm transition-colors", isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground")}
+                                key={tab.type}
+                                onClick={() => onTabChange(tab.type)}
+                                type="button"
+                                whileHover={{ x: 2 }}
+                                whileTap={{ scale: 0.98 }}
+                            >
+                                {isActive && <motion.div className="absolute inset-0 rounded-lg border border-primary/50 bg-primary/10" layoutId="activeTab" transition={{ type: "spring", bounce: 0.2, duration: 0.4 }} />}
+                                <Icon className="relative z-10 h-4 w-4" />
+                                <span className="relative z-10">{tab.label}</span>
+                            </motion.button>
+                        );
+                    })}
+                </div>
+            </nav>
+
+            {/* Tab Content */}
+            <div className="min-w-0 flex-1">
+                <div className="rounded-xl border border-border bg-card/50 backdrop-blur-sm">
+                    <TransitionPanel
+                        activeIndex={activeIndex}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                        variants={{
+                            enter: { opacity: 0, y: 10, filter: "blur(4px)" },
+                            center: { opacity: 1, y: 0, filter: "blur(0px)" },
+                            exit: { opacity: 0, y: -10, filter: "blur(4px)" },
+                        }}
+                    >
+                        <InfoContent operator={operator} />
+                        <SkillsContent operator={operator} />
+                        <LevelUpContent operator={operator} />
+                        <SkinsContent operator={operator} />
+                        <AudioContent operator={operator} />
+                    </TransitionPanel>
+                </div>
+            </div>
+        </div>
+    );
+}

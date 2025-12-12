@@ -2,6 +2,7 @@ import type { GetServerSideProps, NextPage } from "next";
 import Head from "next/head";
 import { env } from "~/env.js";
 import type { Operator } from "~/types/api";
+import { OperatorDetail } from "~/components/operators/detail/operator-detail";
 
 interface Props {
     operator: Operator;
@@ -11,9 +12,10 @@ const OperatorPage: NextPage<Props> = ({ operator }) => {
     return (
         <>
             <Head>
-                <title>{`${operator.name} - Operator Details`}</title>
+                <title>{`${operator.name} - Operator Details | myrtle.moe`}</title>
                 <meta content={`View detailed information about ${operator.name} including stats, skills, talents, skins, and voice lines.`} name="description" />
             </Head>
+            <OperatorDetail operator={operator} />
         </>
     );
 };
@@ -21,7 +23,7 @@ const OperatorPage: NextPage<Props> = ({ operator }) => {
 export const getServerSideProps: GetServerSideProps<Props> = async (context) => {
     const { id } = context.query;
 
-    if (!id) {
+    if (!id || typeof id !== "string") {
         return { notFound: true };
     }
 
