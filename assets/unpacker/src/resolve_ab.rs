@@ -679,6 +679,11 @@ fn ab_resolve(
             &spine_texture_names,
         )?;
         saved_count += extract_sprite_atlases(&env_rc, destdir)?;
+        // Extract SpritePacker MonoBehaviours (used for items/icons, portraits, etc.)
+        match extract_sprite_packer(&env_rc, destdir) {
+            Ok(count) => saved_count += count,
+            Err(e) => log::debug!("SpritePacker extraction: {}", e),
+        }
     }
 
     // Extract text assets

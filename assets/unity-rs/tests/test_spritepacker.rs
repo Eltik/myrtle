@@ -5,7 +5,10 @@ use unity_rs::Environment;
 
 fn print_typetree_node(node: &unity_rs::helpers::type_tree_node::TypeTreeNode, indent: usize) {
     let prefix = "  ".repeat(indent);
-    println!("{}{}[{}] : {}", prefix, node.m_name, node.m_type, node.m_byte_size);
+    println!(
+        "{}{}[{}] : {}",
+        prefix, node.m_name, node.m_type, node.m_byte_size
+    );
     for child in &node.m_children {
         print_typetree_node(child, indent + 1);
     }
@@ -124,7 +127,10 @@ fn test_pack_spritepacker_typetree() {
                         // Truncate large output
                         let json_str = serde_json::to_string_pretty(&json).unwrap();
                         if json_str.len() > 10000 {
-                            println!("JSON (truncated to 10000 chars):\n{}...", &json_str[..10000]);
+                            println!(
+                                "JSON (truncated to 10000 chars):\n{}...",
+                                &json_str[..10000]
+                            );
                         } else {
                             println!("JSON:\n{}", json_str);
                         }

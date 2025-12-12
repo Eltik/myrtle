@@ -82,13 +82,38 @@ pub enum DataFlags {
 }
 
 /// Types that can be stored in BundleFile.files
-#[derive(Debug)]
 pub enum FileType {
     Raw(MemoryReader),
     SerializedFile(std::rc::Rc<std::cell::RefCell<crate::files::serialized_file::SerializedFile>>),
     BundleFile(Box<BundleFile>),
     WebFile(Box<crate::files::web_file::WebFile>),
     Writer(EndianBinaryWriter),
+}
+
+/// Manual Debug implementation to avoid stack overflow from recursive type trees
+impl fmt::Debug for FileType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            FileType::Raw(_) => write!(f, "Raw"),
+            FileType::SerializedFile(sf) => {
+                let sf_ref = sf.borrow();
+                write!(
+                    f,
+                    "SerializedFile(name={:?}, objects={})",
+                    sf_ref.name,
+                    sf_ref.objects.len()
+                )
+            }
+            FileType::BundleFile(bf) => write!(
+                f,
+                "BundleFile(name={:?}, files={})",
+                bf.name,
+                bf.files.len()
+            ),
+            FileType::WebFile(wf) => write!(f, "WebFile(files={})", wf.files.len()),
+            FileType::Writer(_) => write!(f, "Writer"),
+        }
+    }
 }
 
 impl fmt::Display for FileType {

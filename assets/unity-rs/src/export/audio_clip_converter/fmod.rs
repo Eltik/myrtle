@@ -50,9 +50,9 @@ pub fn dump_samples(
     // Acquire global lock to prevent concurrent FMOD System creation
     // FMOD has a limit on simultaneous System instances and will fail with
     // "Not enough memory or resources" if too many are created at once
-    let _fmod_guard = FMOD_GLOBAL_LOCK.lock().map_err(|e| {
-        UnityError::Other(format!("Failed to acquire FMOD lock: {:?}", e))
-    })?;
+    let _fmod_guard = FMOD_GLOBAL_LOCK
+        .lock()
+        .map_err(|e| UnityError::Other(format!("Failed to acquire FMOD lock: {:?}", e)))?;
 
     // Python lines 136-139: Check if pyfmodex is available
     // In Rust, we try to get the system and fail if FMOD isn't available
