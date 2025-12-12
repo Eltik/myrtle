@@ -44,3 +44,7 @@ yarn-error.log*
 
 # idea files
 .idea
+
+Archive.zip
+PROMPT.md
+PROMPT_NO_CONTEXT.md
