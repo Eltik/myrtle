@@ -80,14 +80,14 @@ export function OperatorTabs({ operator, activeTab, onTabChange }: OperatorTabsP
 
             {/* Tab Content */}
             <div className="min-w-0 flex-1">
-                <div className="rounded-xl border border-border bg-card/50 backdrop-blur-md">
+                <div className="rounded-xl border border-border bg-card/80 backdrop-blur-md">
                     <TransitionPanel
                         activeIndex={activeIndex}
-                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                        transition={{ duration: 0.2, ease: "easeOut" }}
                         variants={{
-                            enter: { opacity: 0, y: 10, filter: "blur(4px)" },
-                            center: { opacity: 1, y: 0, filter: "blur(0px)" },
-                            exit: { opacity: 0, y: -10, filter: "blur(4px)" },
+                            enter: { opacity: 0, y: 8 },
+                            center: { opacity: 1, y: 0 },
+                            exit: { opacity: 0, y: -8 },
                         }}
                     >
                         <InfoContent operator={operator} />
