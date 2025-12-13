@@ -23,9 +23,11 @@ export function OperatorRange({ range, className }: OperatorRangeProps) {
             <table className="border-collapse">
                 <tbody>
                     {Array.from({ length: rows }).map((_, rowIndex) => (
+                        // biome-ignore lint/suspicious/noArrayIndexKey: Static grid rows
                         <tr key={rowIndex}>
                             {Array.from({ length: cols }).map((_, colIndex) => {
                                 const gridType = grid[rowIndex]?.[colIndex];
+                                // biome-ignore lint/suspicious/noArrayIndexKey: Static grid cells
                                 return <td className={cn("h-5 w-5 border border-border/30 sm:h-6 sm:w-6", gridType === GridCell.active && "border-2 border-primary/60 bg-primary/20", gridType === GridCell.Operator && "bg-primary", gridType === GridCell.empty && "bg-transparent")} key={colIndex} />;
                             })}
                         </tr>

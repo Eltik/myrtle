@@ -42,6 +42,7 @@ export function TextShimmerWave({ children, as: Component = "p", className, dura
                             rotateY: 0,
                             color: "var(--base-color)",
                         }}
+                        // biome-ignore lint/suspicious/noArrayIndexKey: Character shimmer animation
                         key={i}
                         transition={{
                             duration: duration,

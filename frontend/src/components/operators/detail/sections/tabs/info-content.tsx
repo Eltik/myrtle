@@ -175,6 +175,7 @@ export function InfoContent({ operator }: InfoContentProps) {
             {/* Header */}
             <div className="mb-6">
                 <h2 className="font-semibold text-foreground text-xl">Operator Information</h2>
+                {/* biome-ignore lint/security/noDangerouslySetInnerHtml: Intentional HTML rendering for operator descriptions */}
                 <p className="wrap-break-word text-muted-foreground text-sm" dangerouslySetInnerHTML={{ __html: formatOperatorDescription(operator.description, descriptionBlackboard) }} />
             </div>
 
@@ -229,6 +230,7 @@ export function InfoContent({ operator }: InfoContentProps) {
                         <div className="flex flex-wrap items-center gap-2">
                             <span className="text-muted-foreground text-sm">Promotion:</span>
                             {operator.phases.map((_, idx) => (
+                                // biome-ignore lint/suspicious/noArrayIndexKey: Static array of promotion phases
                                 <button className={cn("flex h-10 w-10 items-center justify-center rounded-lg border transition-all", phaseIndex === idx ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50")} key={idx} onClick={() => setPhaseIndex(idx)} type="button">
                                     <Image alt={`Elite ${idx}`} height={24} src={`/api/cdn/upk/arts/elite_hub/elite_${idx}.png`} width={24} />
                                 </button>
@@ -281,6 +283,7 @@ export function InfoContent({ operator }: InfoContentProps) {
                     <h3 className="mb-3 font-medium text-foreground">Tags</h3>
                     <div className="flex flex-wrap gap-2">
                         {operator.tagList.map((tag, idx) => (
+                            // biome-ignore lint/suspicious/noArrayIndexKey: Static tag list
                             <Badge className="bg-accent" key={idx} variant="secondary">
                                 {tag}
                             </Badge>
@@ -304,8 +307,10 @@ export function InfoContent({ operator }: InfoContentProps) {
                             const candidate = talent.Candidates?.[talent.Candidates.length - 1];
                             if (!candidate) return null;
                             return (
+                                // biome-ignore lint/suspicious/noArrayIndexKey: Static talent list
                                 <div className="rounded-lg border border-border bg-secondary/20 p-4" key={idx}>
                                     <h4 className="mb-1 font-medium text-foreground">{candidate.Name ?? `Talent ${idx + 1}`}</h4>
+                                    {/* biome-ignore lint/security/noDangerouslySetInnerHtml: Intentional HTML rendering for talent descriptions */}
                                     <p className="text-muted-foreground text-sm" dangerouslySetInnerHTML={{ __html: descriptionToHtml(candidate.Description ?? "", []) }} />
                                 </div>
                             );

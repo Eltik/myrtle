@@ -39,6 +39,7 @@ export function TextRoll({ children, duration = 0.5, getEnterDelay = (i) => i * 
         <span className={className}>
             {letters.map((letter, i) => {
                 return (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: Letter animation sequence
                     <span aria-hidden="true" className="relative inline-block [perspective:10000px] [transform-style:preserve-3d] [width:auto]" key={i}>
                         <motion.span
                             animate={variants?.enter?.animate ?? defaultVariants.enter.animate}

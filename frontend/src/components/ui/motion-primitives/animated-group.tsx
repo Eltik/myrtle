@@ -104,6 +104,7 @@ function AnimatedGroup({ children, className, variants, preset, as = "div", asCh
     return (
         <MotionComponent animate="visible" className={className} initial="hidden" variants={containerVariants}>
             {React.Children.map(children, (child, index) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: Children mapping with index key
                 <MotionChild key={index} variants={itemVariants}>
                     {child}
                 </MotionChild>

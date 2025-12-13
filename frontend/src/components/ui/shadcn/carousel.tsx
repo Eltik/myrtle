@@ -104,6 +104,7 @@ function Carousel({ orientation = "horizontal", opts, setApi, plugins, className
                 canScrollNext,
             }}
         >
+            {/* biome-ignore lint/a11y/useSemanticElements: Carousel pattern requires role="region" */}
             <div aria-roledescription="carousel" className={cn("relative", className)} data-slot="carousel" onKeyDownCapture={handleKeyDown} role="region" {...props}>
                 {children}
             </div>
@@ -124,6 +125,7 @@ function CarouselContent({ className, ...props }: React.ComponentProps<"div">) {
 function CarouselItem({ className, ...props }: React.ComponentProps<"div">) {
     const { orientation } = useCarousel();
 
+    // biome-ignore lint/a11y/useSemanticElements: Carousel pattern requires role="group" for slides
     return <div aria-roledescription="slide" className={cn("min-w-0 shrink-0 grow-0 basis-full", orientation === "horizontal" ? "pl-4" : "pt-4", className)} data-slot="carousel-item" role="group" {...props} />;
 }
 

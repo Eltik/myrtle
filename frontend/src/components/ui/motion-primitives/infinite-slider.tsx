@@ -1,5 +1,5 @@
 "use client";
-import { animate, motion, useMotionValue } from "motion/react";
+import { type AnimationPlaybackControls, animate, motion, useMotionValue } from "motion/react";
 import { useEffect, useState } from "react";
 import useMeasure from "react-use-measure";
 import { cn } from "~/lib/utils";
@@ -22,7 +22,7 @@ export function InfiniteSlider({ children, gap = 16, speed = 100, speedOnHover, 
     const [_key, setKey] = useState(0);
 
     useEffect(() => {
-        let controls;
+        let controls: AnimationPlaybackControls | undefined;
         const size = direction === "horizontal" ? width : height;
         const contentSize = size + gap;
         const from = reverse ? -contentSize / 2 : 0;

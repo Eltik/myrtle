@@ -32,7 +32,7 @@ export type MorphingDialogProviderProps = {
 function MorphingDialogProvider({ children, transition }: MorphingDialogProviderProps) {
     const [isOpen, setIsOpen] = useState(false);
     const uniqueId = useId();
-    const triggerRef = useRef<HTMLButtonElement>(null!);
+    const triggerRef = useRef<HTMLButtonElement>(null);
 
     const contextValue = useMemo(
         () => ({
@@ -114,7 +114,7 @@ export type MorphingDialogContentProps = {
 
 function MorphingDialogContent({ children, className, style }: MorphingDialogContentProps) {
     const { setIsOpen, isOpen, uniqueId, triggerRef } = useMorphingDialog();
-    const containerRef = useRef<HTMLDivElement>(null!);
+    const containerRef = useRef<HTMLDivElement>(null);
     const [firstFocusableElement, setFirstFocusableElement] = useState<HTMLElement | null>(null);
     const [lastFocusableElement, setLastFocusableElement] = useState<HTMLElement | null>(null);
 
@@ -268,6 +268,7 @@ export type MorphingDialogImageProps = {
 function MorphingDialogImage({ src, alt, className, style }: MorphingDialogImageProps) {
     const { uniqueId } = useMorphingDialog();
 
+    // biome-ignore lint/performance/noImgElement: motion.img required for layout animation
     return <motion.img alt={alt} className={cn(className)} layoutId={`dialog-img-${uniqueId}`} src={src} style={style} />;
 }
 

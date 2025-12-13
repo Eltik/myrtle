@@ -30,7 +30,7 @@ export function AnimatedBackground({ children, defaultValue, onValueChange, clas
         }
     }, [defaultValue]);
 
-    return Children.map(children, (child: any, index) => {
+    return Children.map(children, (child: ReactElement<{ "data-id": string }>, index) => {
         const id = child.props["data-id"];
 
         const interactionProps = enableHover
@@ -45,6 +45,7 @@ export function AnimatedBackground({ children, defaultValue, onValueChange, clas
         return cloneElement(
             child,
             {
+                // biome-ignore lint/suspicious/noArrayIndexKey: Children cloning with index key
                 key: index,
                 className: cn("relative inline-flex", child.props.className),
                 "data-checked": activeId === id ? "true" : "false",
