@@ -9,8 +9,9 @@ use crate::core::local::{
     },
     types::{
         handbook::Handbook,
+        material::Materials,
         module::{BattleEquip, RawModules},
-        operator::{Operator, RawOperator},
+        operator::{EvolveCost, LevelUpCostItem, Operator, Phase, RawOperator},
         skill::Skill,
         skin::SkinData,
     },
@@ -24,6 +25,7 @@ pub fn enrich_all_operators(
     battle_equip: &BattleEquip,
     handbook: &Handbook,
     skins: &SkinData,
+    materials: &Materials,
     asset_mappings: &AssetMappings,
 ) -> HashMap<String, Operator> {
     raw_operators
@@ -38,6 +40,7 @@ pub fn enrich_all_operators(
                 battle_equip,
                 handbook,
                 skins,
+                materials,
                 asset_mappings,
             );
             (id.clone(), enriched)
@@ -53,6 +56,7 @@ fn enrich_operator(
     battle_equip: &BattleEquip,
     handbook: &Handbook,
     skins: &SkinData,
+    materials: &Materials,
     asset_mappings: &AssetMappings,
 ) -> Operator {
     let enriched_skills = enrich_skills(&raw.skills, skills);
@@ -60,6 +64,12 @@ fn enrich_operator(
     let (handbook_item, profile) = get_handbook_and_profile(id, handbook);
     let artists = get_artists(id, skins);
     let portrait = asset_mappings.get_portrait_path(id);
+
+    // Enrich phases with item icon paths
+    let enriched_phases = enrich_phases(&raw.phases, materials);
+
+    // Enrich skill level up costs
+    let enriched_all_skill_level_up = enrich_all_skill_level_up(&raw.all_skill_lvlup, materials);
 
     Operator {
         id: Some(id.to_string()),
@@ -87,17 +97,107 @@ fn enrich_operator(
         profession: raw.profession.clone(),
         sub_profession_id: raw.sub_profession_id.clone().unwrap_or_default(),
         trait_data: raw.trait_data.clone(),
-        phases: raw.phases.clone(),
+        phases: enriched_phases,
         skills: enriched_skills,
         display_token_dict: raw.display_token_dict.clone(),
         talents: raw.talents.clone().unwrap_or_default(),
         potential_ranks: raw.potential_ranks.clone(),
         favor_key_frames: raw.favor_key_frames.clone().unwrap_or_default(),
-        all_skill_level_up: raw.all_skill_lvlup.clone(),
+        all_skill_level_up: enriched_all_skill_level_up,
         modules: operator_modules,
         handbook: handbook_item,
         profile,
         artists,
         portrait,
     }
+}
+
+/// Enrich phases with item icon paths for evolve costs
+fn enrich_phases(phases: &[Phase], materials: &Materials) -> Vec<Phase> {
+    phases
+        .iter()
+        .map(|phase| {
+            let enriched_evolve_cost = phase.evolve_cost.as_ref().map(|costs| {
+                costs
+                    .iter()
+                    .map(|cost| enrich_evolve_cost(cost, materials))
+                    .collect()
+            });
+
+            Phase {
+                character_prefab_key: phase.character_prefab_key.clone(),
+                range_id: phase.range_id.clone(),
+                max_level: phase.max_level,
+                attributes_key_frames: phase.attributes_key_frames.clone(),
+                evolve_cost: enriched_evolve_cost,
+            }
+        })
+        .collect()
+}
+
+/// Enrich a single evolve cost item with icon_id and image path
+fn enrich_evolve_cost(cost: &EvolveCost, materials: &Materials) -> EvolveCost {
+    let (icon_id, image) = get_item_icon_info(&cost.id, materials);
+
+    EvolveCost {
+        id: cost.id.clone(),
+        count: cost.count,
+        item_type: cost.item_type.clone(),
+        icon_id,
+        image,
+    }
+}
+
+/// Enrich all skill level up costs
+fn enrich_all_skill_level_up(
+    all_skill_lvlup: &[crate::core::local::types::operator::AllSkillLevelUp],
+    materials: &Materials,
+) -> Vec<crate::core::local::types::operator::AllSkillLevelUp> {
+    all_skill_lvlup
+        .iter()
+        .map(|lvlup| crate::core::local::types::operator::AllSkillLevelUp {
+            unlock_cond: lvlup.unlock_cond.clone(),
+            lvl_up_cost: lvlup
+                .lvl_up_cost
+                .iter()
+                .map(|cost| enrich_level_up_cost_item(cost, materials))
+                .collect(),
+        })
+        .collect()
+}
+
+/// Enrich a level up cost item with icon_id and image path
+fn enrich_level_up_cost_item(cost: &LevelUpCostItem, materials: &Materials) -> LevelUpCostItem {
+    let (icon_id, image) = get_item_icon_info(&cost.id, materials);
+
+    LevelUpCostItem {
+        id: cost.id.clone(),
+        count: cost.count,
+        item_type: cost.item_type.clone(),
+        icon_id,
+        image,
+    }
+}
+
+/// Get icon_id and image path for an item ID
+fn get_item_icon_info(item_id: &str, materials: &Materials) -> (Option<String>, Option<String>) {
+    // Look up in items table
+    if let Some(item) = materials.items.get(item_id) {
+        let icon_id = Some(item.icon_id.clone());
+        let image = Some(format!("/upk/arts/items/icons/{}.png", item.icon_id));
+        return (icon_id, image);
+    }
+
+    // Look up in exp_items table - exp items use their id as the icon name
+    if materials.exp_items.contains_key(item_id) {
+        let icon_id = Some(item_id.to_string());
+        let image = Some(format!("/upk/arts/items/icons/{}.png", item_id));
+        return (icon_id, image);
+    }
+
+    // Fallback: use the item_id as icon_id
+    (
+        Some(item_id.to_string()),
+        Some(format!("/upk/arts/items/icons/{}.png", item_id)),
+    )
 }
