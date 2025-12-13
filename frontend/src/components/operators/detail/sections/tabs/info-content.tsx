@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Coins, Dna, Grid3X3, Heart, Info, MapPin, Palette, Shield, Swords, Timer, User } from "lucide-react";
+import { ChevronDown, Coins, Diamond, Dna, Grid3X3, Heart, Hourglass, Info, MapPin, Palette, Shield, ShieldBan, Swords, Timer, User } from "lucide-react";
 import { motion } from "motion/react";
 import Image from "next/image";
 import type React from "react";
@@ -269,11 +269,11 @@ export function InfoContent({ operator }: InfoContentProps) {
                     <StatCard icon={Heart} label="Health" value={attributeStats?.MaxHp ?? 0} />
                     <StatCard icon={Swords} label="ATK" value={attributeStats?.Atk ?? 0} />
                     <StatCard icon={Shield} label="DEF" value={attributeStats?.Def ?? 0} />
-                    <StatCard label="RES" value={attributeStats?.MagicResistance ?? 0} />
-                    <StatCard label="Block" value={attributeStats?.BlockCnt ?? 0} />
-                    <StatCard icon={Timer} label="Redeploy" value={`${attributeStats?.RespawnTime ?? 0}s`} />
+                    <StatCard icon={Diamond} label="RES" value={attributeStats?.MagicResistance ?? 0} />
+                    <StatCard icon={ShieldBan} label="Block" value={attributeStats?.BlockCnt ?? 0} />
+                    <StatCard icon={Hourglass} label="Redeploy" value={`${attributeStats?.RespawnTime ?? 0}s`} />
                     <StatCard icon={Coins} label="DP Cost" value={attributeStats?.Cost ?? 0} />
-                    <StatCard label="ATK Interval" value={`${attributeStats?.BaseAttackTime?.toFixed(2) ?? 0}s`} />
+                    <StatCard icon={Timer} label="ATK Interval" value={`${attributeStats?.BaseAttackTime?.toFixed(2) ?? 0}s`} />
                 </div>
             </div>
 
