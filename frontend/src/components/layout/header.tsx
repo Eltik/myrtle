@@ -9,12 +9,11 @@ import { Button } from "~/components/ui/shadcn/button";
 type NavItem = {
     label: string | React.ReactNode;
     href: string;
-    icon?: string;
     dropdown?: { label: string; href: string; description: string }[];
 };
 
 const navItems: NavItem[] = [
-    { label: "Home", href: "/", icon: "◎" },
+    { label: "Home", href: "/" },
     {
         label: "Operators",
         href: "#",
@@ -59,13 +58,18 @@ function isNavItemActive(item: NavItem, pathname: string): boolean {
         return item.href === pathname;
     }
     // For dropdown items, check if current path matches any dropdown href
-    return item.dropdown.some((dropdownItem) => pathname === dropdownItem.href || pathname.startsWith(`${dropdownItem.href}/`));
+    // Also check if pathname matches the base path (e.g., /operators for /operators?id=...)
+    return item.dropdown.some((dropdownItem) => {
+        const basePath = dropdownItem.href.split("/").slice(0, 2).join("/"); // e.g., "/operators" from "/operators/list"
+        return pathname === dropdownItem.href || pathname.startsWith(`${dropdownItem.href}/`) || pathname === basePath;
+    });
 }
 
 export function Header() {
     const router = useRouter();
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
     const [hoverStyle, setHoverStyle] = useState({ left: 0, width: 0, opacity: 0 });
+    const [activeIconStyle, setActiveIconStyle] = useState({ left: 0, opacity: 0 });
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
     const [isNavHovered, setIsNavHovered] = useState(false);
     const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
@@ -102,11 +106,34 @@ export function Header() {
         }
     }, []);
 
+    const updateActiveIcon = useCallback((index: number) => {
+        const target = itemRefs.current[index];
+        const navRect = navRef.current?.getBoundingClientRect();
+        const targetRect = target?.getBoundingClientRect();
+
+        if (navRect && targetRect) {
+            // Position the icon at the left edge of the nav item, with some padding
+            setActiveIconStyle({
+                left: targetRect.left - navRect.left + 12,
+                opacity: 1,
+            });
+        }
+    }, []);
+
     useLayoutEffect(() => {
         if (activeIndex >= 0 && hoveredIndex === null) {
             updateIndicator(activeIndex, 1);
         }
     }, [activeIndex, hoveredIndex, updateIndicator]);
+
+    // Update active icon position when active index changes or on initial render
+    useLayoutEffect(() => {
+        if (activeIndex >= 0) {
+            updateActiveIcon(activeIndex);
+        } else {
+            setActiveIconStyle((prev) => ({ ...prev, opacity: 0 }));
+        }
+    }, [activeIndex, updateActiveIcon]);
 
     const handleMouseEnter = useCallback(
         (index: number) => {
@@ -117,6 +144,7 @@ export function Header() {
             }
 
             updateIndicator(index, 1);
+            updateActiveIcon(index);
             setHoveredIndex(index);
 
             if (navItems[index]?.dropdown) {
@@ -125,7 +153,7 @@ export function Header() {
                 setActiveDropdown(null);
             }
         },
-        [updateIndicator],
+        [updateIndicator, updateActiveIcon],
     );
 
     const handleNavMouseLeave = useCallback(() => {
@@ -135,11 +163,13 @@ export function Header() {
             setActiveDropdown(null);
             if (activeIndex >= 0) {
                 updateIndicator(activeIndex, 1);
+                updateActiveIcon(activeIndex);
             } else {
                 setHoverStyle((prev) => ({ ...prev, opacity: 0 }));
+                setActiveIconStyle((prev) => ({ ...prev, opacity: 0 }));
             }
         }, 100);
-    }, [activeIndex, updateIndicator]);
+    }, [activeIndex, updateIndicator, updateActiveIcon]);
 
     const handleDropdownMouseEnter = useCallback(() => {
         if (timeoutRef.current) {
@@ -155,11 +185,13 @@ export function Header() {
             setActiveDropdown(null);
             if (activeIndex >= 0) {
                 updateIndicator(activeIndex, 1);
+                updateActiveIcon(activeIndex);
             } else {
                 setHoverStyle((prev) => ({ ...prev, opacity: 0 }));
+                setActiveIconStyle((prev) => ({ ...prev, opacity: 0 }));
             }
         }, 100);
-    }, [activeIndex, updateIndicator]);
+    }, [activeIndex, updateIndicator, updateActiveIcon]);
 
     const handleNavMouseMove = (e: React.MouseEvent<HTMLElement>) => {
         const rect = navRef.current?.getBoundingClientRect();
@@ -247,10 +279,24 @@ export function Header() {
                                 }}
                             />
 
+                            {/* Active indicator icon - slides to active nav item */}
+                            <span
+                                className="pointer-events-none absolute top-1/2 z-20 mt-px text-primary/80 text-xs"
+                                style={{
+                                    left: activeIconStyle.left,
+                                    opacity: activeIconStyle.opacity,
+                                    transform: "translateY(-50%)",
+                                    transition: "left 400ms cubic-bezier(0.4, 0, 0.2, 1), opacity 200ms ease-out",
+                                    textShadow: "0 0 8px oklch(0.75 0.15 25 / 0.6)",
+                                }}
+                            >
+                                ◎
+                            </span>
+
                             {navItems.map((item, index) =>
                                 item.dropdown ? (
                                     <button
-                                        className={`relative z-10 flex items-center gap-1 rounded-full px-3.5 py-1.5 font-medium text-sm transition-colors duration-200 ${hoveredIndex === index || (activeIndex === index && hoveredIndex === null) ? "text-foreground" : "text-muted-foreground"}`}
+                                        className={`relative z-10 flex items-center gap-1 rounded-full py-1.5 pr-3.5 pl-7 font-medium text-sm transition-colors duration-200 ${hoveredIndex === index || (activeIndex === index && hoveredIndex === null) ? "text-foreground" : "text-muted-foreground"}`}
                                         key={typeof item.label === "string" ? item.label : index}
                                         onMouseEnter={() => handleMouseEnter(index)}
                                         ref={(el) => {
@@ -258,7 +304,6 @@ export function Header() {
                                         }}
                                         type="button"
                                     >
-                                        {item.icon && <span className="text-xs opacity-60">{item.icon}</span>}
                                         {item.label}
                                         <ChevronDown
                                             className="h-3 w-3 will-change-transform"
@@ -270,7 +315,7 @@ export function Header() {
                                     </button>
                                 ) : (
                                     <Link
-                                        className={`relative z-10 flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-medium text-sm transition-colors duration-200 ${hoveredIndex === index || (activeIndex === index && hoveredIndex === null) ? "text-foreground" : "text-muted-foreground"}`}
+                                        className={`relative z-10 flex items-center gap-1.5 rounded-full py-1.5 pr-3.5 pl-7 font-medium text-sm transition-colors duration-200 ${hoveredIndex === index || (activeIndex === index && hoveredIndex === null) ? "text-foreground" : "text-muted-foreground"}`}
                                         href={item.href}
                                         key={typeof item.label === "string" ? item.label : index}
                                         onMouseEnter={() => handleMouseEnter(index)}
@@ -278,7 +323,6 @@ export function Header() {
                                             itemRefs.current[index] = el;
                                         }}
                                     >
-                                        {item.icon && <span className="text-xs opacity-60">{item.icon}</span>}
                                         {item.label}
                                     </Link>
                                 ),
