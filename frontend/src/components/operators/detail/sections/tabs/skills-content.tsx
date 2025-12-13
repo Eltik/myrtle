@@ -47,7 +47,7 @@ export function SkillsContent({ operator }: SkillsContentProps) {
             case "INCREASE_WHEN_TAKEN_DAMAGE":
                 return "Defensive Recovery";
             case "UNKNOWN_8":
-                return "N/A"
+                return "N/A";
             default:
                 return spType;
         }
