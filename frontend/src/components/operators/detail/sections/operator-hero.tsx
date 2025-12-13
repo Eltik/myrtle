@@ -53,34 +53,35 @@ export function OperatorHero({ operator }: OperatorHeroProps) {
     const heroImageUrl = operator.skin ? `/api/cdn${operator.skin}` : `/api/cdn/upk/chararts/${operatorId}/${operatorId}_2.png`;
 
     return (
-        <div className="relative h-[420px] w-full overflow-hidden md:h-[520px] lg:h-[580px]" ref={containerRef}>
+        <div className="relative h-[280px] w-full sm:h-[320px] md:h-[380px] lg:h-[420px]" ref={containerRef}>
             {/* Background Image */}
             <motion.div
-                className="absolute inset-0 will-change-transform"
+                className="absolute inset-x-0 top-0 will-change-transform"
                 style={{
                     y: imageY,
                     scale: imageScale,
                 }}
             >
-                <div className="absolute inset-0 flex items-start justify-center pt-0 md:justify-end md:pr-[5%] lg:pr-[10%]">
-                    <div className="relative h-[500px] w-[400px] md:h-[600px] md:w-[480px] lg:h-[700px] lg:w-[560px]">
-                        <Image alt={operator.name} className={cn("object-contain object-top", rarityGlow)} fill priority sizes="(max-width: 768px) 400px, (max-width: 1024px) 480px, 560px" src={heroImageUrl} />
+                <div className="flex items-start justify-center pt-0 md:justify-end md:pr-[5%] lg:pr-[10%]">
+                    <div className="relative h-[480px] w-[380px] sm:h-[540px] sm:w-[440px] md:h-[620px] md:w-[520px] lg:h-[720px] lg:w-[600px]">
+                        <Image alt={operator.name} className={cn("object-contain object-top", rarityGlow)} fill priority sizes="(max-width: 640px) 380px, (max-width: 768px) 440px, (max-width: 1024px) 520px, 600px" src={heroImageUrl} />
                     </div>
                 </div>
             </motion.div>
 
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-background via-background/60 to-transparent" />
+            {/* Bottom gradient fade */}
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-background via-background/80 to-transparent" />
 
             {/* Content */}
             <motion.div
-                className="relative z-10 mx-auto flex h-full max-w-6xl flex-col justify-end px-4 pb-6 md:px-8 md:pb-10"
+                className="relative z-10 mx-auto flex h-full max-w-6xl flex-col justify-end px-4 pb-4 sm:pb-5 md:px-8 md:pb-6 lg:pb-8"
                 style={{
                     opacity: contentOpacity,
                     y: contentY,
                 }}
             >
                 {/* Breadcrumb */}
-                <motion.nav animate={{ opacity: 1, y: 0 }} className="mb-3" initial={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
+                <motion.nav animate={{ opacity: 1, y: 0 }} className="mb-2 md:mb-3" initial={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
                     <ol className="flex items-center gap-2 text-muted-foreground text-sm">
                         <li>
                             <Link className="transition-colors hover:text-foreground" href="/operators/list">
@@ -93,12 +94,12 @@ export function OperatorHero({ operator }: OperatorHeroProps) {
                 </motion.nav>
 
                 {/* Operator Info */}
-                <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                    <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 sm:gap-3 md:flex-row md:items-end md:justify-between md:gap-4">
+                    <div className="flex flex-col gap-1.5 sm:gap-2">
                         {/* Name and Rarity */}
                         <motion.div animate={{ opacity: 1, y: 0 }} initial={{ opacity: 0, y: 20 }} transition={{ duration: 0.4, delay: 0.1 }}>
-                            <h1 className="font-bold text-3xl text-foreground tracking-tight md:text-4xl lg:text-5xl">{operator.name}</h1>
-                            <div className="mt-1.5 flex items-center gap-3">
+                            <h1 className="font-bold text-2xl text-foreground tracking-tight sm:text-3xl md:text-4xl lg:text-5xl">{operator.name}</h1>
+                            <div className="mt-1 flex items-center gap-2 sm:mt-1.5 sm:gap-3">
                                 <span className={cn("font-semibold text-lg tracking-wider", rarityColor)}>{Array(rarityNum).fill("★").join("")}</span>
                                 <span className="text-muted-foreground/50">|</span>
                                 <span className="text-muted-foreground text-sm md:text-base">
