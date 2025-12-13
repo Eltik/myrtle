@@ -1253,26 +1253,82 @@ fn extract_images_with_combination(
             }
         }
     } else {
-        // Default: Save all textures separately (including alpha textures) - matches Python behavior
-        // Skip textures that belong to spine assets
+        // Default: Always merge alpha into RGB textures for usable output
+        // First, find all RGB+alpha pairs
+        let mut alpha_pairs: std::collections::HashMap<String, String> =
+            std::collections::HashMap::new();
+        for name in textures.keys() {
+            if name.contains("[alpha]") {
+                let rgb_name = name.replace("[alpha]", "");
+                if textures.contains_key(&rgb_name) {
+                    alpha_pairs.insert(rgb_name.clone(), name.clone());
+                    log::debug!("Found alpha pair: {} -> {}", rgb_name, name);
+                }
+            }
+        }
+        log::info!(
+            "Alpha merge: {} textures have separate alpha channels that will be merged",
+            alpha_pairs.len()
+        );
+
+        // Process textures - merge alpha pairs, save others as-is
         for (name, tex_data) in &textures {
             // Skip spine textures - they will be handled by spine extraction
             if spine_texture_names.contains(name) {
                 log::debug!("Skipping spine texture from root: {}", name);
                 continue;
             }
-            if let Some(ref img) = tex_data.image {
-                let output_path = destdir.join(format!("{}.png", name));
-                if img.save(&output_path).is_ok() {
-                    saved_count += 1;
-                    log::debug!("Saved texture: {:?}", output_path);
+
+            // Skip [alpha] textures - they'll be merged into their RGB counterpart
+            if name.contains("[alpha]") {
+                log::debug!("Skipping alpha texture (will be merged): {}", name);
+                continue;
+            }
+
+            // Check if this RGB texture has a matching alpha texture
+            if let Some(alpha_name) = alpha_pairs.get(name) {
+                log::debug!("Merging texture {} with alpha {}", name, alpha_name);
+                // Merge RGB + alpha and save
+                if let (Some(rgb_img), Some(alpha_img)) = (
+                    &tex_data.image,
+                    textures.get(alpha_name).and_then(|t| t.image.as_ref()),
+                ) {
+                    let combined = combine_rgba_with_alpha(rgb_img, alpha_img);
+                    let output_path = destdir.join(format!("{}.png", name));
+                    if combined.save(&output_path).is_ok() {
+                        saved_count += 1;
+                        log::debug!("Saved merged texture (RGB+alpha): {:?}", output_path);
+                    }
+                } else {
+                    log::warn!("Failed to get images for merge: {} + {}", name, alpha_name);
+                }
+            } else {
+                // No alpha pair - save texture as-is (it already has embedded alpha or doesn't need it)
+                log::debug!("Saving texture as-is (no alpha pair): {}", name);
+                if let Some(ref img) = tex_data.image {
+                    let output_path = destdir.join(format!("{}.png", name));
+                    if img.save(&output_path).is_ok() {
+                        saved_count += 1;
+                        log::debug!("Saved texture: {:?}", output_path);
+                    }
                 }
             }
         }
     }
 
-    // Create combined images in cmb directory for convenience (always, regardless of merge_alpha)
-    // This creates $0.png files that have RGB+Alpha merged for downstream use
+    // Track which textures were merged (to avoid sprite extraction overwriting them)
+    let merged_texture_names: std::collections::HashSet<String> = textures
+        .keys()
+        .filter(|name| !name.contains("[alpha]"))
+        .filter(|name| {
+            let alpha_name = format!("{}[alpha]", name);
+            textures.contains_key(&alpha_name)
+        })
+        .cloned()
+        .collect();
+
+    // Also create combined images in cmb directory for backwards compatibility
+    // This creates $0.png files that have RGB+Alpha merged
     let mut combined_pairs: Vec<(String, String)> = Vec::new(); // (rgb_name, alpha_name)
 
     for name in textures.keys() {
@@ -1318,18 +1374,24 @@ fn extract_images_with_combination(
         if let Some(assets_file) = obj.assets_file.as_ref().and_then(|weak| weak.upgrade()) {
             if let Ok(sprite) = serde_json::from_value::<unity_rs::generated::Sprite>(data.clone())
             {
-                // Save sprite with its name
-                let output_path = destdir.join(format!("{}.png", name));
+                // Skip sprites that would overwrite merged texture files
+                // (sprites with same name as textures that have alpha merged)
+                if merged_texture_names.contains(&name) {
+                    log::debug!("Skipping sprite {} (already saved as merged texture)", name);
+                } else {
+                    // Save sprite with its name
+                    let output_path = destdir.join(format!("{}.png", name));
 
-                if unity_rs::export::sprite_helper::save_sprite(
-                    &sprite,
-                    &assets_file,
-                    output_path.to_str().unwrap_or(""),
-                )
-                .is_ok()
-                {
-                    saved_count += 1;
-                    log::debug!("Saved sprite: {:?}", output_path);
+                    if unity_rs::export::sprite_helper::save_sprite(
+                        &sprite,
+                        &assets_file,
+                        output_path.to_str().unwrap_or(""),
+                    )
+                    .is_ok()
+                    {
+                        saved_count += 1;
+                        log::debug!("Saved sprite: {:?}", output_path);
+                    }
                 }
 
                 // Group by texture name for numbered extraction
@@ -1629,6 +1691,12 @@ pub fn main(
 
     let total_saved = AtomicUsize::new(0);
     let src_path = src.to_path_buf();
+    // Get the input directory name to include in output path (e.g., "chararts")
+    let src_dir_name = if src_path.is_dir() {
+        src_path.file_name().unwrap_or_default().to_os_string()
+    } else {
+        std::ffi::OsString::new()
+    };
     let save_counter = AtomicUsize::new(0);
 
     // Initialize memory tracking
@@ -1653,9 +1721,10 @@ pub fn main(
                 let rel_path = file.strip_prefix(&src_path).unwrap_or(file);
                 let parent = rel_path.parent().unwrap_or(Path::new(""));
                 let stem = file.file_stem().unwrap_or_default();
+                // Include input directory name in output path (e.g., chararts/char_xxx)
                 (
-                    upk_dir.join(parent).join(stem),
-                    cmb_dir.join(parent).join(stem),
+                    upk_dir.join(&src_dir_name).join(parent).join(stem),
+                    cmb_dir.join(&src_dir_name).join(parent).join(stem),
                 )
             } else {
                 (upk_dir.clone(), cmb_dir.clone())
@@ -1757,9 +1826,10 @@ pub fn main(
                 let rel_path = file.strip_prefix(&src_path).unwrap_or(file);
                 let parent = rel_path.parent().unwrap_or(Path::new(""));
                 let stem = file.file_stem().unwrap_or_default();
+                // Include input directory name in output path (e.g., chararts/char_xxx)
                 (
-                    upk_dir.join(parent).join(stem),
-                    cmb_dir.join(parent).join(stem),
+                    upk_dir.join(&src_dir_name).join(parent).join(stem),
+                    cmb_dir.join(&src_dir_name).join(parent).join(stem),
                 )
             } else {
                 (upk_dir.clone(), cmb_dir.clone())
@@ -1817,9 +1887,10 @@ pub fn main(
                 let rel_path = file.strip_prefix(&src_path).unwrap_or(file);
                 let parent = rel_path.parent().unwrap_or(Path::new(""));
                 let stem = file.file_stem().unwrap_or_default();
+                // Include input directory name in output path (e.g., chararts/char_xxx)
                 (
-                    upk_dir.join(parent).join(stem),
-                    cmb_dir.join(parent).join(stem),
+                    upk_dir.join(&src_dir_name).join(parent).join(stem),
+                    cmb_dir.join(&src_dir_name).join(parent).join(stem),
                 )
             } else {
                 (upk_dir.clone(), cmb_dir.clone())
