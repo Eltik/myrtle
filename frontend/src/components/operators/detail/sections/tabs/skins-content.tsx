@@ -94,7 +94,7 @@ export function SkinsContent({ operator }: SkinsContentProps) {
 
             {isLoading ? (
                 <div className="space-y-4">
-                    <Skeleton className="aspect-3/4 w-full max-w-lg rounded-lg" />
+                    <Skeleton className="aspect-3/4 max-h-[70vh] w-full max-w-md rounded-lg" />
                     <div className="flex gap-2">
                         {[1, 2, 3].map((i) => (
                             <Skeleton className="h-20 w-20 rounded-lg" key={i} />
@@ -106,7 +106,7 @@ export function SkinsContent({ operator }: SkinsContentProps) {
                     {/* Main Image Viewer */}
                     <div className="relative">
                         <AnimatePresence mode="wait">
-                            <motion.div animate={{ opacity: 1 }} className="relative aspect-3/4 w-full overflow-hidden rounded-lg border border-border bg-card/30" exit={{ opacity: 0 }} initial={{ opacity: 0 }} key={selectedSkin} transition={{ duration: 0.2 }}>
+                            <motion.div animate={{ opacity: 1 }} className="relative aspect-3/4 max-h-[70vh] max-w-md overflow-hidden rounded-lg border border-border bg-card/30" exit={{ opacity: 0 }} initial={{ opacity: 0 }} key={selectedSkin} transition={{ duration: 0.2 }}>
                                 {imageLoading && (
                                     <div className="absolute inset-0 flex items-center justify-center">
                                         <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -136,7 +136,7 @@ export function SkinsContent({ operator }: SkinsContentProps) {
                         <div className="rounded-lg border border-border bg-card/30 p-4">
                             <h3 className="mb-3 font-medium text-foreground">{selectedSkinData?.displaySkin?.skinName ?? selectedSkinData?.name ?? "Default"}</h3>
 
-                            {selectedSkinData?.displaySkin && (
+                            {selectedSkinData?.displaySkin ? (
                                 <div className="space-y-3 text-sm">
                                     {selectedSkinData.displaySkin.drawerList && selectedSkinData.displaySkin.drawerList.length > 0 && (
                                         <div className="flex items-start gap-2">
@@ -157,6 +157,8 @@ export function SkinsContent({ operator }: SkinsContentProps) {
                                         </div>
                                     )}
                                 </div>
+                            ) : (
+                                <p>N/A</p>
                             )}
                         </div>
 
@@ -186,8 +188,8 @@ export function SkinsContent({ operator }: SkinsContentProps) {
                                     type="button"
                                 >
                                     <Image alt={skin.name} className="object-cover" fill src={skin.thumbnail || "/placeholder.svg"} />
-                                    <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 to-transparent p-1">
-                                        <span className="line-clamp-1 text-white text-xs">{skin.name}</span>
+                                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-2 pt-4 pb-1.5">
+                                        <span className="line-clamp-1 font-medium text-white text-xs drop-shadow-sm">{skin.name}</span>
                                     </div>
                                 </button>
                             ))}
@@ -244,8 +246,8 @@ function formatSkins(skinData: SkinData | Skin[], operator: Operator): UISkin[] 
             if (skinIdentifier && !skinIdentifier.endsWith("#1") && !skinIdentifier.endsWith("#2")) {
                 // Format the skin path for CDN
                 // skinId format: "char_002_amiya@epoque#4" -> file: "char_002_amiya_epoque#4.png"
-                // Replace @ with _ but keep # as-is since files use # in their names
-                const formattedSkinId = skinIdentifier.replace(/@/g, "_");
+                // Replace @ with _ and encode # as %23 (# is a URL fragment identifier and won't be sent to server)
+                const formattedSkinId = skinIdentifier.replace(/@/g, "_").replace(/#/g, "%23");
 
                 skins.push({
                     id: skinIdentifier,
