@@ -270,8 +270,8 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
             .equip_dict
             .into_iter()
             .map(|(k, v)| {
-                // Get module image path using asset mappings
-                let image = Some(asset_mappings.get_module_big_path(&v.uni_equip_icon));
+                // Get module image path using asset mappings (None for original modules)
+                let image = asset_mappings.get_module_big_path(&v.uni_equip_icon);
                 (
                     k.clone(),
                     crate::core::local::types::module::Module {

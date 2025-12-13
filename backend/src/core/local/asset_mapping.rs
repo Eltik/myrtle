@@ -12,10 +12,12 @@ pub struct AssetMappings {
     pub module_big: HashMap<String, String>,
     /// Module small images: uniequip_xxx_yyy.png -> ui_equip_small_img_hub_N
     pub module_small: HashMap<String, String>,
-    /// Operator portraits: char_xxx_yyy_N.png exists in portraits folder
-    pub portraits: std::collections::HashSet<String>,
+    /// Operator portraits: char_xxx_yyy_N.png -> pack folder (e.g., "pack11")
+    pub portraits: HashMap<String, String>,
     /// Skill icons: skill_icon_xxx.png -> skill_icons_N
     pub skill_icons: HashMap<String, String>,
+    /// Full character art: char_xxx_yyy -> (has_e0, has_e2)
+    pub chararts: HashMap<String, (bool, bool)>,
 }
 
 impl AssetMappings {
@@ -135,21 +137,26 @@ impl AssetMappings {
             }
         }
 
-        // Scan portraits from {assets_dir}/upk/chararts/{char_id}/*.png
-        let chararts_dir = assets_dir.join("upk/chararts");
+        // Scan portraits from {assets_dir}/upk/arts/charportraits/pack{N}/*.png
+        let charportraits_dir = assets_dir.join("upk/arts/charportraits");
 
-        eprintln!("Scanning chararts directory: {:?}", chararts_dir);
+        eprintln!("Scanning charportraits directory: {:?}", charportraits_dir);
 
-        if chararts_dir.exists() {
-            if let Ok(char_dirs) = std::fs::read_dir(&chararts_dir) {
-                for char_dir in char_dirs.flatten() {
-                    if char_dir.file_type().map(|t| t.is_dir()).unwrap_or(false) {
-                        if let Ok(files) = std::fs::read_dir(char_dir.path()) {
-                            for file in files.flatten() {
-                                if let Some(file_name) = file.file_name().to_str() {
-                                    if file_name.ends_with(".png") {
-                                        let base_name = file_name.trim_end_matches(".png");
-                                        mappings.portraits.insert(base_name.to_string());
+        if charportraits_dir.exists() {
+            if let Ok(pack_dirs) = std::fs::read_dir(&charportraits_dir) {
+                for pack_dir in pack_dirs.flatten() {
+                    if pack_dir.file_type().map(|t| t.is_dir()).unwrap_or(false) {
+                        if let Some(pack_name) = pack_dir.file_name().to_str() {
+                            if let Ok(files) = std::fs::read_dir(pack_dir.path()) {
+                                for file in files.flatten() {
+                                    if let Some(file_name) = file.file_name().to_str() {
+                                        if file_name.ends_with(".png") {
+                                            let base_name = file_name.trim_end_matches(".png");
+                                            mappings.portraits.insert(
+                                                base_name.to_string(),
+                                                pack_name.to_string(),
+                                            );
+                                        }
                                     }
                                 }
                             }
@@ -159,14 +166,44 @@ impl AssetMappings {
             }
         }
 
+        // Scan full character art from {assets_dir}/upk/chararts/{char_id}/
+        let chararts_dir = assets_dir.join("upk/chararts");
+
+        eprintln!("Scanning chararts directory: {:?}", chararts_dir);
+
+        if chararts_dir.exists() {
+            if let Ok(entries) = std::fs::read_dir(&chararts_dir) {
+                for entry in entries.flatten() {
+                    if entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
+                        if let Some(dir_name) = entry.file_name().to_str() {
+                            // Only process char_xxx directories
+                            if dir_name.starts_with("char_") {
+                                // Check which versions exist
+                                let e0_path = entry.path().join(format!("{}_1.png", dir_name));
+                                let e2_path = entry.path().join(format!("{}_2.png", dir_name));
+                                let has_e0 = e0_path.exists();
+                                let has_e2 = e2_path.exists();
+                                if has_e0 || has_e2 {
+                                    mappings
+                                        .chararts
+                                        .insert(dir_name.to_string(), (has_e0, has_e2));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         eprintln!(
-            "Built asset mappings: {} avatars, {} skin portraits, {} module big, {} module small, {} skill icons, {} portraits",
+            "Built asset mappings: {} avatars, {} skin portraits, {} module big, {} module small, {} skill icons, {} portraits, {} chararts",
             mappings.avatars.len(),
             mappings.skin_portraits.len(),
             mappings.module_big.len(),
             mappings.module_small.len(),
             mappings.skill_icons.len(),
-            mappings.portraits.len()
+            mappings.portraits.len(),
+            mappings.chararts.len()
         );
 
         mappings
@@ -195,49 +232,80 @@ impl AssetMappings {
     }
 
     /// Get module big image path
-    pub fn get_module_big_path(&self, equip_icon: &str) -> String {
-        if equip_icon == "original" {
-            return "/upk/spritepack/ui_equip_big_img_hub_0/default.png".to_string();
+    /// uniequip_001_xxx modules are "original" placeholder modules with no image
+    pub fn get_module_big_path(&self, equip_icon: &str) -> Option<String> {
+        // "original" and uniequip_001_xxx are placeholder modules with no actual image
+        if equip_icon == "original" || equip_icon.starts_with("uniequip_001_") {
+            return None;
         }
         if let Some(dir) = self.module_big.get(equip_icon) {
-            format!("/upk/spritepack/{}/{}.png", dir, equip_icon)
+            Some(format!("/upk/spritepack/{}/{}.png", dir, equip_icon))
         } else {
-            format!("/upk/spritepack/ui_equip_big_img_hub_0/{}.png", equip_icon)
+            Some(format!(
+                "/upk/spritepack/ui_equip_big_img_hub_0/{}.png",
+                equip_icon
+            ))
         }
     }
 
     /// Get module small image path
-    pub fn get_module_small_path(&self, equip_icon: &str) -> String {
-        if equip_icon == "original" {
-            return "/upk/spritepack/ui_equip_small_img_hub_0/default.png".to_string();
+    /// uniequip_001_xxx modules are "original" placeholder modules with no image
+    pub fn get_module_small_path(&self, equip_icon: &str) -> Option<String> {
+        // "original" and uniequip_001_xxx are placeholder modules with no actual image
+        if equip_icon == "original" || equip_icon.starts_with("uniequip_001_") {
+            return None;
         }
         if let Some(dir) = self.module_small.get(equip_icon) {
-            format!("/upk/spritepack/{}/{}.png", dir, equip_icon)
+            Some(format!("/upk/spritepack/{}/{}.png", dir, equip_icon))
         } else {
-            format!(
+            Some(format!(
                 "/upk/spritepack/ui_equip_small_img_hub_0/{}.png",
                 equip_icon
-            )
+            ))
         }
     }
 
     /// Get operator portrait path (E2 preferred, fallback to E0)
     /// Portrait naming: char_xxx_yyy_2.png (E2), char_xxx_yyy_1.png (E0)
-    /// Path format: /upk/chararts/{char_id}/{portrait_name}.png
+    /// Path format: /upk/arts/charportraits/{pack}/{portrait_name}.png
     pub fn get_portrait_path(&self, char_id: &str) -> Option<String> {
         // Try E2 portrait first (e.g., char_002_amiya_2.png)
         let e2_name = format!("{}_2", char_id);
-        if self.portraits.contains(&e2_name) {
-            return Some(format!("/upk/chararts/{}/{}.png", char_id, e2_name));
+        if let Some(pack) = self.portraits.get(&e2_name) {
+            return Some(format!("/upk/arts/charportraits/{}/{}.png", pack, e2_name));
         }
 
         // Try E0 portrait (e.g., char_002_amiya_1.png)
         let e0_name = format!("{}_1", char_id);
-        if self.portraits.contains(&e0_name) {
-            return Some(format!("/upk/chararts/{}/{}.png", char_id, e0_name));
+        if let Some(pack) = self.portraits.get(&e0_name) {
+            return Some(format!("/upk/arts/charportraits/{}/{}.png", pack, e0_name));
         }
 
         None
+    }
+
+    /// Get full character art path (E2 preferred, fallback to E0)
+    /// Path format: /upk/chararts/{char_id}/{char_id}_{1|2}.png
+    /// Returns None if chararts not available
+    pub fn get_charart_path(&self, char_id: &str) -> Option<String> {
+        match self.chararts.get(char_id) {
+            Some((has_e0, has_e2)) => {
+                // Prefer E2, fallback to E0
+                if *has_e2 {
+                    Some(format!("/upk/chararts/{}/{}_2.png", char_id, char_id))
+                } else if *has_e0 {
+                    Some(format!("/upk/chararts/{}/{}_1.png", char_id, char_id))
+                } else {
+                    None
+                }
+            }
+            None => None,
+        }
+    }
+
+    /// Check if full character art exists for an operator
+    pub fn has_charart(&self, char_id: &str) -> bool {
+        self.chararts.contains_key(char_id)
     }
 
     /// Get skill icon path
