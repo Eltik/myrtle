@@ -93,42 +93,113 @@ export function SkinsContent({ operator }: SkinsContentProps) {
             </div>
 
             {isLoading ? (
-                <div className="space-y-4">
-                    <Skeleton className="aspect-3/4 max-h-[70vh] w-full max-w-md rounded-lg" />
-                    <div className="flex gap-2">
-                        {[1, 2, 3].map((i) => (
-                            <Skeleton className="h-20 w-20 rounded-lg" key={i} />
-                        ))}
+                <div className="grid min-w-0 gap-6 lg:grid-cols-[1fr,300px]">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-4">
+                        <Skeleton className="aspect-3/4 max-h-[70vh] w-full flex-1 rounded-lg" />
+                        <div className="hidden shrink-0 flex-col gap-3 lg:flex">
+                            {[1, 2, 3].map((i) => (
+                                <Skeleton className="h-24 w-24 rounded-lg" key={i} />
+                            ))}
+                        </div>
+                        <div className="flex gap-2 lg:hidden">
+                            {[1, 2, 3].map((i) => (
+                                <Skeleton className="h-20 w-20 rounded-lg" key={i} />
+                            ))}
+                        </div>
+                    </div>
+                    <div className="space-y-4">
+                        <Skeleton className="h-40 w-full rounded-lg" />
+                        <Skeleton className="h-32 w-full rounded-lg" />
                     </div>
                 </div>
             ) : (
                 <div className="grid min-w-0 gap-6 lg:grid-cols-[1fr,300px]">
-                    {/* Main Image Viewer */}
-                    <div className="relative">
-                        <AnimatePresence mode="wait">
-                            <motion.div animate={{ opacity: 1 }} className="relative aspect-3/4 max-h-[70vh] max-w-md overflow-hidden rounded-lg border border-border bg-card/30" exit={{ opacity: 0 }} initial={{ opacity: 0 }} key={selectedSkin} transition={{ duration: 0.2 }}>
-                                {imageLoading && (
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                                    </div>
-                                )}
-                                <Image alt={selectedSkinData?.name ?? "Skin"} className={cn("object-contain transition-opacity duration-300", imageLoading ? "opacity-0" : "opacity-100")} fill onLoad={() => setImageLoading(false)} priority src={selectedSkinData?.image ?? ""} />
+                    {/* Left column: Image Viewer + Skin Selector */}
+                    <div className="flex flex-col gap-4">
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-4">
+                            {/* Main Image Viewer */}
+                            <div className="relative min-w-0 flex-1">
+                                <AnimatePresence mode="wait">
+                                    <motion.div animate={{ opacity: 1 }} className="relative aspect-3/4 max-h-[70vh] w-full overflow-hidden rounded-lg border border-border bg-card/30" exit={{ opacity: 0 }} initial={{ opacity: 0 }} key={selectedSkin} transition={{ duration: 0.2 }}>
+                                        {imageLoading && (
+                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                                            </div>
+                                        )}
+                                        <Image alt={selectedSkinData?.name ?? "Skin"} className={cn("object-contain transition-opacity duration-300", imageLoading ? "opacity-0" : "opacity-100")} fill onLoad={() => setImageLoading(false)} priority src={selectedSkinData?.image ?? ""} />
 
-                                {/* Fullscreen button */}
-                                <Dialog>
-                                    <DialogTrigger asChild>
-                                        <Button className="absolute top-3 right-3" size="icon" variant="secondary">
-                                            <Maximize2 className="h-4 w-4" />
-                                        </Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="max-h-[90vh] max-w-[90vw] p-0">
-                                        <div className="relative h-[80vh] w-full">
-                                            <Image alt={selectedSkinData?.name ?? "Skin"} className="object-contain" fill src={selectedSkinData?.image ?? ""} />
+                                        {/* Fullscreen button */}
+                                        <Dialog>
+                                            <DialogTrigger asChild>
+                                                <Button className="absolute top-3 right-3" size="icon" variant="secondary">
+                                                    <Maximize2 className="h-4 w-4" />
+                                                </Button>
+                                            </DialogTrigger>
+                                            <DialogContent className="max-h-[90vh] max-w-[90vw] p-0">
+                                                <div className="relative h-[80vh] w-full">
+                                                    <Image alt={selectedSkinData?.name ?? "Skin"} className="object-contain" fill src={selectedSkinData?.image ?? ""} />
+                                                </div>
+                                            </DialogContent>
+                                        </Dialog>
+                                    </motion.div>
+                                </AnimatePresence>
+                            </div>
+
+                            {/* Skin Selector - Vertical on desktop */}
+                            {skins.length > 0 && (
+                                <div className="hidden shrink-0 lg:block">
+                                    <h3 className="mb-3 font-medium text-foreground text-sm">Available Skins</h3>
+                                    <ScrollArea className="max-h-[65vh]">
+                                        <div className="flex flex-col gap-3 pr-2">
+                                            {skins.map((skin) => (
+                                                <button
+                                                    className={cn("relative h-24 w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all hover:scale-105", selectedSkin === skin.id ? "border-primary shadow-lg" : "border-border/50 hover:border-primary/50")}
+                                                    key={skin.id}
+                                                    onClick={() => {
+                                                        setImageLoading(true);
+                                                        setSelectedSkin(skin.id);
+                                                    }}
+                                                    type="button"
+                                                >
+                                                    <Image alt={skin.name} className="object-cover" fill src={skin.thumbnail || "/placeholder.svg"} />
+                                                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-2 pt-4 pb-1.5">
+                                                        <span className="line-clamp-1 font-medium text-white text-xs drop-shadow-sm">{skin.name}</span>
+                                                    </div>
+                                                </button>
+                                            ))}
                                         </div>
-                                    </DialogContent>
-                                </Dialog>
-                            </motion.div>
-                        </AnimatePresence>
+                                    </ScrollArea>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Skin Selector - Horizontal on mobile */}
+                        {skins.length > 0 && (
+                            <div className="lg:hidden">
+                                <h3 className="mb-3 font-medium text-foreground text-sm">Available Skins</h3>
+                                <ScrollArea className="w-full">
+                                    <div className="flex gap-3 pb-2">
+                                        {skins.map((skin) => (
+                                            <button
+                                                className={cn("relative h-24 w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all hover:scale-105", selectedSkin === skin.id ? "border-primary shadow-lg" : "border-border/50 hover:border-primary/50")}
+                                                key={skin.id}
+                                                onClick={() => {
+                                                    setImageLoading(true);
+                                                    setSelectedSkin(skin.id);
+                                                }}
+                                                type="button"
+                                            >
+                                                <Image alt={skin.name} className="object-cover" fill src={skin.thumbnail || "/placeholder.svg"} />
+                                                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-2 pt-4 pb-1.5">
+                                                    <span className="line-clamp-1 font-medium text-white text-xs drop-shadow-sm">{skin.name}</span>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <ScrollBar orientation="horizontal" />
+                                </ScrollArea>
+                            </div>
+                        )}
                     </div>
 
                     {/* Skin Details Panel */}
@@ -168,34 +239,6 @@ export function SkinsContent({ operator }: SkinsContentProps) {
                             <p className="text-muted-foreground text-sm">Chibi Viewer Coming Soon</p>
                         </div>
                     </div>
-                </div>
-            )}
-
-            {/* Skin Selector */}
-            {!isLoading && skins.length > 0 && (
-                <div className="mt-6">
-                    <h3 className="mb-3 font-medium text-foreground text-sm">Available Skins</h3>
-                    <ScrollArea className="w-full">
-                        <div className="flex gap-3 pb-2">
-                            {skins.map((skin) => (
-                                <button
-                                    className={cn("relative h-24 w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all hover:scale-105", selectedSkin === skin.id ? "border-primary shadow-lg" : "border-border/50 hover:border-primary/50")}
-                                    key={skin.id}
-                                    onClick={() => {
-                                        setImageLoading(true);
-                                        setSelectedSkin(skin.id);
-                                    }}
-                                    type="button"
-                                >
-                                    <Image alt={skin.name} className="object-cover" fill src={skin.thumbnail || "/placeholder.svg"} />
-                                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-2 pt-4 pb-1.5">
-                                        <span className="line-clamp-1 font-medium text-white text-xs drop-shadow-sm">{skin.name}</span>
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                        <ScrollBar orientation="horizontal" />
-                    </ScrollArea>
                 </div>
             )}
         </div>
