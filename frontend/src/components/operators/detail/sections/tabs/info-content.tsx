@@ -11,10 +11,47 @@ import { Separator } from "~/components/ui/shadcn/separator";
 import { Slider } from "~/components/ui/shadcn/slider";
 import { descriptionToHtml } from "~/lib/description-parser";
 import { cn } from "~/lib/utils";
-import type { Operator } from "~/types/api";
+import type { Blackboard, Operator } from "~/types/api";
 import type { Range } from "~/types/api/impl/range";
+import type { InterpolatedValue } from "~/types/frontend/operators";
 import { OperatorRange } from "../ui/operator-range";
 import { StatCard } from "../ui/stat-card";
+
+/**
+ * Formats operator description with blackboard interpolation
+ * Combines trait blackboard values for proper value substitution
+ */
+function formatOperatorDescription(description: string, blackboard: Blackboard[]): string {
+    if (!description) return "";
+
+    // Filter out blackboard entries with undefined/null keys
+    const validBlackboard = blackboard.filter((b) => b.key != null);
+
+    // Debug: log what we have if there are placeholders
+    if (description.includes("{")) {
+        const placeholderMatch = description.match(/\{([^}:]+)/g);
+        const placeholderKeys = placeholderMatch?.map((m) => m.slice(1).toLowerCase()) ?? [];
+        const blackboardKeys = validBlackboard.map((b) => b.key.toLowerCase());
+
+        const missingKeys = placeholderKeys.filter((key) => !blackboardKeys.includes(key));
+
+        if (missingKeys.length > 0) {
+            console.warn("[formatOperatorDescription] Missing blackboard keys:", {
+                missingKeys,
+                availableKeys: blackboardKeys,
+                blackboardValues: validBlackboard,
+            });
+        }
+    }
+
+    // Apply descriptionToHtml for tag coloring and value interpolation
+    const interpolatedValues: InterpolatedValue[] = validBlackboard.map((b) => ({
+        key: b.key,
+        value: b.value,
+    }));
+
+    return descriptionToHtml(description, interpolatedValues);
+}
 
 interface InfoContentProps {
     operator: Operator;
@@ -109,12 +146,36 @@ export function InfoContent({ operator }: InfoContentProps) {
 
     const currentRange = ranges[currentRangeId];
 
+    // Get blackboard values for description interpolation
+    // The blackboard contains values like {atk}, {max_stack_cnt} that need to be substituted
+    // Check trait first, then fall back to talents if trait blackboard is empty
+    const descriptionBlackboard: Blackboard[] = useMemo(() => {
+        // Try trait blackboard first
+        const traitCandidate = operator.trait?.Candidates?.[operator.trait.Candidates.length - 1];
+        const traitBlackboard = traitCandidate?.Blackboard ?? [];
+
+        if (traitBlackboard.length > 0) {
+            return traitBlackboard;
+        }
+
+        // Fall back to combining all talent blackboards
+        const talentBlackboards: Blackboard[] = [];
+        for (const talent of operator.talents ?? []) {
+            const candidate = talent.Candidates?.[talent.Candidates.length - 1];
+            if (candidate?.Blackboard) {
+                talentBlackboards.push(...candidate.Blackboard);
+            }
+        }
+
+        return talentBlackboards;
+    }, [operator.trait, operator.talents]);
+
     return (
         <div className="min-w-0 overflow-hidden p-4 md:p-6">
             {/* Header */}
             <div className="mb-6">
                 <h2 className="font-semibold text-foreground text-xl">Operator Information</h2>
-                <p className="wrap-break-word text-muted-foreground text-sm">{operator.description}</p>
+                <p className="wrap-break-word text-muted-foreground text-sm" dangerouslySetInnerHTML={{ __html: formatOperatorDescription(operator.description, descriptionBlackboard) }} />
             </div>
 
             {/* Profile Info */}
