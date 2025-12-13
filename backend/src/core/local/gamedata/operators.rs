@@ -59,11 +59,12 @@ fn enrich_operator(
     materials: &Materials,
     asset_mappings: &AssetMappings,
 ) -> Operator {
-    let enriched_skills = enrich_skills(&raw.skills, skills);
+    let enriched_skills = enrich_skills(&raw.skills, skills, materials);
     let operator_modules = get_operator_modules(id, modules, battle_equip, asset_mappings);
     let (handbook_item, profile) = get_handbook_and_profile(id, handbook);
     let artists = get_artists(id, skins);
     let portrait = asset_mappings.get_portrait_path(id);
+    let skin = asset_mappings.get_charart_path(id);
 
     // Enrich phases with item icon paths
     let enriched_phases = enrich_phases(&raw.phases, materials);
@@ -109,6 +110,7 @@ fn enrich_operator(
         profile,
         artists,
         portrait,
+        skin,
     }
 }
 

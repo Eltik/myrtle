@@ -468,7 +468,11 @@ pub struct Operator {
     pub handbook: HandbookItem,
     pub profile: Option<OperatorProfile>,
     pub artists: Vec<String>,
+    /// Small portrait image (headshot) - /upk/arts/charportraits/{pack}/{id}_{1|2}.png
     pub portrait: Option<String>,
+    /// Full character art (large illustration) - /upk/chararts/{id}/{id}_{1|2}.png
+    /// None if not available (use portrait as fallback)
+    pub skin: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

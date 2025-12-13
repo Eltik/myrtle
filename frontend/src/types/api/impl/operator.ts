@@ -258,7 +258,10 @@ export interface Operator {
     handbook: HandbookItem;
     profile: OperatorProfile | null;
     artists: string[];
+    /** Small portrait image (headshot) */
     portrait: string;
+    /** Full character art (large illustration) - null if not available */
+    skin: string | null;
 }
 
 export type Elite = "E0" | "E1" | "E2";

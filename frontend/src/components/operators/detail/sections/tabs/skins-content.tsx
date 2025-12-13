@@ -1,16 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Calendar, Maximize2, Palette, User } from "lucide-react";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
-import { Maximize2, User, Palette, Calendar } from "lucide-react";
-import type { Operator } from "~/types/api";
-import type { SkinData, Skin } from "~/types/api/impl/skin";
-import { cn } from "~/lib/utils";
+import { useEffect, useState } from "react";
 import { Button } from "~/components/ui/shadcn/button";
 import { Dialog, DialogContent, DialogTrigger } from "~/components/ui/shadcn/dialog";
 import { ScrollArea, ScrollBar } from "~/components/ui/shadcn/scroll-area";
 import { Skeleton } from "~/components/ui/shadcn/skeleton";
+import { cn } from "~/lib/utils";
+import type { Operator } from "~/types/api";
+import type { Skin, SkinData } from "~/types/api/impl/skin";
 
 interface SkinsContentProps {
     operator: Operator;
@@ -58,13 +58,17 @@ export function SkinsContent({ operator }: SkinsContentProps) {
                 }
             } catch (error) {
                 console.error("Failed to fetch skins:", error);
-                // Create default skin entry using local CDN - files use full operator ID as filename
+                // Create default skin entry - prefer full art (skin) over portrait
                 const operatorId = operator.id ?? "";
+                const skinPath = operator.skin ? `/api/cdn${operator.skin}` : null;
+                const portraitPath = operator.portrait ? `/api/cdn${operator.portrait}` : null;
+                const basePath = skinPath ?? portraitPath;
+                const e0Path = basePath?.replace(/_2\.png$/, "_1.png") ?? `/api/cdn/upk/chararts/${operatorId}/${operatorId}_1.png`;
                 const defaultSkin: UISkin = {
                     id: operatorId,
                     name: "Default",
-                    image: `/api/cdn/upk/chararts/${operatorId}/${operatorId}_1.png`,
-                    thumbnail: `/api/cdn/upk/chararts/${operatorId}/${operatorId}_1.png`,
+                    image: e0Path,
+                    thumbnail: e0Path,
                     isDefault: true,
                 };
                 setSkins([defaultSkin]);
@@ -200,13 +204,23 @@ function formatSkins(skinData: SkinData | Skin[], operator: Operator): UISkin[] 
     const skins: UISkin[] = [];
     const operatorId = operator.id ?? "";
 
-    // Add default skin (E0/E1 art) - files use full operator ID as filename
-    // Both image and thumbnail use chararts since that's where operator portraits are stored
+    // Prefer full character art (skin) over portrait (headshot)
+    // skin: /upk/chararts/{id}/{id}_{1|2}.png (large full art)
+    // portrait: /upk/arts/charportraits/{pack}/{id}_{1|2}.png (small headshot)
+    const skinPath = operator.skin ? `/api/cdn${operator.skin}` : null;
+    const portraitPath = operator.portrait ? `/api/cdn${operator.portrait}` : null;
+
+    // Use full character art if available, otherwise fall back to portrait
+    const basePath = skinPath ?? portraitPath;
+    const e0Path = basePath?.replace(/_2\.png$/, "_1.png") ?? `/api/cdn/upk/chararts/${operatorId}/${operatorId}_1.png`;
+    const e2Path = basePath?.replace(/_1\.png$/, "_2.png") ?? `/api/cdn/upk/chararts/${operatorId}/${operatorId}_2.png`;
+
+    // Add default skin (E0/E1 art)
     skins.push({
         id: `${operatorId}_default`,
         name: "Default",
-        image: `/api/cdn/upk/chararts/${operatorId}/${operatorId}_1.png`,
-        thumbnail: `/api/cdn/upk/chararts/${operatorId}/${operatorId}_1.png`,
+        image: e0Path,
+        thumbnail: e0Path,
         isDefault: true,
     });
 
@@ -215,8 +229,8 @@ function formatSkins(skinData: SkinData | Skin[], operator: Operator): UISkin[] 
         skins.push({
             id: `${operatorId}_e2`,
             name: "Elite 2",
-            image: `/api/cdn/upk/chararts/${operatorId}/${operatorId}_2.png`,
-            thumbnail: `/api/cdn/upk/chararts/${operatorId}/${operatorId}_2.png`,
+            image: e2Path,
+            thumbnail: e2Path,
             isDefault: false,
         });
     }

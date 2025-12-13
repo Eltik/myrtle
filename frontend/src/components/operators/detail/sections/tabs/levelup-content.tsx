@@ -102,8 +102,7 @@ function SkillMasteryTab({ operator }: { operator: Operator }) {
                     return (
                         <div className="rounded-lg border border-border bg-card/30 p-4" key={idx}>
                             <div className="mb-3 flex items-center gap-2">
-                                <span className="font-medium text-foreground">Mastery {idx + 1}</span>
-                                <Image alt={`M${idx + 1}`} className="h-6 w-6" height={24} src={`/m-${idx + 1}_0.webp`} width={24} />
+                                <span className="rounded bg-primary/20 px-2 py-0.5 font-semibold text-primary text-sm">M{idx + 1}</span>
                             </div>
                             <div className="flex flex-wrap gap-3">
                                 {costData.LevelUpCost.map((cost, costIdx) => (

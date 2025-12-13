@@ -1,13 +1,12 @@
 "use client";
 
+import { ChevronRight } from "lucide-react";
 import { motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
-import type { Operator } from "~/types/api";
-import { formatProfession, formatSubProfession, rarityToNumber } from "~/lib/utils";
-import { cn, formatNationId } from "~/lib/utils";
 import { Badge } from "~/components/ui/shadcn/badge";
+import { cn, formatNationId, formatProfession, formatSubProfession, rarityToNumber } from "~/lib/utils";
+import type { Operator } from "~/types/api";
 
 interface OperatorHeroProps {
     operator: Operator;
@@ -36,16 +35,17 @@ export function OperatorHero({ operator }: OperatorHeroProps) {
     const rarityColor = RARITY_COLORS[operator.rarity] ?? RARITY_COLORS.TIER_1;
     const rarityBgColor = RARITY_BG_COLORS[operator.rarity] ?? RARITY_BG_COLORS.TIER_1;
 
-    // Determine the skin image - use E2 art if available
+    // Use full character art - E2 preferred, fallback to E0
     const operatorId = operator.id ?? "";
-    const artSuffix = operator.phases.length > 2 ? "_2" : "_1";
-    const portraitUrl = `/api/cdn/upk/chararts/${operatorId}/${operatorId}${artSuffix}.png`;
+    // Backend provides E2 path in operator.skin, use it directly
+    // Fallback to constructing E2 path, then E0 path
+    const heroImageUrl = operator.skin ? `/api/cdn${operator.skin}` : `/api/cdn/upk/chararts/${operatorId}/${operatorId}_2.png`;
 
     return (
         <div className="relative h-[500px] w-full overflow-hidden md:h-[600px]">
             {/* Background Image */}
             <div className="absolute inset-0">
-                <Image alt={operator.name} className="object-cover object-top opacity-40" fill priority src={portraitUrl || "/placeholder.svg"} />
+                <Image alt={operator.name} className="object-cover object-top opacity-40" fill priority src={heroImageUrl} />
                 {/* Gradient overlays */}
                 <div className="absolute inset-0 bg-linear-to-t from-background via-background/80 to-transparent" />
                 <div className="absolute inset-0 bg-linear-to-r from-background/60 via-transparent to-background/60" />

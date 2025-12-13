@@ -23,12 +23,13 @@ pub fn get_operator_modules(
                 .unwrap_or_default();
 
             // Get module image path using asset mappings
+            // Note: uniequip_001_xxx modules return None as they are "original" placeholders
             let module = Module {
                 id: Some(raw_module.uni_equip_id.clone()),
                 uni_equip_id: raw_module.uni_equip_id.clone(),
                 uni_equip_name: raw_module.uni_equip_name.clone(),
                 uni_equip_icon: raw_module.uni_equip_icon.clone(),
-                image: Some(asset_mappings.get_module_big_path(&raw_module.uni_equip_icon)),
+                image: asset_mappings.get_module_big_path(&raw_module.uni_equip_icon),
                 uni_equip_desc: raw_module.uni_equip_desc.clone(),
                 type_icon: raw_module.type_icon.clone(),
                 type_name1: raw_module.type_name1.clone(),
