@@ -154,3 +154,23 @@
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
 }
+
+/* Paint containment - isolates repaints to this element */
+.contain-paint {
+    contain: paint;
+}
+
+/* Layout containment - isolates layout calculations */
+.contain-layout {
+    contain: layout;
+}
+
+/* Strict containment - maximum isolation for animated elements */
+.contain-strict {
+    contain: strict;
+}
+
+/* Content containment - for elements with dynamic content */
+.contain-content {
+    contain: content;
+}

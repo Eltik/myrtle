@@ -1,10 +1,10 @@
 "use client";
 
 import { ChevronRight } from "lucide-react";
-import { motion, useScroll, useSpring, useTransform } from "motion/react";
+import { motion, useScroll, useTransform } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import { Badge } from "~/components/ui/shadcn/badge";
 import { cn, formatNationId, formatProfession, formatSubProfession, rarityToNumber } from "~/lib/utils";
 import type { Operator } from "~/types/api";
@@ -33,15 +33,6 @@ const RARITY_GLOW: Record<string, string> = {
 
 export function OperatorHero({ operator }: OperatorHeroProps) {
     const containerRef = useRef<HTMLDivElement>(null);
-    const [isMobile, setIsMobile] = useState(false);
-
-    // Detect mobile for reduced parallax
-    useEffect(() => {
-        const checkMobile = () => setIsMobile(window.innerWidth < 768);
-        checkMobile();
-        window.addEventListener("resize", checkMobile);
-        return () => window.removeEventListener("resize", checkMobile);
-    }, []);
 
     const rarityNum = rarityToNumber(operator.rarity);
     const rarityColor = RARITY_COLORS[operator.rarity] ?? RARITY_COLORS.TIER_1;
@@ -52,32 +43,22 @@ export function OperatorHero({ operator }: OperatorHeroProps) {
         offset: ["start start", "end start"],
     });
 
-    // Snappy spring physics - high stiffness for responsive feel, high damping to prevent overshoot
-    const smoothProgress = useSpring(scrollYProgress, {
-        stiffness: isMobile ? 300 : 400,
-        damping: isMobile ? 40 : 50,
-        restDelta: 0.0001,
-    });
-
-    // Modern parallax transforms - subtle but noticeable
-    const imageY = useTransform(smoothProgress, [0, 1], [0, isMobile ? 80 : 140]);
-    const imageScale = useTransform(smoothProgress, [0, 1], [1, isMobile ? 1.05 : 1.12]);
-    const contentOpacity = useTransform(smoothProgress, [0, 0.4], [1, 0]);
-    const contentY = useTransform(smoothProgress, [0, 0.4], [0, isMobile ? -30 : -60]);
+    const imageY = useTransform(scrollYProgress, [0, 1], [0, 100]);
+    const imageScale = useTransform(scrollYProgress, [0, 1], [1, 1.08]);
+    const contentOpacity = useTransform(scrollYProgress, [0, 0.4], [1, 0]);
+    const contentY = useTransform(scrollYProgress, [0, 0.4], [0, -40]);
 
     const operatorId = operator.id ?? "";
     const heroImageUrl = operator.skin ? `/api/cdn${operator.skin}` : `/api/cdn/upk/chararts/${operatorId}/${operatorId}_2.png`;
 
     return (
-        <div className="relative h-[280px] w-full overflow-visible sm:h-[320px] md:h-[380px] lg:h-[420px]" ref={containerRef}>
-            {/* Background Image - GPU accelerated with translate3d for smooth mobile scrolling */}
+        <div className="relative h-[280px] w-full overflow-visible contain-layout sm:h-80 md:h-[380px] lg:h-[420px]" ref={containerRef}>
+            {/* Background Image */}
             <motion.div
-                className="backface-hidden absolute inset-x-0 top-0 will-change-transform"
+                className="backface-hidden absolute inset-x-0 top-0 transition-transform duration-75 ease-out will-change-transform contain-paint"
                 style={{
                     y: imageY,
                     scale: imageScale,
-                    // Force GPU compositing layer
-                    translateZ: 0,
                 }}
             >
                 <div className="flex items-start justify-center pt-0 md:justify-end md:pr-[5%] lg:pr-[10%]">
@@ -87,16 +68,14 @@ export function OperatorHero({ operator }: OperatorHeroProps) {
                 </div>
             </motion.div>
 
-            {/* Bottom gradient fade - extends beyond hero to cover tabs on mobile */}
             <div className="-bottom-16 sm:-bottom-14 pointer-events-none absolute inset-x-0 h-[calc(33%+64px)] bg-linear-to-t from-background via-background/80 to-transparent sm:h-[calc(33%+56px)] lg:bottom-0 lg:h-1/3" />
 
             {/* Content */}
             <motion.div
-                className="backface-hidden relative z-10 mx-auto flex h-full max-w-6xl flex-col justify-end px-4 pb-4 will-change-transform sm:pb-5 md:px-8 md:pb-6 lg:pb-8"
+                className="backface-hidden relative z-10 mx-auto flex h-full max-w-6xl flex-col justify-end px-4 pb-4 transition-[transform,opacity] duration-75 ease-out will-change-[transform,opacity] sm:pb-5 md:px-8 md:pb-6 lg:pb-8"
                 style={{
                     opacity: contentOpacity,
                     y: contentY,
-                    translateZ: 0,
                 }}
             >
                 {/* Breadcrumb */}
@@ -129,14 +108,14 @@ export function OperatorHero({ operator }: OperatorHeroProps) {
 
                         {/* Tags */}
                         <motion.div animate={{ opacity: 1, y: 0 }} className="flex flex-wrap gap-2" initial={{ opacity: 0, y: 20 }} transition={{ duration: 0.4, delay: 0.2 }}>
-                            <Badge className="border-transparent bg-white/10 text-foreground backdrop-blur-sm" variant="outline">
+                            <Badge className="border-transparent bg-black/40 text-foreground" variant="outline">
                                 {formatProfession(operator.profession)}
                             </Badge>
-                            <Badge className="border-transparent bg-white/10 text-foreground backdrop-blur-sm" variant="outline">
+                            <Badge className="border-transparent bg-black/40 text-foreground" variant="outline">
                                 {operator.position === "RANGED" ? "Ranged" : operator.position === "MELEE" ? "Melee" : operator.position}
                             </Badge>
                             {operator.nationId && (
-                                <Badge className="border-transparent bg-white/10 text-foreground backdrop-blur-sm" variant="outline">
+                                <Badge className="border-transparent bg-black/40 text-foreground" variant="outline">
                                     {formatNationId(operator.nationId)}
                                 </Badge>
                             )}
@@ -146,7 +125,7 @@ export function OperatorHero({ operator }: OperatorHeroProps) {
                     {/* Right side - Avatar and faction */}
                     <motion.div animate={{ opacity: 1, x: 0 }} className="hidden items-center gap-4 md:flex" initial={{ opacity: 0, x: 20 }} transition={{ duration: 0.4, delay: 0.3 }}>
                         {(operator.nationId ?? operator.teamId ?? operator.groupId) && (
-                            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/5 p-2.5 backdrop-blur-sm lg:h-16 lg:w-16">
+                            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/30 p-2.5 lg:h-16 lg:w-16">
                                 <Image alt={operator.nationId ?? operator.teamId ?? operator.groupId ?? "Faction"} className="object-contain opacity-80" height={44} src={`/api/cdn/upk/spritepack/ui_camp_logo_0/logo_${operator.teamId ?? operator.groupId ?? operator.nationId ?? "rhodes"}.png`} width={48} />
                             </div>
                         )}
