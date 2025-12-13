@@ -33,11 +33,11 @@ export function OperatorTabs({ operator, activeTab, onTabChange }: OperatorTabsP
     const activeIndex = TABS.findIndex((t) => t.type === activeTab);
 
     return (
-        <div className="flex flex-col gap-6 lg:flex-row">
+        <div className="flex flex-col lg:flex-row lg:gap-6">
             {/* Tab Navigation - Sidebar on desktop, horizontal scroll on mobile */}
             <nav className="shrink-0 lg:w-48">
                 {/* Mobile: Horizontal scroll */}
-                <div className="flex gap-2 overflow-x-auto pb-2 lg:hidden">
+                <div className="flex gap-2 overflow-x-auto pb-4 lg:hidden">
                     {TABS.map((tab) => {
                         const Icon = tab.icon;
                         const isActive = activeTab === tab.type;
@@ -80,7 +80,7 @@ export function OperatorTabs({ operator, activeTab, onTabChange }: OperatorTabsP
 
             {/* Tab Content */}
             <div className="min-w-0 flex-1">
-                <div className="rounded-xl border border-border bg-card/50 backdrop-blur-sm">
+                <div className="rounded-xl border border-border bg-card/50 backdrop-blur-md">
                     <TransitionPanel
                         activeIndex={activeIndex}
                         transition={{ duration: 0.3, ease: "easeInOut" }}
