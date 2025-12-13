@@ -62,7 +62,7 @@ function ElitePromotionTab({ operator }: { operator: Operator }) {
 
                         <div className="flex flex-wrap gap-3">
                             {phase.EvolveCost.map((cost, costIdx) => (
-                                <MaterialItem count={cost.Count} id={cost.Id} key={costIdx} />
+                                <MaterialItem count={cost.Count} id={cost.Id} image={cost.Image} key={costIdx} />
                             ))}
                         </div>
                     </div>
@@ -107,7 +107,7 @@ function SkillMasteryTab({ operator }: { operator: Operator }) {
                             </div>
                             <div className="flex flex-wrap gap-3">
                                 {costData.LevelUpCost.map((cost, costIdx) => (
-                                    <MaterialItem count={cost.Count} id={cost.Id} key={costIdx} />
+                                    <MaterialItem count={cost.Count} id={cost.Id} image={cost.Image} key={costIdx} />
                                 ))}
                             </div>
                         </div>
@@ -155,7 +155,7 @@ function ModulesTab({ operator }: { operator: Operator }) {
                                             {phaseCosts.length > 0 && (
                                                 <div className="flex flex-wrap gap-2">
                                                     {phaseCosts.map((cost, costIdx) => (
-                                                        <MaterialItem count={cost.count} id={cost.id} key={costIdx} size="sm" />
+                                                        <MaterialItem count={cost.count} id={cost.id} image={cost.image} key={costIdx} size="sm" />
                                                     ))}
                                                 </div>
                                             )}
@@ -181,13 +181,15 @@ function ModulesTab({ operator }: { operator: Operator }) {
     );
 }
 
-function MaterialItem({ id, count, size = "md" }: { id: string; count: number; size?: "sm" | "md" }) {
+function MaterialItem({ id, count, image, size = "md" }: { id: string; count: number; image?: string | null; size?: "sm" | "md" }) {
     const sizeClass = size === "sm" ? "h-10 w-10" : "h-12 w-12";
+    // Use backend-provided image path if available, otherwise fallback to default path
+    const imageSrc = image ? `/api/cdn${image}` : `/api/cdn/upk/arts/items/icons/${id}.png`;
 
     return (
         <div className="flex flex-col items-center gap-1">
             <div className={cn("relative rounded-lg border border-border/50 bg-secondary/30 p-1", sizeClass)}>
-                <Image alt={id} className="object-contain" fill src={`/api/cdn/upk/spritepack/ui_item_icons_h1_0/${id}.png`} />
+                <Image alt={id} className="object-contain" fill src={imageSrc} />
             </div>
             <span className="font-mono text-foreground text-xs">x{count}</span>
         </div>

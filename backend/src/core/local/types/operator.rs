@@ -175,6 +175,10 @@ pub struct EvolveCost {
     pub count: i32,
     #[serde(rename = "Type_")]
     pub item_type: ItemType,
+    #[serde(default)]
+    pub icon_id: Option<String>,
+    #[serde(default)]
+    pub image: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -197,6 +201,10 @@ pub struct LevelUpCostItem {
     pub count: i32,
     #[serde(rename = "Type_")]
     pub item_type: String,
+    #[serde(default)]
+    pub icon_id: Option<String>,
+    #[serde(default)]
+    pub image: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

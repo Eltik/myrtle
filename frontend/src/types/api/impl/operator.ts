@@ -72,6 +72,8 @@ export interface EvolveCost {
     Id: string;
     Count: number;
     Type_: ItemType;
+    IconId: string | null;
+    Image: string | null;
 }
 
 export interface Phase {
@@ -86,6 +88,8 @@ export interface LevelUpCostItem {
     Id: string;
     Count: number;
     Type_: string;
+    IconId: string | null;
+    Image: string | null;
 }
 
 export interface LevelUpCostCond {

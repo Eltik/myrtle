@@ -53,6 +53,10 @@ pub struct ModuleItemCost {
     pub count: i32,
     #[serde(rename = "type", alias = "Type_")]
     pub item_type: ItemType,
+    #[serde(default)]
+    pub icon_id: Option<String>,
+    #[serde(default)]
+    pub image: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

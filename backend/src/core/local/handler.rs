@@ -260,6 +260,7 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
         &battle_equip,
         &handbook,
         &skins,
+        &materials,
         &asset_mappings,
     );
 

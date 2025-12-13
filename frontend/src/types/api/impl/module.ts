@@ -10,6 +10,8 @@ export interface ModuleItemCost {
     id: string;
     count: number;
     type: ItemType;
+    iconId: string | null;
+    image: string | null;
 }
 
 export interface SubProfession {
