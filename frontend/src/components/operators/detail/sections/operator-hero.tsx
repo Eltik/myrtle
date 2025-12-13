@@ -53,7 +53,7 @@ export function OperatorHero({ operator }: OperatorHeroProps) {
     const heroImageUrl = operator.skin ? `/api/cdn${operator.skin}` : `/api/cdn/upk/chararts/${operatorId}/${operatorId}_2.png`;
 
     return (
-        <div className="relative h-[280px] w-full sm:h-[320px] md:h-[380px] lg:h-[420px]" ref={containerRef}>
+        <div className="relative h-[280px] w-full overflow-visible sm:h-[320px] md:h-[380px] lg:h-[420px]" ref={containerRef}>
             {/* Background Image */}
             <motion.div
                 className="absolute inset-x-0 top-0 will-change-transform"
@@ -69,8 +69,8 @@ export function OperatorHero({ operator }: OperatorHeroProps) {
                 </div>
             </motion.div>
 
-            {/* Bottom gradient fade */}
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-background via-background/80 to-transparent" />
+            {/* Bottom gradient fade - extends beyond hero to cover tabs on mobile */}
+            <div className="-bottom-16 sm:-bottom-14 pointer-events-none absolute inset-x-0 h-[calc(33%+64px)] bg-linear-to-t from-background via-background/80 to-transparent sm:h-[calc(33%+56px)] lg:bottom-0 lg:h-1/3" />
 
             {/* Content */}
             <motion.div
