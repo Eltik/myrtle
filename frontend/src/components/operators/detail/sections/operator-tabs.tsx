@@ -1,17 +1,17 @@
 "use client";
 
-import type React from "react";
+import { BookOpen, Coins, Music, Palette, Sparkles } from "lucide-react";
 
 import { motion } from "motion/react";
-import { BookOpen, Coins, Music, Palette, Sparkles } from "lucide-react";
-import type { Operator } from "~/types/api";
-import { cn } from "~/lib/utils";
+import type React from "react";
 import { TransitionPanel } from "~/components/ui/motion-primitives/transition-panel";
-import { InfoContent } from "./tabs/info-content";
-import { SkillsContent } from "./tabs/skills-content";
-import { LevelUpContent } from "./tabs/levelup-content";
-import { SkinsContent } from "./tabs/skins-content";
+import { cn } from "~/lib/utils";
+import type { Operator } from "~/types/api";
 import { AudioContent } from "./tabs/audio-content";
+import { InfoContent } from "./tabs/info-content";
+import { LevelUpContent } from "./tabs/levelup-content";
+import { SkillsContent } from "./tabs/skills-content";
+import { SkinsContent } from "./tabs/skins-content";
 
 type TabType = "info" | "skills" | "levelup" | "skins" | "audio";
 

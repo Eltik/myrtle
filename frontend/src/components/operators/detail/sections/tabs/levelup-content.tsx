@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
 import { ChevronRight } from "lucide-react";
-import type { Operator } from "~/types/api";
-import { cn } from "~/lib/utils";
+import Image from "next/image";
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/shadcn/tabs";
+import { cn } from "~/lib/utils";
+import type { Operator } from "~/types/api";
 
 interface LevelUpContentProps {
     operator: Operator;

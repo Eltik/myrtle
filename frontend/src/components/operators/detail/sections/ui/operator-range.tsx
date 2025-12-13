@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import type { Range } from "~/types/api/impl/range";
 import { cn } from "~/lib/utils";
+import type { Range } from "~/types/api/impl/range";
 
 interface OperatorRangeProps {
     range: Range;

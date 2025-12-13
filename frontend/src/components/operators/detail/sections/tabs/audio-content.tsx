@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Play, Pause, Volume2, VolumeX } from "lucide-react";
+import { Pause, Play, Volume2, VolumeX } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Button } from "~/components/ui/shadcn/button";
+import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/shadcn/select";
+import { Skeleton } from "~/components/ui/shadcn/skeleton";
+import { Slider } from "~/components/ui/shadcn/slider";
+import { cn } from "~/lib/utils";
 import type { Operator } from "~/types/api";
 import type { Voice, Voices } from "~/types/api/impl/voice";
-import { cn } from "~/lib/utils";
-import { Button } from "~/components/ui/shadcn/button";
-import { Slider } from "~/components/ui/shadcn/slider";
-import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
-import { Skeleton } from "~/components/ui/shadcn/skeleton";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/shadcn/select";
 
 interface AudioContentProps {
     operator: Operator;
