@@ -1,9 +1,10 @@
 "use client";
 
 import { ChevronRight } from "lucide-react";
-import { motion } from "motion/react";
+import { motion, useScroll, useTransform } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRef } from "react";
 import { Badge } from "~/components/ui/shadcn/badge";
 import { cn, formatNationId, formatProfession, formatSubProfession, rarityToNumber } from "~/lib/utils";
 import type { Operator } from "~/types/api";
@@ -21,40 +22,65 @@ const RARITY_COLORS: Record<string, string> = {
     TIER_1: "text-white border-white/50",
 };
 
-const RARITY_BG_COLORS: Record<string, string> = {
-    TIER_6: "bg-[#f7a452]/10",
-    TIER_5: "bg-[#f7e79e]/10",
-    TIER_4: "bg-[#bcabdb]/10",
-    TIER_3: "bg-[#88c8e3]/10",
-    TIER_2: "bg-[#7ef2a3]/10",
-    TIER_1: "bg-white/10",
+const RARITY_GLOW: Record<string, string> = {
+    TIER_6: "drop-shadow-[0_0_20px_rgba(255,154,74,0.5)]",
+    TIER_5: "drop-shadow-[0_0_20px_rgba(255,230,109,0.4)]",
+    TIER_4: "drop-shadow-[0_0_15px_rgba(201,184,240,0.4)]",
+    TIER_3: "drop-shadow-[0_0_15px_rgba(125,211,252,0.4)]",
+    TIER_2: "drop-shadow-[0_0_15px_rgba(134,239,172,0.3)]",
+    TIER_1: "drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]",
 };
 
 export function OperatorHero({ operator }: OperatorHeroProps) {
+    const containerRef = useRef<HTMLDivElement>(null);
+
     const rarityNum = rarityToNumber(operator.rarity);
     const rarityColor = RARITY_COLORS[operator.rarity] ?? RARITY_COLORS.TIER_1;
-    const rarityBgColor = RARITY_BG_COLORS[operator.rarity] ?? RARITY_BG_COLORS.TIER_1;
+    const rarityGlow = RARITY_GLOW[operator.rarity] ?? RARITY_GLOW.TIER_1;
 
-    // Use full character art - E2 preferred, fallback to E0
+    const { scrollYProgress } = useScroll({
+        target: containerRef,
+        offset: ["start start", "end start"],
+    });
+
+    // Parallax transforms - image moves slower than scroll
+    const imageY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
+    const imageScale = useTransform(scrollYProgress, [0, 1], [1, 1.1]);
+    const contentOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+    const contentY = useTransform(scrollYProgress, [0, 0.5], [0, -50]);
+
     const operatorId = operator.id ?? "";
-    // Backend provides E2 path in operator.skin, use it directly
-    // Fallback to constructing E2 path, then E0 path
     const heroImageUrl = operator.skin ? `/api/cdn${operator.skin}` : `/api/cdn/upk/chararts/${operatorId}/${operatorId}_2.png`;
 
     return (
-        <div className="relative h-[500px] w-full overflow-hidden md:h-[600px]">
+        <div className="relative h-[420px] w-full overflow-hidden md:h-[520px] lg:h-[580px]" ref={containerRef}>
             {/* Background Image */}
-            <div className="absolute inset-0">
-                <Image alt={operator.name} className="object-cover object-top opacity-40" fill priority src={heroImageUrl} />
-                {/* Gradient overlays */}
-                <div className="absolute inset-0 bg-linear-to-t from-background via-background/80 to-transparent" />
-                <div className="absolute inset-0 bg-linear-to-r from-background/60 via-transparent to-background/60" />
-            </div>
+            <motion.div
+                className="absolute inset-0 will-change-transform"
+                style={{
+                    y: imageY,
+                    scale: imageScale,
+                }}
+            >
+                <div className="absolute inset-0 flex items-start justify-center pt-0 md:justify-end md:pr-[5%] lg:pr-[10%]">
+                    <div className="relative h-[500px] w-[400px] md:h-[600px] md:w-[480px] lg:h-[700px] lg:w-[560px]">
+                        <Image alt={operator.name} className={cn("object-contain object-top", rarityGlow)} fill priority sizes="(max-width: 768px) 400px, (max-width: 1024px) 480px, 560px" src={heroImageUrl} />
+                    </div>
+                </div>
+            </motion.div>
+
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-background via-background/60 to-transparent" />
 
             {/* Content */}
-            <div className="relative z-10 mx-auto flex h-full max-w-6xl flex-col justify-end px-4 pb-8 md:px-8">
+            <motion.div
+                className="relative z-10 mx-auto flex h-full max-w-6xl flex-col justify-end px-4 pb-6 md:px-8 md:pb-10"
+                style={{
+                    opacity: contentOpacity,
+                    y: contentY,
+                }}
+            >
                 {/* Breadcrumb */}
-                <motion.nav animate={{ opacity: 1, y: 0 }} className="mb-4" initial={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
+                <motion.nav animate={{ opacity: 1, y: 0 }} className="mb-3" initial={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
                     <ol className="flex items-center gap-2 text-muted-foreground text-sm">
                         <li>
                             <Link className="transition-colors hover:text-foreground" href="/operators/list">
@@ -62,20 +88,20 @@ export function OperatorHero({ operator }: OperatorHeroProps) {
                             </Link>
                         </li>
                         <ChevronRight className="h-4 w-4" />
-                        <li className="text-foreground">{operator.name}</li>
+                        <li className="font-medium text-foreground">{operator.name}</li>
                     </ol>
                 </motion.nav>
 
                 {/* Operator Info */}
                 <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-2">
                         {/* Name and Rarity */}
                         <motion.div animate={{ opacity: 1, y: 0 }} initial={{ opacity: 0, y: 20 }} transition={{ duration: 0.4, delay: 0.1 }}>
-                            <h1 className="font-bold text-4xl text-foreground md:text-5xl lg:text-6xl">{operator.name}</h1>
-                            <div className="mt-2 flex items-center gap-3">
-                                <span className={cn("font-semibold text-lg", rarityColor)}>{Array(rarityNum).fill("★").join("")}</span>
-                                <span className="text-muted-foreground">|</span>
-                                <span className="text-muted-foreground">
+                            <h1 className="font-bold text-3xl text-foreground tracking-tight md:text-4xl lg:text-5xl">{operator.name}</h1>
+                            <div className="mt-1.5 flex items-center gap-3">
+                                <span className={cn("font-semibold text-lg tracking-wider", rarityColor)}>{Array(rarityNum).fill("★").join("")}</span>
+                                <span className="text-muted-foreground/50">|</span>
+                                <span className="text-muted-foreground text-sm md:text-base">
                                     {formatSubProfession(operator.subProfessionId)} {formatProfession(operator.profession)}
                                 </span>
                             </div>
@@ -83,14 +109,14 @@ export function OperatorHero({ operator }: OperatorHeroProps) {
 
                         {/* Tags */}
                         <motion.div animate={{ opacity: 1, y: 0 }} className="flex flex-wrap gap-2" initial={{ opacity: 0, y: 20 }} transition={{ duration: 0.4, delay: 0.2 }}>
-                            <Badge className={cn("border", rarityColor, rarityBgColor)} variant="outline">
+                            <Badge className="border-transparent bg-white/10 text-foreground backdrop-blur-sm" variant="outline">
                                 {formatProfession(operator.profession)}
                             </Badge>
-                            <Badge className="border-border bg-secondary/50" variant="outline">
+                            <Badge className="border-transparent bg-white/10 text-foreground backdrop-blur-sm" variant="outline">
                                 {operator.position === "RANGED" ? "Ranged" : operator.position === "MELEE" ? "Melee" : operator.position}
                             </Badge>
                             {operator.nationId && (
-                                <Badge className="border-border bg-secondary/50" variant="outline">
+                                <Badge className="border-transparent bg-white/10 text-foreground backdrop-blur-sm" variant="outline">
                                     {formatNationId(operator.nationId)}
                                 </Badge>
                             )}
@@ -100,13 +126,13 @@ export function OperatorHero({ operator }: OperatorHeroProps) {
                     {/* Right side - Avatar and faction */}
                     <motion.div animate={{ opacity: 1, x: 0 }} className="hidden items-center gap-4 md:flex" initial={{ opacity: 0, x: 20 }} transition={{ duration: 0.4, delay: 0.3 }}>
                         {(operator.nationId ?? operator.teamId ?? operator.groupId) && (
-                            <div className="flex h-16 w-16 items-center justify-center rounded-lg border border-border/50 bg-card/50 p-2 backdrop-blur-sm">
-                                <Image alt={operator.nationId ?? operator.teamId ?? operator.groupId ?? "Faction"} className="object-contain opacity-70" height={48} src={`/api/cdn/upk/spritepack/ui_camp_logo_0/logo_${operator.teamId ?? operator.groupId ?? operator.nationId ?? "rhodes"}.png`} width={48} />
+                            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/5 p-2.5 backdrop-blur-sm lg:h-16 lg:w-16">
+                                <Image alt={operator.nationId ?? operator.teamId ?? operator.groupId ?? "Faction"} className="object-contain opacity-80" height={44} src={`/api/cdn/upk/spritepack/ui_camp_logo_0/logo_${operator.teamId ?? operator.groupId ?? operator.nationId ?? "rhodes"}.png`} width={48} />
                             </div>
                         )}
                     </motion.div>
                 </div>
-            </div>
+            </motion.div>
         </div>
     );
 }

@@ -1,17 +1,16 @@
 "use client";
 
-import type React from "react";
-
-import { useState, useEffect, useMemo } from "react";
+import { ChevronDown, Coins, Dna, Grid3X3, Heart, Info, MapPin, Palette, Shield, Swords, Timer, User } from "lucide-react";
 import Image from "next/image";
-import { ChevronDown, Heart, Shield, Swords, Timer, Coins, Grid3X3, Info, User, MapPin, Dna, Palette } from "lucide-react";
+import type React from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Badge } from "~/components/ui/shadcn/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/shadcn/collapsible";
+import { Separator } from "~/components/ui/shadcn/separator";
+import { Slider } from "~/components/ui/shadcn/slider";
+import { cn } from "~/lib/utils";
 import type { Operator } from "~/types/api";
 import type { Range } from "~/types/api/impl/range";
-import { cn } from "~/lib/utils";
-import { Slider } from "~/components/ui/shadcn/slider";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/shadcn/collapsible";
-import { Badge } from "~/components/ui/shadcn/badge";
-import { Separator } from "~/components/ui/shadcn/separator";
 import { OperatorRange } from "../ui/operator-range";
 import { StatCard } from "../ui/stat-card";
 

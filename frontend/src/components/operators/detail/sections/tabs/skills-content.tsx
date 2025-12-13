@@ -1,16 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { ChevronDown, Zap } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
-import { motion, AnimatePresence } from "motion/react";
-import { Zap, ChevronDown } from "lucide-react";
-import type { Operator } from "~/types/api";
-import { cn } from "~/lib/utils";
-import { Slider } from "~/components/ui/shadcn/slider";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/shadcn/select";
+import { useState } from "react";
 import { Badge } from "~/components/ui/shadcn/badge";
-import { Separator } from "~/components/ui/shadcn/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/shadcn/collapsible";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/shadcn/select";
+import { Separator } from "~/components/ui/shadcn/separator";
+import { Slider } from "~/components/ui/shadcn/slider";
+import { cn } from "~/lib/utils";
+import type { Operator } from "~/types/api";
 
 interface SkillsContentProps {
     operator: Operator;
