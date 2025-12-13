@@ -140,7 +140,7 @@ function DialogTrigger({ children, className }: DialogTriggerProps) {
     if (!context) throw new Error("DialogTrigger must be used within Dialog");
 
     return (
-        <button className={cn("inline-flex items-center justify-center rounded-md font-medium text-sm", "transition-colors focus-visible:outline-hidden focus-visible:ring-2", "focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50", className)} onClick={context.handleTrigger}>
+        <button className={cn("inline-flex items-center justify-center rounded-md font-medium text-sm", "transition-colors focus-visible:outline-hidden focus-visible:ring-2", "focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50", className)} onClick={context.handleTrigger} type="button">
             {children}
         </button>
     );

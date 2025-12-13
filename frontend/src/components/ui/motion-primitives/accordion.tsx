@@ -55,7 +55,7 @@ export type AccordionProps = {
 function Accordion({ children, className, transition, variants, expandedValue, onValueChange }: AccordionProps) {
     return (
         <MotionConfig transition={transition}>
-            <div aria-orientation="vertical" className={cn("relative", className)}>
+            <div className={cn("relative", className)} data-orientation="vertical">
                 <AccordionProvider expandedValue={expandedValue} onValueChange={onValueChange} variants={variants}>
                     {children}
                 </AccordionProvider>

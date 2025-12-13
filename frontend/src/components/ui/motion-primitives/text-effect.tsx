@@ -118,6 +118,7 @@ const AnimationComponent: React.FC<{
         ) : (
             <motion.span className="inline-block whitespace-pre">
                 {segment.split("").map((char, charIndex) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: Character animation sequence
                     <motion.span aria-hidden="true" className="inline-block whitespace-pre" key={`char-${charIndex}`} variants={variants}>
                         {char}
                     </motion.span>

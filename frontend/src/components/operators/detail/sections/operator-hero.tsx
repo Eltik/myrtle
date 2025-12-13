@@ -108,14 +108,14 @@ export function OperatorHero({ operator }: OperatorHeroProps) {
 
                         {/* Tags */}
                         <motion.div animate={{ opacity: 1, y: 0 }} className="flex flex-wrap gap-2" initial={{ opacity: 0, y: 20 }} transition={{ duration: 0.4, delay: 0.2 }}>
-                            <Badge className="border-transparent bg-black/40 text-foreground" variant="outline">
+                            <Badge className="border-transparent bg-accent text-foreground" variant="outline">
                                 {formatProfession(operator.profession)}
                             </Badge>
-                            <Badge className="border-transparent bg-black/40 text-foreground" variant="outline">
+                            <Badge className="border-transparent bg-accent text-foreground" variant="outline">
                                 {operator.position === "RANGED" ? "Ranged" : operator.position === "MELEE" ? "Melee" : operator.position}
                             </Badge>
                             {operator.nationId && (
-                                <Badge className="border-transparent bg-black/40 text-foreground" variant="outline">
+                                <Badge className="border-transparent bg-accent text-foreground" variant="outline">
                                     {formatNationId(operator.nationId)}
                                 </Badge>
                             )}

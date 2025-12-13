@@ -29,6 +29,7 @@ function BreadcrumbLink({
 }
 
 function BreadcrumbPage({ className, ...props }: React.ComponentProps<"span">) {
+    // biome-ignore lint/a11y/useFocusableInteractive lint/a11y/useSemanticElements: Current page indicator, not interactive
     return <span aria-current="page" aria-disabled="true" className={cn("font-normal text-foreground", className)} data-slot="breadcrumb-page" role="link" {...props} />;
 }
 

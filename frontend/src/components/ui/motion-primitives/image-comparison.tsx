@@ -43,6 +43,7 @@ function ImageComparison({ children, className, enableHover, springOptions }: Im
 
     return (
         <ImageComparisonContext.Provider value={{ sliderPosition, setSliderPosition, motionSliderPosition }}>
+            {/* biome-ignore lint/a11y/noStaticElementInteractions: Interactive image comparison slider */}
             <div
                 className={cn("relative select-none overflow-hidden", enableHover && "cursor-ew-resize", className)}
                 onMouseDown={() => !enableHover && setIsDragging(true)}
@@ -60,11 +61,14 @@ function ImageComparison({ children, className, enableHover, springOptions }: Im
 }
 
 const ImageComparisonImage = ({ className, alt, src, position }: { className?: string; alt: string; src: string; position: "left" | "right" }) => {
-    const { motionSliderPosition } = useContext(ImageComparisonContext)!;
+    const context = useContext(ImageComparisonContext);
+    if (!context) throw new Error("ImageComparisonImage must be used within ImageComparison");
+    const { motionSliderPosition } = context;
     const leftClipPath = useTransform(motionSliderPosition, (value) => `inset(0 0 0 ${value}%)`);
     const rightClipPath = useTransform(motionSliderPosition, (value) => `inset(0 ${100 - value}% 0 0)`);
 
     return (
+        // biome-ignore lint/performance/noImgElement: motion.img required for animation
         <motion.img
             alt={alt}
             className={cn("absolute inset-0 h-full w-full object-cover", className)}
@@ -77,7 +81,9 @@ const ImageComparisonImage = ({ className, alt, src, position }: { className?: s
 };
 
 const ImageComparisonSlider = ({ className, children }: { className: string; children?: React.ReactNode }) => {
-    const { motionSliderPosition } = useContext(ImageComparisonContext)!;
+    const context = useContext(ImageComparisonContext);
+    if (!context) throw new Error("ImageComparisonSlider must be used within ImageComparison");
+    const { motionSliderPosition } = context;
 
     const left = useTransform(motionSliderPosition, (value) => `${value}%`);
 

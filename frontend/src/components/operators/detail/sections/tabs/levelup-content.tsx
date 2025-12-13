@@ -50,6 +50,7 @@ function ElitePromotionTab({ operator }: { operator: Operator }) {
                 if (idx === 0 || !phase.EvolveCost || phase.EvolveCost.length === 0) return null;
 
                 return (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: Static promotion phases
                     <div className="rounded-lg border border-border bg-card/30 p-4" key={idx}>
                         <div className="mb-3 flex items-center gap-3">
                             <div className="flex items-center gap-2">
@@ -62,6 +63,7 @@ function ElitePromotionTab({ operator }: { operator: Operator }) {
 
                         <div className="flex flex-wrap gap-3">
                             {phase.EvolveCost.map((cost, costIdx) => (
+                                // biome-ignore lint/suspicious/noArrayIndexKey: Static cost list
                                 <MaterialItem count={cost.Count} id={cost.Id} image={cost.Image} key={costIdx} />
                             ))}
                         </div>
@@ -89,6 +91,7 @@ function SkillMasteryTab({ operator }: { operator: Operator }) {
             {/* Skill selector */}
             <div className="flex flex-wrap gap-2">
                 {operator.skills.map((s, idx) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: Static skill list
                     <button className={cn("rounded-lg border px-4 py-2 font-medium text-sm transition-all", selectedSkill === idx ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary/30 text-muted-foreground hover:text-foreground")} key={idx} onClick={() => setSelectedSkill(idx)} type="button">
                         {s.static?.Levels?.[0]?.name ?? `Skill ${idx + 1}`}
                     </button>
@@ -100,12 +103,14 @@ function SkillMasteryTab({ operator }: { operator: Operator }) {
                 {levelUpCosts.map((costData, idx) => {
                     if (!costData.LevelUpCost || costData.LevelUpCost.length === 0) return null;
                     return (
+                        // biome-ignore lint/suspicious/noArrayIndexKey: Static mastery level list
                         <div className="rounded-lg border border-border bg-card/30 p-4" key={idx}>
                             <div className="mb-3 flex items-center gap-2">
                                 <span className="rounded bg-primary/20 px-2 py-0.5 font-semibold text-primary text-sm">M{idx + 1}</span>
                             </div>
                             <div className="flex flex-wrap gap-3">
                                 {costData.LevelUpCost.map((cost, costIdx) => (
+                                    // biome-ignore lint/suspicious/noArrayIndexKey: Static cost list
                                     <MaterialItem count={cost.Count} id={cost.Id} image={cost.Image} key={costIdx} />
                                 ))}
                             </div>
@@ -131,6 +136,7 @@ function ModulesTab({ operator }: { operator: Operator }) {
                 const moduleCosts = mod.itemCost ? Object.values(mod.itemCost) : [];
 
                 return (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: Static module list
                     <div className="rounded-lg border border-border bg-card/30 p-4" key={idx}>
                         <div className="mb-3 flex items-center gap-3">
                             {mod.image && <Image alt={mod.uniEquipName ?? "Module"} className="rounded object-contain" height={48} src={`/api/cdn${mod.image}`} width={48} />}
@@ -149,11 +155,13 @@ function ModulesTab({ operator }: { operator: Operator }) {
                                     const phaseCosts = phaseCost ? [phaseCost] : phaseIdx === 0 ? moduleCosts : [];
 
                                     return (
+                                        // biome-ignore lint/suspicious/noArrayIndexKey: Static module phase list
                                         <div className="rounded border border-border/50 bg-secondary/20 p-3" key={phaseIdx}>
                                             <div className="mb-2 text-muted-foreground text-sm">Stage {phaseIdx + 1}</div>
                                             {phaseCosts.length > 0 && (
                                                 <div className="flex flex-wrap gap-2">
                                                     {phaseCosts.map((cost, costIdx) => (
+                                                        // biome-ignore lint/suspicious/noArrayIndexKey: Static cost list
                                                         <MaterialItem count={cost.count} id={cost.id} image={cost.image} key={costIdx} size="sm" />
                                                     ))}
                                                 </div>
@@ -162,6 +170,7 @@ function ModulesTab({ operator }: { operator: Operator }) {
                                             {phase.attributeBlackboard && phase.attributeBlackboard.length > 0 && (
                                                 <div className="mt-2 flex flex-wrap gap-2">
                                                     {phase.attributeBlackboard.map((attr, attrIdx) => (
+                                                        // biome-ignore lint/suspicious/noArrayIndexKey: Static attribute list
                                                         <span className="rounded bg-primary/10 px-2 py-1 text-primary text-xs" key={attrIdx}>
                                                             {attr.key}: +{attr.value}
                                                         </span>

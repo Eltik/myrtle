@@ -31,6 +31,7 @@ export function ProgressiveBlur({ direction = "bottom", blurLayers = 8, classNam
                 return (
                     <motion.div
                         className="pointer-events-none absolute inset-0 rounded-[inherit]"
+                        // biome-ignore lint/suspicious/noArrayIndexKey: Static blur layers
                         key={index}
                         style={{
                             maskImage: gradient,

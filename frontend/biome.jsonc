@@ -6,6 +6,9 @@
         "useIgnoreFile": true,
         "clientKind": "git"
     },
+    "files": {
+        "includes": ["src/**", "*.json", "*.jsonc", "*.js", "*.ts"]
+    },
     "assist": {
         "enabled": true,
         "actions": {

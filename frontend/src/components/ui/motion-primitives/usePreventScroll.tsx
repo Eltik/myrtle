@@ -36,8 +36,8 @@ interface PreventScrollOptions {
     focusCallback?: () => void;
 }
 
-function chain(...callbacks: any[]): (...args: any[]) => void {
-    return (...args: any[]) => {
+function chain(...callbacks: unknown[]): (...args: unknown[]) => void {
+    return (...args: unknown[]) => {
         for (const callback of callbacks) {
             if (typeof callback === "function") {
                 callback(...args);
@@ -276,7 +276,7 @@ function setStyle(element: HTMLElement, style: keyof React.CSSProperties, value:
 }
 
 // Adds an event listener to an element, and returns a function to remove it.
-function addEvent<K extends keyof GlobalEventHandlersEventMap>(target: EventTarget, event: K, handler: (this: Document, ev: GlobalEventHandlersEventMap[K]) => any, options?: boolean | AddEventListenerOptions) {
+function addEvent<K extends keyof GlobalEventHandlersEventMap>(target: EventTarget, event: K, handler: (this: Document, ev: GlobalEventHandlersEventMap[K]) => void, options?: boolean | AddEventListenerOptions) {
     // @ts-expect-error
     target.addEventListener(event, handler, options);
 

@@ -100,6 +100,7 @@ export function SkillsContent({ operator }: SkillsContentProps) {
                         </SelectTrigger>
                         <SelectContent>
                             {(selectedSkill?.static?.Levels ?? []).map((_, i) => (
+                                // biome-ignore lint/suspicious/noArrayIndexKey: Static skill level list
                                 <SelectItem key={i} value={i.toString()}>
                                     {formatSkillLevel(i)}
                                 </SelectItem>
@@ -154,6 +155,7 @@ export function SkillsContent({ operator }: SkillsContentProps) {
                             <div className="rounded-lg border border-border/50 bg-secondary/10 p-4">
                                 <p
                                     className="text-foreground text-sm leading-relaxed"
+                                    // biome-ignore lint/security/noDangerouslySetInnerHtml: Intentional HTML rendering for skill descriptions
                                     dangerouslySetInnerHTML={{
                                         __html: formatSkillDescription(skillData.description ?? "", skillData.blackboard ?? []),
                                     }}
@@ -182,10 +184,12 @@ export function SkillsContent({ operator }: SkillsContentProps) {
                                 const candidate = talent.Candidates?.[talent.Candidates.length - 1];
                                 if (!candidate) return null;
                                 return (
+                                    // biome-ignore lint/suspicious/noArrayIndexKey: Static talent list
                                     <div className="rounded-lg border border-border bg-card/30 p-4" key={idx}>
                                         <h4 className="mb-2 font-medium text-foreground">{candidate.Name ?? `Talent ${idx + 1}`}</h4>
                                         <p
                                             className="text-muted-foreground text-sm"
+                                            // biome-ignore lint/security/noDangerouslySetInnerHtml: Intentional HTML rendering for talent descriptions
                                             dangerouslySetInnerHTML={{
                                                 __html: formatSkillDescription(candidate.Description ?? "", candidate.Blackboard ?? []),
                                             }}

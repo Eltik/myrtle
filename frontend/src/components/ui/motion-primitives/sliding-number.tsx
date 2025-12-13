@@ -23,13 +23,14 @@ function Digit({ value, place }: { value: number; place: number }) {
         <div className="relative inline-block w-[1ch] overflow-y-clip overflow-x-visible tabular-nums leading-none">
             <div className="invisible">0</div>
             {Array.from({ length: 10 }, (_, i) => (
-                <Number key={i} mv={animatedValue} number={i} />
+                // biome-ignore lint/suspicious/noArrayIndexKey: Static array of 0-9 digits
+                <NumberDisplay key={i} mv={animatedValue} number={i} />
             ))}
         </div>
     );
 }
 
-function Number({ mv, number }: { mv: MotionValue<number>; number: number }) {
+function NumberDisplay({ mv, number }: { mv: MotionValue<number>; number: number }) {
     const uniqueId = useId();
     const [ref, bounds] = useMeasure();
 
@@ -86,6 +87,7 @@ export function SlidingNumber({ value, padStart = false, decimalSeparator = "." 
                 <>
                     <span>{decimalSeparator}</span>
                     {decimalPart.split("").map((_, index) => (
+                        // biome-ignore lint/suspicious/noArrayIndexKey: Static decimal digit positions
                         <Digit key={`decimal-${index}`} place={10 ** (decimalPart.length - index - 1)} value={parseInt(decimalPart, 10)} />
                     ))}
                 </>

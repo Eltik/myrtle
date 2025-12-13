@@ -140,6 +140,7 @@ function CarouselIndicator({ className, classNameButton }: CarouselIndicatorProp
         <div className={cn("absolute bottom-0 z-10 flex w-full items-center justify-center", className)}>
             <div className="flex space-x-2">
                 {Array.from({ length: itemsCount }, (_, i) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: Static indicator buttons
                     <button aria-label={`Go to slide ${i + 1}`} className={cn("h-2 w-2 rounded-full transition-opacity duration-300", index === i ? "bg-zinc-950 dark:bg-zinc-50" : "bg-zinc-900/50 dark:bg-zinc-100/50", classNameButton)} key={i} onClick={() => setIndex(i)} type="button" />
                 ))}
             </div>
@@ -176,7 +177,9 @@ function CarouselContent({ children, className, transition }: CarouselContentPro
         }, options);
 
         const childNodes = containerRef.current.children;
-        Array.from(childNodes).forEach((child) => observer.observe(child));
+        for (const child of Array.from(childNodes)) {
+            observer.observe(child);
+        }
 
         return () => observer.disconnect();
     }, []);
