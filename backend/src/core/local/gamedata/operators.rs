@@ -155,14 +155,16 @@ fn enrich_all_skill_level_up(
 ) -> Vec<crate::core::local::types::operator::AllSkillLevelUp> {
     all_skill_lvlup
         .iter()
-        .map(|lvlup| crate::core::local::types::operator::AllSkillLevelUp {
-            unlock_cond: lvlup.unlock_cond.clone(),
-            lvl_up_cost: lvlup
-                .lvl_up_cost
-                .iter()
-                .map(|cost| enrich_level_up_cost_item(cost, materials))
-                .collect(),
-        })
+        .map(
+            |lvlup| crate::core::local::types::operator::AllSkillLevelUp {
+                unlock_cond: lvlup.unlock_cond.clone(),
+                lvl_up_cost: lvlup
+                    .lvl_up_cost
+                    .iter()
+                    .map(|cost| enrich_level_up_cost_item(cost, materials))
+                    .collect(),
+            },
+        )
         .collect()
 }
 

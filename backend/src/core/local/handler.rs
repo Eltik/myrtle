@@ -251,7 +251,7 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
     };
 
     // ============ Enrich Data ============
-    let skills = enrich_all_skills(raw_skills);
+    let skills = enrich_all_skills(raw_skills, &asset_mappings);
 
     let operators = enrich_all_operators(
         &raw_operators,
