@@ -85,7 +85,7 @@ export function SkinsContent({ operator }: SkinsContentProps) {
     const selectedSkinData = skins.find((s) => s.id === selectedSkin);
 
     return (
-        <div className="p-4 md:p-6">
+        <div className="min-w-0 overflow-hidden p-4 md:p-6">
             {/* Header */}
             <div className="mb-6">
                 <h2 className="font-semibold text-foreground text-xl">{operator.name} Skins</h2>
@@ -94,7 +94,7 @@ export function SkinsContent({ operator }: SkinsContentProps) {
 
             {isLoading ? (
                 <div className="space-y-4">
-                    <Skeleton className="aspect-[3/4] w-full max-w-lg rounded-lg" />
+                    <Skeleton className="aspect-3/4 w-full max-w-lg rounded-lg" />
                     <div className="flex gap-2">
                         {[1, 2, 3].map((i) => (
                             <Skeleton className="h-20 w-20 rounded-lg" key={i} />
@@ -102,11 +102,11 @@ export function SkinsContent({ operator }: SkinsContentProps) {
                     </div>
                 </div>
             ) : (
-                <div className="grid gap-6 lg:grid-cols-[1fr,300px]">
+                <div className="grid min-w-0 gap-6 lg:grid-cols-[1fr,300px]">
                     {/* Main Image Viewer */}
                     <div className="relative">
                         <AnimatePresence mode="wait">
-                            <motion.div animate={{ opacity: 1 }} className="relative aspect-[3/4] w-full overflow-hidden rounded-lg border border-border bg-card/30" exit={{ opacity: 0 }} initial={{ opacity: 0 }} key={selectedSkin} transition={{ duration: 0.2 }}>
+                            <motion.div animate={{ opacity: 1 }} className="relative aspect-3/4 w-full overflow-hidden rounded-lg border border-border bg-card/30" exit={{ opacity: 0 }} initial={{ opacity: 0 }} key={selectedSkin} transition={{ duration: 0.2 }}>
                                 {imageLoading && (
                                     <div className="absolute inset-0 flex items-center justify-center">
                                         <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -186,7 +186,7 @@ export function SkinsContent({ operator }: SkinsContentProps) {
                                     type="button"
                                 >
                                     <Image alt={skin.name} className="object-cover" fill src={skin.thumbnail || "/placeholder.svg"} />
-                                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-1">
+                                    <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 to-transparent p-1">
                                         <span className="line-clamp-1 text-white text-xs">{skin.name}</span>
                                     </div>
                                 </button>

@@ -13,6 +13,7 @@ import type { Operator } from "~/types/api";
 import type { Range } from "~/types/api/impl/range";
 import { OperatorRange } from "../ui/operator-range";
 import { StatCard } from "../ui/stat-card";
+import { descriptionToHtml } from "~/lib/description-parser";
 
 interface InfoContentProps {
     operator: Operator;
@@ -108,11 +109,11 @@ export function InfoContent({ operator }: InfoContentProps) {
     const currentRange = ranges[currentRangeId];
 
     return (
-        <div className="p-4 md:p-6">
+        <div className="min-w-0 overflow-hidden p-4 md:p-6">
             {/* Header */}
             <div className="mb-6">
                 <h2 className="font-semibold text-foreground text-xl">Operator Information</h2>
-                <p className="text-muted-foreground text-sm">{operator.description}</p>
+                <p className="wrap-break-word text-muted-foreground text-sm">{operator.description}</p>
             </div>
 
             {/* Profile Info */}
@@ -210,7 +211,7 @@ export function InfoContent({ operator }: InfoContentProps) {
                     <h3 className="mb-3 font-medium text-foreground">Tags</h3>
                     <div className="flex flex-wrap gap-2">
                         {operator.tagList.map((tag, idx) => (
-                            <Badge className="bg-secondary/50" key={idx} variant="secondary">
+                            <Badge className="bg-accent" key={idx} variant="secondary">
                                 {tag}
                             </Badge>
                         ))}
@@ -235,7 +236,7 @@ export function InfoContent({ operator }: InfoContentProps) {
                             return (
                                 <div className="rounded-lg border border-border bg-secondary/20 p-4" key={idx}>
                                     <h4 className="mb-1 font-medium text-foreground">{candidate.Name ?? `Talent ${idx + 1}`}</h4>
-                                    <p className="text-muted-foreground text-sm" dangerouslySetInnerHTML={{ __html: candidate.Description ?? "" }} />
+                                    <p className="text-muted-foreground text-sm" dangerouslySetInnerHTML={{ __html: descriptionToHtml(candidate.Description ?? "", []) }} />
                                 </div>
                             );
                         })}

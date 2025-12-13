@@ -13,7 +13,7 @@ interface LevelUpContentProps {
 
 export function LevelUpContent({ operator }: LevelUpContentProps) {
     return (
-        <div className="p-4 md:p-6">
+        <div className="min-w-0 overflow-hidden p-4 md:p-6">
             {/* Header */}
             <div className="mb-6">
                 <h2 className="font-semibold text-foreground text-xl">Level-Up Costs</h2>
