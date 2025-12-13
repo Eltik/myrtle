@@ -9,6 +9,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/component
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/shadcn/select";
 import { Separator } from "~/components/ui/shadcn/separator";
 import { Slider } from "~/components/ui/shadcn/slider";
+import { descriptionToHtml } from "~/lib/description-parser";
 import { cn } from "~/lib/utils";
 import type { Operator } from "~/types/api";
 
@@ -45,15 +46,17 @@ export function SkillsContent({ operator }: SkillsContentProps) {
                 return "Offensive Recovery";
             case "INCREASE_WHEN_TAKEN_DAMAGE":
                 return "Defensive Recovery";
+            case "UNKNOWN_8":
+                return "N/A"
             default:
                 return spType;
         }
     };
 
     const getSkillTypeLabel = (skillType: number | string) => {
-        if (skillType === 0 || skillType === "0") return "Passive";
-        if (skillType === 1 || skillType === "1") return "Manual Trigger";
-        if (skillType === 2 || skillType === "2") return "Auto Trigger";
+        if (skillType === 0 || skillType === "PASSIVE") return "Passive";
+        if (skillType === 1 || skillType === "MANUAL") return "Manual Trigger";
+        if (skillType === 2 || skillType === "AUTO") return "Auto Trigger";
         return "Unknown";
     };
 
@@ -77,7 +80,6 @@ export function SkillsContent({ operator }: SkillsContentProps) {
                             onClick={() => setSelectedSkillIndex(idx)}
                             type="button"
                         >
-                            <Zap className="h-4 w-4" />
                             <span className="truncate">{name}</span>
                         </button>
                     );
@@ -157,7 +159,7 @@ export function SkillsContent({ operator }: SkillsContentProps) {
                                     className="text-foreground text-sm leading-relaxed"
                                     // biome-ignore lint/security/noDangerouslySetInnerHtml: Intentional HTML rendering for skill descriptions
                                     dangerouslySetInnerHTML={{
-                                        __html: formatSkillDescription(skillData.description ?? "", skillData.blackboard ?? []),
+                                        __html: descriptionToHtml(skillData.description ?? "", skillData.blackboard ?? []),
                                     }}
                                 />
                             </div>
@@ -191,7 +193,7 @@ export function SkillsContent({ operator }: SkillsContentProps) {
                                             className="text-muted-foreground text-sm"
                                             // biome-ignore lint/security/noDangerouslySetInnerHtml: Intentional HTML rendering for talent descriptions
                                             dangerouslySetInnerHTML={{
-                                                __html: formatSkillDescription(candidate.Description ?? "", candidate.Blackboard ?? []),
+                                                __html: descriptionToHtml(candidate.Description ?? "", candidate.Blackboard ?? []),
                                             }}
                                         />
                                     </div>
@@ -203,30 +205,4 @@ export function SkillsContent({ operator }: SkillsContentProps) {
             )}
         </div>
     );
-}
-
-function formatSkillDescription(text: string, blackboard: Array<{ key: string; value: number; valueStr?: string | null }>): string {
-    if (!text) return "";
-
-    let result = text.replace(/<.[a-z]{2,5}?\.[^<]+>|<\/[^<]*>|<color=[^>]+>/g, "").trim();
-
-    const regex = /\{([^}]+)\}/g;
-    result = result.replace(regex, (match, content) => {
-        const tag = content.split(":")[0]?.toLowerCase() ?? "";
-        const negative = tag.startsWith("-");
-        const key = negative ? tag.slice(1) : tag;
-        const variable = blackboard.find((v) => v.key === key);
-
-        if (!variable) return match;
-
-        const value = negative ? -variable.value : variable.value;
-        const isPercent = content.includes("%");
-
-        if (isPercent) {
-            return `<span class="font-semibold text-primary">${Math.round(value * 100)}%</span>`;
-        }
-        return `<span class="font-semibold text-primary">${value}</span>`;
-    });
-
-    return result;
 }
