@@ -8,7 +8,7 @@ function Slider({ className, defaultValue, value, min = 0, max = 100, ...props }
 
     return (
         <SliderPrimitive.Root
-            className={cn("relative flex w-full touch-none select-none items-center data-[orientation=vertical]:h-full data-[orientation=vertical]:min-h-44 data-[orientation=vertical]:w-auto data-[orientation=vertical]:flex-col data-[disabled]:opacity-50", className)}
+            className={cn("relative flex w-full touch-none select-none items-center data-[orientation=vertical]:h-full data-[orientation=vertical]:min-h-44 data-[orientation=vertical]:w-auto data-[orientation=vertical]:flex-col data-disabled:opacity-50", className)}
             data-slot="slider"
             defaultValue={defaultValue}
             max={max}

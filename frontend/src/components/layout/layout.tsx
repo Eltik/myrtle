@@ -16,9 +16,9 @@ export function Layout({ children }: LayoutProps) {
                 <div className="-bottom-40 absolute right-1/3 h-72 w-72 rounded-full bg-primary/15 blur-[90px]" />
             </div>
 
-            <div className="relative flex flex-1 flex-col">
+            <div className="relative flex min-w-0 flex-1 flex-col overflow-x-hidden">
                 <Header />
-                <main className="mx-auto mt-14 w-full min-w-0 max-w-6xl flex-1 px-4 py-8 md:px-8 md:py-12">{children}</main>
+                <main className="mx-auto mt-14 w-full min-w-0 max-w-6xl flex-1 overflow-x-hidden px-3 py-8 sm:px-4 md:px-8 md:py-12">{children}</main>
                 <Footer />
             </div>
         </div>

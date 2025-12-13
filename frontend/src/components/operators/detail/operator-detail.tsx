@@ -13,12 +13,12 @@ export function OperatorDetail({ operator }: OperatorDetailProps) {
     const [activeTab, setActiveTab] = useState<"info" | "skills" | "levelup" | "skins" | "audio">("info");
 
     return (
-        <div className="relative min-h-screen w-full">
+        <div className="relative min-h-screen w-full min-w-0 overflow-x-hidden">
             {/* Hero Section with parallax background */}
             <OperatorHero operator={operator} />
 
             {/* Content Section */}
-            <div className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-16 md:px-8">
+            <div className="relative z-10 mx-auto box-border w-full min-w-0 max-w-6xl overflow-hidden px-3 pb-16 sm:px-4 md:px-8">
                 <OperatorTabs activeTab={activeTab} onTabChange={setActiveTab} operator={operator} />
             </div>
         </div>

@@ -19,14 +19,14 @@ export function OperatorRange({ range, className }: OperatorRangeProps) {
     const { rows, cols, grid } = useMemo(() => normalizeRange(range), [range]);
 
     return (
-        <div className={cn("inline-block", className)}>
+        <div className={cn("max-w-full overflow-x-auto", className)}>
             <table className="border-collapse">
                 <tbody>
                     {Array.from({ length: rows }).map((_, rowIndex) => (
                         <tr key={rowIndex}>
                             {Array.from({ length: cols }).map((_, colIndex) => {
                                 const gridType = grid[rowIndex]?.[colIndex];
-                                return <td className={cn("h-6 w-6 border border-border/30", gridType === GridCell.active && "border-2 border-primary/60 bg-primary/20", gridType === GridCell.Operator && "bg-primary", gridType === GridCell.empty && "bg-transparent")} key={colIndex} />;
+                                return <td className={cn("h-5 w-5 border border-border/30 sm:h-6 sm:w-6", gridType === GridCell.active && "border-2 border-primary/60 bg-primary/20", gridType === GridCell.Operator && "bg-primary", gridType === GridCell.empty && "bg-transparent")} key={colIndex} />;
                             })}
                         </tr>
                     ))}

@@ -52,7 +52,7 @@ export function OperatorHero({ operator }: OperatorHeroProps) {
     const heroImageUrl = operator.skin ? `/api/cdn${operator.skin}` : `/api/cdn/upk/chararts/${operatorId}/${operatorId}_2.png`;
 
     return (
-        <div className="relative h-[280px] w-full overflow-visible contain-layout sm:h-80 md:h-[380px] lg:h-[420px]" ref={containerRef}>
+        <div className="relative h-[280px] w-full overflow-hidden contain-layout sm:h-80 md:h-[380px] lg:h-[420px]" ref={containerRef}>
             {/* Background Image */}
             <motion.div
                 className="backface-hidden absolute inset-x-0 top-0 transition-transform duration-75 ease-out will-change-transform contain-paint"
@@ -62,8 +62,8 @@ export function OperatorHero({ operator }: OperatorHeroProps) {
                 }}
             >
                 <div className="flex items-start justify-center pt-0 md:justify-end md:pr-[5%] lg:pr-[10%]">
-                    <div className="relative h-[480px] w-[380px] sm:h-[540px] sm:w-[440px] md:h-[620px] md:w-[520px] lg:h-[720px] lg:w-[600px]">
-                        <Image alt={operator.name} className={cn("object-contain object-top", rarityGlow)} fill priority sizes="(max-width: 640px) 380px, (max-width: 768px) 440px, (max-width: 1024px) 520px, 600px" src={heroImageUrl} />
+                    <div className="relative h-[480px] w-[85vw] max-w-[380px] sm:h-[540px] sm:w-[440px] sm:max-w-none md:h-[620px] md:w-[520px] lg:h-[720px] lg:w-[600px]">
+                        <Image alt={operator.name} className={cn("object-contain object-top", rarityGlow)} fill priority sizes="(max-width: 640px) 85vw, (max-width: 768px) 440px, (max-width: 1024px) 520px, 600px" src={heroImageUrl} />
                     </div>
                 </div>
             </motion.div>
@@ -72,7 +72,7 @@ export function OperatorHero({ operator }: OperatorHeroProps) {
 
             {/* Content */}
             <motion.div
-                className="backface-hidden relative z-10 mx-auto flex h-full max-w-6xl flex-col justify-end px-4 pb-4 transition-[transform,opacity] duration-75 ease-out will-change-[transform,opacity] sm:pb-5 md:px-8 md:pb-6 lg:pb-8"
+                className="backface-hidden relative z-10 mx-auto flex h-full max-w-6xl flex-col justify-end px-3 pb-4 transition-[transform,opacity] duration-75 ease-out will-change-[transform,opacity] sm:px-4 sm:pb-5 md:px-8 md:pb-6 lg:pb-8"
                 style={{
                     opacity: contentOpacity,
                     y: contentY,
