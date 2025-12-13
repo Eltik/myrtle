@@ -14,6 +14,8 @@ pub struct AssetMappings {
     pub module_small: HashMap<String, String>,
     /// Operator portraits: char_xxx_yyy_N.png exists in portraits folder
     pub portraits: std::collections::HashSet<String>,
+    /// Skill icons: skill_icon_xxx.png -> skill_icons_N
+    pub skill_icons: HashMap<String, String>,
 }
 
 impl AssetMappings {
@@ -113,18 +115,44 @@ impl AssetMappings {
             }
         }
 
-        // Scan portraits directory from {assets_dir}/portraits
-        let portraits_dir = assets_dir.join("portraits");
+        // Scan skill icon directories
+        for i in 0..10 {
+            let dir_name = format!("skill_icons_{}", i);
+            let dir_path = spritepack.join(&dir_name);
+            if dir_path.exists() {
+                if let Ok(entries) = std::fs::read_dir(&dir_path) {
+                    for entry in entries.flatten() {
+                        if let Some(file_name) = entry.file_name().to_str() {
+                            if file_name.ends_with(".png") {
+                                let base_name = file_name.trim_end_matches(".png");
+                                mappings
+                                    .skill_icons
+                                    .insert(base_name.to_string(), dir_name.clone());
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
-        eprintln!("Scanning portraits directory: {:?}", portraits_dir);
+        // Scan portraits from {assets_dir}/upk/chararts/{char_id}/*.png
+        let chararts_dir = assets_dir.join("upk/chararts");
 
-        if portraits_dir.exists() {
-            if let Ok(entries) = std::fs::read_dir(&portraits_dir) {
-                for entry in entries.flatten() {
-                    if let Some(file_name) = entry.file_name().to_str() {
-                        if file_name.ends_with(".png") {
-                            let base_name = file_name.trim_end_matches(".png");
-                            mappings.portraits.insert(base_name.to_string());
+        eprintln!("Scanning chararts directory: {:?}", chararts_dir);
+
+        if chararts_dir.exists() {
+            if let Ok(char_dirs) = std::fs::read_dir(&chararts_dir) {
+                for char_dir in char_dirs.flatten() {
+                    if char_dir.file_type().map(|t| t.is_dir()).unwrap_or(false) {
+                        if let Ok(files) = std::fs::read_dir(char_dir.path()) {
+                            for file in files.flatten() {
+                                if let Some(file_name) = file.file_name().to_str() {
+                                    if file_name.ends_with(".png") {
+                                        let base_name = file_name.trim_end_matches(".png");
+                                        mappings.portraits.insert(base_name.to_string());
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -132,11 +160,12 @@ impl AssetMappings {
         }
 
         eprintln!(
-            "Built asset mappings: {} avatars, {} skin portraits, {} module big, {} module small, {} portraits",
+            "Built asset mappings: {} avatars, {} skin portraits, {} module big, {} module small, {} skill icons, {} portraits",
             mappings.avatars.len(),
             mappings.skin_portraits.len(),
             mappings.module_big.len(),
             mappings.module_small.len(),
+            mappings.skill_icons.len(),
             mappings.portraits.len()
         );
 
@@ -194,19 +223,32 @@ impl AssetMappings {
 
     /// Get operator portrait path (E2 preferred, fallback to E0)
     /// Portrait naming: char_xxx_yyy_2.png (E2), char_xxx_yyy_1.png (E0)
+    /// Path format: /upk/chararts/{char_id}/{portrait_name}.png
     pub fn get_portrait_path(&self, char_id: &str) -> Option<String> {
         // Try E2 portrait first (e.g., char_002_amiya_2.png)
         let e2_name = format!("{}_2", char_id);
         if self.portraits.contains(&e2_name) {
-            return Some(format!("/portraits/{}.png", e2_name));
+            return Some(format!("/upk/chararts/{}/{}.png", char_id, e2_name));
         }
 
         // Try E0 portrait (e.g., char_002_amiya_1.png)
         let e0_name = format!("{}_1", char_id);
         if self.portraits.contains(&e0_name) {
-            return Some(format!("/portraits/{}.png", e0_name));
+            return Some(format!("/upk/chararts/{}/{}.png", char_id, e0_name));
         }
 
         None
+    }
+
+    /// Get skill icon path
+    /// skill_id: e.g., "skchr_phatm2_1" -> looks up "skill_icon_skchr_phatm2_1" in mappings
+    pub fn get_skill_icon_path(&self, skill_id: &str) -> String {
+        let icon_name = format!("skill_icon_{}", skill_id);
+        if let Some(dir) = self.skill_icons.get(&icon_name) {
+            format!("/upk/spritepack/{}/{}.png", dir, icon_name)
+        } else {
+            // Fallback to skill_icons_0
+            format!("/upk/spritepack/skill_icons_0/{}.png", icon_name)
+        }
     }
 }
