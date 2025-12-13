@@ -1,19 +1,20 @@
 "use client";
 
 import { ChevronDown, Coins, Dna, Grid3X3, Heart, Info, MapPin, Palette, Shield, Swords, Timer, User } from "lucide-react";
+import { motion } from "motion/react";
 import Image from "next/image";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
+import { Disclosure, DisclosureContent, DisclosureTrigger } from "~/components/ui/motion-primitives/disclosure";
 import { Badge } from "~/components/ui/shadcn/badge";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/shadcn/collapsible";
 import { Separator } from "~/components/ui/shadcn/separator";
 import { Slider } from "~/components/ui/shadcn/slider";
+import { descriptionToHtml } from "~/lib/description-parser";
 import { cn } from "~/lib/utils";
 import type { Operator } from "~/types/api";
 import type { Range } from "~/types/api/impl/range";
 import { OperatorRange } from "../ui/operator-range";
 import { StatCard } from "../ui/stat-card";
-import { descriptionToHtml } from "~/lib/description-parser";
 
 interface InfoContentProps {
     operator: Operator;
@@ -117,15 +118,19 @@ export function InfoContent({ operator }: InfoContentProps) {
             </div>
 
             {/* Profile Info */}
-            <Collapsible onOpenChange={setShowProfile} open={showProfile}>
-                <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-3 transition-colors hover:bg-secondary/50">
-                    <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-primary" />
-                        <span className="font-medium text-sm">Profile</span>
+            <Disclosure onOpenChange={setShowProfile} open={showProfile} transition={{ type: "spring", stiffness: 300, damping: 30 }}>
+                <DisclosureTrigger>
+                    <div className="flex w-full cursor-pointer items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-3 transition-colors hover:bg-secondary/50">
+                        <div className="flex items-center gap-2">
+                            <User className="h-4 w-4 text-primary" />
+                            <span className="font-medium text-sm">Profile</span>
+                        </div>
+                        <motion.div animate={{ rotate: showProfile ? 180 : 0 }} className="will-change-transform" transition={{ type: "spring", stiffness: 300, damping: 30 }}>
+                            <ChevronDown className="h-4 w-4" />
+                        </motion.div>
                     </div>
-                    <ChevronDown className={cn("h-4 w-4 transition-transform", showProfile && "rotate-180")} />
-                </CollapsibleTrigger>
-                <CollapsibleContent>
+                </DisclosureTrigger>
+                <DisclosureContent>
                     <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
                         {operator.profile?.basicInfo && (
                             <>
@@ -137,21 +142,25 @@ export function InfoContent({ operator }: InfoContentProps) {
                         )}
                         {operator.artists && operator.artists.length > 0 && <ProfileItem icon={Palette} label="Artist" value={operator.artists.join(", ")} />}
                     </div>
-                </CollapsibleContent>
-            </Collapsible>
+                </DisclosureContent>
+            </Disclosure>
 
             <Separator className="my-6" />
 
             {/* Controls */}
-            <Collapsible onOpenChange={setShowControls} open={showControls}>
-                <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-3 transition-colors hover:bg-secondary/50">
-                    <div className="flex items-center gap-2">
-                        <Grid3X3 className="h-4 w-4 text-primary" />
-                        <span className="font-medium text-sm">Operator Controls</span>
+            <Disclosure onOpenChange={setShowControls} open={showControls} transition={{ type: "spring", stiffness: 300, damping: 30 }}>
+                <DisclosureTrigger>
+                    <div className="flex w-full cursor-pointer items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-3 transition-colors hover:bg-secondary/50">
+                        <div className="flex items-center gap-2">
+                            <Grid3X3 className="h-4 w-4 text-primary" />
+                            <span className="font-medium text-sm">Operator Controls</span>
+                        </div>
+                        <motion.div animate={{ rotate: showControls ? 180 : 0 }} className="will-change-transform" transition={{ type: "spring", stiffness: 300, damping: 30 }}>
+                            <ChevronDown className="h-4 w-4" />
+                        </motion.div>
                     </div>
-                    <ChevronDown className={cn("h-4 w-4 transition-transform", showControls && "rotate-180")} />
-                </CollapsibleTrigger>
-                <CollapsibleContent>
+                </DisclosureTrigger>
+                <DisclosureContent>
                     <div className="mt-3 space-y-4 rounded-lg border border-border/50 bg-card/30 p-4">
                         <p className="text-muted-foreground text-xs">Adjust these controls to see how stats change at different levels, promotions, and trust levels.</p>
 
@@ -185,8 +194,8 @@ export function InfoContent({ operator }: InfoContentProps) {
                             <Slider className="w-full" max={200} min={0} onValueChange={(val) => setTrustLevel(val[0] ?? 100)} step={1} value={[trustLevel]} />
                         </div>
                     </div>
-                </CollapsibleContent>
-            </Collapsible>
+                </DisclosureContent>
+            </Disclosure>
 
             <Separator className="my-6" />
 
