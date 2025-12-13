@@ -1,5 +1,5 @@
 "use client";
-import { AnimatePresence, MotionConfig, motion, type Transition, type Variant, type Variants } from "motion/react";
+import { MotionConfig, motion, type Transition, type Variant, type Variants } from "motion/react";
 import * as React from "react";
 import { createContext, useContext, useEffect, useId, useState } from "react";
 import { cn } from "~/lib/utils";
@@ -108,13 +108,15 @@ export function DisclosureContent({ children, className }: { children: React.Rea
     const { open, variants } = useDisclosure();
     const uniqueId = useId();
 
+    // Use CSS grid technique for smooth height animation without layout shifts
+    // grid-template-rows: 0fr -> 1fr animates height without removing from DOM
     const BASE_VARIANTS: Variants = {
         expanded: {
-            height: "auto",
+            gridTemplateRows: "1fr",
             opacity: 1,
         },
         collapsed: {
-            height: 0,
+            gridTemplateRows: "0fr",
             opacity: 0,
         },
     };
@@ -125,15 +127,9 @@ export function DisclosureContent({ children, className }: { children: React.Rea
     };
 
     return (
-        <div className={cn("overflow-hidden", className)}>
-            <AnimatePresence initial={false}>
-                {open && (
-                    <motion.div animate="expanded" exit="collapsed" id={uniqueId} initial="collapsed" variants={combinedVariants}>
-                        {children}
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </div>
+        <motion.div animate={open ? "expanded" : "collapsed"} className={cn("grid", className)} id={uniqueId} initial={false} style={{ willChange: "grid-template-rows, opacity" }} variants={combinedVariants}>
+            <div className="overflow-hidden">{children}</div>
+        </motion.div>
     );
 }
 
