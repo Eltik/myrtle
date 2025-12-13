@@ -148,3 +148,9 @@
 .card-glow-hover:hover::before {
     opacity: 0.75;
 }
+
+/* GPU acceleration utilities for smooth animations */
+.backface-hidden {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
