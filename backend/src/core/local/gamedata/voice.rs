@@ -47,37 +47,30 @@ fn build_voice_url(voice_asset: &str, lang: &LangType) -> String {
     let original_dir = parts[0];
     let file = parts[1];
     let voice_dir = get_voice_dir(lang);
+    let original_dir_lower = original_dir.to_lowercase();
 
     // Handle directory name transformation based on language
-    let dir = if !original_dir.contains("_cn_topolect") {
-        let part_count = original_dir.split('_').count();
-        if !is_custom(lang) && part_count > 3 {
-            // Remove the last segment for non-custom languages
-            original_dir
-                .split('_')
-                .take(part_count - 1)
-                .collect::<Vec<_>>()
-                .join("_")
-        } else if is_custom(lang) && part_count > 3 {
+    // The voice_asset directory may contain language suffixes that need to be handled
+    let dir = if original_dir_lower.contains("_cn_topolect") {
+        // For CN_TOPOLECT voice assets (e.g., char_2026_yu_cn_topolect)
+        if is_custom(lang) && *lang == LangType::CnTopolect {
+            // Keep the full directory for CN_TOPOLECT language
             original_dir.to_string()
         } else if is_custom(lang) {
-            format!("{}{}", original_dir, appended_custom(lang))
+            // For other custom languages, replace the suffix
+            let base = original_dir_lower.replace("_cn_topolect", "");
+            format!("{}{}", base, appended_custom(lang))
         } else {
-            original_dir.to_string()
+            // For standard languages, strip the _cn_topolect suffix
+            original_dir_lower.replace("_cn_topolect", "")
         }
     } else {
-        let part_count = original_dir.split('_').count();
-        if !is_custom(lang) && part_count > 4 {
-            original_dir
-                .split('_')
-                .take(part_count - 2)
-                .collect::<Vec<_>>()
-                .join("_")
-        } else if is_custom(lang) && part_count > 4 {
-            original_dir.to_string()
-        } else if is_custom(lang) {
+        // For standard voice assets (e.g., char_2026_yu)
+        if is_custom(lang) {
+            // For custom languages, append the appropriate suffix
             format!("{}{}", original_dir, appended_custom(lang))
         } else {
+            // For standard languages, use as-is
             original_dir.to_string()
         }
     };

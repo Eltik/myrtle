@@ -155,12 +155,15 @@ pub async fn get_voices_by_char_id(
         3600,
         &headers,
         || async {
+            // Filter by char_id AND word_key == char_id to get only the primary voice set
+            // This excludes language-specific voice sets (like CN_TOPOLECT entries)
+            // which have word_key like "char_2026_yu_CN_TOPOLECT" instead of "char_2026_yu"
             let char_voices: Vec<_> = state
                 .game_data
                 .voices
                 .char_words
                 .values()
-                .filter(|voice| voice.char_id == char_id)
+                .filter(|voice| voice.char_id == char_id && voice.word_key == char_id)
                 .collect();
 
             if char_voices.is_empty() {
