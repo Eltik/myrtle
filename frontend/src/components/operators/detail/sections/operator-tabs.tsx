@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, Coins, Music, Palette, Sparkles } from "lucide-react";
+import { BookOpen, Coins, FileText, Music, Palette, Sparkles } from "lucide-react";
 
 import { motion } from "motion/react";
 import type React from "react";
@@ -10,10 +10,11 @@ import type { Operator } from "~/types/api";
 import { AudioContent } from "./tabs/audio-content";
 import { InfoContent } from "./tabs/info-content";
 import { LevelUpContent } from "./tabs/levelup-content";
+import { LoreContent } from "./tabs/lore-content";
 import { SkillsContent } from "./tabs/skills-content";
 import { SkinsContent } from "./tabs/skins-content";
 
-type TabType = "info" | "skills" | "levelup" | "skins" | "audio";
+type TabType = "info" | "skills" | "levelup" | "skins" | "audio" | "lore";
 
 interface OperatorTabsProps {
     operator: Operator;
@@ -27,6 +28,7 @@ const TABS: { type: TabType; label: string; icon: React.ElementType }[] = [
     { type: "levelup", label: "Level-Up Cost", icon: Coins },
     { type: "skins", label: "Skins", icon: Palette },
     { type: "audio", label: "Audio/SFX", icon: Music },
+    { type: "lore", label: "Lore", icon: FileText },
 ];
 
 export function OperatorTabs({ operator, activeTab, onTabChange }: OperatorTabsProps) {
@@ -95,6 +97,7 @@ export function OperatorTabs({ operator, activeTab, onTabChange }: OperatorTabsP
                         <LevelUpContent operator={operator} />
                         <SkinsContent operator={operator} />
                         <AudioContent operator={operator} />
+                        <LoreContent operator={operator} />
                     </TransitionPanel>
                 </div>
             </div>

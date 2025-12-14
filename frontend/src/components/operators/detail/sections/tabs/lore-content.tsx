@@ -1,0 +1,355 @@
+"use client";
+
+import { Activity, BookMarked, ChevronDown, FileText, FlaskConical, ScrollText, Sparkles, User } from "lucide-react";
+import { motion } from "motion/react";
+import type React from "react";
+import { memo, useCallback, useState } from "react";
+import { Disclosure, DisclosureContent, DisclosureTrigger } from "~/components/ui/motion-primitives/disclosure";
+import { Separator } from "~/components/ui/shadcn/separator";
+import { cn } from "~/lib/utils";
+import type { Operator } from "~/types/api";
+
+interface LoreContentProps {
+    operator: Operator;
+}
+
+/**
+ * Parses a paragraph of lore text and returns the appropriate styled React element.
+ * Handles different content types: headers, technical content, lists, quotes, emphasis, and statistics.
+ */
+function renderParagraph(paragraph: string, index: number): React.ReactNode {
+    // Skip empty paragraphs
+    const trimmed = paragraph.trim();
+    if (!trimmed) return null;
+
+    // Handle section headers with [HeaderName] format (e.g., [Race] Vouivre)
+    if (trimmed.startsWith("[") && trimmed.includes("]")) {
+        const closingBracket = trimmed.indexOf("]");
+        const headerText = trimmed.substring(1, closingBracket).trim();
+        const contentText = trimmed.substring(closingBracket + 1).trim();
+
+        // Headers related to stats or measurements use monospace styling
+        const statHeaders = [
+            "Race",
+            "Place of Birth",
+            "Date of Birth",
+            "Physical Strength",
+            "Mobility",
+            "Physical Resilience",
+            "Tactical Acumen",
+            "Combat Skill",
+            "Originium Arts Assimilation",
+            "Height",
+            "Weight",
+            "Code Name",
+            "Gender",
+            "Combat Experience",
+            "Cell-Originium Assimilation",
+            "Blood Originium-Crystal Density",
+            "Infection Status",
+        ];
+
+        const isStatHeader = statHeaders.includes(headerText);
+
+        return (
+            <div className="flex flex-col gap-1 py-1.5 sm:flex-row sm:items-baseline sm:gap-3" key={index}>
+                <span className="min-w-40 shrink-0 font-semibold text-primary text-xs uppercase tracking-wide sm:text-right">{headerText}</span>
+                <span className={cn("flex-1 text-foreground text-sm leading-relaxed", isStatHeader && "rounded-md bg-secondary/40 px-2 py-1 font-mono text-xs")}>{contentText || "—"}</span>
+            </div>
+        );
+    }
+
+    // Handle technical/scientific content (contains specific keywords and is relatively short)
+    const technicalKeywords = /\b(Originium|Arts|Cell|Oripathy|Protocol|System|Algorithm|Version|Module|Device|Catalyst|Infection|Crystal|Density|Assimilation)\b/i;
+    if (technicalKeywords.test(trimmed) && trimmed.length < 150) {
+        return (
+            <div className="my-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3" key={index}>
+                <code className="block font-mono text-foreground/90 text-xs leading-relaxed sm:text-sm">{trimmed}</code>
+            </div>
+        );
+    }
+
+    // Handle lists (lines starting with "-", "•", or "·")
+    if (/^[-•·]/.test(trimmed)) {
+        return (
+            <div className="flex gap-3 py-1 pl-2" key={index}>
+                <span className="mt-1 text-primary">•</span>
+                <span className="flex-1 text-muted-foreground text-sm leading-relaxed">{trimmed.substring(1).trim()}</span>
+            </div>
+        );
+    }
+
+    // Handle numbered lists (e.g., "1.", "2.", etc.)
+    if (/^\d+[.)]\s/.test(trimmed)) {
+        const match = trimmed.match(/^(\d+[.)])\s*(.*)$/);
+        if (match) {
+            return (
+                <div className="flex gap-3 py-1 pl-2" key={index}>
+                    <span className="min-w-6 font-mono text-primary text-sm">{match[1]}</span>
+                    <span className="flex-1 text-muted-foreground text-sm leading-relaxed">{match[2]}</span>
+                </div>
+            );
+        }
+    }
+
+    // Handle quotes (wrapped in quotes or starting with >)
+    if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'")) || trimmed.startsWith(">") || trimmed.startsWith("「") || trimmed.startsWith("『")) {
+        let quoteContent = trimmed;
+        if (trimmed.startsWith(">")) {
+            quoteContent = trimmed.substring(1).trim();
+        } else if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+            quoteContent = trimmed.substring(1, trimmed.length - 1).trim();
+        }
+
+        return (
+            <blockquote className="my-3 rounded-r-lg border-primary/40 border-l-4 bg-secondary/30 py-3 pr-4 pl-4" key={index}>
+                <p className="text-muted-foreground text-sm italic leading-relaxed">{quoteContent}</p>
+            </blockquote>
+        );
+    }
+
+    // Handle emphasized paragraphs (ALL CAPS sections longer than 10 chars)
+    if (trimmed.toUpperCase() === trimmed && trimmed.length > 10 && /[A-Z]/.test(trimmed)) {
+        return (
+            <p className="my-3 font-semibold text-amber-600 text-sm tracking-wide dark:text-amber-400" key={index}>
+                {trimmed}
+            </p>
+        );
+    }
+
+    // Handle paragraphs with numeric data or statistics (percentages, decimals)
+    const hasNumericData = /\b([0-9]+\.?[0-9]*%|[0-9]+[.,][0-9]+)\b/.test(trimmed);
+    if (hasNumericData && trimmed.length < 200) {
+        const parts = trimmed.split(/(\b[0-9]+\.?[0-9]*%|\b[0-9]+[.,][0-9]+\b)/g);
+
+        // Create unique keys by tracking occurrences of each part
+        const keyCount: Record<string, number> = {};
+        const getUniqueKey = (part: string) => {
+            keyCount[part] = (keyCount[part] || 0) + 1;
+            return `${part}-${keyCount[part]}`;
+        };
+
+        return (
+            <p className="my-2 text-muted-foreground text-sm leading-relaxed" key={index}>
+                {parts.map((part) => {
+                    const uniqueKey = getUniqueKey(part);
+                    return /\b([0-9]+\.?[0-9]*%|[0-9]+[.,][0-9]+)\b/.test(part) ? (
+                        <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400" key={uniqueKey}>
+                            {part}
+                        </span>
+                    ) : (
+                        <span key={uniqueKey}>{part}</span>
+                    );
+                })}
+            </p>
+        );
+    }
+
+    // Regular paragraph with good typography
+    return (
+        <p className="my-2 text-muted-foreground text-sm leading-relaxed" key={index}>
+            {trimmed}
+        </p>
+    );
+}
+
+/**
+ * Collapsible section component for lore entries
+ */
+const LoreSection = memo(function LoreSection({ title, icon: Icon, children, defaultOpen = false }: { title: string; icon: React.ElementType; children: React.ReactNode; defaultOpen?: boolean }) {
+    const [isOpen, setIsOpen] = useState(defaultOpen);
+
+    const handleToggle = useCallback((open: boolean) => {
+        setIsOpen(open);
+    }, []);
+
+    return (
+        <Disclosure onOpenChange={handleToggle} open={isOpen} transition={{ type: "spring", stiffness: 300, damping: 30 }}>
+            <DisclosureTrigger>
+                <div className="flex w-full cursor-pointer items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-3 transition-colors hover:bg-secondary/50">
+                    <div className="flex items-center gap-3">
+                        <Icon className="h-4 w-4 text-primary" />
+                        <span className="font-medium text-sm">{title}</span>
+                    </div>
+                    <motion.div animate={{ rotate: isOpen ? 180 : 0 }} className="will-change-transform" transition={{ type: "spring", stiffness: 300, damping: 30 }}>
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    </motion.div>
+                </div>
+            </DisclosureTrigger>
+            <DisclosureContent>
+                <div className="mt-3 rounded-lg border border-border/50 bg-card/30 p-4">{children}</div>
+            </DisclosureContent>
+        </Disclosure>
+    );
+});
+
+/**
+ * Individual story entry component
+ */
+const StoryEntry = memo(function StoryEntry({ storyText }: { storyText: string }) {
+    const paragraphs = storyText.split("\n");
+
+    return <div className="prose-sm max-w-none">{paragraphs.map((p, idx) => renderParagraph(p, idx))}</div>;
+});
+
+export const LoreContent = memo(function LoreContent({ operator }: LoreContentProps) {
+    const { profile, handbook } = operator;
+
+    const hasBasicInfo = profile?.basicInfo;
+    const hasPhysicalExam = profile?.physicalExam;
+    const hasStories = handbook?.storyTextAudio && handbook.storyTextAudio.length > 0;
+
+    return (
+        <div className="min-w-0 overflow-hidden p-4 md:p-6">
+            {/* Header */}
+            <div className="mb-6">
+                <h2 className="font-semibold text-foreground text-xl md:text-2xl">Operator Files</h2>
+                <p className="mt-1 text-muted-foreground text-sm">Personal records, archives, and classified documents</p>
+            </div>
+
+            {/* Basic Information Section */}
+            {hasBasicInfo && (
+                <>
+                    <LoreSection defaultOpen={true} icon={User} title="Basic Information">
+                        <div className="grid gap-1 divide-y divide-border/30">
+                            {profile.basicInfo.codeName && (
+                                <div className="flex flex-col gap-1 py-2 sm:flex-row sm:items-baseline sm:gap-3">
+                                    <span className="min-w-40 shrink-0 font-semibold text-primary text-xs uppercase tracking-wide sm:text-right">Code Name</span>
+                                    <span className="flex-1 text-foreground text-sm">{profile.basicInfo.codeName}</span>
+                                </div>
+                            )}
+                            {profile.basicInfo.gender && (
+                                <div className="flex flex-col gap-1 py-2 sm:flex-row sm:items-baseline sm:gap-3">
+                                    <span className="min-w-40 shrink-0 font-semibold text-primary text-xs uppercase tracking-wide sm:text-right">Gender</span>
+                                    <span className="flex-1 text-foreground text-sm">{profile.basicInfo.gender}</span>
+                                </div>
+                            )}
+                            {profile.basicInfo.race && (
+                                <div className="flex flex-col gap-1 py-2 sm:flex-row sm:items-baseline sm:gap-3">
+                                    <span className="min-w-40 shrink-0 font-semibold text-primary text-xs uppercase tracking-wide sm:text-right">Race</span>
+                                    <span className="flex-1 text-foreground text-sm">{profile.basicInfo.race}</span>
+                                </div>
+                            )}
+                            {profile.basicInfo.placeOfBirth && (
+                                <div className="flex flex-col gap-1 py-2 sm:flex-row sm:items-baseline sm:gap-3">
+                                    <span className="min-w-40 shrink-0 font-semibold text-primary text-xs uppercase tracking-wide sm:text-right">Place of Birth</span>
+                                    <span className="flex-1 text-foreground text-sm">{profile.basicInfo.placeOfBirth}</span>
+                                </div>
+                            )}
+                            {profile.basicInfo.dateOfBirth && (
+                                <div className="flex flex-col gap-1 py-2 sm:flex-row sm:items-baseline sm:gap-3">
+                                    <span className="min-w-40 shrink-0 font-semibold text-primary text-xs uppercase tracking-wide sm:text-right">Date of Birth</span>
+                                    <span className="flex-1 text-foreground text-sm">{profile.basicInfo.dateOfBirth}</span>
+                                </div>
+                            )}
+                            {profile.basicInfo.height && (
+                                <div className="flex flex-col gap-1 py-2 sm:flex-row sm:items-baseline sm:gap-3">
+                                    <span className="min-w-40 shrink-0 font-semibold text-primary text-xs uppercase tracking-wide sm:text-right">Height</span>
+                                    <span className="flex-1 rounded-md bg-secondary/40 px-2 py-1 font-mono text-foreground text-xs">{profile.basicInfo.height}</span>
+                                </div>
+                            )}
+                            {profile.basicInfo.combatExperience && (
+                                <div className="flex flex-col gap-1 py-2 sm:flex-row sm:items-baseline sm:gap-3">
+                                    <span className="min-w-40 shrink-0 font-semibold text-primary text-xs uppercase tracking-wide sm:text-right">Combat Experience</span>
+                                    <span className="flex-1 text-foreground text-sm">{profile.basicInfo.combatExperience}</span>
+                                </div>
+                            )}
+                            {profile.basicInfo.infectionStatus && (
+                                <div className="flex flex-col gap-1 py-2 sm:flex-row sm:items-baseline sm:gap-3">
+                                    <span className="min-w-40 shrink-0 font-semibold text-primary text-xs uppercase tracking-wide sm:text-right">Infection Status</span>
+                                    <span className={cn("flex-1 text-sm", profile.basicInfo.infectionStatus.toLowerCase().includes("non-infected") ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400")}>{profile.basicInfo.infectionStatus}</span>
+                                </div>
+                            )}
+                        </div>
+                    </LoreSection>
+                    <Separator className="my-4" />
+                </>
+            )}
+
+            {/* Physical Examination Section */}
+            {hasPhysicalExam && (
+                <>
+                    <LoreSection defaultOpen={false} icon={Activity} title="Physical Examination">
+                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            {profile.physicalExam.physicalStrength && (
+                                <div className="rounded-lg border border-border/30 bg-secondary/20 p-3">
+                                    <div className="mb-1 text-muted-foreground text-xs">Physical Strength</div>
+                                    <div className="font-semibold text-foreground">{profile.physicalExam.physicalStrength}</div>
+                                </div>
+                            )}
+                            {profile.physicalExam.mobility && (
+                                <div className="rounded-lg border border-border/30 bg-secondary/20 p-3">
+                                    <div className="mb-1 text-muted-foreground text-xs">Mobility</div>
+                                    <div className="font-semibold text-foreground">{profile.physicalExam.mobility}</div>
+                                </div>
+                            )}
+                            {profile.physicalExam.physicalResilience && (
+                                <div className="rounded-lg border border-border/30 bg-secondary/20 p-3">
+                                    <div className="mb-1 text-muted-foreground text-xs">Physical Resilience</div>
+                                    <div className="font-semibold text-foreground">{profile.physicalExam.physicalResilience}</div>
+                                </div>
+                            )}
+                            {profile.physicalExam.tacticalAcumen && (
+                                <div className="rounded-lg border border-border/30 bg-secondary/20 p-3">
+                                    <div className="mb-1 text-muted-foreground text-xs">Tactical Acumen</div>
+                                    <div className="font-semibold text-foreground">{profile.physicalExam.tacticalAcumen}</div>
+                                </div>
+                            )}
+                            {profile.physicalExam.combatSkill && (
+                                <div className="rounded-lg border border-border/30 bg-secondary/20 p-3">
+                                    <div className="mb-1 text-muted-foreground text-xs">Combat Skill</div>
+                                    <div className="font-semibold text-foreground">{profile.physicalExam.combatSkill}</div>
+                                </div>
+                            )}
+                            {profile.physicalExam.originiumArtsAssimilation && (
+                                <div className="rounded-lg border border-border/30 bg-secondary/20 p-3">
+                                    <div className="mb-1 text-muted-foreground text-xs">Originium Arts Assimilation</div>
+                                    <div className="font-semibold text-foreground">{profile.physicalExam.originiumArtsAssimilation}</div>
+                                </div>
+                            )}
+                        </div>
+                    </LoreSection>
+                    <Separator className="my-4" />
+                </>
+            )}
+
+            {/* Archive Files Section */}
+            {hasStories && (
+                <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                        <BookMarked className="h-5 w-5 text-primary" />
+                        <h3 className="font-semibold text-foreground text-lg">Archive Files</h3>
+                    </div>
+
+                    {handbook.storyTextAudio.map((storySection, sectionIndex) => {
+                        // Determine icon based on title
+                        let SectionIcon = ScrollText;
+                        const title = storySection.storyTitle.toLowerCase();
+                        if (title.includes("clinical") || title.includes("medical")) {
+                            SectionIcon = FlaskConical;
+                        } else if (title.includes("promotion") || title.includes("elite")) {
+                            SectionIcon = Sparkles;
+                        }
+
+                        return (
+                            <LoreSection defaultOpen={sectionIndex === 0} icon={SectionIcon} key={storySection.storyTitle} title={storySection.storyTitle}>
+                                {storySection.stories.map((story) => (
+                                    <StoryEntry key={story.storyText.slice(0, 50)} storyText={story.storyText} />
+                                ))}
+                            </LoreSection>
+                        );
+                    })}
+                </div>
+            )}
+
+            {/* Empty State */}
+            {!hasBasicInfo && !hasPhysicalExam && !hasStories && (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <FileText className="mb-4 h-12 w-12 text-muted-foreground/50" />
+                    <h3 className="mb-2 font-medium text-foreground">No Records Available</h3>
+                    <p className="text-muted-foreground text-sm">This operator's files are classified or not yet documented.</p>
+                </div>
+            )}
+        </div>
+    );
+});
