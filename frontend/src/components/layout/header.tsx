@@ -1,10 +1,12 @@
 "use client";
 
-import { ChevronDown, Ellipsis, Github, User } from "lucide-react";
+import { ChevronDown, Ellipsis, Github, Menu, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "~/components/ui/shadcn/accordion";
 import { Button } from "~/components/ui/shadcn/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "~/components/ui/shadcn/sheet";
 
 type NavItem = {
     label: string | React.ReactNode;
@@ -73,6 +75,7 @@ export function Header() {
     const [isNavHovered, setIsNavHovered] = useState(false);
     const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
     const [dropdownStyle, setDropdownStyle] = useState({ left: 0, width: 220 });
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const navRef = useRef<HTMLElement>(null);
     const itemRefs = useRef<(HTMLAnchorElement | HTMLButtonElement | null)[]>([]);
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -385,13 +388,80 @@ export function Header() {
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
+                        {/* Mobile Menu Button - Only visible on mobile */}
+                        <Sheet onOpenChange={setMobileMenuOpen} open={mobileMenuOpen}>
+                            <SheetTrigger asChild>
+                                <Button className="h-8 w-8 md:hidden" size="icon" variant="ghost">
+                                    <Menu className="h-4 w-4" />
+                                    <span className="sr-only">Open menu</span>
+                                </Button>
+                            </SheetTrigger>
+                            <SheetContent
+                                className="w-[280px] overflow-y-auto border-border sm:w-[320px]"
+                                side="left"
+                                style={{
+                                    background: "linear-gradient(180deg, oklch(0.15 0.005 285) 0%, oklch(0.12 0.005 285) 100%)",
+                                }}
+                            >
+                                <SheetHeader className="border-border border-b pb-4">
+                                    <SheetTitle className="flex items-center gap-2">
+                                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary" />
+                                        <span className="font-semibold text-foreground">myrtle.moe</span>
+                                    </SheetTitle>
+                                </SheetHeader>
+                                <nav className="flex flex-col gap-1 py-4">
+                                    {navItems.map((item, index) =>
+                                        item.dropdown ? (
+                                            <Accordion collapsible key={typeof item.label === "string" ? item.label : index} type="single">
+                                                <AccordionItem className="border-b-0" value={`item-${index}`}>
+                                                    <AccordionTrigger className={`rounded-md px-3 py-2.5 hover:no-underline ${isNavItemActive(item, router.pathname) ? "bg-primary/10 text-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}>
+                                                        <span className="font-medium">{item.label}</span>
+                                                    </AccordionTrigger>
+                                                    <AccordionContent className="pt-1 pb-1">
+                                                        <div className="ml-3 flex flex-col gap-0.5 border-border border-l pl-3">
+                                                            {item.dropdown.map((dropdownItem) => (
+                                                                <Link
+                                                                    className={`flex flex-col gap-0.5 rounded-md px-3 py-2 transition-colors ${router.pathname === dropdownItem.href ? "bg-primary/10 text-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}
+                                                                    href={dropdownItem.href}
+                                                                    key={dropdownItem.label}
+                                                                    onClick={() => setMobileMenuOpen(false)}
+                                                                >
+                                                                    <span className="font-medium text-sm">{dropdownItem.label}</span>
+                                                                    <span className="text-muted-foreground text-xs">{dropdownItem.description}</span>
+                                                                </Link>
+                                                            ))}
+                                                        </div>
+                                                    </AccordionContent>
+                                                </AccordionItem>
+                                            </Accordion>
+                                        ) : (
+                                            <Link
+                                                className={`rounded-md px-3 py-2.5 font-medium transition-colors ${isNavItemActive(item, router.pathname) ? "bg-primary/10 text-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}
+                                                href={item.href}
+                                                key={typeof item.label === "string" ? item.label : index}
+                                                onClick={() => setMobileMenuOpen(false)}
+                                            >
+                                                {item.label}
+                                            </Link>
+                                        ),
+                                    )}
+                                </nav>
+                                <div className="mt-auto border-border border-t px-2 py-4">
+                                    <Button className="w-full gap-2" variant="outline">
+                                        <User className="h-4 w-4" />
+                                        Login
+                                    </Button>
+                                </div>
+                            </SheetContent>
+                        </Sheet>
+
                         <Button asChild className="h-8 w-8" size="icon" variant="ghost">
                             <Link href="https://github.com" rel="noopener noreferrer" target="_blank">
                                 <Github className="h-4 w-4" />
                                 <span className="sr-only">GitHub</span>
                             </Link>
                         </Button>
-                        <Button className="h-8 gap-2 bg-transparent" size="sm" variant="outline">
+                        <Button className="hidden h-8 gap-2 bg-transparent md:flex" size="sm" variant="outline">
                             <User className="h-3.5 w-3.5" />
                             Login
                         </Button>
