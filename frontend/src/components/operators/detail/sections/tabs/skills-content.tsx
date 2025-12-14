@@ -192,7 +192,7 @@ export const SkillsContent = memo(function SkillsContent({ operator }: SkillsCon
                         <div className="mt-3 space-y-3">
                             {operator.talents.map((talent, idx) => {
                                 const candidate = talent.Candidates?.[talent.Candidates.length - 1];
-                                if (!candidate) return null;
+                                if (!candidate || !candidate.Name) return null;
                                 return (
                                     // biome-ignore lint/suspicious/noArrayIndexKey: Static talent list
                                     <div className="rounded-lg border border-border bg-card/30 p-4" key={idx}>
