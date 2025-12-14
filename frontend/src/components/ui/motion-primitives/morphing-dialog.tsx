@@ -9,7 +9,7 @@ import { cn } from "~/lib/utils";
 
 export type MorphingDialogContextType = {
     isOpen: boolean;
-    setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    setIsOpen: (value: boolean | ((prev: boolean) => boolean)) => void;
     uniqueId: string;
     triggerRef: React.RefObject<HTMLButtonElement | null>;
 };
@@ -27,12 +27,28 @@ function useMorphingDialog() {
 export type MorphingDialogProviderProps = {
     children: React.ReactNode;
     transition?: Transition;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
 };
 
-function MorphingDialogProvider({ children, transition }: MorphingDialogProviderProps) {
-    const [isOpen, setIsOpen] = useState(false);
+function MorphingDialogProvider({ children, transition, open: controlledOpen, onOpenChange }: MorphingDialogProviderProps) {
+    const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
     const uniqueId = useId();
     const triggerRef = useRef<HTMLButtonElement>(null);
+
+    const isControlled = controlledOpen !== undefined;
+    const isOpen = isControlled ? controlledOpen : uncontrolledOpen;
+
+    const setIsOpen = useCallback(
+        (value: boolean | ((prev: boolean) => boolean)) => {
+            const newValue = typeof value === "function" ? value(isOpen) : value;
+            if (!isControlled) {
+                setUncontrolledOpen(newValue);
+            }
+            onOpenChange?.(newValue);
+        },
+        [isControlled, isOpen, onOpenChange],
+    );
 
     const contextValue = useMemo(
         () => ({
@@ -41,7 +57,7 @@ function MorphingDialogProvider({ children, transition }: MorphingDialogProvider
             uniqueId,
             triggerRef,
         }),
-        [isOpen, uniqueId],
+        [isOpen, setIsOpen, uniqueId],
     );
 
     return (
@@ -54,11 +70,13 @@ function MorphingDialogProvider({ children, transition }: MorphingDialogProvider
 export type MorphingDialogProps = {
     children: React.ReactNode;
     transition?: Transition;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
 };
 
-function MorphingDialog({ children, transition }: MorphingDialogProps) {
+function MorphingDialog({ children, transition, open, onOpenChange }: MorphingDialogProps) {
     return (
-        <MorphingDialogProvider>
+        <MorphingDialogProvider onOpenChange={onOpenChange} open={open}>
             <MotionConfig transition={transition}>{children}</MotionConfig>
         </MorphingDialogProvider>
     );
@@ -196,7 +214,7 @@ function MorphingDialogContainer({ children }: MorphingDialogContainerProps) {
         <AnimatePresence initial={false} mode="sync">
             {isOpen && (
                 <>
-                    <motion.div animate={{ opacity: 1 }} className="fixed inset-0 h-full w-full bg-white/40 backdrop-blur-xs dark:bg-black/40" exit={{ opacity: 0 }} initial={{ opacity: 0 }} key={`backdrop-${uniqueId}`} />
+                    <motion.div animate={{ opacity: 1 }} className="fixed inset-0 h-full w-full bg-black/60 backdrop-blur-sm" exit={{ opacity: 0 }} initial={{ opacity: 0 }} key={`backdrop-${uniqueId}`} />
                     <div className="fixed inset-0 z-50 flex items-center justify-center">{children}</div>
                 </>
             )}
