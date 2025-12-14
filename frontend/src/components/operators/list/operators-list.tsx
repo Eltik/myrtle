@@ -1,8 +1,7 @@
 "use client";
 
-import { Grid3X3, LayoutList, Search, SlidersHorizontal } from "lucide-react";
+import { Grid3X3, LayoutList, Search } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
-import { MorphingPopover, MorphingPopoverContent, MorphingPopoverTrigger } from "~/components/ui/motion-primitives/morphing-popover";
 import { cn } from "~/lib/utils";
 import type { OperatorFromList } from "~/types/api/operators";
 import { CLASSES, GENDERS, ITEMS_PER_PAGE, RARITIES } from "./constants";
@@ -10,6 +9,7 @@ import { useOperatorFilters } from "./hooks";
 import { OperatorCard } from "./operator-card";
 import { OperatorFilters } from "./operator-filters";
 import { Pagination } from "./ui/impl/pagination";
+import { ResponsiveFilterContainer } from "./ui/impl/responsive-filter-container";
 
 export function OperatorsList({ data }: { data: OperatorFromList[] }) {
     // UI state
@@ -112,52 +112,43 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                         </button>
                     </div>
 
-                    {/* Filter Toggle with Morphing Popover */}
-                    <MorphingPopover onOpenChange={setShowFilters} open={showFilters}>
-                        <MorphingPopoverTrigger>
-                            <button className={cn("flex h-10 items-center gap-2 rounded-lg border px-3 transition-colors", showFilters || hasActiveFilters ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary/50 text-muted-foreground hover:text-foreground")} type="button">
-                                <SlidersHorizontal className="h-4 w-4" />
-                                <span className="font-medium text-sm">Filters</span>
-                                {hasActiveFilters && <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">{activeFilterCount}</span>}
-                            </button>
-                        </MorphingPopoverTrigger>
-                        <MorphingPopoverContent className="w-[calc(100vw-2rem)] max-w-4xl bg-card/95 p-0 drop-shadow-2xl backdrop-blur-sm sm:w-[600px] md:w-[700px] lg:w-[900px]">
-                            <OperatorFilters
-                                artists={filterOptions.artists}
-                                birthPlaces={filterOptions.birthPlaces}
-                                classes={[...CLASSES]}
-                                factions={filterOptions.factions}
-                                genders={[...GENDERS]}
-                                nations={filterOptions.nations}
-                                onArtistChange={setSelectedArtists}
-                                onBirthPlaceChange={setSelectedBirthPlaces}
-                                onClassChange={setSelectedClasses}
-                                onClearFilters={handleClearFilters}
-                                onFactionChange={setSelectedFactions}
-                                onGenderChange={setSelectedGenders}
-                                onNationChange={setSelectedNations}
-                                onRaceChange={setSelectedRaces}
-                                onRarityChange={setSelectedRarities}
-                                onSortByChange={setSortBy}
-                                onSortOrderChange={setSortOrder}
-                                onSubclassChange={setSelectedSubclasses}
-                                races={filterOptions.races}
-                                rarities={[...RARITIES]}
-                                selectedArtists={filters.selectedArtists}
-                                selectedBirthPlaces={filters.selectedBirthPlaces}
-                                selectedClasses={filters.selectedClasses}
-                                selectedFactions={filters.selectedFactions}
-                                selectedGenders={filters.selectedGenders}
-                                selectedNations={filters.selectedNations}
-                                selectedRaces={filters.selectedRaces}
-                                selectedRarities={filters.selectedRarities}
-                                selectedSubclasses={filters.selectedSubclasses}
-                                sortBy={filters.sortBy}
-                                sortOrder={filters.sortOrder}
-                                subclasses={filterOptions.subclasses}
-                            />
-                        </MorphingPopoverContent>
-                    </MorphingPopover>
+                    {/* Filter Toggle - Responsive: Dialog on mobile, Popover on desktop */}
+                    <ResponsiveFilterContainer activeFilterCount={activeFilterCount} hasActiveFilters={hasActiveFilters} onOpenChange={setShowFilters} open={showFilters}>
+                        <OperatorFilters
+                            artists={filterOptions.artists}
+                            birthPlaces={filterOptions.birthPlaces}
+                            classes={[...CLASSES]}
+                            factions={filterOptions.factions}
+                            genders={[...GENDERS]}
+                            nations={filterOptions.nations}
+                            onArtistChange={setSelectedArtists}
+                            onBirthPlaceChange={setSelectedBirthPlaces}
+                            onClassChange={setSelectedClasses}
+                            onClearFilters={handleClearFilters}
+                            onFactionChange={setSelectedFactions}
+                            onGenderChange={setSelectedGenders}
+                            onNationChange={setSelectedNations}
+                            onRaceChange={setSelectedRaces}
+                            onRarityChange={setSelectedRarities}
+                            onSortByChange={setSortBy}
+                            onSortOrderChange={setSortOrder}
+                            onSubclassChange={setSelectedSubclasses}
+                            races={filterOptions.races}
+                            rarities={[...RARITIES]}
+                            selectedArtists={filters.selectedArtists}
+                            selectedBirthPlaces={filters.selectedBirthPlaces}
+                            selectedClasses={filters.selectedClasses}
+                            selectedFactions={filters.selectedFactions}
+                            selectedGenders={filters.selectedGenders}
+                            selectedNations={filters.selectedNations}
+                            selectedRaces={filters.selectedRaces}
+                            selectedRarities={filters.selectedRarities}
+                            selectedSubclasses={filters.selectedSubclasses}
+                            sortBy={filters.sortBy}
+                            sortOrder={filters.sortOrder}
+                            subclasses={filterOptions.subclasses}
+                        />
+                    </ResponsiveFilterContainer>
                 </div>
             </div>
 
