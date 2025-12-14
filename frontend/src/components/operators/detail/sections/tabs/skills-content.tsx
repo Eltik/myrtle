@@ -3,7 +3,7 @@
 import { ChevronDown, Zap } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
-import { useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { Badge } from "~/components/ui/shadcn/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/shadcn/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/shadcn/select";
@@ -17,28 +17,30 @@ interface SkillsContentProps {
     operator: Operator;
 }
 
-export function SkillsContent({ operator }: SkillsContentProps) {
+export const SkillsContent = memo(function SkillsContent({ operator }: SkillsContentProps) {
     const [skillLevel, setSkillLevel] = useState((operator.skills?.[0]?.static?.Levels?.length ?? 1) - 1);
     const [selectedSkillIndex, setSelectedSkillIndex] = useState(operator.skills.length > 0 ? operator.skills.length - 1 : 0);
     const [showTalents, setShowTalents] = useState(true);
 
-    if (!operator.skills || operator.skills.length === 0) {
-        return (
-            <div className="flex items-center justify-center p-12">
-                <p className="text-muted-foreground">No skills available for this operator.</p>
-            </div>
-        );
-    }
-
     const selectedSkill = operator.skills[selectedSkillIndex];
     const skillData = selectedSkill?.static?.Levels?.[skillLevel];
 
-    const formatSkillLevel = (level: number) => {
+    const skillDescriptionHtml = useMemo(() => descriptionToHtml(skillData?.description ?? "", skillData?.blackboard ?? []), [skillData?.description, skillData?.blackboard]);
+
+    const handleSkillLevelChange = useCallback((val: number[]) => {
+        setSkillLevel(val[0] ?? 0);
+    }, []);
+
+    const handleSkillLevelSelect = useCallback((val: string) => {
+        setSkillLevel(Number.parseInt(val, 10));
+    }, []);
+
+    const formatSkillLevel = useCallback((level: number) => {
         if (level < 7) return `Lv.${level + 1}`;
         return `M${level - 6}`;
-    };
+    }, []);
 
-    const getSpTypeLabel = (spType: string) => {
+    const getSpTypeLabel = useCallback((spType: string) => {
         switch (spType) {
             case "INCREASE_WITH_TIME":
                 return "Auto Recovery";
@@ -51,14 +53,22 @@ export function SkillsContent({ operator }: SkillsContentProps) {
             default:
                 return spType;
         }
-    };
+    }, []);
 
-    const getSkillTypeLabel = (skillType: number | string) => {
+    const getSkillTypeLabel = useCallback((skillType: number | string) => {
         if (skillType === 0 || skillType === "PASSIVE") return "Passive";
         if (skillType === 1 || skillType === "MANUAL") return "Manual Trigger";
         if (skillType === 2 || skillType === "AUTO") return "Auto Trigger";
         return "Unknown";
-    };
+    }, []);
+
+    if (!operator.skills || operator.skills.length === 0) {
+        return (
+            <div className="flex items-center justify-center p-12">
+                <p className="text-muted-foreground">No skills available for this operator.</p>
+            </div>
+        );
+    }
 
     return (
         <div className="min-w-0 overflow-hidden p-4 md:p-6">
@@ -94,9 +104,9 @@ export function SkillsContent({ operator }: SkillsContentProps) {
                             <span className="text-muted-foreground text-sm">Skill Level</span>
                             <span className="font-mono text-foreground text-sm">{formatSkillLevel(skillLevel)}</span>
                         </div>
-                        <Slider className="w-full" max={(selectedSkill?.static?.Levels?.length ?? 1) - 1} min={0} onValueChange={(val) => setSkillLevel(val[0] ?? 0)} step={1} value={[skillLevel]} />
+                        <Slider className="w-full" max={(selectedSkill?.static?.Levels?.length ?? 1) - 1} min={0} onValueChange={handleSkillLevelChange} step={1} value={[skillLevel]} />
                     </div>
-                    <Select onValueChange={(val) => setSkillLevel(Number.parseInt(val, 10))} value={skillLevel.toString()}>
+                    <Select onValueChange={handleSkillLevelSelect} value={skillLevel.toString()}>
                         <SelectTrigger className="w-32">
                             <SelectValue />
                         </SelectTrigger>
@@ -158,9 +168,7 @@ export function SkillsContent({ operator }: SkillsContentProps) {
                                 <p
                                     className="text-foreground text-sm leading-relaxed"
                                     // biome-ignore lint/security/noDangerouslySetInnerHtml: Intentional HTML rendering for skill descriptions
-                                    dangerouslySetInnerHTML={{
-                                        __html: descriptionToHtml(skillData.description ?? "", skillData.blackboard ?? []),
-                                    }}
+                                    dangerouslySetInnerHTML={{ __html: skillDescriptionHtml }}
                                 />
                             </div>
                         </div>
@@ -205,4 +213,4 @@ export function SkillsContent({ operator }: SkillsContentProps) {
             )}
         </div>
     );
-}
+});

@@ -1,7 +1,7 @@
 "use client";
 
 import { Grid3X3, LayoutList, Search, SlidersHorizontal } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { MorphingPopover, MorphingPopoverContent, MorphingPopoverTrigger } from "~/components/ui/motion-primitives/morphing-popover";
 import { cn } from "~/lib/utils";
 import type { OperatorFromList } from "~/types/api/operators";
@@ -55,10 +55,30 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
         setCurrentPage(1);
     };
 
-    const handleSearchChange = (query: string) => {
-        setSearchQuery(query);
-        setCurrentPage(1);
-    };
+    const handleSearchChange = useCallback(
+        (query: string) => {
+            setSearchQuery(query);
+            setCurrentPage(1);
+        },
+        [setSearchQuery],
+    );
+
+    const hoverHandlers = useMemo(() => {
+        const handlers = new Map<string, (isOpen: boolean) => void>();
+        for (const operator of paginatedOperators) {
+            const operatorId = operator.id ?? "";
+            handlers.set(operatorId, (isOpen: boolean) => {
+                if (isOpen) {
+                    setHoveredOperator(operatorId);
+                    setIsGrayscaleActive(true);
+                } else {
+                    setHoveredOperator((current) => (current === operatorId ? null : current));
+                    setIsGrayscaleActive(false);
+                }
+            });
+        }
+        return handlers;
+    }, [paginatedOperators]);
 
     return (
         <div className="min-w-0 space-y-6">
@@ -162,23 +182,13 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
 
             {/* Operators Grid/List */}
             {paginatedOperators.length > 0 ? (
-                <div className={cn(viewMode === "grid" ? "grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-6 lg:gap-3 xl:grid-cols-8 xl:gap-4" : "flex flex-col gap-1")}>
+                <div className={cn(viewMode === "grid" ? "grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-6 lg:gap-3 xl:grid-cols-8 xl:gap-4" : "flex flex-col gap-1", "contain-layout")}>
                     {paginatedOperators.map((operator) => {
                         const operatorId = operator.id ?? "";
                         const isCurrentlyHovered = hoveredOperator === operatorId;
                         const shouldGrayscale = isGrayscaleActive && !isCurrentlyHovered;
 
-                        const handleHoverChange = (isOpen: boolean) => {
-                            if (isOpen) {
-                                setHoveredOperator(operatorId);
-                                setIsGrayscaleActive(true);
-                            } else if (hoveredOperator === operatorId) {
-                                setHoveredOperator(null);
-                                setIsGrayscaleActive(false);
-                            }
-                        };
-
-                        return <OperatorCard isHovered={isCurrentlyHovered} key={operatorId} onHoverChange={handleHoverChange} operator={operator} shouldGrayscale={shouldGrayscale} viewMode={viewMode} />;
+                        return <OperatorCard isHovered={isCurrentlyHovered} key={operatorId} onHoverChange={hoverHandlers.get(operatorId)} operator={operator} shouldGrayscale={shouldGrayscale} viewMode={viewMode} />;
                     })}
                 </div>
             ) : (

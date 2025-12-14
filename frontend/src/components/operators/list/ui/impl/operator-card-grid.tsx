@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { memo } from "react";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "~/components/ui/shadcn/hover-card";
 import { capitalize, cn, formatProfession, formatSubProfession, rarityToNumber } from "~/lib/utils";
 import type { OperatorFromList } from "~/types/api/operators";
@@ -14,14 +15,14 @@ interface OperatorCardGridProps {
     onHoverChange?: (isOpen: boolean) => void;
 }
 
-export function OperatorCardGrid({ operator, isHovered = false, shouldGrayscale = false, onHoverChange }: OperatorCardGridProps) {
+export const OperatorCardGrid = memo(function OperatorCardGrid({ operator, isHovered = false, shouldGrayscale = false, onHoverChange }: OperatorCardGridProps) {
     const rarityNum = rarityToNumber(operator.rarity);
     const rarityColor = RARITY_COLORS[rarityNum] ?? "#ffffff";
     const rarityBlurColor = RARITY_BLUR_COLORS[rarityNum] ?? "#aaaaaa";
     const operatorId = operator.id ?? "";
 
     const cardContent = (
-        <Link aria-label={`View details for ${operator.name}`} className="group relative flex aspect-2/3 overflow-clip rounded-md border border-muted/50 bg-card transition hover:rounded-lg" href={`/operators?id=${operatorId}`}>
+        <Link aria-label={`View details for ${operator.name}`} className="group relative flex aspect-2/3 overflow-clip rounded-md border border-muted/50 bg-card transition contain-content hover:rounded-lg" href={`/operators?id=${operatorId}`}>
             {/* Faction background */}
             <div className="-translate-x-8 -translate-y-4 absolute">
                 <FactionLogo className="opacity-5 transition-opacity group-hover:opacity-10" nationId={operator.nationId} size={360} teamId={operator.teamId} />
@@ -89,4 +90,4 @@ export function OperatorCardGrid({ operator, isHovered = false, shouldGrayscale 
             </HoverCardContent>
         </HoverCard>
     );
-}
+});

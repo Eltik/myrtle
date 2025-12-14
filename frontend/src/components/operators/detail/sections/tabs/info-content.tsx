@@ -4,7 +4,7 @@ import { ChevronDown, Coins, Diamond, Dna, Grid3X3, Heart, Hourglass, Info, MapP
 import { motion } from "motion/react";
 import Image from "next/image";
 import type React from "react";
-import { useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { Disclosure, DisclosureContent, DisclosureTrigger } from "~/components/ui/motion-primitives/disclosure";
 import { Badge } from "~/components/ui/shadcn/badge";
 import { Separator } from "~/components/ui/shadcn/separator";
@@ -57,7 +57,7 @@ interface InfoContentProps {
     operator: Operator;
 }
 
-export function InfoContent({ operator }: InfoContentProps) {
+export const InfoContent = memo(function InfoContent({ operator }: InfoContentProps) {
     // State for operator configuration
     const [phaseIndex, setPhaseIndex] = useState(operator.phases.length - 1);
     const [level, setLevel] = useState(operator.phases[operator.phases.length - 1]?.MaxLevel ?? 1);
@@ -70,15 +70,19 @@ export function InfoContent({ operator }: InfoContentProps) {
     const currentPhase = operator.phases[phaseIndex];
     const currentRangeId = currentPhase?.RangeId ?? "";
 
-    // Fetch ranges
+    const rangeIds = useMemo(() => {
+        const ids = new Set<string>();
+        for (const phase of operator.phases) {
+            if (phase.RangeId) ids.add(phase.RangeId);
+        }
+        return Array.from(ids);
+    }, [operator.phases]);
+
     useEffect(() => {
         const fetchRanges = async () => {
-            const rangeIds = new Set<string>();
-            operator.phases.forEach((phase) => {
-                if (phase.RangeId) rangeIds.add(phase.RangeId);
-            });
+            if (rangeIds.length === 0) return;
 
-            const rangePromises = Array.from(rangeIds).map(async (rangeId) => {
+            const rangePromises = rangeIds.map(async (rangeId) => {
                 try {
                     const res = await fetch("/api/static", {
                         method: "POST",
@@ -94,16 +98,16 @@ export function InfoContent({ operator }: InfoContentProps) {
 
             const results = await Promise.all(rangePromises);
             const rangeMap: Record<string, Range> = {};
-            results.forEach((result) => {
+            for (const result of results) {
                 if (result?.range) {
                     rangeMap[result.id] = result.range;
                 }
-            });
+            }
             setRanges(rangeMap);
         };
 
         fetchRanges();
-    }, [operator.phases]);
+    }, [rangeIds]);
 
     // Calculate stats based on level and phase
     const attributeStats = useMemo(() => {
@@ -170,13 +174,23 @@ export function InfoContent({ operator }: InfoContentProps) {
         return talentBlackboards;
     }, [operator.trait, operator.talents]);
 
+    const formattedDescription = useMemo(() => formatOperatorDescription(operator.description, descriptionBlackboard), [operator.description, descriptionBlackboard]);
+
+    const handleLevelChange = useCallback((val: number[]) => {
+        setLevel(val[0] ?? 1);
+    }, []);
+
+    const handleTrustChange = useCallback((val: number[]) => {
+        setTrustLevel(val[0] ?? 100);
+    }, []);
+
     return (
         <div className="min-w-0 overflow-hidden p-4 md:p-6">
             {/* Header */}
             <div className="mb-6">
                 <h2 className="font-semibold text-foreground text-xl">Operator Information</h2>
                 {/* biome-ignore lint/security/noDangerouslySetInnerHtml: Intentional HTML rendering for operator descriptions */}
-                <p className="wrap-break-word text-muted-foreground text-sm" dangerouslySetInnerHTML={{ __html: formatOperatorDescription(operator.description, descriptionBlackboard) }} />
+                <p className="wrap-break-word text-muted-foreground text-sm" dangerouslySetInnerHTML={{ __html: formattedDescription }} />
             </div>
 
             {/* Profile Info */}
@@ -245,7 +259,7 @@ export function InfoContent({ operator }: InfoContentProps) {
                                     {level} / {currentPhase?.MaxLevel ?? 1}
                                 </span>
                             </div>
-                            <Slider className="w-full" max={currentPhase?.MaxLevel ?? 1} min={1} onValueChange={(val) => setLevel(val[0] ?? 1)} step={1} value={[level]} />
+                            <Slider className="w-full" max={currentPhase?.MaxLevel ?? 1} min={1} onValueChange={handleLevelChange} step={1} value={[level]} />
                         </div>
 
                         {/* Trust Slider */}
@@ -254,7 +268,7 @@ export function InfoContent({ operator }: InfoContentProps) {
                                 <span className="text-muted-foreground text-sm">Trust</span>
                                 <span className="font-mono text-foreground text-sm">{trustLevel}%</span>
                             </div>
-                            <Slider className="w-full" max={200} min={0} onValueChange={(val) => setTrustLevel(val[0] ?? 100)} step={1} value={[trustLevel]} />
+                            <Slider className="w-full" max={200} min={0} onValueChange={handleTrustChange} step={1} value={[trustLevel]} />
                         </div>
                     </div>
                 </DisclosureContent>
@@ -320,9 +334,9 @@ export function InfoContent({ operator }: InfoContentProps) {
             )}
         </div>
     );
-}
+});
 
-function ProfileItem({ icon: Icon, label, value }: { icon?: React.ElementType; label: string; value: string }) {
+const ProfileItem = memo(function ProfileItem({ icon: Icon, label, value }: { icon?: React.ElementType; label: string; value: string }) {
     return (
         <div className="rounded-lg border border-border/50 bg-secondary/20 p-3">
             <div className="flex items-center gap-2 text-muted-foreground text-xs">
@@ -332,4 +346,4 @@ function ProfileItem({ icon: Icon, label, value }: { icon?: React.ElementType; l
             <div className="mt-1 font-medium text-foreground text-sm">{value}</div>
         </div>
     );
-}
+});
