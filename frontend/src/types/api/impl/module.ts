@@ -144,7 +144,7 @@ export interface Module {
     unlockLevel: number;
     unlockFavorPoint: number;
     missionList: string[];
-    itemCost: Record<string, ModuleItemCost> | null;
+    itemCost: Record<string, ModuleItemCost[]> | null;
     type: ModuleType;
     uniEquipGetTime: number;
     charEquipOrder: number;

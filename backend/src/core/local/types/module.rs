@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use super::material::ItemType;
-use super::serde_helpers::deserialize_fb_map;
+use super::serde_helpers::{deserialize_fb_map, deserialize_fb_map_option};
 
 // ============================================================================
 // Enums
@@ -44,6 +44,19 @@ impl Default for ModuleTarget {
 // Nested Structs
 // ============================================================================
 
+/// Raw module item cost from game data (uses lowercase field names)
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RawModuleItemCost {
+    #[serde(alias = "Id")]
+    pub id: String,
+    #[serde(alias = "Count")]
+    pub count: i32,
+    #[serde(rename = "type", alias = "Type_")]
+    pub item_type: ItemType,
+}
+
+/// Processed module item cost with additional fields
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ModuleItemCost {
@@ -257,8 +270,12 @@ pub struct RawModule {
     pub unlock_favor_point: i32,
     #[serde(alias = "MissionList")]
     pub mission_list: Vec<String>,
-    #[serde(alias = "ItemCost", default)]
-    pub item_cost: Option<Vec<serde_json::Value>>,
+    #[serde(
+        alias = "ItemCost",
+        default,
+        deserialize_with = "deserialize_fb_map_option"
+    )]
+    pub item_cost: Option<HashMap<i32, Vec<RawModuleItemCost>>>,
     #[serde(rename = "type", alias = "Type_")]
     pub module_type: ModuleType,
     #[serde(alias = "UniEquipGetTime")]
@@ -288,7 +305,7 @@ pub struct Module {
     pub unlock_level: i32,
     pub unlock_favor_point: i32,
     pub mission_list: Vec<String>,
-    pub item_cost: Option<HashMap<String, ModuleItemCost>>,
+    pub item_cost: Option<HashMap<String, Vec<ModuleItemCost>>>,
     #[serde(rename = "type")]
     pub module_type: ModuleType,
     pub uni_equip_get_time: i64,
