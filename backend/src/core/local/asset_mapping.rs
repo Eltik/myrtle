@@ -137,6 +137,30 @@ impl AssetMappings {
             }
         }
 
+        // Scan alternate skill icons location at {assets_dir}/upk/arts/skills/
+        // Some newer skill icons are stored here instead of spritepack
+        let arts_skills_dir = assets_dir.join("upk/arts/skills");
+        if arts_skills_dir.exists() {
+            if let Ok(entries) = std::fs::read_dir(&arts_skills_dir) {
+                for entry in entries.flatten() {
+                    if entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
+                        if let Some(dir_name) = entry.file_name().to_str() {
+                            // Directory name is the skill icon name (e.g., skill_icon_skchr_angel2_3)
+                            // File inside is {dir_name}.png
+                            let png_path = entry.path().join(format!("{}.png", dir_name));
+                            if png_path.exists() {
+                                // Use special marker for arts/skills location
+                                mappings.skill_icons.insert(
+                                    dir_name.to_string(),
+                                    format!("arts_skills:{}", dir_name),
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         // Scan portraits from {assets_dir}/upk/arts/charportraits/pack{N}/*.png
         let charportraits_dir = assets_dir.join("upk/arts/charportraits");
 
@@ -313,7 +337,12 @@ impl AssetMappings {
     pub fn get_skill_icon_path(&self, skill_id: &str) -> String {
         let icon_name = format!("skill_icon_{}", skill_id);
         if let Some(dir) = self.skill_icons.get(&icon_name) {
-            format!("/upk/spritepack/{}/{}.png", dir, icon_name)
+            // Check for arts/skills alternate location (prefixed with "arts_skills:")
+            if let Some(subdir) = dir.strip_prefix("arts_skills:") {
+                format!("/upk/arts/skills/{}/{}.png", subdir, icon_name)
+            } else {
+                format!("/upk/spritepack/{}/{}.png", dir, icon_name)
+            }
         } else {
             // Fallback to skill_icons_0
             format!("/upk/spritepack/skill_icons_0/{}.png", icon_name)
