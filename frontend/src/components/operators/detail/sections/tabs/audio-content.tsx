@@ -1,7 +1,7 @@
 "use client";
 
 import { Pause, Play, Volume2, VolumeX } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "~/components/ui/shadcn/button";
 import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/shadcn/select";
@@ -47,6 +47,24 @@ export function AudioContent({ operator }: AudioContentProps) {
     const [progress, setProgress] = useState(0);
 
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const animationFrameRef = useRef<number | null>(null);
+
+    const updateProgress = useCallback(() => {
+        if (audioRef.current && !audioRef.current.paused) {
+            const audio = audioRef.current;
+            if (audio.duration > 0) {
+                setProgress((audio.currentTime / audio.duration) * 100);
+            }
+            animationFrameRef.current = requestAnimationFrame(updateProgress);
+        }
+    }, []);
+
+    const stopProgressAnimation = useCallback(() => {
+        if (animationFrameRef.current) {
+            cancelAnimationFrame(animationFrameRef.current);
+            animationFrameRef.current = null;
+        }
+    }, []);
 
     // Derive available languages from voice data
     const availableLanguages = useMemo(() => {
@@ -76,14 +94,16 @@ export function AudioContent({ operator }: AudioContentProps) {
     }, [availableLanguages, selectedLanguage]);
 
     // Stop audio when language changes
+    // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally run when selectedLanguage changes
     useEffect(() => {
         if (audioRef.current) {
             audioRef.current.pause();
             audioRef.current = null;
         }
+        stopProgressAnimation();
         setPlayingId(null);
         setProgress(0);
-    }, [selectedLanguage]);
+    }, [selectedLanguage, stopProgressAnimation]);
 
     // Fetch voice data
     useEffect(() => {
@@ -116,6 +136,7 @@ export function AudioContent({ operator }: AudioContentProps) {
         if (playingId === voice.id) {
             // Pause current
             audioRef.current?.pause();
+            stopProgressAnimation();
             setPlayingId(null);
             setProgress(0);
             return;
@@ -125,6 +146,7 @@ export function AudioContent({ operator }: AudioContentProps) {
         if (audioRef.current) {
             audioRef.current.pause();
         }
+        stopProgressAnimation();
 
         // Find the voice URL for the selected language from backend data
         const voiceData = voice.data?.find((d) => d.language === selectedLanguage);
@@ -139,26 +161,29 @@ export function AudioContent({ operator }: AudioContentProps) {
         const audio = new Audio(audioUrl);
         audio.volume = isMuted ? 0 : volume / 100;
         audio.onended = () => {
+            stopProgressAnimation();
             setPlayingId(null);
             setProgress(0);
         };
         audio.onerror = () => {
             console.error("Failed to load audio:", audioUrl);
+            stopProgressAnimation();
             setPlayingId(null);
             setProgress(0);
-        };
-        audio.ontimeupdate = () => {
-            if (audio.duration > 0) {
-                setProgress((audio.currentTime / audio.duration) * 100);
-            }
         };
 
         audioRef.current = audio;
         setProgress(0);
-        audio.play().catch(() => {
-            setPlayingId(null);
-            setProgress(0);
-        });
+        audio
+            .play()
+            .then(() => {
+                animationFrameRef.current = requestAnimationFrame(updateProgress);
+            })
+            .catch(() => {
+                stopProgressAnimation();
+                setPlayingId(null);
+                setProgress(0);
+            });
         setPlayingId(voice.id);
     };
 
@@ -173,8 +198,9 @@ export function AudioContent({ operator }: AudioContentProps) {
     useEffect(() => {
         return () => {
             audioRef.current?.pause();
+            stopProgressAnimation();
         };
-    }, []);
+    }, [stopProgressAnimation]);
 
     return (
         <div className="min-w-0 overflow-hidden p-4 md:p-6">
@@ -218,14 +244,22 @@ export function AudioContent({ operator }: AudioContentProps) {
                 <ScrollArea className="h-[500px]">
                     <div className="space-y-2 pr-4">
                         {voices.map((voice) => (
-                            <div className={cn("group flex items-start gap-3 rounded-lg border border-border p-3 transition-colors", playingId === voice.id ? "border-primary bg-primary/10" : "bg-card/30 hover:bg-secondary/30")} key={voice.id}>
-                                <Button className="shrink-0" onClick={() => playVoice(voice)} size="icon" variant={playingId === voice.id ? "default" : "secondary"}>
-                                    {playingId === voice.id ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                                </Button>
-                                <div className="min-w-0 flex-1">
-                                    <h4 className="mb-1 font-medium text-foreground text-sm">{voice.title}</h4>
-                                    <p className="line-clamp-2 text-muted-foreground text-xs">{voice.text}</p>
+                            <div className={cn("group relative overflow-hidden rounded-lg border border-border transition-colors", playingId === voice.id ? "border-primary bg-primary/10" : "bg-card/30 hover:bg-secondary/30")} key={voice.id}>
+                                <div className="flex items-start gap-3 p-3">
+                                    <Button className="shrink-0" onClick={() => playVoice(voice)} size="icon" variant={playingId === voice.id ? "default" : "secondary"}>
+                                        {playingId === voice.id ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                                    </Button>
+                                    <div className="min-w-0 flex-1">
+                                        <h4 className="mb-1 font-medium text-foreground text-sm">{voice.title}</h4>
+                                        <p className="line-clamp-2 text-muted-foreground text-xs">{voice.text}</p>
+                                    </div>
                                 </div>
+                                {/* Progress bar */}
+                                {playingId === voice.id && (
+                                    <div className="absolute inset-x-0 bottom-0 h-1 bg-primary/20">
+                                        <div className="h-full bg-primary" style={{ width: `${progress}%` }} />
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
