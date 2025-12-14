@@ -167,7 +167,7 @@ export const SkinsContent = memo(function SkinsContent({ operator }: SkinsConten
                                                     type="button"
                                                 >
                                                     <Image alt={skin.name} className="object-cover" fill src={skin.thumbnail || "/placeholder.svg"} />
-                                                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-2 pt-4 pb-1.5">
+                                                    <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/90 via-black/60 to-transparent px-2 pt-4 pb-1.5">
                                                         <span className="line-clamp-1 font-medium text-white text-xs drop-shadow-sm">{skin.name}</span>
                                                     </div>
                                                 </button>
@@ -192,7 +192,7 @@ export const SkinsContent = memo(function SkinsContent({ operator }: SkinsConten
                                                 type="button"
                                             >
                                                 <Image alt={skin.name} className="object-cover" fill src={skin.thumbnail || "/placeholder.svg"} />
-                                                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-2 pt-4 pb-1.5">
+                                                <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/90 via-black/60 to-transparent px-2 pt-4 pb-1.5">
                                                     <span className="line-clamp-1 font-medium text-white text-xs drop-shadow-sm">{skin.name}</span>
                                                 </div>
                                             </button>

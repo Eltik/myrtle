@@ -101,7 +101,7 @@ export function OperatorHero({ operator }: OperatorHeroProps) {
                                 <span className={cn("font-semibold text-lg tracking-wider", rarityColor)}>{Array(rarityNum).fill("★").join("")}</span>
                                 <span className="text-muted-foreground/50">|</span>
                                 <span className="text-muted-foreground text-sm md:text-base">
-                                    {formatSubProfession(operator.subProfessionId)} {formatProfession(operator.profession)}
+                                    {formatSubProfession(operator.subProfessionId).split(" ")[0]} {formatProfession(operator.profession)}
                                 </span>
                             </div>
                         </motion.div>
