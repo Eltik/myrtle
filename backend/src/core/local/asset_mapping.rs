@@ -18,6 +18,8 @@ pub struct AssetMappings {
     pub skill_icons: HashMap<String, String>,
     /// Full character art: char_xxx_yyy -> (has_e0, has_e2)
     pub chararts: HashMap<String, (bool, bool)>,
+    /// Item icons: icon_id.png -> directory path (spritepack or arts/items/icons)
+    pub item_icons: HashMap<String, String>,
 }
 
 impl AssetMappings {
@@ -219,15 +221,63 @@ impl AssetMappings {
             }
         }
 
+        // Scan item icon directories in spritepack
+        let item_icon_dirs = [
+            "ui_item_icons_h1_0",
+            "ui_item_icons_h1_acticon_0",
+            "ui_item_icons_h1_apsupply_0",
+            "ui_item_icons_h1_classpotential_0",
+            "ui_item_icons_h1_potential_0",
+        ];
+        for dir_name in &item_icon_dirs {
+            let dir_path = spritepack.join(dir_name);
+            if dir_path.exists() {
+                if let Ok(entries) = std::fs::read_dir(&dir_path) {
+                    for entry in entries.flatten() {
+                        if let Some(file_name) = entry.file_name().to_str() {
+                            if file_name.ends_with(".png") {
+                                let base_name = file_name.trim_end_matches(".png");
+                                // Only insert if not already present (first directory wins)
+                                mappings
+                                    .item_icons
+                                    .entry(base_name.to_string())
+                                    .or_insert_with(|| format!("spritepack:{}", dir_name));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Also scan the standard arts/items/icons directory
+        let arts_items_dir = assets_dir.join("upk/arts/items/icons");
+        if arts_items_dir.exists() {
+            if let Ok(entries) = std::fs::read_dir(&arts_items_dir) {
+                for entry in entries.flatten() {
+                    if let Some(file_name) = entry.file_name().to_str() {
+                        if file_name.ends_with(".png") {
+                            let base_name = file_name.trim_end_matches(".png");
+                            // Only insert if not already present (spritepack takes priority)
+                            mappings
+                                .item_icons
+                                .entry(base_name.to_string())
+                                .or_insert_with(|| "arts_items".to_string());
+                        }
+                    }
+                }
+            }
+        }
+
         eprintln!(
-            "Built asset mappings: {} avatars, {} skin portraits, {} module big, {} module small, {} skill icons, {} portraits, {} chararts",
+            "Built asset mappings: {} avatars, {} skin portraits, {} module big, {} module small, {} skill icons, {} portraits, {} chararts, {} item icons",
             mappings.avatars.len(),
             mappings.skin_portraits.len(),
             mappings.module_big.len(),
             mappings.module_small.len(),
             mappings.skill_icons.len(),
             mappings.portraits.len(),
-            mappings.chararts.len()
+            mappings.chararts.len(),
+            mappings.item_icons.len()
         );
 
         mappings
@@ -346,6 +396,24 @@ impl AssetMappings {
         } else {
             // Fallback to skill_icons_0
             format!("/upk/spritepack/skill_icons_0/{}.png", icon_name)
+        }
+    }
+
+    /// Get item icon path by icon_id
+    /// Returns the correct path based on where the icon was found during scanning
+    pub fn get_item_icon_path(&self, icon_id: &str) -> String {
+        if let Some(location) = self.item_icons.get(icon_id) {
+            if let Some(dir) = location.strip_prefix("spritepack:") {
+                format!("/upk/spritepack/{}/{}.png", dir, icon_id)
+            } else if location == "arts_items" {
+                format!("/upk/arts/items/icons/{}.png", icon_id)
+            } else {
+                // Fallback for any other format
+                format!("/upk/arts/items/icons/{}.png", icon_id)
+            }
+        } else {
+            // Fallback to default items directory
+            format!("/upk/arts/items/icons/{}.png", icon_id)
         }
     }
 }

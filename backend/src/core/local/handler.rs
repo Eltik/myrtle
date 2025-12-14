@@ -272,6 +272,41 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
             .map(|(k, v)| {
                 // Get module image path using asset mappings (None for original modules)
                 let image = asset_mappings.get_module_big_path(&v.uni_equip_icon);
+
+                // Convert raw item costs to processed item costs
+                // Raw keys are i32 (1, 2, 3), output keys are String ("1", "2", "3")
+                // Look up the material's iconId to build the correct image path
+                let item_cost = v.item_cost.map(|costs| {
+                    costs
+                        .into_iter()
+                        .map(|(stage, items)| {
+                            let converted_items: Vec<
+                                crate::core::local::types::module::ModuleItemCost,
+                            > = items
+                                .into_iter()
+                                .map(|raw| {
+                                    // Look up the material to get its icon_id
+                                    let icon_id = materials
+                                        .items
+                                        .get(&raw.id)
+                                        .map(|m| m.icon_id.clone())
+                                        .unwrap_or_else(|| raw.id.clone());
+                                    // Use asset mappings to get correct path
+                                    let image_path = asset_mappings.get_item_icon_path(&icon_id);
+                                    crate::core::local::types::module::ModuleItemCost {
+                                        id: raw.id.clone(),
+                                        count: raw.count,
+                                        item_type: raw.item_type,
+                                        icon_id: Some(icon_id),
+                                        image: Some(image_path),
+                                    }
+                                })
+                                .collect();
+                            (stage.to_string(), converted_items)
+                        })
+                        .collect()
+                });
+
                 (
                     k.clone(),
                     crate::core::local::types::module::Module {
@@ -293,7 +328,7 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
                         unlock_level: v.unlock_level,
                         unlock_favor_point: v.unlock_favor_point,
                         mission_list: v.mission_list,
-                        item_cost: None,
+                        item_cost,
                         module_type: v.module_type,
                         uni_equip_get_time: v.uni_equip_get_time,
                         char_equip_order: v.char_equip_order,

@@ -60,17 +60,19 @@ fn enrich_operator(
     asset_mappings: &AssetMappings,
 ) -> Operator {
     let enriched_skills = enrich_skills(&raw.skills, skills, materials);
-    let operator_modules = get_operator_modules(id, modules, battle_equip, asset_mappings);
+    let operator_modules =
+        get_operator_modules(id, modules, battle_equip, materials, asset_mappings);
     let (handbook_item, profile) = get_handbook_and_profile(id, handbook);
     let artists = get_artists(id, skins);
     let portrait = asset_mappings.get_portrait_path(id);
     let skin = asset_mappings.get_charart_path(id);
 
     // Enrich phases with item icon paths
-    let enriched_phases = enrich_phases(&raw.phases, materials);
+    let enriched_phases = enrich_phases(&raw.phases, materials, asset_mappings);
 
     // Enrich skill level up costs
-    let enriched_all_skill_level_up = enrich_all_skill_level_up(&raw.all_skill_lvlup, materials);
+    let enriched_all_skill_level_up =
+        enrich_all_skill_level_up(&raw.all_skill_lvlup, materials, asset_mappings);
 
     Operator {
         id: Some(id.to_string()),
@@ -115,14 +117,18 @@ fn enrich_operator(
 }
 
 /// Enrich phases with item icon paths for evolve costs
-fn enrich_phases(phases: &[Phase], materials: &Materials) -> Vec<Phase> {
+fn enrich_phases(
+    phases: &[Phase],
+    materials: &Materials,
+    asset_mappings: &AssetMappings,
+) -> Vec<Phase> {
     phases
         .iter()
         .map(|phase| {
             let enriched_evolve_cost = phase.evolve_cost.as_ref().map(|costs| {
                 costs
                     .iter()
-                    .map(|cost| enrich_evolve_cost(cost, materials))
+                    .map(|cost| enrich_evolve_cost(cost, materials, asset_mappings))
                     .collect()
             });
 
@@ -138,8 +144,12 @@ fn enrich_phases(phases: &[Phase], materials: &Materials) -> Vec<Phase> {
 }
 
 /// Enrich a single evolve cost item with icon_id and image path
-fn enrich_evolve_cost(cost: &EvolveCost, materials: &Materials) -> EvolveCost {
-    let (icon_id, image) = get_item_icon_info(&cost.id, materials);
+fn enrich_evolve_cost(
+    cost: &EvolveCost,
+    materials: &Materials,
+    asset_mappings: &AssetMappings,
+) -> EvolveCost {
+    let (icon_id, image) = get_item_icon_info(&cost.id, materials, asset_mappings);
 
     EvolveCost {
         id: cost.id.clone(),
@@ -154,6 +164,7 @@ fn enrich_evolve_cost(cost: &EvolveCost, materials: &Materials) -> EvolveCost {
 fn enrich_all_skill_level_up(
     all_skill_lvlup: &[crate::core::local::types::operator::AllSkillLevelUp],
     materials: &Materials,
+    asset_mappings: &AssetMappings,
 ) -> Vec<crate::core::local::types::operator::AllSkillLevelUp> {
     all_skill_lvlup
         .iter()
@@ -163,7 +174,7 @@ fn enrich_all_skill_level_up(
                 lvl_up_cost: lvlup
                     .lvl_up_cost
                     .iter()
-                    .map(|cost| enrich_level_up_cost_item(cost, materials))
+                    .map(|cost| enrich_level_up_cost_item(cost, materials, asset_mappings))
                     .collect(),
             },
         )
@@ -171,8 +182,12 @@ fn enrich_all_skill_level_up(
 }
 
 /// Enrich a level up cost item with icon_id and image path
-fn enrich_level_up_cost_item(cost: &LevelUpCostItem, materials: &Materials) -> LevelUpCostItem {
-    let (icon_id, image) = get_item_icon_info(&cost.id, materials);
+fn enrich_level_up_cost_item(
+    cost: &LevelUpCostItem,
+    materials: &Materials,
+    asset_mappings: &AssetMappings,
+) -> LevelUpCostItem {
+    let (icon_id, image) = get_item_icon_info(&cost.id, materials, asset_mappings);
 
     LevelUpCostItem {
         id: cost.id.clone(),
@@ -184,24 +199,28 @@ fn enrich_level_up_cost_item(cost: &LevelUpCostItem, materials: &Materials) -> L
 }
 
 /// Get icon_id and image path for an item ID
-fn get_item_icon_info(item_id: &str, materials: &Materials) -> (Option<String>, Option<String>) {
+fn get_item_icon_info(
+    item_id: &str,
+    materials: &Materials,
+    asset_mappings: &AssetMappings,
+) -> (Option<String>, Option<String>) {
     // Look up in items table
     if let Some(item) = materials.items.get(item_id) {
         let icon_id = Some(item.icon_id.clone());
-        let image = Some(format!("/upk/arts/items/icons/{}.png", item.icon_id));
+        let image = Some(asset_mappings.get_item_icon_path(&item.icon_id));
         return (icon_id, image);
     }
 
     // Look up in exp_items table - exp items use their id as the icon name
     if materials.exp_items.contains_key(item_id) {
         let icon_id = Some(item_id.to_string());
-        let image = Some(format!("/upk/arts/items/icons/{}.png", item_id));
+        let image = Some(asset_mappings.get_item_icon_path(item_id));
         return (icon_id, image);
     }
 
     // Fallback: use the item_id as icon_id
     (
         Some(item_id.to_string()),
-        Some(format!("/upk/arts/items/icons/{}.png", item_id)),
+        Some(asset_mappings.get_item_icon_path(item_id)),
     )
 }
