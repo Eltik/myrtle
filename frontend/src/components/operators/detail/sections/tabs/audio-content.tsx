@@ -1,7 +1,7 @@
 "use client";
 
 import { Pause, Play, Volume2, VolumeX } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "~/components/ui/shadcn/button";
 import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/shadcn/select";
@@ -9,7 +9,7 @@ import { Skeleton } from "~/components/ui/shadcn/skeleton";
 import { Slider } from "~/components/ui/shadcn/slider";
 import { cn } from "~/lib/utils";
 import type { Operator } from "~/types/api";
-import type { Voice, Voices } from "~/types/api/impl/voice";
+import type { LangType, Voice, VoiceData, Voices } from "~/types/api/impl/voice";
 
 interface AudioContentProps {
     operator: Operator;
@@ -19,25 +19,60 @@ interface VoiceLine {
     id: string;
     title: string;
     text: string;
-    audioUrl?: string;
+    data?: VoiceData[];
+    languages?: LangType[];
 }
 
-const VOICE_LANGUAGES = [
-    { id: "JP", label: "Japanese" },
-    { id: "CN", label: "Chinese" },
-    { id: "EN", label: "English" },
-    { id: "KR", label: "Korean" },
-];
+// Map backend LangType to display labels
+const LANGUAGE_LABELS: Record<LangType, string> = {
+    JP: "Japanese",
+    CN_MANDARIN: "Chinese",
+    EN: "English",
+    KR: "Korean",
+    CN_TOPOLECT: "Chinese (Regional)",
+    GER: "German",
+    ITA: "Italian",
+    RUS: "Russian",
+    FRE: "French",
+    LINKAGE: "Collaboration",
+};
 
 export function AudioContent({ operator }: AudioContentProps) {
     const [voices, setVoices] = useState<VoiceLine[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [selectedLanguage, setSelectedLanguage] = useState("JP");
+    const [selectedLanguage, setSelectedLanguage] = useState<LangType>("JP");
     const [playingId, setPlayingId] = useState<string | null>(null);
     const [volume, setVolume] = useState(80);
     const [isMuted, setIsMuted] = useState(false);
 
     const audioRef = useRef<HTMLAudioElement | null>(null);
+
+    // Derive available languages from voice data
+    const availableLanguages = useMemo(() => {
+        if (voices.length === 0) return [];
+
+        // Collect all unique languages from all voice lines
+        const langSet = new Set<LangType>();
+        for (const voice of voices) {
+            if (voice.languages) {
+                for (const lang of voice.languages) {
+                    langSet.add(lang);
+                }
+            }
+        }
+
+        // Sort languages in a sensible order
+        const order: LangType[] = ["JP", "CN_MANDARIN", "EN", "KR", "CN_TOPOLECT", "GER", "ITA", "RUS", "FRE", "LINKAGE"];
+        return order.filter((lang) => langSet.has(lang));
+    }, [voices]);
+
+    // Set default language when available languages change
+    useEffect(() => {
+        const firstLang = availableLanguages[0];
+        if (firstLang && !availableLanguages.includes(selectedLanguage)) {
+            setSelectedLanguage(firstLang);
+        }
+    }, [availableLanguages, selectedLanguage]);
 
     // Fetch voice data
     useEffect(() => {
@@ -52,7 +87,7 @@ export function AudioContent({ operator }: AudioContentProps) {
                 const data = await res.json();
 
                 if (data.voices) {
-                    const formattedVoices = formatVoices(data.voices, operator.id ?? "");
+                    const formattedVoices = formatVoices(data.voices);
                     setVoices(formattedVoices);
                 }
             } catch (error) {
@@ -79,15 +114,21 @@ export function AudioContent({ operator }: AudioContentProps) {
             audioRef.current.pause();
         }
 
-        // Construct audio URL based on language using local CDN
-        // Voice files are stored in the assets folder organized by language and operator ID
-        const audioUrl = `/api/cdn/upk/audio/voice_${selectedLanguage.toLowerCase()}/${operator.id}/${voice.id}.wav`;
+        // Find the voice URL for the selected language from backend data
+        const voiceData = voice.data?.find((d) => d.language === selectedLanguage);
+        if (!voiceData?.voiceUrl) {
+            console.error("No voice URL available for language:", selectedLanguage);
+            return;
+        }
+
+        // Use the backend-provided URL (prepend CDN path)
+        const audioUrl = `/api/cdn/upk${voiceData.voiceUrl}`;
 
         const audio = new Audio(audioUrl);
         audio.volume = isMuted ? 0 : volume / 100;
         audio.onended = () => setPlayingId(null);
         audio.onerror = () => {
-            console.error("Failed to load audio");
+            console.error("Failed to load audio:", audioUrl);
             setPlayingId(null);
         };
 
@@ -120,14 +161,14 @@ export function AudioContent({ operator }: AudioContentProps) {
 
             {/* Controls */}
             <div className="mb-6 flex flex-wrap items-center gap-4">
-                <Select onValueChange={setSelectedLanguage} value={selectedLanguage}>
-                    <SelectTrigger className="w-40">
+                <Select onValueChange={(value) => setSelectedLanguage(value as LangType)} value={selectedLanguage}>
+                    <SelectTrigger className="w-48">
                         <SelectValue placeholder="Language" />
                     </SelectTrigger>
                     <SelectContent>
-                        {VOICE_LANGUAGES.map((lang) => (
-                            <SelectItem key={lang.id} value={lang.id}>
-                                {lang.label}
+                        {availableLanguages.map((lang) => (
+                            <SelectItem key={lang} value={lang}>
+                                {LANGUAGE_LABELS[lang] ?? lang}
                             </SelectItem>
                         ))}
                     </SelectContent>
@@ -171,76 +212,44 @@ export function AudioContent({ operator }: AudioContentProps) {
     );
 }
 
-function formatVoices(voiceData: Voices | Voice[], _operatorId: string): VoiceLine[] {
+function formatVoices(voiceData: Voices | Voice[]): VoiceLine[] {
     const voiceLines: VoiceLine[] = [];
-
-    // Common voice line categories
-    const defaultVoiceLines = [
-        { id: "CN_001", title: "Appointment" },
-        { id: "CN_002", title: "Talk 1" },
-        { id: "CN_003", title: "Talk 2" },
-        { id: "CN_004", title: "Talk 3" },
-        { id: "CN_005", title: "Talk after Promotion 1" },
-        { id: "CN_006", title: "Talk after Promotion 2" },
-        { id: "CN_007", title: "Talk after Trust Increase 1" },
-        { id: "CN_008", title: "Talk after Trust Increase 2" },
-        { id: "CN_009", title: "Talk after Trust Increase 3" },
-        { id: "CN_010", title: "Idle" },
-        { id: "CN_011", title: "Onboard" },
-        { id: "CN_012", title: "Watch Battlerecord" },
-        { id: "CN_013", title: "Promotion 1" },
-        { id: "CN_014", title: "Promotion 2" },
-        { id: "CN_017", title: "Added to Squad" },
-        { id: "CN_018", title: "Appointed as Squad Leader" },
-        { id: "CN_019", title: "Depart" },
-        { id: "CN_020", title: "Begin Operation" },
-        { id: "CN_021", title: "Selecting Operator 1" },
-        { id: "CN_022", title: "Selecting Operator 2" },
-        { id: "CN_023", title: "Deployment 1" },
-        { id: "CN_024", title: "Deployment 2" },
-        { id: "CN_025", title: "In Battle 1" },
-        { id: "CN_026", title: "In Battle 2" },
-        { id: "CN_027", title: "In Battle 3" },
-        { id: "CN_028", title: "In Battle 4" },
-        { id: "CN_029", title: "4-star Result" },
-        { id: "CN_030", title: "3-star Result" },
-        { id: "CN_031", title: "Operation Failure" },
-        { id: "CN_032", title: "Assigned to Facility" },
-        { id: "CN_033", title: "Tap" },
-        { id: "CN_034", title: "Trust Tap" },
-        { id: "CN_036", title: "Greeting" },
-    ];
 
     // If we have actual voice data, use it
     if (Array.isArray(voiceData)) {
-        voiceData.forEach((voice) => {
+        for (const voice of voiceData) {
             voiceLines.push({
-                id: voice.id ?? "",
+                id: voice.voiceId ?? voice.id ?? "",
                 title: voice.voiceTitle ?? "Voice Line",
                 text: voice.voiceText ?? "",
+                data: voice.data ?? undefined,
+                languages: voice.languages ?? undefined,
             });
-        });
+        }
     } else if (voiceData && typeof voiceData === "object") {
-        // Handle object format
-        Object.entries(voiceData).forEach(([key, value]) => {
-            if (value && typeof value === "object") {
+        // Handle Voices object format (with charWords map)
+        const voices = "charWords" in voiceData ? voiceData.charWords : voiceData;
+
+        for (const [_key, voice] of Object.entries(voices)) {
+            if (voice && typeof voice === "object" && "voiceId" in voice) {
+                const v = voice as Voice;
                 voiceLines.push({
-                    id: key,
-                    title: (value as Voice).voiceTitle ?? key,
-                    text: (value as Voice).voiceText ?? "",
+                    id: v.voiceId ?? v.id ?? _key,
+                    title: v.voiceTitle ?? "Voice Line",
+                    text: v.voiceText ?? "",
+                    data: v.data ?? undefined,
+                    languages: v.languages ?? undefined,
                 });
             }
-        });
+        }
     }
 
-    // If no voice data, return default structure
-    if (voiceLines.length === 0) {
-        return defaultVoiceLines.map((v) => ({
-            id: v.id,
-            title: v.title,
-            text: "Voice line text not available",
-        }));
-    }
+    // Sort by voice index if available (CN_001, CN_002, etc.)
+    voiceLines.sort((a, b) => {
+        const numA = Number.parseInt(a.id.replace(/\D/g, ""), 10) || 0;
+        const numB = Number.parseInt(b.id.replace(/\D/g, ""), 10) || 0;
+        return numA - numB;
+    });
 
     return voiceLines;
 }
