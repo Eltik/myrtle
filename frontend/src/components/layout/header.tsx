@@ -70,7 +70,6 @@ export function Header() {
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
     const [hoverStyle, setHoverStyle] = useState({ left: 0, width: 0, opacity: 0 });
     const [activeIconStyle, setActiveIconStyle] = useState({ left: 0, opacity: 0 });
-    const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
     const [isNavHovered, setIsNavHovered] = useState(false);
     const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
     const [dropdownStyle, setDropdownStyle] = useState({ left: 0, width: 220 });
@@ -193,16 +192,27 @@ export function Header() {
         }, 100);
     }, [activeIndex, updateIndicator, updateActiveIcon]);
 
-    const handleNavMouseMove = (e: React.MouseEvent<HTMLElement>) => {
-        const rect = navRef.current?.getBoundingClientRect();
-        if (rect) {
-            setMousePosition({
-                x: e.clientX - rect.left,
-                y: e.clientY - rect.top,
-            });
-        }
-        setIsNavHovered(true);
-    };
+    const mousePosRef = useRef({ x: 0, y: 0 });
+    const glowRef = useRef<HTMLDivElement>(null);
+
+    const handleNavMouseMove = useCallback(
+        (e: React.MouseEvent<HTMLElement>) => {
+            const rect = navRef.current?.getBoundingClientRect();
+            if (rect) {
+                mousePosRef.current = {
+                    x: e.clientX - rect.left,
+                    y: e.clientY - rect.top,
+                };
+                if (glowRef.current) {
+                    glowRef.current.style.background = `radial-gradient(120px circle at ${mousePosRef.current.x}px ${mousePosRef.current.y}px, oklch(0.75 0.15 25 / 0.25) 0%, transparent 65%)`;
+                }
+            }
+            if (!isNavHovered) {
+                setIsNavHovered(true);
+            }
+        },
+        [isNavHovered],
+    );
 
     return (
         <header className="fixed top-0 z-50 w-full">
@@ -250,8 +260,9 @@ export function Header() {
                         >
                             <div
                                 className="pointer-events-none absolute inset-0 z-0 rounded-full transition-opacity duration-300"
+                                ref={glowRef}
                                 style={{
-                                    background: `radial-gradient(120px circle at ${mousePosition.x}px ${mousePosition.y}px, oklch(0.75 0.15 25 / 0.25) 0%, transparent 65%)`,
+                                    background: "radial-gradient(120px circle at 0px 0px, oklch(0.75 0.15 25 / 0.25) 0%, transparent 65%)",
                                     opacity: isNavHovered ? 1 : 0,
                                 }}
                             />

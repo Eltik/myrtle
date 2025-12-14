@@ -1,9 +1,9 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
 import { Calendar, Maximize2, Palette, User } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "~/components/ui/shadcn/button";
 import { Dialog, DialogContent, DialogTrigger } from "~/components/ui/shadcn/dialog";
 import { ScrollArea, ScrollBar } from "~/components/ui/shadcn/scroll-area";
@@ -31,13 +31,17 @@ interface UISkin {
     isDefault: boolean;
 }
 
-export function SkinsContent({ operator }: SkinsContentProps) {
+export const SkinsContent = memo(function SkinsContent({ operator }: SkinsContentProps) {
     const [skins, setSkins] = useState<UISkin[]>([]);
     const [selectedSkin, setSelectedSkin] = useState<string>("");
     const [isLoading, setIsLoading] = useState(true);
     const [imageLoading, setImageLoading] = useState(true);
 
-    // Fetch skins
+    const operatorId = operator.id ?? "";
+    const operatorSkin = operator.skin;
+    const operatorPortrait = operator.portrait;
+    const phasesLength = operator.phases.length;
+
     useEffect(() => {
         const fetchSkins = async () => {
             setIsLoading(true);
@@ -45,12 +49,12 @@ export function SkinsContent({ operator }: SkinsContentProps) {
                 const res = await fetch("/api/static", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ type: "skins", id: operator.id }),
+                    body: JSON.stringify({ type: "skins", id: operatorId }),
                 });
                 const data = await res.json();
 
                 if (data.skins) {
-                    const formattedSkins = formatSkins(data.skins, operator);
+                    const formattedSkins = formatSkinsForOperator(data.skins, operatorId, operatorSkin ?? undefined, operatorPortrait, phasesLength);
                     setSkins(formattedSkins);
                     if (formattedSkins.length > 0) {
                         setSelectedSkin(formattedSkins[0]?.id ?? "");
@@ -59,9 +63,8 @@ export function SkinsContent({ operator }: SkinsContentProps) {
             } catch (error) {
                 console.error("Failed to fetch skins:", error);
                 // Create default skin entry - prefer full art (skin) over portrait
-                const operatorId = operator.id ?? "";
-                const skinPath = operator.skin ? `/api/cdn${operator.skin}` : null;
-                const portraitPath = operator.portrait ? `/api/cdn${operator.portrait}` : null;
+                const skinPath = operatorSkin ? `/api/cdn${operatorSkin}` : null;
+                const portraitPath = operatorPortrait ? `/api/cdn${operatorPortrait}` : null;
                 const basePath = skinPath ?? portraitPath;
                 const e0Path = basePath?.replace(/_2\.png$/, "_1.png") ?? `/api/cdn/upk/chararts/${operatorId}/${operatorId}_1.png`;
                 const defaultSkin: UISkin = {
@@ -77,12 +80,17 @@ export function SkinsContent({ operator }: SkinsContentProps) {
             setIsLoading(false);
         };
 
-        if (operator.id) {
+        if (operatorId) {
             fetchSkins();
         }
-    }, [operator]); // Updated to use the entire operator object
+    }, [operatorId, operatorSkin, operatorPortrait, phasesLength]);
 
-    const selectedSkinData = skins.find((s) => s.id === selectedSkin);
+    const selectedSkinData = useMemo(() => skins.find((s) => s.id === selectedSkin), [skins, selectedSkin]);
+
+    const handleSkinSelect = useCallback((skinId: string) => {
+        setImageLoading(true);
+        setSelectedSkin(skinId);
+    }, []);
 
     return (
         <div className="min-w-0 overflow-hidden p-4 md:p-6">
@@ -155,10 +163,7 @@ export function SkinsContent({ operator }: SkinsContentProps) {
                                                 <button
                                                     className={cn("relative h-24 w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all hover:scale-105", selectedSkin === skin.id ? "border-primary shadow-lg" : "border-border/50 hover:border-primary/50")}
                                                     key={skin.id}
-                                                    onClick={() => {
-                                                        setImageLoading(true);
-                                                        setSelectedSkin(skin.id);
-                                                    }}
+                                                    onClick={() => handleSkinSelect(skin.id)}
                                                     type="button"
                                                 >
                                                     <Image alt={skin.name} className="object-cover" fill src={skin.thumbnail || "/placeholder.svg"} />
@@ -183,10 +188,7 @@ export function SkinsContent({ operator }: SkinsContentProps) {
                                             <button
                                                 className={cn("relative h-24 w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all hover:scale-105", selectedSkin === skin.id ? "border-primary shadow-lg" : "border-border/50 hover:border-primary/50")}
                                                 key={skin.id}
-                                                onClick={() => {
-                                                    setImageLoading(true);
-                                                    setSelectedSkin(skin.id);
-                                                }}
+                                                onClick={() => handleSkinSelect(skin.id)}
                                                 type="button"
                                             >
                                                 <Image alt={skin.name} className="object-cover" fill src={skin.thumbnail || "/placeholder.svg"} />
@@ -243,17 +245,14 @@ export function SkinsContent({ operator }: SkinsContentProps) {
             )}
         </div>
     );
-}
+});
 
-function formatSkins(skinData: SkinData | Skin[], operator: Operator): UISkin[] {
+function formatSkinsForOperator(skinData: SkinData | Skin[], operatorId: string, operatorSkin: string | undefined, operatorPortrait: string | undefined, phasesLength: number): UISkin[] {
     const skins: UISkin[] = [];
-    const operatorId = operator.id ?? "";
 
     // Prefer full character art (skin) over portrait (headshot)
-    // skin: /upk/chararts/{id}/{id}_{1|2}.png (large full art)
-    // portrait: /upk/arts/charportraits/{pack}/{id}_{1|2}.png (small headshot)
-    const skinPath = operator.skin ? `/api/cdn${operator.skin}` : null;
-    const portraitPath = operator.portrait ? `/api/cdn${operator.portrait}` : null;
+    const skinPath = operatorSkin ? `/api/cdn${operatorSkin}` : null;
+    const portraitPath = operatorPortrait ? `/api/cdn${operatorPortrait}` : null;
 
     // Use full character art if available, otherwise fall back to portrait
     const basePath = skinPath ?? portraitPath;
@@ -270,7 +269,7 @@ function formatSkins(skinData: SkinData | Skin[], operator: Operator): UISkin[] 
     });
 
     // Add E2 art if available (phases > 2 means E2 exists)
-    if (operator.phases.length > 2) {
+    if (phasesLength > 2) {
         skins.push({
             id: `${operatorId}_e2`,
             name: "Elite 2",
@@ -282,7 +281,7 @@ function formatSkins(skinData: SkinData | Skin[], operator: Operator): UISkin[] 
 
     // Process additional skins from API
     if (Array.isArray(skinData)) {
-        skinData.forEach((skin) => {
+        for (const skin of skinData) {
             // Use skinId (standard Skin type) - EnrichedSkin also has skinId via extension
             const skinIdentifier = skin.skinId;
             // Skip default skins (those with #1 or #2 suffixes which are E0/E1 and E2 arts)
@@ -309,7 +308,7 @@ function formatSkins(skinData: SkinData | Skin[], operator: Operator): UISkin[] 
                     isDefault: false,
                 });
             }
-        });
+        }
     }
 
     return skins;

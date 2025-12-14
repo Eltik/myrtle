@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { memo } from "react";
 import { capitalize, cn, formatProfession, formatSubProfession, rarityToNumber } from "~/lib/utils";
 import type { OperatorFromList } from "~/types/api/operators";
 import { RARITY_COLORS } from "../../constants";
@@ -13,13 +14,13 @@ interface OperatorCardListProps {
     shouldGrayscale?: boolean;
 }
 
-export function OperatorCardList({ operator, isHovered = false, shouldGrayscale = false }: OperatorCardListProps) {
+export const OperatorCardList = memo(function OperatorCardList({ operator, isHovered = false, shouldGrayscale = false }: OperatorCardListProps) {
     const rarityNum = rarityToNumber(operator.rarity);
     const rarityColor = RARITY_COLORS[rarityNum] ?? "#ffffff";
     const operatorId = operator.id ?? "";
 
     return (
-        <Link className={cn("group relative flex items-center gap-3 rounded-lg border border-transparent bg-card/50 px-3 py-2.5 transition-all duration-200 hover:border-border hover:bg-card", shouldGrayscale && "grayscale", isHovered && "grayscale-0")} href={`/operators?id=${operatorId}`}>
+        <Link className={cn("group relative flex items-center gap-3 rounded-lg border border-transparent bg-card/50 px-3 py-2.5 transition-all duration-200 contain-layout hover:border-border hover:bg-card", shouldGrayscale && "grayscale", isHovered && "grayscale-0")} href={`/operators?id=${operatorId}`}>
             {/* Rarity indicator line on left */}
             <div className="-translate-y-1/2 absolute top-1/2 left-0 h-8 w-0.5 rounded-full opacity-60 transition-opacity group-hover:opacity-100" style={{ backgroundColor: rarityColor }} />
 
@@ -88,4 +89,4 @@ export function OperatorCardList({ operator, isHovered = false, shouldGrayscale 
             </div>
         </Link>
     );
-}
+});

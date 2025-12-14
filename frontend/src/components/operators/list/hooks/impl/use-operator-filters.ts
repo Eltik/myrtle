@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { rarityToNumber } from "~/lib/utils";
 import type { OperatorFromList } from "~/types/api/operators";
 
@@ -114,59 +114,82 @@ export function useOperatorFilters(data: OperatorFromList[]): UseOperatorFilters
         };
     }, [data]);
 
+    const filterSets = useMemo(
+        () => ({
+            classes: new Set(selectedClasses),
+            subclasses: new Set(selectedSubclasses),
+            rarities: new Set(selectedRarities),
+            birthPlaces: new Set(selectedBirthPlaces),
+            nations: new Set(selectedNations),
+            factions: new Set(selectedFactions),
+            genders: new Set(selectedGenders),
+            races: new Set(selectedRaces),
+            artists: new Set(selectedArtists),
+        }),
+        [selectedClasses, selectedSubclasses, selectedRarities, selectedBirthPlaces, selectedNations, selectedFactions, selectedGenders, selectedRaces, selectedArtists],
+    );
+
+    const lowercaseQuery = useMemo(() => searchQuery.toLowerCase(), [searchQuery]);
+
+    const hasFilters = useMemo(
+        () => searchQuery !== "" || selectedClasses.length > 0 || selectedSubclasses.length > 0 || selectedRarities.length > 0 || selectedBirthPlaces.length > 0 || selectedNations.length > 0 || selectedFactions.length > 0 || selectedGenders.length > 0 || selectedRaces.length > 0 || selectedArtists.length > 0,
+        [searchQuery, selectedClasses, selectedSubclasses, selectedRarities, selectedBirthPlaces, selectedNations, selectedFactions, selectedGenders, selectedRaces, selectedArtists],
+    );
+
     // Apply filters and sorting
     const filteredOperators = useMemo(() => {
-        let result = [...data];
+        let result: OperatorFromList[];
 
-        // Search filter
-        if (searchQuery) {
-            const query = searchQuery.toLowerCase();
-            result = result.filter((op) => op.name.toLowerCase().includes(query) || op.profession.toLowerCase().includes(query) || op.subProfessionId.toLowerCase().includes(query));
-        }
+        if (!hasFilters) {
+            result = [...data];
+        } else {
+            result = data.filter((op) => {
+                if (lowercaseQuery && !op.name.toLowerCase().includes(lowercaseQuery) && !op.profession.toLowerCase().includes(lowercaseQuery) && !op.subProfessionId.toLowerCase().includes(lowercaseQuery)) {
+                    return false;
+                }
 
-        // Class filter
-        if (selectedClasses.length > 0) {
-            result = result.filter((op) => selectedClasses.includes(op.profession));
-        }
+                if (filterSets.classes.size > 0 && !filterSets.classes.has(op.profession)) {
+                    return false;
+                }
 
-        // Subclass filter
-        if (selectedSubclasses.length > 0) {
-            result = result.filter((op) => selectedSubclasses.includes(op.subProfessionId.toLowerCase()));
-        }
+                if (filterSets.subclasses.size > 0 && !filterSets.subclasses.has(op.subProfessionId.toLowerCase())) {
+                    return false;
+                }
 
-        // Rarity filter
-        if (selectedRarities.length > 0) {
-            result = result.filter((op) => selectedRarities.includes(rarityToNumber(op.rarity)));
-        }
+                if (filterSets.rarities.size > 0 && !filterSets.rarities.has(rarityToNumber(op.rarity))) {
+                    return false;
+                }
 
-        // Birth place filter
-        if (selectedBirthPlaces.length > 0) {
-            result = result.filter((op) => op.profile?.basicInfo?.placeOfBirth && selectedBirthPlaces.includes(op.profile.basicInfo.placeOfBirth));
-        }
+                if (filterSets.birthPlaces.size > 0 && (!op.profile?.basicInfo?.placeOfBirth || !filterSets.birthPlaces.has(op.profile.basicInfo.placeOfBirth))) {
+                    return false;
+                }
 
-        // Nation filter
-        if (selectedNations.length > 0) {
-            result = result.filter((op) => op.nationId && selectedNations.includes(op.nationId));
-        }
+                if (filterSets.nations.size > 0 && (!op.nationId || !filterSets.nations.has(op.nationId))) {
+                    return false;
+                }
 
-        // Faction filter
-        if (selectedFactions.length > 0) {
-            result = result.filter((op) => (op.groupId && selectedFactions.includes(op.groupId)) || (op.teamId && selectedFactions.includes(op.teamId)));
-        }
+                if (filterSets.factions.size > 0) {
+                    const hasGroup = op.groupId && filterSets.factions.has(op.groupId);
+                    const hasTeam = op.teamId && filterSets.factions.has(op.teamId);
+                    if (!hasGroup && !hasTeam) {
+                        return false;
+                    }
+                }
 
-        // Gender filter
-        if (selectedGenders.length > 0) {
-            result = result.filter((op) => op.profile?.basicInfo?.gender && selectedGenders.includes(op.profile.basicInfo.gender));
-        }
+                if (filterSets.genders.size > 0 && (!op.profile?.basicInfo?.gender || !filterSets.genders.has(op.profile.basicInfo.gender))) {
+                    return false;
+                }
 
-        // Race filter
-        if (selectedRaces.length > 0) {
-            result = result.filter((op) => op.profile?.basicInfo?.race && selectedRaces.includes(op.profile.basicInfo.race));
-        }
+                if (filterSets.races.size > 0 && (!op.profile?.basicInfo?.race || !filterSets.races.has(op.profile.basicInfo.race))) {
+                    return false;
+                }
 
-        // Artists filter
-        if (selectedArtists.length > 0) {
-            result = result.filter((op) => op.artists?.some((artist) => selectedArtists.includes(artist)));
+                if (filterSets.artists.size > 0 && (!op.artists || !op.artists.some((artist) => filterSets.artists.has(artist)))) {
+                    return false;
+                }
+
+                return true;
+            });
         }
 
         // Sorting
@@ -181,10 +204,9 @@ export function useOperatorFilters(data: OperatorFromList[]): UseOperatorFilters
         });
 
         return result;
-    }, [searchQuery, selectedClasses, selectedSubclasses, selectedRarities, selectedBirthPlaces, selectedNations, selectedFactions, selectedGenders, selectedRaces, selectedArtists, sortBy, sortOrder, data]);
+    }, [data, hasFilters, lowercaseQuery, filterSets, sortBy, sortOrder]);
 
-    // Clear all filters
-    const clearFilters = () => {
+    const clearFilters = useCallback(() => {
         setSelectedClasses([]);
         setSelectedSubclasses([]);
         setSelectedRarities([]);
@@ -195,12 +217,14 @@ export function useOperatorFilters(data: OperatorFromList[]): UseOperatorFilters
         setSelectedRaces([]);
         setSelectedArtists([]);
         setSearchQuery("");
-    };
+    }, []);
 
-    // Computed values
-    const activeFilterCount = selectedClasses.length + selectedSubclasses.length + selectedRarities.length + selectedBirthPlaces.length + selectedNations.length + selectedFactions.length + selectedGenders.length + selectedRaces.length + selectedArtists.length + (searchQuery ? 1 : 0);
+    const activeFilterCount = useMemo(
+        () => selectedClasses.length + selectedSubclasses.length + selectedRarities.length + selectedBirthPlaces.length + selectedNations.length + selectedFactions.length + selectedGenders.length + selectedRaces.length + selectedArtists.length + (searchQuery ? 1 : 0),
+        [selectedClasses.length, selectedSubclasses.length, selectedRarities.length, selectedBirthPlaces.length, selectedNations.length, selectedFactions.length, selectedGenders.length, selectedRaces.length, selectedArtists.length, searchQuery],
+    );
 
-    const hasActiveFilters = activeFilterCount > 0;
+    const hasActiveFilters = hasFilters;
 
     return {
         filters: {
