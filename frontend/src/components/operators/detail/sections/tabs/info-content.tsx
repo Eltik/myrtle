@@ -319,7 +319,7 @@ export const InfoContent = memo(function InfoContent({ operator }: InfoContentPr
                     <div className="space-y-3">
                         {operator.talents.map((talent, idx) => {
                             const candidate = talent.Candidates?.[talent.Candidates.length - 1];
-                            if (!candidate) return null;
+                            if (!candidate || !candidate.Name) return null;
                             return (
                                 // biome-ignore lint/suspicious/noArrayIndexKey: Static talent list
                                 <div className="rounded-lg border border-border bg-secondary/20 p-4" key={idx}>
