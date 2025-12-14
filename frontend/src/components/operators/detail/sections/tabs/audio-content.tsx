@@ -44,6 +44,7 @@ export function AudioContent({ operator }: AudioContentProps) {
     const [playingId, setPlayingId] = useState<string | null>(null);
     const [volume, setVolume] = useState(80);
     const [isMuted, setIsMuted] = useState(false);
+    const [progress, setProgress] = useState(0);
 
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -73,6 +74,16 @@ export function AudioContent({ operator }: AudioContentProps) {
             setSelectedLanguage(firstLang);
         }
     }, [availableLanguages, selectedLanguage]);
+
+    // Stop audio when language changes
+    useEffect(() => {
+        if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current = null;
+        }
+        setPlayingId(null);
+        setProgress(0);
+    }, [selectedLanguage]);
 
     // Fetch voice data
     useEffect(() => {
@@ -106,6 +117,7 @@ export function AudioContent({ operator }: AudioContentProps) {
             // Pause current
             audioRef.current?.pause();
             setPlayingId(null);
+            setProgress(0);
             return;
         }
 
@@ -126,14 +138,27 @@ export function AudioContent({ operator }: AudioContentProps) {
 
         const audio = new Audio(audioUrl);
         audio.volume = isMuted ? 0 : volume / 100;
-        audio.onended = () => setPlayingId(null);
+        audio.onended = () => {
+            setPlayingId(null);
+            setProgress(0);
+        };
         audio.onerror = () => {
             console.error("Failed to load audio:", audioUrl);
             setPlayingId(null);
+            setProgress(0);
+        };
+        audio.ontimeupdate = () => {
+            if (audio.duration > 0) {
+                setProgress((audio.currentTime / audio.duration) * 100);
+            }
         };
 
         audioRef.current = audio;
-        audio.play().catch(() => setPlayingId(null));
+        setProgress(0);
+        audio.play().catch(() => {
+            setPlayingId(null);
+            setProgress(0);
+        });
         setPlayingId(voice.id);
     };
 
