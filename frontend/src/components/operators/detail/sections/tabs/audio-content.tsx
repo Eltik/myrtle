@@ -251,7 +251,7 @@ export function AudioContent({ operator }: AudioContentProps) {
                                     </Button>
                                     <div className="min-w-0 flex-1">
                                         <h4 className="mb-1 font-medium text-foreground text-sm">{voice.title}</h4>
-                                        <p className="line-clamp-2 text-muted-foreground text-xs">{voice.text}</p>
+                                        <p className={cn("overflow-hidden text-muted-foreground text-xs duration-300 ease-out", playingId === voice.id ? "max-h-96" : "line-clamp-2 max-h-10")}>{voice.text}</p>
                                     </div>
                                 </div>
                                 {/* Progress bar */}
