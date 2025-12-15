@@ -14,10 +14,10 @@ export type GlowEffectProps = {
 };
 
 export function GlowEffect({ className, style, colors = ["#FF5733", "#33FF57", "#3357FF", "#F1C40F"], mode = "rotate", blur = "medium", transition, scale = 1, duration = 5 }: GlowEffectProps) {
-    const BASE_TRANSITION = {
-        repeat: Infinity,
+    const BASE_TRANSITION: Transition = {
+        repeat: Number.POSITIVE_INFINITY,
         duration: duration,
-        ease: "linear",
+        ease: "linear" as const,
     };
 
     const animations = {

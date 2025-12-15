@@ -83,22 +83,30 @@ export function DisclosureTrigger({ children, className }: { children: React.Rea
     return (
         <>
             {React.Children.map(children, (child) => {
-                return React.isValidElement(child)
-                    ? React.cloneElement(child, {
-                          onClick: toggle,
-                          role: "button",
-                          "aria-expanded": open,
-                          tabIndex: 0,
-                          onKeyDown: (e: { key: string; preventDefault: () => void }) => {
-                              if (e.key === "Enter" || e.key === " ") {
-                                  e.preventDefault();
-                                  toggle();
-                              }
-                          },
-                          className: cn(className, (child as React.ReactElement).props.className),
-                          ...(child as React.ReactElement).props,
-                      })
-                    : child;
+                if (React.isValidElement(child)) {
+                    const childElement = child as React.ReactElement<{
+                        className?: string;
+                        onClick?: () => void;
+                        role?: string;
+                        "aria-expanded"?: boolean;
+                        tabIndex?: number;
+                        onKeyDown?: (e: { key: string; preventDefault: () => void }) => void;
+                    }>;
+                    return React.cloneElement(childElement, {
+                        onClick: toggle,
+                        role: "button",
+                        "aria-expanded": open,
+                        tabIndex: 0,
+                        onKeyDown: (e: { key: string; preventDefault: () => void }) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                toggle();
+                            }
+                        },
+                        className: cn(className, childElement.props.className),
+                    });
+                }
+                return child;
             })}
         </>
     );

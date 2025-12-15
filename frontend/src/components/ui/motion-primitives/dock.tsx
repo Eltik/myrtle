@@ -129,7 +129,7 @@ function DockItem({ children, className, onClick }: DockItemProps) {
             style={{ width }}
             tabIndex={0}
         >
-            {Children.map(children, (child) => cloneElement(child as React.ReactElement, { width, isHovered }))}
+            {Children.map(children, (child) => cloneElement(child as React.ReactElement<{ width?: typeof width; isHovered?: typeof isHovered }>, { width, isHovered }))}
         </motion.div>
     );
 }

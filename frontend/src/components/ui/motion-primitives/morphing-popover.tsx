@@ -5,7 +5,7 @@ import { createContext, type RefObject, useContext, useEffect, useRef, useState 
 import { cn } from "~/lib/utils";
 
 const TRANSITION: Transition = {
-    type: "spring",
+    type: "spring" as const,
     bounce: 0.1,
     duration: 0.4,
 };

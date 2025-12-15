@@ -52,35 +52,35 @@ const presetVariants: Record<PresetType, Variants> = {
         hidden: { scale: 0.5 },
         visible: {
             scale: 1,
-            transition: { type: "spring", stiffness: 300, damping: 20 },
+            transition: { type: "spring" as const, stiffness: 300, damping: 20 },
         },
     },
     flip: {
         hidden: { rotateX: -90 },
         visible: {
             rotateX: 0,
-            transition: { type: "spring", stiffness: 300, damping: 20 },
+            transition: { type: "spring" as const, stiffness: 300, damping: 20 },
         },
     },
     bounce: {
         hidden: { y: -50 },
         visible: {
             y: 0,
-            transition: { type: "spring", stiffness: 400, damping: 10 },
+            transition: { type: "spring" as const, stiffness: 400, damping: 10 },
         },
     },
     rotate: {
         hidden: { rotate: -180 },
         visible: {
             rotate: 0,
-            transition: { type: "spring", stiffness: 200, damping: 15 },
+            transition: { type: "spring" as const, stiffness: 200, damping: 15 },
         },
     },
     swing: {
         hidden: { rotate: -10 },
         visible: {
             rotate: 0,
-            transition: { type: "spring", stiffness: 300, damping: 8 },
+            transition: { type: "spring" as const, stiffness: 300, damping: 8 },
         },
     },
 };
@@ -90,7 +90,7 @@ const addDefaultVariants = (variants: Variants) => ({
     visible: { ...defaultItemVariants.visible, ...variants.visible },
 });
 
-function AnimatedGroup({ children, className, variants, preset, as = "div", asChild = "div" }: AnimatedGroupProps) {
+function AnimatedGroup({ children, className, variants, preset, as: Component = "div", asChild: ChildComponent = "div" }: AnimatedGroupProps) {
     const selectedVariants = {
         item: addDefaultVariants(preset ? presetVariants[preset] : {}),
         container: addDefaultVariants(defaultContainerVariants),
@@ -98,18 +98,19 @@ function AnimatedGroup({ children, className, variants, preset, as = "div", asCh
     const containerVariants = variants?.container || selectedVariants.container;
     const itemVariants = variants?.item || selectedVariants.item;
 
-    const MotionComponent = React.useMemo(() => motion.create(as as keyof JSX.IntrinsicElements), [as]);
-    const MotionChild = React.useMemo(() => motion.create(asChild as keyof JSX.IntrinsicElements), [asChild]);
+    // Use motion with the component type
+    const MotionContainer = motion(Component);
+    const MotionChild = motion(ChildComponent);
 
     return (
-        <MotionComponent animate="visible" className={className} initial="hidden" variants={containerVariants}>
+        <MotionContainer animate="visible" className={className} initial="hidden" variants={containerVariants}>
             {React.Children.map(children, (child, index) => (
                 // biome-ignore lint/suspicious/noArrayIndexKey: Children mapping with index key
                 <MotionChild key={index} variants={itemVariants}>
                     {child}
                 </MotionChild>
             ))}
-        </MotionComponent>
+        </MotionContainer>
     );
 }
 

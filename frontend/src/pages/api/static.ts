@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { unstable_cache } from "next/cache";
 import { env } from "~/env";
+import type { ChibiCharacter } from "~/types/api/impl/chibi";
 import type { Item } from "~/types/api/impl/material";
 import type { Module, ModuleData, Modules } from "~/types/api/impl/module";
 import type { Operator } from "~/types/api/impl/operator";
@@ -97,7 +98,7 @@ const fetchData = async <T>(endpoint: string, cacheKey?: string): Promise<T> => 
 
 // Request body type definition
 interface RequestBody {
-    type: "materials" | "modules" | "operators" | "ranges" | "skills" | "trust" | "handbook" | "skins" | "voices" | "gacha";
+    type: "materials" | "modules" | "operators" | "ranges" | "skills" | "trust" | "handbook" | "skins" | "voices" | "gacha" | "chibis";
     id?: string;
     method?: string;
     trust?: number;
@@ -263,6 +264,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 } else {
                     return res.status(400).json({ error: "Invalid 'method' for type 'gacha'. Use 'recruitment' or 'calculate'." });
                 }
+            }
+            case "chibis": {
+                let endpoint: string;
+                if (body.id) {
+                    // Check if this looks like a character ID (starts with char_)
+                    if (body.id.startsWith("char_")) {
+                        endpoint = `/static/chibis/${body.id}`;
+                    } else {
+                        endpoint = `/static/chibis/${body.id}`;
+                    }
+                } else {
+                    endpoint = "/static/chibis";
+                }
+                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-chibis-${body.id ?? "all"}`;
+                const chibis = await fetchData<{ chibi?: ChibiCharacter; chibis?: ChibiCharacter[] }>(endpoint, cacheKey);
+                return res.status(200).json(chibis);
             }
             default: {
                 const unknownType = body.type as string;

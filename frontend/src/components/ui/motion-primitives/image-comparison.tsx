@@ -34,7 +34,7 @@ function ImageComparison({ children, className, enableHover, springOptions }: Im
         if (!isDragging && !enableHover) return;
 
         const containerRect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-        const x = "touches" in event ? event.touches[0].clientX - containerRect.left : (event as React.MouseEvent).clientX - containerRect.left;
+        const x = "touches" in event ? (event.touches[0]?.clientX ?? 0) - containerRect.left : (event as React.MouseEvent).clientX - containerRect.left;
 
         const percentage = Math.min(Math.max((x / containerRect.width) * 100, 0), 100);
         motionValue.set(percentage);

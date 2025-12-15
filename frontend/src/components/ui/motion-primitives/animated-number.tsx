@@ -10,8 +10,8 @@ export type AnimatedNumberProps = {
     as?: React.ElementType;
 };
 
-export function AnimatedNumber({ value, className, springOptions, as = "span" }: AnimatedNumberProps) {
-    const MotionComponent = motion.create(as as keyof JSX.IntrinsicElements);
+export function AnimatedNumber({ value, className, springOptions, as: Component = "span" }: AnimatedNumberProps) {
+    const MotionComponent = motion(Component);
 
     const spring = useSpring(value, springOptions);
     const display = useTransform(spring, (current) => Math.round(current).toLocaleString());
