@@ -297,9 +297,10 @@ fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Re
 
     // Collect all assets - use Vec to preserve duplicates with same name
     let mut textassets: Vec<(String, serde_json::Value)> = Vec::new();
-    let mut texture_objects: std::collections::HashMap<
+    // Store ALL texture objects, including duplicates, keyed by name
+    let mut texture_objects_all: std::collections::HashMap<
         String,
-        unity_rs::files::object_reader::ObjectReader<()>,
+        Vec<unity_rs::files::object_reader::ObjectReader<()>>,
     > = std::collections::HashMap::new();
 
     for mut obj in env.objects() {
@@ -314,11 +315,59 @@ fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Re
             ClassIDType::Texture2D => {
                 if let Ok(data) = obj.read(false) {
                     if let Some(name) = data.get("m_Name").and_then(|v| v.as_str()) {
-                        texture_objects.insert(name.to_string(), obj.clone());
+                        texture_objects_all
+                            .entry(name.to_string())
+                            .or_insert_with(Vec::new)
+                            .push(obj.clone());
                     }
                 }
             }
             _ => {}
+        }
+    }
+
+    // Resolve duplicates by decoding and picking the texture with more colors
+    let mut texture_objects: std::collections::HashMap<
+        String,
+        unity_rs::files::object_reader::ObjectReader<()>,
+    > = std::collections::HashMap::new();
+
+    for (name, objects) in texture_objects_all {
+        if objects.len() == 1 {
+            texture_objects.insert(name, objects.into_iter().next().unwrap());
+        } else {
+            // Multiple textures with same name - decode all and pick best
+            let mut best_obj = None;
+            let mut best_colored_pixels = 0usize;
+
+            for mut tex_obj in objects {
+                if let Ok(data) = tex_obj.read(false) {
+                    if let Ok(mut texture) =
+                        serde_json::from_value::<unity_rs::generated::Texture2D>(data)
+                    {
+                        texture.object_reader = Some(Box::new(tex_obj.clone()));
+                        if let Ok(img) = texture_to_image(&texture) {
+                            let colored = img
+                                .pixels()
+                                .filter(|p| p[0] as u32 + p[1] as u32 + p[2] as u32 > 30)
+                                .count();
+                            if colored > best_colored_pixels {
+                                best_colored_pixels = colored;
+                                best_obj = Some(tex_obj);
+                            }
+                        }
+                    }
+                }
+            }
+
+            if let Some(obj) = best_obj {
+                log::debug!(
+                    "Selected best texture '{}' with {} colored pixels",
+                    name,
+                    best_colored_pixels
+                );
+                texture_objects.insert(name, obj);
+            }
         }
     }
 
@@ -497,28 +546,35 @@ fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Re
                     None
                 };
 
-                // Save RGB and alpha SEPARATELY (like Python does)
-                // This matches Python output structure with separate [alpha].png files
+                // For BattleFront/BattleBack: combine RGB + alpha into a single texture
+                // For Building: save RGB only (no alpha needed)
+                // For other types: save RGB + alpha separately
 
-                // Save RGB texture
-                if let Some(ref rgb) = rgb_image {
-                    let tex_path = asset_dir.join(tex_name);
-                    if rgb.save(&tex_path).is_ok() {
-                        saved_count += 1;
-                        log::debug!("Saved spine RGB texture: {:?}", tex_path);
-                    }
-                }
+                let tex_path = asset_dir.join(tex_name);
 
-                // Save alpha texture separately (for BattleFront/BattleBack only, not Building)
-                if let Some(ref alpha) = alpha_image {
-                    // Only save alpha for battle-type assets, not Building
-                    if asset.asset_type == SpineAssetType::BattleFront
-                        || asset.asset_type == SpineAssetType::BattleBack
-                    {
-                        let alpha_path = asset_dir.join(format!("{}[alpha].png", base));
-                        if alpha.save(&alpha_path).is_ok() {
+                if asset.asset_type == SpineAssetType::BattleFront
+                    || asset.asset_type == SpineAssetType::BattleBack
+                {
+                    // Combine RGB + alpha for battle sprites
+                    if let (Some(ref rgb), Some(ref alpha)) = (&rgb_image, &alpha_image) {
+                        let combined = combine_rgba_with_alpha(rgb, alpha);
+                        if combined.save(&tex_path).is_ok() {
                             saved_count += 1;
-                            log::debug!("Saved spine alpha texture: {:?}", alpha_path);
+                            log::debug!("Saved combined spine texture: {:?}", tex_path);
+                        }
+                    } else if let Some(ref rgb) = rgb_image {
+                        // No alpha available, save RGB as-is
+                        if rgb.save(&tex_path).is_ok() {
+                            saved_count += 1;
+                            log::debug!("Saved spine RGB texture (no alpha): {:?}", tex_path);
+                        }
+                    }
+                } else {
+                    // Building and other types: save RGB only
+                    if let Some(ref rgb) = rgb_image {
+                        if rgb.save(&tex_path).is_ok() {
+                            saved_count += 1;
+                            log::debug!("Saved spine RGB texture: {:?}", tex_path);
                         }
                     }
                 }
@@ -1218,7 +1274,36 @@ fn extract_images_with_combination(
                             None
                         };
 
-                        textures.insert(name.to_string(), TextureData { image });
+                        // Handle duplicate textures - keep the one with more non-black pixels
+                        if let Some(existing) = textures.get(name) {
+                            if let (Some(ref new_img), Some(ref old_img)) =
+                                (&image, &existing.image)
+                            {
+                                // Count non-black pixels to determine which has more color
+                                let new_colored = new_img
+                                    .pixels()
+                                    .filter(|p| p[0] as u32 + p[1] as u32 + p[2] as u32 > 30)
+                                    .count();
+                                let old_colored = old_img
+                                    .pixels()
+                                    .filter(|p| p[0] as u32 + p[1] as u32 + p[2] as u32 > 30)
+                                    .count();
+
+                                if new_colored > old_colored {
+                                    log::debug!("Replacing texture '{}' with version having more color ({} vs {} colored pixels)", name, new_colored, old_colored);
+                                    textures.insert(name.to_string(), TextureData { image });
+                                } else {
+                                    log::debug!("Keeping existing texture '{}' (has more color: {} vs {} colored pixels)", name, old_colored, new_colored);
+                                }
+                            } else {
+                                // One or both don't have image data - prefer the one with data
+                                if image.is_some() && existing.image.is_none() {
+                                    textures.insert(name.to_string(), TextureData { image });
+                                }
+                            }
+                        } else {
+                            textures.insert(name.to_string(), TextureData { image });
+                        }
                         log::debug!("Collected texture: {}", name);
                     }
                 }
