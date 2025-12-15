@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 use serde::de::DeserializeOwned;
 
 use crate::core::local::asset_mapping::AssetMappings;
+use crate::core::local::gamedata::chibi::init_chibi_data;
 use crate::core::local::gamedata::operators::enrich_all_operators;
 use crate::core::local::gamedata::skills::enrich_all_skills;
 use crate::core::local::gamedata::skins::enrich_all_skins;
@@ -250,6 +251,9 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
         }
     };
 
+    // ============ Load Chibi Data ============
+    let chibis = init_chibi_data(assets_dir);
+
     // ============ Enrich Data ============
     let skills = enrich_all_skills(raw_skills, &asset_mappings);
 
@@ -354,6 +358,7 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
         favor,
         voices,
         gacha,
+        chibis,
         asset_mappings,
     })
 }

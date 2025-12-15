@@ -79,5 +79,15 @@ pub fn router() -> Router<AppState> {
         )
         .route("/gacha/pools", get(endpoints::gacha::get_gacha_pools))
         .route("/gacha/tags", get(endpoints::gacha::get_gacha_tags))
+        // Chibis
+        .route("/chibis", get(endpoints::chibis::get_all_chibis))
+        .route(
+            "/chibis/operators",
+            get(endpoints::chibis::get_chibi_operators),
+        )
+        .route(
+            "/chibis/{operator_code}",
+            get(endpoints::chibis::get_chibi_by_operator),
+        )
         .layer(CompressionLayer::new())
 }

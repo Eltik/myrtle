@@ -3,12 +3,13 @@ use std::collections::HashMap;
 use crate::core::local::{
     asset_mapping::AssetMappings,
     types::{
-        gacha::GachaData, handbook::Handbook, material::Materials, module::Modules,
-        operator::Operator, range::Ranges, skill::Skill, skin::SkinData, trust::Favor,
-        voice::Voices,
+        chibi::ChibiData, gacha::GachaData, handbook::Handbook, material::Materials,
+        module::Modules, operator::Operator, range::Ranges, skill::Skill, skin::SkinData,
+        trust::Favor, voice::Voices,
     },
 };
 
+pub mod chibi;
 pub mod enemy;
 pub mod gacha;
 pub mod handbook;
@@ -34,6 +35,7 @@ pub struct GameData {
     pub favor: Favor,
     pub voices: Voices,
     pub gacha: GachaData,
+    pub chibis: ChibiData,
     pub asset_mappings: AssetMappings,
 }
 
