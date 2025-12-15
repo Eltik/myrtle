@@ -6,7 +6,7 @@ import { useRef, useState } from "react";
 import useClickOutside from "~/hooks/useClickOutside";
 
 const transition = {
-    type: "spring",
+    type: "spring" as const,
     bounce: 0.1,
     duration: 0.2,
 };

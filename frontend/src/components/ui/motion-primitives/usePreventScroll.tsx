@@ -46,7 +46,6 @@ function chain(...callbacks: unknown[]): (...args: unknown[]) => void {
     };
 }
 
-// @ts-expect-error
 const visualViewport = typeof document !== "undefined" && window.visualViewport;
 
 export function isScrollable(node: Element): boolean {
@@ -138,7 +137,7 @@ function preventScrollMobileSafari() {
             return;
         }
 
-        lastY = e.changedTouches[0].pageY;
+        lastY = e.changedTouches[0]?.pageY ?? 0;
     };
 
     const onTouchMove = (e: TouchEvent) => {
@@ -152,7 +151,7 @@ function preventScrollMobileSafari() {
         // of a nested scrollable area, otherwise mobile Safari will start scrolling
         // the window instead. Unfortunately, this disables bounce scrolling when at
         // the top but it's the best we can do.
-        const y = e.changedTouches[0].pageY;
+        const y = e.changedTouches[0]?.pageY ?? 0;
         const scrollTop = scrollable.scrollTop;
         const bottom = scrollable.scrollHeight - scrollable.clientHeight;
 

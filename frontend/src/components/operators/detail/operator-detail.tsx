@@ -10,7 +10,7 @@ interface OperatorDetailProps {
 }
 
 export function OperatorDetail({ operator }: OperatorDetailProps) {
-    const [activeTab, setActiveTab] = useState<"info" | "skills" | "levelup" | "skins" | "audio">("info");
+    const [activeTab, setActiveTab] = useState<"info" | "skills" | "levelup" | "skins" | "audio" | "lore">("info");
 
     return (
         <div className="relative min-h-screen w-full min-w-0 overflow-x-hidden">

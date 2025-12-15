@@ -33,7 +33,7 @@ const defaultVariants: Variants = {
 };
 
 const defaultTransition: Transition = {
-    ease: "easeOut",
+    ease: "easeOut" as const,
     duration: 0.2,
 };
 

@@ -227,7 +227,7 @@ function CarouselContent({ children, className, transition }: CarouselContentPro
                 transition || {
                     damping: 18,
                     stiffness: 90,
-                    type: "spring",
+                    type: "spring" as const,
                     duration: 0.2,
                 }
             }

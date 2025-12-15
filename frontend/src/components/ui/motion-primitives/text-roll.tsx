@@ -21,7 +21,7 @@ export type TextRollProps = {
     onAnimationComplete?: () => void;
 };
 
-export function TextRoll({ children, duration = 0.5, getEnterDelay = (i) => i * 0.1, getExitDelay = (i) => i * 0.1 + 0.2, className, transition = { ease: "easeIn" }, variants, onAnimationComplete }: TextRollProps) {
+export function TextRoll({ children, duration = 0.5, getEnterDelay = (i) => i * 0.1, getExitDelay = (i) => i * 0.1 + 0.2, className, transition = { ease: "easeIn" as const }, variants, onAnimationComplete }: TextRollProps) {
     const defaultVariants = {
         enter: {
             initial: { rotateX: 0 },

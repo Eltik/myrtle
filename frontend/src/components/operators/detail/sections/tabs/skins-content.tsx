@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, Maximize2, Palette, User } from "lucide-react";
+import { Calendar, Maximize2, Palette } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
@@ -235,11 +235,8 @@ export const SkinsContent = memo(function SkinsContent({ operator }: SkinsConten
                             )}
                         </div>
 
-                        {/* Chibi Viewer Placeholder */}
-                        <div className="rounded-lg border border-border border-dashed bg-secondary/20 p-6 text-center">
-                            <User className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
-                            <p className="text-muted-foreground text-sm">Chibi Viewer Coming Soon</p>
-                        </div>
+                        {/* Chibi Viewer */}
+                        <ChibiViewer operatorId={operatorId} skinId={selectedSkinData?.id} />
                     </div>
                 </div>
             )}

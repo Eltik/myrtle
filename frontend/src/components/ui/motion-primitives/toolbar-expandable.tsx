@@ -8,7 +8,7 @@ import useClickOutside from "~/hooks/useClickOutside";
 import { cn } from "~/lib/utils";
 
 const transition = {
-    type: "spring",
+    type: "spring" as const,
     bounce: 0.1,
     duration: 0.25,
 };

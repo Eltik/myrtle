@@ -36,7 +36,7 @@ export function TextMorph({ children, as: Component = "p", className, style, var
     };
 
     const defaultTransition: Transition = {
-        type: "spring",
+        type: "spring" as const,
         stiffness: 280,
         damping: 18,
         mass: 0.3,

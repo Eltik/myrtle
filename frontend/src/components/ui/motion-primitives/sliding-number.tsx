@@ -72,8 +72,9 @@ type SlidingNumberProps = {
 export function SlidingNumber({ value, padStart = false, decimalSeparator = "." }: SlidingNumberProps) {
     const absValue = Math.abs(value);
     const [integerPart, decimalPart] = absValue.toString().split(".");
-    const integerValue = parseInt(integerPart, 10);
-    const paddedInteger = padStart && integerValue < 10 ? `0${integerPart}` : integerPart;
+    const integerValue = parseInt(integerPart ?? "0", 10);
+    const safeIntegerPart = integerPart ?? "0";
+    const paddedInteger = padStart && integerValue < 10 ? `0${safeIntegerPart}` : safeIntegerPart;
     const integerDigits = paddedInteger.split("");
     const integerPlaces = integerDigits.map((_, i) => 10 ** (integerDigits.length - i - 1));
 
@@ -81,7 +82,7 @@ export function SlidingNumber({ value, padStart = false, decimalSeparator = "." 
         <div className="flex items-center">
             {value < 0 && "-"}
             {integerDigits.map((_, index) => (
-                <Digit key={`pos-${integerPlaces[index]}`} place={integerPlaces[index]} value={integerValue} />
+                <Digit key={`pos-${integerPlaces[index] ?? 0}`} place={integerPlaces[index] ?? 1} value={integerValue} />
             ))}
             {decimalPart && (
                 <>

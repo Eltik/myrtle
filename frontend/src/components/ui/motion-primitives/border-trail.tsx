@@ -14,7 +14,7 @@ export function BorderTrail({ className, size = 60, transition, onAnimationCompl
     const defaultTransition: Transition = {
         repeat: Infinity,
         duration: 5,
-        ease: "linear",
+        ease: "linear" as const,
     };
 
     return (
