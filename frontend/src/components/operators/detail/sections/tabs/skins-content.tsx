@@ -236,7 +236,7 @@ export const SkinsContent = memo(function SkinsContent({ operator }: SkinsConten
                         </div>
 
                         {/* Chibi Viewer */}
-                        <ChibiViewer operatorId={operatorId} skinId={selectedSkinData?.id} />
+                        {/*<ChibiViewer operatorId={operatorId} skinId={selectedSkinData?.id} />*/}
                     </div>
                 </div>
             )}

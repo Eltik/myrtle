@@ -318,11 +318,16 @@ fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Re
 
     // Collect all assets - use Vec to preserve duplicates with same name
     let mut textassets: Vec<(String, serde_json::Value)> = Vec::new();
-    // Store ALL texture objects with their sizes, keyed by name
-    // Each entry: (width, height, ObjectReader)
+    // Store ALL texture objects with their sizes and quality, keyed by name
+    // Each entry: (width, height, colored_pixels, ObjectReader)
     let mut texture_objects_by_size: std::collections::HashMap<
         String,
-        Vec<(u32, u32, unity_rs::files::object_reader::ObjectReader<()>)>,
+        Vec<(
+            u32,
+            u32,
+            usize,
+            unity_rs::files::object_reader::ObjectReader<()>,
+        )>,
     > = std::collections::HashMap::new();
 
     for mut obj in env.objects() {
@@ -342,10 +347,30 @@ fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Re
                             data.get("m_Width").and_then(|v| v.as_u64()).unwrap_or(0) as u32;
                         let height =
                             data.get("m_Height").and_then(|v| v.as_u64()).unwrap_or(0) as u32;
+                        // Decode texture to count colored pixels for quality comparison
+                        let mut tex_obj = obj.clone();
+                        let colored_pixels = if let Ok(tex_data) = tex_obj.read(false) {
+                            if let Ok(mut texture) =
+                                serde_json::from_value::<unity_rs::generated::Texture2D>(tex_data)
+                            {
+                                texture.object_reader = Some(Box::new(tex_obj.clone()));
+                                if let Ok(img) = texture_to_image(&texture) {
+                                    img.pixels()
+                                        .filter(|p| p[0] as u32 + p[1] as u32 + p[2] as u32 > 30)
+                                        .count()
+                                } else {
+                                    0
+                                }
+                            } else {
+                                0
+                            }
+                        } else {
+                            0
+                        };
                         texture_objects_by_size
                             .entry(name.to_string())
                             .or_insert_with(Vec::new)
-                            .push((width, height, obj.clone()));
+                            .push((width, height, colored_pixels, obj.clone()));
                     }
                 }
             }
@@ -361,30 +386,16 @@ fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Re
 
     for (name, objects) in &texture_objects_by_size {
         if objects.len() == 1 {
-            texture_objects.insert(name.clone(), objects[0].2.clone());
+            texture_objects.insert(name.clone(), objects[0].3.clone());
         } else {
-            // Multiple textures with same name - decode all and pick best
+            // Multiple textures with same name - pick best by colored pixels (already computed)
             let mut best_obj = None;
             let mut best_colored_pixels = 0usize;
 
-            for (_, _, tex_obj) in objects {
-                let mut tex_obj = tex_obj.clone();
-                if let Ok(data) = tex_obj.read(false) {
-                    if let Ok(mut texture) =
-                        serde_json::from_value::<unity_rs::generated::Texture2D>(data)
-                    {
-                        texture.object_reader = Some(Box::new(tex_obj.clone()));
-                        if let Ok(img) = texture_to_image(&texture) {
-                            let colored = img
-                                .pixels()
-                                .filter(|p| p[0] as u32 + p[1] as u32 + p[2] as u32 > 30)
-                                .count();
-                            if colored > best_colored_pixels {
-                                best_colored_pixels = colored;
-                                best_obj = Some(tex_obj);
-                            }
-                        }
-                    }
+            for (_, _, colored, tex_obj) in objects {
+                if *colored > best_colored_pixels {
+                    best_colored_pixels = *colored;
+                    best_obj = Some(tex_obj.clone());
                 }
             }
 
@@ -502,6 +513,7 @@ fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Re
         }
 
         // Create directory structure: <type>/<asset_name>/
+        // Each skin gets its own subdirectory within the type folder
         let type_dir = asset.asset_type.directory_name();
         let asset_dir = if type_dir.is_empty() {
             destdir.join(&asset.name)
@@ -551,65 +563,147 @@ fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Re
             for tex_name in &required_textures {
                 let base = tex_name.trim_end_matches(".png");
 
-                // Helper closure to find texture matching atlas size, or fallback to any available
-                let find_texture_obj =
-                    |name: &str| -> Option<unity_rs::files::object_reader::ObjectReader<()>> {
-                        if let Some(textures) = texture_objects_by_size.get(name) {
-                            // If we have atlas size, try to find matching texture
-                            if let Some((atlas_w, atlas_h)) = atlas_size {
-                                // First try exact match
-                                for (w, h, obj) in textures {
-                                    if *w == atlas_w && *h == atlas_h {
-                                        log::debug!(
-                                            "Found exact size match for '{}': {}x{} (atlas: {}x{})",
-                                            name,
-                                            w,
-                                            h,
-                                            atlas_w,
-                                            atlas_h
-                                        );
-                                        return Some(obj.clone());
-                                    }
-                                }
-                                // No exact match - try closest size that's >= atlas size
-                                let mut best_match: Option<&(
-                                    u32,
-                                    u32,
-                                    unity_rs::files::object_reader::ObjectReader<()>,
-                                )> = None;
-                                for tex in textures {
-                                    if tex.0 >= atlas_w && tex.1 >= atlas_h {
-                                        if best_match.is_none()
-                                            || (tex.0 <= best_match.unwrap().0
-                                                && tex.1 <= best_match.unwrap().1)
-                                        {
-                                            best_match = Some(tex);
-                                        }
-                                    }
-                                }
-                                if let Some((w, h, obj)) = best_match {
+                // Helper closure to find best texture
+                // force_exact: if true, always use exact size match (for RGB when alpha exists)
+                let find_texture_obj = |name: &str,
+                                        force_exact: bool|
+                 -> Option<
+                    unity_rs::files::object_reader::ObjectReader<()>,
+                > {
+                    if let Some(textures) = texture_objects_by_size.get(name) {
+                        // Calculate pixel density (colored / total) to detect nearly-black textures
+                        let pixel_density = |w: u32, h: u32, colored: usize| -> f64 {
+                            let total = (w as usize) * (h as usize);
+                            if total == 0 {
+                                0.0
+                            } else {
+                                colored as f64 / total as f64
+                            }
+                        };
+
+                        // A texture is "nearly black" if less than 15% of pixels are colored
+                        const MIN_DENSITY: f64 = 0.15;
+
+                        if let Some((atlas_w, atlas_h)) = atlas_size {
+                            // First, try exact size match
+                            let exact_matches: Vec<_> = textures
+                                .iter()
+                                .filter(|(w, h, _, _)| *w == atlas_w && *h == atlas_h)
+                                .collect();
+
+                            // If we have an exact match, check if we should use it
+                            if let Some(best_exact) = exact_matches
+                                .iter()
+                                .max_by_key(|(_, _, colored, _)| *colored)
+                            {
+                                let (w, h, colored, obj) = *best_exact;
+                                let density = pixel_density(*w, *h, *colored);
+
+                                // Always use exact match if forced (RGB+alpha pair must match sizes)
+                                // or if density is reasonable
+                                if force_exact || density >= MIN_DENSITY {
                                     log::debug!(
-                                        "Found close size match for '{}': {}x{} (atlas: {}x{})",
-                                        name,
-                                        w,
-                                        h,
-                                        atlas_w,
-                                        atlas_h
-                                    );
+                                            "Found exact size match for '{}': {}x{} with {} colored pixels ({:.1}% density){}",
+                                            name, w, h, colored, density * 100.0,
+                                            if force_exact { " [forced for alpha pairing]" } else { "" }
+                                        );
                                     return Some(obj.clone());
                                 }
+                                log::debug!(
+                                        "Exact match for '{}' is nearly black ({:.1}% density), looking for alternatives",
+                                        name, density * 100.0
+                                    );
                             }
-                            // No size info or no match - use first available
-                            if !textures.is_empty() {
-                                return Some(textures[0].2.clone());
+
+                            // Try close matches (within 2x atlas size) that aren't nearly black
+                            let close_matches: Vec<_> = textures
+                                .iter()
+                                .filter(|(w, h, colored, _)| {
+                                    *w >= atlas_w
+                                        && *h >= atlas_h
+                                        && *w <= atlas_w * 2
+                                        && *h <= atlas_h * 2
+                                        && pixel_density(*w, *h, *colored) >= MIN_DENSITY
+                                })
+                                .collect();
+
+                            // Prefer smallest close match with good density
+                            if let Some(best_close) =
+                                close_matches.iter().min_by_key(|(w, h, _, _)| (*w, *h))
+                            {
+                                let (w, h, colored, obj) = *best_close;
+                                log::debug!(
+                                        "Found close size match for '{}': {}x{} with {} colored pixels (atlas: {}x{})",
+                                        name, w, h, colored, atlas_w, atlas_h
+                                    );
+                                return Some(obj.clone());
+                            }
+
+                            // If no good close match, look for any texture >= atlas size with good density
+                            let larger_good: Vec<_> = textures
+                                .iter()
+                                .filter(|(w, h, colored, _)| {
+                                    *w >= atlas_w
+                                        && *h >= atlas_h
+                                        && pixel_density(*w, *h, *colored) >= MIN_DENSITY
+                                })
+                                .collect();
+
+                            // Prefer smallest one (less downscaling needed)
+                            if let Some(best_larger) =
+                                larger_good.iter().min_by_key(|(w, h, _, _)| (*w, *h))
+                            {
+                                let (w, h, colored, obj) = *best_larger;
+                                log::debug!(
+                                        "Found larger texture for '{}': {}x{} with {} colored pixels (atlas: {}x{})",
+                                        name, w, h, colored, atlas_w, atlas_h
+                                    );
+                                return Some(obj.clone());
+                            }
+
+                            // Last resort: pick any texture with best density
+                            let all_with_density: Vec<_> = textures
+                                .iter()
+                                .map(|(w, h, colored, obj)| {
+                                    (w, h, colored, pixel_density(*w, *h, *colored), obj)
+                                })
+                                .collect();
+
+                            if let Some((w, h, colored, density, obj)) =
+                                all_with_density.iter().max_by(|a, b| {
+                                    a.3.partial_cmp(&b.3).unwrap_or(std::cmp::Ordering::Equal)
+                                })
+                            {
+                                log::debug!(
+                                        "Using best density texture for '{}': {}x{} with {} colored pixels ({:.1}% density, atlas: {}x{})",
+                                        name, w, h, colored, density * 100.0, atlas_w, atlas_h
+                                    );
+                                return Some((*obj).clone());
                             }
                         }
-                        // Fall back to deduplicated map
-                        texture_objects.get(name).cloned()
-                    };
+                        // No size info - pick texture with best density
+                        if !textures.is_empty() {
+                            let best = textures.iter().max_by(|a, b| {
+                                let da = pixel_density(a.0, a.1, a.2);
+                                let db = pixel_density(b.0, b.1, b.2);
+                                da.partial_cmp(&db).unwrap_or(std::cmp::Ordering::Equal)
+                            });
+                            if let Some((_, _, _, obj)) = best {
+                                return Some(obj.clone());
+                            }
+                        }
+                    }
+                    // Fall back to deduplicated map
+                    texture_objects.get(name).cloned()
+                };
+
+                // Check if alpha texture exists (to determine if we need to force exact match for RGB)
+                let alpha_name = format!("{}[alpha]", base);
+                let has_alpha = texture_objects_by_size.contains_key(&alpha_name);
 
                 // Try to get RGB texture matching atlas size
-                let rgb_image = if let Some(mut tex_obj) = find_texture_obj(base) {
+                // If alpha exists, force exact match so RGB and alpha sizes match
+                let rgb_image = if let Some(mut tex_obj) = find_texture_obj(base, has_alpha) {
                     if let Ok(data) = tex_obj.read(false) {
                         if let Ok(mut texture) =
                             serde_json::from_value::<unity_rs::generated::Texture2D>(data.clone())
@@ -627,8 +721,8 @@ fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Re
                 };
 
                 // Try to get alpha texture matching atlas size
-                let alpha_name = format!("{}[alpha]", base);
-                let alpha_image = if let Some(mut alpha_obj) = find_texture_obj(&alpha_name) {
+                let alpha_image = if let Some(mut alpha_obj) = find_texture_obj(&alpha_name, false)
+                {
                     if let Ok(data) = alpha_obj.read(false) {
                         if let Ok(mut texture) =
                             serde_json::from_value::<unity_rs::generated::Texture2D>(data.clone())
