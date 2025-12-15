@@ -262,6 +262,27 @@ fn parse_atlas_textures(atlas_content: &str) -> Vec<String> {
     textures
 }
 
+/// Parse atlas file to extract the expected texture size (width, height)
+fn parse_atlas_size(atlas_content: &str) -> Option<(u32, u32)> {
+    for line in atlas_content.lines() {
+        let trimmed = line.trim();
+        if trimmed.starts_with("size:") {
+            // Format: "size: 256,256" or "size:256,256"
+            let size_str = trimmed.trim_start_matches("size:").trim();
+            let parts: Vec<&str> = size_str.split(',').collect();
+            if parts.len() == 2 {
+                if let (Ok(w), Ok(h)) = (
+                    parts[0].trim().parse::<u32>(),
+                    parts[1].trim().parse::<u32>(),
+                ) {
+                    return Some((w, h));
+                }
+            }
+        }
+    }
+    None
+}
+
 /// Validate that all required textures exist
 fn validate_spine_textures(
     required: &[String],
@@ -297,10 +318,11 @@ fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Re
 
     // Collect all assets - use Vec to preserve duplicates with same name
     let mut textassets: Vec<(String, serde_json::Value)> = Vec::new();
-    // Store ALL texture objects, including duplicates, keyed by name
-    let mut texture_objects_all: std::collections::HashMap<
+    // Store ALL texture objects with their sizes, keyed by name
+    // Each entry: (width, height, ObjectReader)
+    let mut texture_objects_by_size: std::collections::HashMap<
         String,
-        Vec<unity_rs::files::object_reader::ObjectReader<()>>,
+        Vec<(u32, u32, unity_rs::files::object_reader::ObjectReader<()>)>,
     > = std::collections::HashMap::new();
 
     for mut obj in env.objects() {
@@ -315,10 +337,15 @@ fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Re
             ClassIDType::Texture2D => {
                 if let Ok(data) = obj.read(false) {
                     if let Some(name) = data.get("m_Name").and_then(|v| v.as_str()) {
-                        texture_objects_all
+                        // Get texture dimensions from metadata
+                        let width =
+                            data.get("m_Width").and_then(|v| v.as_u64()).unwrap_or(0) as u32;
+                        let height =
+                            data.get("m_Height").and_then(|v| v.as_u64()).unwrap_or(0) as u32;
+                        texture_objects_by_size
                             .entry(name.to_string())
                             .or_insert_with(Vec::new)
-                            .push(obj.clone());
+                            .push((width, height, obj.clone()));
                     }
                 }
             }
@@ -326,21 +353,22 @@ fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Re
         }
     }
 
-    // Resolve duplicates by decoding and picking the texture with more colors
+    // Build a simple name->object map for non-spine texture extraction (pick best by colored pixels)
     let mut texture_objects: std::collections::HashMap<
         String,
         unity_rs::files::object_reader::ObjectReader<()>,
     > = std::collections::HashMap::new();
 
-    for (name, objects) in texture_objects_all {
+    for (name, objects) in &texture_objects_by_size {
         if objects.len() == 1 {
-            texture_objects.insert(name, objects.into_iter().next().unwrap());
+            texture_objects.insert(name.clone(), objects[0].2.clone());
         } else {
             // Multiple textures with same name - decode all and pick best
             let mut best_obj = None;
             let mut best_colored_pixels = 0usize;
 
-            for mut tex_obj in objects {
+            for (_, _, tex_obj) in objects {
+                let mut tex_obj = tex_obj.clone();
                 if let Ok(data) = tex_obj.read(false) {
                     if let Ok(mut texture) =
                         serde_json::from_value::<unity_rs::generated::Texture2D>(data)
@@ -366,7 +394,7 @@ fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Re
                     name,
                     best_colored_pixels
                 );
-                texture_objects.insert(name, obj);
+                texture_objects.insert(name.clone(), obj);
             }
         }
     }
@@ -383,7 +411,20 @@ fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Re
         if name.ends_with(".skel") {
             let base_name = name.trim_end_matches(".skel").to_string();
             if let Some(script) = data.get("m_Script").and_then(|v| v.as_str()) {
-                skels.push((base_name, script.as_bytes().to_vec()));
+                // Decode base64 if the skel data is base64-encoded
+                let skel_bytes = if script.starts_with("base64:") {
+                    use base64::{engine::general_purpose::STANDARD, Engine as _};
+                    match STANDARD.decode(&script[7..]) {
+                        Ok(decoded) => decoded,
+                        Err(e) => {
+                            log::warn!("Failed to decode base64 skel data for {}: {}", name, e);
+                            script.as_bytes().to_vec()
+                        }
+                    }
+                } else {
+                    script.as_bytes().to_vec()
+                };
+                skels.push((base_name, skel_bytes));
             }
         } else if name.ends_with(".atlas") {
             let base_name = name.trim_end_matches(".atlas").to_string();
@@ -502,14 +543,73 @@ fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Re
             std::fs::write(&path, atlas)?;
             saved_count += 1;
 
+            // Parse atlas size to find matching textures
+            let atlas_size = parse_atlas_size(atlas);
+
             // Also save associated textures
             let required_textures = parse_atlas_textures(atlas);
             for tex_name in &required_textures {
                 let base = tex_name.trim_end_matches(".png");
 
-                // Try to get RGB texture
-                let rgb_image = if let Some(tex_obj) = texture_objects.get(base) {
-                    let mut tex_obj = tex_obj.clone();
+                // Helper closure to find texture matching atlas size, or fallback to any available
+                let find_texture_obj =
+                    |name: &str| -> Option<unity_rs::files::object_reader::ObjectReader<()>> {
+                        if let Some(textures) = texture_objects_by_size.get(name) {
+                            // If we have atlas size, try to find matching texture
+                            if let Some((atlas_w, atlas_h)) = atlas_size {
+                                // First try exact match
+                                for (w, h, obj) in textures {
+                                    if *w == atlas_w && *h == atlas_h {
+                                        log::debug!(
+                                            "Found exact size match for '{}': {}x{} (atlas: {}x{})",
+                                            name,
+                                            w,
+                                            h,
+                                            atlas_w,
+                                            atlas_h
+                                        );
+                                        return Some(obj.clone());
+                                    }
+                                }
+                                // No exact match - try closest size that's >= atlas size
+                                let mut best_match: Option<&(
+                                    u32,
+                                    u32,
+                                    unity_rs::files::object_reader::ObjectReader<()>,
+                                )> = None;
+                                for tex in textures {
+                                    if tex.0 >= atlas_w && tex.1 >= atlas_h {
+                                        if best_match.is_none()
+                                            || (tex.0 <= best_match.unwrap().0
+                                                && tex.1 <= best_match.unwrap().1)
+                                        {
+                                            best_match = Some(tex);
+                                        }
+                                    }
+                                }
+                                if let Some((w, h, obj)) = best_match {
+                                    log::debug!(
+                                        "Found close size match for '{}': {}x{} (atlas: {}x{})",
+                                        name,
+                                        w,
+                                        h,
+                                        atlas_w,
+                                        atlas_h
+                                    );
+                                    return Some(obj.clone());
+                                }
+                            }
+                            // No size info or no match - use first available
+                            if !textures.is_empty() {
+                                return Some(textures[0].2.clone());
+                            }
+                        }
+                        // Fall back to deduplicated map
+                        texture_objects.get(name).cloned()
+                    };
+
+                // Try to get RGB texture matching atlas size
+                let rgb_image = if let Some(mut tex_obj) = find_texture_obj(base) {
                     if let Ok(data) = tex_obj.read(false) {
                         if let Ok(mut texture) =
                             serde_json::from_value::<unity_rs::generated::Texture2D>(data.clone())
@@ -526,10 +626,9 @@ fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Re
                     None
                 };
 
-                // Try to get alpha texture
+                // Try to get alpha texture matching atlas size
                 let alpha_name = format!("{}[alpha]", base);
-                let alpha_image = if let Some(alpha_obj) = texture_objects.get(&alpha_name) {
-                    let mut alpha_obj = alpha_obj.clone();
+                let alpha_image = if let Some(mut alpha_obj) = find_texture_obj(&alpha_name) {
                     if let Ok(data) = alpha_obj.read(false) {
                         if let Ok(mut texture) =
                             serde_json::from_value::<unity_rs::generated::Texture2D>(data.clone())
@@ -552,27 +651,55 @@ fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Re
 
                 let tex_path = asset_dir.join(tex_name);
 
+                // Helper to resize image to atlas size if needed
+                let resize_to_atlas = |img: image::RgbaImage| -> image::RgbaImage {
+                    if let Some((atlas_w, atlas_h)) = atlas_size {
+                        if img.width() != atlas_w || img.height() != atlas_h {
+                            log::debug!(
+                                "Resizing texture from {}x{} to {}x{} to match atlas",
+                                img.width(),
+                                img.height(),
+                                atlas_w,
+                                atlas_h
+                            );
+                            image::imageops::resize(
+                                &img,
+                                atlas_w,
+                                atlas_h,
+                                image::imageops::FilterType::Lanczos3,
+                            )
+                        } else {
+                            img
+                        }
+                    } else {
+                        img
+                    }
+                };
+
                 if asset.asset_type == SpineAssetType::BattleFront
                     || asset.asset_type == SpineAssetType::BattleBack
                 {
                     // Combine RGB + alpha for battle sprites
                     if let (Some(ref rgb), Some(ref alpha)) = (&rgb_image, &alpha_image) {
                         let combined = combine_rgba_with_alpha(rgb, alpha);
-                        if combined.save(&tex_path).is_ok() {
+                        let resized = resize_to_atlas(combined);
+                        if resized.save(&tex_path).is_ok() {
                             saved_count += 1;
                             log::debug!("Saved combined spine texture: {:?}", tex_path);
                         }
                     } else if let Some(ref rgb) = rgb_image {
-                        // No alpha available, save RGB as-is
-                        if rgb.save(&tex_path).is_ok() {
+                        // No alpha available, save RGB as-is (resized if needed)
+                        let resized = resize_to_atlas(rgb.clone());
+                        if resized.save(&tex_path).is_ok() {
                             saved_count += 1;
                             log::debug!("Saved spine RGB texture (no alpha): {:?}", tex_path);
                         }
                     }
                 } else {
-                    // Building and other types: save RGB only
+                    // Building and other types: save RGB only (with resize if needed)
                     if let Some(ref rgb) = rgb_image {
-                        if rgb.save(&tex_path).is_ok() {
+                        let resized = resize_to_atlas(rgb.clone());
+                        if resized.save(&tex_path).is_ok() {
                             saved_count += 1;
                             log::debug!("Saved spine RGB texture: {:?}", tex_path);
                         }
