@@ -808,6 +808,11 @@ fn ab_resolve(
         let env = env_rc.borrow();
         for mut obj in env.objects() {
             if obj.obj_type == ClassIDType::AudioClip {
+                // Get container path for proper directory structure
+                // This is critical for bundles like extra_custom_X.ab that contain
+                // multiple audio clips with the same m_Name (e.g., CN_043 for different characters)
+                let container_path = obj.container().ok().flatten();
+
                 match obj.read(false) {
                     Ok(data) => {
                         let name = data
@@ -829,7 +834,58 @@ fn ab_resolve(
                                         for (sample_name, wav_data) in samples {
                                             // Strip .wav if already present to avoid double extension
                                             let clean_name = sample_name.strip_suffix(".wav").unwrap_or(&sample_name);
-                                            let output_path = destdir.join(format!("{}.wav", clean_name));
+
+                                            // Determine output path based on container path
+                                            let output_path = if let Some(ref cpath) = container_path {
+                                                // Use container path for proper directory structure
+                                                // Container paths look like: "dyn/audio/sound_beta_2/voice_custom/char_xxx/cn_043"
+                                                // We want to output to: upk/audio/sound_beta_2/voice_custom/char_xxx/CN_043.wav
+
+                                                // Strip common prefixes from container path
+                                                let clean_container = cpath
+                                                    .strip_prefix("dyn/audio/")
+                                                    .or_else(|| cpath.strip_prefix("dyn/"))
+                                                    .or_else(|| cpath.strip_prefix("audio/"))
+                                                    .unwrap_or(cpath);
+
+                                                let container = std::path::Path::new(clean_container);
+
+                                                // Find the 'upk' directory in destdir path to use as base
+                                                // destdir can be: upk/<bundle_name> or upk/<src_folder>/<bundle_name>
+                                                // We need to go back to the upk/ level for proper audio path structure
+                                                let base_dir = {
+                                                    let mut current = destdir;
+                                                    let mut found_upk = None;
+
+                                                    // Walk up the path looking for 'upk' directory
+                                                    while let Some(parent) = current.parent() {
+                                                        if current.file_name().map(|n| n == "upk").unwrap_or(false) {
+                                                            found_upk = Some(current);
+                                                            break;
+                                                        }
+                                                        current = parent;
+                                                    }
+
+                                                    // Use found upk dir, or fall back to parent of destdir
+                                                    found_upk.unwrap_or_else(|| destdir.parent().unwrap_or(destdir))
+                                                };
+
+                                                // Get the parent directory from container path (e.g., sound_beta_2/voice_custom/char_xxx)
+                                                // Then use the original sample name (with correct case) for the filename
+                                                let parent_dir = container.parent().unwrap_or(std::path::Path::new(""));
+                                                let audio_path = base_dir.join("audio").join(parent_dir).join(format!("{}.wav", clean_name));
+
+                                                audio_path
+                                            } else {
+                                                // Fallback to simple name in destdir
+                                                destdir.join(format!("{}.wav", clean_name))
+                                            };
+
+                                            // Create parent directories
+                                            if let Some(parent) = output_path.parent() {
+                                                let _ = std::fs::create_dir_all(parent);
+                                            }
+
                                             if std::fs::write(&output_path, wav_data).is_ok() {
                                                 saved_count += 1;
                                                 log::debug!("Saved audio: {:?}", output_path);
