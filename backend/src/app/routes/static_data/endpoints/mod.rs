@@ -1,3 +1,4 @@
+pub mod chibis;
 pub mod gacha;
 pub mod handbook;
 pub mod materials;

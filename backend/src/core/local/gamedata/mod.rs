@@ -1,3 +1,4 @@
+pub mod chibi;
 pub mod handbook;
 pub mod materials;
 pub mod modules;
