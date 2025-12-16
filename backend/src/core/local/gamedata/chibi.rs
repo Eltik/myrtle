@@ -178,29 +178,38 @@ fn process_skinpack(skinpack_path: &Path, characters: &mut HashMap<String, Chibi
                             continue;
                         }
 
-                        let skin_id = match skin_path.file_name().and_then(|n| n.to_str()) {
+                        let dir_name = match skin_path.file_name().and_then(|n| n.to_str()) {
                             Some(name) => name.to_string(),
                             None => continue,
                         };
 
+                        // Normalize skin_id for grouping: Building directories use "build_" prefix
+                        // e.g., "build_char_002_amiya_epoque#4" -> "char_002_amiya_epoque#4"
+                        let skin_id = if dir_name.starts_with("build_") {
+                            dir_name.strip_prefix("build_").unwrap().to_string()
+                        } else {
+                            dir_name.clone()
+                        };
+
                         if let Some(spine_files) = collect_spine_files(&skin_path) {
+                            // Use dir_name (original directory) for paths, skin_id (normalized) for grouping
                             let formatted = SpineFiles {
                                 atlas: spine_files.atlas.map(|f| {
                                     format!(
                                         "/upk/skinpack/{}/{}/{}/{}",
-                                        char_id, anim_dir, skin_id, f
+                                        char_id, anim_dir, dir_name, f
                                     )
                                 }),
                                 skel: spine_files.skel.map(|f| {
                                     format!(
                                         "/upk/skinpack/{}/{}/{}/{}",
-                                        char_id, anim_dir, skin_id, f
+                                        char_id, anim_dir, dir_name, f
                                     )
                                 }),
                                 png: spine_files.png.map(|f| {
                                     format!(
                                         "/upk/skinpack/{}/{}/{}/{}",
-                                        char_id, anim_dir, skin_id, f
+                                        char_id, anim_dir, dir_name, f
                                     )
                                 }),
                             };

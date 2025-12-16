@@ -236,7 +236,6 @@ export const SkinsContent = memo(function SkinsContent({ operator }: SkinsConten
                         </div>
 
                         {/* Chibi Viewer */}
-                        {/*<ChibiViewer operatorId={operatorId} skinId={selectedSkinData?.id} />*/}
                     </div>
                 </div>
             )}
@@ -282,7 +281,9 @@ function formatSkinsForOperator(skinData: SkinData | Skin[], operatorId: string,
             // Use skinId (standard Skin type) - EnrichedSkin also has skinId via extension
             const skinIdentifier = skin.skinId;
             // Skip default skins (those with #1 or #2 suffixes which are E0/E1 and E2 arts)
-            if (skinIdentifier && !skinIdentifier.endsWith("#1") && !skinIdentifier.endsWith("#2")) {
+            // BUT don't skip special skins that contain '@' (e.g., char_332_archet@shining#1)
+            const isDefaultSkin = !skinIdentifier?.includes("@") && (skinIdentifier?.endsWith("#1") || skinIdentifier?.endsWith("#2"));
+            if (skinIdentifier && !isDefaultSkin) {
                 // Format the skin path for CDN
                 // skinId format: "char_002_amiya@epoque#4" -> file: "char_002_amiya_epoque#4.png"
                 // Replace @ with _ and encode # as %23 (# is a URL fragment identifier and won't be sent to server)
