@@ -105,9 +105,14 @@ pub enum SpineAssetType {
 }
 
 impl SpineAssetType {
-    /// Determine Spine asset type from name and atlas content
-    /// Uses Python's logic: count animation prefixes in atlas to determine front vs back
-    pub fn from_name_and_atlas(name: &str, atlas_content: Option<&str>) -> Self {
+    /// Determine Spine asset type from name, atlas content, and skeleton data
+    /// Uses Python's logic: check skeleton data for "Default" AND "Relax" animations for Building detection
+    /// Falls back to atlas content for Front vs Back determination
+    pub fn from_name_atlas_and_skel(
+        name: &str,
+        atlas_content: Option<&str>,
+        skel_data: Option<&[u8]>,
+    ) -> Self {
         let lower_name = name.to_lowercase();
 
         // DynIllust: name starts with dyn_
@@ -115,17 +120,31 @@ impl SpineAssetType {
             return SpineAssetType::DynIllust;
         }
 
-        // Building: name starts with build_ OR has 'Relax' animation
+        // Building: name starts with build_
         if lower_name.starts_with("build_") {
             return SpineAssetType::Building;
         }
 
-        // Check atlas for 'Relax' animation (Building indicator)
-        if let Some(atlas) = atlas_content {
-            if atlas.contains("Relax") {
+        // Check skeleton data for "Default" AND "Relax" animations (Building indicator)
+        // This matches Python's SpineSkeletonHandler.guess_type() logic:
+        // if "default" in anim_names and "relax" in anim_names: return BUILDING
+        if let Some(skel) = skel_data {
+            let has_default = Self::contains_animation_name(skel, b"Default")
+                || Self::contains_animation_name(skel, b"default");
+            let has_relax = Self::contains_animation_name(skel, b"Relax")
+                || Self::contains_animation_name(skel, b"relax");
+
+            if has_default && has_relax {
+                log::debug!(
+                    "Detected Building type for '{}' via skeleton animations (Default + Relax)",
+                    name
+                );
                 return SpineAssetType::Building;
             }
+        }
 
+        // Fall back to atlas content analysis for Front vs Back
+        if let Some(atlas) = atlas_content {
             // Count animation prefixes to determine Front vs Back
             let atlas_lower = atlas.to_lowercase();
             let front_count =
@@ -140,6 +159,22 @@ impl SpineAssetType {
         }
 
         SpineAssetType::Unknown
+    }
+
+    /// Check if skeleton data contains an animation name
+    /// This does a simple byte search which works for both JSON and binary Spine formats
+    fn contains_animation_name(skel_data: &[u8], name: &[u8]) -> bool {
+        // For binary format, animation names are stored as length-prefixed strings
+        // For JSON format, animation names appear in the "animations" object
+        // A simple substring search works for both cases
+        skel_data
+            .windows(name.len())
+            .any(|window| window == name)
+    }
+
+    /// Legacy function for backward compatibility
+    pub fn from_name_and_atlas(name: &str, atlas_content: Option<&str>) -> Self {
+        Self::from_name_atlas_and_skel(name, atlas_content, None)
     }
 
     /// Get directory name for this asset type
@@ -597,9 +632,9 @@ fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Re
             );
             SpineAssetType::BattleBack
         } else {
-            // Fall back to atlas content analysis
+            // Fall back to atlas + skeleton content analysis
             let atlas_content = matched_atlas.map(|(_, c)| c.as_str());
-            SpineAssetType::from_name_and_atlas(skel_name, atlas_content)
+            SpineAssetType::from_name_atlas_and_skel(skel_name, atlas_content, Some(skel_data))
         };
 
         if let Some((atlas_idx, atlas_content)) = matched_atlas {
