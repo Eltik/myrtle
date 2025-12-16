@@ -817,15 +817,17 @@ fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Re
     Ok(saved_count)
 }
 
-/// Collect names of textures that should be excluded from root extraction
-/// Excludes: alpha textures, building textures, and base spine textures (same name as atlas/skel)
-fn collect_spine_texture_names(
+/// Collect spine texture info: name -> max atlas size
+/// Returns map of texture names to their maximum atlas dimensions
+/// Textures larger than this are full artwork and should NOT be excluded from root
+fn collect_spine_texture_info(
     env_rc: &Rc<RefCell<Environment>>,
-) -> std::collections::HashSet<String> {
+) -> std::collections::HashMap<String, (u32, u32)> {
     let env = env_rc.borrow();
-    let mut excluded_textures = std::collections::HashSet::new();
+    let mut spine_textures: std::collections::HashMap<String, (u32, u32)> =
+        std::collections::HashMap::new();
 
-    // Collect texture names from atlas/skel files
+    // Collect texture names and atlas sizes from atlas files
     for mut obj in env.objects() {
         if obj.obj_type == ClassIDType::TextAsset {
             if let Ok(data) = obj.read(false) {
@@ -833,25 +835,44 @@ fn collect_spine_texture_names(
                     if name.ends_with(".atlas") {
                         let base_name = name.trim_end_matches(".atlas");
 
-                        // Exclude base spine texture from root (it goes to BattleFront/BattleBack subdirs only)
-                        // This prevents chibi-sized sprites from appearing at root
-                        excluded_textures.insert(base_name.to_string());
-
-                        // Exclude alpha for atlas base name
-                        excluded_textures.insert(format!("{}[alpha]", base_name));
-
-                        // Building textures go ONLY to Building/ subdirectory, not root
-                        if base_name.starts_with("build_") {
-                            excluded_textures.insert(base_name.to_string());
-                        }
-
-                        // Get atlas content and extract texture names (for multi-texture atlases)
+                        // Get atlas content to extract size
                         if let Some(script) = data.get("m_Script").and_then(|v| v.as_str()) {
-                            let textures = parse_atlas_textures(script);
-                            for tex_name in textures {
-                                let base = tex_name.trim_end_matches(".png");
-                                // Exclude alpha textures from root
-                                excluded_textures.insert(format!("{}[alpha]", base));
+                            // Parse atlas size
+                            if let Some(size) = parse_atlas_size(script) {
+                                // Track base name with atlas size
+                                let entry = spine_textures
+                                    .entry(base_name.to_string())
+                                    .or_insert((0, 0));
+                                if size.0 > entry.0 {
+                                    entry.0 = size.0;
+                                }
+                                if size.1 > entry.1 {
+                                    entry.1 = size.1;
+                                }
+
+                                // Track alpha variant
+                                let alpha_name = format!("{}[alpha]", base_name);
+                                let alpha_entry =
+                                    spine_textures.entry(alpha_name).or_insert((0, 0));
+                                if size.0 > alpha_entry.0 {
+                                    alpha_entry.0 = size.0;
+                                }
+                                if size.1 > alpha_entry.1 {
+                                    alpha_entry.1 = size.1;
+                                }
+
+                                // Track building variant
+                                if base_name.starts_with("build_") {
+                                    let build_entry = spine_textures
+                                        .entry(base_name.to_string())
+                                        .or_insert((0, 0));
+                                    if size.0 > build_entry.0 {
+                                        build_entry.0 = size.0;
+                                    }
+                                    if size.1 > build_entry.1 {
+                                        build_entry.1 = size.1;
+                                    }
+                                }
                             }
                         }
                     }
@@ -859,13 +880,17 @@ fn collect_spine_texture_names(
                     // Also track skel files for building variants
                     if name.ends_with(".skel") {
                         let base_name = name.trim_end_matches(".skel");
-                        // Exclude base spine texture from root
-                        excluded_textures.insert(base_name.to_string());
-                        // Exclude alpha textures
-                        excluded_textures.insert(format!("{}[alpha]", base_name));
-                        // Exclude building variant from root
+                        // Use a default max size for skel-only entries (will be overridden by atlas if exists)
+                        spine_textures
+                            .entry(base_name.to_string())
+                            .or_insert((1024, 1024));
+                        spine_textures
+                            .entry(format!("{}[alpha]", base_name))
+                            .or_insert((1024, 1024));
                         if !base_name.starts_with("build_") {
-                            excluded_textures.insert(format!("build_{}", base_name));
+                            spine_textures
+                                .entry(format!("build_{}", base_name))
+                                .or_insert((2048, 2048));
                         }
                     }
                 }
@@ -874,11 +899,39 @@ fn collect_spine_texture_names(
     }
 
     log::debug!(
-        "Collected {} texture names to exclude from root: {:?}",
-        excluded_textures.len(),
-        excluded_textures
+        "Collected {} spine texture entries with sizes: {:?}",
+        spine_textures.len(),
+        spine_textures
     );
-    excluded_textures
+    spine_textures
+}
+
+/// Check if a texture should be excluded from root (is a spine texture, not full artwork)
+fn is_spine_texture(
+    name: &str,
+    width: u32,
+    height: u32,
+    spine_info: &std::collections::HashMap<String, (u32, u32)>,
+) -> bool {
+    if let Some((max_w, max_h)) = spine_info.get(name) {
+        // If texture is significantly larger than atlas size (> 1.5x in both dimensions),
+        // it's likely full artwork and should NOT be excluded
+        let is_artwork = width > max_w + max_w / 2 && height > max_h + max_h / 2;
+        if is_artwork {
+            log::debug!(
+                "Texture '{}' ({}x{}) is larger than atlas ({}x{}), treating as artwork",
+                name,
+                width,
+                height,
+                max_w,
+                max_h
+            );
+            return false;
+        }
+        true
+    } else {
+        false
+    }
 }
 
 /// Extract a single AB file
@@ -939,11 +992,11 @@ fn ab_resolve(
     let mut saved_count = 0;
     std::fs::create_dir_all(destdir)?;
 
-    // If spine extraction is enabled, first collect spine texture names to exclude from root
-    let spine_texture_names: std::collections::HashSet<String> = if do_spine {
-        collect_spine_texture_names(&env_rc)
+    // If spine extraction is enabled, first collect spine texture info (name -> atlas size)
+    let spine_texture_info: std::collections::HashMap<String, (u32, u32)> = if do_spine {
+        collect_spine_texture_info(&env_rc)
     } else {
-        std::collections::HashSet::new()
+        std::collections::HashMap::new()
     };
 
     // Extract images (Texture2D and Sprite) with alpha/RGB combination
@@ -953,7 +1006,7 @@ fn ab_resolve(
             destdir,
             cmb_destdir,
             merge_alpha,
-            &spine_texture_names,
+            &spine_texture_info,
         )?;
         saved_count += extract_sprite_atlases(&env_rc, destdir)?;
         // Extract SpritePacker MonoBehaviours (used for items/icons, portraits, etc.)
@@ -1436,7 +1489,7 @@ fn extract_images_with_combination(
     destdir: &Path,
     cmb_destdir: &Path,
     merge_alpha: bool,
-    spine_texture_names: &std::collections::HashSet<String>,
+    spine_texture_info: &std::collections::HashMap<String, (u32, u32)>,
 ) -> Result<usize> {
     let env = env_rc.borrow();
     let mut saved_count = 0;
@@ -1565,15 +1618,28 @@ fn extract_images_with_combination(
             std::collections::HashSet::new();
 
         for name in textures.keys() {
-            // Skip spine textures
-            if spine_texture_names.contains(name) {
-                continue;
+            // Skip spine textures (based on size comparison)
+            if let Some(tex_data) = textures.get(name) {
+                if let Some(ref img) = tex_data.image {
+                    if is_spine_texture(name, img.width(), img.height(), spine_texture_info) {
+                        continue;
+                    }
+                }
             }
             if name.contains("[alpha]") {
                 let rgb_name = name.replace("[alpha]", "");
                 // Skip if RGB is a spine texture
-                if spine_texture_names.contains(&rgb_name) {
-                    continue;
+                if let Some(tex_data) = textures.get(&rgb_name) {
+                    if let Some(ref img) = tex_data.image {
+                        if is_spine_texture(
+                            &rgb_name,
+                            img.width(),
+                            img.height(),
+                            spine_texture_info,
+                        ) {
+                            continue;
+                        }
+                    }
                 }
                 if textures.contains_key(&rgb_name) {
                     processed_names.insert(rgb_name.clone());
@@ -1599,10 +1665,12 @@ fn extract_images_with_combination(
 
         // Save remaining textures that weren't part of pairs
         for (name, tex_data) in &textures {
-            // Skip spine textures
-            if spine_texture_names.contains(name) {
-                log::debug!("Skipping spine texture from root: {}", name);
-                continue;
+            // Skip spine textures (based on size comparison)
+            if let Some(ref img) = tex_data.image {
+                if is_spine_texture(name, img.width(), img.height(), spine_texture_info) {
+                    log::debug!("Skipping spine texture from root: {}", name);
+                    continue;
+                }
             }
             if !processed_names.contains(name) {
                 if let Some(ref img) = tex_data.image {
@@ -1635,10 +1703,12 @@ fn extract_images_with_combination(
 
         // Process textures - merge alpha pairs, save others as-is
         for (name, tex_data) in &textures {
-            // Skip spine textures - they will be handled by spine extraction
-            if spine_texture_names.contains(name) {
-                log::debug!("Skipping spine texture from root: {}", name);
-                continue;
+            // Skip spine textures - they will be handled by spine extraction (based on size comparison)
+            if let Some(ref img) = tex_data.image {
+                if is_spine_texture(name, img.width(), img.height(), spine_texture_info) {
+                    log::debug!("Skipping spine texture from root: {}", name);
+                    continue;
+                }
             }
 
             // Skip [alpha] textures - they'll be merged into their RGB counterpart
