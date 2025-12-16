@@ -311,13 +311,133 @@ fn validate_spine_textures(
     (found, missing)
 }
 
+/// Find CharacterAnimator MonoBehaviours and build a mapping of TextAsset path_id -> SpineAssetType
+/// This is the authoritative way to determine front vs back for battle animations
+fn find_character_animator_types(
+    env_rc: &Rc<RefCell<Environment>>,
+) -> (
+    std::collections::HashSet<i64>,
+    std::collections::HashSet<i64>,
+) {
+    let mut front_skel_path_ids: std::collections::HashSet<i64> = std::collections::HashSet::new();
+    let mut back_skel_path_ids: std::collections::HashSet<i64> = std::collections::HashSet::new();
+
+    let env = env_rc.borrow();
+
+    // Build a map of path_id -> ObjectReader for all objects
+    let mut all_objects: std::collections::HashMap<i64, unity_rs::files::object_reader::ObjectReader<()>> =
+        std::collections::HashMap::new();
+    for obj in env.objects() {
+        all_objects.insert(obj.path_id, obj);
+    }
+
+    // Find CharacterAnimator MonoBehaviours (have _front and _back keys)
+    for mut obj in env.objects() {
+        if obj.obj_type != ClassIDType::MonoBehaviour {
+            continue;
+        }
+
+        // Try to read TypeTree
+        let node_clone = obj.serialized_type.as_ref().and_then(|st| st.node.clone());
+        if node_clone.is_none() {
+            continue;
+        }
+
+        obj.reset();
+        let tree = match obj.read_typetree(node_clone, false, false) {
+            Ok(t) => t,
+            Err(_) => continue,
+        };
+
+        // Check for CharacterAnimator keys
+        let has_front = tree.get("_front").is_some();
+        let has_back = tree.get("_back").is_some();
+        if !has_front || !has_back {
+            continue;
+        }
+
+        log::debug!("Found CharacterAnimator at path_id {}", obj.path_id);
+
+        // Trace front reference chain: _front.skeleton -> SkeletonAnimation -> skeletonDataAsset -> skeletonJSON
+        if let Some(front) = tree.get("_front") {
+            if let Some(front_skel_path_id) =
+                trace_to_textasset(&all_objects, front, "skeleton", "skeletonDataAsset", "skeletonJSON")
+            {
+                log::debug!("  Front skeletonJSON path_id: {}", front_skel_path_id);
+                front_skel_path_ids.insert(front_skel_path_id);
+            }
+        }
+
+        // Trace back reference chain
+        if let Some(back) = tree.get("_back") {
+            if let Some(back_skel_path_id) =
+                trace_to_textasset(&all_objects, back, "skeleton", "skeletonDataAsset", "skeletonJSON")
+            {
+                log::debug!("  Back skeletonJSON path_id: {}", back_skel_path_id);
+                back_skel_path_ids.insert(back_skel_path_id);
+            }
+        }
+    }
+
+    log::info!(
+        "CharacterAnimator found {} front and {} back skeleton path_ids",
+        front_skel_path_ids.len(),
+        back_skel_path_ids.len()
+    );
+
+    (front_skel_path_ids, back_skel_path_ids)
+}
+
+/// Helper to trace the reference chain from CharacterAnimator to TextAsset path_id
+/// Chain: _front/_back -> skeleton -> skeletonDataAsset -> skeletonJSON
+fn trace_to_textasset(
+    all_objects: &std::collections::HashMap<i64, unity_rs::files::object_reader::ObjectReader<()>>,
+    direction_value: &serde_json::Value,
+    skel_key: &str,
+    sda_key: &str,
+    json_key: &str,
+) -> Option<i64> {
+    // Get skeleton reference (SkeletonAnimation MonoBehaviour)
+    let skel_anim_path_id = direction_value
+        .get(skel_key)?
+        .get("m_PathID")?
+        .as_i64()?;
+
+    // Read SkeletonAnimation MonoBehaviour
+    let mut skel_anim_obj = all_objects.get(&skel_anim_path_id)?.clone();
+    let node = skel_anim_obj.serialized_type.as_ref()?.node.clone()?;
+    skel_anim_obj.reset();
+    let skel_anim_tree = skel_anim_obj.read_typetree(Some(node), false, false).ok()?;
+
+    // Get skeletonDataAsset reference
+    let sda_path_id = skel_anim_tree
+        .get(sda_key)?
+        .get("m_PathID")?
+        .as_i64()?;
+
+    // Read SkeletonDataAsset MonoBehaviour
+    let mut sda_obj = all_objects.get(&sda_path_id)?.clone();
+    let sda_node = sda_obj.serialized_type.as_ref()?.node.clone()?;
+    sda_obj.reset();
+    let sda_tree = sda_obj.read_typetree(Some(sda_node), false, false).ok()?;
+
+    // Get skeletonJSON TextAsset path_id
+    let json_path_id = sda_tree.get(json_key)?.get("m_PathID")?.as_i64()?;
+
+    Some(json_path_id)
+}
+
 /// Extract Spine assets from MonoBehaviours
 fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Result<usize> {
+    // First, find CharacterAnimator-based type mappings
+    let (front_skel_path_ids, back_skel_path_ids) = find_character_animator_types(env_rc);
+
     let env = env_rc.borrow();
     let mut saved_count = 0;
 
     // Collect all assets - use Vec to preserve duplicates with same name
-    let mut textassets: Vec<(String, serde_json::Value)> = Vec::new();
+    // Now also track path_id for CharacterAnimator-based type resolution
+    let mut textassets: Vec<(String, i64, serde_json::Value)> = Vec::new();
     // Store ALL texture objects with their sizes and quality, keyed by name
     // Each entry: (width, height, colored_pixels, ObjectReader)
     let mut texture_objects_by_size: std::collections::HashMap<
@@ -335,7 +455,7 @@ fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Re
             ClassIDType::TextAsset => {
                 if let Ok(data) = obj.read(false) {
                     if let Some(name) = data.get("m_Name").and_then(|v| v.as_str()) {
-                        textassets.push((name.to_string(), data));
+                        textassets.push((name.to_string(), obj.path_id, data));
                     }
                 }
             }
@@ -414,11 +534,12 @@ fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Re
     // Key: (base_name, index) to handle multiple instances with same name
     let mut spine_assets: Vec<SpineAsset> = Vec::new();
 
-    // First, collect all skel and atlas files with their content
-    let mut skels: Vec<(String, Vec<u8>)> = Vec::new();
-    let mut atlases: Vec<(String, String)> = Vec::new();
+    // First, collect all skel and atlas files with their content AND path_id
+    // (name, path_id, data)
+    let mut skels: Vec<(String, i64, Vec<u8>)> = Vec::new();
+    let mut atlases: Vec<(String, i64, String)> = Vec::new();
 
-    for (name, data) in &textassets {
+    for (name, path_id, data) in &textassets {
         if name.ends_with(".skel") {
             let base_name = name.trim_end_matches(".skel").to_string();
             if let Some(script) = data.get("m_Script").and_then(|v| v.as_str()) {
@@ -435,34 +556,54 @@ fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Re
                 } else {
                     script.as_bytes().to_vec()
                 };
-                skels.push((base_name, skel_bytes));
+                skels.push((base_name, *path_id, skel_bytes));
             }
         } else if name.ends_with(".atlas") {
             let base_name = name.trim_end_matches(".atlas").to_string();
             if let Some(script) = data.get("m_Script").and_then(|v| v.as_str()) {
-                atlases.push((base_name, script.to_string()));
+                atlases.push((base_name, *path_id, script.to_string()));
             }
         }
     }
 
     // Match skels with atlases by name and create SpineAssets
     // Each skel-atlas pair with the same name creates one SpineAsset
+    // Use CharacterAnimator path_id mappings for authoritative front/back determination
     let mut used_atlas_indices: std::collections::HashSet<usize> = std::collections::HashSet::new();
 
-    for (skel_name, skel_data) in &skels {
-        // Find matching atlas (one per skel)
+    for (skel_name, skel_path_id, skel_data) in &skels {
+        // Find matching atlas (one per skel) - prefer atlas with same path_id relationship
         let mut matched_atlas: Option<(usize, &String)> = None;
-        for (idx, (atlas_name, atlas_content)) in atlases.iter().enumerate() {
+        for (idx, (atlas_name, _atlas_path_id, atlas_content)) in atlases.iter().enumerate() {
             if atlas_name == skel_name && !used_atlas_indices.contains(&idx) {
                 matched_atlas = Some((idx, atlas_content));
                 break;
             }
         }
 
+        // Determine asset type: prioritize CharacterAnimator path_id mapping over atlas heuristic
+        let asset_type = if front_skel_path_ids.contains(skel_path_id) {
+            log::debug!(
+                "Skel '{}' (path_id={}) determined as FRONT via CharacterAnimator",
+                skel_name,
+                skel_path_id
+            );
+            SpineAssetType::BattleFront
+        } else if back_skel_path_ids.contains(skel_path_id) {
+            log::debug!(
+                "Skel '{}' (path_id={}) determined as BACK via CharacterAnimator",
+                skel_name,
+                skel_path_id
+            );
+            SpineAssetType::BattleBack
+        } else {
+            // Fall back to atlas content analysis
+            let atlas_content = matched_atlas.map(|(_, c)| c.as_str());
+            SpineAssetType::from_name_and_atlas(skel_name, atlas_content)
+        };
+
         if let Some((atlas_idx, atlas_content)) = matched_atlas {
             used_atlas_indices.insert(atlas_idx);
-
-            let asset_type = SpineAssetType::from_name_and_atlas(skel_name, Some(atlas_content));
 
             spine_assets.push(SpineAsset {
                 name: skel_name.clone(),
@@ -473,7 +614,6 @@ fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Re
             });
         } else {
             // Skel without atlas
-            let asset_type = SpineAssetType::from_name_and_atlas(skel_name, None);
             spine_assets.push(SpineAsset {
                 name: skel_name.clone(),
                 asset_type,
@@ -485,7 +625,7 @@ fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Re
     }
 
     // Also create assets for atlases without skels
-    for (idx, (atlas_name, atlas_content)) in atlases.iter().enumerate() {
+    for (idx, (atlas_name, _atlas_path_id, atlas_content)) in atlases.iter().enumerate() {
         if !used_atlas_indices.contains(&idx) {
             let asset_type = SpineAssetType::from_name_and_atlas(atlas_name, Some(atlas_content));
             spine_assets.push(SpineAsset {

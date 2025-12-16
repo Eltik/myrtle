@@ -1,7 +1,7 @@
 "use client";
 
 import * as PIXI from "pixi.js";
-import { memo, useEffect, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/shadcn/select";
 import type { ChibiCharacter, SpineFiles } from "~/types/api/impl/chibi";
 
@@ -120,7 +120,7 @@ export const ChibiViewer = memo(function ChibiViewer({ chibi, skinName }: ChibiV
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const availableViewTypes = getAvailableViewTypes(chibi, skinName);
+    const availableViewTypes = useMemo(() => getAvailableViewTypes(chibi, skinName), [chibi, skinName]);
 
     // Initialize view type based on available types
     useEffect(() => {
@@ -134,6 +134,7 @@ export const ChibiViewer = memo(function ChibiViewer({ chibi, skinName }: ChibiV
         if (!canvasContainerRef.current) return;
 
         mountedRef.current = true;
+        loadingRef.current = false; // Reset loading state on effect re-run
         let animationFrameId: number | null = null;
 
         const cleanup = () => {
@@ -251,6 +252,11 @@ export const ChibiViewer = memo(function ChibiViewer({ chibi, skinName }: ChibiV
             if (!container) return;
 
             cleanup();
+
+            // Clear any existing canvas elements
+            while (container.firstChild) {
+                container.removeChild(container.firstChild);
+            }
 
             const containerWidth = container.clientWidth || 300;
             const containerHeight = container.clientHeight || 180;

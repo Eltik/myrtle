@@ -110,21 +110,70 @@ fn process_chararts(chararts_path: &Path, characters: &mut HashMap<String, Chibi
                     continue;
                 }
 
-                // Look for the char_id subdirectory inside the animation type
-                let spine_dir = anim_path.join(&char_id);
-                if spine_dir.exists() && spine_dir.is_dir() {
+                // Try multiple possible subdirectory names:
+                // 1. Exact char_id match (e.g., "char_002_amiya")
+                // 2. With "build_" prefix for Building directories (e.g., "build_char_002_amiya")
+                // 3. Any subdirectory that contains spine files (fallback for mismatched names)
+                let possible_dirs = [
+                    anim_path.join(&char_id),
+                    anim_path.join(format!("build_{}", char_id)),
+                ];
+
+                let mut found_spine_dir: Option<(std::path::PathBuf, String)> = None;
+
+                // Try exact matches first
+                for possible_dir in &possible_dirs {
+                    if possible_dir.exists() && possible_dir.is_dir() {
+                        if let Some(dir_name) = possible_dir.file_name().and_then(|n| n.to_str()) {
+                            found_spine_dir = Some((possible_dir.clone(), dir_name.to_string()));
+                            break;
+                        }
+                    }
+                }
+
+                // Fallback: scan for any subdirectory with spine files
+                if found_spine_dir.is_none() {
+                    if let Ok(sub_entries) = fs::read_dir(&anim_path) {
+                        for sub_entry in sub_entries.flatten() {
+                            let sub_path = sub_entry.path();
+                            if sub_path.is_dir() {
+                                // Check if this directory has spine files
+                                if let Some(_) = collect_spine_files(&sub_path) {
+                                    if let Some(dir_name) =
+                                        sub_path.file_name().and_then(|n| n.to_str())
+                                    {
+                                        found_spine_dir =
+                                            Some((sub_path.clone(), dir_name.to_string()));
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if let Some((spine_dir, subdir_name)) = found_spine_dir {
                     if let Some(spine_files) = collect_spine_files(&spine_dir) {
                         let anim_key = anim_type.as_str().to_string();
-                        // Format paths for the API
+                        // Format paths for the API using the actual subdirectory name
                         let formatted = SpineFiles {
                             atlas: spine_files.atlas.map(|f| {
-                                format!("/upk/chararts/{}/{}/{}/{}", char_id, anim_dir, char_id, f)
+                                format!(
+                                    "/upk/chararts/{}/{}/{}/{}",
+                                    char_id, anim_dir, subdir_name, f
+                                )
                             }),
                             skel: spine_files.skel.map(|f| {
-                                format!("/upk/chararts/{}/{}/{}/{}", char_id, anim_dir, char_id, f)
+                                format!(
+                                    "/upk/chararts/{}/{}/{}/{}",
+                                    char_id, anim_dir, subdir_name, f
+                                )
                             }),
                             png: spine_files.png.map(|f| {
-                                format!("/upk/chararts/{}/{}/{}/{}", char_id, anim_dir, char_id, f)
+                                format!(
+                                    "/upk/chararts/{}/{}/{}/{}",
+                                    char_id, anim_dir, subdir_name, f
+                                )
                             }),
                         };
                         default_skin.animation_types.insert(anim_key, formatted);
