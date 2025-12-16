@@ -10,7 +10,9 @@ import { ScrollArea, ScrollBar } from "~/components/ui/shadcn/scroll-area";
 import { Skeleton } from "~/components/ui/shadcn/skeleton";
 import { cn } from "~/lib/utils";
 import type { Operator } from "~/types/api";
+import type { ChibiCharacter } from "~/types/api/impl/chibi";
 import type { Skin, SkinData } from "~/types/api/impl/skin";
+import { ChibiViewer } from "./chibi-viewer";
 
 interface SkinsContentProps {
     operator: Operator;
@@ -36,6 +38,7 @@ export const SkinsContent = memo(function SkinsContent({ operator }: SkinsConten
     const [selectedSkin, setSelectedSkin] = useState<string>("");
     const [isLoading, setIsLoading] = useState(true);
     const [imageLoading, setImageLoading] = useState(true);
+    const [chibiData, setChibiData] = useState<ChibiCharacter | null>(null);
 
     const operatorId = operator.id ?? "";
     const operatorSkin = operator.skin;
@@ -43,22 +46,37 @@ export const SkinsContent = memo(function SkinsContent({ operator }: SkinsConten
     const phasesLength = operator.phases.length;
 
     useEffect(() => {
-        const fetchSkins = async () => {
+        const fetchData = async () => {
             setIsLoading(true);
-            try {
-                const res = await fetch("/api/static", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ type: "skins", id: operatorId }),
-                });
-                const data = await res.json();
 
-                if (data.skins) {
-                    const formattedSkins = formatSkinsForOperator(data.skins, operatorId, operatorSkin ?? undefined, operatorPortrait, phasesLength);
+            // Fetch skins and chibi data in parallel
+            const skinsPromise = fetch("/api/static", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ type: "skins", id: operatorId }),
+            }).then((res) => res.json());
+
+            const chibiPromise = fetch("/api/static", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ type: "chibis", id: operatorId }),
+            })
+                .then((res) => res.json())
+                .catch(() => null);
+
+            try {
+                const [skinsData, chibiResponse] = await Promise.all([skinsPromise, chibiPromise]);
+
+                if (skinsData.skins) {
+                    const formattedSkins = formatSkinsForOperator(skinsData.skins, operatorId, operatorSkin ?? undefined, operatorPortrait, phasesLength);
                     setSkins(formattedSkins);
                     if (formattedSkins.length > 0) {
                         setSelectedSkin(formattedSkins[0]?.id ?? "");
                     }
+                }
+
+                if (chibiResponse?.chibi) {
+                    setChibiData(chibiResponse.chibi);
                 }
             } catch (error) {
                 console.error("Failed to fetch skins:", error);
@@ -81,11 +99,30 @@ export const SkinsContent = memo(function SkinsContent({ operator }: SkinsConten
         };
 
         if (operatorId) {
-            fetchSkins();
+            fetchData();
         }
     }, [operatorId, operatorSkin, operatorPortrait, phasesLength]);
 
     const selectedSkinData = useMemo(() => skins.find((s) => s.id === selectedSkin), [skins, selectedSkin]);
+
+    // Derive the chibi skin name from the selected skin
+    const chibiSkinName = useMemo(() => {
+        if (!selectedSkin) return "default";
+
+        // For default/E2 skins, use "default"
+        if (selectedSkin.endsWith("_default") || selectedSkin.endsWith("_e2")) {
+            return "default";
+        }
+
+        // For custom skins, extract the skin name from the skin ID
+        // Format: char_xxx_name@skingroup#version -> skingroup#version
+        const atIndex = selectedSkin.indexOf("@");
+        if (atIndex !== -1) {
+            return selectedSkin.slice(atIndex + 1);
+        }
+
+        return "default";
+    }, [selectedSkin]);
 
     const handleSkinSelect = useCallback((skinId: string) => {
         setImageLoading(true);
@@ -236,6 +273,7 @@ export const SkinsContent = memo(function SkinsContent({ operator }: SkinsConten
                         </div>
 
                         {/* Chibi Viewer */}
+                        {chibiData && <ChibiViewer chibi={chibiData} skinName={chibiSkinName} />}
                     </div>
                 </div>
             )}
