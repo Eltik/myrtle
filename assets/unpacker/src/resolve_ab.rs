@@ -1442,6 +1442,11 @@ fn collect_spine_texture_info(
 }
 
 /// Check if a texture should be excluded from root (is a spine texture, not full artwork)
+/// Check if a number is a power of 2
+fn is_power_of_two(n: u32) -> bool {
+    n > 0 && (n & (n - 1)) == 0
+}
+
 fn is_spine_texture(
     name: &str,
     width: u32,
@@ -1450,18 +1455,34 @@ fn is_spine_texture(
 ) -> bool {
     if let Some((max_w, max_h)) = spine_info.get(name) {
         // If texture is significantly larger than atlas size (> 1.5x in both dimensions),
-        // it's likely full artwork and should NOT be excluded
-        let is_artwork = width > max_w + max_w / 2 && height > max_h + max_h / 2;
-        if is_artwork {
+        // it might be artwork - but we need additional checks
+        let is_larger = width > max_w + max_w / 2 && height > max_h + max_h / 2;
+
+        if is_larger {
+            // However, if the texture has power-of-2 dimensions (especially square),
+            // it's almost certainly a spritesheet, NOT artwork.
+            // Real character artwork has irregular dimensions like 1670x1665, 1950x2031, etc.
+            let is_pow2_square = is_power_of_two(width) && is_power_of_two(height) && width == height;
+
+            if is_pow2_square {
+                log::debug!(
+                    "Texture '{}' ({}x{}) is power-of-2 square, treating as spritesheet (not artwork)",
+                    name,
+                    width,
+                    height
+                );
+                return true; // It's a spine/spritesheet texture
+            }
+
             log::debug!(
-                "Texture '{}' ({}x{}) is larger than atlas ({}x{}), treating as artwork",
+                "Texture '{}' ({}x{}) is larger than atlas ({}x{}) and has irregular dimensions, treating as artwork",
                 name,
                 width,
                 height,
                 max_w,
                 max_h
             );
-            return false;
+            return false; // It's artwork
         }
         true
     } else {
@@ -2144,6 +2165,10 @@ fn extract_images_with_combination(
         log::debug!("All texture names: {:?}", texture_names);
     }
 
+    // Track which textures were actually saved (to avoid sprite extraction overwriting them)
+    let mut saved_texture_names: std::collections::HashSet<String> =
+        std::collections::HashSet::new();
+
     // Handle alpha textures based on merge_alpha setting
     // Skip textures that belong to spine assets (they will be handled by spine extraction)
     if merge_alpha {
@@ -2191,6 +2216,7 @@ fn extract_images_with_combination(
                         let output_path = destdir.join(format!("{}.png", rgb_name));
                         if combined.save(&output_path).is_ok() {
                             saved_count += 1;
+                            saved_texture_names.insert(rgb_name.clone());
                             log::debug!("Saved merged texture: {:?}", output_path);
                         }
                     }
@@ -2212,6 +2238,7 @@ fn extract_images_with_combination(
                     let output_path = destdir.join(format!("{}.png", name));
                     if img.save(&output_path).is_ok() {
                         saved_count += 1;
+                        saved_texture_names.insert(name.clone());
                         log::debug!("Saved texture: {:?}", output_path);
                     }
                 }
@@ -2264,6 +2291,7 @@ fn extract_images_with_combination(
                     let output_path = destdir.join(format!("{}.png", name));
                     if combined.save(&output_path).is_ok() {
                         saved_count += 1;
+                        saved_texture_names.insert(name.clone());
                         log::debug!("Saved merged texture (RGB+alpha): {:?}", output_path);
                     }
                 } else {
@@ -2276,6 +2304,7 @@ fn extract_images_with_combination(
                     let output_path = destdir.join(format!("{}.png", name));
                     if img.save(&output_path).is_ok() {
                         saved_count += 1;
+                        saved_texture_names.insert(name.clone());
                         log::debug!("Saved texture: {:?}", output_path);
                     }
                 }
@@ -2283,16 +2312,12 @@ fn extract_images_with_combination(
         }
     }
 
-    // Track which textures were merged (to avoid sprite extraction overwriting them)
-    let merged_texture_names: std::collections::HashSet<String> = textures
-        .keys()
-        .filter(|name| !name.contains("[alpha]"))
-        .filter(|name| {
-            let alpha_name = format!("{}[alpha]", name);
-            textures.contains_key(&alpha_name)
-        })
-        .cloned()
-        .collect();
+    // Log which textures were actually saved (for debugging)
+    log::debug!(
+        "Actually saved {} textures to root: {:?}",
+        saved_texture_names.len(),
+        saved_texture_names
+    );
 
     // Also create combined images in cmb directory for backwards compatibility
     // This creates $0.png files that have RGB+Alpha merged
@@ -2341,23 +2366,22 @@ fn extract_images_with_combination(
         if let Some(assets_file) = obj.assets_file.as_ref().and_then(|weak| weak.upgrade()) {
             if let Ok(sprite) = serde_json::from_value::<unity_rs::generated::Sprite>(data.clone())
             {
-                // Skip sprites that would overwrite merged textures
-                if merged_texture_names.contains(&name) {
-                    log::debug!("Skipping sprite {} (already saved as merged texture)", name);
-                } else {
-                    // Save sprite with its name
-                    let output_path = destdir.join(format!("{}.png", name));
+                // Always extract sprites - they may have textureRect cropping that gives better results
+                // than the raw texture. The sprite extraction will properly:
+                // - Crop according to textureRect
+                // - Merge alpha from sprite's alphaTexture reference
+                // - Handle tight packing, rotation, etc.
+                let output_path = destdir.join(format!("{}.png", name));
 
-                    if unity_rs::export::sprite_helper::save_sprite(
-                        &sprite,
-                        &assets_file,
-                        output_path.to_str().unwrap_or(""),
-                    )
-                    .is_ok()
-                    {
-                        saved_count += 1;
-                        log::debug!("Saved sprite: {:?}", output_path);
-                    }
+                if unity_rs::export::sprite_helper::save_sprite(
+                    &sprite,
+                    &assets_file,
+                    output_path.to_str().unwrap_or(""),
+                )
+                .is_ok()
+                {
+                    saved_count += 1;
+                    log::debug!("Saved sprite: {:?}", output_path);
                 }
 
                 // Group by texture name for numbered extraction
