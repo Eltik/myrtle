@@ -353,9 +353,11 @@ fn find_character_animator_types(
 ) -> (
     std::collections::HashSet<i64>,
     std::collections::HashSet<i64>,
+    std::collections::HashMap<i64, i64>, // skel_path_id -> atlas_path_id mapping
 ) {
     let mut front_skel_path_ids: std::collections::HashSet<i64> = std::collections::HashSet::new();
     let mut back_skel_path_ids: std::collections::HashSet<i64> = std::collections::HashSet::new();
+    let mut skel_to_atlas: std::collections::HashMap<i64, i64> = std::collections::HashMap::new();
 
     let env = env_rc.borrow();
 
@@ -400,6 +402,14 @@ fn find_character_animator_types(
             {
                 log::debug!("  Front skeletonJSON path_id: {}", front_skel_path_id);
                 front_skel_path_ids.insert(front_skel_path_id);
+
+                // Also trace to atlas for this front skeleton
+                if let Some(front_atlas_path_id) =
+                    trace_to_atlas_textasset(&all_objects, front, "skeleton", "skeletonDataAsset")
+                {
+                    log::debug!("  Front atlas path_id: {}", front_atlas_path_id);
+                    skel_to_atlas.insert(front_skel_path_id, front_atlas_path_id);
+                }
             }
         }
 
@@ -410,17 +420,26 @@ fn find_character_animator_types(
             {
                 log::debug!("  Back skeletonJSON path_id: {}", back_skel_path_id);
                 back_skel_path_ids.insert(back_skel_path_id);
+
+                // Also trace to atlas for this back skeleton
+                if let Some(back_atlas_path_id) =
+                    trace_to_atlas_textasset(&all_objects, back, "skeleton", "skeletonDataAsset")
+                {
+                    log::debug!("  Back atlas path_id: {}", back_atlas_path_id);
+                    skel_to_atlas.insert(back_skel_path_id, back_atlas_path_id);
+                }
             }
         }
     }
 
     log::info!(
-        "CharacterAnimator found {} front and {} back skeleton path_ids",
+        "CharacterAnimator found {} front, {} back skeleton path_ids, {} skel->atlas mappings",
         front_skel_path_ids.len(),
-        back_skel_path_ids.len()
+        back_skel_path_ids.len(),
+        skel_to_atlas.len()
     );
 
-    (front_skel_path_ids, back_skel_path_ids)
+    (front_skel_path_ids, back_skel_path_ids, skel_to_atlas)
 }
 
 /// Helper to trace the reference chain from CharacterAnimator to TextAsset path_id
@@ -462,10 +481,61 @@ fn trace_to_textasset(
     Some(json_path_id)
 }
 
+/// Helper to trace the reference chain from CharacterAnimator to Atlas TextAsset path_id
+/// Chain: _front/_back -> skeleton -> skeletonDataAsset -> atlasAssets[0] -> atlasFile
+fn trace_to_atlas_textasset(
+    all_objects: &std::collections::HashMap<i64, unity_rs::files::object_reader::ObjectReader<()>>,
+    direction_value: &serde_json::Value,
+    skel_key: &str,
+    sda_key: &str,
+) -> Option<i64> {
+    // Get skeleton reference (SkeletonAnimation MonoBehaviour)
+    let skel_anim_path_id = direction_value
+        .get(skel_key)?
+        .get("m_PathID")?
+        .as_i64()?;
+
+    // Read SkeletonAnimation MonoBehaviour
+    let mut skel_anim_obj = all_objects.get(&skel_anim_path_id)?.clone();
+    let node = skel_anim_obj.serialized_type.as_ref()?.node.clone()?;
+    skel_anim_obj.reset();
+    let skel_anim_tree = skel_anim_obj.read_typetree(Some(node), false, false).ok()?;
+
+    // Get skeletonDataAsset reference
+    let sda_path_id = skel_anim_tree
+        .get(sda_key)?
+        .get("m_PathID")?
+        .as_i64()?;
+
+    // Read SkeletonDataAsset MonoBehaviour
+    let mut sda_obj = all_objects.get(&sda_path_id)?.clone();
+    let sda_node = sda_obj.serialized_type.as_ref()?.node.clone()?;
+    sda_obj.reset();
+    let sda_tree = sda_obj.read_typetree(Some(sda_node), false, false).ok()?;
+
+    // Get atlasAssets array and get first element
+    let atlas_assets = sda_tree.get("atlasAssets")?.as_array()?;
+    if atlas_assets.is_empty() {
+        return None;
+    }
+    let atlas_data_path_id = atlas_assets[0].get("m_PathID")?.as_i64()?;
+
+    // Read AtlasData MonoBehaviour
+    let mut atlas_data_obj = all_objects.get(&atlas_data_path_id)?.clone();
+    let atlas_data_node = atlas_data_obj.serialized_type.as_ref()?.node.clone()?;
+    atlas_data_obj.reset();
+    let atlas_data_tree = atlas_data_obj.read_typetree(Some(atlas_data_node), false, false).ok()?;
+
+    // Get atlasFile TextAsset path_id
+    let atlas_file_path_id = atlas_data_tree.get("atlasFile")?.get("m_PathID")?.as_i64()?;
+
+    Some(atlas_file_path_id)
+}
+
 /// Extract Spine assets from MonoBehaviours
 fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Result<usize> {
-    // First, find CharacterAnimator-based type mappings
-    let (front_skel_path_ids, back_skel_path_ids) = find_character_animator_types(env_rc);
+    // First, find CharacterAnimator-based type mappings (including skel->atlas path_id mapping)
+    let (front_skel_path_ids, back_skel_path_ids, skel_to_atlas) = find_character_animator_types(env_rc);
 
     let env = env_rc.borrow();
     let mut saved_count = 0;
@@ -607,12 +677,30 @@ fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Re
     let mut used_atlas_indices: std::collections::HashSet<usize> = std::collections::HashSet::new();
 
     for (skel_name, skel_path_id, skel_data) in &skels {
-        // Find matching atlas (one per skel) - prefer atlas with same path_id relationship
+        // Find matching atlas using path_id mapping (authoritative) or fall back to name matching
         let mut matched_atlas: Option<(usize, &String)> = None;
-        for (idx, (atlas_name, _atlas_path_id, atlas_content)) in atlases.iter().enumerate() {
-            if atlas_name == skel_name && !used_atlas_indices.contains(&idx) {
-                matched_atlas = Some((idx, atlas_content));
-                break;
+
+        // First, try to find atlas by path_id mapping from CharacterAnimator
+        if let Some(expected_atlas_path_id) = skel_to_atlas.get(skel_path_id) {
+            for (idx, (_atlas_name, atlas_path_id, atlas_content)) in atlases.iter().enumerate() {
+                if atlas_path_id == expected_atlas_path_id && !used_atlas_indices.contains(&idx) {
+                    log::debug!(
+                        "Matched atlas for '{}' via path_id mapping: skel_path_id={} -> atlas_path_id={}",
+                        skel_name, skel_path_id, atlas_path_id
+                    );
+                    matched_atlas = Some((idx, atlas_content));
+                    break;
+                }
+            }
+        }
+
+        // Fall back to name-based matching if no path_id mapping found
+        if matched_atlas.is_none() {
+            for (idx, (atlas_name, _atlas_path_id, atlas_content)) in atlases.iter().enumerate() {
+                if atlas_name == skel_name && !used_atlas_indices.contains(&idx) {
+                    matched_atlas = Some((idx, atlas_content));
+                    break;
+                }
             }
         }
 
