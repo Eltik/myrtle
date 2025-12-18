@@ -167,9 +167,7 @@ impl SpineAssetType {
         // For binary format, animation names are stored as length-prefixed strings
         // For JSON format, animation names appear in the "animations" object
         // A simple substring search works for both cases
-        skel_data
-            .windows(name.len())
-            .any(|window| window == name)
+        skel_data.windows(name.len()).any(|window| window == name)
     }
 
     /// Legacy function for backward compatibility
@@ -360,13 +358,16 @@ fn find_character_animator_types(
     let mut front_skel_path_ids: std::collections::HashSet<i64> = std::collections::HashSet::new();
     let mut back_skel_path_ids: std::collections::HashSet<i64> = std::collections::HashSet::new();
     let mut skel_to_atlas: std::collections::HashMap<i64, i64> = std::collections::HashMap::new();
-    let mut skel_to_textures: std::collections::HashMap<i64, Vec<i64>> = std::collections::HashMap::new();
+    let mut skel_to_textures: std::collections::HashMap<i64, Vec<i64>> =
+        std::collections::HashMap::new();
 
     let env = env_rc.borrow();
 
     // Build a map of path_id -> ObjectReader for all objects
-    let mut all_objects: std::collections::HashMap<i64, unity_rs::files::object_reader::ObjectReader<()>> =
-        std::collections::HashMap::new();
+    let mut all_objects: std::collections::HashMap<
+        i64,
+        unity_rs::files::object_reader::ObjectReader<()>,
+    > = std::collections::HashMap::new();
     for obj in env.objects() {
         all_objects.insert(obj.path_id, obj);
     }
@@ -400,9 +401,13 @@ fn find_character_animator_types(
 
         // Trace front reference chain: _front.skeleton -> SkeletonAnimation -> skeletonDataAsset -> skeletonJSON
         if let Some(front) = tree.get("_front") {
-            if let Some(front_skel_path_id) =
-                trace_to_textasset(&all_objects, front, "skeleton", "skeletonDataAsset", "skeletonJSON")
-            {
+            if let Some(front_skel_path_id) = trace_to_textasset(
+                &all_objects,
+                front,
+                "skeleton",
+                "skeletonDataAsset",
+                "skeletonJSON",
+            ) {
                 log::debug!("  Front skeletonJSON path_id: {}", front_skel_path_id);
                 front_skel_path_ids.insert(front_skel_path_id);
 
@@ -426,9 +431,13 @@ fn find_character_animator_types(
 
         // Trace back reference chain
         if let Some(back) = tree.get("_back") {
-            if let Some(back_skel_path_id) =
-                trace_to_textasset(&all_objects, back, "skeleton", "skeletonDataAsset", "skeletonJSON")
-            {
+            if let Some(back_skel_path_id) = trace_to_textasset(
+                &all_objects,
+                back,
+                "skeleton",
+                "skeletonDataAsset",
+                "skeletonJSON",
+            ) {
                 log::debug!("  Back skeletonJSON path_id: {}", back_skel_path_id);
                 back_skel_path_ids.insert(back_skel_path_id);
 
@@ -459,7 +468,12 @@ fn find_character_animator_types(
         skel_to_textures.len()
     );
 
-    (front_skel_path_ids, back_skel_path_ids, skel_to_atlas, skel_to_textures)
+    (
+        front_skel_path_ids,
+        back_skel_path_ids,
+        skel_to_atlas,
+        skel_to_textures,
+    )
 }
 
 /// Helper to trace the reference chain from CharacterAnimator to TextAsset path_id
@@ -472,10 +486,7 @@ fn trace_to_textasset(
     json_key: &str,
 ) -> Option<i64> {
     // Get skeleton reference (SkeletonAnimation MonoBehaviour)
-    let skel_anim_path_id = direction_value
-        .get(skel_key)?
-        .get("m_PathID")?
-        .as_i64()?;
+    let skel_anim_path_id = direction_value.get(skel_key)?.get("m_PathID")?.as_i64()?;
 
     // Read SkeletonAnimation MonoBehaviour
     let mut skel_anim_obj = all_objects.get(&skel_anim_path_id)?.clone();
@@ -484,10 +495,7 @@ fn trace_to_textasset(
     let skel_anim_tree = skel_anim_obj.read_typetree(Some(node), false, false).ok()?;
 
     // Get skeletonDataAsset reference
-    let sda_path_id = skel_anim_tree
-        .get(sda_key)?
-        .get("m_PathID")?
-        .as_i64()?;
+    let sda_path_id = skel_anim_tree.get(sda_key)?.get("m_PathID")?.as_i64()?;
 
     // Read SkeletonDataAsset MonoBehaviour
     let mut sda_obj = all_objects.get(&sda_path_id)?.clone();
@@ -510,10 +518,7 @@ fn trace_to_atlas_textasset(
     sda_key: &str,
 ) -> Option<i64> {
     // Get skeleton reference (SkeletonAnimation MonoBehaviour)
-    let skel_anim_path_id = direction_value
-        .get(skel_key)?
-        .get("m_PathID")?
-        .as_i64()?;
+    let skel_anim_path_id = direction_value.get(skel_key)?.get("m_PathID")?.as_i64()?;
 
     // Read SkeletonAnimation MonoBehaviour
     let mut skel_anim_obj = all_objects.get(&skel_anim_path_id)?.clone();
@@ -522,10 +527,7 @@ fn trace_to_atlas_textasset(
     let skel_anim_tree = skel_anim_obj.read_typetree(Some(node), false, false).ok()?;
 
     // Get skeletonDataAsset reference
-    let sda_path_id = skel_anim_tree
-        .get(sda_key)?
-        .get("m_PathID")?
-        .as_i64()?;
+    let sda_path_id = skel_anim_tree.get(sda_key)?.get("m_PathID")?.as_i64()?;
 
     // Read SkeletonDataAsset MonoBehaviour
     let mut sda_obj = all_objects.get(&sda_path_id)?.clone();
@@ -544,10 +546,15 @@ fn trace_to_atlas_textasset(
     let mut atlas_data_obj = all_objects.get(&atlas_data_path_id)?.clone();
     let atlas_data_node = atlas_data_obj.serialized_type.as_ref()?.node.clone()?;
     atlas_data_obj.reset();
-    let atlas_data_tree = atlas_data_obj.read_typetree(Some(atlas_data_node), false, false).ok()?;
+    let atlas_data_tree = atlas_data_obj
+        .read_typetree(Some(atlas_data_node), false, false)
+        .ok()?;
 
     // Get atlasFile TextAsset path_id
-    let atlas_file_path_id = atlas_data_tree.get("atlasFile")?.get("m_PathID")?.as_i64()?;
+    let atlas_file_path_id = atlas_data_tree
+        .get("atlasFile")?
+        .get("m_PathID")?
+        .as_i64()?;
 
     Some(atlas_file_path_id)
 }
@@ -579,11 +586,18 @@ fn trace_to_texture_pathids(
     let mut skel_anim_obj = match all_objects.get(&skel_anim_path_id) {
         Some(obj) => obj.clone(),
         None => {
-            log::trace!("trace_to_texture_pathids: skeleton object {} not found", skel_anim_path_id);
+            log::trace!(
+                "trace_to_texture_pathids: skeleton object {} not found",
+                skel_anim_path_id
+            );
             return texture_path_ids;
         }
     };
-    let node = match skel_anim_obj.serialized_type.as_ref().and_then(|st| st.node.clone()) {
+    let node = match skel_anim_obj
+        .serialized_type
+        .as_ref()
+        .and_then(|st| st.node.clone())
+    {
         Some(n) => n,
         None => {
             log::trace!("trace_to_texture_pathids: no node for skeleton object");
@@ -594,7 +608,10 @@ fn trace_to_texture_pathids(
     let skel_anim_tree = match skel_anim_obj.read_typetree(Some(node), false, false) {
         Ok(t) => t,
         Err(e) => {
-            log::trace!("trace_to_texture_pathids: failed to read skeleton typetree: {:?}", e);
+            log::trace!(
+                "trace_to_texture_pathids: failed to read skeleton typetree: {:?}",
+                e
+            );
             return texture_path_ids;
         }
     };
@@ -607,12 +624,20 @@ fn trace_to_texture_pathids(
     {
         Some(id) => id,
         None => {
-            log::trace!("trace_to_texture_pathids: no skeletonDataAsset reference. Keys: {:?}", skel_anim_tree.as_object().map(|o| o.keys().collect::<Vec<_>>()));
+            log::trace!(
+                "trace_to_texture_pathids: no skeletonDataAsset reference. Keys: {:?}",
+                skel_anim_tree
+                    .as_object()
+                    .map(|o| o.keys().collect::<Vec<_>>())
+            );
             return texture_path_ids;
         }
     };
 
-    log::trace!("trace_to_texture_pathids: skeletonDataAsset path_id: {}", sda_path_id);
+    log::trace!(
+        "trace_to_texture_pathids: skeletonDataAsset path_id: {}",
+        sda_path_id
+    );
 
     // Read SkeletonDataAsset MonoBehaviour
     let mut sda_obj = match all_objects.get(&sda_path_id) {
@@ -622,7 +647,11 @@ fn trace_to_texture_pathids(
             return texture_path_ids;
         }
     };
-    let sda_node = match sda_obj.serialized_type.as_ref().and_then(|st| st.node.clone()) {
+    let sda_node = match sda_obj
+        .serialized_type
+        .as_ref()
+        .and_then(|st| st.node.clone())
+    {
         Some(n) => n,
         None => {
             log::trace!("trace_to_texture_pathids: no node for skeletonDataAsset");
@@ -633,7 +662,10 @@ fn trace_to_texture_pathids(
     let sda_tree = match sda_obj.read_typetree(Some(sda_node), false, false) {
         Ok(t) => t,
         Err(e) => {
-            log::trace!("trace_to_texture_pathids: failed to read skeletonDataAsset typetree: {:?}", e);
+            log::trace!(
+                "trace_to_texture_pathids: failed to read skeletonDataAsset typetree: {:?}",
+                e
+            );
             return texture_path_ids;
         }
     };
@@ -642,12 +674,18 @@ fn trace_to_texture_pathids(
     let atlas_assets = match sda_tree.get("atlasAssets").and_then(|v| v.as_array()) {
         Some(arr) => arr,
         None => {
-            log::trace!("trace_to_texture_pathids: no atlasAssets array. Keys: {:?}", sda_tree.as_object().map(|o| o.keys().collect::<Vec<_>>()));
+            log::trace!(
+                "trace_to_texture_pathids: no atlasAssets array. Keys: {:?}",
+                sda_tree.as_object().map(|o| o.keys().collect::<Vec<_>>())
+            );
             return texture_path_ids;
         }
     };
 
-    log::trace!("trace_to_texture_pathids: found {} atlasAssets", atlas_assets.len());
+    log::trace!(
+        "trace_to_texture_pathids: found {} atlasAssets",
+        atlas_assets.len()
+    );
 
     // Process each AtlasData
     for atlas_asset_ref in atlas_assets {
@@ -656,7 +694,10 @@ fn trace_to_texture_pathids(
             None => continue,
         };
 
-        log::trace!("trace_to_texture_pathids: processing AtlasData at path_id {}", atlas_data_path_id);
+        log::trace!(
+            "trace_to_texture_pathids: processing AtlasData at path_id {}",
+            atlas_data_path_id
+        );
 
         // Read AtlasData MonoBehaviour
         let mut atlas_data_obj = match all_objects.get(&atlas_data_path_id) {
@@ -666,7 +707,11 @@ fn trace_to_texture_pathids(
                 continue;
             }
         };
-        let atlas_data_node = match atlas_data_obj.serialized_type.as_ref().and_then(|st| st.node.clone()) {
+        let atlas_data_node = match atlas_data_obj
+            .serialized_type
+            .as_ref()
+            .and_then(|st| st.node.clone())
+        {
             Some(n) => n,
             None => {
                 log::trace!("trace_to_texture_pathids: no node for AtlasData");
@@ -674,26 +719,41 @@ fn trace_to_texture_pathids(
             }
         };
         atlas_data_obj.reset();
-        let atlas_data_tree = match atlas_data_obj.read_typetree(Some(atlas_data_node), false, false) {
-            Ok(t) => t,
-            Err(e) => {
-                log::trace!("trace_to_texture_pathids: failed to read AtlasData typetree: {:?}", e);
-                continue;
-            }
-        };
+        let atlas_data_tree =
+            match atlas_data_obj.read_typetree(Some(atlas_data_node), false, false) {
+                Ok(t) => t,
+                Err(e) => {
+                    log::trace!(
+                        "trace_to_texture_pathids: failed to read AtlasData typetree: {:?}",
+                        e
+                    );
+                    continue;
+                }
+            };
 
-        log::trace!("trace_to_texture_pathids: AtlasData keys: {:?}", atlas_data_tree.as_object().map(|o| o.keys().collect::<Vec<_>>()));
+        log::trace!(
+            "trace_to_texture_pathids: AtlasData keys: {:?}",
+            atlas_data_tree
+                .as_object()
+                .map(|o| o.keys().collect::<Vec<_>>())
+        );
 
         // Get materials array from AtlasData
         if let Some(materials) = atlas_data_tree.get("materials").and_then(|v| v.as_array()) {
-            log::trace!("trace_to_texture_pathids: found {} materials", materials.len());
+            log::trace!(
+                "trace_to_texture_pathids: found {} materials",
+                materials.len()
+            );
             for mat_ref in materials {
                 let mat_path_id = match mat_ref.get("m_PathID").and_then(|v| v.as_i64()) {
                     Some(id) => id,
                     None => continue,
                 };
 
-                log::trace!("trace_to_texture_pathids: processing Material at path_id {}", mat_path_id);
+                log::trace!(
+                    "trace_to_texture_pathids: processing Material at path_id {}",
+                    mat_path_id
+                );
 
                 // Read Material
                 let mut mat_obj = match all_objects.get(&mat_path_id) {
@@ -703,7 +763,11 @@ fn trace_to_texture_pathids(
                         continue;
                     }
                 };
-                let mat_node = match mat_obj.serialized_type.as_ref().and_then(|st| st.node.clone()) {
+                let mat_node = match mat_obj
+                    .serialized_type
+                    .as_ref()
+                    .and_then(|st| st.node.clone())
+                {
                     Some(n) => n,
                     None => {
                         log::trace!("trace_to_texture_pathids: no node for Material");
@@ -714,17 +778,27 @@ fn trace_to_texture_pathids(
                 let mat_tree = match mat_obj.read_typetree(Some(mat_node), false, false) {
                     Ok(t) => t,
                     Err(e) => {
-                        log::trace!("trace_to_texture_pathids: failed to read Material typetree: {:?}", e);
+                        log::trace!(
+                            "trace_to_texture_pathids: failed to read Material typetree: {:?}",
+                            e
+                        );
                         continue;
                     }
                 };
 
-                log::trace!("trace_to_texture_pathids: Material keys: {:?}", mat_tree.as_object().map(|o| o.keys().collect::<Vec<_>>()));
+                log::trace!(
+                    "trace_to_texture_pathids: Material keys: {:?}",
+                    mat_tree.as_object().map(|o| o.keys().collect::<Vec<_>>())
+                );
 
                 // Get mainTexture from m_SavedProperties.m_TexEnvs
                 if let Some(saved_props) = mat_tree.get("m_SavedProperties") {
-                    if let Some(tex_envs) = saved_props.get("m_TexEnvs").and_then(|v| v.as_array()) {
-                        log::trace!("trace_to_texture_pathids: found {} m_TexEnvs", tex_envs.len());
+                    if let Some(tex_envs) = saved_props.get("m_TexEnvs").and_then(|v| v.as_array())
+                    {
+                        log::trace!(
+                            "trace_to_texture_pathids: found {} m_TexEnvs",
+                            tex_envs.len()
+                        );
                         for tex_env in tex_envs {
                             // tex_env is an Array: [name, {m_Texture: {...}, m_Scale: {...}, m_Offset: {...}}]
                             let tex_data = if let Some(arr) = tex_env.as_array() {
@@ -737,7 +811,9 @@ fn trace_to_texture_pathids(
 
                             if let Some(tex_data) = tex_data {
                                 if let Some(tex_ref) = tex_data.get("m_Texture") {
-                                    if let Some(tex_path_id) = tex_ref.get("m_PathID").and_then(|v| v.as_i64()) {
+                                    if let Some(tex_path_id) =
+                                        tex_ref.get("m_PathID").and_then(|v| v.as_i64())
+                                    {
                                         if tex_path_id != 0 {
                                             log::trace!("trace_to_texture_pathids: found texture path_id: {}", tex_path_id);
                                             texture_path_ids.push(tex_path_id);
@@ -762,7 +838,8 @@ fn trace_to_texture_pathids(
 /// Extract Spine assets from MonoBehaviours
 fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Result<usize> {
     // First, find CharacterAnimator-based type mappings (including skel->atlas and skel->texture path_id mappings)
-    let (front_skel_path_ids, back_skel_path_ids, skel_to_atlas, skel_to_textures) = find_character_animator_types(env_rc);
+    let (front_skel_path_ids, back_skel_path_ids, skel_to_atlas, skel_to_textures) =
+        find_character_animator_types(env_rc);
 
     let env = env_rc.borrow();
     let mut saved_count = 0;
@@ -1058,7 +1135,9 @@ fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Re
                 let base = tex_name.trim_end_matches(".png");
 
                 // Get expected texture path_ids for this skeleton
-                let expected_texture_path_ids: Option<&Vec<i64>> = asset.skel_path_id.and_then(|skel_id| skel_to_textures.get(&skel_id));
+                let expected_texture_path_ids: Option<&Vec<i64>> = asset
+                    .skel_path_id
+                    .and_then(|skel_id| skel_to_textures.get(&skel_id));
 
                 // Helper closure to find best texture
                 // force_exact: if true, always use exact size match (for RGB when alpha exists)
@@ -1093,7 +1172,8 @@ fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Re
                                 // Pick the best matching texture (prefer exact atlas size, then most colored pixels)
                                 if let Some((atlas_w, atlas_h)) = atlas_size {
                                     // Try exact size match first
-                                    if let Some(exact) = path_id_matches.iter()
+                                    if let Some(exact) = path_id_matches
+                                        .iter()
                                         .filter(|(w, h, _, _, _)| *w == atlas_w && *h == atlas_h)
                                         .max_by_key(|(_, _, colored, _, _)| *colored)
                                     {
@@ -1455,35 +1535,24 @@ fn is_spine_texture(
 ) -> bool {
     if let Some((max_w, max_h)) = spine_info.get(name) {
         // If texture is significantly larger than atlas size (> 1.5x in both dimensions),
-        // it might be artwork - but we need additional checks
+        // it's artwork/portrait texture, NOT a spine spritesheet.
+        // This is true even if the texture is power-of-2 square, because some portrait
+        // textures happen to be 2048x2048 (the character art just fits that size).
         let is_larger = width > max_w + max_w / 2 && height > max_h + max_h / 2;
 
         if is_larger {
-            // However, if the texture has power-of-2 dimensions (especially square),
-            // it's almost certainly a spritesheet, NOT artwork.
-            // Real character artwork has irregular dimensions like 1670x1665, 1950x2031, etc.
-            let is_pow2_square = is_power_of_two(width) && is_power_of_two(height) && width == height;
-
-            if is_pow2_square {
-                log::debug!(
-                    "Texture '{}' ({}x{}) is power-of-2 square, treating as spritesheet (not artwork)",
-                    name,
-                    width,
-                    height
-                );
-                return true; // It's a spine/spritesheet texture
-            }
-
             log::debug!(
-                "Texture '{}' ({}x{}) is larger than atlas ({}x{}) and has irregular dimensions, treating as artwork",
+                "Texture '{}' ({}x{}) is larger than atlas ({}x{}), treating as artwork/portrait",
                 name,
                 width,
                 height,
                 max_w,
                 max_h
             );
-            return false; // It's artwork
+            return false; // It's artwork, not a spine texture
         }
+
+        // Texture matches atlas size - it's a spine spritesheet texture
         true
     } else {
         false
@@ -2168,6 +2237,9 @@ fn extract_images_with_combination(
     // Track which textures were actually saved (to avoid sprite extraction overwriting them)
     let mut saved_texture_names: std::collections::HashSet<String> =
         std::collections::HashSet::new();
+    // Track which textures were merged with alpha (only these should skip sprite extraction)
+    let mut merged_texture_names: std::collections::HashSet<String> =
+        std::collections::HashSet::new();
 
     // Handle alpha textures based on merge_alpha setting
     // Skip textures that belong to spine assets (they will be handled by spine extraction)
@@ -2217,6 +2289,7 @@ fn extract_images_with_combination(
                         if combined.save(&output_path).is_ok() {
                             saved_count += 1;
                             saved_texture_names.insert(rgb_name.clone());
+                            merged_texture_names.insert(rgb_name.clone());
                             log::debug!("Saved merged texture: {:?}", output_path);
                         }
                     }
@@ -2265,14 +2338,6 @@ fn extract_images_with_combination(
 
         // Process textures - merge alpha pairs, save others as-is
         for (name, tex_data) in &textures {
-            // Skip spine textures - they will be handled by spine extraction (based on size comparison)
-            if let Some(ref img) = tex_data.image {
-                if is_spine_texture(name, img.width(), img.height(), spine_texture_info) {
-                    log::debug!("Skipping spine texture from root: {}", name);
-                    continue;
-                }
-            }
-
             // Skip [alpha] textures - they'll be merged into their RGB counterpart
             if name.contains("[alpha]") {
                 log::debug!("Skipping alpha texture (will be merged): {}", name);
@@ -2280,6 +2345,19 @@ fn extract_images_with_combination(
             }
 
             // Check if this RGB texture has a matching alpha texture
+            let has_alpha_pair = alpha_pairs.contains_key(name);
+
+            // Skip spine textures ONLY if they don't have an alpha pair
+            // Textures with alpha pairs should always be merged and saved for portrait use
+            if !has_alpha_pair {
+                if let Some(ref img) = tex_data.image {
+                    if is_spine_texture(name, img.width(), img.height(), spine_texture_info) {
+                        log::debug!("Skipping spine texture from root: {}", name);
+                        continue;
+                    }
+                }
+            }
+
             if let Some(alpha_name) = alpha_pairs.get(name) {
                 log::debug!("Merging texture {} with alpha {}", name, alpha_name);
                 // Merge RGB + alpha and save
@@ -2292,6 +2370,7 @@ fn extract_images_with_combination(
                     if combined.save(&output_path).is_ok() {
                         saved_count += 1;
                         saved_texture_names.insert(name.clone());
+                        merged_texture_names.insert(name.clone());
                         log::debug!("Saved merged texture (RGB+alpha): {:?}", output_path);
                     }
                 } else {
@@ -2366,10 +2445,66 @@ fn extract_images_with_combination(
         if let Some(assets_file) = obj.assets_file.as_ref().and_then(|weak| weak.upgrade()) {
             if let Ok(sprite) = serde_json::from_value::<unity_rs::generated::Sprite>(data.clone())
             {
-                // Always extract sprites - they may have textureRect cropping that gives better results
-                // than the raw texture. The sprite extraction will properly:
+                // Check if sprite has alphaTexture reference
+                let has_alpha_texture = sprite
+                    .m_RD
+                    .as_ref()
+                    .and_then(|rd| rd.alphaTexture.as_ref())
+                    .map(|at| at.m_path_id != 0)
+                    .unwrap_or(false);
+
+                // Check if sprite provides cropping (textureRect dimensions differ from texture)
+                let provides_cropping = if let Some(ref rd) = sprite.m_RD {
+                    if let (Some(ref tr), Some(ref tex)) = (&rd.textureRect, &rd.texture) {
+                        // Get texture dimensions
+                        let tex_dims = {
+                            let assets_file_ref = assets_file.borrow();
+                            assets_file_ref
+                                .objects
+                                .get(&tex.m_path_id)
+                                .and_then(|obj| {
+                                    let mut obj = obj.clone();
+                                    obj.read(false).ok()
+                                })
+                                .and_then(|data| {
+                                    let w = data.get("m_Width").and_then(|v| v.as_i64());
+                                    let h = data.get("m_Height").and_then(|v| v.as_i64());
+                                    match (w, h) {
+                                        (Some(w), Some(h)) => Some((w as f32, h as f32)),
+                                        _ => None,
+                                    }
+                                })
+                        };
+
+                        if let Some((tex_w, tex_h)) = tex_dims {
+                            let rect_w = tr.width.unwrap_or(0.0);
+                            let rect_h = tr.height.unwrap_or(0.0);
+                            // Sprite provides cropping if textureRect is smaller than texture
+                            (rect_w - tex_w).abs() > 1.0 || (rect_h - tex_h).abs() > 1.0
+                        } else {
+                            false
+                        }
+                    } else {
+                        false
+                    }
+                } else {
+                    false
+                };
+
+                // If sprite doesn't have alphaTexture, doesn't provide cropping, and texture was
+                // already merged with alpha, skip sprite extraction to preserve the merged version
+                if !has_alpha_texture && !provides_cropping && merged_texture_names.contains(&name)
+                {
+                    log::debug!(
+                        "Skipping sprite {} (no alphaTexture, no cropping, merged texture already saved)",
+                        name
+                    );
+                    continue;
+                }
+
+                // Extract sprite - it will properly:
                 // - Crop according to textureRect
-                // - Merge alpha from sprite's alphaTexture reference
+                // - Merge alpha from sprite's alphaTexture reference (if present)
                 // - Handle tight packing, rotation, etc.
                 let output_path = destdir.join(format!("{}.png", name));
 
