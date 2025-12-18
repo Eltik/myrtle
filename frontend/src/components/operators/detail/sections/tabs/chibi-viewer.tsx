@@ -112,7 +112,7 @@ export const ChibiViewer = memo(function ChibiViewer({ chibi, skinName }: ChibiV
     const spineRef = useRef<import("pixi-spine").Spine | null>(null);
     const canvasContainerRef = useRef<HTMLDivElement>(null);
     const mountedRef = useRef(true);
-    const loadingRef = useRef(false);
+    const loadIdRef = useRef(0);
 
     const [selectedAnimation, setSelectedAnimation] = useState<string>("Idle");
     const [availableAnimations, setAvailableAnimations] = useState<string[]>([]);
@@ -134,7 +134,8 @@ export const ChibiViewer = memo(function ChibiViewer({ chibi, skinName }: ChibiV
         if (!canvasContainerRef.current) return;
 
         mountedRef.current = true;
-        loadingRef.current = false; // Reset loading state on effect re-run
+        // Increment load ID to invalidate any in-flight loads from previous effect runs
+        const currentLoadId = ++loadIdRef.current;
         let animationFrameId: number | null = null;
 
         const cleanup = () => {
@@ -155,15 +156,14 @@ export const ChibiViewer = memo(function ChibiViewer({ chibi, skinName }: ChibiV
         };
 
         const loadSpine = async () => {
-            if (loadingRef.current || !mountedRef.current) return;
-            loadingRef.current = true;
+            // Check if this load is still valid (not superseded by a newer effect run)
+            if (currentLoadId !== loadIdRef.current || !mountedRef.current) return;
 
             const skinData = getChibiSkinData(chibi, skinName, viewType);
 
             if (!skinData || !skinData.atlas || !skinData.skel || !skinData.png) {
                 setError("No spine data available");
                 setIsLoading(false);
-                loadingRef.current = false;
                 return;
             }
 
@@ -175,7 +175,8 @@ export const ChibiViewer = memo(function ChibiViewer({ chibi, skinName }: ChibiV
             setError(null);
 
             try {
-                if (!mountedRef.current) return;
+                // Check again before async operation
+                if (currentLoadId !== loadIdRef.current || !mountedRef.current) return;
 
                 // Clean up previous spine
                 if (spineRef.current && appRef.current) {
@@ -187,7 +188,8 @@ export const ChibiViewer = memo(function ChibiViewer({ chibi, skinName }: ChibiV
                 // Load spine with custom URL encoding to handle # characters
                 const spine = await loadSpineWithEncodedUrls(skelUrl, atlasUrl, pngUrl);
 
-                if (!mountedRef.current || !appRef.current) {
+                // Critical check after async load - abort if this load is stale
+                if (currentLoadId !== loadIdRef.current || !mountedRef.current || !appRef.current) {
                     spine.destroy();
                     return;
                 }
@@ -238,12 +240,11 @@ export const ChibiViewer = memo(function ChibiViewer({ chibi, skinName }: ChibiV
                 setIsLoading(false);
             } catch (err) {
                 console.error("Failed to load Spine:", err);
-                if (mountedRef.current) {
+                // Only update state if this load is still current
+                if (currentLoadId === loadIdRef.current && mountedRef.current) {
                     setError("Failed to load chibi");
                     setIsLoading(false);
                 }
-            } finally {
-                loadingRef.current = false;
             }
         };
 
@@ -271,7 +272,8 @@ export const ChibiViewer = memo(function ChibiViewer({ chibi, skinName }: ChibiV
                 autoDensity: true,
             });
 
-            if (!mountedRef.current) {
+            // Check if this initialization is still valid
+            if (currentLoadId !== loadIdRef.current || !mountedRef.current) {
                 app.destroy(true, { children: true, texture: true });
                 return;
             }
