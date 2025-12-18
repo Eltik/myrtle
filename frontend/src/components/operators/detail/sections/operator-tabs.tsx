@@ -81,8 +81,8 @@ export function OperatorTabs({ operator, activeTab, onTabChange }: OperatorTabsP
             </nav>
 
             {/* Tab Content */}
-            <div className="min-w-0 flex-1 overflow-hidden">
-                <div className="overflow-hidden rounded-xl border border-border bg-card/80 backdrop-blur-md">
+            <div className="min-w-0 flex-1">
+                <div className="rounded-xl border border-border bg-card/80 backdrop-blur-md">
                     <TransitionPanel
                         activeIndex={activeIndex}
                         transition={{ duration: 0.2, ease: "easeOut" }}
