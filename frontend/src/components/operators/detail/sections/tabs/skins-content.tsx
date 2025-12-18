@@ -192,10 +192,10 @@ export const SkinsContent = memo(function SkinsContent({ operator }: SkinsConten
 
                             {/* Skin Selector - Vertical on desktop */}
                             {skins.length > 0 && (
-                                <div className="hidden shrink-0 lg:block">
-                                    <h3 className="mb-3 font-medium text-foreground text-sm">Available Skins</h3>
-                                    <ScrollArea className="max-h-[65vh]">
-                                        <div className="flex flex-col gap-3 pr-2">
+                                <div className="hidden shrink-0 flex-col lg:flex">
+                                    <h3 className="mb-3 shrink-0 font-medium text-foreground text-sm">Available Skins</h3>
+                                    <ScrollArea className="h-[calc(70vh-3rem)]">
+                                        <div className="flex flex-col gap-3 pr-3">
                                             {skins.map((skin) => (
                                                 <button
                                                     className={cn("relative h-24 w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all hover:scale-105", selectedSkin === skin.id ? "border-primary shadow-lg" : "border-border/50 hover:border-primary/50")}
@@ -219,8 +219,8 @@ export const SkinsContent = memo(function SkinsContent({ operator }: SkinsConten
                         {skins.length > 0 && (
                             <div className="lg:hidden">
                                 <h3 className="mb-3 font-medium text-foreground text-sm">Available Skins</h3>
-                                <ScrollArea className="w-full">
-                                    <div className="flex gap-3 pb-2">
+                                <ScrollArea className="w-full whitespace-nowrap pb-2.5" type="always">
+                                    <div className="flex w-max gap-3">
                                         {skins.map((skin) => (
                                             <button
                                                 className={cn("relative h-24 w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all hover:scale-105", selectedSkin === skin.id ? "border-primary shadow-lg" : "border-border/50 hover:border-primary/50")}
