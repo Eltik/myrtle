@@ -85,6 +85,20 @@ export function AudioContent({ operator }: AudioContentProps) {
         return order.filter((lang) => langSet.has(lang));
     }, [voices]);
 
+    // Get the voice actor name for the selected language
+    const voiceActorName = useMemo(() => {
+        if (voices.length === 0) return null;
+
+        // Find the first voice line that has data for the selected language
+        for (const voice of voices) {
+            const voiceData = voice.data?.find((d) => d.language === selectedLanguage);
+            if (voiceData?.cvName && voiceData.cvName.length > 0) {
+                return voiceData.cvName.join(", ");
+            }
+        }
+        return null;
+    }, [voices, selectedLanguage]);
+
     // Set default language when available languages change
     useEffect(() => {
         const firstLang = availableLanguages[0];
@@ -148,14 +162,12 @@ export function AudioContent({ operator }: AudioContentProps) {
         }
         stopProgressAnimation();
 
-        // Find the voice URL for the selected language from backend data
         const voiceData = voice.data?.find((d) => d.language === selectedLanguage);
         if (!voiceData?.voiceUrl) {
             console.error("No voice URL available for language:", selectedLanguage);
             return;
         }
 
-        // Use the backend-provided URL (prepend CDN path)
         const audioUrl = `/api/cdn/upk${voiceData.voiceUrl}`;
 
         const audio = new Audio(audioUrl);
@@ -187,14 +199,12 @@ export function AudioContent({ operator }: AudioContentProps) {
         setPlayingId(voice.id);
     };
 
-    // Update volume when changed
     useEffect(() => {
         if (audioRef.current) {
             audioRef.current.volume = isMuted ? 0 : volume / 100;
         }
     }, [volume, isMuted]);
 
-    // Cleanup audio on unmount
     useEffect(() => {
         return () => {
             audioRef.current?.pause();
@@ -211,25 +221,32 @@ export function AudioContent({ operator }: AudioContentProps) {
             </div>
 
             {/* Controls */}
-            <div className="mb-6 flex flex-wrap items-center gap-4">
-                <Select onValueChange={(value) => setSelectedLanguage(value as LangType)} value={selectedLanguage}>
-                    <SelectTrigger className="w-48">
-                        <SelectValue placeholder="Language" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {availableLanguages.map((lang) => (
-                            <SelectItem key={lang} value={lang}>
-                                {LANGUAGE_LABELS[lang] ?? lang}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+            <div className="mb-6 space-y-3">
+                {voiceActorName && (
+                    <p className="text-muted-foreground text-sm">
+                        <span className="text-foreground/60">CV:</span> <span className="font-medium text-foreground">{voiceActorName}</span>
+                    </p>
+                )}
+                <div className="flex flex-wrap items-center gap-4">
+                    <Select onValueChange={(value) => setSelectedLanguage(value as LangType)} value={selectedLanguage}>
+                        <SelectTrigger className="w-48">
+                            <SelectValue placeholder="Language" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {availableLanguages.map((lang) => (
+                                <SelectItem key={lang} value={lang}>
+                                    {LANGUAGE_LABELS[lang] ?? lang}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
 
-                <div className="flex items-center gap-2">
-                    <Button onClick={() => setIsMuted(!isMuted)} size="icon" variant="ghost">
-                        {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-                    </Button>
-                    <Slider className="w-24" max={100} min={0} onValueChange={(val) => setVolume(val[0] ?? 80)} step={1} value={[volume]} />
+                    <div className="flex items-center gap-2">
+                        <Button onClick={() => setIsMuted(!isMuted)} size="icon" variant="ghost">
+                            {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                        </Button>
+                        <Slider className="w-24" max={100} min={0} onValueChange={(val) => setVolume(val[0] ?? 80)} step={1} value={[volume]} />
+                    </div>
                 </div>
             </div>
 

@@ -195,7 +195,7 @@ export const SkinsContent = memo(function SkinsContent({ operator }: SkinsConten
                                 <div className="hidden shrink-0 flex-col lg:flex">
                                     <h3 className="mb-3 shrink-0 font-medium text-foreground text-sm">Available Skins</h3>
                                     <ScrollArea className="h-[calc(70vh-3rem)]">
-                                        <div className="flex flex-col gap-3 pr-3">
+                                        <div className="flex flex-col gap-3 p-1 pr-3">
                                             {skins.map((skin) => (
                                                 <button
                                                     className={cn("relative h-24 w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all hover:scale-105", selectedSkin === skin.id ? "border-primary shadow-lg" : "border-border/50 hover:border-primary/50")}
@@ -225,7 +225,7 @@ export const SkinsContent = memo(function SkinsContent({ operator }: SkinsConten
                                         WebkitOverflowScrolling: "touch",
                                     }}
                                 >
-                                    <div className="inline-flex gap-3">
+                                    <div className="inline-flex gap-3 p-1">
                                         {skins.map((skin) => (
                                             <button
                                                 className={cn("relative inline-block h-24 w-24 overflow-hidden rounded-lg border-2 transition-all hover:scale-105", selectedSkin === skin.id ? "border-primary shadow-lg" : "border-border/50 hover:border-primary/50")}
