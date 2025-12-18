@@ -12,9 +12,9 @@ const descriptionTagRightDelim = "</>";
 const descriptionInterpolationRegex = /-?{-?(?<interpolationKey>[^}:]+)(?::(?<formatString>[^}]+))?}/;
 
 export const DESCRIPTION_COLORS = {
-    valueUp: "#49b3ff",
-    valueDown: "#ff5e5e",
-    reminder: "#ffcf53",
+    valueUp: "#d597da",
+    valueDown: "#ff847d",
+    reminder: "#da9a46",
     potential: "#49b3ff",
     keyword: "#49b3ff",
 };
