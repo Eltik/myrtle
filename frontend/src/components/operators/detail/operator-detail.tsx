@@ -18,7 +18,7 @@ export function OperatorDetail({ operator }: OperatorDetailProps) {
             <OperatorHero operator={operator} />
 
             {/* Content Section */}
-            <div className="relative z-10 mx-auto box-border w-full min-w-0 max-w-6xl overflow-hidden px-3 pb-16 sm:px-4 md:px-8">
+            <div className="relative z-10 mx-auto box-border w-full min-w-0 max-w-6xl px-3 pb-16 sm:px-4 md:px-8">
                 <OperatorTabs activeTab={activeTab} onTabChange={setActiveTab} operator={operator} />
             </div>
         </div>

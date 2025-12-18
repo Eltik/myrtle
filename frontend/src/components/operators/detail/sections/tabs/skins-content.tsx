@@ -6,7 +6,7 @@ import Image from "next/image";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "~/components/ui/shadcn/button";
 import { Dialog, DialogContent, DialogTrigger } from "~/components/ui/shadcn/dialog";
-import { ScrollArea, ScrollBar } from "~/components/ui/shadcn/scroll-area";
+import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
 import { Skeleton } from "~/components/ui/shadcn/skeleton";
 import { cn } from "~/lib/utils";
 import type { Operator } from "~/types/api";
@@ -160,7 +160,7 @@ export const SkinsContent = memo(function SkinsContent({ operator }: SkinsConten
             ) : (
                 <div className="grid min-w-0 gap-6 lg:grid-cols-[1fr,300px]">
                     {/* Left column: Image Viewer + Skin Selector */}
-                    <div className="flex flex-col gap-4">
+                    <div className="flex min-w-0 flex-col gap-4 overflow-hidden">
                         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-4">
                             {/* Main Image Viewer */}
                             <div className="relative min-w-0 flex-1">
@@ -219,11 +219,16 @@ export const SkinsContent = memo(function SkinsContent({ operator }: SkinsConten
                         {skins.length > 0 && (
                             <div className="lg:hidden">
                                 <h3 className="mb-3 font-medium text-foreground text-sm">Available Skins</h3>
-                                <ScrollArea className="w-full whitespace-nowrap pb-2.5" type="always">
-                                    <div className="flex w-max gap-3">
+                                <div
+                                    className="overflow-x-auto overflow-y-hidden whitespace-nowrap pb-2.5"
+                                    style={{
+                                        WebkitOverflowScrolling: "touch",
+                                    }}
+                                >
+                                    <div className="inline-flex gap-3">
                                         {skins.map((skin) => (
                                             <button
-                                                className={cn("relative h-24 w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all hover:scale-105", selectedSkin === skin.id ? "border-primary shadow-lg" : "border-border/50 hover:border-primary/50")}
+                                                className={cn("relative inline-block h-24 w-24 overflow-hidden rounded-lg border-2 transition-all hover:scale-105", selectedSkin === skin.id ? "border-primary shadow-lg" : "border-border/50 hover:border-primary/50")}
                                                 key={skin.id}
                                                 onClick={() => handleSkinSelect(skin.id)}
                                                 type="button"
@@ -235,8 +240,7 @@ export const SkinsContent = memo(function SkinsContent({ operator }: SkinsConten
                                             </button>
                                         ))}
                                     </div>
-                                    <ScrollBar orientation="horizontal" />
-                                </ScrollArea>
+                                </div>
                             </div>
                         )}
                     </div>
