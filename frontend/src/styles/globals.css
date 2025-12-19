@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "./utilities.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -127,88 +128,4 @@
     body {
         @apply bg-background text-foreground;
     }
-}
-
-.card-glow-hover {
-    position: relative;
-}
-
-.card-glow-hover::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    box-shadow: 0 0 10px 2px var(--glow-primary);
-    opacity: 0;
-    transition: opacity 200ms ease-out;
-    will-change: opacity;
-    pointer-events: none;
-}
-
-.card-glow-hover:hover::before {
-    opacity: 0.75;
-}
-
-/* GPU acceleration utilities for smooth animations */
-.backface-hidden {
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-}
-
-/* Paint containment - isolates repaints to this element */
-.contain-paint {
-    contain: paint;
-}
-
-/* Layout containment - isolates layout calculations */
-.contain-layout {
-    contain: layout;
-}
-
-/* Strict containment - maximum isolation for animated elements */
-.contain-strict {
-    contain: strict;
-}
-
-/* Content containment - for elements with dynamic content */
-.contain-content {
-    contain: content;
-}
-
-/* GPU-accelerated transform transitions */
-.gpu-accelerated {
-    transform: translateZ(0);
-    will-change: transform, opacity;
-}
-
-/* Optimized scale transition for images */
-.scale-transition {
-    transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
-    will-change: transform;
-}
-
-/* Grayscale transition optimized */
-.grayscale-transition {
-    transition: filter 200ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Opacity transition for smooth fades */
-.opacity-transition {
-    transition: opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Combined hover transition for cards */
-.card-hover-transition {
-    transition:
-        transform 150ms cubic-bezier(0.4, 0, 0.2, 1),
-        opacity 150ms cubic-bezier(0.4, 0, 0.2, 1),
-        filter 200ms cubic-bezier(0.4, 0, 0.2, 1),
-        border-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
-        background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* View transition container */
-.view-transition-container {
-    contain: layout paint;
-    will-change: contents;
 }

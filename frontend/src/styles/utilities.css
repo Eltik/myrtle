@@ -1,0 +1,54 @@
+/* Custom utility classes for animations and performance */
+
+.card-glow-hover {
+    position: relative;
+}
+
+.card-glow-hover::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: 0 0 10px 2px var(--glow-primary);
+    opacity: 0;
+    transition: opacity 200ms ease-out;
+    pointer-events: none;
+}
+
+.card-glow-hover:hover::before {
+    opacity: 0.75;
+}
+
+.backface-hidden {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+.contain-paint {
+    contain: paint;
+}
+
+.contain-layout {
+    contain: layout;
+}
+
+.contain-content {
+    contain: content;
+}
+
+.opacity-transition {
+    transition: opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.grayscale-transition {
+    transition: filter 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover-transition {
+    transition:
+        transform 150ms cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 150ms cubic-bezier(0.4, 0, 0.2, 1),
+        filter 200ms cubic-bezier(0.4, 0, 0.2, 1),
+        border-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+        background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}

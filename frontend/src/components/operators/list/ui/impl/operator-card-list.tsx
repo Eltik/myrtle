@@ -34,17 +34,17 @@ export const OperatorCardList = memo(function OperatorCardList({ operator, listC
                 </div>
             </div>
 
-            {/* Desktop Layout: Name column - only show when not in compact layout */}
+            {/* Desktop Layout: Name column */}
             {!useCompactLayout && (
                 <div className="hidden min-w-0 flex-1 md:block">
                     <span className="truncate font-semibold text-foreground text-sm uppercase tracking-wide">{operator.name}</span>
                 </div>
             )}
 
-            {/* Desktop: Rarity stars - only show when not in compact layout */}
+            {/* Desktop: Rarity stars */}
             {!useCompactLayout && <RarityStars className="hidden w-24 shrink-0 items-center gap-0.5 md:flex" rarity={rarityNum} starClassName="text-sm" />}
 
-            {/* Desktop: Class info - only show when not in compact layout */}
+            {/* Desktop: Class info */}
             {!useCompactLayout && (
                 <div className="hidden w-32 shrink-0 items-center gap-2 md:flex">
                     <div className="flex h-5 w-5 items-center justify-center">
@@ -54,14 +54,14 @@ export const OperatorCardList = memo(function OperatorCardList({ operator, listC
                 </div>
             )}
 
-            {/* Desktop: Archetype - only show when not in compact layout */}
+            {/* Desktop: Archetype */}
             {!useCompactLayout && (
                 <div className="hidden w-40 shrink-0 lg:block">
                     <span className="truncate text-muted-foreground text-sm">{capitalize(formatSubProfession(operator.subProfessionId.toLowerCase()))}</span>
                 </div>
             )}
 
-            {/* Desktop: Faction logo - only show when not in compact layout */}
+            {/* Desktop: Faction logo */}
             {!useCompactLayout && (
                 <div className="hidden w-8 shrink-0 justify-center xl:flex">
                     <div className="flex h-6 w-6 items-center justify-center opacity-40 transition-opacity group-hover:opacity-70">
@@ -76,7 +76,7 @@ export const OperatorCardList = memo(function OperatorCardList({ operator, listC
                 <div className="flex items-center gap-2">
                     <span className="truncate font-semibold text-foreground text-sm uppercase tracking-wide">{operator.name}</span>
                     <div className="flex h-4 w-4 shrink-0 items-center justify-center opacity-50">
-                        <FactionLogo className="object-contain" nationId={operator.nationId} size={16} teamId={operator.teamId} />
+                        <FactionLogo className="object-contain" groupId={operator.groupId} nationId={operator.nationId} size={16} teamId={operator.teamId} />
                     </div>
                 </div>
 
