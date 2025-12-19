@@ -1,5 +1,5 @@
-import { isEqual, range } from "lodash-es";
-import type { AttributeData, Operator } from "~/types/api";
+import { range } from "lodash-es";
+import type { AttributeData, Module, Operator } from "~/types/api";
 
 /**
  * Get operator attribute stats based on level, phase, trust, potential, and module
@@ -42,34 +42,29 @@ export function getOperatorAttributeStats(
 
     const { MaxHp: finalMaxHp, Atk: finalMaxAtk, Def: finalMaxDef, MagicResistance: finalMaxRes } = finalKeyFrame.Data;
 
-    // Trust bonuses
-    const trustBonuses = doStatsChange(operator, metadata.phaseIndex) ? getStatIncreaseAtTrust(operator, trust) : { maxHp: 0, atk: 0, def: 0, magicResistance: 0 };
+    // Trust bonuses (always apply)
+    const trustBonuses = getStatIncreaseAtTrust(operator, trust);
 
-    // Potential bonuses
-    const potBonuses = doStatsChange(operator, metadata.phaseIndex)
-        ? getStatIncreaseAtPotential(operator, potential)
-        : {
-              health: 0,
-              attackPower: 0,
-              defense: 0,
-              artsResistance: 0,
-              attackSpeed: 0,
-              dpCost: 0,
-              redeployTimeInSeconds: 0,
-          };
+    // Potential bonuses (always apply)
+    const potBonuses = getStatIncreaseAtPotential(operator, potential);
+
+    // Module bonuses (only at E2 phase and if module is selected)
+    const selectedModule = metadata.moduleId ? operator.modules.find((m) => m.uniEquipId === metadata.moduleId) : null;
+    const moduleBonuses = metadata.phaseIndex === 2 && selectedModule ? getModuleStatIncrease(selectedModule, metadata.moduleLevel) : { atk: 0, maxHp: 0, def: 0, attackSpeed: 0, magicResistance: 0, cost: 0, respawnTime: 0, blockCnt: 0 };
 
     // Calculate final stats
-    const health = linearInterpolateByLevel(level, maxLevel, maxHp, finalMaxHp) + trustBonuses.maxHp + potBonuses.health;
-    const attackPower = linearInterpolateByLevel(level, maxLevel, atk, finalMaxAtk) + trustBonuses.atk + potBonuses.attackPower;
-    const defense = linearInterpolateByLevel(level, maxLevel, def, finalMaxDef) + trustBonuses.def + potBonuses.defense;
-    const artsResistance = linearInterpolateByLevel(level, maxLevel, res, finalMaxRes) + trustBonuses.magicResistance + potBonuses.artsResistance;
+    const health = linearInterpolateByLevel(level, maxLevel, maxHp, finalMaxHp) + trustBonuses.maxHp + potBonuses.health + moduleBonuses.maxHp;
+    const attackPower = linearInterpolateByLevel(level, maxLevel, atk, finalMaxAtk) + trustBonuses.atk + potBonuses.attackPower + moduleBonuses.atk;
+    const defense = linearInterpolateByLevel(level, maxLevel, def, finalMaxDef) + trustBonuses.def + potBonuses.defense + moduleBonuses.def;
+    const artsResistance = linearInterpolateByLevel(level, maxLevel, res, finalMaxRes) + trustBonuses.magicResistance + potBonuses.artsResistance + moduleBonuses.magicResistance;
 
-    const redeployTimeInSeconds = redeploy + potBonuses.redeployTimeInSeconds;
-    const dpCost = dp + potBonuses.dpCost;
-    const blockCount = blockCnt;
+    const redeployTimeInSeconds = redeploy + potBonuses.redeployTimeInSeconds + moduleBonuses.respawnTime;
+    const dpCost = dp + potBonuses.dpCost + moduleBonuses.cost;
+    const blockCount = blockCnt + moduleBonuses.blockCnt;
 
-    // ASPD calculation
-    const secondsPerAttack = calculateSecondsPerAttack(baseAttackTime, 100 + potBonuses.attackSpeed);
+    // ASPD calculation (include module attack speed bonus)
+    const totalAspdBonus = 100 + potBonuses.attackSpeed + moduleBonuses.attackSpeed;
+    const secondsPerAttack = calculateSecondsPerAttack(baseAttackTime, totalAspdBonus);
 
     const stats: AttributeData = {
         Atk: attackPower,
@@ -100,14 +95,72 @@ export function getOperatorAttributeStats(
     return stats;
 }
 
-function doStatsChange(operator: Operator, phaseIndex: number): boolean {
-    const phase = operator.phases[phaseIndex];
-    if (!phase) return false;
+/**
+ * Get stat increase from module at a specific level
+ */
+function getModuleStatIncrease(
+    module: Module,
+    moduleLevel: number,
+): {
+    atk: number;
+    maxHp: number;
+    def: number;
+    attackSpeed: number;
+    magicResistance: number;
+    cost: number;
+    respawnTime: number;
+    blockCnt: number;
+} {
+    const statChanges = {
+        atk: 0,
+        maxHp: 0,
+        def: 0,
+        attackSpeed: 0,
+        magicResistance: 0,
+        cost: 0,
+        respawnTime: 0,
+        blockCnt: 0,
+    };
 
-    const startingKeyFrame = phase.AttributesKeyFrames[0];
-    const finalKeyFrame = phase.AttributesKeyFrames[phase.AttributesKeyFrames.length - 1];
+    if (!module.data?.phases || moduleLevel <= 0) {
+        return statChanges;
+    }
 
-    return !isEqual(startingKeyFrame?.Data, finalKeyFrame?.Data);
+    const modulePhase = module.data.phases[moduleLevel - 1];
+    if (!modulePhase?.attributeBlackboard) {
+        return statChanges;
+    }
+
+    for (const attr of modulePhase.attributeBlackboard) {
+        switch (attr.key) {
+            case "atk":
+                statChanges.atk += attr.value;
+                break;
+            case "max_hp":
+                statChanges.maxHp += attr.value;
+                break;
+            case "def":
+                statChanges.def += attr.value;
+                break;
+            case "attack_speed":
+                statChanges.attackSpeed += attr.value;
+                break;
+            case "magic_resistance":
+                statChanges.magicResistance += attr.value;
+                break;
+            case "cost":
+                statChanges.cost += attr.value;
+                break;
+            case "respawn_time":
+                statChanges.respawnTime += attr.value;
+                break;
+            case "block_cnt":
+                statChanges.blockCnt += attr.value;
+                break;
+        }
+    }
+
+    return statChanges;
 }
 
 function getStatIncreaseAtTrust(operator: Operator, rawTrust: number): { maxHp: number; atk: number; def: number; magicResistance: number } {
@@ -167,6 +220,28 @@ function getStatIncreaseAtPotential(
     }, initialIncreases);
 }
 
+/**
+ * Parse the numeric value from a potential description string
+ * Examples:
+ *   "Max HP +200" -> 200
+ *   "DP Cost -1" -> -1
+ *   "ATK +30" -> 30
+ *   "Redeploy Time -4s" -> -4
+ */
+function parseValueFromDescription(description: string): number {
+    // Match patterns like "+200", "-1", "+30", "-4s", etc.
+    const match = description.match(/([+-]?\d+)/);
+    if (match?.[1]) {
+        return Number.parseInt(match[1], 10);
+    }
+    return 0;
+}
+
+/**
+ * Get stat increase for a single potential rank
+ * Uses camelCase property access (matching actual API response format)
+ * Falls back to parsing description when value is missing (common in decoded FlatBuffers data)
+ */
 function getPotentialStatIncrease(
     operator: Operator,
     potential: number,
@@ -194,13 +269,44 @@ function getPotentialStatIncrease(
     }
 
     const pot = operator.potentialRanks[potential - 1];
-
-    if (!pot?.Buff?.Attributes?.AttributeModifiers) {
+    if (!pot) {
         return statChanges;
     }
 
-    const attribType = pot.Buff.Attributes.AttributeModifiers[0]?.AttributeType;
-    const attribChange = pot.Buff.Attributes.AttributeModifiers[0]?.Value ?? 0;
+    // Access using camelCase (actual API response format) with fallback to PascalCase (TypeScript types)
+    // biome-ignore lint/suspicious/noExplicitAny: API returns camelCase but types are PascalCase
+    const potAny = pot as any;
+
+    // Get description for fallback value parsing
+    const description = potAny.description ?? pot.Description ?? "";
+
+    // Try camelCase first (actual API), then PascalCase (TypeScript types)
+    const buff = potAny.buff ?? pot.Buff;
+    if (!buff) {
+        return statChanges;
+    }
+
+    const attributes = buff.attributes ?? buff.Attributes;
+    if (!attributes) {
+        return statChanges;
+    }
+
+    const modifiers = attributes.attributeModifiers ?? attributes.AttributeModifiers;
+    if (!modifiers || modifiers.length === 0) {
+        return statChanges;
+    }
+
+    const modifier = modifiers[0];
+    if (!modifier) {
+        return statChanges;
+    }
+
+    const attribType = modifier.attributeType ?? modifier.AttributeType;
+    // Try to get value from API, fallback to parsing from description if value is 0 or missing
+    let attribChange = modifier.value ?? modifier.Value ?? 0;
+    if (attribChange === 0 && description) {
+        attribChange = parseValueFromDescription(description);
+    }
 
     switch (attribType) {
         case "MAX_HP":

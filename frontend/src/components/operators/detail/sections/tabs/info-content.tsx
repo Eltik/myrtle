@@ -1,15 +1,18 @@
 "use client";
 
-import { ChevronDown, Coins, Diamond, Dna, Grid3X3, Heart, Hourglass, Info, MapPin, Palette, Shield, ShieldBan, Swords, Timer, User } from "lucide-react";
+import { ChevronDown, Coins, Diamond, Dna, Grid3X3, Heart, Hourglass, Info, MapPin, Package, Palette, Shield, ShieldBan, Swords, Timer, User } from "lucide-react";
 import { motion } from "motion/react";
 import Image from "next/image";
 import type React from "react";
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Disclosure, DisclosureContent, DisclosureTrigger } from "~/components/ui/motion-primitives/disclosure";
 import { Badge } from "~/components/ui/shadcn/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/shadcn/select";
 import { Separator } from "~/components/ui/shadcn/separator";
 import { Slider } from "~/components/ui/shadcn/slider";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/shadcn/tooltip";
 import { descriptionToHtml } from "~/lib/description-parser";
+import { getOperatorAttributeStats } from "~/lib/operator-stats";
 import { cn } from "~/lib/utils";
 import type { Blackboard, Operator } from "~/types/api";
 import type { Range } from "~/types/api/impl/range";
@@ -53,6 +56,23 @@ function formatOperatorDescription(description: string, blackboard: Blackboard[]
     return descriptionToHtml(description, interpolatedValues);
 }
 
+/**
+ * Format attribute key to human-readable label
+ */
+function formatAttributeKey(key: string): string {
+    const keyMap: Record<string, string> = {
+        atk: "ATK",
+        max_hp: "HP",
+        def: "DEF",
+        attack_speed: "ASPD",
+        magic_resistance: "RES",
+        cost: "DP Cost",
+        respawn_time: "Redeploy",
+        block_cnt: "Block",
+    };
+    return keyMap[key] ?? key.replace(/_/g, " ").toUpperCase();
+}
+
 interface InfoContentProps {
     operator: Operator;
 }
@@ -62,8 +82,27 @@ export const InfoContent = memo(function InfoContent({ operator }: InfoContentPr
     const [phaseIndex, setPhaseIndex] = useState(operator.phases.length - 1);
     const [level, setLevel] = useState(operator.phases[operator.phases.length - 1]?.MaxLevel ?? 1);
     const [trustLevel, setTrustLevel] = useState(100);
+    const [potentialRank, setPotentialRank] = useState(0);
     const [showControls, setShowControls] = useState(true);
     const [showProfile, setShowProfile] = useState(true);
+    const [showModuleDetails, setShowModuleDetails] = useState(true);
+
+    // Module state - use "none" as sentinel for user explicitly choosing no module
+    const [currentModuleId, setCurrentModuleId] = useState<string>("");
+    const [currentModuleLevel, setCurrentModuleLevel] = useState<number>(0);
+    // Track if user has made an explicit module selection (to prevent auto-select from overriding)
+    const userHasSelectedModule = useRef(false);
+
+    // Get modules that are available
+    const availableModules = useMemo(() => {
+        return operator.modules.filter((m) => m.type !== "INITIAL");
+    }, [operator.modules]);
+
+    // Get current module data
+    const currentModule = useMemo(() => {
+        if (!currentModuleId) return null;
+        return availableModules.find((m) => m.uniEquipId === currentModuleId) ?? null;
+    }, [availableModules, currentModuleId]);
 
     // Range state
     const [ranges, setRanges] = useState<Record<string, Range>>({});
@@ -109,44 +148,71 @@ export const InfoContent = memo(function InfoContent({ operator }: InfoContentPr
         fetchRanges();
     }, [rangeIds]);
 
-    // Calculate stats based on level and phase
+    // Calculate stats using the utility function from operator-stats.ts
     const attributeStats = useMemo(() => {
-        const phase = operator.phases[phaseIndex];
-        if (!phase?.AttributesKeyFrames || phase.AttributesKeyFrames.length === 0) return null;
-
-        const maxLevel = phase.MaxLevel;
-        const startFrame = phase.AttributesKeyFrames[0]?.Data;
-        const endFrame = phase.AttributesKeyFrames[phase.AttributesKeyFrames.length - 1]?.Data;
-
-        if (!startFrame || !endFrame) return null;
-
-        // Linear interpolation
-        const interpolate = (start: number, end: number) => {
-            if (maxLevel <= 1) return start;
-            return Math.round(start + ((level - 1) * (end - start)) / (maxLevel - 1));
-        };
-
-        // Apply trust bonus (simplified)
-        const trustMultiplier = Math.min(trustLevel, 100) / 100;
-        const trustBonus = operator.favorKeyFrames?.[operator.favorKeyFrames.length - 1]?.Data;
-
-        return {
-            MaxHp: interpolate(startFrame.MaxHp, endFrame.MaxHp) + Math.round((trustBonus?.MaxHp ?? 0) * trustMultiplier),
-            Atk: interpolate(startFrame.Atk, endFrame.Atk) + Math.round((trustBonus?.Atk ?? 0) * trustMultiplier),
-            Def: interpolate(startFrame.Def, endFrame.Def) + Math.round((trustBonus?.Def ?? 0) * trustMultiplier),
-            MagicResistance: interpolate(startFrame.MagicResistance, endFrame.MagicResistance),
-            Cost: startFrame.Cost,
-            BlockCnt: startFrame.BlockCnt,
-            RespawnTime: startFrame.RespawnTime,
-            BaseAttackTime: startFrame.BaseAttackTime,
-        };
-    }, [operator, phaseIndex, level, trustLevel]);
+        return getOperatorAttributeStats(
+            operator,
+            {
+                phaseIndex,
+                favorPoint: trustLevel,
+                potentialRank,
+                moduleId: currentModuleId,
+                moduleLevel: currentModuleLevel,
+            },
+            level,
+        );
+    }, [operator, phaseIndex, level, trustLevel, potentialRank, currentModuleId, currentModuleLevel]);
 
     // Update level when phase changes
     useEffect(() => {
         const maxLevel = operator.phases[phaseIndex]?.MaxLevel ?? 1;
         setLevel(maxLevel);
     }, [phaseIndex, operator.phases]);
+
+    // Handle module selection when phase changes
+    useEffect(() => {
+        if (phaseIndex !== 2) {
+            // Reset module selection when not at E2
+            setCurrentModuleId("");
+            setCurrentModuleLevel(0);
+            userHasSelectedModule.current = false;
+        } else if (availableModules.length > 0 && !currentModuleId && !userHasSelectedModule.current) {
+            // Auto-select first module when reaching E2, only if user hasn't explicitly chosen
+            const firstModule = availableModules[0];
+            if (firstModule) {
+                setCurrentModuleId(firstModule.uniEquipId);
+                const maxModuleLevel = firstModule.data?.phases?.length ?? 0;
+                setCurrentModuleLevel(maxModuleLevel);
+            }
+        }
+    }, [phaseIndex, availableModules, currentModuleId]);
+
+    // Handle module change
+    const handleModuleChange = useCallback(
+        (moduleId: string) => {
+            userHasSelectedModule.current = true; // Mark that user has made an explicit selection
+            if (moduleId === "none") {
+                setCurrentModuleId("");
+                setCurrentModuleLevel(0);
+                return;
+            }
+            setCurrentModuleId(moduleId);
+            const selectedModule = availableModules.find((m) => m.uniEquipId === moduleId);
+            if (selectedModule) {
+                const maxModuleLevel = selectedModule.data?.phases?.length ?? 0;
+                setCurrentModuleLevel(maxModuleLevel);
+            }
+        },
+        [availableModules],
+    );
+
+    // Handle module level change
+    const handleModuleLevelChange = useCallback((levelStr: string) => {
+        const newLevel = Number.parseInt(levelStr, 10);
+        if (!Number.isNaN(newLevel)) {
+            setCurrentModuleLevel(newLevel);
+        }
+    }, []);
 
     const currentRange = ranges[currentRangeId];
 
@@ -238,7 +304,7 @@ export const InfoContent = memo(function InfoContent({ operator }: InfoContentPr
                 </DisclosureTrigger>
                 <DisclosureContent>
                     <div className="mt-3 space-y-4 rounded-lg border border-border/50 bg-card/30 p-4">
-                        <p className="text-muted-foreground text-xs">Adjust these controls to see how stats change at different levels, promotions, and trust levels.</p>
+                        <p className="text-muted-foreground text-xs">Adjust these controls to see how stats change at different levels, promotions, potentials, modules, and trust levels.</p>
 
                         {/* Elite Phase Selection */}
                         <div className="flex flex-wrap items-center gap-2">
@@ -262,14 +328,144 @@ export const InfoContent = memo(function InfoContent({ operator }: InfoContentPr
                             <Slider className="w-full" max={currentPhase?.MaxLevel ?? 1} min={1} onValueChange={handleLevelChange} step={1} value={[level]} />
                         </div>
 
+                        {/* Potential Selection */}
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                                <span className="text-muted-foreground text-sm">Potential:</span>
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Info className="h-3 w-3 cursor-help text-muted-foreground" />
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Select the potential rank to see stat bonuses</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                                {/* Potential 0 (no potential) */}
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <button
+                                                className={cn("flex h-10 w-10 items-center justify-center rounded-lg border transition-all", potentialRank === 0 ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50")}
+                                                onClick={() => setPotentialRank(0)}
+                                                type="button"
+                                            >
+                                                <Image alt="No Potential" height={28} src="/api/cdn/upk/arts/potential_hub/potential_0.png" width={28} />
+                                            </button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>No Potential</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                                {/* Potentials 1-5 */}
+                                {operator.potentialRanks.map((rank, idx) => (
+                                    <TooltipProvider key={rank.Description}>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <button
+                                                    className={cn("flex h-10 w-10 items-center justify-center rounded-lg border transition-all", potentialRank === idx + 1 ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50")}
+                                                    onClick={() => setPotentialRank(idx + 1)}
+                                                    type="button"
+                                                >
+                                                    <Image alt={`Potential ${idx + 1}`} height={28} src={`/api/cdn/upk/arts/potential_hub/potential_${idx + 1}.png`} width={28} />
+                                                </button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Pot {idx + 1}: {rank.Description}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                ))}
+                            </div>
+                        </div>
+
                         {/* Trust Slider */}
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
-                                <span className="text-muted-foreground text-sm">Trust</span>
+                                <div className="flex items-center gap-1">
+                                    <Heart className="h-3.5 w-3.5 text-muted-foreground" />
+                                    <span className="text-muted-foreground text-sm">Trust</span>
+                                </div>
                                 <span className="font-mono text-foreground text-sm">{trustLevel}%</span>
                             </div>
                             <Slider className="w-full" max={200} min={0} onValueChange={handleTrustChange} step={1} value={[trustLevel]} />
                         </div>
+
+                        {/* Module Selection (only at E2) */}
+                        {phaseIndex === 2 && availableModules.length > 0 && (
+                            <div className="rounded-lg border border-border/50 bg-secondary/10 p-3">
+                                <div className="mb-3 flex items-center gap-2">
+                                    <Package className="h-4 w-4 text-primary" />
+                                    <span className="font-medium text-sm">Module Selection</span>
+                                </div>
+                                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                    {/* Module Type */}
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-1">
+                                            <span className="text-muted-foreground text-xs">Module Type</span>
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Info className="h-3 w-3 cursor-help text-muted-foreground" />
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>Select a module to see how it affects stats</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        </div>
+                                        <Select onValueChange={handleModuleChange} value={currentModuleId || "none"}>
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue placeholder="Select Module" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="none">No Module</SelectItem>
+                                                {availableModules.map((mod) => (
+                                                    <SelectItem key={mod.uniEquipId} value={mod.uniEquipId}>
+                                                        {mod.typeName1 && mod.typeName2 ? `${mod.typeName1}-${mod.typeName2}` : mod.uniEquipName}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    {/* Module Level */}
+                                    {currentModule?.data?.phases && currentModule.data.phases.length > 0 && (
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-1">
+                                                <span className="text-muted-foreground text-xs">Module Level</span>
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Info className="h-3 w-3 cursor-help text-muted-foreground" />
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Select module level to see its effects</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            </div>
+                                            <Select onValueChange={handleModuleLevelChange} value={String(currentModuleLevel)}>
+                                                <SelectTrigger className="w-full">
+                                                    <SelectValue placeholder="Select Level" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {currentModule.data.phases.map((phase) => (
+                                                        <SelectItem key={phase.equipLevel} value={String(phase.equipLevel)}>
+                                                            Level {phase.equipLevel}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </DisclosureContent>
             </Disclosure>
@@ -287,7 +483,7 @@ export const InfoContent = memo(function InfoContent({ operator }: InfoContentPr
                     <StatCard icon={ShieldBan} label="Block" value={attributeStats?.BlockCnt ?? 0} />
                     <StatCard icon={Hourglass} label="Redeploy" value={`${attributeStats?.RespawnTime ?? 0}s`} />
                     <StatCard icon={Coins} label="DP Cost" value={attributeStats?.Cost ?? 0} />
-                    <StatCard icon={Timer} label="ATK Interval" value={`${attributeStats?.BaseAttackTime?.toFixed(2) ?? 0}s`} />
+                    <StatCard icon={Timer} label="ATK Interval" value={`${attributeStats?.AttackSpeed?.toFixed(2) ?? 0}s`} />
                 </div>
             </div>
 
@@ -311,6 +507,120 @@ export const InfoContent = memo(function InfoContent({ operator }: InfoContentPr
                 <h3 className="mb-3 font-medium text-foreground">Attack Range</h3>
                 {currentRange ? <OperatorRange range={currentRange} /> : <p className="text-muted-foreground text-sm">No range data available.</p>}
             </div>
+
+            {/* Module Details */}
+            {phaseIndex === 2 && currentModule && (
+                <Disclosure onOpenChange={setShowModuleDetails} open={showModuleDetails} transition={{ type: "spring", stiffness: 300, damping: 30 }}>
+                    <DisclosureTrigger>
+                        <div className="mb-6 flex w-full cursor-pointer items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-3 transition-colors hover:bg-secondary/50">
+                            <div className="flex items-center gap-2">
+                                <Package className="h-4 w-4 text-primary" />
+                                <span className="font-medium text-sm">Module Details</span>
+                            </div>
+                            <motion.div animate={{ rotate: showModuleDetails ? 180 : 0 }} className="will-change-transform" transition={{ type: "spring", stiffness: 300, damping: 30 }}>
+                                <ChevronDown className="h-4 w-4" />
+                            </motion.div>
+                        </div>
+                    </DisclosureTrigger>
+                    <DisclosureContent>
+                        <div className="mb-6 rounded-lg border border-border/50 bg-card/30 p-4">
+                            {/* Module Header */}
+                            <div className="mb-4 flex items-center gap-3">
+                                {currentModule.image && (
+                                    <Image alt={currentModule.uniEquipName} className="rounded-md object-contain" height={64} src={`/api/cdn${currentModule.image}`} width={64} />
+                                )}
+                                <div>
+                                    <h4 className="font-semibold text-foreground">{currentModule.uniEquipName}</h4>
+                                    <div className="mt-1 flex gap-1">
+                                        <Badge variant="outline">{currentModule.typeName1}</Badge>
+                                        {currentModule.typeName2 && <Badge variant="outline">{currentModule.typeName2}</Badge>}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Module Lore/Description */}
+                            {currentModule.uniEquipDesc && (
+                                <div className="mb-4 max-h-32 overflow-y-auto rounded-md bg-secondary/20 p-3">
+                                    <p className="whitespace-pre-line text-muted-foreground text-xs leading-relaxed">{currentModule.uniEquipDesc}</p>
+                                </div>
+                            )}
+
+                            {/* Module Stats at Current Level */}
+                            {currentModule.data?.phases && currentModuleLevel > 0 && (
+                                <div className="space-y-3">
+                                    <h5 className="font-medium text-foreground text-sm">Level {currentModuleLevel} Stats</h5>
+                                    {(() => {
+                                        const phase = currentModule.data.phases[currentModuleLevel - 1];
+                                        if (!phase?.attributeBlackboard || phase.attributeBlackboard.length === 0) {
+                                            return <p className="text-muted-foreground text-xs">No stat bonuses at this level.</p>;
+                                        }
+                                        return (
+                                            <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+                                                {phase.attributeBlackboard.map((attr) => (
+                                                    <div className="rounded-md bg-secondary/30 p-2" key={attr.key}>
+                                                        <span className="text-muted-foreground text-xs">{formatAttributeKey(attr.key)}:</span>
+                                                        <span className="ml-1 font-medium text-foreground text-sm">+{attr.value}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        );
+                                    })()}
+
+                                    {/* Module Talent/Trait Changes */}
+                                    {(() => {
+                                        const phase = currentModule.data.phases[currentModuleLevel - 1];
+                                        if (!phase?.parts) return null;
+
+                                        const talentChanges = phase.parts.flatMap((part) => part.addOrOverrideTalentDataBundle?.candidates?.filter((c) => c.upgradeDescription || c.description) ?? []);
+
+                                        const traitChanges = phase.parts.flatMap((part) => part.overrideTraitDataBundle?.candidates?.filter((c) => c.additionalDescription) ?? []);
+
+                                        if (talentChanges.length === 0 && traitChanges.length === 0) return null;
+
+                                        return (
+                                            <div className="mt-3 space-y-2">
+                                                {talentChanges.length > 0 && (
+                                                    <div>
+                                                        <h6 className="mb-1 font-medium text-foreground text-xs">Talent Changes</h6>
+                                                        {talentChanges.map((candidate, idx) => (
+                                                            // biome-ignore lint/suspicious/noArrayIndexKey: Static array
+                                                            <div className="rounded-md bg-secondary/20 p-2" key={idx}>
+                                                                {candidate.name && <span className="font-medium text-foreground text-xs">{candidate.name}: </span>}
+                                                                <span
+                                                                    className="text-muted-foreground text-xs"
+                                                                    // biome-ignore lint/security/noDangerouslySetInnerHtml: Required for formatted description
+                                                                    dangerouslySetInnerHTML={{
+                                                                        __html: descriptionToHtml(candidate.upgradeDescription || candidate.description || "", []),
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                {traitChanges.length > 0 && (
+                                                    <div>
+                                                        <h6 className="mb-1 font-medium text-foreground text-xs">Trait Changes</h6>
+                                                        {traitChanges.map((candidate, idx) => (
+                                                            // biome-ignore lint/suspicious/noArrayIndexKey: Static array
+                                                            <div className="rounded-md bg-secondary/20 p-2" key={idx}>
+                                                                <span
+                                                                    className="text-muted-foreground text-xs"
+                                                                    // biome-ignore lint/security/noDangerouslySetInnerHtml: Required for formatted description
+                                                                    dangerouslySetInnerHTML={{ __html: descriptionToHtml(candidate.additionalDescription || "", []) }}
+                                                                />
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
+                            )}
+                        </div>
+                    </DisclosureContent>
+                </Disclosure>
+            )}
 
             {/* Talents */}
             {operator.talents && operator.talents.length > 0 && (
