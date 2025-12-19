@@ -12,66 +12,13 @@ import { Separator } from "~/components/ui/shadcn/separator";
 import { Slider } from "~/components/ui/shadcn/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/shadcn/tooltip";
 import { descriptionToHtml } from "~/lib/description-parser";
+import { blackboardToInterpolatedValues, formatAttributeKey, formatOperatorDescription, getActiveTalentCandidate } from "~/lib/operator-helpers";
 import { getOperatorAttributeStats } from "~/lib/operator-stats";
 import { cn } from "~/lib/utils";
 import type { Blackboard, Operator } from "~/types/api";
 import type { Range } from "~/types/api/impl/range";
-import type { InterpolatedValue } from "~/types/frontend/operators";
 import { OperatorRange } from "../ui/operator-range";
 import { StatCard } from "../ui/stat-card";
-
-/**
- * Formats operator description with blackboard interpolation
- * Combines trait blackboard values for proper value substitution
- */
-function formatOperatorDescription(description: string, blackboard: Blackboard[]): string {
-    if (!description) return "";
-
-    // Filter out blackboard entries with undefined/null keys
-    const validBlackboard = blackboard.filter((b) => b.key != null);
-
-    // Debug: log what we have if there are placeholders
-    if (description.includes("{")) {
-        const placeholderMatch = description.match(/\{([^}:]+)/g);
-        const placeholderKeys = placeholderMatch?.map((m) => m.slice(1).toLowerCase()) ?? [];
-        const blackboardKeys = validBlackboard.map((b) => b.key.toLowerCase());
-
-        const missingKeys = placeholderKeys.filter((key) => !blackboardKeys.includes(key));
-
-        if (missingKeys.length > 0) {
-            console.warn("[formatOperatorDescription] Missing blackboard keys:", {
-                missingKeys,
-                availableKeys: blackboardKeys,
-                blackboardValues: validBlackboard,
-            });
-        }
-    }
-
-    // Apply descriptionToHtml for tag coloring and value interpolation
-    const interpolatedValues: InterpolatedValue[] = validBlackboard.map((b) => ({
-        key: b.key,
-        value: b.value,
-    }));
-
-    return descriptionToHtml(description, interpolatedValues);
-}
-
-/**
- * Format attribute key to human-readable label
- */
-function formatAttributeKey(key: string): string {
-    const keyMap: Record<string, string> = {
-        atk: "ATK",
-        max_hp: "HP",
-        def: "DEF",
-        attack_speed: "ASPD",
-        magic_resistance: "RES",
-        cost: "DP Cost",
-        respawn_time: "Redeploy",
-        block_cnt: "Block",
-    };
-    return keyMap[key] ?? key.replace(/_/g, " ").toUpperCase();
-}
 
 interface InfoContentProps {
     operator: Operator;
@@ -348,11 +295,7 @@ export const InfoContent = memo(function InfoContent({ operator }: InfoContentPr
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
-                                            <button
-                                                className={cn("flex h-10 w-10 items-center justify-center rounded-lg border transition-all", potentialRank === 0 ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50")}
-                                                onClick={() => setPotentialRank(0)}
-                                                type="button"
-                                            >
+                                            <button className={cn("flex h-10 w-10 items-center justify-center rounded-lg border transition-all", potentialRank === 0 ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50")} onClick={() => setPotentialRank(0)} type="button">
                                                 <Image alt="No Potential" height={28} src="/api/cdn/upk/arts/potential_hub/potential_0.png" width={28} />
                                             </button>
                                         </TooltipTrigger>
@@ -366,16 +309,14 @@ export const InfoContent = memo(function InfoContent({ operator }: InfoContentPr
                                     <TooltipProvider key={rank.Description}>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
-                                                <button
-                                                    className={cn("flex h-10 w-10 items-center justify-center rounded-lg border transition-all", potentialRank === idx + 1 ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50")}
-                                                    onClick={() => setPotentialRank(idx + 1)}
-                                                    type="button"
-                                                >
+                                                <button className={cn("flex h-10 w-10 items-center justify-center rounded-lg border transition-all", potentialRank === idx + 1 ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50")} onClick={() => setPotentialRank(idx + 1)} type="button">
                                                     <Image alt={`Potential ${idx + 1}`} height={28} src={`/api/cdn/upk/arts/potential_hub/potential_${idx + 1}.png`} width={28} />
                                                 </button>
                                             </TooltipTrigger>
                                             <TooltipContent>
-                                                <p>Pot {idx + 1}: {rank.Description}</p>
+                                                <p>
+                                                    Pot {idx + 1}: {rank.Description}
+                                                </p>
                                             </TooltipContent>
                                         </Tooltip>
                                     </TooltipProvider>
@@ -526,9 +467,7 @@ export const InfoContent = memo(function InfoContent({ operator }: InfoContentPr
                         <div className="mb-6 rounded-lg border border-border/50 bg-card/30 p-4">
                             {/* Module Header */}
                             <div className="mb-4 flex items-center gap-3">
-                                {currentModule.image && (
-                                    <Image alt={currentModule.uniEquipName} className="rounded-md object-contain" height={64} src={`/api/cdn${currentModule.image}`} width={64} />
-                                )}
+                                {currentModule.image && <Image alt={currentModule.uniEquipName} className="rounded-md object-contain" height={64} src={`/api/cdn${currentModule.image}`} width={64} />}
                                 <div>
                                     <h4 className="font-semibold text-foreground">{currentModule.uniEquipName}</h4>
                                     <div className="mt-1 flex gap-1">
@@ -628,14 +567,29 @@ export const InfoContent = memo(function InfoContent({ operator }: InfoContentPr
                     <h3 className="mb-3 font-medium text-foreground">Talents</h3>
                     <div className="space-y-3">
                         {operator.talents.map((talent, idx) => {
-                            const candidate = talent.Candidates?.[talent.Candidates.length - 1];
+                            const candidate = getActiveTalentCandidate(talent, phaseIndex, level, potentialRank);
                             if (!candidate || !candidate.Name) return null;
+
                             return (
                                 // biome-ignore lint/suspicious/noArrayIndexKey: Static talent list
                                 <div className="rounded-lg border border-border bg-secondary/20 p-4" key={idx}>
-                                    <h4 className="mb-1 font-medium text-foreground">{candidate.Name ?? `Talent ${idx + 1}`}</h4>
+                                    <div className="mb-1 flex items-center gap-2">
+                                        <h4 className="font-medium text-foreground">{candidate.Name ?? `Talent ${idx + 1}`}</h4>
+                                        {candidate.RequiredPotentialRank > 0 && (
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Image alt={`Potential ${candidate.RequiredPotentialRank}`} className="h-5 w-5" height={20} src={`/api/cdn/upk/arts/potential_hub/potential_${candidate.RequiredPotentialRank}.png`} width={20} />
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>Requires Potential {candidate.RequiredPotentialRank}</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        )}
+                                    </div>
                                     {/* biome-ignore lint/security/noDangerouslySetInnerHtml: Intentional HTML rendering for talent descriptions */}
-                                    <p className="text-muted-foreground text-sm" dangerouslySetInnerHTML={{ __html: descriptionToHtml(candidate.Description ?? "", []) }} />
+                                    <p className="text-muted-foreground text-sm" dangerouslySetInnerHTML={{ __html: descriptionToHtml(candidate.Description ?? "", blackboardToInterpolatedValues(candidate.Blackboard ?? [])) }} />
                                 </div>
                             );
                         })}
