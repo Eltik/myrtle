@@ -268,7 +268,7 @@ export const InfoContent = memo(function InfoContent({ operator }: InfoContentPr
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
                                 <span className="text-muted-foreground text-sm">Level</span>
-                                <span className="font-mono text-foreground text-sm">
+                                <span className="font-mono text-foreground text-sm bg-accent px-2 py-0.5 rounded-sm">
                                     {level} / {currentPhase?.MaxLevel ?? 1}
                                 </span>
                             </div>
@@ -331,7 +331,7 @@ export const InfoContent = memo(function InfoContent({ operator }: InfoContentPr
                                     <Heart className="h-3.5 w-3.5 text-muted-foreground" />
                                     <span className="text-muted-foreground text-sm">Trust</span>
                                 </div>
-                                <span className="font-mono text-foreground text-sm">{trustLevel}%</span>
+                                <span className="font-mono text-foreground text-sm bg-accent px-2 py-0.5 rounded-sm">{trustLevel}%</span>
                             </div>
                             <Slider className="w-full" max={200} min={0} onValueChange={handleTrustChange} step={1} value={[trustLevel]} />
                         </div>
