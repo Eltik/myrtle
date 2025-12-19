@@ -14,7 +14,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/comp
 import { descriptionToHtml } from "~/lib/description-parser";
 import { blackboardToInterpolatedValues, formatAttributeKey, formatOperatorDescription, getActiveTalentCandidate } from "~/lib/operator-helpers";
 import { getOperatorAttributeStats } from "~/lib/operator-stats";
-import { cn } from "~/lib/utils";
+import { cn, rarityToNumber } from "~/lib/utils";
 import type { Blackboard, Operator } from "~/types/api";
 import type { Range } from "~/types/api/impl/range";
 import { OperatorRange } from "../ui/operator-range";
@@ -29,7 +29,7 @@ export const InfoContent = memo(function InfoContent({ operator }: InfoContentPr
     const [phaseIndex, setPhaseIndex] = useState(operator.phases.length - 1);
     const [level, setLevel] = useState(operator.phases[operator.phases.length - 1]?.MaxLevel ?? 1);
     const [trustLevel, setTrustLevel] = useState(100);
-    const [potentialRank, setPotentialRank] = useState(0);
+    const [potentialRank, setPotentialRank] = useState(rarityToNumber(operator.rarity) <= 4 ? 5 : 0);
     const [showControls, setShowControls] = useState(true);
     const [showProfile, setShowProfile] = useState(true);
     const [showModuleDetails, setShowModuleDetails] = useState(true);

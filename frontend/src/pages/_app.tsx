@@ -12,7 +12,7 @@ const geist = Geist({
 const MyApp: AppType = ({ Component, pageProps }) => {
     return (
         <div className={geist.className}>
-            <PagesTopLoader color="#f59a9f" height={4} showSpinner={false} />
+            <PagesTopLoader color="#e66e68" height={4} showSpinner={false} />
             <Layout>
                 <Component {...pageProps} />
             </Layout>
