@@ -10,11 +10,14 @@ import { RarityStars } from "./rarity-stars";
 
 interface OperatorCardListProps {
     operator: OperatorFromList;
+    listColumns?: number;
     isHovered?: boolean;
     shouldGrayscale?: boolean;
 }
 
-export const OperatorCardList = memo(function OperatorCardList({ operator, isHovered = false, shouldGrayscale = false }: OperatorCardListProps) {
+export const OperatorCardList = memo(function OperatorCardList({ operator, listColumns = 1, isHovered = false, shouldGrayscale = false }: OperatorCardListProps) {
+    // Use compact layout when displaying in multi-column grid
+    const useCompactLayout = listColumns > 1;
     const rarityNum = rarityToNumber(operator.rarity);
     const rarityColor = RARITY_COLORS[rarityNum] ?? "#ffffff";
     const operatorId = operator.id ?? "";
@@ -29,36 +32,44 @@ export const OperatorCardList = memo(function OperatorCardList({ operator, isHov
                 <Image alt={operator.name} className="object-cover transition-transform duration-200 group-hover:scale-110" fill src={`/api/cdn${operator.portrait}`} />
             </div>
 
-            {/* Desktop Layout: Name column */}
-            <div className="hidden min-w-0 flex-1 md:block">
-                <span className="truncate font-semibold text-foreground text-sm uppercase tracking-wide">{operator.name}</span>
-            </div>
-
-            {/* Desktop: Rarity stars */}
-            <RarityStars className="hidden w-24 shrink-0 items-center gap-0.5 md:flex" rarity={rarityNum} starClassName="text-sm" />
-
-            {/* Desktop: Class info */}
-            <div className="hidden w-32 shrink-0 items-center gap-2 md:flex">
-                <div className="flex h-5 w-5 items-center justify-center">
-                    <ClassIcon className="opacity-60 transition-opacity group-hover:opacity-100" profession={operator.profession} size={20} />
+            {/* Desktop Layout: Name column - only show when not in compact layout */}
+            {!useCompactLayout && (
+                <div className="hidden min-w-0 flex-1 md:block">
+                    <span className="truncate font-semibold text-foreground text-sm uppercase tracking-wide">{operator.name}</span>
                 </div>
-                <span className="text-muted-foreground text-sm">{formatProfession(operator.profession)}</span>
-            </div>
+            )}
 
-            {/* Desktop: Archetype */}
-            <div className="hidden w-40 shrink-0 lg:block">
-                <span className="truncate text-muted-foreground text-sm">{capitalize(formatSubProfession(operator.subProfessionId.toLowerCase()))}</span>
-            </div>
+            {/* Desktop: Rarity stars - only show when not in compact layout */}
+            {!useCompactLayout && <RarityStars className="hidden w-24 shrink-0 items-center gap-0.5 md:flex" rarity={rarityNum} starClassName="text-sm" />}
 
-            {/* Desktop: Faction logo */}
-            <div className="hidden w-8 shrink-0 justify-center xl:flex">
-                <div className="flex h-6 w-6 items-center justify-center opacity-40 transition-opacity group-hover:opacity-70">
-                    <FactionLogo className="object-contain" nationId={operator.nationId} size={24} teamId={operator.teamId} />
+            {/* Desktop: Class info - only show when not in compact layout */}
+            {!useCompactLayout && (
+                <div className="hidden w-32 shrink-0 items-center gap-2 md:flex">
+                    <div className="flex h-5 w-5 items-center justify-center">
+                        <ClassIcon className="opacity-60 transition-opacity group-hover:opacity-100" profession={operator.profession} size={20} />
+                    </div>
+                    <span className="text-muted-foreground text-sm">{formatProfession(operator.profession)}</span>
                 </div>
-            </div>
+            )}
 
-            {/* Mobile Layout */}
-            <div className="flex min-w-0 flex-1 flex-col gap-1 md:hidden">
+            {/* Desktop: Archetype - only show when not in compact layout */}
+            {!useCompactLayout && (
+                <div className="hidden w-40 shrink-0 lg:block">
+                    <span className="truncate text-muted-foreground text-sm">{capitalize(formatSubProfession(operator.subProfessionId.toLowerCase()))}</span>
+                </div>
+            )}
+
+            {/* Desktop: Faction logo - only show when not in compact layout */}
+            {!useCompactLayout && (
+                <div className="hidden w-8 shrink-0 justify-center xl:flex">
+                    <div className="flex h-6 w-6 items-center justify-center opacity-40 transition-opacity group-hover:opacity-70">
+                        <FactionLogo className="object-contain" nationId={operator.nationId} size={24} teamId={operator.teamId} />
+                    </div>
+                </div>
+            )}
+
+            {/* Compact/Mobile Layout - show when compact layout or on mobile */}
+            <div className={cn("flex min-w-0 flex-1 flex-col gap-1", useCompactLayout ? "flex" : "md:hidden")}>
                 {/* Name row with faction icon */}
                 <div className="flex items-center gap-2">
                     <span className="truncate font-semibold text-foreground text-sm uppercase tracking-wide">{operator.name}</span>

@@ -165,7 +165,7 @@ export const SkinsContent = memo(function SkinsContent({ operator }: SkinsConten
                             {/* Main Image Viewer */}
                             <div className="relative min-w-0 flex-1">
                                 <AnimatePresence mode="wait">
-                                    <motion.div animate={{ opacity: 1 }} className="relative aspect-3/4 max-h-[70vh] w-full overflow-hidden rounded-lg border border-border bg-card/30" exit={{ opacity: 0 }} initial={{ opacity: 0 }} key={selectedSkin} transition={{ duration: 0.2 }}>
+                                    <motion.div animate={{ opacity: 1 }} className="relative aspect-3/4 max-h-[70vh] w-full overflow-hidden rounded-lg border border-border bg-card/30 p-3" exit={{ opacity: 0 }} initial={{ opacity: 0 }} key={selectedSkin} transition={{ duration: 0.2 }}>
                                         {imageLoading && (
                                             <div className="absolute inset-0 flex items-center justify-center">
                                                 <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />

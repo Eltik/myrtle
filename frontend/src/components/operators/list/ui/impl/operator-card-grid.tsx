@@ -39,7 +39,7 @@ export const OperatorCardGrid = memo(function OperatorCardGrid({ operator, isHov
             <div className="absolute inset-x-0 bottom-0 z-10">
                 <div className="relative">
                     <div className="h-12 w-full bg-background/80 backdrop-blur-sm" />
-                    <h2 className="absolute bottom-1 left-1 line-clamp-2 max-w-[85%] pr-8 font-bold text-xs uppercase opacity-60 transition-opacity group-hover:opacity-100 sm:text-sm md:text-sm">{operator.name}</h2>
+                    <h2 className="absolute bottom-1 left-1 line-clamp-2 max-w-[92%] font-bold text-xs uppercase opacity-60 transition-opacity group-hover:opacity-100 sm:text-sm md:text-sm">{operator.name}</h2>
                     {/* Class icon */}
                     <div className="absolute right-1 bottom-1 flex scale-75 items-center opacity-0 transition-all duration-200 group-hover:scale-100 group-hover:opacity-100">
                         <div className="h-4 w-4 md:h-6 md:w-6">

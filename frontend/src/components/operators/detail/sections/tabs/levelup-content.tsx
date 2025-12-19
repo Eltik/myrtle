@@ -45,7 +45,7 @@ export function LevelUpContent({ operator }: LevelUpContentProps) {
 
 function ElitePromotionTab({ operator }: { operator: Operator }) {
     return (
-        <div className="space-y-4">
+        <div className="grid gap-4 md:grid-cols-2">
             {operator.phases.map((phase, idx) => {
                 if (idx === 0 || !phase.EvolveCost || phase.EvolveCost.length === 0) return null;
 
@@ -61,7 +61,7 @@ function ElitePromotionTab({ operator }: { operator: Operator }) {
                             <span className="font-medium text-foreground">Elite {idx}</span>
                         </div>
 
-                        <div className="flex flex-wrap gap-3">
+                        <div className="flex flex-wrap gap-4">
                             {phase.EvolveCost.map((cost, costIdx) => (
                                 // biome-ignore lint/suspicious/noArrayIndexKey: Static cost list
                                 <MaterialItem count={cost.Count} id={cost.Id} image={cost.Image} key={costIdx} />
@@ -71,7 +71,7 @@ function ElitePromotionTab({ operator }: { operator: Operator }) {
                 );
             })}
 
-            {operator.phases.length <= 1 && <div className="py-8 text-center text-muted-foreground">This operator cannot be promoted.</div>}
+            {operator.phases.length <= 1 && <div className="py-8 text-center text-muted-foreground md:col-span-2">This operator cannot be promoted.</div>}
         </div>
     );
 }
@@ -108,7 +108,7 @@ function SkillMasteryTab({ operator }: { operator: Operator }) {
                             <div className="mb-3 flex items-center gap-2">
                                 <span className="rounded bg-primary/20 px-2 py-0.5 font-semibold text-primary text-sm">M{idx + 1}</span>
                             </div>
-                            <div className="flex flex-wrap gap-3">
+                            <div className="flex flex-wrap gap-4">
                                 {costData.LevelUpCost.map((cost, costIdx) => (
                                     // biome-ignore lint/suspicious/noArrayIndexKey: Static cost list
                                     <MaterialItem count={cost.Count} id={cost.Id} image={cost.Image} key={costIdx} />
@@ -192,7 +192,7 @@ function ModulesTab({ operator }: { operator: Operator }) {
 
                                         {/* Materials for this stage */}
                                         {stageCosts.length > 0 ? (
-                                            <div className="flex flex-wrap gap-2">
+                                            <div className="flex flex-wrap gap-4">
                                                 {stageCosts.map((cost, costIdx) => (
                                                     // biome-ignore lint/suspicious/noArrayIndexKey: Static cost list
                                                     <MaterialItem count={cost.count} id={cost.id} image={cost.image} key={costIdx} size="sm" />

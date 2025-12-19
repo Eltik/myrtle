@@ -7,7 +7,7 @@ import type { ChibiCharacter, SpineFiles } from "~/types/api/impl/chibi";
 
 const CHIBI_OFFSET_X = 0.5;
 const CHIBI_OFFSET_Y = 0.85;
-const CHIBI_SCALE = 0.5;
+const CHIBI_SCALE = 0.75;
 const ANIMATION_SPEED = 0.5;
 
 interface ChibiViewerProps {
@@ -319,7 +319,7 @@ export const ChibiViewer = memo(function ChibiViewer({ chibi, skinName }: ChibiV
 
     return (
         <div className="w-full rounded-lg border border-border bg-card/30 p-3">
-            <h4 className="mb-2 font-medium text-foreground text-sm">Chibi Preview</h4>
+            <h4 className="mb-2 font-medium text-foreground">Chibi Preview</h4>
 
             <div className="mb-3 flex flex-wrap gap-2">
                 <Select disabled={isLoading || availableViewTypes.length <= 1} onValueChange={handleViewTypeChange} value={viewType}>
@@ -337,7 +337,7 @@ export const ChibiViewer = memo(function ChibiViewer({ chibi, skinName }: ChibiV
                     <SelectTrigger className="h-8 min-w-[100px] flex-1 text-xs">
                         <SelectValue placeholder="Animation" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-h-48">
                         {availableAnimations.map((anim) => (
                             <SelectItem key={anim} value={anim}>
                                 {anim}
