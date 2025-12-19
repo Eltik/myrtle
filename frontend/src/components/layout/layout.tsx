@@ -11,8 +11,8 @@ export function Layout({ children }: LayoutProps) {
     return (
         <div className="relative flex min-h-screen overflow-x-clip bg-background">
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                <div className="-top-40 -right-40 absolute h-[28rem] w-[28rem] rounded-full bg-primary/20 blur-[120px]" />
-                <div className="-left-48 absolute top-1/2 h-[26rem] w-[26rem] rounded-full bg-primary/10 blur-[100px]" />
+                <div className="-top-40 -right-40 absolute h-112 w-md rounded-full bg-primary/20 blur-[120px]" />
+                <div className="-left-48 absolute top-1/2 h-104 w-md rounded-full bg-primary/10 blur-[100px]" />
                 <div className="-bottom-40 absolute right-1/3 h-80 w-80 rounded-full bg-primary/15 blur-[100px]" />
             </div>
 

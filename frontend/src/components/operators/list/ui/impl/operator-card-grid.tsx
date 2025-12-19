@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { memo } from "react";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "~/components/ui/shadcn/hover-card";
-import { capitalize, cn, formatProfession, formatSubProfession, rarityToNumber } from "~/lib/utils";
+import { capitalize, cn, formatSubProfession, rarityToNumber } from "~/lib/utils";
 import type { OperatorFromList } from "~/types/api/operators";
 import { HOVER_DELAY, RARITY_BLUR_COLORS, RARITY_COLORS } from "../../constants";
 import { ClassIcon } from "./class-icon";
@@ -71,7 +71,7 @@ export const OperatorCardGrid = memo(function OperatorCardGrid({ operator, isHov
                         </div>
                         {/* Rarity and class info */}
                         <p className="font-semibold text-xs" style={{ color: rarityColor }}>
-                            {`${rarityNum}★ ${capitalize(formatSubProfession(operator.subProfessionId.toLowerCase()))} ${formatProfession(operator.profession)}`}
+                            {`${rarityNum}★ ${formatSubProfession(operator.subProfessionId.toLowerCase())}`}
                         </p>
                         {/* Position and race */}
                         <div className="flex space-x-2 pt-1 text-muted-foreground text-xs">
