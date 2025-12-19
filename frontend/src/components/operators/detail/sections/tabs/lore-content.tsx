@@ -1,11 +1,10 @@
 "use client";
 
-import { Activity, BookMarked, ChevronDown, FileText, FlaskConical, ScrollText, Sparkles, User } from "lucide-react";
+import { BookMarked, ChevronDown, FileText, FlaskConical, ScrollText, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
 import type React from "react";
 import { memo, useCallback, useState } from "react";
 import { Disclosure, DisclosureContent, DisclosureTrigger } from "~/components/ui/motion-primitives/disclosure";
-import { Separator } from "~/components/ui/shadcn/separator";
 import { cn } from "~/lib/utils";
 import type { Operator } from "~/types/api";
 
@@ -193,10 +192,8 @@ const StoryEntry = memo(function StoryEntry({ storyText }: { storyText: string }
 });
 
 export const LoreContent = memo(function LoreContent({ operator }: LoreContentProps) {
-    const { profile, handbook } = operator;
+    const { handbook } = operator;
 
-    const hasBasicInfo = profile?.basicInfo;
-    const hasPhysicalExam = profile?.physicalExam;
     const hasStories = handbook?.storyTextAudio && handbook.storyTextAudio.length > 0;
 
     return (
@@ -206,112 +203,6 @@ export const LoreContent = memo(function LoreContent({ operator }: LoreContentPr
                 <h2 className="font-semibold text-foreground text-xl md:text-2xl">Operator Files</h2>
                 <p className="mt-1 text-muted-foreground text-sm">Personal records, archives, and classified documents</p>
             </div>
-
-            {/* Basic Information Section */}
-            {hasBasicInfo && (
-                <>
-                    <LoreSection defaultOpen={true} icon={User} title="Basic Information">
-                        <div className="grid gap-1 divide-y divide-border/30">
-                            {profile.basicInfo.codeName && (
-                                <div className="flex flex-col gap-1 py-2 sm:flex-row sm:items-baseline sm:gap-3">
-                                    <span className="min-w-40 shrink-0 font-semibold text-primary text-xs uppercase tracking-wide sm:text-right">Code Name</span>
-                                    <span className="flex-1 text-foreground text-sm">{profile.basicInfo.codeName}</span>
-                                </div>
-                            )}
-                            {profile.basicInfo.gender && (
-                                <div className="flex flex-col gap-1 py-2 sm:flex-row sm:items-baseline sm:gap-3">
-                                    <span className="min-w-40 shrink-0 font-semibold text-primary text-xs uppercase tracking-wide sm:text-right">Gender</span>
-                                    <span className="flex-1 text-foreground text-sm">{profile.basicInfo.gender}</span>
-                                </div>
-                            )}
-                            {profile.basicInfo.race && (
-                                <div className="flex flex-col gap-1 py-2 sm:flex-row sm:items-baseline sm:gap-3">
-                                    <span className="min-w-40 shrink-0 font-semibold text-primary text-xs uppercase tracking-wide sm:text-right">Race</span>
-                                    <span className="flex-1 text-foreground text-sm">{profile.basicInfo.race}</span>
-                                </div>
-                            )}
-                            {profile.basicInfo.placeOfBirth && (
-                                <div className="flex flex-col gap-1 py-2 sm:flex-row sm:items-baseline sm:gap-3">
-                                    <span className="min-w-40 shrink-0 font-semibold text-primary text-xs uppercase tracking-wide sm:text-right">Place of Birth</span>
-                                    <span className="flex-1 text-foreground text-sm">{profile.basicInfo.placeOfBirth}</span>
-                                </div>
-                            )}
-                            {profile.basicInfo.dateOfBirth && (
-                                <div className="flex flex-col gap-1 py-2 sm:flex-row sm:items-baseline sm:gap-3">
-                                    <span className="min-w-40 shrink-0 font-semibold text-primary text-xs uppercase tracking-wide sm:text-right">Date of Birth</span>
-                                    <span className="flex-1 text-foreground text-sm">{profile.basicInfo.dateOfBirth}</span>
-                                </div>
-                            )}
-                            {profile.basicInfo.height && (
-                                <div className="flex flex-col gap-1 py-2 sm:flex-row sm:items-baseline sm:gap-3">
-                                    <span className="min-w-40 shrink-0 font-semibold text-primary text-xs uppercase tracking-wide sm:text-right">Height</span>
-                                    <span className="flex-1 rounded-md bg-secondary/40 px-2 py-1 font-mono text-foreground text-xs">{profile.basicInfo.height}</span>
-                                </div>
-                            )}
-                            {profile.basicInfo.combatExperience && (
-                                <div className="flex flex-col gap-1 py-2 sm:flex-row sm:items-baseline sm:gap-3">
-                                    <span className="min-w-40 shrink-0 font-semibold text-primary text-xs uppercase tracking-wide sm:text-right">Combat Experience</span>
-                                    <span className="flex-1 text-foreground text-sm">{profile.basicInfo.combatExperience}</span>
-                                </div>
-                            )}
-                            {profile.basicInfo.infectionStatus && (
-                                <div className="flex flex-col gap-1 py-2 sm:flex-row sm:items-baseline sm:gap-3">
-                                    <span className="min-w-40 shrink-0 font-semibold text-primary text-xs uppercase tracking-wide sm:text-right">Infection Status</span>
-                                    <span className={cn("flex-1 text-sm", profile.basicInfo.infectionStatus.toLowerCase().includes("non-infected") ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400")}>{profile.basicInfo.infectionStatus}</span>
-                                </div>
-                            )}
-                        </div>
-                    </LoreSection>
-                    <Separator className="my-4" />
-                </>
-            )}
-
-            {/* Physical Examination Section */}
-            {hasPhysicalExam && (
-                <>
-                    <LoreSection defaultOpen={false} icon={Activity} title="Physical Examination">
-                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                            {profile.physicalExam.physicalStrength && (
-                                <div className="rounded-lg border border-border/30 bg-secondary/20 p-3">
-                                    <div className="mb-1 text-muted-foreground text-xs">Physical Strength</div>
-                                    <div className="font-semibold text-foreground">{profile.physicalExam.physicalStrength}</div>
-                                </div>
-                            )}
-                            {profile.physicalExam.mobility && (
-                                <div className="rounded-lg border border-border/30 bg-secondary/20 p-3">
-                                    <div className="mb-1 text-muted-foreground text-xs">Mobility</div>
-                                    <div className="font-semibold text-foreground">{profile.physicalExam.mobility}</div>
-                                </div>
-                            )}
-                            {profile.physicalExam.physicalResilience && (
-                                <div className="rounded-lg border border-border/30 bg-secondary/20 p-3">
-                                    <div className="mb-1 text-muted-foreground text-xs">Physical Resilience</div>
-                                    <div className="font-semibold text-foreground">{profile.physicalExam.physicalResilience}</div>
-                                </div>
-                            )}
-                            {profile.physicalExam.tacticalAcumen && (
-                                <div className="rounded-lg border border-border/30 bg-secondary/20 p-3">
-                                    <div className="mb-1 text-muted-foreground text-xs">Tactical Acumen</div>
-                                    <div className="font-semibold text-foreground">{profile.physicalExam.tacticalAcumen}</div>
-                                </div>
-                            )}
-                            {profile.physicalExam.combatSkill && (
-                                <div className="rounded-lg border border-border/30 bg-secondary/20 p-3">
-                                    <div className="mb-1 text-muted-foreground text-xs">Combat Skill</div>
-                                    <div className="font-semibold text-foreground">{profile.physicalExam.combatSkill}</div>
-                                </div>
-                            )}
-                            {profile.physicalExam.originiumArtsAssimilation && (
-                                <div className="rounded-lg border border-border/30 bg-secondary/20 p-3">
-                                    <div className="mb-1 text-muted-foreground text-xs">Originium Arts Assimilation</div>
-                                    <div className="font-semibold text-foreground">{profile.physicalExam.originiumArtsAssimilation}</div>
-                                </div>
-                            )}
-                        </div>
-                    </LoreSection>
-                    <Separator className="my-4" />
-                </>
-            )}
 
             {/* Archive Files Section */}
             {hasStories && (
@@ -343,7 +234,7 @@ export const LoreContent = memo(function LoreContent({ operator }: LoreContentPr
             )}
 
             {/* Empty State */}
-            {!hasBasicInfo && !hasPhysicalExam && !hasStories && (
+            {!hasStories && (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                     <FileText className="mb-4 h-12 w-12 text-muted-foreground/50" />
                     <h3 className="mb-2 font-medium text-foreground">No Records Available</h3>

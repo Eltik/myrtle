@@ -7,9 +7,10 @@ import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/shadcn/select";
 import { Skeleton } from "~/components/ui/shadcn/skeleton";
 import { Slider } from "~/components/ui/shadcn/slider";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/shadcn/tabs";
 import { cn } from "~/lib/utils";
 import type { Operator } from "~/types/api";
-import type { LangType, Voice, VoiceData, Voices } from "~/types/api/impl/voice";
+import type { LangType, PlaceType, Voice, VoiceData, Voices } from "~/types/api/impl/voice";
 
 interface AudioContentProps {
     operator: Operator;
@@ -21,7 +22,60 @@ interface VoiceLine {
     text: string;
     data?: VoiceData[];
     languages?: LangType[];
+    placeType?: PlaceType;
 }
+
+interface VoiceCategory {
+    id: string;
+    name: string;
+    lines: VoiceLine[];
+}
+
+// Map PlaceType to category name
+function getCategoryName(placeType: PlaceType): string {
+    switch (placeType) {
+        case "GREETING":
+        case "NEW_YEAR":
+        case "ANNIVERSARY":
+        case "BIRTHDAY":
+            return "Greetings";
+        case "BATTLE_START":
+        case "BATTLE_FACE_ENEMY":
+        case "BATTLE_SELECT":
+        case "BATTLE_PLACE":
+        case "BATTLE_SKILL_1":
+        case "BATTLE_SKILL_2":
+        case "BATTLE_SKILL_3":
+        case "BATTLE_SKILL_4":
+        case "FOUR_STAR":
+        case "THREE_STAR":
+        case "TWO_STAR":
+        case "LOSE":
+            return "Combat";
+        case "HOME_PLACE":
+        case "HOME_SHOW":
+        case "HOME_WAIT":
+            return "Interaction";
+        case "BUILDING_PLACE":
+        case "BUILDING_TOUCHING":
+        case "BUILDING_FAVOR_BUBBLE":
+            return "Base";
+        case "LEVEL_UP":
+        case "EVOLVE_ONE":
+        case "EVOLVE_TWO":
+            return "Level Up";
+        case "GACHA":
+            return "Recruitment";
+        case "SQUAD":
+        case "SQUAD_FIRST":
+            return "Squad";
+        default:
+            return "Other";
+    }
+}
+
+// Category display order
+const CATEGORY_ORDER = ["Greetings", "Combat", "Interaction", "Base", "Level Up", "Recruitment", "Squad", "Other"];
 
 // Map backend LangType to display labels
 const LANGUAGE_LABELS: Record<LangType, string> = {
@@ -41,6 +95,7 @@ export function AudioContent({ operator }: AudioContentProps) {
     const [voices, setVoices] = useState<VoiceLine[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedLanguage, setSelectedLanguage] = useState<LangType>("JP");
+    const [activeCategory, setActiveCategory] = useState<string>("greetings");
     const [playingId, setPlayingId] = useState<string | null>(null);
     const [volume, setVolume] = useState(80);
     const [isMuted, setIsMuted] = useState(false);
@@ -84,6 +139,45 @@ export function AudioContent({ operator }: AudioContentProps) {
         const order: LangType[] = ["JP", "CN_MANDARIN", "EN", "KR", "CN_TOPOLECT", "GER", "ITA", "RUS", "FRE", "LINKAGE"];
         return order.filter((lang) => langSet.has(lang));
     }, [voices]);
+
+    // Group voices by category
+    const voiceCategories = useMemo(() => {
+        if (voices.length === 0) return [];
+
+        const categoriesMap = new Map<string, VoiceLine[]>();
+
+        for (const voice of voices) {
+            const categoryName = voice.placeType ? getCategoryName(voice.placeType) : "Other";
+            const categoryId = categoryName.toLowerCase().replace(/\s+/g, "-");
+
+            if (!categoriesMap.has(categoryId)) {
+                categoriesMap.set(categoryId, []);
+            }
+            categoriesMap.get(categoryId)?.push(voice);
+        }
+
+        // Convert to array and sort by category order
+        const categories: VoiceCategory[] = [];
+        for (const [id, lines] of categoriesMap) {
+            const name = CATEGORY_ORDER.find((c) => c.toLowerCase().replace(/\s+/g, "-") === id) ?? id;
+            categories.push({ id, name, lines });
+        }
+
+        categories.sort((a, b) => {
+            const indexA = CATEGORY_ORDER.indexOf(a.name);
+            const indexB = CATEGORY_ORDER.indexOf(b.name);
+            return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
+        });
+
+        return categories;
+    }, [voices]);
+
+    // Set initial active category when categories are loaded
+    useEffect(() => {
+        if (voiceCategories.length > 0 && !voiceCategories.some((c) => c.id === activeCategory)) {
+            setActiveCategory(voiceCategories[0]?.id ?? "greetings");
+        }
+    }, [voiceCategories, activeCategory]);
 
     // Get the voice actor name for the selected language
     const voiceActorName = useMemo(() => {
@@ -250,37 +344,56 @@ export function AudioContent({ operator }: AudioContentProps) {
                 </div>
             </div>
 
-            {/* Voice Lines List */}
+            {/* Voice Lines List with Categories */}
             {isLoading ? (
                 <div className="space-y-2">
                     {[1, 2, 3, 4, 5].map((i) => (
                         <Skeleton className="h-16 w-full rounded-lg" key={i} />
                     ))}
                 </div>
-            ) : voices.length > 0 ? (
-                <ScrollArea className="h-[500px]">
-                    <div className="space-y-2 pr-4">
-                        {voices.map((voice) => (
-                            <div className={cn("group relative overflow-hidden rounded-lg border border-border transition-colors", playingId === voice.id ? "border-primary bg-primary/10" : "bg-card/30 hover:bg-secondary/30")} key={voice.id}>
-                                <div className="flex items-start gap-3 p-3">
-                                    <Button className="shrink-0" onClick={() => playVoice(voice)} size="icon" variant={playingId === voice.id ? "default" : "secondary"}>
-                                        {playingId === voice.id ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                                    </Button>
-                                    <div className="min-w-0 flex-1">
-                                        <h4 className="mb-1 font-medium text-foreground text-sm">{voice.title}</h4>
-                                        <p className={cn("overflow-hidden text-muted-foreground text-xs duration-300 ease-out", playingId === voice.id ? "max-h-96" : "line-clamp-2 max-h-10")}>{voice.text}</p>
-                                    </div>
-                                </div>
-                                {/* Progress bar */}
-                                {playingId === voice.id && (
-                                    <div className="absolute inset-x-0 bottom-0 h-1 bg-primary/20">
-                                        <div className="h-full bg-primary" style={{ width: `${progress}%` }} />
-                                    </div>
-                                )}
-                            </div>
-                        ))}
+            ) : voiceCategories.length > 0 ? (
+                <Tabs className="w-full" onValueChange={setActiveCategory} value={activeCategory}>
+                    {/* Category Tabs */}
+                    <div className="mb-4 overflow-x-auto">
+                        <TabsList className="inline-flex h-auto w-auto min-w-full justify-start gap-1 bg-transparent p-0">
+                            {voiceCategories.map((category) => (
+                                <TabsTrigger className="shrink-0 rounded-lg border border-transparent px-3 py-1.5 text-sm data-[state=active]:border-primary data-[state=active]:bg-primary/10 data-[state=active]:text-primary" key={category.id} value={category.id}>
+                                    {category.name}
+                                    <span className="ml-1.5 text-muted-foreground text-xs">({category.lines.length})</span>
+                                </TabsTrigger>
+                            ))}
+                        </TabsList>
                     </div>
-                </ScrollArea>
+
+                    {/* Category Content */}
+                    {voiceCategories.map((category) => (
+                        <TabsContent className="mt-0" key={category.id} value={category.id}>
+                            <ScrollArea className="h-[450px]">
+                                <div className="space-y-2 pr-4">
+                                    {category.lines.map((voice) => (
+                                        <div className={cn("group relative overflow-hidden rounded-lg border border-border transition-colors", playingId === voice.id ? "border-primary bg-primary/10" : "bg-card/30 hover:bg-secondary/30")} key={voice.id}>
+                                            <div className="flex items-start gap-3 p-3">
+                                                <Button className="shrink-0" onClick={() => playVoice(voice)} size="icon" variant={playingId === voice.id ? "default" : "secondary"}>
+                                                    {playingId === voice.id ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                                                </Button>
+                                                <div className="min-w-0 flex-1">
+                                                    <h4 className="mb-1 font-medium text-foreground text-sm">{voice.title}</h4>
+                                                    <p className={cn("overflow-hidden text-muted-foreground text-xs duration-300 ease-out", playingId === voice.id ? "max-h-96" : "line-clamp-2 max-h-10")}>{voice.text}</p>
+                                                </div>
+                                            </div>
+                                            {/* Progress bar */}
+                                            {playingId === voice.id && (
+                                                <div className="absolute inset-x-0 bottom-0 h-1 bg-primary/20">
+                                                    <div className="h-full bg-primary" style={{ width: `${progress}%` }} />
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </ScrollArea>
+                        </TabsContent>
+                    ))}
+                </Tabs>
             ) : (
                 <div className="py-12 text-center text-muted-foreground">No voice data available for this operator.</div>
             )}
@@ -300,6 +413,7 @@ function formatVoices(voiceData: Voices | Voice[]): VoiceLine[] {
                 text: voice.voiceText ?? "",
                 data: voice.data ?? undefined,
                 languages: voice.languages ?? undefined,
+                placeType: voice.placeType ?? undefined,
             });
         }
     } else if (voiceData && typeof voiceData === "object") {
@@ -315,6 +429,7 @@ function formatVoices(voiceData: Voices | Voice[]): VoiceLine[] {
                     text: v.voiceText ?? "",
                     data: v.data ?? undefined,
                     languages: v.languages ?? undefined,
+                    placeType: v.placeType ?? undefined,
                 });
             }
         }

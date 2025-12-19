@@ -1,7 +1,8 @@
 "use client";
 
-import { Grid3X3, LayoutList, Search } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { Grid3X3, LayoutList, Search, Settings2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/shadcn/select";
 import { cn } from "~/lib/utils";
 import type { OperatorFromList } from "~/types/api/operators";
 import { CLASSES, GENDERS, ITEMS_PER_PAGE, RARITIES } from "./constants";
@@ -11,10 +12,37 @@ import { OperatorFilters } from "./operator-filters";
 import { Pagination } from "./ui/impl/pagination";
 import { ResponsiveFilterContainer } from "./ui/impl/responsive-filter-container";
 
+// Check if we're on mobile (matches Tailwind's md breakpoint)
+function getInitialViewMode(): "grid" | "list" {
+    if (typeof window === "undefined") return "grid";
+    return window.innerWidth < 768 ? "list" : "grid";
+}
+
+// Get initial list columns from localStorage
+function getInitialListColumns(): number {
+    if (typeof window === "undefined") return 2;
+    const saved = localStorage.getItem("operatorListColumns");
+    return saved ? Number.parseInt(saved, 10) : 2;
+}
+
 export function OperatorsList({ data }: { data: OperatorFromList[] }) {
-    // UI state
+    // UI state - default to list view on mobile
     const [showFilters, setShowFilters] = useState(false);
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+    const [listColumns, setListColumns] = useState(2);
+
+    // Set initial view mode and list columns based on screen size (runs once on mount)
+    useEffect(() => {
+        setViewMode(getInitialViewMode());
+        setListColumns(getInitialListColumns());
+    }, []);
+
+    // Persist list columns to localStorage
+    const handleListColumnsChange = useCallback((value: string) => {
+        const cols = Number.parseInt(value, 10);
+        setListColumns(cols);
+        localStorage.setItem("operatorListColumns", value);
+    }, []);
     const [currentPage, setCurrentPage] = useState(1);
     const [hoveredOperator, setHoveredOperator] = useState<string | null>(null);
     const [isGrayscaleActive, setIsGrayscaleActive] = useState(false);
@@ -112,6 +140,23 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                         </button>
                     </div>
 
+                    {/* List Columns Selector (desktop only, when in list view) */}
+                    {viewMode === "list" && (
+                        <div className="hidden items-center gap-1.5 md:flex">
+                            <Settings2 className="h-4 w-4 text-muted-foreground" />
+                            <Select onValueChange={handleListColumnsChange} value={listColumns.toString()}>
+                                <SelectTrigger className="h-8 w-20">
+                                    <SelectValue placeholder="Cols" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="1">1 col</SelectItem>
+                                    <SelectItem value="2">2 cols</SelectItem>
+                                    <SelectItem value="3">3 cols</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
+
                     {/* Filter Toggle - Responsive: Dialog on mobile, Popover on desktop */}
                     <ResponsiveFilterContainer activeFilterCount={activeFilterCount} hasActiveFilters={hasActiveFilters} onOpenChange={setShowFilters} open={showFilters}>
                         <OperatorFilters
@@ -159,8 +204,8 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                 </span>
             </div>
 
-            {/* List View Header */}
-            {viewMode === "list" && paginatedOperators.length > 0 && (
+            {/* List View Header - only show for single column layout */}
+            {viewMode === "list" && paginatedOperators.length > 0 && listColumns === 1 && (
                 <div className="hidden items-center gap-3 border-border/50 border-b px-3 pb-2 text-muted-foreground text-xs uppercase tracking-wider md:flex">
                     <div className="w-12 shrink-0" />
                     <div className="min-w-0 flex-1">Name</div>
@@ -173,13 +218,13 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
 
             {/* Operators Grid/List */}
             {paginatedOperators.length > 0 ? (
-                <div className={cn(viewMode === "grid" ? "grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-6 lg:gap-3 xl:grid-cols-8 xl:gap-4" : "flex flex-col gap-1", "contain-layout")}>
+                <div className={cn(viewMode === "grid" ? "grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 lg:gap-3 xl:gap-4" : cn("grid gap-1", listColumns === 1 ? "grid-cols-1" : listColumns === 2 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"), "contain-layout")}>
                     {paginatedOperators.map((operator) => {
                         const operatorId = operator.id ?? "";
                         const isCurrentlyHovered = hoveredOperator === operatorId;
                         const shouldGrayscale = isGrayscaleActive && !isCurrentlyHovered;
 
-                        return <OperatorCard isHovered={isCurrentlyHovered} key={operatorId} onHoverChange={hoverHandlers.get(operatorId)} operator={operator} shouldGrayscale={shouldGrayscale} viewMode={viewMode} />;
+                        return <OperatorCard isHovered={isCurrentlyHovered} key={operatorId} listColumns={listColumns} onHoverChange={hoverHandlers.get(operatorId)} operator={operator} shouldGrayscale={shouldGrayscale} viewMode={viewMode} />;
                     })}
                 </div>
             ) : (
