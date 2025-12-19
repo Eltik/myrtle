@@ -1,6 +1,6 @@
 "use client";
 
-import { Grid3X3, LayoutList, Search, Settings2 } from "lucide-react";
+import { Grid3X3, LayoutList, Search } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatedBackground } from "~/components/ui/motion-primitives/animated-background";
@@ -168,10 +168,9 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                     {/* List Columns Selector (desktop only, when in list view) */}
                     <AnimatePresence mode="popLayout">
                         {viewMode === "list" && (
-                            <motion.div animate={{ opacity: 1, scale: 1 }} className="hidden h-10 items-center gap-1.5 rounded-lg border border-border bg-secondary/50 px-2.5 md:flex" exit={{ opacity: 0, scale: 0.95 }} initial={{ opacity: 0, scale: 0.95 }} layout transition={TOGGLE_TRANSITION}>
-                                <Settings2 className="h-4 w-4 text-muted-foreground" />
+                            <motion.div animate={{ opacity: 1, scale: 1 }} className="hidden h-10 items-center rounded-lg border border-border bg-secondary/50 px-2.5 md:block" exit={{ opacity: 0, scale: 0.95 }} initial={{ opacity: 0, scale: 0.95 }} layout transition={TOGGLE_TRANSITION}>
                                 <Select onValueChange={handleListColumnsChange} value={listColumns.toString()}>
-                                    <SelectTrigger className="h-7 w-16 border-0 bg-transparent px-1.5 text-sm focus:ring-0">
+                                    <SelectTrigger className="h-7 w-20 border-0 bg-transparent px-1.5 text-sm focus:ring-0">
                                         <SelectValue placeholder="Cols" />
                                     </SelectTrigger>
                                     <SelectContent>

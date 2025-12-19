@@ -122,9 +122,15 @@ export function OperatorHero({ operator }: OperatorHeroProps) {
 
                     {/* Right side - Avatar and faction */}
                     <motion.div animate={{ opacity: 1, x: 0 }} className="hidden items-center gap-4 md:flex" initial={{ opacity: 0, x: 20 }} transition={{ duration: 0.4, delay: 0.3 }}>
-                        {(operator.nationId ?? operator.teamId ?? operator.groupId) && (
+                        {((operator.nationId && operator.nationId.length > 0) ?? (operator.teamId && operator.teamId.length > 0) ?? (operator.groupId && operator.groupId.length > 0)) && (
                             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/30 p-2.5 lg:h-16 lg:w-16">
-                                <Image alt={operator.nationId ?? operator.teamId ?? operator.groupId ?? "Faction"} className="object-contain opacity-80" height={44} src={`/api/cdn/upk/spritepack/ui_camp_logo_0/logo_${operator.teamId ?? operator.groupId ?? operator.nationId ?? "rhodes"}.png`} width={48} />
+                                <Image
+                                    alt={operator.nationId && operator.nationId.length > 0 ? operator.nationId : operator.teamId && operator.teamId.length > 0 ? operator.teamId : operator.groupId && operator.groupId.length > 0 ? operator.groupId : "Faction"}
+                                    className="object-contain opacity-80"
+                                    height={44}
+                                    src={`/api/cdn/upk/spritepack/ui_camp_logo_0/logo_${operator.nationId && operator.nationId.length > 0 ? operator.nationId : (operator.teamId && operator.teamId.length > 0) ? operator.teamId : operator.groupId && operator.groupId.length > 0 ? operator.groupId : "rhodes"}.png`}
+                                    width={48}
+                                />
                             </div>
                         )}
                     </motion.div>

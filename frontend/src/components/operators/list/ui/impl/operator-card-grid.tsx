@@ -66,7 +66,7 @@ export const OperatorCardGrid = memo(function OperatorCardGrid({ operator, isHov
                         <div className="flex items-center justify-between">
                             <h4 className="font-semibold text-base">{operator.name}</h4>
                             <div className="h-6 w-6 shrink-0">
-                                <FactionLogo className="object-contain" nationId={operator.nationId} size={24} teamId={operator.teamId} />
+                                <FactionLogo className="object-contain" groupId={operator.groupId} nationId={operator.nationId} size={24} teamId={operator.teamId} />
                             </div>
                         </div>
                         {/* Rarity and class info */}
