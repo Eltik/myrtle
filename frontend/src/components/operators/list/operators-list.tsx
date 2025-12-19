@@ -14,25 +14,15 @@ import { OperatorFilters } from "./operator-filters";
 import { Pagination } from "./ui/impl/pagination";
 import { ResponsiveFilterContainer } from "./ui/impl/responsive-filter-container";
 
-// Smooth spring transition for layout animations (critically damped - no overshoot)
-const LAYOUT_TRANSITION = {
-    type: "spring" as const,
-    stiffness: 500,
-    damping: 35,
-    mass: 0.5,
-};
-
-// Unified spring transition for opacity/scale (matches layout timing)
-const FADE_TRANSITION = {
-    type: "spring" as const,
-    stiffness: 500,
-    damping: 35,
-    mass: 0.5,
+// Quick transition for toggle controls (synchronized timing)
+const TOGGLE_TRANSITION = {
+    duration: 0.2,
+    ease: [0.4, 0, 0.2, 1] as const,
 };
 
 // Fast transition for grid/list container switches
 const CONTAINER_TRANSITION = {
-    duration: 0.15,
+    duration: 0.2,
     ease: [0.4, 0, 0.2, 1] as const,
 };
 
@@ -155,7 +145,7 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
 
                 <div className="flex items-center gap-2">
                     {/* View Toggle with animated sliding indicator */}
-                    <motion.div className="flex items-center rounded-lg border border-border bg-secondary/50 p-1" layout transition={LAYOUT_TRANSITION}>
+                    <motion.div className="flex items-center rounded-lg border border-border bg-secondary/50 p-1" layout transition={TOGGLE_TRANSITION}>
                         <AnimatedBackground
                             className="rounded-md bg-primary"
                             defaultValue={viewMode}
@@ -164,7 +154,7 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                                     setViewMode(value);
                                 }
                             }}
-                            transition={LAYOUT_TRANSITION}
+                            transition={TOGGLE_TRANSITION}
                         >
                             <button className={cn("flex h-8 w-8 cursor-pointer items-center justify-center rounded-md transition-colors duration-150", viewMode === "grid" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground")} data-id="grid" type="button">
                                 <Grid3X3 className="h-4 w-4" />
@@ -178,7 +168,7 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                     {/* List Columns Selector (desktop only, when in list view) */}
                     <AnimatePresence mode="popLayout">
                         {viewMode === "list" && (
-                            <motion.div animate={{ opacity: 1, scale: 1 }} className="hidden h-10 items-center gap-1.5 rounded-lg border border-border bg-secondary/50 px-2.5 md:flex" exit={{ opacity: 0, scale: 0.95 }} initial={{ opacity: 0, scale: 0.95 }} layout transition={FADE_TRANSITION}>
+                            <motion.div animate={{ opacity: 1, scale: 1 }} className="hidden h-10 items-center gap-1.5 rounded-lg border border-border bg-secondary/50 px-2.5 md:flex" exit={{ opacity: 0, scale: 0.95 }} initial={{ opacity: 0, scale: 0.95 }} layout transition={TOGGLE_TRANSITION}>
                                 <Settings2 className="h-4 w-4 text-muted-foreground" />
                                 <Select onValueChange={handleListColumnsChange} value={listColumns.toString()}>
                                     <SelectTrigger className="h-7 w-16 border-0 bg-transparent px-1.5 text-sm focus:ring-0">
