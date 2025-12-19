@@ -22,33 +22,31 @@ export const OperatorCardGrid = memo(function OperatorCardGrid({ operator, isHov
     const operatorId = operator.id ?? "";
 
     const cardContent = (
-        <Link aria-label={`View details for ${operator.name}`} className="group relative flex aspect-2/3 overflow-clip rounded-md border border-muted/50 bg-card transition contain-content hover:rounded-lg" href={`/operators?id=${operatorId}`}>
+        <Link aria-label={`View details for ${operator.name}`} className="group card-hover-transition relative flex aspect-2/3 overflow-clip rounded-md border border-muted/50 bg-card contain-content hover:rounded-lg" href={`/operators?id=${operatorId}`}>
             {/* Faction background */}
             <div className="-translate-x-8 -translate-y-4 absolute">
-                <FactionLogo className="opacity-5 transition-opacity group-hover:opacity-10" nationId={operator.nationId} size={360} teamId={operator.teamId} />
+                <FactionLogo className="opacity-5 opacity-transition group-hover:opacity-10" nationId={operator.nationId} size={360} teamId={operator.teamId} />
             </div>
 
             {/* Portrait */}
-            <div className="absolute inset-0">
-                <div className={cn("relative h-full w-full scale-100 transition-all duration-150 group-hover:scale-105", shouldGrayscale && "grayscale", isHovered && "grayscale-0")}>
-                    <Image alt={`${operator.name} Portrait`} className="h-full w-full rounded-lg object-contain" decoding="async" fill loading="lazy" src={`/api/cdn${operator.portrait}`} />
-                </div>
+            <div className={cn("absolute inset-0 origin-center transform-gpu transition-all duration-200 ease-out group-hover:scale-105", shouldGrayscale && "grayscale", isHovered && "grayscale-0")}>
+                <Image alt={`${operator.name} Portrait`} className="h-full w-full rounded-lg object-contain" decoding="async" fill loading="lazy" src={`/api/cdn${operator.portrait}`} />
             </div>
 
             {/* Bottom info bar */}
             <div className="absolute inset-x-0 bottom-0 z-10">
                 <div className="relative">
                     <div className="h-12 w-full bg-background/80 backdrop-blur-sm" />
-                    <h2 className="absolute bottom-1 left-1 line-clamp-2 max-w-[92%] font-bold text-xs uppercase opacity-60 transition-opacity group-hover:opacity-100 sm:text-sm md:text-sm">{operator.name}</h2>
+                    <h2 className="absolute bottom-1 left-1 line-clamp-2 max-w-[92%] font-bold text-xs uppercase opacity-60 opacity-transition group-hover:opacity-100 sm:text-sm md:text-sm">{operator.name}</h2>
                     {/* Class icon */}
-                    <div className="absolute right-1 bottom-1 flex scale-75 items-center opacity-0 transition-all duration-200 group-hover:scale-100 group-hover:opacity-100">
+                    <div className="card-hover-transition absolute right-1 bottom-1 flex scale-75 items-center opacity-0 group-hover:scale-100 group-hover:opacity-100">
                         <div className="h-4 w-4 md:h-6 md:w-6">
                             <ClassIcon profession={operator.profession} size={160} />
                         </div>
                     </div>
                     {/* Rarity color bar */}
-                    <div className={cn("absolute bottom-0 h-0.5 w-full", shouldGrayscale && "grayscale", isHovered && "grayscale-0")} style={{ backgroundColor: rarityColor }} />
-                    <div className={cn("-bottom-0.5 absolute h-1 w-full blur-sm", shouldGrayscale && "grayscale", isHovered && "grayscale-0")} style={{ backgroundColor: rarityBlurColor }} />
+                    <div className={cn("absolute bottom-0 h-0.5 w-full grayscale-transition", shouldGrayscale && "grayscale", isHovered && "grayscale-0")} style={{ backgroundColor: rarityColor }} />
+                    <div className={cn("-bottom-0.5 absolute h-1 w-full blur-sm grayscale-transition", shouldGrayscale && "grayscale", isHovered && "grayscale-0")} style={{ backgroundColor: rarityBlurColor }} />
                 </div>
             </div>
         </Link>

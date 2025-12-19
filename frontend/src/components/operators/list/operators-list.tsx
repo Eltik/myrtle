@@ -1,7 +1,9 @@
 "use client";
 
 import { Grid3X3, LayoutList, Search, Settings2 } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { AnimatedBackground } from "~/components/ui/motion-primitives/animated-background";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/shadcn/select";
 import { cn } from "~/lib/utils";
 import type { OperatorFromList } from "~/types/api/operators";
@@ -11,6 +13,28 @@ import { OperatorCard } from "./operator-card";
 import { OperatorFilters } from "./operator-filters";
 import { Pagination } from "./ui/impl/pagination";
 import { ResponsiveFilterContainer } from "./ui/impl/responsive-filter-container";
+
+// Smooth spring transition for layout animations (critically damped - no overshoot)
+const LAYOUT_TRANSITION = {
+    type: "spring" as const,
+    stiffness: 500,
+    damping: 35,
+    mass: 0.5,
+};
+
+// Unified spring transition for opacity/scale (matches layout timing)
+const FADE_TRANSITION = {
+    type: "spring" as const,
+    stiffness: 500,
+    damping: 35,
+    mass: 0.5,
+};
+
+// Fast transition for grid/list container switches
+const CONTAINER_TRANSITION = {
+    duration: 0.15,
+    ease: [0.4, 0, 0.2, 1] as const,
+};
 
 // Check if we're on mobile (matches Tailwind's md breakpoint)
 function getInitialViewMode(): "grid" | "list" {
@@ -130,32 +154,45 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    {/* View Toggle */}
-                    <div className="flex items-center rounded-lg border border-border bg-secondary/50 p-1">
-                        <button className={cn("flex h-8 w-8 items-center justify-center rounded-md transition-colors", viewMode === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")} onClick={() => setViewMode("grid")} type="button">
-                            <Grid3X3 className="h-4 w-4" />
-                        </button>
-                        <button className={cn("flex h-8 w-8 items-center justify-center rounded-md transition-colors", viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")} onClick={() => setViewMode("list")} type="button">
-                            <LayoutList className="h-4 w-4" />
-                        </button>
-                    </div>
+                    {/* View Toggle with animated sliding indicator */}
+                    <motion.div className="flex items-center rounded-lg border border-border bg-secondary/50 p-1" layout transition={LAYOUT_TRANSITION}>
+                        <AnimatedBackground
+                            className="rounded-md bg-primary"
+                            defaultValue={viewMode}
+                            onValueChange={(value) => {
+                                if (value === "grid" || value === "list") {
+                                    setViewMode(value);
+                                }
+                            }}
+                            transition={LAYOUT_TRANSITION}
+                        >
+                            <button className={cn("flex h-8 w-8 cursor-pointer items-center justify-center rounded-md transition-colors duration-150", viewMode === "grid" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground")} data-id="grid" type="button">
+                                <Grid3X3 className="h-4 w-4" />
+                            </button>
+                            <button className={cn("flex h-8 w-8 cursor-pointer items-center justify-center rounded-md transition-colors duration-150", viewMode === "list" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground")} data-id="list" type="button">
+                                <LayoutList className="h-4 w-4" />
+                            </button>
+                        </AnimatedBackground>
+                    </motion.div>
 
                     {/* List Columns Selector (desktop only, when in list view) */}
-                    {viewMode === "list" && (
-                        <div className="hidden items-center gap-1.5 md:flex">
-                            <Settings2 className="h-4 w-4 text-muted-foreground" />
-                            <Select onValueChange={handleListColumnsChange} value={listColumns.toString()}>
-                                <SelectTrigger className="h-8 w-20">
-                                    <SelectValue placeholder="Cols" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="1">1 col</SelectItem>
-                                    <SelectItem value="2">2 cols</SelectItem>
-                                    <SelectItem value="3">3 cols</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    )}
+                    <AnimatePresence mode="popLayout">
+                        {viewMode === "list" && (
+                            <motion.div animate={{ opacity: 1, scale: 1 }} className="hidden h-10 items-center gap-1.5 rounded-lg border border-border bg-secondary/50 px-2.5 md:flex" exit={{ opacity: 0, scale: 0.95 }} initial={{ opacity: 0, scale: 0.95 }} layout transition={FADE_TRANSITION}>
+                                <Settings2 className="h-4 w-4 text-muted-foreground" />
+                                <Select onValueChange={handleListColumnsChange} value={listColumns.toString()}>
+                                    <SelectTrigger className="h-7 w-16 border-0 bg-transparent px-1.5 text-sm focus:ring-0">
+                                        <SelectValue placeholder="Cols" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="1">1 col</SelectItem>
+                                        <SelectItem value="2">2 cols</SelectItem>
+                                        <SelectItem value="3">3 cols</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
 
                     {/* Filter Toggle - Responsive: Dialog on mobile, Popover on desktop */}
                     <ResponsiveFilterContainer activeFilterCount={activeFilterCount} hasActiveFilters={hasActiveFilters} onOpenChange={setShowFilters} open={showFilters}>
@@ -205,40 +242,68 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
             </div>
 
             {/* List View Header - only show for single column layout */}
-            {viewMode === "list" && paginatedOperators.length > 0 && listColumns === 1 && (
-                <div className="hidden items-center gap-3 border-border/50 border-b px-3 pb-2 text-muted-foreground text-xs uppercase tracking-wider md:flex">
-                    <div className="w-12 shrink-0" />
-                    <div className="min-w-0 flex-1">Name</div>
-                    <div className="w-24 shrink-0">Rarity</div>
-                    <div className="w-32 shrink-0">Class</div>
-                    <div className="hidden w-40 shrink-0 lg:block">Archetype</div>
-                    <div className="hidden w-8 shrink-0 text-center xl:block">Faction</div>
-                </div>
-            )}
+            <AnimatePresence mode="wait">
+                {viewMode === "list" && paginatedOperators.length > 0 && listColumns === 1 && (
+                    <motion.div animate={{ opacity: 1, y: 0 }} className="hidden items-center gap-3 border-border/50 border-b px-3 pb-2 text-muted-foreground text-xs uppercase tracking-wider md:flex" exit={{ opacity: 0, y: -8 }} initial={{ opacity: 0, y: -8 }} transition={CONTAINER_TRANSITION}>
+                        <div className="w-12 shrink-0" />
+                        <div className="min-w-0 flex-1">Name</div>
+                        <div className="w-24 shrink-0">Rarity</div>
+                        <div className="w-32 shrink-0">Class</div>
+                        <div className="hidden w-40 shrink-0 lg:block">Archetype</div>
+                        <div className="hidden w-8 shrink-0 text-center xl:block">Faction</div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Operators Grid/List */}
-            {paginatedOperators.length > 0 ? (
-                <div className={cn(viewMode === "grid" ? "grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 lg:gap-3 xl:gap-4" : cn("grid gap-1", listColumns === 1 ? "grid-cols-1" : listColumns === 2 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"), "contain-layout")}>
-                    {paginatedOperators.map((operator) => {
-                        const operatorId = operator.id ?? "";
-                        const isCurrentlyHovered = hoveredOperator === operatorId;
-                        const shouldGrayscale = isGrayscaleActive && !isCurrentlyHovered;
+            <AnimatePresence initial={false} mode="wait">
+                {paginatedOperators.length > 0 ? (
+                    <motion.div
+                        animate={{ opacity: 1, scale: 1 }}
+                        className={cn(
+                            viewMode === "grid" ? "grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 lg:gap-3 xl:gap-4" : cn("grid gap-1", listColumns === 1 ? "grid-cols-1" : listColumns === 2 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"),
+                            "will-change-transform contain-layout",
+                        )}
+                        exit={{ opacity: 0, scale: 0.98 }}
+                        initial={{ opacity: 0, scale: 0.98 }}
+                        key={`${viewMode}-${listColumns}`}
+                        transition={CONTAINER_TRANSITION}
+                    >
+                        {paginatedOperators.map((operator, index) => {
+                            const operatorId = operator.id ?? "";
+                            const isCurrentlyHovered = hoveredOperator === operatorId;
+                            const shouldGrayscale = isGrayscaleActive && !isCurrentlyHovered;
 
-                        return <OperatorCard isHovered={isCurrentlyHovered} key={operatorId} listColumns={listColumns} onHoverChange={hoverHandlers.get(operatorId)} operator={operator} shouldGrayscale={shouldGrayscale} viewMode={viewMode} />;
-                    })}
-                </div>
-            ) : (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-secondary">
-                        <Search className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                    <h3 className="mb-2 font-semibold text-foreground text-lg">No operators found</h3>
-                    <p className="mb-4 max-w-sm text-muted-foreground text-sm">Try adjusting your search or filter criteria to find what you're looking for.</p>
-                    <button className="text-primary text-sm hover:underline" onClick={handleClearFilters} type="button">
-                        Clear all filters
-                    </button>
-                </div>
-            )}
+                            return (
+                                <motion.div
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="contain-content"
+                                    initial={{ opacity: 0, y: 8 }}
+                                    key={operatorId}
+                                    transition={{
+                                        duration: 0.2,
+                                        delay: Math.min(index * 0.015, 0.3),
+                                        ease: [0.4, 0, 0.2, 1],
+                                    }}
+                                >
+                                    <OperatorCard isHovered={isCurrentlyHovered} listColumns={listColumns} onHoverChange={hoverHandlers.get(operatorId)} operator={operator} shouldGrayscale={shouldGrayscale} viewMode={viewMode} />
+                                </motion.div>
+                            );
+                        })}
+                    </motion.div>
+                ) : (
+                    <motion.div animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center py-16 text-center" exit={{ opacity: 0, scale: 0.98 }} initial={{ opacity: 0, scale: 0.98 }} key="empty" transition={CONTAINER_TRANSITION}>
+                        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-secondary">
+                            <Search className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                        <h3 className="mb-2 font-semibold text-foreground text-lg">No operators found</h3>
+                        <p className="mb-4 max-w-sm text-muted-foreground text-sm">Try adjusting your search or filter criteria to find what you're looking for.</p>
+                        <button className="text-primary text-sm hover:underline" onClick={handleClearFilters} type="button">
+                            Clear all filters
+                        </button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Pagination */}
             <Pagination currentPage={currentPage} onPageChange={handlePageChange} totalPages={totalPages} />
