@@ -7,6 +7,7 @@ import type React from "react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Disclosure, DisclosureContent, DisclosureTrigger } from "~/components/ui/motion-primitives/disclosure";
 import { Badge } from "~/components/ui/shadcn/badge";
+import { Input } from "~/components/ui/shadcn/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/shadcn/select";
 import { Separator } from "~/components/ui/shadcn/separator";
 import { Slider } from "~/components/ui/shadcn/slider";
@@ -197,6 +198,22 @@ export const InfoContent = memo(function InfoContent({ operator }: InfoContentPr
         setTrustLevel(val[0] ?? 100);
     }, []);
 
+    const handleLevelInputChange = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            const val = Number.parseInt(e.target.value, 10);
+            if (Number.isNaN(val)) return;
+            const maxLevel = currentPhase?.MaxLevel ?? 1;
+            setLevel(Math.max(1, Math.min(val, maxLevel)));
+        },
+        [currentPhase?.MaxLevel],
+    );
+
+    const handleTrustInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = Number.parseInt(e.target.value, 10);
+        if (Number.isNaN(val)) return;
+        setTrustLevel(Math.max(0, Math.min(val, 200)));
+    }, []);
+
     return (
         <div className="min-w-0 overflow-hidden p-4 md:p-6">
             {/* Header */}
@@ -268,9 +285,10 @@ export const InfoContent = memo(function InfoContent({ operator }: InfoContentPr
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
                                 <span className="text-muted-foreground text-sm">Level</span>
-                                <span className="font-mono text-foreground text-sm bg-accent px-2 py-0.5 rounded-sm">
-                                    {level} / {currentPhase?.MaxLevel ?? 1}
-                                </span>
+                                <div className="flex items-center gap-1 rounded-sm bg-accent px-2 py-0.5">
+                                    <Input className="h-5 w-10 border-none bg-transparent p-0 text-center font-mono text-foreground text-sm shadow-none focus-visible:ring-0" max={currentPhase?.MaxLevel ?? 1} min={1} onChange={handleLevelInputChange} type="number" value={level} />
+                                    <span className="font-mono text-foreground text-sm">/ {currentPhase?.MaxLevel ?? 1}</span>
+                                </div>
                             </div>
                             <Slider className="w-full" max={currentPhase?.MaxLevel ?? 1} min={1} onValueChange={handleLevelChange} step={1} value={[level]} />
                         </div>
@@ -290,7 +308,8 @@ export const InfoContent = memo(function InfoContent({ operator }: InfoContentPr
                                     </Tooltip>
                                 </TooltipProvider>
                             </div>
-                            <div className="flex flex-wrap items-center gap-2">
+                            {/* Desktop: Button row */}
+                            <div className="hidden flex-wrap items-center gap-2 md:flex">
                                 {/* Potential 0 (no potential) */}
                                 <TooltipProvider>
                                     <Tooltip>
@@ -322,6 +341,42 @@ export const InfoContent = memo(function InfoContent({ operator }: InfoContentPr
                                     </TooltipProvider>
                                 ))}
                             </div>
+                            {/* Mobile: Dropdown */}
+                            <div className="md:hidden">
+                                <Select onValueChange={(val) => setPotentialRank(Number.parseInt(val, 10))} value={String(potentialRank)}>
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue>
+                                            <div className="flex items-center gap-2">
+                                                <Image alt={`Potential ${potentialRank}`} className="h-5 w-5" height={20} src={`/api/cdn/upk/arts/potential_hub/potential_${potentialRank}.png`} width={20} />
+                                                <span>
+                                                    {potentialRank === 0 ? "No Potential" : `Potential ${potentialRank}`}
+                                                    {potentialRank > 0 && operator.potentialRanks[potentialRank - 1]?.Description && ` - ${operator.potentialRanks[potentialRank - 1]?.Description}`}
+                                                </span>
+                                            </div>
+                                        </SelectValue>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {/* Potential 0 (no potential) */}
+                                        <SelectItem value="0">
+                                            <div className="flex items-center gap-2">
+                                                <Image alt="No Potential" className="h-5 w-5" height={20} src="/api/cdn/upk/arts/potential_hub/potential_0.png" width={20} />
+                                                <span>No Potential</span>
+                                            </div>
+                                        </SelectItem>
+                                        {/* Potentials 1-5 */}
+                                        {operator.potentialRanks.map((rank, idx) => (
+                                            <SelectItem key={rank.Description} value={String(idx + 1)}>
+                                                <div className="flex items-center gap-2">
+                                                    <Image alt={`Potential ${idx + 1}`} className="h-5 w-5" height={20} src={`/api/cdn/upk/arts/potential_hub/potential_${idx + 1}.png`} width={20} />
+                                                    <span>
+                                                        Pot {idx + 1}: {rank.Description}
+                                                    </span>
+                                                </div>
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
 
                         {/* Trust Slider */}
@@ -331,7 +386,10 @@ export const InfoContent = memo(function InfoContent({ operator }: InfoContentPr
                                     <Heart className="h-3.5 w-3.5 text-muted-foreground" />
                                     <span className="text-muted-foreground text-sm">Trust</span>
                                 </div>
-                                <span className="font-mono text-foreground text-sm bg-accent px-2 py-0.5 rounded-sm">{trustLevel}%</span>
+                                <div className="flex items-center gap-0.5 rounded-sm bg-accent px-2 py-0.5">
+                                    <Input className="h-5 w-10 border-none bg-transparent p-0 text-center font-mono text-foreground text-sm shadow-none focus-visible:ring-0" max={200} min={0} onChange={handleTrustInputChange} type="number" value={trustLevel} />
+                                    <span className="font-mono text-foreground text-sm">%</span>
+                                </div>
                             </div>
                             <Slider className="w-full" max={200} min={0} onValueChange={handleTrustChange} step={1} value={[trustLevel]} />
                         </div>
