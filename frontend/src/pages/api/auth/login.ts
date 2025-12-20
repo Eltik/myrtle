@@ -67,14 +67,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         const { email, code, server }: LoginInput = parseResult.data;
 
         // Build backend URL with properly encoded parameters
-        const backendUrl = new URL("/yostar/login", env.BACKEND_URL);
+        const backendUrl = new URL("/login", env.BACKEND_URL);
         backendUrl.searchParams.set("email", email);
         backendUrl.searchParams.set("code", code.toString());
         backendUrl.searchParams.set("server", server);
 
         // Call backend authentication service
         const loginResponse = await fetch(backendUrl.toString(), {
-            method: "GET",
+            method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },

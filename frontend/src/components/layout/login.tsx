@@ -154,6 +154,8 @@ function LoginContent({ onSuccess }: { onSuccess?: () => void }) {
 
             // Close the dialog
             onSuccess?.();
+
+            window.location.reload();
         } catch (err) {
             console.error(err);
             toast.error("Login failed", {
@@ -183,11 +185,11 @@ function LoginContent({ onSuccess }: { onSuccess?: () => void }) {
                 <CardDescription>
                     Use your YoStar email to send an OTP code. No login information is stored on the server.
                     <Accordion className="mt-3 flex w-full flex-col divide-y divide-zinc-700 rounded-md border border-border px-2" transition={{ duration: 0.2, ease: "easeInOut" }}>
-                        <AccordionItem value="how-it-works" className="py-2">
+                        <AccordionItem className="py-2" value="how-it-works">
                             <AccordionTrigger className="w-full text-left text-zinc-50">
                                 <div className="flex items-center justify-between">
                                     <div>How it Works</div>
-                                    <ChevronDown className="h-4 w-4 text-zinc-50 transition-transform duration-200 group-data-expanded:-rotate-180" />
+                                    <ChevronDown className="group-data-expanded:-rotate-180 h-4 w-4 text-zinc-50 transition-transform duration-200" />
                                 </div>
                             </AccordionTrigger>
                             <AccordionContent className="pt-4 text-muted-foreground text-sm leading-relaxed">
@@ -208,12 +210,9 @@ function LoginContent({ onSuccess }: { onSuccess?: () => void }) {
                                     <div className="rounded-md border border-amber-500/20 bg-amber-500/5 p-3">
                                         <p className="mb-1.5 font-medium text-amber-500/90">Notice</p>
                                         <p className="text-muted-foreground/90">
-                                            myrtle.moe is not affiliated with Yostar or Hypergryph and is not an officially sanctioned tool. We are not responsible for any actions taken by the Arknights publishers as a result of
-                                            logging in using this approach. Proceed at your own discretion.
+                                            myrtle.moe is not affiliated with Yostar or Hypergryph and is not an officially sanctioned tool. We are not responsible for any actions taken by the Arknights publishers as a result of logging in using this approach. Proceed at your own discretion.
                                         </p>
-                                        <p className="mt-2 text-muted-foreground/80">
-                                            To date, no such actions have occurred, and we therefore believe it is reasonable to make this tool available to users. Ultimately, the choice to use it is yours.
-                                        </p>
+                                        <p className="mt-2 text-muted-foreground/80">To date, no such actions have occurred, and we therefore believe it is reasonable to make this tool available to users. Ultimately, the choice to use it is yours.</p>
                                     </div>
                                 </div>
                             </AccordionContent>
@@ -227,15 +226,15 @@ function LoginContent({ onSuccess }: { onSuccess?: () => void }) {
                         <div className="flex flex-col gap-4">
                             <div className="grid gap-2">
                                 <Label htmlFor="email">Email</Label>
-                                <Input id="email" value={email} type="email" placeholder="doctor@rhodes.island" required onChange={(e) => setEmail(e.target.value)} disabled={isLoading} />
+                                <Input disabled={isLoading} id="email" onChange={(e) => setEmail(e.target.value)} placeholder="doctor@rhodes.island" required type="email" value={email} />
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="server">Server</Label>
-                                <Select value={server} onValueChange={(value) => setServer(value as AKServer)} disabled={isLoading}>
+                                <Select disabled={isLoading} onValueChange={(value) => setServer(value as AKServer)} value={server}>
                                     <SelectTrigger id="server">
                                         <SelectValue placeholder="Select server" />
                                     </SelectTrigger>
-                                    <SelectContent className="z-[70]">
+                                    <SelectContent className="z-70">
                                         {SERVER_OPTIONS.map((option) => (
                                             <SelectItem key={option.value} value={option.value}>
                                                 {option.label}
@@ -255,14 +254,14 @@ function LoginContent({ onSuccess }: { onSuccess?: () => void }) {
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="otp">Verification Code</Label>
-                                <InputOTP maxLength={6} value={otp} onChange={setOTP} disabled={isLoading}>
+                                <InputOTP disabled={isLoading} maxLength={6} onChange={setOTP} value={otp}>
                                     <InputOTPGroup className="w-full">
-                                        <InputOTPSlot index={0} className="flex-1" />
-                                        <InputOTPSlot index={1} className="flex-1" />
-                                        <InputOTPSlot index={2} className="flex-1" />
-                                        <InputOTPSlot index={3} className="flex-1" />
-                                        <InputOTPSlot index={4} className="flex-1" />
-                                        <InputOTPSlot index={5} className="flex-1" />
+                                        <InputOTPSlot className="flex-1" index={0} />
+                                        <InputOTPSlot className="flex-1" index={1} />
+                                        <InputOTPSlot className="flex-1" index={2} />
+                                        <InputOTPSlot className="flex-1" index={3} />
+                                        <InputOTPSlot className="flex-1" index={4} />
+                                        <InputOTPSlot className="flex-1" index={5} />
                                     </InputOTPGroup>
                                 </InputOTP>
                                 <p className="text-muted-foreground text-xs">Enter the 6-digit code sent to your email.</p>
@@ -273,7 +272,7 @@ function LoginContent({ onSuccess }: { onSuccess?: () => void }) {
             </CardContent>
             <CardFooter className="flex flex-col gap-2">
                 {!isOtpSent ? (
-                    <Button type="submit" className="w-full" variant="outline" onClick={sendOTP} disabled={isLoading || email.length === 0}>
+                    <Button className="w-full" disabled={isLoading || email.length === 0} onClick={sendOTP} type="submit" variant="outline">
                         {isSendingOtp ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -285,7 +284,7 @@ function LoginContent({ onSuccess }: { onSuccess?: () => void }) {
                     </Button>
                 ) : (
                     <>
-                        <Button type="submit" className="w-full" onClick={handleLogin} disabled={isLoading || otp.length !== 6}>
+                        <Button className="w-full" disabled={isLoading || otp.length !== 6} onClick={handleLogin} type="submit">
                             {isLoggingIn ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -296,21 +295,21 @@ function LoginContent({ onSuccess }: { onSuccess?: () => void }) {
                             )}
                         </Button>
                         <Button
-                            type="button"
-                            variant="ghost"
                             className="w-full text-muted-foreground"
+                            disabled={isLoading}
                             onClick={() => {
                                 setIsOtpSent(false);
                                 setOTP("");
                             }}
-                            disabled={isLoading}
+                            type="button"
+                            variant="ghost"
                         >
                             Use different email
                         </Button>
                         {cooldown > 0 ? (
                             <p className="text-center text-muted-foreground text-xs">Resend available in {cooldown}s</p>
                         ) : (
-                            <Button type="button" variant="link" className="h-auto p-0 text-muted-foreground text-xs" onClick={sendOTP} disabled={isSendingOtp}>
+                            <Button className="h-auto p-0 text-muted-foreground text-xs" disabled={isSendingOtp} onClick={sendOTP} type="button" variant="link">
                                 Resend OTP
                             </Button>
                         )}
@@ -326,13 +325,13 @@ export function Login({ variant = "default" }: LoginProps) {
 
     return (
         <MorphingDialog
+            onOpenChange={setOpen}
+            open={open}
             transition={{
                 type: "spring",
                 bounce: 0.1,
                 duration: 0.4,
             }}
-            open={open}
-            onOpenChange={setOpen}
         >
             <MorphingDialogTrigger className={cn("inline-flex", variant === "default" && "w-full")}>
                 <LoginTriggerButton variant={variant} />
