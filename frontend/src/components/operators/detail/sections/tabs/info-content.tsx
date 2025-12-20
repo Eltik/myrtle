@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Coins, Diamond, Dna, Grid3X3, Heart, Hourglass, Info, MapPin, Package, Palette, Shield, ShieldBan, Swords, Timer, User } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Coins, Diamond, Dna, Grid3X3, Heart, Hourglass, Info, MapPin, Package, Palette, Shield, ShieldBan, Swords, Timer, User } from "lucide-react";
 import { motion } from "motion/react";
 import Image from "next/image";
 import type React from "react";
@@ -267,136 +267,166 @@ export const InfoContent = memo(function InfoContent({ operator }: InfoContentPr
                     </div>
                 </DisclosureTrigger>
                 <DisclosureContent>
-                    <div className="mt-3 space-y-4 rounded-lg border border-border/50 bg-card/30 p-4">
+                    <div className="mt-3 space-y-3">
                         <p className="text-muted-foreground text-xs">Adjust these controls to see how stats change at different levels, promotions, potentials, modules, and trust levels.</p>
 
-                        {/* Elite Phase Selection */}
-                        <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-muted-foreground text-sm">Promotion:</span>
-                            {operator.phases.map((_, idx) => (
-                                // biome-ignore lint/suspicious/noArrayIndexKey: Static array of promotion phases
-                                <button className={cn("flex h-10 w-10 items-center justify-center rounded-lg border transition-all", phaseIndex === idx ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50")} key={idx} onClick={() => setPhaseIndex(idx)} type="button">
-                                    <Image alt={`Elite ${idx}`} height={24} src={`/api/cdn/upk/arts/elite_hub/elite_${idx}.png`} width={24} />
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Level Slider */}
-                        <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                                <span className="text-muted-foreground text-sm">Level</span>
-                                <div className="flex items-center gap-1 rounded-sm bg-accent px-2 py-0.5">
-                                    <Input className="h-5 w-10 border-none bg-transparent p-0 text-center font-mono text-foreground text-sm shadow-none focus-visible:ring-0" max={currentPhase?.MaxLevel ?? 1} min={1} onChange={handleLevelInputChange} type="number" value={level} />
-                                    <span className="font-mono text-foreground text-sm">/ {currentPhase?.MaxLevel ?? 1}</span>
-                                </div>
-                            </div>
-                            <Slider className="w-full" max={currentPhase?.MaxLevel ?? 1} min={1} onValueChange={handleLevelChange} step={1} value={[level]} />
-                        </div>
-
-                        {/* Potential Selection */}
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                                <span className="text-muted-foreground text-sm">Potential:</span>
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Info className="h-3 w-3 cursor-help text-muted-foreground" />
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>Select the potential rank to see stat bonuses</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            </div>
-                            {/* Desktop: Button row */}
-                            <div className="hidden flex-wrap items-center gap-2 md:flex">
-                                {/* Potential 0 (no potential) */}
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <button className={cn("flex h-10 w-10 items-center justify-center rounded-lg border transition-all", potentialRank === 0 ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50")} onClick={() => setPotentialRank(0)} type="button">
-                                                <Image alt="No Potential" height={28} src="/api/cdn/upk/arts/potential_hub/potential_0.png" width={28} />
+                        {/* Main Controls - Two column layout on desktop */}
+                        <div className="rounded-lg border border-border/50 bg-card/30 p-4">
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                {/* Left Column: Promotion + Potential (icon selections) */}
+                                <div className="space-y-3">
+                                    {/* Elite Phase Selection */}
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <span className="text-muted-foreground text-sm">Promotion:</span>
+                                        {operator.phases.map((_, idx) => (
+                                            // biome-ignore lint/suspicious/noArrayIndexKey: Static array of promotion phases
+                                            <button className={cn("flex h-10 w-10 items-center justify-center rounded-lg border transition-all", phaseIndex === idx ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50")} key={idx} onClick={() => setPhaseIndex(idx)} type="button">
+                                                <Image alt={`Elite ${idx}`} height={24} src={`/api/cdn/upk/arts/elite_hub/elite_${idx}.png`} width={24} />
                                             </button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>No Potential</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                                {/* Potentials 1-5 */}
-                                {operator.potentialRanks.map((rank, idx) => (
-                                    <TooltipProvider key={rank.Description}>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <button className={cn("flex h-10 w-10 items-center justify-center rounded-lg border transition-all", potentialRank === idx + 1 ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50")} onClick={() => setPotentialRank(idx + 1)} type="button">
-                                                    <Image alt={`Potential ${idx + 1}`} height={28} src={`/api/cdn/upk/arts/potential_hub/potential_${idx + 1}.png`} width={28} />
-                                                </button>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p>
-                                                    Pot {idx + 1}: {rank.Description}
-                                                </p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                ))}
-                            </div>
-                            {/* Mobile: Dropdown */}
-                            <div className="md:hidden">
-                                <Select onValueChange={(val) => setPotentialRank(Number.parseInt(val, 10))} value={String(potentialRank)}>
-                                    <SelectTrigger className="w-full">
-                                        <SelectValue>
-                                            <div className="flex items-center gap-2">
-                                                <Image alt={`Potential ${potentialRank}`} className="h-5 w-5" height={20} src={`/api/cdn/upk/arts/potential_hub/potential_${potentialRank}.png`} width={20} />
-                                                <span>
-                                                    {potentialRank === 0 ? "No Potential" : `Potential ${potentialRank}`}
-                                                    {potentialRank > 0 && operator.potentialRanks[potentialRank - 1]?.Description && ` - ${operator.potentialRanks[potentialRank - 1]?.Description}`}
-                                                </span>
-                                            </div>
-                                        </SelectValue>
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {/* Potential 0 (no potential) */}
-                                        <SelectItem value="0">
-                                            <div className="flex items-center gap-2">
-                                                <Image alt="No Potential" className="h-5 w-5" height={20} src="/api/cdn/upk/arts/potential_hub/potential_0.png" width={20} />
-                                                <span>No Potential</span>
-                                            </div>
-                                        </SelectItem>
-                                        {/* Potentials 1-5 */}
-                                        {operator.potentialRanks.map((rank, idx) => (
-                                            <SelectItem key={rank.Description} value={String(idx + 1)}>
-                                                <div className="flex items-center gap-2">
-                                                    <Image alt={`Potential ${idx + 1}`} className="h-5 w-5" height={20} src={`/api/cdn/upk/arts/potential_hub/potential_${idx + 1}.png`} width={20} />
-                                                    <span>
-                                                        Pot {idx + 1}: {rank.Description}
-                                                    </span>
-                                                </div>
-                                            </SelectItem>
                                         ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
+                                    </div>
 
-                        {/* Trust Slider */}
-                        <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-1">
-                                    <Heart className="h-3.5 w-3.5 text-muted-foreground" />
-                                    <span className="text-muted-foreground text-sm">Trust</span>
+                                    {/* Potential Selection */}
+                                    <div className="space-y-1.5">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-muted-foreground text-sm">Potential:</span>
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Info className="h-3 w-3 cursor-help text-muted-foreground" />
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>Select the potential rank to see stat bonuses</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        </div>
+                                        {/* Desktop: Compact button row */}
+                                        <div className="hidden flex-wrap items-center gap-1.5 md:flex">
+                                            {/* Potential 0 (no potential) */}
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <button className={cn("flex h-8 w-8 items-center justify-center rounded-md border transition-all", potentialRank === 0 ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50")} onClick={() => setPotentialRank(0)} type="button">
+                                                            <Image alt="No Potential" height={22} src="/api/cdn/upk/arts/potential_hub/potential_0.png" width={22} />
+                                                        </button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>No Potential</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                            {/* Potentials 1-5 */}
+                                            {operator.potentialRanks.map((rank, idx) => (
+                                                <TooltipProvider key={rank.Description}>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <button className={cn("flex h-8 w-8 items-center justify-center rounded-md border transition-all", potentialRank === idx + 1 ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50")} onClick={() => setPotentialRank(idx + 1)} type="button">
+                                                                <Image alt={`Potential ${idx + 1}`} height={22} src={`/api/cdn/upk/arts/potential_hub/potential_${idx + 1}.png`} width={22} />
+                                                            </button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>
+                                                                Pot {idx + 1}: {rank.Description}
+                                                            </p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            ))}
+                                        </div>
+                                        {/* Mobile: Dropdown */}
+                                        <div className="md:hidden">
+                                            <Select onValueChange={(val) => setPotentialRank(Number.parseInt(val, 10))} value={String(potentialRank)}>
+                                                <SelectTrigger className="w-full">
+                                                    <SelectValue>
+                                                        <div className="flex items-center gap-2">
+                                                            <Image alt={`Potential ${potentialRank}`} className="h-5 w-5" height={20} src={`/api/cdn/upk/arts/potential_hub/potential_${potentialRank}.png`} width={20} />
+                                                            <span>
+                                                                {potentialRank === 0 ? "No Potential" : `Potential ${potentialRank}`}
+                                                                {potentialRank > 0 && operator.potentialRanks[potentialRank - 1]?.Description && ` - ${operator.potentialRanks[potentialRank - 1]?.Description}`}
+                                                            </span>
+                                                        </div>
+                                                    </SelectValue>
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {/* Potential 0 (no potential) */}
+                                                    <SelectItem value="0">
+                                                        <div className="flex items-center gap-2">
+                                                            <Image alt="No Potential" className="h-5 w-5" height={20} src="/api/cdn/upk/arts/potential_hub/potential_0.png" width={20} />
+                                                            <span>No Potential</span>
+                                                        </div>
+                                                    </SelectItem>
+                                                    {/* Potentials 1-5 */}
+                                                    {operator.potentialRanks.map((rank, idx) => (
+                                                        <SelectItem key={rank.Description} value={String(idx + 1)}>
+                                                            <div className="flex items-center gap-2">
+                                                                <Image alt={`Potential ${idx + 1}`} className="h-5 w-5" height={20} src={`/api/cdn/upk/arts/potential_hub/potential_${idx + 1}.png`} width={20} />
+                                                                <span>
+                                                                    Pot {idx + 1}: {rank.Description}
+                                                                </span>
+                                                            </div>
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-0.5 rounded-sm bg-accent px-2 py-0.5">
-                                    <Input className="h-5 w-10 border-none bg-transparent p-0 text-center font-mono text-foreground text-sm shadow-none focus-visible:ring-0" max={200} min={0} onChange={handleTrustInputChange} type="number" value={trustLevel} />
-                                    <span className="font-mono text-foreground text-sm">%</span>
+
+                                {/* Right Column: Level + Trust (sliders) */}
+                                <div className="space-y-3">
+                                    {/* Level Slider */}
+                                    <div className="space-y-1.5">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="text-muted-foreground text-sm">Level</span>
+                                            <div className="flex items-center gap-1">
+                                                {/* Level adjustment buttons */}
+                                                <div className="hidden items-center md:flex">
+                                                    <button className="flex h-6 w-6 items-center justify-center rounded-l border border-border bg-card text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" onClick={() => setLevel(1)} title="Min" type="button">
+                                                        <ChevronsLeft className="h-3.5 w-3.5" />
+                                                    </button>
+                                                    <button className="flex h-6 w-6 items-center justify-center border-border border-y border-r bg-card text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" onClick={() => setLevel((prev) => Math.max(1, prev - 5))} title="-5" type="button">
+                                                        <ChevronLeft className="h-3.5 w-3.5" />
+                                                    </button>
+                                                </div>
+                                                {/* Level display */}
+                                                <div className="flex items-center gap-1 rounded-sm bg-accent px-2 py-0.5 md:rounded-none md:border-border md:border-y md:bg-card">
+                                                    <Input className="h-5 w-8 border-none bg-transparent p-0 text-center font-mono text-foreground text-sm shadow-none focus-visible:ring-0" max={currentPhase?.MaxLevel ?? 1} min={1} onChange={handleLevelInputChange} type="number" value={level} />
+                                                </div>
+                                                <div className="hidden items-center md:flex">
+                                                    <button className="flex h-6 w-6 items-center justify-center border-border border-y border-l bg-card text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" onClick={() => setLevel((prev) => Math.min(currentPhase?.MaxLevel ?? 1, prev + 5))} title="+5" type="button">
+                                                        <ChevronRight className="h-3.5 w-3.5" />
+                                                    </button>
+                                                    <button className="flex h-6 w-6 items-center justify-center rounded-r border border-border bg-card text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" onClick={() => setLevel(currentPhase?.MaxLevel ?? 1)} title="Max" type="button">
+                                                        <ChevronsRight className="h-3.5 w-3.5" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <Slider className="w-full" max={currentPhase?.MaxLevel ?? 1} min={1} onValueChange={handleLevelChange} step={1} value={[level]} />
+                                    </div>
+
+                                    {/* Trust Slider */}
+                                    <div className="space-y-1.5">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-1">
+                                                <Heart className="h-3.5 w-3.5 text-muted-foreground" />
+                                                <span className="text-muted-foreground text-sm">Trust</span>
+                                            </div>
+                                            <div className="flex items-center gap-0.5 rounded-sm bg-accent px-2 py-0.5">
+                                                <Input className="h-5 w-10 border-none bg-transparent p-0 text-center font-mono text-foreground text-sm shadow-none focus-visible:ring-0" max={200} min={0} onChange={handleTrustInputChange} type="number" value={trustLevel} />
+                                                <span className="font-mono text-foreground text-sm">%</span>
+                                            </div>
+                                        </div>
+                                        <Slider className="w-full" max={200} min={0} onValueChange={handleTrustChange} step={1} value={[trustLevel]} />
+                                    </div>
                                 </div>
                             </div>
-                            <Slider className="w-full" max={200} min={0} onValueChange={handleTrustChange} step={1} value={[trustLevel]} />
                         </div>
 
                         {/* Module Selection (only at E2) */}
                         {phaseIndex === 2 && availableModules.length > 0 && (
-                            <div className="rounded-lg border border-border/50 bg-secondary/10 p-3">
+                            <div className="rounded-lg border border-border/50 bg-card/30 p-4">
                                 <div className="mb-3 flex items-center gap-2">
                                     <Package className="h-4 w-4 text-primary" />
                                     <span className="font-medium text-sm">Module Selection</span>
