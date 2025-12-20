@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Zap } from "lucide-react";
+import { ChevronDown, Columns, Rows, Zap } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import { memo, useCallback, useMemo, useState } from "react";
@@ -9,21 +9,137 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/component
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/shadcn/select";
 import { Separator } from "~/components/ui/shadcn/separator";
 import { Slider } from "~/components/ui/shadcn/slider";
+import { Switch } from "~/components/ui/shadcn/switch";
+import { ToggleGroup, ToggleGroupItem } from "~/components/ui/shadcn/toggle-group";
 import { descriptionToHtml } from "~/lib/description-parser";
 import { cn } from "~/lib/utils";
 import type { Operator } from "~/types/api";
+import type { SkillLevel as SkillLevelType } from "~/types/api/impl/skill";
 
 interface SkillsContentProps {
     operator: Operator;
 }
 
+// Comparison row component - horizontal layout for minimal eye movement (Fitts's Law)
+interface SkillComparisonRowProps {
+    levelIndex: number;
+    levelData: SkillLevelType;
+    formatSkillLevel: (level: number) => string;
+    isFirst?: boolean;
+    isLast?: boolean;
+}
+
+const SkillComparisonRow = memo(function SkillComparisonRow({ levelIndex, levelData, formatSkillLevel, isFirst, isLast }: SkillComparisonRowProps) {
+    const descriptionHtml = useMemo(() => descriptionToHtml(levelData.description ?? "", levelData.blackboard ?? []), [levelData.description, levelData.blackboard]);
+
+    return (
+        <motion.div
+            animate={{ opacity: 1 }}
+            className={cn(
+                "flex flex-col gap-3 border-border bg-card/30 p-3 md:flex-row md:items-start md:gap-4 md:p-4",
+                isFirst && "rounded-t-lg border-x border-t",
+                !isFirst && !isLast && "border-x border-t",
+                isLast && "rounded-b-lg border",
+                !isFirst && !isLast && !isFirst && "border-t-border/50",
+            )}
+            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
+            transition={{ duration: 0.15, delay: isFirst ? 0 : 0.03 }}
+        >
+            {/* Level Badge - Fixed width column */}
+            <div className="flex shrink-0 items-center gap-2 md:w-14 md:flex-col md:items-start md:gap-1">
+                <Badge className={cn("font-mono text-sm", levelIndex >= 7 ? "bg-primary/20 text-primary" : "bg-secondary/50")} variant="secondary">
+                    {formatSkillLevel(levelIndex)}
+                </Badge>
+            </div>
+
+            {/* Description - Flexible width, takes remaining space */}
+            <div className="min-w-0 flex-1">
+                <p
+                    className="text-foreground text-sm leading-relaxed"
+                    // biome-ignore lint/security/noDangerouslySetInnerHtml: Intentional HTML rendering for skill descriptions
+                    dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+                />
+            </div>
+
+            {/* Stats - Fixed width columns on the right */}
+            <div className="flex shrink-0 items-center gap-2 md:gap-3">
+                <div className="w-14 rounded border border-border/50 bg-secondary/20 px-2 py-1.5 text-center">
+                    <div className="text-[9px] text-muted-foreground md:hidden">SP</div>
+                    <div className="font-mono font-semibold text-foreground text-sm">{levelData.spData?.spCost ?? "-"}</div>
+                </div>
+                <div className="w-14 rounded border border-border/50 bg-secondary/20 px-2 py-1.5 text-center">
+                    <div className="text-[9px] text-muted-foreground md:hidden">Init</div>
+                    <div className="font-mono font-semibold text-foreground text-sm">{levelData.spData?.initSp ?? "-"}</div>
+                </div>
+                <div className="w-14 rounded border border-border/50 bg-secondary/20 px-2 py-1.5 text-center">
+                    <div className="text-[9px] text-muted-foreground md:hidden">Dur</div>
+                    <div className="font-mono font-semibold text-foreground text-sm">{levelData.duration && levelData.duration > 0 ? `${levelData.duration}s` : "-"}</div>
+                </div>
+            </div>
+        </motion.div>
+    );
+});
+
 export const SkillsContent = memo(function SkillsContent({ operator }: SkillsContentProps) {
     const [skillLevel, setSkillLevel] = useState((operator.skills?.[0]?.static?.Levels?.length ?? 1) - 1);
     const [selectedSkillIndex, setSelectedSkillIndex] = useState(operator.skills.length > 0 ? operator.skills.length - 1 : 0);
     const [showTalents, setShowTalents] = useState(true);
+    const [comparisonMode, setComparisonMode] = useState(false);
+    const [selectedComparisonLevels, setSelectedComparisonLevels] = useState<string[]>([]);
 
     const selectedSkill = operator.skills[selectedSkillIndex];
     const skillData = selectedSkill?.static?.Levels?.[skillLevel];
+
+    // Get all available levels for this skill
+    const allSkillLevels = useMemo(() => {
+        const levels = selectedSkill?.static?.Levels ?? [];
+        return levels.map((level, idx) => ({ index: idx, data: level }));
+    }, [selectedSkill?.static?.Levels]);
+
+    // Get default comparison levels (SL7-M3 if available, otherwise last 4 levels)
+    const defaultComparisonLevels = useMemo(() => {
+        const totalLevels = selectedSkill?.static?.Levels?.length ?? 0;
+        if (totalLevels >= 10) {
+            // Has mastery: default to SL7, M1, M2, M3
+            return ["6", "7", "8", "9"];
+        }
+        if (totalLevels >= 4) {
+            // No mastery but has enough levels: show last 4
+            return Array.from({ length: 4 }, (_, i) => String(totalLevels - 4 + i));
+        }
+        // Few levels: show all
+        return Array.from({ length: totalLevels }, (_, i) => String(i));
+    }, [selectedSkill?.static?.Levels?.length]);
+
+    // Initialize selected levels when skill changes or comparison mode is enabled
+    const effectiveComparisonLevels = useMemo(() => {
+        if (selectedComparisonLevels.length === 0) {
+            return defaultComparisonLevels;
+        }
+        // Filter out any levels that don't exist for this skill
+        const maxLevel = (selectedSkill?.static?.Levels?.length ?? 1) - 1;
+        const validLevels = selectedComparisonLevels.filter((l) => Number.parseInt(l, 10) <= maxLevel);
+        return validLevels.length > 0 ? validLevels : defaultComparisonLevels;
+    }, [selectedComparisonLevels, defaultComparisonLevels, selectedSkill?.static?.Levels?.length]);
+
+    // Get the levels to display in comparison view based on selection
+    const comparisonLevels = useMemo(() => {
+        return allSkillLevels
+            .filter((level) => effectiveComparisonLevels.includes(String(level.index)))
+            .sort((a, b) => a.index - b.index);
+    }, [allSkillLevels, effectiveComparisonLevels]);
+
+    // Check if skill has mastery levels (more than 7 levels)
+    const hasMasteryLevels = (selectedSkill?.static?.Levels?.length ?? 0) > 7;
+
+    // Handle comparison level selection
+    const handleComparisonLevelChange = useCallback((values: string[]) => {
+        // Ensure at least one level is always selected
+        if (values.length > 0) {
+            setSelectedComparisonLevels(values);
+        }
+    }, []);
 
     const skillDescriptionHtml = useMemo(() => descriptionToHtml(skillData?.description ?? "", skillData?.blackboard ?? []), [skillData?.description, skillData?.blackboard]);
 
@@ -98,83 +214,188 @@ export const SkillsContent = memo(function SkillsContent({ operator }: SkillsCon
 
             {/* Skill Level Control */}
             <div className="mb-6 rounded-lg border border-border bg-secondary/20 p-4">
-                <div className="flex flex-col gap-4 md:flex-row md:items-center">
-                    <div className="flex-1 space-y-2">
-                        <div className="flex items-center justify-between">
-                            <span className="text-muted-foreground text-sm">Skill Level</span>
-                            <span className="font-mono text-foreground text-sm">{formatSkillLevel(skillLevel)}</span>
+                {/* Comparison Mode Toggle */}
+                {hasMasteryLevels && (
+                    <div className="mb-4 flex items-center justify-between border-border border-b pb-4">
+                        <div className="flex items-center gap-2">
+                            {comparisonMode ? <Columns className="h-4 w-4 text-primary" /> : <Rows className="h-4 w-4 text-muted-foreground" />}
+                            <span className="text-sm">Compare Skill Levels</span>
                         </div>
-                        <Slider className="w-full" max={(selectedSkill?.static?.Levels?.length ?? 1) - 1} min={0} onValueChange={handleSkillLevelChange} step={1} value={[skillLevel]} />
+                        <Switch checked={comparisonMode} onCheckedChange={setComparisonMode} />
                     </div>
-                    <Select onValueChange={handleSkillLevelSelect} value={skillLevel.toString()}>
-                        <SelectTrigger className="w-32">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {(selectedSkill?.static?.Levels ?? []).map((_, i) => (
-                                // biome-ignore lint/suspicious/noArrayIndexKey: Static skill level list
-                                <SelectItem key={i} value={i.toString()}>
-                                    {formatSkillLevel(i)}
-                                </SelectItem>
+                )}
+
+                {/* Single Level View Controls */}
+                {!comparisonMode && (
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center">
+                        <div className="flex-1 space-y-2">
+                            <div className="flex items-center justify-between">
+                                <span className="text-muted-foreground text-sm">Skill Level</span>
+                                <span className="font-mono text-foreground text-sm">{formatSkillLevel(skillLevel)}</span>
+                            </div>
+                            <Slider className="w-full" max={(selectedSkill?.static?.Levels?.length ?? 1) - 1} min={0} onValueChange={handleSkillLevelChange} step={1} value={[skillLevel]} />
+                        </div>
+                        <Select onValueChange={handleSkillLevelSelect} value={skillLevel.toString()}>
+                            <SelectTrigger className="w-32">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {(selectedSkill?.static?.Levels ?? []).map((_, i) => (
+                                    // biome-ignore lint/suspicious/noArrayIndexKey: Static skill level list
+                                    <SelectItem key={i} value={i.toString()}>
+                                        {formatSkillLevel(i)}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                )}
+
+                {/* Comparison Mode Level Selector */}
+                {comparisonMode && (
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground text-sm">Select levels to compare</span>
+                            <span className="text-muted-foreground text-xs">{comparisonLevels.length} selected</span>
+                        </div>
+                        <ToggleGroup
+                            className="flex flex-wrap gap-1.5"
+                            onValueChange={handleComparisonLevelChange}
+                            type="multiple"
+                            value={effectiveComparisonLevels}
+                            variant="outline"
+                        >
+                            {allSkillLevels.map((level) => (
+                                <ToggleGroupItem
+                                    className={cn(
+                                        "h-8 min-w-12 px-2 text-xs",
+                                        level.index >= 7 && "data-[state=on]:bg-primary/20 data-[state=on]:text-primary",
+                                    )}
+                                    key={level.index}
+                                    value={String(level.index)}
+                                >
+                                    {formatSkillLevel(level.index)}
+                                </ToggleGroupItem>
                             ))}
-                        </SelectContent>
-                    </Select>
-                </div>
+                        </ToggleGroup>
+                    </div>
+                )}
             </div>
 
-            {/* Skill Details */}
-            <AnimatePresence mode="wait">
-                <motion.div animate={{ opacity: 1, y: 0 }} className="rounded-lg border border-border bg-card/30" exit={{ opacity: 0, y: -10 }} initial={{ opacity: 0, y: 10 }} key={`${selectedSkillIndex}-${skillLevel}`} transition={{ duration: 0.2 }}>
-                    {skillData && (
-                        <div className="p-4 md:p-6">
-                            {/* Skill Header */}
-                            <div className="mb-4 flex items-start gap-4">
-                                {selectedSkill?.static?.Image && (
-                                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border border-border bg-secondary/50">
-                                        <Image alt={skillData.name ?? "Skill"} className="object-contain" height={48} src={`/api/cdn${selectedSkill.static.Image}`} width={48} />
+            {/* Skill Details - Single View */}
+            {!comparisonMode && (
+                <AnimatePresence mode="wait">
+                    <motion.div animate={{ opacity: 1, y: 0 }} className="rounded-lg border border-border bg-card/30" exit={{ opacity: 0, y: -10 }} initial={{ opacity: 0, y: 10 }} key={`${selectedSkillIndex}-${skillLevel}`} transition={{ duration: 0.2 }}>
+                        {skillData && (
+                            <div className="p-4 md:p-6">
+                                {/* Skill Header */}
+                                <div className="mb-4 flex items-start gap-4">
+                                    {selectedSkill?.static?.Image && (
+                                        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border border-border bg-secondary/50">
+                                            <Image alt={skillData.name ?? "Skill"} className="object-contain" height={48} src={`/api/cdn${selectedSkill.static.Image}`} width={48} />
+                                        </div>
+                                    )}
+                                    <div className="min-w-0 flex-1">
+                                        <h3 className="font-semibold text-foreground text-lg">{skillData.name}</h3>
+                                        <div className="mt-1 flex flex-wrap gap-2">
+                                            <Badge className="bg-secondary/50" variant="secondary">
+                                                {getSpTypeLabel(skillData.spData?.spType ?? "")}
+                                            </Badge>
+                                            <Badge className="bg-secondary/50" variant="secondary">
+                                                {getSkillTypeLabel(skillData.skillType ?? 0)}
+                                            </Badge>
+                                        </div>
                                     </div>
-                                )}
-                                <div className="min-w-0 flex-1">
-                                    <h3 className="font-semibold text-foreground text-lg">{skillData.name}</h3>
-                                    <div className="mt-1 flex flex-wrap gap-2">
-                                        <Badge className="bg-secondary/50" variant="secondary">
-                                            {getSpTypeLabel(skillData.spData?.spType ?? "")}
-                                        </Badge>
-                                        <Badge className="bg-secondary/50" variant="secondary">
-                                            {getSkillTypeLabel(skillData.skillType ?? 0)}
-                                        </Badge>
+                                </div>
+
+                                {/* SP Info */}
+                                <div className="mb-4 grid grid-cols-3 gap-3">
+                                    <div className="rounded-lg border border-border/50 bg-secondary/20 p-3 text-center">
+                                        <div className="text-muted-foreground text-xs">SP Cost</div>
+                                        <div className="font-mono font-semibold text-foreground text-lg">{skillData.spData?.spCost ?? "-"}</div>
                                     </div>
+                                    <div className="rounded-lg border border-border/50 bg-secondary/20 p-3 text-center">
+                                        <div className="text-muted-foreground text-xs">Initial SP</div>
+                                        <div className="font-mono font-semibold text-foreground text-lg">{skillData.spData?.initSp ?? "-"}</div>
+                                    </div>
+                                    <div className="rounded-lg border border-border/50 bg-secondary/20 p-3 text-center">
+                                        <div className="text-muted-foreground text-xs">Duration</div>
+                                        <div className="font-mono font-semibold text-foreground text-lg">{skillData.duration && skillData.duration > 0 ? `${skillData.duration}s` : "-"}</div>
+                                    </div>
+                                </div>
+
+                                {/* Description */}
+                                <div className="rounded-lg border border-border/50 bg-secondary/10 p-4">
+                                    <p
+                                        className="text-foreground text-sm leading-relaxed"
+                                        // biome-ignore lint/security/noDangerouslySetInnerHtml: Intentional HTML rendering for skill descriptions
+                                        dangerouslySetInnerHTML={{ __html: skillDescriptionHtml }}
+                                    />
                                 </div>
                             </div>
+                        )}
+                    </motion.div>
+                </AnimatePresence>
+            )}
 
-                            {/* SP Info */}
-                            <div className="mb-4 grid grid-cols-3 gap-3">
-                                <div className="rounded-lg border border-border/50 bg-secondary/20 p-3 text-center">
-                                    <div className="text-muted-foreground text-xs">SP Cost</div>
-                                    <div className="font-mono font-semibold text-foreground text-lg">{skillData.spData?.spCost ?? "-"}</div>
-                                </div>
-                                <div className="rounded-lg border border-border/50 bg-secondary/20 p-3 text-center">
-                                    <div className="text-muted-foreground text-xs">Initial SP</div>
-                                    <div className="font-mono font-semibold text-foreground text-lg">{skillData.spData?.initSp ?? "-"}</div>
-                                </div>
-                                <div className="rounded-lg border border-border/50 bg-secondary/20 p-3 text-center">
-                                    <div className="text-muted-foreground text-xs">Duration</div>
-                                    <div className="font-mono font-semibold text-foreground text-lg">{skillData.duration && skillData.duration > 0 ? `${skillData.duration}s` : "-"}</div>
-                                </div>
+            {/* Skill Details - Comparison View */}
+            {comparisonMode && (
+                <div className="space-y-3">
+                    {/* Skill Header (shown once above the comparison rows) */}
+                    <div className="flex items-start gap-4 rounded-lg border border-border bg-card/30 p-4">
+                        {selectedSkill?.static?.Image && (
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-border bg-secondary/50">
+                                <Image alt={comparisonLevels[0]?.data.name ?? "Skill"} className="object-contain" height={36} src={`/api/cdn${selectedSkill.static.Image}`} width={36} />
                             </div>
-
-                            {/* Description */}
-                            <div className="rounded-lg border border-border/50 bg-secondary/10 p-4">
-                                <p
-                                    className="text-foreground text-sm leading-relaxed"
-                                    // biome-ignore lint/security/noDangerouslySetInnerHtml: Intentional HTML rendering for skill descriptions
-                                    dangerouslySetInnerHTML={{ __html: skillDescriptionHtml }}
-                                />
+                        )}
+                        <div className="min-w-0 flex-1">
+                            <h3 className="font-semibold text-foreground text-lg">{comparisonLevels[0]?.data.name}</h3>
+                            <div className="mt-1 flex flex-wrap gap-2">
+                                <Badge className="bg-secondary/50" variant="secondary">
+                                    {getSpTypeLabel(comparisonLevels[0]?.data.spData?.spType ?? "")}
+                                </Badge>
+                                <Badge className="bg-secondary/50" variant="secondary">
+                                    {getSkillTypeLabel(comparisonLevels[0]?.data.skillType ?? 0)}
+                                </Badge>
                             </div>
                         </div>
-                    )}
-                </motion.div>
-            </AnimatePresence>
+                    </div>
+
+                    {/* Column Headers - Desktop only */}
+                    <div className="hidden items-center gap-4 px-4 text-muted-foreground text-xs md:flex">
+                        <div className="w-14 shrink-0">Level</div>
+                        <div className="min-w-0 flex-1">Description</div>
+                        <div className="flex shrink-0 gap-3">
+                            <div className="w-14 text-center">SP</div>
+                            <div className="w-14 text-center">Init</div>
+                            <div className="w-14 text-center">Dur</div>
+                        </div>
+                    </div>
+
+                    {/* Comparison Rows */}
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            animate={{ opacity: 1 }}
+                            className="flex flex-col"
+                            exit={{ opacity: 0 }}
+                            initial={{ opacity: 0 }}
+                            key={`comparison-${selectedSkillIndex}-${effectiveComparisonLevels.join("-")}`}
+                            transition={{ duration: 0.2 }}
+                        >
+                            {comparisonLevels.map((level, idx) => (
+                                <SkillComparisonRow
+                                    formatSkillLevel={formatSkillLevel}
+                                    isFirst={idx === 0}
+                                    isLast={idx === comparisonLevels.length - 1}
+                                    key={level.index}
+                                    levelData={level.data}
+                                    levelIndex={level.index}
+                                />
+                            ))}
+                        </motion.div>
+                    </AnimatePresence>
+                </div>
+            )}
 
             <Separator className="my-6" />
 
