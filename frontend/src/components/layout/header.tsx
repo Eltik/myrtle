@@ -455,7 +455,7 @@ export function Header() {
                                         <div className="flex h-10 w-full items-center justify-center">
                                             <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
                                         </div>
-                                    ) : user ? (
+                                    ) : user?.status ? (
                                         <div className="space-y-3">
                                             <div className="flex items-center gap-3 rounded-md bg-secondary/50 px-3 py-2">
                                                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20">
@@ -496,7 +496,7 @@ export function Header() {
                                 <div className="flex h-8 w-8 items-center justify-center">
                                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
                                 </div>
-                            ) : user ? (
+                            ) : user?.status ? (
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button className="flex h-8 items-center gap-2 rounded-md border border-border bg-transparent px-3 text-foreground text-sm transition-colors hover:bg-secondary" variant="ghost">
@@ -511,7 +511,7 @@ export function Header() {
                                             <p className="text-muted-foreground text-xs">Level {user.status.level}</p>
                                         </div>
                                         <DropdownMenuSeparator />
-                                        <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={logout}>
+                                        <DropdownMenuItem className="text-primary transition-colors focus:text-primary/80" onClick={logout}>
                                             <LogOut className="mr-2 h-4 w-4" />
                                             Logout
                                         </DropdownMenuItem>

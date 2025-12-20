@@ -42,8 +42,8 @@ export function useAuth() {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
 
-    // Refresh session from the server
-    const refreshSession = useCallback(async (): Promise<User | null> => {
+    // Fetch user data from the server (uses cached database data, no game server refresh)
+    const fetchUser = useCallback(async (): Promise<User | null> => {
         try {
             const res = await fetch("/api/auth/me", { method: "POST" });
             const data = await res.json();
@@ -74,11 +74,11 @@ export function useAuth() {
             setLoading(false);
         }
 
-        // Step 3: Refresh session in background to validate and update seqnum
-        refreshSession().then((refreshedUser) => {
-            if (refreshedUser) {
-                setUser(refreshedUser);
-                setCachedUser(refreshedUser);
+        // Step 3: Fetch user data in background to validate session
+        fetchUser().then((fetchedUser) => {
+            if (fetchedUser) {
+                setUser(fetchedUser);
+                setCachedUser(fetchedUser);
             } else {
                 // Session expired or invalid - clear everything
                 setUser(null);
@@ -89,7 +89,7 @@ export function useAuth() {
                 setLoading(false);
             }
         });
-    }, [refreshSession]);
+    }, [fetchUser]);
 
     const login = useCallback(async (email: string, code: string, server: string) => {
         const res = await fetch("/api/auth/login", {
@@ -100,15 +100,10 @@ export function useAuth() {
 
         const data = await res.json();
 
-        if (data.success) {
-            // After successful login, fetch user data
-            const meRes = await fetch("/api/auth/me", { method: "POST" });
-            const meData = await meRes.json();
-
-            if (meData.success && meData.user) {
-                setUser(meData.user);
-                setCachedUser(meData.user);
-            }
+        if (data.success && data.user) {
+            // Login response includes user data (refreshed during login)
+            setUser(data.user);
+            setCachedUser(data.user);
         }
 
         return data;
@@ -120,5 +115,5 @@ export function useAuth() {
         setCachedUser(null);
     }, []);
 
-    return { user, loading, login, logout, refreshSession };
+    return { user, loading, login, logout, fetchUser };
 }

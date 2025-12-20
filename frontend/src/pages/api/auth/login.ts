@@ -2,6 +2,7 @@ import { serialize } from "cookie";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
 import { env } from "~/env";
+import type { User } from "~/types/api";
 
 // Valid Arknights server regions
 const AKServerSchema = z.enum(["en", "jp", "kr", "cn", "bili", "tw"]);
@@ -32,6 +33,7 @@ interface BackendLoginResponse {
 // API response types
 interface SuccessResponse {
     success: true;
+    user: User;
 }
 
 interface ErrorResponse {
@@ -66,14 +68,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
         const { email, code, server }: LoginInput = parseResult.data;
 
-        // Build backend URL with properly encoded parameters
-        const backendUrl = new URL("/login", env.BACKEND_URL);
-        backendUrl.searchParams.set("email", email);
-        backendUrl.searchParams.set("code", code.toString());
-        backendUrl.searchParams.set("server", server);
+        // Step 1: Authenticate with backend
+        const loginUrl = new URL("/login", env.BACKEND_URL);
+        loginUrl.searchParams.set("email", email);
+        loginUrl.searchParams.set("code", code.toString());
+        loginUrl.searchParams.set("server", server);
 
-        // Call backend authentication service
-        const loginResponse = await fetch(backendUrl.toString(), {
+        const loginResponse = await fetch(loginUrl.toString(), {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -101,6 +102,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             });
         }
 
+        // Step 2: Refresh to fetch user data and store in database
+        const refreshUrl = new URL("/refresh", env.BACKEND_URL);
+        refreshUrl.searchParams.set("uid", backendData.uid);
+        refreshUrl.searchParams.set("secret", backendData.secret);
+        refreshUrl.searchParams.set("seqnum", backendData.seqnum.toString());
+        refreshUrl.searchParams.set("server", server);
+
+        const refreshResponse = await fetch(refreshUrl.toString(), {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
+
+        if (!refreshResponse.ok) {
+            const errorText = await refreshResponse.text();
+            console.error(`Backend refresh failed: ${refreshResponse.status} - ${errorText}`);
+
+            return res.status(500).json({
+                success: false,
+                error: "Failed to fetch user data",
+            });
+        }
+
+        const user: User = await refreshResponse.json();
+
+        // Step 3: Set session cookies (seqnum incremented after refresh)
         const sessionData = JSON.stringify({
             uid: backendData.uid,
             secret: backendData.secret,
@@ -125,7 +153,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             }),
         ]);
 
-        return res.status(200).json({ success: true });
+        return res.status(200).json({ success: true, user });
     } catch (error) {
         console.error("Login handler error:", error);
         return res.status(500).json({
