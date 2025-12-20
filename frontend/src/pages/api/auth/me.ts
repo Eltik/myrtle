@@ -50,6 +50,28 @@ function getSessionFromCookie(req: NextApiRequest): SessionData | null {
     }
 }
 
+/**
+ * Clear auth cookies helper
+ */
+function clearAuthCookies(res: NextApiResponse) {
+    res.setHeader("Set-Cookie", [
+        serialize("auth_session", "", {
+            httpOnly: true,
+            secure: env.NODE_ENV === "production",
+            sameSite: "strict",
+            path: "/",
+            maxAge: 0,
+        }),
+        serialize("auth_indicator", "", {
+            httpOnly: false,
+            secure: env.NODE_ENV === "production",
+            sameSite: "strict",
+            path: "/",
+            maxAge: 0,
+        }),
+    ]);
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
     // Only allow POST
     if (req.method !== "POST") {
@@ -71,84 +93,51 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             });
         }
 
-        const { uid, secret, seqnum, server } = session;
+        const { uid } = session;
 
-        // Build backend URL with properly encoded parameters
-        const backendUrl = new URL("/refresh", env.BACKEND_URL);
+        // Build backend URL to get user data (no refresh)
+        const backendUrl = new URL("/get-user", env.BACKEND_URL);
         backendUrl.searchParams.set("uid", uid);
-        backendUrl.searchParams.set("secret", secret);
-        backendUrl.searchParams.set("seqnum", seqnum.toString());
-        backendUrl.searchParams.set("server", server);
 
-        // Call backend refresh service
-        const refreshResponse = await fetch(backendUrl.toString(), {
-            method: "POST",
+        // Call backend to get user data
+        const userResponse = await fetch(backendUrl.toString(), {
+            method: "GET",
             headers: {
                 "Content-Type": "application/json",
             },
         });
 
-        if (!refreshResponse.ok) {
-            const errorText = await refreshResponse.text();
-            console.error(`Backend refresh failed: ${refreshResponse.status} - ${errorText}`);
+        if (!userResponse.ok) {
+            const errorText = await userResponse.text();
+            console.error(`Backend get-user failed: ${userResponse.status} - ${errorText}`);
 
-            // If unauthorized, clear the session cookies
-            if (refreshResponse.status === 401) {
-                res.setHeader("Set-Cookie", [
-                    serialize("auth_session", "", {
-                        httpOnly: true,
-                        secure: env.NODE_ENV === "production",
-                        sameSite: "strict",
-                        path: "/",
-                        maxAge: 0, // Expire immediately
-                    }),
-                    serialize("auth_indicator", "", {
-                        httpOnly: false,
-                        secure: env.NODE_ENV === "production",
-                        sameSite: "strict",
-                        path: "/",
-                        maxAge: 0, // Expire immediately
-                    }),
-                ]);
+            // If not found or unauthorized, clear the session cookies
+            if (userResponse.status === 404 || userResponse.status === 401) {
+                clearAuthCookies(res);
                 return res.status(401).json({
                     success: false,
-                    error: "Session expired",
+                    error: "User not found",
                 });
             }
 
             return res.status(400).json({
                 success: false,
-                error: "Failed to refresh session",
+                error: "Failed to get user data",
             });
         }
 
-        const user: User = await refreshResponse.json();
+        // Backend returns database User model: { id, uid, server, data, created_at }
+        // The actual user data is nested in the 'data' field
+        const dbUser = await userResponse.json();
+        const user: User = dbUser.data;
 
-        // Increment seqnum and update the session cookie
-        const newSeqnum = seqnum + 1;
-        const sessionData = JSON.stringify({
-            uid,
-            secret,
-            seqnum: newSeqnum,
-            server,
-        });
-
-        res.setHeader("Set-Cookie", [
-            serialize("auth_session", sessionData, {
-                httpOnly: true,
-                secure: env.NODE_ENV === "production",
-                sameSite: "strict",
-                path: "/",
-                maxAge: 60 * 60 * 24 * 7, // 1 week
-            }),
-            serialize("auth_indicator", "1", {
-                httpOnly: false, // Client-side readable to check if session exists
-                secure: env.NODE_ENV === "production",
-                sameSite: "strict",
-                path: "/",
-                maxAge: 60 * 60 * 24 * 7, // 1 week
-            }),
-        ]);
+        if (!user || !user.status) {
+            clearAuthCookies(res);
+            return res.status(401).json({
+                success: false,
+                error: "Invalid user data",
+            });
+        }
 
         return res.status(200).json({
             success: true,
