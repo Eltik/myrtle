@@ -10,4 +10,5 @@ export * from "./impl/range";
 export * from "./impl/skill";
 export * from "./impl/skin";
 export * from "./impl/trust";
+export * from "./impl/user";
 export * from "./impl/voice";
