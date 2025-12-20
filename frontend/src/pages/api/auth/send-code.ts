@@ -51,13 +51,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         const { email, server }: SendCodeInput = parseResult.data;
 
         // Build backend URL with properly encoded parameters
-        const backendUrl = new URL("/yostar/send-code", env.BACKEND_URL);
+        const backendUrl = new URL("/send-code", env.BACKEND_URL);
         backendUrl.searchParams.set("email", email);
         backendUrl.searchParams.set("server", server);
 
         // Call backend to send verification code
         const sendCodeResponse = await fetch(backendUrl.toString(), {
-            method: "GET",
+            method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
@@ -66,7 +66,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         if (!sendCodeResponse.ok) {
             // Log the actual error for debugging, but don't expose to client
             const errorText = await sendCodeResponse.text();
-            console.error(`Backend send-code failed: ${sendCodeResponse.status} - ${errorText}`);
+            console.error(`Backend send-code failed: ${sendCodeResponse.status} - ${errorText}.`);
 
             // Return generic error to client (don't leak backend details)
             return res.status(400).json({

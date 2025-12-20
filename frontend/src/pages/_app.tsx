@@ -13,7 +13,7 @@ const geist = Geist({
 
 const MyApp: AppType = ({ Component, pageProps }) => {
     return (
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+        <ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange enableSystem>
             <div className={geist.className}>
                 <PagesTopLoader color="#e66e68" height={4} showSpinner={false} />
                 <Layout>

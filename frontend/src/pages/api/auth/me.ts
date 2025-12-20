@@ -74,7 +74,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         const { uid, secret, seqnum, server } = session;
 
         // Build backend URL with properly encoded parameters
-        const backendUrl = new URL("/yostar/refresh", env.BACKEND_URL);
+        const backendUrl = new URL("/refresh", env.BACKEND_URL);
         backendUrl.searchParams.set("uid", uid);
         backendUrl.searchParams.set("secret", secret);
         backendUrl.searchParams.set("seqnum", seqnum.toString());
@@ -82,7 +82,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
         // Call backend refresh service
         const refreshResponse = await fetch(backendUrl.toString(), {
-            method: "GET",
+            method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },

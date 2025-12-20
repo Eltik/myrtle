@@ -4,11 +4,11 @@ import { ChevronDown, Ellipsis, Github, LogOut, Menu, User } from "lucide-react"
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { useAuth } from "~/hooks/use-auth";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "~/components/ui/shadcn/accordion";
 import { Button } from "~/components/ui/shadcn/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "~/components/ui/shadcn/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "~/components/ui/shadcn/sheet";
+import { useAuth } from "~/hooks/use-auth";
 import { Login } from "./login";
 
 type NavItem = {
@@ -467,12 +467,12 @@ export function Header() {
                                                 </div>
                                             </div>
                                             <Button
-                                                variant="outline"
                                                 className="w-full justify-start text-destructive hover:bg-destructive/10 hover:text-destructive"
                                                 onClick={() => {
                                                     logout();
                                                     setMobileMenuOpen(false);
                                                 }}
+                                                variant="outline"
                                             >
                                                 <LogOut className="mr-2 h-4 w-4" />
                                                 Logout
@@ -499,7 +499,7 @@ export function Header() {
                             ) : user ? (
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" className="flex h-8 items-center gap-2 rounded-md border border-border bg-transparent px-3 text-foreground text-sm transition-colors hover:bg-secondary">
+                                        <Button className="flex h-8 items-center gap-2 rounded-md border border-border bg-transparent px-3 text-foreground text-sm transition-colors hover:bg-secondary" variant="ghost">
                                             <User className="h-3.5 w-3.5" />
                                             <span className="max-w-24 truncate font-medium">{user.status.nickName}</span>
                                             <ChevronDown className="h-3 w-3" />
@@ -511,7 +511,7 @@ export function Header() {
                                             <p className="text-muted-foreground text-xs">Level {user.status.level}</p>
                                         </div>
                                         <DropdownMenuSeparator />
-                                        <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive">
+                                        <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={logout}>
                                             <LogOut className="mr-2 h-4 w-4" />
                                             Logout
                                         </DropdownMenuItem>
