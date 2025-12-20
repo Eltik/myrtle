@@ -108,8 +108,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             server,
         });
 
-        res.setHeader(
-            "Set-Cookie",
+        res.setHeader("Set-Cookie", [
             serialize("auth_session", sessionData, {
                 httpOnly: true,
                 secure: env.NODE_ENV === "production",
@@ -117,7 +116,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
                 path: "/",
                 maxAge: 60 * 60 * 24 * 7, // 1 week
             }),
-        );
+            serialize("auth_indicator", "1", {
+                httpOnly: false, // Client-side readable to check if session exists
+                secure: env.NODE_ENV === "production",
+                sameSite: "strict",
+                path: "/",
+                maxAge: 60 * 60 * 24 * 7, // 1 week
+            }),
+        ]);
 
         return res.status(200).json({ success: true });
     } catch (error) {
