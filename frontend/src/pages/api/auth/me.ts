@@ -92,10 +92,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             const errorText = await refreshResponse.text();
             console.error(`Backend refresh failed: ${refreshResponse.status} - ${errorText}`);
 
-            // If unauthorized, clear the session cookie
+            // If unauthorized, clear the session cookies
             if (refreshResponse.status === 401) {
-                res.setHeader(
-                    "Set-Cookie",
+                res.setHeader("Set-Cookie", [
                     serialize("auth_session", "", {
                         httpOnly: true,
                         secure: env.NODE_ENV === "production",
@@ -103,7 +102,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
                         path: "/",
                         maxAge: 0, // Expire immediately
                     }),
-                );
+                    serialize("auth_indicator", "", {
+                        httpOnly: false,
+                        secure: env.NODE_ENV === "production",
+                        sameSite: "strict",
+                        path: "/",
+                        maxAge: 0, // Expire immediately
+                    }),
+                ]);
                 return res.status(401).json({
                     success: false,
                     error: "Session expired",
@@ -127,8 +133,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             server,
         });
 
-        res.setHeader(
-            "Set-Cookie",
+        res.setHeader("Set-Cookie", [
             serialize("auth_session", sessionData, {
                 httpOnly: true,
                 secure: env.NODE_ENV === "production",
@@ -136,7 +141,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
                 path: "/",
                 maxAge: 60 * 60 * 24 * 7, // 1 week
             }),
-        );
+            serialize("auth_indicator", "1", {
+                httpOnly: false, // Client-side readable to check if session exists
+                secure: env.NODE_ENV === "production",
+                sameSite: "strict",
+                path: "/",
+                maxAge: 60 * 60 * 24 * 7, // 1 week
+            }),
+        ]);
 
         return res.status(200).json({
             success: true,

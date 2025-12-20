@@ -1,12 +1,15 @@
 "use client";
 
-import { ChevronDown, Ellipsis, Github, Menu, User } from "lucide-react";
+import { ChevronDown, Ellipsis, Github, LogOut, Menu, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useAuth } from "~/hooks/use-auth";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "~/components/ui/shadcn/accordion";
 import { Button } from "~/components/ui/shadcn/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "~/components/ui/shadcn/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "~/components/ui/shadcn/sheet";
+import { Login } from "./login";
 
 type NavItem = {
     label: string | React.ReactNode;
@@ -69,6 +72,7 @@ function isNavItemActive(item: NavItem, pathname: string): boolean {
 
 export function Header() {
     const router = useRouter();
+    const { user, loading, logout } = useAuth();
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
     const [hoverStyle, setHoverStyle] = useState({ left: 0, width: 0, opacity: 0 });
     const [activeIconStyle, setActiveIconStyle] = useState({ left: 0, opacity: 0 });
@@ -447,10 +451,36 @@ export function Header() {
                                     )}
                                 </nav>
                                 <div className="mt-auto border-border border-t px-2 py-4">
-                                    <Button className="w-full gap-2" variant="outline">
-                                        <User className="h-4 w-4" />
-                                        Login
-                                    </Button>
+                                    {loading ? (
+                                        <div className="flex h-10 w-full items-center justify-center">
+                                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+                                        </div>
+                                    ) : user ? (
+                                        <div className="space-y-3">
+                                            <div className="flex items-center gap-3 rounded-md bg-secondary/50 px-3 py-2">
+                                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20">
+                                                    <User className="h-4 w-4 text-primary" />
+                                                </div>
+                                                <div className="flex-1 overflow-hidden">
+                                                    <p className="truncate font-medium text-foreground text-sm">{user.status.nickName}</p>
+                                                    <p className="text-muted-foreground text-xs">Level {user.status.level}</p>
+                                                </div>
+                                            </div>
+                                            <Button
+                                                variant="outline"
+                                                className="w-full justify-start text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                                onClick={() => {
+                                                    logout();
+                                                    setMobileMenuOpen(false);
+                                                }}
+                                            >
+                                                <LogOut className="mr-2 h-4 w-4" />
+                                                Logout
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <Login />
+                                    )}
                                 </div>
                             </SheetContent>
                         </Sheet>
@@ -461,10 +491,36 @@ export function Header() {
                                 <span className="sr-only">GitHub</span>
                             </Link>
                         </Button>
-                        <Button className="hidden h-8 gap-2 bg-transparent md:flex" size="sm" variant="outline">
-                            <User className="h-3.5 w-3.5" />
-                            Login
-                        </Button>
+                        <div className="hidden md:block">
+                            {loading ? (
+                                <div className="flex h-8 w-8 items-center justify-center">
+                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+                                </div>
+                            ) : user ? (
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" className="flex h-8 items-center gap-2 rounded-md border border-border bg-transparent px-3 text-foreground text-sm transition-colors hover:bg-secondary">
+                                            <User className="h-3.5 w-3.5" />
+                                            <span className="max-w-24 truncate font-medium">{user.status.nickName}</span>
+                                            <ChevronDown className="h-3 w-3" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-48">
+                                        <div className="px-2 py-1.5">
+                                            <p className="font-medium text-sm">{user.status.nickName}</p>
+                                            <p className="text-muted-foreground text-xs">Level {user.status.level}</p>
+                                        </div>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive">
+                                            <LogOut className="mr-2 h-4 w-4" />
+                                            Logout
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            ) : (
+                                <Login variant="header" />
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>

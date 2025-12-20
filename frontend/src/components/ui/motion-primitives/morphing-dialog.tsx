@@ -214,8 +214,8 @@ function MorphingDialogContainer({ children }: MorphingDialogContainerProps) {
         <AnimatePresence initial={false} mode="sync">
             {isOpen && (
                 <>
-                    <motion.div animate={{ opacity: 1 }} className="fixed inset-0 h-full w-full bg-black/60 backdrop-blur-sm" exit={{ opacity: 0 }} initial={{ opacity: 0 }} key={`backdrop-${uniqueId}`} />
-                    <div className="fixed inset-0 z-50 flex items-center justify-center">{children}</div>
+                    <motion.div animate={{ opacity: 1 }} className="fixed inset-0 z-60 h-full w-full bg-black/60 backdrop-blur-sm" exit={{ opacity: 0 }} initial={{ opacity: 0 }} key={`backdrop-${uniqueId}`} />
+                    <div className="fixed inset-0 z-60 flex items-center justify-center">{children}</div>
                 </>
             )}
         </AnimatePresence>,
