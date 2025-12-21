@@ -318,3 +318,40 @@ export function capitalize(s: string): string {
     if (!s) return "";
     return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }
+
+/**
+ * Normalizes a skin ID for use in avatar URLs.
+ * Replaces "@" or "#" with "_" and URL encodes the result.
+ */
+export function normalizeSkinId(skinId: string): string {
+    if (skinId.includes("@")) {
+        return encodeURIComponent(skinId.replaceAll("@", "_"));
+    }
+    return encodeURIComponent(skinId.replaceAll("#", "_"));
+}
+
+/**
+ * Returns the GitHub avatar URL for a given character/skin ID.
+ */
+export function getAvatarById(charId: string): string {
+    return `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${normalizeSkinId(charId)}.png`;
+}
+
+/**
+ * Gets the avatar URL for a user's secretary.
+ * Handles both default skins (ending in #1) and purchased skins (containing @).
+ */
+export function getAvatarSkinId(user: { status?: { secretary: string; secretarySkinId: string } } | null): string {
+    const DEFAULT_AVATAR = "https://static.wikia.nocookie.net/mrfz/images/4/46/Symbol_profile.png/revision/latest?cb=20220418145951";
+
+    if (!user?.status) return DEFAULT_AVATAR;
+
+    const secretaryId = user.status.secretary;
+    const secretarySkinId = user.status.secretarySkinId;
+
+    // If secretarySkinId doesn't contain @ and ends with #1, it's the default E0 skin
+    // In that case, use the base character ID
+    const skinId = !secretarySkinId.includes("@") && secretarySkinId.endsWith("#1") ? secretaryId : secretarySkinId;
+
+    return getAvatarById(skinId);
+}
