@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Ellipsis, Github, LogOut, Menu, User } from "lucide-react";
+import { ChevronDown, Ellipsis, Github, LogOut, Menu } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -9,6 +9,8 @@ import { Button } from "~/components/ui/shadcn/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "~/components/ui/shadcn/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "~/components/ui/shadcn/sheet";
 import { useAuth } from "~/hooks/use-auth";
+import { getAvatarSkinId } from "~/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/shadcn/avatar";
 import { Login } from "./login";
 
 type NavItem = {
@@ -347,7 +349,7 @@ export function Header() {
                             )}
                         </nav>
 
-                        {/* Dropdown container - GPU accelerated */}
+                        {/* Dropdown container */}
                         <div
                             className="absolute top-full pt-2 will-change-transform"
                             onMouseEnter={handleDropdownMouseEnter}
@@ -458,9 +460,10 @@ export function Header() {
                                     ) : user?.status ? (
                                         <div className="space-y-3">
                                             <div className="flex items-center gap-3 rounded-md bg-secondary/50 px-3 py-2">
-                                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20">
-                                                    <User className="h-4 w-4 text-primary" />
-                                                </div>
+                                                <Avatar className="h-8 w-8">
+                                                    <AvatarImage alt="User avatar" src={getAvatarSkinId(user)} />
+                                                    <AvatarFallback className="bg-primary/20 text-primary text-xs">{user.status.nickName.slice(0, 1) ?? "E"}</AvatarFallback>
+                                                </Avatar>
                                                 <div className="flex-1 overflow-hidden">
                                                     <p className="truncate font-medium text-foreground text-sm">{user.status.nickName}</p>
                                                     <p className="text-muted-foreground text-xs">Level {user.status.level}</p>
@@ -499,8 +502,11 @@ export function Header() {
                             ) : user?.status ? (
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button className="flex h-8 items-center gap-2 rounded-md border border-border bg-transparent px-3 text-foreground text-sm transition-colors hover:bg-secondary" variant="ghost">
-                                            <User className="h-3.5 w-3.5" />
+                                        <Button className="flex h-8 items-center gap-2 rounded-md border border-border bg-transparent px-2 text-foreground text-sm transition-colors hover:bg-secondary" variant="ghost">
+                                            <Avatar className="h-5 w-5">
+                                                <AvatarImage alt="User avatar" src={getAvatarSkinId(user)} />
+                                                <AvatarFallback className="text-[10px]">{user.status.nickName.slice(0, 1) ?? "E"}</AvatarFallback>
+                                            </Avatar>
                                             <span className="max-w-24 truncate font-medium">{user.status.nickName}</span>
                                             <ChevronDown className="h-3 w-3" />
                                         </Button>
