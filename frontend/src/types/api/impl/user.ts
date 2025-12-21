@@ -1,6 +1,92 @@
 // User types - Converted from backend Rust types
+// Includes types from ak-roster (https://github.com/neeia/ak-roster)
 
+// Server type aliases
+export type ApiServer = "en" | "jp" | "cn" | "kr";
+export type YostarServer = "en" | "jp" | "kr";
 export type AKServer = "en" | "jp" | "kr" | "cn" | "bili" | "tw";
+export type ArknightsServer = AKServer; // Alias for compatibility
+export type Distributor = "yostar" | "hypergryph" | "bilibili";
+
+// Channel IDs for different distributors
+export const channelIds: { [distributor in Distributor]: string } = {
+    hypergryph: "1",
+    bilibili: "2",
+    yostar: "3",
+};
+
+// Yostar API domains by server region
+export const yostarDomains: Record<YostarServer, string> = {
+    en: "https://en-sdk-api.yostarplat.com",
+    jp: "https://jp-sdk-api.yostarplat.com",
+    kr: "https://jp-sdk-api.yostarplat.com",
+};
+
+// Network configuration URLs for all servers
+export const networkConfigUrls: { [server in AKServer]: string } = {
+    en: "https://ak-conf.arknights.global/config/prod/official/network_config",
+    jp: "https://ak-conf.arknights.jp/config/prod/official/network_config",
+    kr: "https://ak-conf.arknights.kr/config/prod/official/network_config",
+    cn: "https://ak-conf.hypergryph.com/config/prod/official/network_config",
+    bili: "https://ak-conf.hypergryph.com/config/prod/b/network_config",
+    tw: "https://ak-conf.txwy.tw/config/prod/official/network_config",
+};
+
+// Yostar authentication response
+export interface YostarAuthData {
+    result: number;
+    yostar_uid: string;
+    yostar_token: string;
+    yostar_account: string;
+}
+
+// Yostar token response
+export interface YostarToken {
+    result: number;
+    uid: string;
+    token: string;
+}
+
+// Access token response
+export interface AccessToken {
+    result: number;
+    accessToken: string;
+}
+
+// U8 token response
+export interface U8Token {
+    result: number;
+    uid: string;
+    token: string;
+}
+
+// Login secret response
+export interface LoginSecret {
+    result: number;
+    uid: string;
+    secret: string;
+}
+
+// Game version information
+export interface VersionInfo {
+    resVersion: string;
+    clientVersion: string;
+}
+
+// Device/authentication token data
+export interface TokenData {
+    deviceId: string;
+    token: YostarToken;
+}
+
+// Database model for stored user (wrapper around game data)
+export interface StoredUser {
+    id: string; // UUID
+    uid: string;
+    server: string;
+    data: User; // The actual game User data
+    createdAt: string; // ISO date string
+}
 
 /** Response from account/syncData endpoint */
 export interface UserResponse {
@@ -26,6 +112,7 @@ export interface User {
     building: Building;
     dexNav: DexNav;
     crisis: Crisis;
+    crisisV2?: unknown; // From ak-roster
     tshop: Record<string, TShopEntry>;
     gacha: Gacha;
     backflow: Backflow;
@@ -39,6 +126,7 @@ export interface User {
     siracusaMap: SiracusaMap;
     storyreview: StoryReview;
     medal: Medal;
+    nameCardStyle?: unknown; // From ak-roster
     aprilFool: Record<string, AprilFoolEntry>;
     retro: Retro;
     charm: Charm;
@@ -53,6 +141,13 @@ export interface User {
     inventory: Record<string, unknown>;
     limitedBuff: LimitedBuff;
     ticket: unknown;
+    // Additional fields from ak-roster
+    tokenData?: TokenData;
+    sandboxPerm?: unknown;
+    trainingGround?: unknown;
+    checkMeta?: unknown;
+    share?: unknown;
+    roguelike?: unknown;
 }
 
 export interface Dungeon {
@@ -121,6 +216,7 @@ export interface UserStatus {
     tipMonthlyCardExpireTs: number;
     secretary: string;
     secretarySkinId: string;
+    globalVoiceLan?: string; // From ak-roster - global voice language setting
 }
 
 export interface Avatar {
@@ -135,6 +231,7 @@ export interface Troop {
     chars: Record<string, CharacterData>;
     charGroup: Record<string, CharGroup>;
     charMission: Record<string, Record<string, number>>;
+    addon?: unknown; // From ak-roster
 }
 
 export interface Squad {
@@ -167,6 +264,7 @@ export interface CharacterData {
     voiceLan: string;
     currentEquip: string | null;
     equip: Record<string, EquipData>;
+    starMark?: number; // From ak-roster - star mark/favorite indicator
     static: unknown | null; // Added by formatUser
 }
 
@@ -233,12 +331,17 @@ export interface PushFlags {
 }
 
 export interface Equipment {
-    missions: unknown;
+    missions: Record<string, EquipmentMission>;
+}
+
+export interface EquipmentMission {
+    value: number;
+    target: number;
 }
 
 export interface UserSkin {
-    characterSkins: unknown;
-    skinTs: unknown;
+    characterSkins: Record<string, number>; // Record<skin_id, 1> - the number is always 1
+    skinTs: Record<string, number>; // Record<skin_id, epoch_timestamp>
 }
 
 export interface Shop {
@@ -350,7 +453,16 @@ export interface UserMissionRewardCategories {
 export interface Social {
     assistCharList: (AssistChar | null)[];
     yesterdayReward: YesterdayReward;
-    yCrissSs: string;
+    yCrisisSs: string; // Fixed typo from yCrissSs
+    yCrisisV2Ss?: unknown; // From ak-roster
+    medalBoard?: MedalBoard; // From ak-roster
+}
+
+export interface MedalBoard {
+    type: string;
+    custom: string;
+    template: unknown;
+    templateMedalList: unknown;
 }
 
 export interface AssistChar {
