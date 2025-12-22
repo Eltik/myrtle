@@ -382,7 +382,7 @@ export function CharacterCard({ data }: CharacterCardProps) {
                         <div>
                             <div className="flex items-center justify-between">
                                 <span className="font-medium text-sm">Trust</span>
-                                <span className="font-bold text-sm">{((operator?.trust ?? 0) / 2).toFixed(0)}%</span>
+                                <span className="font-bold text-sm">{(operator?.trust ?? 0).toFixed(0)}%</span>
                             </div>
                             <Progress className="h-1.5 transition-all duration-1000 ease-out" value={trustProgress} />
                         </div>
@@ -444,21 +444,32 @@ export function CharacterCard({ data }: CharacterCardProps) {
                             <AccordionContent>
                                 <ScrollArea className="max-h-[180px]">
                                     {data.skills && data.skills.length > 0 ? (
-                                        <div className="space-y-2">
+                                        <div className="space-y-2 overflow-hidden">
                                             {data.skills.map((skill, index) => {
                                                 const skillStatic = skill.static as {
                                                     iconId?: string;
                                                     skillId?: string;
                                                     image?: string;
-                                                    levels?: { name?: string }[];
+                                                    name?: string;
+                                                    description?: string;
+                                                    duration?: number;
+                                                    hidden?: boolean;
+                                                    spData?: {
+                                                        increment?: number;
+                                                        initSp?: number;
+                                                        levelUpCost?: null;
+                                                        maxChargeTime?: number;
+                                                        spCost?: number;
+                                                        spType?: string;
+                                                    }
                                                 } | null;
                                                 const isDefaultSkill = data.defaultSkillIndex === index;
 
                                                 return (
-                                                    <div className={`flex items-center gap-2 rounded-md border p-2 ${isDefaultSkill ? "border-neutral-400 bg-neutral-100 dark:bg-neutral-800/30" : ""}`} key={skill.skillId}>
+                                                    <div className={`flex items-center gap-2 overflow-hidden rounded-md border p-2 ${isDefaultSkill ? "border-neutral-400 bg-neutral-100 dark:bg-neutral-800/30" : ""}`} key={skill.skillId}>
                                                         <Image alt="Skill" className="h-7 w-7 shrink-0" height={28} src={skillStatic?.image ? `/api/cdn${skillStatic.image}` : `/api/cdn/upk/spritepack/skill_icons_0/skill_icon_${skillStatic?.iconId ?? skillStatic?.skillId ?? skill.skillId}.png`} unoptimized width={28} />
-                                                        <div className="min-w-0 flex-1">
-                                                            <div className="truncate font-medium text-sm">{skillStatic?.levels?.[0]?.name ?? `Skill ${index + 1}`}</div>
+                                                        <div className="w-0 flex-1 overflow-hidden">
+                                                            <div className="truncate font-medium text-sm" title={skillStatic?.name ?? `Skill ${index + 1}`}>{skillStatic?.name ?? `Skill ${index + 1}`}</div>
                                                             <div className="flex items-center gap-1 text-muted-foreground text-xs">
                                                                 <span>Lv.{data.mainSkillLvl}</span>
                                                                 {skill.specializeLevel > 0 && (
@@ -620,16 +631,27 @@ export function CharacterCard({ data }: CharacterCardProps) {
                                             iconId?: string;
                                             skillId?: string;
                                             image?: string;
-                                            levels?: { name?: string }[];
+                                            name?: string;
+                                            description?: string;
+                                            duration?: number;
+                                            hidden?: boolean;
+                                            spData?: {
+                                                increment?: number;
+                                                initSp?: number;
+                                                levelUpCost?: null;
+                                                maxChargeTime?: number;
+                                                spCost?: number;
+                                                spType?: string;
+                                            };
                                         } | null;
                                         const isDefaultSkill = data.defaultSkillIndex === index;
 
                                         return (
                                             <div className={`flex items-center gap-3 rounded-lg border p-3 ${isDefaultSkill ? "border-neutral-400 bg-neutral-100 dark:bg-neutral-800/30" : ""}`} key={skill.skillId}>
                                                 <Image alt="Skill" className="h-10 w-10" height={40} src={skillStatic?.image ? `/api/cdn${skillStatic.image}` : `/api/cdn/upk/spritepack/skill_icons_0/skill_icon_${skillStatic?.iconId ?? skillStatic?.skillId ?? skill.skillId}.png`} unoptimized width={40} />
-                                                <div className="flex-1">
-                                                    <div className="font-medium">
-                                                        {skillStatic?.levels?.[0]?.name ?? `Skill ${index + 1}`}
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="truncate font-medium" title={skillStatic?.name ?? `Skill ${index + 1}`}>
+                                                        {skillStatic?.name ?? `Skill ${index + 1}`}
                                                         {isDefaultSkill && <span className="ml-2 text-neutral-500 text-xs">(Equipped)</span>}
                                                     </div>
                                                     <div className="flex items-center gap-2 text-muted-foreground text-sm">
