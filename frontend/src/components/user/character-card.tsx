@@ -12,17 +12,18 @@ import { formatProfession, getOperatorImageUrl, getProfessionIconName, getRarity
 import type { CharacterData } from "~/types/api/impl/user";
 
 // Calculate operator stats based on level and phase
+// Uses PascalCase property names matching the updated UserCharacterPhase types
 function getAttributeStats(
     data: CharacterData,
     operator: {
         phases?: {
-            maxLevel: number;
-            attributesKeyFrames?: { level: number; data: { maxHp: number; atk: number; def: number; magicResistance: number; cost: number; blockCnt: number } }[];
+            MaxLevel: number;
+            AttributesKeyFrames?: { Level: number; Data: { MaxHp: number; Atk: number; Def: number; MagicResistance: number; Cost: number; BlockCnt: number } }[];
         }[];
     } | null,
 ) {
     const phase = operator?.phases?.[data.evolvePhase];
-    const keyFrames = phase?.attributesKeyFrames;
+    const keyFrames = phase?.AttributesKeyFrames;
 
     if (!keyFrames || keyFrames.length === 0) return null;
 
@@ -38,7 +39,7 @@ function getAttributeStats(
     for (let i = 0; i < keyFrames.length - 1; i++) {
         const current = keyFrames[i];
         const next = keyFrames[i + 1];
-        if (current && next && current.level <= data.level && next.level >= data.level) {
+        if (current && next && current.Level <= data.level && next.Level >= data.level) {
             lower = current;
             upper = next;
             break;
@@ -46,15 +47,15 @@ function getAttributeStats(
     }
 
     // Linear interpolation
-    const t = upper.level === lower.level ? 1 : (data.level - lower.level) / (upper.level - lower.level);
+    const t = upper.Level === lower.Level ? 1 : (data.level - lower.Level) / (upper.Level - lower.Level);
 
     return {
-        maxHp: Math.round(lower.data.maxHp + (upper.data.maxHp - lower.data.maxHp) * t),
-        atk: Math.round(lower.data.atk + (upper.data.atk - lower.data.atk) * t),
-        def: Math.round(lower.data.def + (upper.data.def - lower.data.def) * t),
-        magicResistance: Math.round(lower.data.magicResistance + (upper.data.magicResistance - lower.data.magicResistance) * t),
-        cost: Math.round(lower.data.cost + (upper.data.cost - lower.data.cost) * t),
-        blockCnt: lower.data.blockCnt,
+        maxHp: Math.round(lower.Data.MaxHp + (upper.Data.MaxHp - lower.Data.MaxHp) * t),
+        atk: Math.round(lower.Data.Atk + (upper.Data.Atk - lower.Data.Atk) * t),
+        def: Math.round(lower.Data.Def + (upper.Data.Def - lower.Data.Def) * t),
+        magicResistance: Math.round(lower.Data.MagicResistance + (upper.Data.MagicResistance - lower.Data.MagicResistance) * t),
+        cost: Math.round(lower.Data.Cost + (upper.Data.Cost - lower.Data.Cost) * t),
+        blockCnt: lower.Data.BlockCnt,
     };
 }
 
@@ -69,8 +70,8 @@ export function CharacterCard({ data }: CharacterCardProps) {
         rarity?: string;
         trust?: number;
         phases?: {
-            maxLevel: number;
-            attributesKeyFrames?: { level: number; data: { maxHp: number; atk: number; def: number; magicResistance: number; cost: number; blockCnt: number } }[];
+            MaxLevel: number;
+            AttributesKeyFrames?: { Level: number; Data: { MaxHp: number; Atk: number; Def: number; MagicResistance: number; Cost: number; BlockCnt: number } }[];
         }[];
         modules?: {
             uniEquipId: string;
@@ -88,7 +89,7 @@ export function CharacterCard({ data }: CharacterCardProps) {
     const cardRef = useRef<HTMLDivElement>(null);
 
     const trustPercentage = operator?.trust ? (operator.trust / 200) * 100 : 0;
-    const maxLevel = operator?.phases?.[data.evolvePhase]?.maxLevel ?? 1;
+    const maxLevel = operator?.phases?.[data.evolvePhase]?.MaxLevel ?? 1;
     const stats = getAttributeStats(data, operator);
 
     useEffect(() => {
@@ -158,7 +159,7 @@ export function CharacterCard({ data }: CharacterCardProps) {
                         <div>
                             <div className="flex items-center justify-between">
                                 <span className="font-medium text-sm">Trust</span>
-                                <span className="font-bold text-sm">{operator?.trust ?? 0}/200</span>
+                                <span className="font-bold text-sm">{((operator?.trust ?? 0) / 2).toFixed(0)}%</span>
                             </div>
                             <Progress className="h-1.5 transition-all duration-1000 ease-out" value={trustProgress} />
                         </div>
