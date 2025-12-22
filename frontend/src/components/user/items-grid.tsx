@@ -1,13 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import Image from "next/image";
 import { ArrowUpDown, Search } from "lucide-react";
-import { Input } from "~/components/ui/shadcn/input";
+import Image from "next/image";
+import { useMemo, useState } from "react";
 import { Button } from "~/components/ui/shadcn/button";
 import { Card } from "~/components/ui/shadcn/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/shadcn/table";
+import { Input } from "~/components/ui/shadcn/input";
 import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/shadcn/table";
 import type { User } from "~/types/api/impl/user";
 
 interface ItemData {
@@ -62,7 +62,7 @@ export function ItemsGrid({ data }: ItemsGridProps) {
             <div className="flex items-center gap-4">
                 <div className="relative flex-1">
                     <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="Search items..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
+                    <Input className="pl-10" onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search items..." value={searchTerm} />
                 </div>
             </div>
 
@@ -73,13 +73,13 @@ export function ItemsGrid({ data }: ItemsGridProps) {
                             <TableRow>
                                 <TableHead className="w-16">Icon</TableHead>
                                 <TableHead>
-                                    <Button variant="ghost" onClick={() => toggleSort("name")} className="flex items-center gap-1 p-0 hover:bg-transparent">
+                                    <Button className="flex items-center gap-1 p-0 hover:bg-transparent" onClick={() => toggleSort("name")} variant="ghost">
                                         Name
                                         <ArrowUpDown className="h-4 w-4" />
                                     </Button>
                                 </TableHead>
                                 <TableHead className="text-right">
-                                    <Button variant="ghost" onClick={() => toggleSort("amount")} className="flex items-center gap-1 p-0 hover:bg-transparent">
+                                    <Button className="flex items-center gap-1 p-0 hover:bg-transparent" onClick={() => toggleSort("amount")} variant="ghost">
                                         Amount
                                         <ArrowUpDown className="h-4 w-4" />
                                     </Button>
@@ -90,7 +90,7 @@ export function ItemsGrid({ data }: ItemsGridProps) {
                             {items.map((item) => (
                                 <TableRow key={item.id}>
                                     <TableCell>
-                                        <Image src={item.image ? `/api/cdn${item.image}` : `/api/cdn/upk/spritepack/ui_item_icons_h1_0/${item.iconId}.png`} width={32} height={32} alt={item.name} className="h-8 w-8" unoptimized />
+                                        <Image alt={item.name} className="h-8 w-8" height={32} src={item.image ? `/api/cdn${item.image}` : `/api/cdn/upk/spritepack/ui_item_icons_h1_0/${item.iconId}.png`} unoptimized width={32} />
                                     </TableCell>
                                     <TableCell className="font-medium">{item.name}</TableCell>
                                     <TableCell className="text-right">{item.amount.toLocaleString()}</TableCell>
@@ -98,7 +98,7 @@ export function ItemsGrid({ data }: ItemsGridProps) {
                             ))}
                             {items.length === 0 && (
                                 <TableRow>
-                                    <TableCell colSpan={3} className="text-center text-muted-foreground">
+                                    <TableCell className="text-center text-muted-foreground" colSpan={3}>
                                         No items found.
                                     </TableCell>
                                 </TableRow>
