@@ -1,5 +1,6 @@
 "use client";
 
+import { motion, useScroll, useTransform } from "motion/react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { RARITY_COLORS } from "~/components/operators/list/constants";
@@ -88,6 +89,21 @@ export function CharacterCard({ data }: CharacterCardProps) {
     const [levelProgress, setLevelProgress] = useState(0);
     const [trustProgress, setTrustProgress] = useState(0);
     const cardRef = useRef<HTMLDivElement>(null);
+    const [dialogScrollElement, setDialogScrollElement] = useState<HTMLDivElement | null>(null);
+
+    // Parallax effect for dialog hero image - only track when element is mounted
+    const { scrollYProgress } = useScroll({
+        container: dialogScrollElement ? { current: dialogScrollElement } : undefined,
+    });
+
+    // Parallax: image moves up slower than scroll, creating depth
+    const heroImageY = useTransform(scrollYProgress, [0, 0.3], [0, -30]);
+    const heroImageScale = useTransform(scrollYProgress, [0, 0.3], [1, 1.08]);
+    // Vignette gets more prominent when scrolling
+    const vignetteOpacity = useTransform(scrollYProgress, [0, 0.2], [0.4, 1]);
+    // Text fades out as user scrolls
+    const heroContentOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
+    const heroContentY = useTransform(scrollYProgress, [0, 0.15], [0, -15]);
 
     const trustPercentage = operator?.trust ? (operator.trust / 200) * 100 : 0;
     const maxLevel = operator?.phases?.[data.evolvePhase]?.MaxLevel ?? 1;
@@ -150,7 +166,7 @@ export function CharacterCard({ data }: CharacterCardProps) {
                 ref={cardRef}
                 style={isMaxed ? { boxShadow: `0 0 20px ${rarityColor}40, 0 0 40px ${rarityColor}20` } : undefined}
             >
-                {/* Image area wrapper - relative positioning for maxed indicator */}
+                {/* Image area wrapper */}
                 <div className="relative">
                     <MorphingDialogTrigger>
                         <div className="relative h-64 w-full cursor-pointer overflow-hidden">
@@ -174,7 +190,7 @@ export function CharacterCard({ data }: CharacterCardProps) {
                         </div>
                     </MorphingDialogTrigger>
 
-                    {/* Maxed indicator - diagonal badge at top left */}
+                    {/* Maxed indicator */}
                     {isMaxed && (
                         <div className="-top-3 absolute z-10 rounded-r-md px-2 py-0.5 text-center font-semibold text-xs shadow-md" style={{ color: rarityColor }}>
                             Maxed
@@ -341,20 +357,39 @@ export function CharacterCard({ data }: CharacterCardProps) {
 
             {/* Full Details Dialog */}
             <MorphingDialogContainer>
-                <MorphingDialogContent className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl border bg-background">
-                    <div className="p-6 pb-4">
-                        {/* Dialog Header */}
-                        <div className="relative mb-6">
-                            <div className="relative h-64 w-full overflow-hidden rounded-lg">
+                <MorphingDialogContent className="relative max-h-[90vh] w-full max-w-2xl rounded-xl border bg-background">
+                    <div className="max-h-[90vh] overflow-y-auto p-6 pb-4" ref={setDialogScrollElement} style={{ scrollbarGutter: "stable" }}>
+                        {/* Dialog Header with Parallax */}
+                        <div className="relative mb-6 h-64 overflow-hidden rounded-lg">
+                            {/* Parallax image */}
+                            <motion.div
+                                className="absolute inset-0"
+                                style={{
+                                    y: heroImageY,
+                                    scale: heroImageScale,
+                                }}
+                            >
                                 <Image alt={operatorName} className="h-full w-full object-contain" fill src={operatorImage || "/placeholder.svg"} unoptimized />
-                            </div>
-                            <div className="absolute inset-x-0 bottom-0 rounded-b-lg bg-linear-to-t from-black/70 via-black/40 to-transparent p-4 pt-16">
+                            </motion.div>
+                            {/* Vignette overlay - stays and intensifies */}
+                            <motion.div
+                                className="pointer-events-none absolute inset-0 rounded-lg bg-linear-to-t from-black via-black/50 to-transparent"
+                                style={{ opacity: vignetteOpacity }}
+                            />
+                            {/* Text content - fades out */}
+                            <motion.div
+                                className="absolute inset-x-0 bottom-0 p-4"
+                                style={{
+                                    opacity: heroContentOpacity,
+                                    y: heroContentY,
+                                }}
+                            >
                                 <h2 className="font-bold text-3xl text-white">{operatorName}</h2>
                                 <div className="mt-2 flex items-center gap-3">
                                     <Image alt={`${starCount} Star`} className="h-6 w-auto object-contain" height={24} src={`/api/cdn/upk/arts/rarity_hub/rarity_yellow_${starCount - 1}.png`} unoptimized width={80} />
                                     <span className="rounded bg-neutral-700/50 px-2 py-0.5 text-neutral-200 text-sm">{operatorProfession}</span>
                                 </div>
-                            </div>
+                            </motion.div>
                         </div>
 
                         {/* Stats Grid */}
