@@ -30,10 +30,10 @@ function getAvatarUrl(user: User): string {
 function Stat({ label, value }: { label: string; value: number }) {
     return (
         <div className="text-center">
-            <div className="text-2xl font-bold">
+            <div className="font-bold text-2xl">
                 <AnimatedNumber value={value} springOptions={{ bounce: 0, duration: 1000 }} />
             </div>
-            <div className="text-sm text-muted-foreground">{label}</div>
+            <div className="text-muted-foreground text-sm">{label}</div>
         </div>
     );
 }
@@ -57,7 +57,7 @@ export function UserHeader({ data }: UserHeaderProps) {
             }}
             transition={{ duration: 0.5, ease: "easeOut" }}
         >
-            <Card className="mx-auto mb-8 mt-5">
+            <Card className="mx-auto mt-5 mb-8">
                 <CardHeader>
                     <div className="flex items-center space-x-4">
                         <Avatar className="h-20 w-20">

@@ -7,7 +7,7 @@ import { Progress } from "~/components/ui/shadcn/progress";
 import { Separator } from "~/components/ui/shadcn/separator";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "~/components/ui/shadcn/accordion";
 import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
-import { Dialog, DialogContent } from "~/components/ui/shadcn/dialog";
+import { MorphingDialog, MorphingDialogTrigger, MorphingDialogContainer, MorphingDialogContent, MorphingDialogClose, MorphingDialogImage } from "~/components/ui/motion-primitives/morphing-dialog";
 import type { CharacterData } from "~/types/api/impl/user";
 
 // Helper functions
@@ -146,19 +146,13 @@ export function CharacterCard({ data }: CharacterCardProps) {
     } | null;
 
     const [isHovered, setIsHovered] = useState(false);
-    const [isLoaded, setIsLoaded] = useState(false);
     const [levelProgress, setLevelProgress] = useState(0);
     const [trustProgress, setTrustProgress] = useState(0);
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
     const cardRef = useRef<HTMLDivElement>(null);
 
     const trustPercentage = operator?.trust ? (operator.trust / 200) * 100 : 0;
     const maxLevel = operator?.phases?.[data.evolvePhase]?.maxLevel ?? 1;
     const stats = getAttributeStats(data, operator);
-
-    useEffect(() => {
-        setIsLoaded(true);
-    }, []);
 
     useEffect(() => {
         const observer = new IntersectionObserver(
@@ -181,13 +175,6 @@ export function CharacterCard({ data }: CharacterCardProps) {
         return () => observer.disconnect();
     }, [data.level, maxLevel, trustPercentage]);
 
-    const handleCardClick = (e: React.MouseEvent) => {
-        const isAccordionClick = (e.target as HTMLElement).closest("[data-accordion]") !== null;
-        if (!isAccordionClick) {
-            setIsDialogOpen(true);
-        }
-    };
-
     const operatorName = operator?.name ?? "Unknown Operator";
     const operatorProfession = formatProfession(operator?.profession ?? "");
     const operatorRarity = operator?.rarity ?? "TIER_1";
@@ -195,66 +182,55 @@ export function CharacterCard({ data }: CharacterCardProps) {
     const operatorImage = getOperatorImageUrl(data.charId, data.skin, data.evolvePhase, data.currentTmpl, data.tmpl as Record<string, { skinId: string }> | null);
 
     return (
-        <>
-            <Card
-                ref={cardRef}
-                className={`flex w-full cursor-pointer flex-col overflow-hidden border-2 border-muted/30 transition-all duration-300 hover:border-muted hover:shadow-lg ${isLoaded ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
-                onMouseEnter={() => setIsHovered(true)}
-                onMouseLeave={() => setIsHovered(false)}
-                onClick={handleCardClick}
-            >
-                <div className="relative">
-                    {/* Operator Image */}
-                    <div className="relative h-64 w-full overflow-hidden">
-                        <Image
-                            loading="lazy"
-                            decoding="async"
+        <MorphingDialog transition={{ type: "spring", bounce: 0.05, duration: 0.25 }}>
+                <Card
+                    ref={cardRef}
+                    className="fade-in slide-in-from-bottom-4 flex w-full animate-in flex-col overflow-hidden border-2 border-muted/30 transition-all duration-300 hover:border-muted hover:shadow-lg"
+                    onMouseEnter={() => setIsHovered(true)}
+                    onMouseLeave={() => setIsHovered(false)}
+                >
+                {/* Image area wrapped in MorphingDialogTrigger for the morph effect */}
+                <MorphingDialogTrigger>
+                    <div className="relative h-64 w-full cursor-pointer overflow-hidden">
+                        <MorphingDialogImage
                             src={operatorImage || "/placeholder.svg"}
                             alt={operatorName}
                             className={`h-full w-full object-contain transition-transform duration-300 ${isHovered ? "scale-105" : "scale-100"}`}
-                            width={200}
-                            height={200}
-                            unoptimized
                         />
-                        <div className={`absolute inset-0 bg-gradient-to-t from-black/70 to-transparent transition-opacity duration-300 ${isHovered ? "opacity-90" : "opacity-70"}`} />
+                        <div className={`absolute inset-0 bg-gradient-to-t from-black/50 to-transparent transition-opacity duration-300 ${isHovered ? "opacity-90" : "opacity-70"}`} />
 
                         {/* Operator Info Overlay */}
-                        <div className="absolute bottom-0 left-0 right-0 p-4">
-                            <h3 className={`mt-2 max-w-[75%] text-xl font-bold text-white transition-all duration-300 ${isHovered ? "translate-y-0" : "translate-y-1"}`}>{operatorName}</h3>
+                        <div className="absolute right-0 bottom-0 left-0 p-4">
+                            <h3 className={`mt-2 max-w-[75%] text-left font-bold text-white text-xl transition-all duration-300 ${isHovered ? "translate-y-0" : "translate-y-1"}`}>{operatorName}</h3>
                             <div className={`flex items-center justify-between transition-all duration-300 ${isHovered ? "translate-y-0" : "translate-y-1"}`}>
                                 <div className="flex items-center gap-2">
-                                    <div className="flex flex-row gap-0">
-                                        {Array(starCount)
-                                            .fill(0)
-                                            .map((_, i) => (
-                                                <Image key={i} src="/api/cdn/upk/arts/ui/[uc]charcommon/icon_star_selected.png" width={16} height={16} alt="Star" className="h-4 w-4" unoptimized />
-                                            ))}
-                                    </div>
+                                    <Image src={`/api/cdn/upk/arts/rarity_hub/rarity_yellow_${starCount - 1}.png`} width={60} height={18} alt={`${starCount} Star`} className="h-[18px] w-auto object-contain" unoptimized />
                                     <div className="flex flex-row items-center gap-1">
                                         <Image src={`/api/cdn/upk/arts/ui/[uc]charcommon/icon_profession_${getProfessionIconName(operator?.profession ?? "")}.png`} width={20} height={20} alt={operatorProfession} className="h-5 w-5" unoptimized />
                                         <span className="text-sm text-white">{operatorProfession}</span>
                                     </div>
                                 </div>
-                                <Image src={`/api/cdn/upk/arts/elite_hub/elite_${data.evolvePhase}.png`} width={24} height={24} alt="Elite" className="h-6 w-6" unoptimized />
+                                <Image src={`/api/cdn/upk/arts/elite_hub/elite_${data.evolvePhase}.png`} width={24} height={24} alt="Elite" className="h-6 w-6 object-contain" unoptimized />
                             </div>
                         </div>
                     </div>
+                </MorphingDialogTrigger>
 
                     {/* Operator Stats */}
-                    <CardContent className="flex-1 p-4">
+                    <CardContent className="flex-1 px-4 pt-4 pb-2">
                         {/* Level and Trust Progress */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <div className="flex items-center justify-between">
-                                    <span className="text-sm font-medium">Level</span>
-                                    <span className="text-sm font-bold">{data.level}</span>
+                                    <span className="font-medium text-sm">Level</span>
+                                    <span className="font-bold text-sm">{data.level}</span>
                                 </div>
                                 <Progress value={levelProgress} className="h-1.5 transition-all duration-1000 ease-out" />
                             </div>
                             <div>
                                 <div className="flex items-center justify-between">
-                                    <span className="text-sm font-medium">Trust</span>
-                                    <span className="text-sm font-bold">{operator?.trust ?? 0}/200</span>
+                                    <span className="font-medium text-sm">Trust</span>
+                                    <span className="font-bold text-sm">{operator?.trust ?? 0}/200</span>
                                 </div>
                                 <Progress value={trustProgress} className="h-1.5 transition-all duration-1000 ease-out" />
                             </div>
@@ -298,13 +274,13 @@ export function CharacterCard({ data }: CharacterCardProps) {
                         <Accordion type="multiple" className="w-full" data-accordion>
                             {/* Potential */}
                             <AccordionItem value="potential" className="border-b-0">
-                                <AccordionTrigger className="py-2 text-sm font-medium">Potential</AccordionTrigger>
+                                <AccordionTrigger className="py-2 font-medium text-sm">Potential</AccordionTrigger>
                                 <AccordionContent>
                                     <div className="flex items-center justify-between py-1">
                                         <span className="text-sm">Current Potential</span>
                                         <div className="flex items-center gap-1">
                                             <Image src={`/api/cdn/upk/arts/potential_hub/potential_${data.potentialRank}.png`} width={24} height={24} alt={`Potential ${data.potentialRank + 1}`} className="h-6 w-6" unoptimized />
-                                            <span className="text-sm text-muted-foreground">+{data.potentialRank}</span>
+                                            <span className="text-muted-foreground text-sm">+{data.potentialRank}</span>
                                         </div>
                                     </div>
                                 </AccordionContent>
@@ -312,7 +288,7 @@ export function CharacterCard({ data }: CharacterCardProps) {
 
                             {/* Skills */}
                             <AccordionItem value="skills" className="border-b-0">
-                                <AccordionTrigger className="py-2 text-sm font-medium">Skills</AccordionTrigger>
+                                <AccordionTrigger className="py-2 font-medium text-sm">Skills</AccordionTrigger>
                                 <AccordionContent>
                                     <ScrollArea className="max-h-[180px]">
                                         {data.skills && data.skills.length > 0 ? (
@@ -327,7 +303,7 @@ export function CharacterCard({ data }: CharacterCardProps) {
                                                     const isDefaultSkill = data.defaultSkillIndex === index;
 
                                                     return (
-                                                        <div key={skill.skillId} className={`flex items-center gap-2 rounded-md border p-2 ${isDefaultSkill ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" : ""}`}>
+                                                        <div key={skill.skillId} className={`flex items-center gap-2 rounded-md border p-2 ${isDefaultSkill ? "border-neutral-400 bg-neutral-100 dark:bg-neutral-800/30" : ""}`}>
                                                             <Image
                                                                 src={skillStatic?.image ? `/api/cdn${skillStatic.image}` : `/api/cdn/upk/spritepack/skill_icons_0/skill_icon_${skillStatic?.iconId ?? skillStatic?.skillId ?? skill.skillId}.png`}
                                                                 width={28}
@@ -337,8 +313,8 @@ export function CharacterCard({ data }: CharacterCardProps) {
                                                                 unoptimized
                                                             />
                                                             <div className="min-w-0 flex-1">
-                                                                <div className="truncate text-sm font-medium">{skillStatic?.levels?.[0]?.name ?? `Skill ${index + 1}`}</div>
-                                                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                                                <div className="truncate font-medium text-sm">{skillStatic?.levels?.[0]?.name ?? `Skill ${index + 1}`}</div>
+                                                                <div className="flex items-center gap-1 text-muted-foreground text-xs">
                                                                     <span>Lv.{data.mainSkillLvl}</span>
                                                                     {skill.specializeLevel > 0 && (
                                                                         <span className="flex items-center gap-0.5">
@@ -353,7 +329,7 @@ export function CharacterCard({ data }: CharacterCardProps) {
                                                 })}
                                             </div>
                                         ) : (
-                                            <p className="text-sm text-muted-foreground">No skills found.</p>
+                                            <p className="text-muted-foreground text-sm">No skills found.</p>
                                         )}
                                     </ScrollArea>
                                 </AccordionContent>
@@ -361,7 +337,7 @@ export function CharacterCard({ data }: CharacterCardProps) {
 
                             {/* Modules */}
                             <AccordionItem value="modules" className="border-b-0">
-                                <AccordionTrigger className="py-2 text-sm font-medium">Modules</AccordionTrigger>
+                                <AccordionTrigger className="py-2 font-medium text-sm">Modules</AccordionTrigger>
                                 <AccordionContent>
                                     {operator?.modules && operator.modules.length > 0 ? (
                                         <div className="space-y-2">
@@ -377,7 +353,7 @@ export function CharacterCard({ data }: CharacterCardProps) {
                                                     }
 
                                                     return (
-                                                        <div key={module.uniEquipId} className={`flex items-center gap-2 rounded-md border p-2 ${isEquipped ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" : ""}`}>
+                                                        <div key={module.uniEquipId} className={`flex items-center gap-2 rounded-md border p-2 ${isEquipped ? "border-neutral-400 bg-neutral-100 dark:bg-neutral-800/30" : ""}`}>
                                                             <Image
                                                                 src={module.image ? `/api/cdn${module.image}` : `/api/cdn/upk/spritepack/ui_equip_big_img_hub_0/${module.uniEquipIcon}.png`}
                                                                 width={28}
@@ -387,8 +363,8 @@ export function CharacterCard({ data }: CharacterCardProps) {
                                                                 unoptimized
                                                             />
                                                             <div className="min-w-0 flex-1">
-                                                                <div className="truncate text-sm font-medium">{module.uniEquipName}</div>
-                                                                <div className="text-xs text-muted-foreground">
+                                                                <div className="truncate font-medium text-sm">{module.uniEquipName}</div>
+                                                                <div className="text-muted-foreground text-xs">
                                                                     {module.typeName1} Lv.{moduleLevel}
                                                                 </div>
                                                             </div>
@@ -401,93 +377,81 @@ export function CharacterCard({ data }: CharacterCardProps) {
                                                 const moduleLevel = equipData?.level ?? 0;
                                                 const isLocked = equipData?.locked === 1;
                                                 return module.typeName1 !== "ORIGINAL" && moduleLevel > 0 && !isLocked;
-                                            }) && <p className="text-sm text-muted-foreground">No modules unlocked.</p>}
+                                            }) && <p className="text-muted-foreground text-sm">No modules unlocked.</p>}
                                         </div>
                                     ) : (
-                                        <p className="text-sm text-muted-foreground">No modules available.</p>
+                                        <p className="text-muted-foreground text-sm">No modules available.</p>
                                     )}
                                 </AccordionContent>
                             </AccordionItem>
                         </Accordion>
                     </CardContent>
-                </div>
             </Card>
 
             {/* Full Details Dialog */}
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="max-h-[90vh] max-w-2xl overflow-hidden p-0">
-                    <ScrollArea className="max-h-[90vh]">
-                        <div className="p-6">
+            <MorphingDialogContainer>
+                <MorphingDialogContent className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl border bg-background">
+                        <div className="p-6 pb-4">
                             {/* Dialog Header */}
                             <div className="relative mb-6">
                                 <div className="relative h-64 w-full overflow-hidden rounded-lg">
-                                    <Image src={operatorImage || "/placeholder.svg"} alt={operatorName} className="h-full w-full object-contain" fill unoptimized />
+                                    <MorphingDialogImage src={operatorImage || "/placeholder.svg"} alt={operatorName} className="h-full w-full object-contain" />
                                 </div>
-                                <div className="absolute bottom-0 left-0 right-0 rounded-b-lg bg-gradient-to-t from-black to-transparent p-4">
-                                    <h2 className="text-3xl font-bold text-white">{operatorName}</h2>
+                                <div className="absolute inset-x-0 bottom-0 rounded-b-lg bg-gradient-to-t from-black/70 via-black/40 to-transparent p-4 pt-16">
+                                    <h2 className="font-bold text-3xl text-white">{operatorName}</h2>
                                     <div className="mt-2 flex items-center gap-3">
-                                        <div className="flex">
-                                            {Array(starCount)
-                                                .fill(0)
-                                                .map((_, i) => (
-                                                    <span key={i} className="text-lg text-yellow-400">
-                                                        ★
-                                                    </span>
-                                                ))}
-                                        </div>
-                                        <span className="rounded bg-primary/20 px-2 py-0.5 text-sm text-primary">{operatorProfession}</span>
+                                        <Image src={`/api/cdn/upk/arts/rarity_hub/rarity_yellow_${starCount - 1}.png`} width={80} height={24} alt={`${starCount} Star`} className="h-6 w-auto object-contain" unoptimized />
+                                        <span className="rounded bg-neutral-700/50 px-2 py-0.5 text-neutral-200 text-sm">{operatorProfession}</span>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Stats Grid */}
-                            <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-                                <div className="rounded-lg border p-3 text-center">
-                                    <div className="text-2xl font-bold">E{data.evolvePhase}</div>
-                                    <div className="text-xs text-muted-foreground">Elite</div>
+                            <div className="mb-4 grid grid-cols-4 gap-2">
+                                <div className="flex items-center justify-center rounded-lg border p-2">
+                                    <Image src={`/api/cdn/upk/arts/elite_hub/elite_${data.evolvePhase}.png`} width={32} height={32} alt={`Elite ${data.evolvePhase}`} className="h-8 w-8 object-contain" unoptimized />
                                 </div>
-                                <div className="rounded-lg border p-3 text-center">
-                                    <div className="text-2xl font-bold">{data.level}</div>
-                                    <div className="text-xs text-muted-foreground">Level</div>
+                                <div className="rounded-lg border p-2 text-center">
+                                    <div className="font-bold text-lg">{data.level}</div>
+                                    <div className="text-muted-foreground text-xs">Level</div>
                                 </div>
-                                <div className="rounded-lg border p-3 text-center">
-                                    <div className="text-2xl font-bold">{data.potentialRank + 1}</div>
-                                    <div className="text-xs text-muted-foreground">Potential</div>
+                                <div className="flex items-center justify-center rounded-lg border p-2">
+                                    <Image src={`/api/cdn/upk/arts/potential_hub/potential_${data.potentialRank}.png`} width={32} height={32} alt={`Potential ${data.potentialRank + 1}`} className="h-8 w-8 object-contain" unoptimized />
                                 </div>
-                                <div className="rounded-lg border p-3 text-center">
-                                    <div className="text-2xl font-bold">{operator?.trust ?? 0}%</div>
-                                    <div className="text-xs text-muted-foreground">Trust</div>
+                                <div className="rounded-lg border p-2 text-center">
+                                    <div className="font-bold text-lg">{operator?.trust ?? 0}%</div>
+                                    <div className="text-muted-foreground text-xs">Trust</div>
                                 </div>
                             </div>
 
                             {/* Battle Stats */}
                             {stats && (
                                 <div className="mb-6">
-                                    <h3 className="mb-3 text-lg font-semibold">Battle Stats</h3>
+                                    <h3 className="mb-3 font-semibold text-lg">Battle Stats</h3>
                                     <div className="grid grid-cols-3 gap-4">
                                         <div className="rounded-lg border p-3">
-                                            <div className="text-lg font-bold">{stats.maxHp}</div>
-                                            <div className="text-xs text-muted-foreground">HP</div>
+                                            <div className="font-bold text-lg">{stats.maxHp}</div>
+                                            <div className="text-muted-foreground text-xs">HP</div>
                                         </div>
                                         <div className="rounded-lg border p-3">
-                                            <div className="text-lg font-bold">{stats.atk}</div>
-                                            <div className="text-xs text-muted-foreground">ATK</div>
+                                            <div className="font-bold text-lg">{stats.atk}</div>
+                                            <div className="text-muted-foreground text-xs">ATK</div>
                                         </div>
                                         <div className="rounded-lg border p-3">
-                                            <div className="text-lg font-bold">{stats.def}</div>
-                                            <div className="text-xs text-muted-foreground">DEF</div>
+                                            <div className="font-bold text-lg">{stats.def}</div>
+                                            <div className="text-muted-foreground text-xs">DEF</div>
                                         </div>
                                         <div className="rounded-lg border p-3">
-                                            <div className="text-lg font-bold">{stats.magicResistance}</div>
-                                            <div className="text-xs text-muted-foreground">RES</div>
+                                            <div className="font-bold text-lg">{stats.magicResistance}</div>
+                                            <div className="text-muted-foreground text-xs">RES</div>
                                         </div>
                                         <div className="rounded-lg border p-3">
-                                            <div className="text-lg font-bold">{stats.cost}</div>
-                                            <div className="text-xs text-muted-foreground">Cost</div>
+                                            <div className="font-bold text-lg">{stats.cost}</div>
+                                            <div className="text-muted-foreground text-xs">Cost</div>
                                         </div>
                                         <div className="rounded-lg border p-3">
-                                            <div className="text-lg font-bold">{stats.blockCnt}</div>
-                                            <div className="text-xs text-muted-foreground">Block</div>
+                                            <div className="font-bold text-lg">{stats.blockCnt}</div>
+                                            <div className="text-muted-foreground text-xs">Block</div>
                                         </div>
                                     </div>
                                 </div>
@@ -495,7 +459,7 @@ export function CharacterCard({ data }: CharacterCardProps) {
 
                             {/* Skills */}
                             <div className="mb-6">
-                                <h3 className="mb-3 text-lg font-semibold">Skills (Lv.{data.mainSkillLvl})</h3>
+                                <h3 className="mb-3 font-semibold text-lg">Skills (Lv.{data.mainSkillLvl})</h3>
                                 <div className="space-y-3">
                                     {data.skills && data.skills.length > 0 ? (
                                         data.skills.map((skill, index) => {
@@ -508,7 +472,7 @@ export function CharacterCard({ data }: CharacterCardProps) {
                                             const isDefaultSkill = data.defaultSkillIndex === index;
 
                                             return (
-                                                <div key={skill.skillId} className={`flex items-center gap-3 rounded-lg border p-3 ${isDefaultSkill ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" : ""}`}>
+                                                <div key={skill.skillId} className={`flex items-center gap-3 rounded-lg border p-3 ${isDefaultSkill ? "border-neutral-400 bg-neutral-100 dark:bg-neutral-800/30" : ""}`}>
                                                     <Image
                                                         src={skillStatic?.image ? `/api/cdn${skillStatic.image}` : `/api/cdn/upk/spritepack/skill_icons_0/skill_icon_${skillStatic?.iconId ?? skillStatic?.skillId ?? skill.skillId}.png`}
                                                         width={40}
@@ -520,9 +484,9 @@ export function CharacterCard({ data }: CharacterCardProps) {
                                                     <div className="flex-1">
                                                         <div className="font-medium">
                                                             {skillStatic?.levels?.[0]?.name ?? `Skill ${index + 1}`}
-                                                            {isDefaultSkill && <span className="ml-2 text-xs text-blue-500">(Equipped)</span>}
+                                                            {isDefaultSkill && <span className="ml-2 text-neutral-500 text-xs">(Equipped)</span>}
                                                         </div>
-                                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                                        <div className="flex items-center gap-2 text-muted-foreground text-sm">
                                                             <span>Lv.{data.mainSkillLvl}</span>
                                                             {skill.specializeLevel > 0 && (
                                                                 <span className="flex items-center gap-1">
@@ -542,8 +506,8 @@ export function CharacterCard({ data }: CharacterCardProps) {
                             </div>
 
                             {/* Modules */}
-                            <div className="mb-6">
-                                <h3 className="mb-3 text-lg font-semibold">Modules</h3>
+                            <div className="mb-4">
+                                <h3 className="mb-3 font-semibold text-lg">Modules</h3>
                                 <div className="space-y-3">
                                     {operator?.modules && operator.modules.length > 0 ? (
                                         <>
@@ -559,7 +523,7 @@ export function CharacterCard({ data }: CharacterCardProps) {
                                                     }
 
                                                     return (
-                                                        <div key={module.uniEquipId} className={`flex items-center gap-3 rounded-lg border p-3 ${isEquipped ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" : ""}`}>
+                                                        <div key={module.uniEquipId} className={`flex items-center gap-3 rounded-lg border p-3 ${isEquipped ? "border-neutral-400 bg-neutral-100 dark:bg-neutral-800/30" : ""}`}>
                                                             <Image
                                                                 src={module.image ? `/api/cdn${module.image}` : `/api/cdn/upk/spritepack/ui_equip_big_img_hub_0/${module.uniEquipIcon}.png`}
                                                                 width={40}
@@ -569,14 +533,14 @@ export function CharacterCard({ data }: CharacterCardProps) {
                                                                 unoptimized
                                                             />
                                                             <div className="flex-1">
-                                                                <div className="text-xs text-muted-foreground">
+                                                                <div className="text-muted-foreground text-xs">
                                                                     {module.typeName1} {module.typeName2 ? `(${module.typeName2})` : ""}
                                                                 </div>
                                                                 <div className="font-medium">
                                                                     {module.uniEquipName}
-                                                                    {isEquipped && <span className="ml-2 text-xs text-blue-500">(Equipped)</span>}
+                                                                    {isEquipped && <span className="ml-2 text-neutral-500 text-xs">(Equipped)</span>}
                                                                 </div>
-                                                                <div className="text-sm text-muted-foreground">Level {moduleLevel}</div>
+                                                                <div className="text-muted-foreground text-sm">Level {moduleLevel}</div>
                                                             </div>
                                                         </div>
                                                     );
@@ -596,8 +560,8 @@ export function CharacterCard({ data }: CharacterCardProps) {
                             </div>
 
                             {/* Info */}
-                            <div>
-                                <h3 className="mb-3 text-lg font-semibold">Info</h3>
+                            <div className="mb-0">
+                                <h3 className="mb-2 font-semibold text-lg">Info</h3>
                                 <div className="space-y-2 text-sm">
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground">Recruited</span>
@@ -612,9 +576,9 @@ export function CharacterCard({ data }: CharacterCardProps) {
                                 </div>
                             </div>
                         </div>
-                    </ScrollArea>
-                </DialogContent>
-            </Dialog>
-        </>
+                    <MorphingDialogClose className="text-muted-foreground hover:text-foreground" />
+                </MorphingDialogContent>
+            </MorphingDialogContainer>
+        </MorphingDialog>
     );
 }
