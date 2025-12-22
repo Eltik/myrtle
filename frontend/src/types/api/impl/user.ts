@@ -138,7 +138,7 @@ export interface User {
     car: Car;
     openServer: OpenServer;
     campaignsV2: CampaignsV2;
-    inventory: Record<string, unknown>;
+    inventory: Record<string, InventoryItem>;
     limitedBuff: LimitedBuff;
     ticket: unknown;
     // Additional fields from ak-roster
@@ -265,7 +265,7 @@ export interface CharacterData {
     currentEquip: string | null;
     equip: Record<string, EquipData>;
     starMark?: number; // From ak-roster - star mark/favorite indicator
-    static: unknown | null; // Added by formatUser
+    static?: CharacterStatic | null; // Added by formatUser - operator metadata
 }
 
 export interface CharacterTemplate {
@@ -282,7 +282,7 @@ export interface CharacterSkill {
     state: number;
     specializeLevel: number;
     completeUpgradeTime: number;
-    static: unknown | null; // Added by formatUser
+    static?: UserSkillStatic | null; // Added by formatUser - skill metadata
 }
 
 export interface EquipData {
@@ -364,7 +364,7 @@ export interface ShopLS {
 export interface ShopHS {
     curShopId: string;
     info: ShopInfo[];
-    progressInfo: unknown;
+    progressInfo: ShopProgressInfo;
 }
 
 export interface ShopES {
@@ -405,7 +405,7 @@ export interface ShopSocial {
 
 export interface ShopClassic {
     info: ShopInfo[];
-    progressInfo: unknown;
+    progressInfo: ShopProgressInfo;
 }
 
 export interface ShopInfo {
@@ -537,14 +537,14 @@ export interface RoomSlot {
 }
 
 export interface BuildingRooms {
-    CONTROL: Record<string, unknown>;
-    ELEVATOR: Record<string, unknown>;
-    POWER: Record<string, unknown>;
-    MANUFACTURE: Record<string, unknown>;
-    TRADING: Record<string, unknown>;
-    DORMITORY: Record<string, unknown>;
-    CORRIDOR: Record<string, unknown>;
-    WORKSHOP: Record<string, unknown>;
+    CONTROL: Record<string, ControlRoom>;
+    ELEVATOR: Record<string, Record<string, unknown>>; // Usually empty
+    POWER: Record<string, PowerRoom>;
+    MANUFACTURE: Record<string, ManufactureRoom>;
+    TRADING: Record<string, TradingRoom>;
+    DORMITORY: Record<string, DormitoryRoom>;
+    CORRIDOR: Record<string, Record<string, unknown>>; // Usually empty
+    WORKSHOP: Record<string, WorkshopRoom>;
 }
 
 export interface FurnitureEntry {
@@ -598,8 +598,8 @@ export interface CrisisMap {
 
 export interface CrisisShop {
     coin: number;
-    info: unknown[];
-    progressInfo: unknown;
+    info: ShopInfo[];
+    progressInfo: ShopProgressInfo;
 }
 
 export interface CrisisTraining {
@@ -614,8 +614,8 @@ export interface CrisisTrainingStage {
 
 export interface TShopEntry {
     coin: number;
-    info: unknown[];
-    progressInfo: unknown;
+    info: ShopInfo[];
+    progressInfo: ShopProgressInfo;
 }
 
 export interface Gacha {
@@ -670,7 +670,7 @@ export interface AvatarEntry {
 
 export interface Background {
     selected: string;
-    bgs: Record<string, unknown>;
+    bgs: Record<string, BackgroundEntry>;
 }
 
 export interface HomeTheme {
@@ -683,8 +683,133 @@ export interface HomeThemeEntry {
 }
 
 export interface Rlv2 {
-    current: unknown;
-    outer: Record<string, unknown>;
+    current: Rlv2Current | null;
+    outer: Record<string, Rlv2Outer>;
+}
+
+export interface Rlv2Current {
+    player: Rlv2Player;
+    map: { zones: Record<string, unknown> };
+    troop: Rlv2Troop;
+    inventory: Rlv2Inventory;
+    game: Rlv2Game;
+    buff: Rlv2Buff;
+    record: { brief: unknown | null };
+    module: unknown[];
+}
+
+export interface Rlv2Player {
+    state: string;
+    property: {
+        exp: number;
+        level: number;
+        maxLevel?: number;
+        hp: { current: number; max: number };
+        gold: number;
+        shield: number;
+        capacity: number;
+        population: { cost: number; max: number };
+        conPerfectBattle: number;
+    };
+    cursor: { zone: number; position: unknown | null };
+    trace: unknown[];
+    pending: unknown[];
+    status: { bankPut: number };
+    toEnding: string;
+    chgEnding: boolean;
+}
+
+export interface Rlv2Troop {
+    chars: Record<string, unknown>;
+    expedition: unknown[];
+    expeditionReturn: unknown | null;
+    hasExpeditionReturn: boolean;
+    expeditionDetails?: Record<string, unknown>;
+}
+
+export interface Rlv2Inventory {
+    relic: Record<string, unknown>;
+    recruit: Record<string, unknown>;
+    trap: unknown | null;
+    consumable: Record<string, unknown>;
+    exploreTool?: Record<string, unknown>;
+}
+
+export interface Rlv2Game {
+    mode: string;
+    predefined: unknown | null;
+    theme: string;
+    outer: { support: boolean };
+    start: number;
+    modeGrade: number;
+    equivalentGrade: number;
+}
+
+export interface Rlv2Buff {
+    tmpHP: number;
+    capsule: unknown | null;
+    squadBuff: unknown[];
+}
+
+export interface Rlv2Outer {
+    bank: Rlv2Bank;
+    bp: { point: number; reward: Record<string, unknown> };
+    buff: Rlv2OuterBuff;
+    collect: Rlv2Collect;
+    mission: Rlv2Mission;
+    challenge: { reward: Record<string, unknown>; grade: Record<string, unknown>; highScore?: Record<string, number> };
+    monthTeam: { valid: string[]; reward: Record<string, unknown>; mission: Record<string, unknown> };
+    record: Rlv2Record;
+    activity?: Record<string, unknown>;
+}
+
+export interface Rlv2Bank {
+    show: boolean;
+    current: number;
+    record: number;
+    reward: Record<string, unknown>;
+    totalPut: number;
+}
+
+export interface Rlv2OuterBuff {
+    pointOwned: number;
+    pointCost: number;
+    unlocked: Record<string, unknown>;
+    score: number;
+}
+
+export interface Rlv2Collect {
+    relic: Record<string, Rlv2CollectItem>;
+    capsule: Record<string, Rlv2CollectItem>;
+    activeTool: Record<string, Rlv2CollectItem>;
+    bgm: Record<string, number>;
+    pic: Record<string, number>;
+    chat: Record<string, number>;
+    band: Record<string, Rlv2CollectItem>;
+    buff: Record<string, Rlv2CollectItem>;
+    endBook: Record<string, unknown>;
+    mode: Record<string, Record<string, Rlv2CollectItem>>;
+    recruitSet: Record<string, Rlv2CollectItem>;
+    modeGrade: Record<string, Record<string, Rlv2CollectItem>>;
+}
+
+export interface Rlv2CollectItem {
+    state: number;
+    progress: number[] | null;
+}
+
+export interface Rlv2Mission {
+    updateId: string;
+    refresh: number;
+    list: unknown[];
+}
+
+export interface Rlv2Record {
+    last: number;
+    modeCnt: Record<string, unknown>;
+    endingCnt: Record<string, unknown>;
+    stageCnt: Record<string, unknown>;
+    bandCnt: Record<string, unknown>;
 }
 
 export interface DeepSea {
@@ -699,9 +824,60 @@ export interface DeepSea {
 }
 
 export interface Tower {
-    current: unknown;
-    outer: unknown;
-    season: unknown;
+    current: TowerCurrent | null;
+    outer: TowerOuter;
+    season: TowerSeason;
+}
+
+export interface TowerCurrent {
+    status: TowerStatus;
+    layer: unknown[];
+    cards: Record<string, unknown>;
+    godCard: { id: string; subGodCardId: string };
+    halftime: { count: number; candidate: unknown[]; canGiveUp: boolean };
+    trap: unknown[];
+    reward?: { high: number; low: number };
+}
+
+export interface TowerStatus {
+    state: string;
+    tower: string;
+    coord: number;
+    tactical: Record<string, string>; // CASTER, MEDIC, PIONEER, etc.
+    strategy: string;
+    start: number;
+    isHard: boolean;
+}
+
+export interface TowerOuter {
+    training: Record<string, unknown>;
+    towers: Record<string, unknown>;
+    hasTowerPass: number;
+    pickedGodCard: Record<string, unknown>;
+    tactical: Record<string, string>;
+    strategy: string;
+}
+
+export interface TowerSeason {
+    id: string;
+    finishTs: number;
+    missions: Record<string, TowerMission>;
+    passWithGodCard: Record<string, unknown>;
+    slots: Record<string, unknown>;
+    period: TowerPeriod;
+}
+
+export interface TowerMission {
+    value: number;
+    target: number;
+    hasRecv: boolean;
+}
+
+export interface TowerPeriod {
+    termTs: number;
+    items: Record<string, unknown>;
+    cur: number;
+    len: number;
 }
 
 export interface SiracusaMap {
@@ -713,9 +889,9 @@ export interface SiracusaMap {
 
 export interface SiracusaOpera {
     total: number;
-    show: unknown | null;
+    show: string | null;
     release: Record<string, number>;
-    like: unknown;
+    like: Record<string, string>; // Map of char_card_X -> opera_X
 }
 
 export interface StoryReview {
@@ -725,7 +901,7 @@ export interface StoryReview {
 
 export interface StoryReviewGroup {
     rts: number;
-    stories: unknown[];
+    stories: StoryReviewStory[];
 }
 
 export interface Medal {
@@ -735,14 +911,14 @@ export interface Medal {
 
 export interface MedalEntry {
     id: string;
-    val: unknown; // Can be nested arrays like [[23,30]]
-    fts: number;
-    rts: number;
+    val: [number, number][]; // Array of [index, value] tuples, e.g. [[0, 7], [1, 30]]
+    fts: number; // First timestamp (-1 if not obtained)
+    rts: number; // Recent timestamp (-1 if not used)
 }
 
 export interface MedalCustom {
-    currentIndex: unknown | null;
-    customs: unknown;
+    currentIndex: string | null;
+    customs: Record<string, unknown>;
 }
 
 export interface AprilFoolEntry {
@@ -820,9 +996,9 @@ export interface NewbiePackage {
 }
 
 export interface Car {
-    battleCar: Record<string, unknown | null>;
-    exhibitionCar: Record<string, unknown | null>;
-    accessories: Record<string, unknown | null>;
+    battleCar: Record<string, unknown>;
+    exhibitionCar: Record<string, unknown>;
+    accessories: Record<string, CarAccessory>;
 }
 
 export interface OpenServer {
@@ -867,6 +1043,600 @@ export interface CampaignInstance {
 }
 
 export interface LimitedBuff {
-    dailyUsage: unknown;
-    inventory: unknown;
+    dailyUsage: Record<string, unknown>;
+    inventory: Record<string, unknown>;
+}
+
+// ==================== Inventory Types ====================
+
+export interface InventoryItem {
+    amount: number;
+    buildingProductList?: BuildingProductEntry[];
+    classifyType?: string;
+    description?: string;
+    hideInItemGet?: boolean;
+    iconId?: string;
+    itemId: string;
+    itemType?: string;
+    name?: string;
+    obtainApproach?: string | null;
+    overrideBkg?: string | null;
+    rarity?: string;
+    sortId?: number;
+    stackIconId?: string;
+    stageDropList?: StageDropEntry[];
+    usage?: string;
+    voucherRelateList?: unknown[] | null;
+    image?: string; // Added by backend formatting
+}
+
+export interface BuildingProductEntry {
+    formulaId: string;
+    roomType: string;
+}
+
+export interface StageDropEntry {
+    occPer: string;
+    stageId: string;
+}
+
+// ==================== Background Types ====================
+
+export interface BackgroundEntry {
+    unlock?: number; // Unix timestamp when unlocked
+    conditions?: Record<string, BackgroundCondition>;
+}
+
+export interface BackgroundCondition {
+    t: number; // Condition type
+    v: number; // Condition value
+}
+
+// ==================== Shop Progress Types ====================
+
+export interface ShopProgressInfo {
+    [id: string]: ShopProgressEntry;
+}
+
+export interface ShopProgressEntry {
+    count: number;
+    order: number;
+}
+
+// ==================== Building Room Types ====================
+
+export interface ControlRoom {
+    apCost: number;
+    buff: ControlRoomBuff;
+    lastUpdateTime: number;
+    presetQueue: unknown[];
+}
+
+export interface ControlRoomBuff {
+    apCost: Record<string, number>;
+    dormitory: { recover: number; tagRecover: Record<string, number> };
+    global: { apCost: number; roomCnt: Record<string, number> };
+    hire: { apCost: number; spUp: { base: number; up: number } };
+    manufacture: { apCost: number; roomSpeed: Record<string, number>; sSpeed: number; speed: number };
+    meeting: { apCost: number; clue: number; notOwned: number; sSpeed: number; speedUp: number; weight: Record<string, number> };
+    point: Record<string, number>;
+    power: { apCost: number };
+    trading: { apCost: number; charLimit: Record<string, number>; charSpeed: Record<string, number>; roomLimit: Record<string, number>; roomSpeed: Record<string, number>; sSpeed: number; speed: number };
+    training: { speed: number };
+}
+
+export interface TradingRoom {
+    buff?: TradingRoomBuff;
+    state?: number;
+    lastUpdateTime?: number;
+    strategy?: string; // e.g. "O_GOLD"
+    stockLimit?: number;
+    apCost?: number;
+    stock?: TradingStock[];
+    next?: TradingNext;
+    completeWorkTime?: number;
+    display?: RoomDisplay;
+}
+
+export interface TradingRoomBuff {
+    speed: number;
+    limit: number;
+    apCost: { all: number; single: unknown; self: unknown };
+    rate: unknown;
+    tgw: unknown[];
+    point: unknown;
+    manuLines: unknown;
+    orderWtBuff: unknown[];
+    orderBuff: unknown[];
+    violatedInfo: { orderChecker: unknown[]; cntBuff: unknown[] };
+}
+
+export interface TradingStock {
+    instId?: number;
+    type?: string; // e.g. "MATERIAL"
+    delivery?: TradingDelivery[];
+    gain?: { type?: string; id?: string; count?: number };
+    buff?: unknown[];
+}
+
+export interface TradingDelivery {
+    type: string;
+    id: string;
+    count: number;
+}
+
+export interface TradingNext {
+    order: number;
+    processPoint: number;
+    maxPoint: number;
+    speed: number;
+}
+
+export interface ManufactureRoom {
+    buff?: ManufactureRoomBuff;
+    state?: number;
+    formulaId?: string;
+    remainSolutionCnt?: number;
+    outputSolutionCnt?: number;
+    lastUpdateTime?: number;
+    saveTime?: number;
+    tailTime?: number;
+    apCost?: number;
+    completeWorkTime?: number;
+    capacity?: number;
+    processPoint?: number;
+    display?: RoomDisplay;
+}
+
+export interface ManufactureRoomBuff {
+    apCost: { self: unknown };
+    speed: number;
+    capacity: number;
+    sSpeed: number;
+    tSpeed: unknown;
+    cSpeed: number;
+    capFrom: unknown;
+    maxSpeed: number;
+    point: unknown;
+    flag: unknown;
+    skillExtend: unknown;
+}
+
+export interface RoomDisplay {
+    base: number;
+    buff: number;
+}
+
+export interface DormitoryRoom {
+    buff?: DormitoryRoomBuff;
+    comfort?: number;
+    diySolution?: DormitorySolution | null;
+}
+
+export interface DormitoryRoomBuff {
+    apCost: {
+        all: number;
+        single: { target: unknown | null; value: number };
+        self: unknown;
+        exclude: unknown;
+    };
+    point: unknown;
+}
+
+export interface DormitorySolution {
+    wallPaper?: string;
+    floor?: string;
+    carpet?: DormitoryCarpet;
+    furnitures?: DormitoryFurniture[];
+}
+
+export interface DormitoryCarpet {
+    id?: string;
+    coordinate?: { x: number; y: number };
+}
+
+export interface DormitoryFurniture {
+    id: string;
+    coordinate: { x: number; y: number };
+}
+
+export interface PowerRoom {
+    buff?: PowerRoomBuff;
+    state?: number;
+}
+
+export interface PowerRoomBuff {
+    global: { roomCnt: unknown };
+    manufacture: { charSpeed: unknown };
+    laborSpeed: number;
+    apCost: { self: unknown };
+}
+
+export interface WorkshopRoom {
+    buff?: WorkshopRoomBuff;
+    state?: number;
+    lastUpdateTime?: number;
+    statistic?: { noAddition: number };
+}
+
+export interface WorkshopRoomBuff {
+    rate: { all: number };
+    cost: { type: string; limit: number; reduction: number };
+    costRe: { type: string; from: number; change: number };
+    frate: unknown[];
+    recovery: { type: string; pace: number; recover: number };
+    goldFree: unknown;
+    costForce: { type: string; cost: number };
+    fFix: { asRarity: unknown };
+    activeBonus: unknown;
+    apRate: unknown;
+    costDevide: { type: string; limit: number; denominator: number };
+}
+
+// ==================== Car Types ====================
+
+export interface CarAccessory {
+    id: string;
+    num: number;
+}
+
+// ==================== Story Review Types ====================
+
+export interface StoryReviewStory {
+    id: string;
+    rc: number; // Read count
+    uts: number; // Unix timestamp
+}
+
+// ==================== Character Static Types ====================
+// These types represent the static operator data added by backend formatUser
+// Prefixed with "User" to avoid conflicts with game data table types in operator.ts, skill.ts, etc.
+
+/** Static operator data added by backend formatUser */
+export interface CharacterStatic {
+    id: string;
+    name: string;
+    appellation?: string;
+    description?: string;
+    rarity: string; // "TIER_1" through "TIER_6"
+    profession: string; // "CASTER", "GUARD", etc.
+    subProfessionId?: string;
+    position: string; // "RANGED" or "MELEE"
+    nationId?: string | null;
+    groupId?: string | null;
+    teamId?: string | null;
+    displayNumber?: string;
+    portrait?: string;
+    skin?: string;
+    tagList?: string[];
+    isSpChar?: boolean;
+    isNotObtainable?: boolean;
+    itemUsage?: string;
+    itemDesc?: string;
+    itemObtainApproach?: string;
+    maxPotentialLevel?: number;
+    canUseGeneralPotentialItem?: boolean;
+    canUseActivityPotentialItem?: boolean;
+    potentialItemId?: string | null;
+    classicPotentialItemId?: string | null;
+    activityPotentialItemId?: string | null;
+    displayTokenDict?: Record<string, unknown> | null;
+    trait?: UserCharacterTrait | null;
+    phases?: UserCharacterPhase[];
+    skills?: UserCharacterStaticSkill[];
+    talents?: UserCharacterTalent[];
+    potentialRanks?: UserPotentialRank[];
+    favorKeyFrames?: UserFavorKeyFrame[];
+    allSkillLevelUp?: UserSkillLevelUpCost[];
+    modules?: UserCharacterModule[];
+    handbook?: UserCharacterHandbook;
+    profile?: UserCharacterProfile;
+    trust?: number;
+    artists?: string[];
+}
+
+export interface UserCharacterTrait {
+    candidates?: UserTraitCandidate[];
+}
+
+export interface UserTraitCandidate {
+    additionalDescription?: string | null;
+    blackboard?: UserBlackboardEntry[];
+    overrideDescripton?: string | null; // Note: typo in game data
+    prefabKey?: string | null;
+    rangeId?: string | null;
+    requiredPotentialRank?: number;
+    unlockCondition?: UserUnlockCondition;
+}
+
+export interface UserBlackboardEntry {
+    key: string;
+    value: number;
+    valueStr?: string | null;
+}
+
+export interface UserUnlockCondition {
+    Level: number;
+    Phase: string; // "PHASE_0", "PHASE_1", "PHASE_2"
+}
+
+export interface UserCharacterPhase {
+    AttributesKeyFrames?: UserAttributeKeyFrame[];
+    CharacterPrefabKey?: string;
+    EvolveCost?: UserItemCost[] | null;
+    MaxLevel: number;
+    RangeId?: string;
+}
+
+export interface UserAttributeKeyFrame {
+    Data: UserCharacterAttributes;
+    Level: number;
+}
+
+export interface UserCharacterAttributes {
+    Atk: number;
+    AttackSpeed: number;
+    BaseAttackTime: number;
+    BlockCnt: number;
+    Cost: number;
+    Def: number;
+    HpRecoveryPerSec: number;
+    MagicResistance: number;
+    MassLevel: number;
+    MaxDeckStackCnt: number;
+    MaxDeployCount: number;
+    MaxHp: number;
+    MoveSpeed: number;
+    RespawnTime: number;
+    SpRecoveryPerSec: number;
+    StunImmune: boolean;
+    SilenceImmune: boolean;
+    SleepImmune: boolean;
+    FrozenImmune: boolean;
+    LevitateImmune: boolean;
+    DisarmedCombatImmune: boolean;
+    TauntLevel: number;
+}
+
+export interface UserItemCost {
+    Count: number;
+    IconId?: string;
+    Id: string;
+    Image?: string;
+    Type_: string;
+}
+
+export interface UserCharacterStaticSkill {
+    skillId: string;
+    overridePrefabKey?: string | null;
+    overrideTokenKey?: string | null;
+    levelUpCostCond?: UserSkillLevelUpCondition[];
+    static?: UserSkillStatic;
+}
+
+export interface UserSkillLevelUpCondition {
+    LevelUpCost?: UserItemCost[];
+    LevelUpTime?: number;
+    UnlockCond?: UserUnlockCondition;
+}
+
+export interface UserCharacterTalent {
+    Candidates?: UserTalentCandidate[];
+}
+
+export interface UserTalentCandidate {
+    BlackBoard?: UserBlackboardEntry[];
+    Description?: string;
+    Name?: string;
+    PrefabKey?: string | null;
+    RangeId?: string | null;
+    RequiredPotentialRank?: number;
+    TalentIndex?: number;
+    UnlockCondition?: UserUnlockCondition;
+}
+
+export interface UserPotentialRank {
+    Buff?: UserPotentialBuff | null;
+    Description?: string;
+    Type_?: number;
+}
+
+export interface UserPotentialBuff {
+    Attributes?: UserPotentialBuffAttributes;
+}
+
+export interface UserPotentialBuffAttributes {
+    AbnormalFlags?: unknown | null;
+    AbnormalImmunes?: unknown | null;
+    AbnormalAntis?: unknown | null;
+    AbnormalCombos?: unknown | null;
+    AbnormalComboImmunes?: unknown | null;
+    AttributeModifiers?: UserAttributeModifier[];
+}
+
+export interface UserAttributeModifier {
+    AttributeType: number;
+    FormulaItem: number;
+    Value: number;
+    FrameIndex: number;
+}
+
+export interface UserFavorKeyFrame {
+    Data: UserFavorData;
+    Level: number;
+}
+
+export interface UserFavorData {
+    Atk: number;
+    Def: number;
+    MaxHp: number;
+}
+
+export interface UserSkillLevelUpCost {
+    LvlUpCost?: UserItemCost[];
+    UnlockCond?: UserUnlockCondition;
+}
+
+export interface UserCharacterModule {
+    id: string;
+    charId: string;
+    uniEquipId: string;
+    uniEquipName?: string;
+    uniEquipIcon?: string;
+    uniEquipDesc?: string;
+    uniEquipGetTime?: number;
+    charEquipOrder?: number;
+    tmplId?: string | null;
+    type: string;
+    typeName1?: string;
+    typeName2?: string;
+    typeIcon?: string;
+    equipShiningColor?: string;
+    showEvolvePhase?: string;
+    unlockEvolvePhase?: string;
+    showLevel?: number;
+    unlockLevel?: number;
+    unlockFavorPoint?: number;
+    image?: string;
+    data?: UserModuleData;
+    missionList?: UserModuleMission[];
+    itemCost?: Record<string, UserItemCost[]>;
+}
+
+export interface UserModuleData {
+    phases?: UserModulePhase[];
+}
+
+export interface UserModulePhase {
+    attributeBlackboard?: UserBlackboardEntry[];
+    equipLevel?: number;
+    parts?: UserModulePart[];
+    tokenAttributeBlackboard?: Record<string, UserBlackboardEntry[]>;
+}
+
+export interface UserModulePart {
+    isToken?: boolean;
+    overrideTraitDataBundle?: UserModuleTraitBundle;
+    addOrOverrideTalentDataBundle?: UserModuleTalentBundle;
+    target?: string;
+}
+
+export interface UserModuleTraitBundle {
+    candidates?: UserTraitCandidate[] | null;
+}
+
+export interface UserModuleTalentBundle {
+    candidates?: UserTalentCandidate[] | null;
+}
+
+export interface UserModuleMission {
+    desc?: string;
+    jumpStageId?: string | null;
+    template?: string;
+    uniEquipId?: string;
+    uniEquipMissionId?: string;
+    uniEquipMissionSort?: number;
+}
+
+export interface UserCharacterHandbook {
+    charID: string;
+    infoName?: string;
+    isLimited?: boolean;
+    storyTextAudio?: UserStoryTextAudio[];
+    handbookAvgList?: UserHandbookAvg[];
+}
+
+export interface UserStoryTextAudio {
+    stories?: UserHandbookStory[];
+    storyTitle?: string;
+    unLockorNot?: boolean;
+}
+
+export interface UserHandbookStory {
+    storyText?: string;
+    unLockParam?: string;
+    unLockType?: number;
+}
+
+export interface UserHandbookAvg {
+    avgList?: UserAvgEntry[];
+    storySetId?: string;
+    storySetName?: string;
+    sortId?: number;
+}
+
+export interface UserAvgEntry {
+    avgTag?: string;
+    storyId?: string;
+    storyIntro?: string;
+    storyName?: string;
+    storyTxt?: string;
+}
+
+export interface UserCharacterProfile {
+    basicInfo?: UserBasicInfo;
+    physicalExam?: UserPhysicalExam;
+}
+
+export interface UserBasicInfo {
+    codeName?: string;
+    combatExperience?: string;
+    dateOfBirth?: string;
+    gender?: string;
+    height?: string;
+    infectionStatus?: string;
+    placeOfBirth?: string;
+    race?: string;
+}
+
+export interface UserPhysicalExam {
+    cellOriginiumAssimilation?: string;
+    originiumArtsAssimilation?: string;
+    physicalStrength?: string;
+    tacticalAcumen?: string;
+    combatSkill?: string;
+    mobility?: string;
+    bloodOriginiumCrystalDensity?: string;
+}
+
+// ==================== Skill Static Types ====================
+
+/** Static skill data added by backend formatUser */
+export interface UserSkillStatic {
+    skillId: string;
+    name?: string;
+    description?: string;
+    duration?: number;
+    hidden?: boolean;
+    iconId?: string | null;
+    image?: string;
+    spData?: UserSkillSpData;
+    levels?: UserSkillLevel[]; // Full skill level data when available
+}
+
+export interface UserSkillLevel {
+    name: string;
+    rangeId?: string | null;
+    description: string;
+    skillType: string | number;
+    durationType?: string | null;
+    duration: number;
+    spData: UserSkillSpData;
+    prefabId?: string;
+    blackboard: UserSkillBlackboard[];
+}
+
+export interface UserSkillBlackboard {
+    key: string;
+    value: number;
+    valueStr?: string | null;
+}
+
+export interface UserSkillSpData {
+    increment?: number;
+    initSp?: number;
+    levelUpCost?: unknown[] | null;
+    maxChargeTime?: number;
+    spCost?: number;
+    spType?: string | number; // "INCREASE_WITH_TIME", "INCREASE_WHEN_ATTACK", etc.
 }

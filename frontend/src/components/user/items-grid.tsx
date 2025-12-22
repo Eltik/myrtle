@@ -8,15 +8,7 @@ import { Card } from "~/components/ui/shadcn/card";
 import { Input } from "~/components/ui/shadcn/input";
 import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/shadcn/table";
-import type { User } from "~/types/api/impl/user";
-
-interface ItemData {
-    id: string;
-    iconId?: string;
-    name?: string;
-    amount: number;
-    image?: string;
-}
+import type { InventoryItem, User } from "~/types/api/impl/user";
 
 interface ItemsGridProps {
     data: User;
@@ -28,7 +20,7 @@ export function ItemsGrid({ data }: ItemsGridProps) {
     const [sortBy, setSortBy] = useState<"name" | "amount">("amount");
 
     const items = useMemo(() => {
-        const inventory = data.inventory as Record<string, ItemData>;
+        const inventory = data.inventory as Record<string, InventoryItem>;
 
         return Object.entries(inventory)
             .map(([id, item]) => ({

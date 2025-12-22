@@ -2,31 +2,15 @@ import { Badge } from "~/components/ui/shadcn/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/shadcn/card";
 import { Progress } from "~/components/ui/shadcn/progress";
 import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
-import type { User } from "~/types/api/impl/user";
+import type { ManufactureRoom, TradingRoom, User } from "~/types/api/impl/user";
 
 interface BaseViewProps {
     data: User;
 }
 
-interface TradingPostData {
-    state?: number;
-    strategy?: string;
-    stockLimit?: number;
-    stock?: { gain?: { count?: number } }[];
-    display?: { base?: number; buff?: number };
-}
-
-interface ManufactureData {
-    state?: number;
-    formulaId?: string;
-    remainSolutionCnt?: number;
-    capacity?: number;
-    display?: { base?: number; buff?: number };
-}
-
 export function BaseView({ data }: BaseViewProps) {
-    const tradingPosts = data.building?.rooms?.TRADING as Record<string, TradingPostData> | undefined;
-    const factories = data.building?.rooms?.MANUFACTURE as Record<string, ManufactureData> | undefined;
+    const tradingPosts = data.building?.rooms?.TRADING as Record<string, TradingRoom> | undefined;
+    const factories = data.building?.rooms?.MANUFACTURE as Record<string, ManufactureRoom> | undefined;
     const roomSlots = data.building?.roomSlots;
 
     return (
