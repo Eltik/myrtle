@@ -340,20 +340,11 @@ export function getAvatarById(charId: string): string {
 /**
  * Gets the avatar URL for a user's secretary.
  * Handles both default skins (ending in #1) and purchased skins (containing @).
+ * Uses the dynamic avatar route which looks up the correct directory.
  */
 export function getAvatarSkinId(user: { status?: { secretary: string; secretarySkinId: string } } | null): string {
-    const DEFAULT_AVATAR = "https://static.wikia.nocookie.net/mrfz/images/4/46/Symbol_profile.png/revision/latest?cb=20220418145951";
-
-    if (!user?.status) return DEFAULT_AVATAR;
-
-    const secretaryId = user.status.secretary;
-    const secretarySkinId = user.status.secretarySkinId;
-
-    // If secretarySkinId doesn't contain @ and ends with #1, it's the default E0 skin
-    // In that case, use the base character ID
-    const skinId = !secretarySkinId.includes("@") && secretarySkinId.endsWith("#1") ? secretaryId : secretarySkinId;
-
-    return getAvatarById(skinId);
+    // Use getSecretaryAvatarUrl which handles all the complexity
+    return getSecretaryAvatarUrl(user);
 }
 
 /**
@@ -400,23 +391,26 @@ export function getOperatorImageUrl(charId: string, skin: string, evolvePhase: n
         return `/api/cdn/upk/chararts/${charId}/${charId}${suffix}.png`;
     }
 
-    // Normalize skin ID for file path (replace @ and # with _)
-    const normalizedSkinId = skinId.replaceAll("@", "_").replaceAll("#", "_");
-
     // Custom skins (containing @) are in skinpack folder
+    // Skinpack files keep # in filename (e.g., char_4036_forcer_epoque#20.png)
     if (skinId.includes("@")) {
+        // Replace @ with _, URL-encode # as %23 (skinpack files use # in names)
+        const normalizedSkinId = skinId.replaceAll("@", "_").replaceAll("#", "%23");
         return `/api/cdn/upk/skinpack/${charId}/${normalizedSkinId}.png`;
     }
 
     // Default/E2 skins are in chararts folder
+    // Chararts files use _ instead of # (e.g., char_4015_spuria_2.png)
+    const normalizedSkinId = skinId.replaceAll("@", "_").replaceAll("#", "_");
     return `/api/cdn/upk/chararts/${charId}/${normalizedSkinId}.png`;
 }
 
 /**
- * Gets the avatar URL for a user's secretary using the CDN.
+ * Gets the avatar URL for a user's secretary using the dynamic avatar route.
+ * The backend will look up the correct directory from asset mappings.
  */
 export function getSecretaryAvatarUrl(user: { status?: { secretary: string; secretarySkinId: string } } | null): string {
-    const DEFAULT_AVATAR = "/api/cdn/upk/spritepack/ui_char_avatar_0/char_002_amiya.png";
+    const DEFAULT_AVATAR = "/api/cdn/avatar/char_002_amiya";
 
     if (!user?.status) return DEFAULT_AVATAR;
 
@@ -426,8 +420,12 @@ export function getSecretaryAvatarUrl(user: { status?: { secretary: string; secr
     // If secretarySkinId doesn't contain @ and ends with #1, use base character ID
     const skinId = !secretarySkinId.includes("@") && secretarySkinId.endsWith("#1") ? secretaryId : secretarySkinId;
 
-    // Normalize skin ID for file path
-    const normalizedSkinId = skinId.replaceAll("@", "_").replaceAll("#", "_");
+    // Normalize skin ID for avatar lookup:
+    // - Replace @ with _ (files use underscore)
+    // - Keep # as-is for custom skins (backend handles URL decoding)
+    // - Replace # with _ for base skins
+    const normalizedSkinId = skinId.includes("@") ? skinId.replaceAll("@", "_").replaceAll("#", "%23") : skinId.replaceAll("@", "_").replaceAll("#", "_");
 
-    return `/api/cdn/upk/spritepack/ui_char_avatar_0/${normalizedSkinId}.png`;
+    // Use dynamic avatar route - backend looks up correct directory
+    return `/api/cdn/avatar/${normalizedSkinId}`;
 }
