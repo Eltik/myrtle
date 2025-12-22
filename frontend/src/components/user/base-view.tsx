@@ -34,13 +34,13 @@ export function BaseView({ data }: BaseViewProps) {
             <div className="space-y-6">
                 <Card className="border-yellow-500/30 bg-yellow-500/5">
                     <CardContent className="p-4">
-                        <p className="text-sm text-muted-foreground">This section is still a work-in-progress. Base data visualization coming soon!</p>
+                        <p className="text-muted-foreground text-sm">This section is still a work-in-progress. Base data visualization coming soon!</p>
                     </CardContent>
                 </Card>
 
                 {/* Trading Posts */}
                 <div>
-                    <h3 className="mb-4 text-lg font-semibold">Trading Posts</h3>
+                    <h3 className="mb-4 font-semibold text-lg">Trading Posts</h3>
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {tradingPosts &&
                             Object.entries(tradingPosts).map(([roomId, post]) => {
@@ -77,13 +77,13 @@ export function BaseView({ data }: BaseViewProps) {
                                     </Card>
                                 );
                             })}
-                        {(!tradingPosts || Object.keys(tradingPosts).length === 0) && <p className="text-sm text-muted-foreground">No trading posts found.</p>}
+                        {(!tradingPosts || Object.keys(tradingPosts).length === 0) && <p className="text-muted-foreground text-sm">No trading posts found.</p>}
                     </div>
                 </div>
 
                 {/* Factories */}
                 <div>
-                    <h3 className="mb-4 text-lg font-semibold">Factories</h3>
+                    <h3 className="mb-4 font-semibold text-lg">Factories</h3>
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {factories &&
                             Object.entries(factories).map(([roomId, factory]) => {
@@ -101,7 +101,7 @@ export function BaseView({ data }: BaseViewProps) {
                                         <CardContent className="space-y-2">
                                             <div className="flex items-center justify-between text-sm">
                                                 <span className="text-muted-foreground">Product</span>
-                                                <span className="font-medium truncate max-w-[120px]">{factory.formulaId ?? "None"}</span>
+                                                <span className="max-w-[120px] truncate font-medium">{factory.formulaId ?? "None"}</span>
                                             </div>
                                             <div className="flex items-center justify-between text-sm">
                                                 <span className="text-muted-foreground">Queue</span>
@@ -120,7 +120,7 @@ export function BaseView({ data }: BaseViewProps) {
                                     </Card>
                                 );
                             })}
-                        {(!factories || Object.keys(factories).length === 0) && <p className="text-sm text-muted-foreground">No factories found.</p>}
+                        {(!factories || Object.keys(factories).length === 0) && <p className="text-muted-foreground text-sm">No factories found.</p>}
                     </div>
                 </div>
             </div>

@@ -23,7 +23,7 @@ export default function UserPage({ userData, error }: UserPageProps) {
                 </Head>
                 <div className="container mx-auto flex min-h-[50vh] items-center justify-center p-4">
                     <div className="text-center">
-                        <h1 className="mb-4 text-4xl font-bold">User Not Found</h1>
+                        <h1 className="mb-4 font-bold text-4xl">User Not Found</h1>
                         <p className="text-muted-foreground">{error ?? "The requested user profile could not be found."}</p>
                     </div>
                 </div>
@@ -59,17 +59,17 @@ export default function UserPage({ userData, error }: UserPageProps) {
                         </TabsList>
 
                         <TabsContent value="characters" className="space-y-4">
-                            <h2 className="text-2xl font-bold">Characters</h2>
+                            <h2 className="font-bold text-2xl">Characters</h2>
                             <CharactersGrid data={data} />
                         </TabsContent>
 
                         <TabsContent value="items" className="space-y-4">
-                            <h2 className="text-2xl font-bold">Items</h2>
+                            <h2 className="font-bold text-2xl">Items</h2>
                             <ItemsGrid data={data} />
                         </TabsContent>
 
                         <TabsContent value="base" className="space-y-4">
-                            <h2 className="text-2xl font-bold">Base</h2>
+                            <h2 className="font-bold text-2xl">Base</h2>
                             <BaseView data={data} />
                         </TabsContent>
                     </Tabs>

@@ -137,7 +137,7 @@ export function CharactersGrid({ data }: CharactersGridProps) {
             {/* Loading indicator */}
             {displayCount < sortedAndFilteredCharacters.length && (
                 <div className="flex justify-center py-4">
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-muted-foreground text-sm">
                         Showing {displayCount} of {sortedAndFilteredCharacters.length} operators. Scroll to load more.
                     </p>
                 </div>
