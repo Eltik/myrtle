@@ -752,6 +752,7 @@ impl FlatBufferToJson
             "FormulaItem".to_string(),
             self.formulaItem().to_json_value(),
         );
+        map.insert("Value".to_string(), json!(self.value()));
         map.insert(
             "LoadFromBlackboard".to_string(),
             json!(self.loadFromBlackboard()),
@@ -1346,6 +1347,7 @@ impl FlatBufferToJson
             "FormulaItem".to_string(),
             self.formulaItem().to_json_value(),
         );
+        map.insert("Value".to_string(), json!(self.value()));
         map.insert(
             "LoadFromBlackboard".to_string(),
             json!(self.loadFromBlackboard()),
