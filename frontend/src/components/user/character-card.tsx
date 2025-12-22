@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import { RARITY_COLORS } from "~/components/operators/list/constants";
 import { MorphingDialog, MorphingDialogClose, MorphingDialogContainer, MorphingDialogContent, MorphingDialogTrigger } from "~/components/ui/motion-primitives/morphing-dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "~/components/ui/shadcn/accordion";
 import { Card, CardContent } from "~/components/ui/shadcn/card";
@@ -117,36 +118,72 @@ export function CharacterCard({ data }: CharacterCardProps) {
     const operatorProfession = formatProfession(operator?.profession ?? "");
     const operatorRarity = operator?.rarity ?? "TIER_1";
     const starCount = getRarityStarCount(operatorRarity);
+
+    // Check if operator is fully maxed
+    const isMaxed = (() => {
+        // Max potential is 5 (0-indexed, represents potential 6)
+        const isMaxPotential = data.potentialRank === 5;
+
+        // Max level depends on rarity - need to be at highest elite phase with max level
+        const maxElitePhase = (operator?.phases?.length ?? 1) - 1;
+        const isAtMaxElite = data.evolvePhase === maxElitePhase;
+        const maxLevelForPhase = operator?.phases?.[maxElitePhase]?.MaxLevel ?? 1;
+        const isMaxLevel = isAtMaxElite && data.level === maxLevelForPhase;
+
+        // Max skills: M3 on all skills for 4+ stars, or skill level 7 for 3-stars
+        const isThreeStar = starCount <= 3;
+        const isMaxSkills = isThreeStar
+            ? data.mainSkillLvl === 7 // 3-stars just need skill level 7
+            : data.skills.length > 0 && data.skills.every((skill) => skill.specializeLevel === 3);
+
+        return isMaxPotential && isMaxLevel && isMaxSkills;
+    })();
     const operatorImage = getOperatorImageUrl(data.charId, data.skin, data.evolvePhase, data.currentTmpl, data.tmpl as Record<string, { skinId: string }> | null);
+    const rarityColor = RARITY_COLORS[starCount] ?? "#ffffff";
 
     return (
         <MorphingDialog transition={{ type: "spring", bounce: 0.05, duration: 0.25 }}>
-            <Card className="fade-in slide-in-from-bottom-4 flex w-full animate-in flex-col overflow-hidden border-2 border-muted/30 transition-all duration-300 hover:border-muted hover:shadow-lg" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)} ref={cardRef}>
-                {/* Image area wrapped in MorphingDialogTrigger for the morph effect */}
-                <MorphingDialogTrigger>
-                    <div className="relative h-64 w-full cursor-pointer overflow-hidden">
-                        <Image alt={operatorName} className={`h-full w-full object-contain transition-transform duration-300 ${isHovered ? "scale-105" : "scale-100"}`} height={200} src={operatorImage || "/placeholder.svg"} unoptimized width={200} />
-                        <div className={`absolute inset-0 bg-linear-to-t from-black/50 to-transparent transition-opacity duration-300 ${isHovered ? "opacity-90" : "opacity-70"}`} />
+            <Card
+                className="fade-in slide-in-from-bottom-4 flex w-full animate-in flex-col gap-0 overflow-hidden border-2 border-muted/30 pb-1 transition-all duration-300 hover:border-muted hover:shadow-lg"
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+                ref={cardRef}
+                style={isMaxed ? { boxShadow: `0 0 20px ${rarityColor}40, 0 0 40px ${rarityColor}20` } : undefined}
+            >
+                {/* Image area wrapper - relative positioning for maxed indicator */}
+                <div className="relative">
+                    <MorphingDialogTrigger>
+                        <div className="relative h-64 w-full cursor-pointer overflow-hidden">
+                            <Image alt={operatorName} className={`h-full w-full object-contain transition-transform duration-300 ${isHovered ? "scale-105" : "scale-100"}`} height={200} src={operatorImage || "/placeholder.svg"} unoptimized width={200} />
+                            <div className={`absolute inset-0 bg-linear-to-t from-black/50 to-transparent transition-opacity duration-300 ${isHovered ? "opacity-90" : "opacity-70"}`} />
 
-                        {/* Operator Info Overlay */}
-                        <div className="absolute right-0 bottom-0 left-0 p-4">
-                            <h3 className={`mt-2 max-w-[75%] text-left font-bold text-white text-xl transition-all duration-300 ${isHovered ? "translate-y-0" : "translate-y-1"}`}>{operatorName}</h3>
-                            <div className={`flex items-center justify-between transition-all duration-300 ${isHovered ? "translate-y-0" : "translate-y-1"}`}>
-                                <div className="flex items-center gap-2">
-                                    <Image alt={`${starCount} Star`} className="h-[18px] w-auto object-contain" height={18} src={`/api/cdn/upk/arts/rarity_hub/rarity_yellow_${starCount - 1}.png`} unoptimized width={60} />
-                                    <div className="flex flex-row items-center gap-1">
-                                        <Image alt={operatorProfession} className="h-5 w-5" height={20} src={`/api/cdn/upk/arts/ui/[uc]charcommon/icon_profession_${getProfessionIconName(operator?.profession ?? "")}.png`} unoptimized width={20} />
-                                        <span className="text-sm text-white">{operatorProfession}</span>
+                            {/* Operator Info Overlay */}
+                            <div className="absolute right-0 bottom-0 left-0 p-4">
+                                <h3 className={`mt-2 max-w-[75%] text-left font-bold text-white text-xl transition-all duration-300 ${isHovered ? "translate-y-0" : "translate-y-1"}`}>{operatorName}</h3>
+                                <div className={`flex items-center justify-between transition-all duration-300 ${isHovered ? "translate-y-0" : "translate-y-1"}`}>
+                                    <div className="flex items-center gap-2">
+                                        <Image alt={`${starCount} Star`} className="h-[18px] w-auto object-contain" height={18} src={`/api/cdn/upk/arts/rarity_hub/rarity_yellow_${starCount - 1}.png`} unoptimized width={60} />
+                                        <div className="flex flex-row items-center gap-1">
+                                            <Image alt={operatorProfession} className="h-5 w-5" height={20} src={`/api/cdn/upk/arts/ui/[uc]charcommon/icon_profession_${getProfessionIconName(operator?.profession ?? "")}.png`} unoptimized width={20} />
+                                            <span className="text-sm text-white">{operatorProfession}</span>
+                                        </div>
                                     </div>
+                                    <Image alt="Elite" className="h-6 w-6 object-contain" height={24} src={`/api/cdn/upk/arts/elite_hub/elite_${data.evolvePhase}.png`} unoptimized width={24} />
                                 </div>
-                                <Image alt="Elite" className="h-6 w-6 object-contain" height={24} src={`/api/cdn/upk/arts/elite_hub/elite_${data.evolvePhase}.png`} unoptimized width={24} />
                             </div>
                         </div>
-                    </div>
-                </MorphingDialogTrigger>
+                    </MorphingDialogTrigger>
+
+                    {/* Maxed indicator - diagonal badge at top left */}
+                    {isMaxed && (
+                        <div className="-top-3 absolute z-10 rounded-r-md px-2 py-0.5 text-center font-semibold text-xs shadow-md" style={{ color: rarityColor }}>
+                            Maxed
+                        </div>
+                    )}
+                </div>
 
                 {/* Operator Stats */}
-                <CardContent className="flex-1 px-4 pt-4 pb-2">
+                <CardContent className="flex-1 px-4 pt-2 pb-2">
                     {/* Level and Trust Progress */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -467,10 +504,8 @@ export function CharacterCard({ data }: CharacterCardProps) {
                                     <span>{new Date(data.gainTime * 1000).toLocaleDateString()}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Trust</span>
-                                    <span>
-                                        {operator?.trust ?? 0}/200 ({((operator?.trust ?? 0) / 2).toFixed(0)}%)
-                                    </span>
+                                    <span className="text-muted-foreground">Voice</span>
+                                    <span className="capitalize">{data.voiceLan === "JP" ? "Japanese" : data.voiceLan === "CN_MANDARIN" ? "Chinese" : data.voiceLan === "EN" ? "English" : data.voiceLan === "KR" ? "Korean" : (data.voiceLan?.toLowerCase().replace("_", " ") ?? "Japanese")}</span>
                                 </div>
                             </div>
                         </div>
