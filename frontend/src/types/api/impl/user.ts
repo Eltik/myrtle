@@ -1455,7 +1455,7 @@ export interface UserPotentialBuffAttributes {
 }
 
 export interface UserAttributeModifier {
-    AttributeType: number;
+    AttributeType: string; // "MAX_HP", "ATK", "DEF", "MAGIC_RESISTANCE", "COST", "ATTACK_SPEED", "RESPAWN_TIME", etc.
     FormulaItem: number;
     Value: number;
     FrameIndex: number;

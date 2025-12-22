@@ -1,5 +1,5 @@
 # Setup
-
+TODO: Remove this and merge with the README.md once I update it.
 ## Assets
 The following is a basic example on how to setup the assets downloader and unpacker.
 1. Run `node build.js` in `assets/build.js`.
