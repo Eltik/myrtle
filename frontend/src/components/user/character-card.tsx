@@ -240,7 +240,7 @@ export function CharacterCard({ data }: CharacterCardProps) {
                                                                 <span>Lv.{data.mainSkillLvl}</span>
                                                                 {skill.specializeLevel > 0 && (
                                                                     <span className="flex items-center gap-0.5">
-                                                                        <Image alt={`M${skill.specializeLevel}`} className="h-4 w-4" height={16} src={`/m-${skill.specializeLevel}_0.webp`} unoptimized width={16} />M{skill.specializeLevel}
+                                                                        <Image alt={`M${skill.specializeLevel}`} className="h-4 w-4" height={16} src={`/api/cdn/upk/arts/specialized_hub/specialized_${skill.specializeLevel}.png`} unoptimized width={16} />M{skill.specializeLevel}
                                                                     </span>
                                                                 )}
                                                             </div>
@@ -397,7 +397,7 @@ export function CharacterCard({ data }: CharacterCardProps) {
                                                         <span>Lv.{data.mainSkillLvl}</span>
                                                         {skill.specializeLevel > 0 && (
                                                             <span className="flex items-center gap-1">
-                                                                <Image alt={`M${skill.specializeLevel}`} className="h-5 w-5" height={20} src={`/m-${skill.specializeLevel}_0.webp`} unoptimized width={20} />M{skill.specializeLevel}
+                                                                <Image alt={`M${skill.specializeLevel}`} className="h-5 w-5" height={20} src={`/api/cdn/upk/arts/specialized_hub/specialized_${skill.specializeLevel}.png`} unoptimized width={20} />M{skill.specializeLevel}
                                                             </span>
                                                         )}
                                                     </div>

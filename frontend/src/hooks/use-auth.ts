@@ -4,6 +4,23 @@ import type { User } from "~/types/api";
 const USER_CACHE_KEY = "myrtle_user_cache";
 
 /**
+ * Minimal user data cached in localStorage for instant display.
+ * Only includes fields actually used in the UI to avoid quota issues.
+ * The full User object can be 100-300KB which exceeds localStorage limits.
+ */
+export interface CachedUserData {
+    status: {
+        nickName: string;
+        level: number;
+        secretary: string;
+        secretarySkinId: string;
+    };
+}
+
+/** User data type - can be full User from API or minimal cached data */
+export type AuthUser = User | CachedUserData;
+
+/**
  * Check if the auth indicator cookie exists (client-side readable).
  * This cookie is set alongside the httpOnly session cookie to allow
  * the client to know if a session exists without exposing sensitive data.
@@ -14,9 +31,25 @@ function hasAuthIndicator(): boolean {
 }
 
 /**
- * Get cached user data from localStorage for instant display.
+ * Extract minimal user data for caching.
+ * Only includes fields used in the UI (header display, avatar).
  */
-function getCachedUser(): User | null {
+function extractCacheData(user: User): CachedUserData {
+    return {
+        status: {
+            nickName: user.status.nickName,
+            level: user.status.level,
+            secretary: user.status.secretary,
+            secretarySkinId: user.status.secretarySkinId,
+        },
+    };
+}
+
+/**
+ * Get cached user data from localStorage for instant display.
+ * Returns a partial User object with only the cached fields.
+ */
+function getCachedUser(): CachedUserData | null {
     if (typeof window === "undefined") return null;
     try {
         const cached = localStorage.getItem(USER_CACHE_KEY);
@@ -27,19 +60,20 @@ function getCachedUser(): User | null {
 }
 
 /**
- * Cache user data to localStorage for faster subsequent loads.
+ * Cache minimal user data to localStorage for faster subsequent loads.
+ * Only caches fields actually used in the UI to avoid quota issues.
  */
 function setCachedUser(user: User | null): void {
     if (typeof window === "undefined") return;
     if (user) {
-        localStorage.setItem(USER_CACHE_KEY, JSON.stringify(user));
+        localStorage.setItem(USER_CACHE_KEY, JSON.stringify(extractCacheData(user)));
     } else {
         localStorage.removeItem(USER_CACHE_KEY);
     }
 }
 
 export function useAuth() {
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<AuthUser | null>(null);
     const [loading, setLoading] = useState(true);
 
     // Fetch user data from the server (uses cached database data, no game server refresh)
