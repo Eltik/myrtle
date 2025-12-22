@@ -338,9 +338,9 @@ export function CharacterCard({ data }: CharacterCardProps) {
             >
                 {/* Image area wrapper */}
                 <div className="relative">
-                    <MorphingDialogTrigger>
+                    <MorphingDialogTrigger className="block w-full">
                         <div className="relative h-64 w-full cursor-pointer overflow-hidden">
-                            <Image alt={operatorName} className={`h-full w-full object-contain transition-transform duration-300 ${isHovered ? "scale-105" : "scale-100"}`} height={200} src={operatorImage || "/placeholder.svg"} unoptimized width={200} />
+                            <Image alt={operatorName} className={`h-full w-full object-contain object-top transition-transform duration-300 ${isHovered ? "scale-105" : "scale-100"}`} height={512} src={operatorImage || "/placeholder.svg"} unoptimized width={512} />
                             <div className={`absolute inset-0 bg-linear-to-t from-black/50 to-transparent transition-opacity duration-300 ${isHovered ? "opacity-90" : "opacity-70"}`} />
 
                             {/* Operator Info Overlay */}
@@ -461,7 +461,7 @@ export function CharacterCard({ data }: CharacterCardProps) {
                                                         maxChargeTime?: number;
                                                         spCost?: number;
                                                         spType?: string;
-                                                    }
+                                                    };
                                                 } | null;
                                                 const isDefaultSkill = data.defaultSkillIndex === index;
 
@@ -469,7 +469,9 @@ export function CharacterCard({ data }: CharacterCardProps) {
                                                     <div className={`flex items-center gap-2 overflow-hidden rounded-md border p-2 ${isDefaultSkill ? "border-neutral-400 bg-neutral-100 dark:bg-neutral-800/30" : ""}`} key={skill.skillId}>
                                                         <Image alt="Skill" className="h-7 w-7 shrink-0" height={28} src={skillStatic?.image ? `/api/cdn${skillStatic.image}` : `/api/cdn/upk/spritepack/skill_icons_0/skill_icon_${skillStatic?.iconId ?? skillStatic?.skillId ?? skill.skillId}.png`} unoptimized width={28} />
                                                         <div className="w-0 flex-1 overflow-hidden">
-                                                            <div className="truncate font-medium text-sm" title={skillStatic?.name ?? `Skill ${index + 1}`}>{skillStatic?.name ?? `Skill ${index + 1}`}</div>
+                                                            <div className="truncate font-medium text-sm" title={skillStatic?.name ?? `Skill ${index + 1}`}>
+                                                                {skillStatic?.name ?? `Skill ${index + 1}`}
+                                                            </div>
                                                             <div className="flex items-center gap-1 text-muted-foreground text-xs">
                                                                 <span>Lv.{data.mainSkillLvl}</span>
                                                                 {skill.specializeLevel > 0 && (
@@ -550,7 +552,7 @@ export function CharacterCard({ data }: CharacterCardProps) {
                                     scale: heroImageScale,
                                 }}
                             >
-                                <Image alt={operatorName} className="h-full w-full object-contain" fill src={operatorImage || "/placeholder.svg"} unoptimized />
+                                <Image alt={operatorName} className="h-full w-full object-contain object-top" height={512} src={operatorImage || "/placeholder.svg"} unoptimized width={512} />
                             </motion.div>
                             {/* Vignette overlay - stays and intensifies */}
                             <motion.div className="pointer-events-none absolute inset-0 rounded-lg bg-linear-to-t from-black via-black/50 to-transparent" style={{ opacity: vignetteOpacity }} />

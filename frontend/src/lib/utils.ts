@@ -26,6 +26,7 @@ export const rarityToNumber = (rarity: OperatorRarity): number => {
 };
 
 export const formatProfession = (profession: string): string => {
+    if (!profession) return "Guard";
     switch (profession.toLowerCase()) {
         case "pioneer":
             return "Vanguard";
@@ -360,6 +361,7 @@ export function getRarityStarCount(rarity: string): number {
  * Maps a profession code to its icon name for CDN paths.
  */
 export function getProfessionIconName(profession: string): string {
+    if (!profession) return "warrior";
     const iconMap: Record<string, string> = {
         WARRIOR: "warrior",
         SNIPER: "sniper",
@@ -370,7 +372,7 @@ export function getProfessionIconName(profession: string): string {
         SPECIAL: "special",
         PIONEER: "pioneer",
     };
-    return iconMap[profession?.toUpperCase()] ?? profession?.toLowerCase() ?? "warrior";
+    return iconMap[profession.toUpperCase()] ?? profession.toLowerCase() ?? "warrior";
 }
 
 /**
