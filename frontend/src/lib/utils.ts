@@ -355,3 +355,79 @@ export function getAvatarSkinId(user: { status?: { secretary: string; secretaryS
 
     return getAvatarById(skinId);
 }
+
+/**
+ * Extracts the star count (1-6) from a rarity string like "TIER_6".
+ * Returns 0 if the format doesn't match.
+ */
+export function getRarityStarCount(rarity: string): number {
+    const match = rarity?.match(/TIER_(\d)/);
+    return match ? Number.parseInt(match[1] ?? "", 10) : 0;
+}
+
+/**
+ * Maps a profession code to its icon name for CDN paths.
+ */
+export function getProfessionIconName(profession: string): string {
+    const iconMap: Record<string, string> = {
+        WARRIOR: "warrior",
+        SNIPER: "sniper",
+        TANK: "tank",
+        MEDIC: "medic",
+        SUPPORT: "support",
+        CASTER: "caster",
+        SPECIAL: "special",
+        PIONEER: "pioneer",
+    };
+    return iconMap[profession?.toUpperCase()] ?? profession?.toLowerCase() ?? "warrior";
+}
+
+/**
+ * Gets the operator image URL based on character ID, skin, evolve phase, and template.
+ * Handles different skin types: default skins, E2 skins, and custom skins.
+ */
+export function getOperatorImageUrl(charId: string, skin: string, evolvePhase: number, currentTmpl?: string | null, tmpl?: Record<string, { skinId: string }> | null): string {
+    let skinId = skin;
+
+    // Check if using a template (for operators with alternate forms like Amiya)
+    if (currentTmpl && tmpl && tmpl[currentTmpl]) {
+        skinId = tmpl[currentTmpl].skinId;
+    }
+
+    // If no skin ID, use default based on evolve phase
+    if (!skinId) {
+        const suffix = evolvePhase >= 2 ? "_2" : "_1";
+        return `/api/cdn/upk/chararts/${charId}/${charId}${suffix}.png`;
+    }
+
+    // Normalize skin ID for file path (replace @ and # with _)
+    const normalizedSkinId = skinId.replaceAll("@", "_").replaceAll("#", "_");
+
+    // Custom skins (containing @) are in skinpack folder
+    if (skinId.includes("@")) {
+        return `/api/cdn/upk/skinpack/${charId}/${normalizedSkinId}.png`;
+    }
+
+    // Default/E2 skins are in chararts folder
+    return `/api/cdn/upk/chararts/${charId}/${normalizedSkinId}.png`;
+}
+
+/**
+ * Gets the avatar URL for a user's secretary using the CDN.
+ */
+export function getSecretaryAvatarUrl(user: { status?: { secretary: string; secretarySkinId: string } } | null): string {
+    const DEFAULT_AVATAR = "/api/cdn/upk/spritepack/ui_char_avatar_0/char_002_amiya.png";
+
+    if (!user?.status) return DEFAULT_AVATAR;
+
+    const secretaryId = user.status.secretary;
+    const secretarySkinId = user.status.secretarySkinId;
+
+    // If secretarySkinId doesn't contain @ and ends with #1, use base character ID
+    const skinId = !secretarySkinId.includes("@") && secretarySkinId.endsWith("#1") ? secretaryId : secretarySkinId;
+
+    // Normalize skin ID for file path
+    const normalizedSkinId = skinId.replaceAll("@", "_").replaceAll("#", "_");
+
+    return `/api/cdn/upk/spritepack/ui_char_avatar_0/${normalizedSkinId}.png`;
+}

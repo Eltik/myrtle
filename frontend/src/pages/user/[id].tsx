@@ -1,11 +1,11 @@
-import Head from "next/head";
 import type { GetServerSideProps } from "next";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/shadcn/tabs";
+import Head from "next/head";
 import { InView } from "~/components/ui/motion-primitives/in-view";
-import { UserHeader } from "~/components/user/user-header";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/shadcn/tabs";
+import { BaseView } from "~/components/user/base-view";
 import { CharactersGrid } from "~/components/user/characters-grid";
 import { ItemsGrid } from "~/components/user/items-grid";
-import { BaseView } from "~/components/user/base-view";
+import { UserHeader } from "~/components/user/user-header";
 import type { StoredUser } from "~/types/api/impl/user";
 
 interface UserPageProps {
@@ -19,7 +19,7 @@ export default function UserPage({ userData, error }: UserPageProps) {
             <>
                 <Head>
                     <title>User Not Found - myrtle.moe</title>
-                    <meta name="description" content="User profile not found" />
+                    <meta content="User profile not found" name="description" />
                 </Head>
                 <div className="container mx-auto flex min-h-[50vh] items-center justify-center p-4">
                     <div className="text-center">
@@ -39,36 +39,36 @@ export default function UserPage({ userData, error }: UserPageProps) {
         <>
             <Head>
                 <title>{possessive} Arknights Profile - myrtle.moe</title>
-                <meta name="description" content={`View ${possessive} Arknights profile on myrtle.moe.`} />
+                <meta content={`View ${possessive} Arknights profile on myrtle.moe.`} name="description" />
             </Head>
             <div className="container mx-auto p-4">
                 <UserHeader data={data} />
 
                 <InView
+                    transition={{ duration: 0.5, ease: "easeOut", delay: 0.2 }}
                     variants={{
                         hidden: { opacity: 0, y: -20 },
                         visible: { opacity: 1, y: 0 },
                     }}
-                    transition={{ duration: 0.5, ease: "easeOut", delay: 0.2 }}
                 >
-                    <Tabs defaultValue="characters" className="space-y-4">
+                    <Tabs className="space-y-4" defaultValue="characters">
                         <TabsList>
                             <TabsTrigger value="characters">Characters</TabsTrigger>
                             <TabsTrigger value="items">Items</TabsTrigger>
                             <TabsTrigger value="base">Base</TabsTrigger>
                         </TabsList>
 
-                        <TabsContent value="characters" className="space-y-4">
+                        <TabsContent className="space-y-4" value="characters">
                             <h2 className="font-bold text-2xl">Characters</h2>
                             <CharactersGrid data={data} />
                         </TabsContent>
 
-                        <TabsContent value="items" className="space-y-4">
+                        <TabsContent className="space-y-4" value="items">
                             <h2 className="font-bold text-2xl">Items</h2>
                             <ItemsGrid data={data} />
                         </TabsContent>
 
-                        <TabsContent value="base" className="space-y-4">
+                        <TabsContent className="space-y-4" value="base">
                             <h2 className="font-bold text-2xl">Base</h2>
                             <BaseView data={data} />
                         </TabsContent>

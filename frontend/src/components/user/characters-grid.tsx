@@ -1,25 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDown, ArrowUp } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "~/components/ui/shadcn/button";
 import { Input } from "~/components/ui/shadcn/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/shadcn/select";
-import { Button } from "~/components/ui/shadcn/button";
+import { capitalize, getRarityStarCount } from "~/lib/utils";
+import type { CharacterData, User } from "~/types/api/impl/user";
 import { CharacterCard } from "./character-card";
-import type { User, CharacterData } from "~/types/api/impl/user";
 
 type SortBy = "level" | "rarity" | "obtained" | "potential";
 type SortOrder = "asc" | "desc";
 type RarityFilter = "all" | "TIER_6" | "TIER_5" | "TIER_4" | "TIER_3" | "TIER_2" | "TIER_1";
-
-function getRarityNumber(rarity: string): number {
-    const match = rarity?.match(/TIER_(\d)/);
-    return match ? Number.parseInt(match[1] ?? "", 10) : 0;
-}
-
-function capitalize(s: string): string {
-    return s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "";
-}
 
 interface CharactersGridProps {
     data: User;
@@ -54,7 +46,7 @@ export function CharactersGrid({ data }: CharactersGridProps) {
                         }
                         break;
                     case "rarity":
-                        comparison = getRarityNumber(b.static?.rarity ?? "TIER_1") - getRarityNumber(a.static?.rarity ?? "TIER_1");
+                        comparison = getRarityStarCount(b.static?.rarity ?? "TIER_1") - getRarityStarCount(a.static?.rarity ?? "TIER_1");
                         break;
                     case "obtained":
                         comparison = b.gainTime - a.gainTime;
@@ -87,14 +79,14 @@ export function CharactersGrid({ data }: CharactersGridProps) {
 
     useEffect(() => {
         setDisplayCount(40);
-    }, [sortBy, sortOrder, filterRarity, searchTerm]);
+    }, []);
 
     return (
         <div className="flex w-full flex-col space-y-6">
             {/* Filter Controls */}
             <div className="flex w-full flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center">
-                <Input placeholder="Search operators..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full sm:w-[280px]" />
-                <Select value={sortBy} onValueChange={(value: SortBy) => setSortBy(value)}>
+                <Input className="w-full sm:w-[280px]" onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search operators..." value={searchTerm} />
+                <Select onValueChange={(value: SortBy) => setSortBy(value)} value={sortBy}>
                     <SelectTrigger className="w-full sm:w-[180px]">
                         <SelectValue placeholder="Sort by" />
                     </SelectTrigger>
@@ -105,8 +97,8 @@ export function CharactersGrid({ data }: CharactersGridProps) {
                         <SelectItem value="potential">Sort by Potential</SelectItem>
                     </SelectContent>
                 </Select>
-                <Select value={filterRarity} onValueChange={(value: RarityFilter) => setFilterRarity(value)}>
-                    <SelectTrigger className="w-full sm:w-[160px]">
+                <Select onValueChange={(value: RarityFilter) => setFilterRarity(value)} value={filterRarity}>
+                    <SelectTrigger className="w-full sm:w-40">
                         <SelectValue placeholder="Filter by Rarity" />
                     </SelectTrigger>
                     <SelectContent>
@@ -119,7 +111,7 @@ export function CharactersGrid({ data }: CharactersGridProps) {
                         <SelectItem value="TIER_1">1 Star</SelectItem>
                     </SelectContent>
                 </Select>
-                <Button onClick={toggleSortOrder} variant="outline" className="flex w-full items-center justify-center gap-2 bg-transparent sm:w-auto">
+                <Button className="flex w-full items-center justify-center gap-2 bg-transparent sm:w-auto" onClick={toggleSortOrder} variant="outline">
                     <span>{capitalize(sortOrder)}</span>
                     {sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
                 </Button>
@@ -128,7 +120,7 @@ export function CharactersGrid({ data }: CharactersGridProps) {
             {/* Operator Grid */}
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {sortedAndFilteredCharacters.slice(0, displayCount).map((char, index) => (
-                    <div key={char.charId} ref={index === displayCount - 1 ? lastCharacterRef : null} className="flex">
+                    <div className="flex" key={char.charId} ref={index === displayCount - 1 ? lastCharacterRef : null}>
                         <CharacterCard data={char} />
                     </div>
                 ))}

@@ -1,7 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/shadcn/card";
-import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
 import { Badge } from "~/components/ui/shadcn/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/shadcn/card";
 import { Progress } from "~/components/ui/shadcn/progress";
+import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
 import type { User } from "~/types/api/impl/user";
 
 interface BaseViewProps {
@@ -71,7 +71,7 @@ export function BaseView({ data }: BaseViewProps) {
                                                     <span className="text-muted-foreground">Efficiency</span>
                                                     <span className="font-medium">{efficiency}%</span>
                                                 </div>
-                                                <Progress value={Math.min(efficiency, 200) / 2} className="h-1.5" />
+                                                <Progress className="h-1.5" value={Math.min(efficiency, 200) / 2} />
                                             </div>
                                         </CardContent>
                                     </Card>
@@ -114,7 +114,7 @@ export function BaseView({ data }: BaseViewProps) {
                                                     <span className="text-muted-foreground">Efficiency</span>
                                                     <span className="font-medium">{efficiency}%</span>
                                                 </div>
-                                                <Progress value={Math.min(efficiency, 200) / 2} className="h-1.5" />
+                                                <Progress className="h-1.5" value={Math.min(efficiency, 200) / 2} />
                                             </div>
                                         </CardContent>
                                     </Card>
