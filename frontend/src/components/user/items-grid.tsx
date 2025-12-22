@@ -59,8 +59,38 @@ export function ItemsGrid({ data }: ItemsGridProps) {
     };
 
     const SortIcon = ({ field }: { field: "name" | "amount" }) => {
-        if (sortBy !== field) return <ArrowUpDown className="h-3.5 w-3.5 opacity-50" />;
-        return sortOrder === "asc" ? <ArrowUp className="h-3.5 w-3.5" /> : <ArrowDown className="h-3.5 w-3.5" />;
+        const isActive = sortBy === field;
+        const isAscending = sortOrder === "asc";
+
+        return (
+            <div className="relative h-3.5 w-3.5">
+                <AnimatePresence mode="wait">
+                    {!isActive ? (
+                        <motion.div
+                            key="inactive"
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 0.5, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute inset-0"
+                        >
+                            <ArrowUpDown className="h-3.5 w-3.5" />
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            key={isAscending ? "asc" : "desc"}
+                            initial={{ opacity: 0, rotate: isAscending ? 180 : -180 }}
+                            animate={{ opacity: 1, rotate: 0 }}
+                            exit={{ opacity: 0, rotate: isAscending ? -180 : 180 }}
+                            transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
+                            className="absolute inset-0"
+                        >
+                            {isAscending ? <ArrowUp className="h-3.5 w-3.5" /> : <ArrowDown className="h-3.5 w-3.5" />}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+        );
     };
 
     return (
