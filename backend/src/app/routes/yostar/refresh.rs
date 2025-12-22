@@ -73,7 +73,7 @@ async fn refresh_impl(
     )
     .await
     .map_err(|e| {
-        eprintln!("Fetch error: {:?}", e);
+        eprintln!("Refresh fetch error: {:?}", e);
         ApiError::Internal("Internal server error.".into())
     })?;
 
