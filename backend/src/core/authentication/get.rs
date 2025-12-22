@@ -102,7 +102,7 @@ pub async fn get_secret(
         true, // assign_headers for Authorization
     )
     .await
-    .map_err(|e| format!("Fetch error: {:?}", e))?;
+    .map_err(|e| format!("Get secret fetch error: {:?}", e))?;
 
     let data: GetSecretResponse = response.json().await?;
     if data.result != 0 {
@@ -187,7 +187,7 @@ pub async fn get_u8_token(
         true,
     )
     .await
-    .map_err(|e| format!("Fetch error: {:?}", e))?;
+    .map_err(|e| format!("Get token fetch error: {:?}", e))?;
 
     let data: U8TokenResponse = response.json().await?;
 

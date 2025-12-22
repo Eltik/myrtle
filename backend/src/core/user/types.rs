@@ -85,7 +85,7 @@ pub struct CowLevelEntry {
     pub id: String,
     #[serde(rename = "type")]
     pub entry_type: String,
-    pub val: Vec<String>,
+    pub val: Vec<serde_json::Value>,
     pub fts: i64,
     pub rts: i64,
 }
@@ -179,7 +179,7 @@ pub struct CharacterData {
     pub favor_point: i32,
     pub potential_rank: i32,
     pub main_skill_lvl: i32,
-    pub skin: String,
+    pub skin: Option<String>,
     pub level: i32,
     pub exp: i32,
     pub evolve_phase: i32,
@@ -490,7 +490,7 @@ pub struct BuildingStatus {
 #[serde(rename_all = "camelCase", default)]
 pub struct Labor {
     pub buff_speed: f64,
-    pub process_point: i32,
+    pub process_point: f64,
     pub value: i32,
     pub last_update_time: i64,
     pub max_value: i32,
@@ -595,7 +595,7 @@ pub struct DexNavFormula {
 #[serde(rename_all = "camelCase", default)]
 pub struct DexNavEnemy {
     pub enemies: HashMap<String, i32>,
-    pub stage: HashMap<String, i32>,
+    pub stage: HashMap<String, serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

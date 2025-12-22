@@ -50,7 +50,7 @@ async fn send_code_impl(
     let data = yostar::send_code(&state.client, email, server)
         .await
         .map_err(|e| {
-            eprintln!("Fetch error: {:?}", e);
+            eprintln!("Send code fetch error: {:?}", e);
             ApiError::Internal("Internal server error.".into())
         })?;
     Ok(Json(data))

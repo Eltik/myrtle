@@ -2,3 +2,5 @@ target
 .env
 backend claude.txt
 types claude.txt
+debug_logs/
+debug_sync_data.json

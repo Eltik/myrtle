@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use chrono::Utc;
 use reqwest::Client;
 use tokio::sync::RwLock;
 
@@ -13,6 +14,88 @@ use crate::core::{
     local::types::GameData,
     user::{CharacterData, CharacterSkill},
 };
+
+const DEBUG_LOGS_DIR: &str = "debug_logs";
+
+/// Saves debug information when JSON parsing fails
+fn save_debug_logs(raw_json: &str, error: &serde_json::Error) {
+    use std::fs;
+    use std::path::Path;
+
+    let col = error.column();
+    let line = error.line();
+
+    // Create timestamped folder name
+    let timestamp = Utc::now().format("%Y-%m-%d_%H-%M-%S").to_string();
+    let folder_name = format!("parse_error_{}", timestamp);
+    let folder_path = Path::new(DEBUG_LOGS_DIR).join(&folder_name);
+
+    // Create directories
+    if let Err(e) = fs::create_dir_all(&folder_path) {
+        eprintln!("Failed to create debug folder: {}", e);
+        return;
+    }
+
+    // Save raw JSON
+    let json_path = folder_path.join("sync_data.json");
+    if let Err(e) = fs::write(&json_path, raw_json) {
+        eprintln!("Failed to write JSON: {}", e);
+    }
+
+    // Build error report
+    let start = col.saturating_sub(200);
+    let end = (col + 200).min(raw_json.len());
+    let context = &raw_json[start..end];
+
+    // Find the likely problematic field
+    let before_error = &raw_json[col.saturating_sub(100)..col];
+    let field_name = if let Some(last_quote) = before_error.rfind("\":") {
+        let field_start = before_error[..last_quote].rfind('"').unwrap_or(0);
+        Some(&before_error[field_start + 1..last_quote])
+    } else {
+        None
+    };
+
+    let error_report = format!(
+        r#"Parse Error Report
+==================
+
+Timestamp: {}
+Error: {}
+
+Location:
+  Line: {}
+  Column: {}
+
+Likely Problematic Field: {}
+
+Context Around Error (col {}-{}):
+{}
+
+Raw Error:
+{:?}
+"#,
+        timestamp,
+        error,
+        line,
+        col,
+        field_name.unwrap_or("unknown"),
+        start,
+        end,
+        context,
+        error
+    );
+
+    // Save error report
+    let report_path = folder_path.join("error_report.txt");
+    if let Err(e) = fs::write(&report_path, &error_report) {
+        eprintln!("Failed to write error report: {}", e);
+    }
+
+    // Also print to console
+    eprintln!("\n{}", error_report);
+    eprintln!("Debug files saved to: {}\n", folder_path.display());
+}
 
 pub async fn get(
     client: &Client,
@@ -32,7 +115,18 @@ pub async fn get(
         server,
     )
     .await?;
-    let data: UserResponse = response.json().await.map_err(FetchError::RequestFailed)?;
+
+    // Get raw JSON text first for debugging
+    let raw_json = response.text().await.map_err(FetchError::RequestFailed)?;
+
+    // Try to parse and save debug info on error
+    let data: UserResponse = match serde_json::from_str(&raw_json) {
+        Ok(data) => data,
+        Err(e) => {
+            save_debug_logs(&raw_json, &e);
+            return Err(FetchError::ParseError(e.to_string()));
+        }
+    };
 
     Ok(data.user.map(|mut user| {
         format_user(&mut user, game_data);
