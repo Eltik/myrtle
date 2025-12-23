@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDown, ArrowUp, ArrowUpDown, Box, ChevronDown, ChevronUp, Hammer, Layers, MapPin, Package, Search, Sparkles, Tag, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Box, ChevronDown, ChevronUp, Hammer, Layers, MapPin, Package, Search, Tag, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -23,6 +23,16 @@ const RARITY_COLORS: Record<string, { bg: string; text: string; border: string }
     TIER_6: { bg: "bg-neutral-300/60 dark:bg-neutral-600/60", text: "text-neutral-900 dark:text-neutral-50", border: "border-neutral-400 dark:border-neutral-500" },
 };
 
+// Rarity glow effects for item icons (muted to match monochrome theme)
+const RARITY_GLOW: Record<string, string> = {
+    TIER_1: "",
+    TIER_2: "drop-shadow-[0_0_8px_rgba(134,239,172,0.15)]",
+    TIER_3: "drop-shadow-[0_0_10px_rgba(125,211,252,0.2)]",
+    TIER_4: "drop-shadow-[0_0_12px_rgba(201,184,240,0.25)]",
+    TIER_5: "drop-shadow-[0_0_15px_rgba(255,230,109,0.3)]",
+    TIER_6: "drop-shadow-[0_0_18px_rgba(255,154,74,0.35)]",
+};
+
 const RARITY_LABELS: Record<string, string> = {
     TIER_1: "Tier 1",
     TIER_2: "Tier 2",
@@ -37,7 +47,7 @@ const OCC_PER_LABELS: Record<string, string> = {
     ALMOST: "Almost",
     ALWAYS: "Always",
     SOMETIMES: "Sometimes",
-    OFTEN: "Often"
+    OFTEN: "Often",
 };
 
 // Format item class type for display
@@ -113,7 +123,7 @@ function ItemDetailCard({ item }: { item: ItemWithData }) {
             <div className={`rounded-t-xl p-4 ${rarityColors.bg}`}>
                 <div className="flex items-start gap-4">
                     {/* Item Icon */}
-                    <div className="shrink-0 rounded-xl bg-background/80 p-2 shadow-sm">
+                    <div className={`shrink-0 rounded-xl bg-background/80 p-2 shadow-sm ${RARITY_GLOW[item.rarity ?? "TIER_1"] ?? ""}`}>
                         <ItemIconLarge alt={item.name ?? item.id} src={imageUrl} />
                     </div>
 
@@ -220,8 +230,8 @@ function ItemDetailCard({ item }: { item: ItemWithData }) {
                                         {item.stageDropList && item.stageDropList.length > 0 && (
                                             <div>
                                                 <h3 className="mb-2 font-semibold text-sm">Drop Stages</h3>
-                                                <ScrollArea className="max-h-32">
-                                                    <div className="space-y-1.5">
+                                                <ScrollArea className="h-40 rounded-md border">
+                                                    <div className="space-y-1.5 p-2">
                                                         {item.stageDropList.map((drop) => (
                                                             <div className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-1.5 text-sm" key={drop.stageId}>
                                                                 <span className="flex items-center gap-2">
