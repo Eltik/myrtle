@@ -1,5 +1,7 @@
 import { TextLoop } from "~/components/ui/motion-primitives/text-loop";
 
+export { BentoGrid } from "./impl/bento-grid";
+
 export function MainContent() {
     return (
         <section className="mb-12">

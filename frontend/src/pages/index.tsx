@@ -1,6 +1,5 @@
 import Head from "next/head";
-import { MainContent } from "~/components/home";
-import { BentoGrid } from "~/components/home/bento";
+import { BentoGrid, MainContent } from "~/components/home";
 
 export default function Home() {
     return (
