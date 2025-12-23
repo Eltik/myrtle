@@ -1,14 +1,32 @@
 "use client";
 
-import { ArrowDown, ArrowUp, ArrowUpDown, Package, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Box, Package, Search } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "~/components/ui/shadcn/button";
 import { Card } from "~/components/ui/shadcn/card";
 import { Input } from "~/components/ui/shadcn/input";
 import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
 import type { InventoryItem, User } from "~/types/api/impl/user";
+
+function ItemIcon({ src, alt }: { src: string; alt: string }) {
+    const [hasError, setHasError] = useState(false);
+
+    const handleError = useCallback(() => {
+        setHasError(true);
+    }, []);
+
+    if (hasError) {
+        return (
+            <div className="flex h-9 w-9 items-center justify-center text-muted-foreground/50">
+                <Box className="h-5 w-5" />
+            </div>
+        );
+    }
+
+    return <Image alt={alt} className="h-9 w-9 object-contain" height={36} onError={handleError} src={src} unoptimized width={36} />;
+}
 
 interface ItemsGridProps {
     data: User;
@@ -147,7 +165,7 @@ export function ItemsGrid({ data }: ItemsGridProps) {
                                     >
                                         {/* Icon Cell */}
                                         <motion.div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-muted/50" transition={{ type: "spring", stiffness: 400, damping: 17 }} whileHover={{ scale: 1.1 }}>
-                                            <Image alt={item.name} className="h-9 w-9 object-contain" height={36} src={item.image ? `/api/cdn${item.image}` : `/api/cdn/upk/spritepack/ui_item_icons_h1_0/${item.iconId}.png`} unoptimized width={36} />
+                                            <ItemIcon alt={item.name} src={item.image ? `/api/cdn${item.image}` : `/api/cdn/upk/spritepack/ui_item_icons_h1_0/${item.iconId}.png`} />
                                         </motion.div>
 
                                         {/* Name Cell */}
