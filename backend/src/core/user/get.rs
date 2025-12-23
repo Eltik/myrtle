@@ -234,6 +234,11 @@ fn format_inventory(user: &mut User, game_data: &GameData) {
                 let mut enriched = serde_json::to_value(material).unwrap_or_default();
                 if let serde_json::Value::Object(ref mut map) = enriched {
                     map.insert("amount".to_string(), serde_json::json!(count));
+                    // Add resolved image path using asset mappings
+                    let image_path = game_data
+                        .asset_mappings
+                        .get_item_icon_path(&material.icon_id);
+                    map.insert("image".to_string(), serde_json::json!(image_path));
                 }
                 (item_id, enriched)
             })
