@@ -3,10 +3,29 @@
 import { motion, useScroll, useTransform } from "motion/react";
 import Image from "next/image";
 import { useState } from "react";
+import { AnimatedGroup } from "~/components/ui/motion-primitives/animated-group";
+import { AnimatedNumber } from "~/components/ui/motion-primitives/animated-number";
 import { MorphingDialogClose, MorphingDialogContainer, MorphingDialogContent } from "~/components/ui/motion-primitives/morphing-dialog";
+import { Separator } from "~/components/ui/shadcn/separator";
 import type { CharacterData, CharacterStatic } from "~/types/api/impl/user";
 import { ModuleItem } from "./module-item";
 import { SkillItem } from "./skill-item";
+
+interface StatItemProps {
+    label: string;
+    value: number;
+}
+
+function StatItem({ label, value }: StatItemProps) {
+    return (
+        <div className="flex items-center justify-between rounded-md bg-muted/30 px-2.5 py-1.5">
+            <span className="text-muted-foreground text-xs">{label}</span>
+            <span className="font-medium text-sm tabular-nums">
+                <AnimatedNumber springOptions={{ bounce: 0, duration: 400 }} value={value} />
+            </span>
+        </div>
+    );
+}
 
 interface CharacterDialogProps {
     data: CharacterData;
@@ -96,34 +115,19 @@ export function CharacterDialog({ data, operator, operatorName, operatorProfessi
 
                     {/* Battle Stats */}
                     {stats && (
-                        <div className="mb-6">
-                            <h3 className="mb-3 font-semibold text-lg">Battle Stats</h3>
-                            <div className="grid grid-cols-3 gap-4">
-                                <div className="rounded-lg border p-3">
-                                    <div className="font-bold text-lg">{stats.maxHp}</div>
-                                    <div className="text-muted-foreground text-xs">HP</div>
-                                </div>
-                                <div className="rounded-lg border p-3">
-                                    <div className="font-bold text-lg">{stats.atk}</div>
-                                    <div className="text-muted-foreground text-xs">ATK</div>
-                                </div>
-                                <div className="rounded-lg border p-3">
-                                    <div className="font-bold text-lg">{stats.def}</div>
-                                    <div className="text-muted-foreground text-xs">DEF</div>
-                                </div>
-                                <div className="rounded-lg border p-3">
-                                    <div className="font-bold text-lg">{stats.magicResistance}</div>
-                                    <div className="text-muted-foreground text-xs">RES</div>
-                                </div>
-                                <div className="rounded-lg border p-3">
-                                    <div className="font-bold text-lg">{stats.cost}</div>
-                                    <div className="text-muted-foreground text-xs">Cost</div>
-                                </div>
-                                <div className="rounded-lg border p-3">
-                                    <div className="font-bold text-lg">{stats.blockCnt}</div>
-                                    <div className="text-muted-foreground text-xs">Block</div>
-                                </div>
+                        <div className="mb-5">
+                            <div className="mb-2.5 flex items-center gap-2">
+                                <h3 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">Stats</h3>
+                                <Separator className="flex-1" />
                             </div>
+                            <AnimatedGroup className="grid grid-cols-2 gap-1.5 sm:grid-cols-3" preset="blur-slide">
+                                <StatItem label="HP" value={stats.maxHp} />
+                                <StatItem label="ATK" value={stats.atk} />
+                                <StatItem label="DEF" value={stats.def} />
+                                <StatItem label="RES" value={stats.magicResistance} />
+                                <StatItem label="DP Cost" value={stats.cost} />
+                                <StatItem label="Block" value={stats.blockCnt} />
+                            </AnimatedGroup>
                         </div>
                     )}
 
