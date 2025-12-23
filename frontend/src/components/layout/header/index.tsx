@@ -1,0 +1,70 @@
+"use client";
+
+import { Github } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import { useState } from "react";
+import { Button } from "~/components/ui/shadcn/button";
+import { useAuth } from "~/hooks/use-auth";
+import { NavDesktop } from "./impl/nav-desktop";
+import { NavMobile } from "./impl/nav-mobile";
+import { UserMenu } from "./impl/user-menu";
+
+export function Header() {
+    const router = useRouter();
+    const { user, loading, logout } = useAuth();
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+    return (
+        <header className="fixed top-0 z-50 w-full">
+            <div className="relative">
+                <div
+                    className="-bottom-px absolute inset-x-0 h-px"
+                    style={{
+                        background: "linear-gradient(90deg, transparent, oklch(0.75 0.15 25 / 0.5), oklch(0.85 0.12 40 / 0.3), oklch(0.75 0.15 25 / 0.5), transparent)",
+                    }}
+                />
+                <div
+                    className="-bottom-1 pointer-events-none absolute inset-x-0 h-4 blur-md"
+                    style={{
+                        background: "linear-gradient(90deg, transparent 10%, oklch(0.75 0.15 25 / 0.15), oklch(0.80 0.10 35 / 0.1), oklch(0.75 0.15 25 / 0.15), transparent 90%)",
+                    }}
+                />
+                <div
+                    className="absolute inset-0 backdrop-blur"
+                    style={{
+                        background: "linear-gradient(180deg, oklch(0.15 0.005 285 / 0.8) 0%, oklch(0.13 0.005 285 / 0.6) 100%)",
+                    }}
+                />
+                <div
+                    className="absolute inset-x-0 top-0 h-px"
+                    style={{
+                        background: "linear-gradient(90deg, transparent, oklch(1 0 0 / 0.05), transparent)",
+                    }}
+                />
+                <div className="relative flex h-14 items-center justify-between px-4">
+                    <Link className="flex items-center gap-2" href="/">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">{/* tbd logo here */}</div>
+                        <span className="font-semibold text-base text-foreground">myrtle.moe</span>
+                    </Link>
+
+                    <NavDesktop pathname={router.pathname} />
+
+                    <div className="flex items-center gap-2">
+                        <NavMobile loading={loading} logout={logout} mobileMenuOpen={mobileMenuOpen} pathname={router.pathname} setMobileMenuOpen={setMobileMenuOpen} user={user} />
+
+                        <Button asChild className="h-8 w-8" size="icon" variant="ghost">
+                            <Link href="https://github.com" rel="noopener noreferrer" target="_blank">
+                                <Github className="h-4 w-4" />
+                                <span className="sr-only">GitHub</span>
+                            </Link>
+                        </Button>
+                        <div className="hidden md:block">
+                            <UserMenu loading={loading} logout={logout} user={user} />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+    );
+}
