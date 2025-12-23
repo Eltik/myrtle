@@ -9,7 +9,6 @@ export const navItems: NavItem[] = [
         dropdown: [
             { label: "Collection", href: "/operators/list", description: "List of all released operators" },
             { label: "Tier List", href: "/operators/tier-list", description: "Operator rankings by class" },
-            { label: "Chibi Viewer", href: "/operators/chibis", description: "Arknights chibi viewer" },
         ],
     },
     {
@@ -22,12 +21,11 @@ export const navItems: NavItem[] = [
         ],
     },
     {
-        label: "Events",
+        label: "Players",
         href: "#",
         dropdown: [
-            { label: "Current Events", href: "/events/current", description: "Active event guides" },
-            { label: "Event Archive", href: "/events/archive", description: "Past event information" },
-            { label: "CN Preview", href: "/events/cn-preview", description: "Upcoming content from CN" },
+            { label: "Search Players", href: "/users/search", description: "Find and view player profiles" },
+            { label: "Leaderboard", href: "/users/leaderboard", description: "Top players and rankings" },
         ],
     },
     {
