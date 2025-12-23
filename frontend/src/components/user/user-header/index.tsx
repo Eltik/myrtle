@@ -2,23 +2,12 @@
 
 import { Clipboard } from "lucide-react";
 import { toast } from "sonner";
-import { AnimatedNumber } from "~/components/ui/motion-primitives/animated-number";
 import { InView } from "~/components/ui/motion-primitives/in-view";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/shadcn/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/shadcn/card";
 import { getSecretaryAvatarUrl } from "~/lib/utils";
 import type { User } from "~/types/api/impl/user";
-
-function Stat({ label, value }: { label: string; value: number }) {
-    return (
-        <div className="text-center">
-            <div className="font-bold text-2xl">
-                <AnimatedNumber springOptions={{ bounce: 0, duration: 1000 }} value={value} />
-            </div>
-            <div className="text-muted-foreground text-sm">{label}</div>
-        </div>
-    );
-}
+import { Stat } from "./impl/stat";
 
 interface UserHeaderProps {
     data: User;
