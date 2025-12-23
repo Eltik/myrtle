@@ -95,23 +95,43 @@ export function CharacterDialog({ data, operator, operatorName, operatorProfessi
                         </motion.div>
                     </div>
 
-                    {/* Stats Grid */}
-                    <div className="mb-4 grid grid-cols-4 gap-2">
-                        <div className="flex items-center justify-center rounded-lg border p-2">
-                            <Image alt={`Elite ${data.evolvePhase}`} className="h-8 w-8 object-contain" height={32} src={`/api/cdn/upk/arts/elite_hub/elite_${data.evolvePhase}.png`} unoptimized width={32} />
+                    {/* Quick Stats */}
+                    <AnimatedGroup
+                        className="mb-5 grid grid-cols-4 gap-1.5"
+                        variants={{
+                            container: {
+                                visible: {
+                                    transition: {
+                                        staggerChildren: 0.05,
+                                    },
+                                },
+                            },
+                            item: {
+                                hidden: { opacity: 0, scale: 0.95, filter: "blur(4px)" },
+                                visible: {
+                                    opacity: 1,
+                                    scale: 1,
+                                    filter: "blur(0px)",
+                                    transition: { type: "spring", stiffness: 200, damping: 20 },
+                                },
+                            },
+                        }}
+                    >
+                        <div className="flex items-center justify-center rounded-md bg-muted/30 py-2">
+                            <Image alt={`Elite ${data.evolvePhase}`} className="h-6 w-6 object-contain" height={24} src={`/api/cdn/upk/arts/elite_hub/elite_${data.evolvePhase}.png`} unoptimized width={24} />
                         </div>
-                        <div className="rounded-lg border p-2 text-center">
-                            <div className="font-bold text-lg">{data.level}</div>
-                            <div className="text-muted-foreground text-xs">Level</div>
+                        <div className="flex flex-col items-center justify-center rounded-md bg-muted/30 px-2.5 py-1.5 sm:flex-row sm:justify-between">
+                            <span className="text-[10px] text-muted-foreground sm:text-xs">Lvl</span>
+                            <span className="font-medium text-sm tabular-nums">{data.level}</span>
                         </div>
-                        <div className="flex items-center justify-center rounded-lg border p-2">
-                            <Image alt={`Potential ${data.potentialRank + 1}`} className="h-8 w-8 object-contain" height={32} src={`/api/cdn/upk/arts/potential_hub/potential_${data.potentialRank}.png`} unoptimized width={32} />
+                        <div className="flex items-center justify-center rounded-md bg-muted/30 py-2">
+                            <Image alt={`Potential ${data.potentialRank + 1}`} className="h-6 w-6 object-contain" height={24} src={`/api/cdn/upk/arts/potential_hub/potential_${data.potentialRank}.png`} unoptimized width={24} />
                         </div>
-                        <div className="rounded-lg border p-2 text-center">
-                            <div className="font-bold text-lg">{operator?.trust ?? 0}%</div>
-                            <div className="text-muted-foreground text-xs">Trust</div>
+                        <div className="flex flex-col items-center justify-center rounded-md bg-muted/30 px-2.5 py-1.5 sm:flex-row sm:justify-between">
+                            <span className="text-[10px] text-muted-foreground sm:text-xs">Trust</span>
+                            <span className="font-medium text-sm tabular-nums">{operator?.trust ?? 0}%</span>
                         </div>
-                    </div>
+                    </AnimatedGroup>
 
                     {/* Battle Stats */}
                     {stats && (
@@ -132,23 +152,37 @@ export function CharacterDialog({ data, operator, operatorName, operatorProfessi
                     )}
 
                     {/* Skills */}
-                    <div className="mb-6">
-                        <h3 className="mb-3 font-semibold text-lg">Skills (Lv.{data.mainSkillLvl})</h3>
-                        <div className="space-y-3">
-                            {data.skills && data.skills.length > 0 ? (
-                                data.skills.map((skill, index) => <SkillItem index={index} isDefaultSkill={data.defaultSkillIndex === index} key={skill.skillId} mainSkillLvl={data.mainSkillLvl} size="large" skill={skill} />)
-                            ) : (
-                                <p className="text-muted-foreground">No skills found.</p>
-                            )}
+                    <div className="mb-5">
+                        <div className="mb-2.5 flex items-center gap-2">
+                            <h3 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">Skills</h3>
+                            <span className="text-muted-foreground/60 text-xs">Lv.{data.mainSkillLvl}</span>
+                            <Separator className="flex-1" />
                         </div>
+                        {data.skills && data.skills.length > 0 ? (
+                            <AnimatedGroup className="space-y-1.5" preset="blur-slide">
+                                {data.skills.map((skill, index) => (
+                                    <SkillItem index={index} isDefaultSkill={data.defaultSkillIndex === index} key={skill.skillId} mainSkillLvl={data.mainSkillLvl} size="large" skill={skill} />
+                                ))}
+                            </AnimatedGroup>
+                        ) : (
+                            <p className="text-muted-foreground text-xs">No skills found.</p>
+                        )}
                     </div>
 
                     {/* Modules */}
-                    <div className="mb-4">
-                        <h3 className="mb-3 font-semibold text-lg">Modules</h3>
-                        <div className="space-y-3">
-                            {operator?.modules && operator.modules.length > 0 ? (
-                                <>
+                    <div className="mb-5">
+                        <div className="mb-2.5 flex items-center gap-2">
+                            <h3 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">Modules</h3>
+                            <Separator className="flex-1" />
+                        </div>
+                        {operator?.modules && operator.modules.length > 0 ? (
+                            operator.modules.some((module) => {
+                                const equipData = data.equip[module.uniEquipId];
+                                const moduleLevel = equipData?.level ?? 0;
+                                const isLocked = equipData?.locked === 1;
+                                return module.typeName1 !== "ORIGINAL" && moduleLevel > 0 && !isLocked;
+                            }) ? (
+                                <AnimatedGroup className="space-y-1.5" preset="blur-slide">
                                     {operator.modules
                                         .map((module) => {
                                             const equipData = data.equip[module.uniEquipId];
@@ -163,30 +197,29 @@ export function CharacterDialog({ data, operator, operatorName, operatorProfessi
                                             return <ModuleItem isEquipped={isEquipped} key={module.uniEquipId} module={module} moduleLevel={moduleLevel} size="large" />;
                                         })
                                         .filter(Boolean)}
-                                    {!operator.modules.some((module) => {
-                                        const equipData = data.equip[module.uniEquipId];
-                                        const moduleLevel = equipData?.level ?? 0;
-                                        const isLocked = equipData?.locked === 1;
-                                        return module.typeName1 !== "ORIGINAL" && moduleLevel > 0 && !isLocked;
-                                    }) && <p className="text-muted-foreground">No modules unlocked.</p>}
-                                </>
+                                </AnimatedGroup>
                             ) : (
-                                <p className="text-muted-foreground">No modules available.</p>
-                            )}
-                        </div>
+                                <p className="text-muted-foreground text-xs">No modules unlocked.</p>
+                            )
+                        ) : (
+                            <p className="text-muted-foreground text-xs">No modules available.</p>
+                        )}
                     </div>
 
                     {/* Info */}
-                    <div className="mb-0">
-                        <h3 className="mb-2 font-semibold text-lg">Info</h3>
-                        <div className="space-y-2 text-sm">
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Recruited</span>
-                                <span>{new Date(data.gainTime * 1000).toLocaleDateString()}</span>
+                    <div>
+                        <div className="mb-2.5 flex items-center gap-2">
+                            <h3 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">Info</h3>
+                            <Separator className="flex-1" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-1.5">
+                            <div className="flex items-center justify-between rounded-md bg-muted/30 px-2.5 py-1.5">
+                                <span className="text-muted-foreground text-xs">Recruited</span>
+                                <span className="font-medium text-sm">{new Date(data.gainTime * 1000).toLocaleDateString()}</span>
                             </div>
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Voice</span>
-                                <span className="capitalize">{data.voiceLan === "JP" ? "Japanese" : data.voiceLan === "CN_MANDARIN" ? "Chinese" : data.voiceLan === "EN" ? "English" : data.voiceLan === "KR" ? "Korean" : (data.voiceLan?.toLowerCase().replace("_", " ") ?? "Japanese")}</span>
+                            <div className="flex items-center justify-between rounded-md bg-muted/30 px-2.5 py-1.5">
+                                <span className="text-muted-foreground text-xs">Voice</span>
+                                <span className="font-medium text-sm">{data.voiceLan === "JP" ? "Japanese" : data.voiceLan === "CN_MANDARIN" ? "Chinese" : data.voiceLan === "EN" ? "English" : data.voiceLan === "KR" ? "Korean" : (data.voiceLan?.toLowerCase().replace("_", " ") ?? "Japanese")}</span>
                             </div>
                         </div>
                     </div>

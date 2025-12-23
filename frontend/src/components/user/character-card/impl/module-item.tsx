@@ -10,24 +10,21 @@ interface ModuleItemProps {
 
 export function ModuleItem({ module, moduleLevel, isEquipped, size = "small" }: ModuleItemProps) {
     const isSmall = size === "small";
-    const iconSize = isSmall ? 28 : 40;
-    const containerClass = isSmall ? "flex items-center gap-2 rounded-md border p-2" : "flex items-center gap-3 rounded-lg border p-3";
-    const imageClass = isSmall ? "h-7 w-7 shrink-0 object-contain" : "h-10 w-10 object-contain";
 
     return (
-        <div className={`${containerClass} ${isEquipped ? "border-neutral-400 bg-neutral-100 dark:bg-neutral-800/30" : ""}`}>
-            <Image alt="Module" className={imageClass} height={iconSize} src={module.image ? `/api/cdn${module.image}` : `/api/cdn/upk/spritepack/ui_equip_big_img_hub_0/${module.uniEquipIcon}.png`} unoptimized width={iconSize} />
-            <div className={isSmall ? "min-w-0 flex-1" : "flex-1"}>
-                {!isSmall && (
-                    <div className="text-muted-foreground text-xs">
-                        {module.typeName1} {module.typeName2 ? `(${module.typeName2})` : ""}
-                    </div>
-                )}
-                <div className="truncate font-medium text-sm">
-                    {module.uniEquipName}
-                    {!isSmall && isEquipped && <span className="ml-2 text-neutral-500 text-xs">(Equipped)</span>}
+        <div className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 ${isEquipped ? "border border-primary/30 bg-primary/5 shadow-[0_0_8px_rgba(var(--primary),0.15)]" : "bg-muted/30"}`}>
+            <Image alt="Module" className={isSmall ? "h-6 w-6 shrink-0 object-contain" : "h-7 w-7 shrink-0 object-contain"} height={isSmall ? 24 : 28} src={module.image ? `/api/cdn${module.image}` : `/api/cdn/upk/spritepack/ui_equip_big_img_hub_0/${module.uniEquipIcon}.png`} unoptimized width={isSmall ? 24 : 28} />
+            <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                    <span className="truncate font-medium text-sm" title={module.uniEquipName}>
+                        {module.uniEquipName}
+                    </span>
+                    {isEquipped && <span className="shrink-0 text-[10px] text-muted-foreground">(Equipped)</span>}
                 </div>
-                <div className="text-muted-foreground text-xs">{isSmall ? `${module.typeName1} Lv.${moduleLevel}` : `Level ${moduleLevel}`}</div>
+            </div>
+            <div className="flex shrink-0 items-center gap-1.5 text-muted-foreground text-xs">
+                <span>{module.typeName1}</span>
+                <span>Lv.{moduleLevel}</span>
             </div>
         </div>
     );

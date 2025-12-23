@@ -31,29 +31,32 @@ export function SkillItem({ skill, index, isDefaultSkill, mainSkillLvl, size = "
     const skillStatic = skill.static as SkillStatic | null;
     const isSmall = size === "small";
 
-    const iconSize = isSmall ? 28 : 40;
-    const containerClass = isSmall ? "flex items-center gap-2 overflow-hidden rounded-md border p-2" : "flex items-center gap-3 rounded-lg border p-3";
-    const imageClass = isSmall ? "h-7 w-7 shrink-0" : "h-10 w-10";
-    const titleClass = isSmall ? "truncate font-medium text-sm" : "truncate font-medium";
-    const masteryIconSize = isSmall ? 16 : 20;
-    const masteryClass = isSmall ? "h-4 w-4" : "h-5 w-5";
-
     return (
-        <div className={`${containerClass} ${isDefaultSkill ? "border-neutral-400 bg-neutral-100 dark:bg-neutral-800/30" : ""}`}>
-            <Image alt="Skill" className={imageClass} height={iconSize} src={skillStatic?.image ? `/api/cdn${skillStatic.image}` : `/api/cdn/upk/spritepack/skill_icons_0/skill_icon_${skillStatic?.iconId ?? skillStatic?.skillId ?? skill.skillId}.png`} unoptimized width={iconSize} />
-            <div className={isSmall ? "w-0 flex-1 overflow-hidden" : "min-w-0 flex-1"}>
-                <div className={titleClass} title={skillStatic?.name ?? `Skill ${index + 1}`}>
-                    {skillStatic?.name ?? `Skill ${index + 1}`}
-                    {!isSmall && isDefaultSkill && <span className="ml-2 text-neutral-500 text-xs">(Equipped)</span>}
+        <div className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 ${isDefaultSkill ? "border border-primary/30 bg-primary/5 shadow-[0_0_8px_rgba(var(--primary),0.15)]" : "bg-muted/30"}`}>
+            <Image
+                alt="Skill"
+                className={isSmall ? "h-6 w-6 shrink-0 rounded" : "h-7 w-7 shrink-0 rounded-sm"}
+                height={isSmall ? 24 : 28}
+                src={skillStatic?.image ? `/api/cdn${skillStatic.image}` : `/api/cdn/upk/spritepack/skill_icons_0/skill_icon_${skillStatic?.iconId ?? skillStatic?.skillId ?? skill.skillId}.png`}
+                unoptimized
+                width={isSmall ? 24 : 28}
+            />
+            <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                    <span className="truncate font-medium text-sm" title={skillStatic?.name ?? `Skill ${index + 1}`}>
+                        {skillStatic?.name ?? `Skill ${index + 1}`}
+                    </span>
+                    {isDefaultSkill && <span className="shrink-0 text-[10px] text-muted-foreground">(Equipped)</span>}
                 </div>
-                <div className={`flex items-center gap-${isSmall ? "1" : "2"} text-muted-foreground text-${isSmall ? "xs" : "sm"}`}>
-                    <span>Lv.{mainSkillLvl}</span>
-                    {skill.specializeLevel > 0 && (
-                        <span className={`flex items-center gap-${isSmall ? "0.5" : "1"}`}>
-                            <Image alt={`M${skill.specializeLevel}`} className={masteryClass} height={masteryIconSize} src={`/api/cdn/upk/arts/specialized_hub/specialized_${skill.specializeLevel}.png`} unoptimized width={masteryIconSize} />M{skill.specializeLevel}
-                        </span>
-                    )}
-                </div>
+            </div>
+            <div className="flex shrink-0 items-center gap-1.5 text-muted-foreground text-xs">
+                <span>Lv.{mainSkillLvl}</span>
+                {skill.specializeLevel > 0 && (
+                    <span className="flex items-center gap-0.5">
+                        <Image alt={`M${skill.specializeLevel}`} className="h-4 w-4" height={16} src={`/api/cdn/upk/arts/specialized_hub/specialized_${skill.specializeLevel}.png`} unoptimized width={16} />
+                        <span>M{skill.specializeLevel}</span>
+                    </span>
+                )}
             </div>
         </div>
     );
