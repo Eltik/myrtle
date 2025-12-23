@@ -5,6 +5,12 @@ export function isNavItemActive(item: NavItem, pathname: string): boolean {
     if (!item.dropdown) {
         return item.href === pathname;
     }
+
+    // Special case: Users tab should also match /user/[id] profile pages
+    if (item.label === "Users" && pathname.startsWith("/user/")) {
+        return true;
+    }
+
     // For dropdown items, check if current path matches any dropdown href
     // Also check if pathname matches the base path (e.g., /operators for /operators?id=...)
     return item.dropdown.some((dropdownItem) => {

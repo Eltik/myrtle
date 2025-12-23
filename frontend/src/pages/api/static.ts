@@ -39,10 +39,55 @@ interface OperatorOutcome {
     tags: string[];
 }
 
-// Assumed structure from backend's getRecruitment()
-interface BackendRecruitmentData {
-    TAG_MAP: Record<string, RecruitmentTag>;
-    RECRUIT_POOL: Record<string, Operator>;
+// Backend gacha tag structure
+interface BackendGachaTag {
+    tagId: number;
+    tagName: string;
+    tagGroup: number;
+}
+
+// Backend recruitment response structure
+interface BackendRecruitmentResponse {
+    recruitment: {
+        tags: BackendGachaTag[];
+        tagMap: Record<string, BackendGachaTag>;
+        tagNameMap: Record<string, BackendGachaTag>;
+        recruitDetail: string;
+        recruitPool: unknown;
+    };
+}
+
+// Map tagGroup to type string
+const TAG_GROUP_TYPE_MAP: Record<number, string> = {
+    0: "Qualification", // Robot, Starter, Senior Operator, Top Operator
+    1: "Position", // Melee, Ranged
+    2: "Class", // Guard, Sniper, Defender, Medic, Supporter, Caster, Specialist, Vanguard
+    3: "Affix", // Other tags like DP-Recovery, Shift, Debuff, etc.
+};
+
+// Map rarity tier string to number
+const RARITY_TIER_MAP: Record<string, number> = {
+    TIER_6: 6,
+    TIER_5: 5,
+    TIER_4: 4,
+    TIER_3: 3,
+    TIER_2: 2,
+    TIER_1: 1,
+};
+
+// Backend operator structure (simplified for recruitment)
+interface BackendOperator {
+    name: string;
+    rarity: string; // e.g., "TIER_6"
+    tag_list?: string[];
+}
+
+// Backend calculate response structure
+interface BackendCalculateResponse {
+    recruitment: Array<{
+        label: string[];
+        operators: BackendOperator[];
+    }>;
 }
 
 // Cache configuration
@@ -235,14 +280,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     const endpoint = "/static/gacha/recruitment";
                     const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-gacha-recruitment-tags`;
 
-                    const gachaData = await fetchData<{ recruitment: BackendRecruitmentData }>(endpoint, cacheKey);
+                    const gachaData = await fetchData<BackendRecruitmentResponse>(endpoint, cacheKey);
 
-                    if (!gachaData.recruitment?.TAG_MAP) {
+                    if (!gachaData.recruitment?.tags || !Array.isArray(gachaData.recruitment.tags)) {
                         console.error("Invalid recruitment data structure received from backend:", gachaData);
                         throw new Error("Could not retrieve recruitment tags from backend.");
                     }
 
-                    const tagsArray = Object.values(gachaData.recruitment.TAG_MAP);
+                    // Transform backend tags to frontend format
+                    const tagsArray: RecruitmentTag[] = gachaData.recruitment.tags.map((tag) => ({
+                        id: String(tag.tagId),
+                        name: tag.tagName,
+                        type: TAG_GROUP_TYPE_MAP[tag.tagGroup] ?? "Affix",
+                    }));
 
                     return res.status(200).json({ data: tagsArray });
                 } else if (body.method === "calculate") {
@@ -254,13 +304,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     // GET /static/gacha/calculate?recruitment={tags}
                     const endpoint = `/static/gacha/calculate?recruitment=${encodeURIComponent(recruitmentString)}`;
                     const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-gacha-calculate-${recruitmentString}`;
-                    const calcResult = await fetchData<{ recruitment: OperatorOutcome[] }>(endpoint, cacheKey);
+                    const calcResult = await fetchData<BackendCalculateResponse>(endpoint, cacheKey);
 
-                    if (!calcResult.recruitment) {
+                    if (!calcResult.recruitment || !Array.isArray(calcResult.recruitment)) {
                         console.error("Invalid calculation result structure received from backend:", calcResult);
                         throw new Error("Could not retrieve calculation results from backend.");
                     }
-                    return res.status(200).json({ data: calcResult.recruitment });
+
+                    // Transform backend response to frontend OperatorOutcome format
+                    const operatorOutcomes: OperatorOutcome[] = [];
+
+                    for (const group of calcResult.recruitment) {
+                        // Check if this combination has a guaranteed high-rarity result
+                        // (e.g., Top Operator guarantees 6★, Senior Operator guarantees 5★)
+                        const hasTopOperator = group.label.includes("Top Operator");
+                        const hasSeniorOperator = group.label.includes("Senior Operator");
+                        const _minRarity = hasTopOperator ? 6 : hasSeniorOperator ? 5 : 3;
+
+                        for (const op of group.operators) {
+                            const rarity = RARITY_TIER_MAP[op.rarity] ?? 1;
+                            // An operator is "guaranteed" if all operators in the group are >= minRarity
+                            // Check if this is a guaranteed result based on minimum rarity
+                            const allHighRarity = group.operators.every((o) => (RARITY_TIER_MAP[o.rarity] ?? 1) >= 4);
+
+                            operatorOutcomes.push({
+                                name: op.name,
+                                rarity,
+                                guaranteed: hasTopOperator || hasSeniorOperator || allHighRarity,
+                                tags: body.tags, // Use the selected tag IDs
+                            });
+                        }
+                    }
+
+                    return res.status(200).json({ data: operatorOutcomes });
                 } else {
                     return res.status(400).json({ error: "Invalid 'method' for type 'gacha'. Use 'recruitment' or 'calculate'." });
                 }
