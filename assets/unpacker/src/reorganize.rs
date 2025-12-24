@@ -348,6 +348,15 @@ pub fn reorganize_inplace(
                     continue;
                 }
 
+                // Skip raw encrypted/binary files (should be decoded first)
+                // These have hash suffixes and contain non-text data
+                if is_raw_encrypted_file(source_path) {
+                    log::debug!("Skipping raw encrypted file: {}", source_path.display());
+                    stats.files_skipped += 1;
+                    folder_emptied = false;
+                    continue;
+                }
+
                 // If destination exists, prefer files with actual dialogue content
                 // (full dialogue scripts vs short summaries)
                 if dest_path.exists() {
@@ -526,6 +535,43 @@ fn ensure_json_extension(filename: &str) -> String {
     } else {
         format!("{}.json", filename)
     }
+}
+
+/// Check if a file is a raw encrypted/binary file that should be decoded first.
+/// These are typically FlatBuffer-encoded game data tables with hash suffixes.
+fn is_raw_encrypted_file(path: &Path) -> bool {
+    let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+
+    // Files with proper extensions are likely already decoded
+    if filename.ends_with(".json") || filename.ends_with(".txt") {
+        return false;
+    }
+
+    // Check if filename looks like it has a hash suffix (6 hex chars at end)
+    // e.g., "activity_table0a200c" vs "activity_table"
+    if filename.len() > 6 {
+        let suffix = &filename[filename.len() - 6..];
+        let has_hash_suffix = suffix.chars().all(|c| c.is_ascii_hexdigit());
+
+        // If it has a hash suffix and contains _table or _data, it's likely raw encrypted
+        if has_hash_suffix
+            && (filename.contains("_table") || filename.contains("_data") || filename.contains("_database"))
+        {
+            // Verify by checking first few bytes for binary content
+            if let Ok(data) = std::fs::read(path) {
+                if data.len() > 4 {
+                    // JSON starts with '{' or '[', text files are UTF-8
+                    // Encrypted files start with random-looking bytes
+                    let first_byte = data[0];
+                    if first_byte != b'{' && first_byte != b'[' && first_byte > 127 {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+
+    false
 }
 
 /// Determine if source file should overwrite destination file.
