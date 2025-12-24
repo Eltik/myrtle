@@ -6,6 +6,7 @@ pub mod decode_textasset;
 pub mod flatbuffers_decode;
 pub mod generated_fbs;
 pub mod generated_fbs_yostar;
+pub mod reorganize;
 pub mod resolve_ab;
 pub mod resource_manifest;
 pub mod sprite_packer;

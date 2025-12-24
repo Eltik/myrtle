@@ -12,6 +12,7 @@ A high-performance Rust implementation of an Arknights game asset extractor and 
   - [Combine Command](#combine-command)
   - [Decode Command](#decode-command)
   - [Portraits Command](#portraits-command)
+  - [Reorganize Command](#reorganize-command)
 - [Output Structure](#output-structure)
 - [How It Works](#how-it-works)
 - [Architecture](#architecture)
@@ -357,6 +358,97 @@ Portrait naming convention:
 - `char_<id>_<name>_1.png` - E0/E1 portrait
 - `char_<id>_<name>_2.png` - E2 portrait
 - `char_<id>_<name>_<skin>#<num>.png` - Skin portrait
+
+### Reorganize Command
+
+Reorganizes extracted files from hash-based folders to proper game paths. When extracting game data (particularly from the `anon` folder), files are placed in hash-based directories that don't match the organized structure found in repositories like [Kengxxiao/ArknightsGameData](https://github.com/Kengxxiao/ArknightsGameData_YoStar).
+
+```bash
+assets-unpacker reorganize --input <PATH> --output <PATH> --manifest <PATH>
+```
+
+#### Options
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--input, -i <PATH>` | Source directory containing extracted assets (with `anon/` subfolder) | Required |
+| `--output, -o <PATH>` | Destination directory for reorganized files | Same as input (in-place) |
+| `--manifest, -m <PATH>` | Path to resource manifest (`.idx` file) for accurate path mapping | Auto-detected |
+
+#### Why Reorganization is Needed
+
+When extracting assets from the `anon` folder (which contains story scripts, game data, etc.), the extracted files are placed in hash-based directories like:
+
+```
+upk/anon/d4d578962b25496976daab70b0cc7801/
+├── level_main_00-01_beg
+├── level_main_00-01_end
+├── level_main_01-01_beg
+└── ...
+```
+
+This structure is not user-friendly and doesn't match the organized paths used by community game data repositories. The reorganize command moves these files to their proper game paths:
+
+```
+decoded/gamedata/story/obt/main/
+├── level_main_00-01_beg.txt
+├── level_main_00-01_end.txt
+├── level_main_01-01_beg.txt
+└── ...
+```
+
+#### Examples
+
+```bash
+# Reorganize extracted files to decoded folder
+assets-unpacker reorganize \
+  --input ./Unpacked/upk \
+  --output ./Unpacked/decoded \
+  --manifest ./ArkAssets/ff46f6d6ebbeea499eb0b08231a01c98.idx
+
+# In-place reorganization (modifies upk directory directly)
+assets-unpacker reorganize \
+  --input ./Unpacked/upk \
+  --manifest ./ArkAssets/*.idx
+```
+
+#### Dialogue vs Summary Handling
+
+Some story files exist in two versions: full dialogue scripts and short summaries. The reorganize command automatically prefers files with actual dialogue content (containing `[Dialog]`, `[name=`, or `[Character(` markers) over summary-only files. This ensures you get the complete story scripts matching what's in Kengxxiao's repository.
+
+#### Typical Workflow
+
+To get properly organized game data similar to Kengxxiao's repository:
+
+```bash
+# 1. Extract text assets from the anon folder
+assets-unpacker extract \
+  --input ./ArkAssets/anon \
+  --output ./Unpacked \
+  --text --group --force
+
+# 2. Reorganize to proper game paths
+assets-unpacker reorganize \
+  --input ./Unpacked/upk \
+  --output ./Unpacked/decoded \
+  --manifest ./ArkAssets/*.idx
+```
+
+This produces organized output like:
+```
+Unpacked/decoded/
+├── gamedata/
+│   ├── story/
+│   │   ├── obt/
+│   │   │   ├── main/           # 382 main story files
+│   │   │   ├── guide/          # Tutorial stories
+│   │   │   └── memory/         # Operator records
+│   │   └── activities/
+│   │       ├── act13side/      # Activity stories
+│   │       └── ...
+│   └── excel/                  # Game data tables
+└── ...
+```
 
 #### CN vs Yostar/EN Schema Fallback
 
