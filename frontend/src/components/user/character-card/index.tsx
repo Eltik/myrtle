@@ -122,7 +122,7 @@ export function CharacterCard({ data }: CharacterCardProps) {
                 </div>
 
                 {/* Operator Stats */}
-                <CardContent className="flex-1 px-4 pt-2 pb-2">
+                <CardContent className="min-w-0 flex-1 overflow-hidden px-4 pt-2 pb-2">
                     {/* Level and Trust Progress */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -195,9 +195,9 @@ export function CharacterCard({ data }: CharacterCardProps) {
                         <AccordionItem className="border-b-0" value="skills">
                             <AccordionTrigger className="py-2 font-medium text-sm">Skills</AccordionTrigger>
                             <AccordionContent>
-                                <ScrollArea className="max-h-[180px]">
+                                <ScrollArea className="max-h-[180px] w-full">
                                     {data.skills && data.skills.length > 0 ? (
-                                        <div className="space-y-2 overflow-hidden">
+                                        <div className="w-full space-y-2 overflow-hidden">
                                             {data.skills.map((skill, index) => (
                                                 <SkillItem index={index} isDefaultSkill={data.defaultSkillIndex === index} key={skill.skillId} mainSkillLvl={data.mainSkillLvl} size="small" skill={skill} />
                                             ))}
