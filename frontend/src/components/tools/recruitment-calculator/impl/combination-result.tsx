@@ -1,13 +1,12 @@
 "use client";
 
-import { motion } from "motion/react";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
-import { cn } from "~/lib/utils";
 import { RARITY_COLORS } from "~/components/operators/list/constants";
-import { TOP_OPERATOR_TAG_ID, SENIOR_OPERATOR_TAG_ID } from "./constants";
-import type { TagCombinationResult } from "./types";
+import { cn } from "~/lib/utils";
+import { SENIOR_OPERATOR_TAG_ID, TOP_OPERATOR_TAG_ID } from "./constants";
 import { OperatorResultCard } from "./operator-result-card";
+import type { TagCombinationResult } from "./types";
 
 interface CombinationResultProps {
     result: TagCombinationResult;
@@ -22,9 +21,9 @@ export function CombinationResult({ result, defaultExpanded = false }: Combinati
     const hasSeniorOperator = result.tags.includes(SENIOR_OPERATOR_TAG_ID);
 
     return (
-        <div className={cn("overflow-hidden rounded-lg border transition-colors", isHighValue ? "border-amber-500/30 bg-amber-500/5" : "border-border bg-card/50", isExpanded && "ring-1 ring-primary/20")}>
+        <div className={cn("overflow-hidden rounded-lg border", isHighValue ? "border-amber-500/30 bg-amber-500/5" : "border-border bg-card/50")}>
             {/* Header */}
-            <button className="flex w-full items-center justify-between p-3 text-left transition-colors hover:bg-muted/30 sm:p-4" onClick={() => setIsExpanded(!isExpanded)} type="button">
+            <button className="flex w-full items-center justify-between p-3 text-left hover:bg-muted/30 sm:p-4" onClick={() => setIsExpanded(!isExpanded)} type="button">
                 <div className="flex flex-wrap items-center gap-2">
                     {/* Guaranteed rarity badge */}
                     <span className={cn("flex items-center gap-1 rounded-md px-2 py-0.5 font-bold text-xs", isHighValue ? "bg-amber-500/20" : "bg-muted")} style={{ color: guaranteedColor }}>
@@ -49,11 +48,11 @@ export function CombinationResult({ result, defaultExpanded = false }: Combinati
                     </span>
                 </div>
 
-                <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", isExpanded && "rotate-180")} />
+                <ChevronDown className={cn("h-4 w-4 text-muted-foreground", isExpanded && "rotate-180")} />
             </button>
 
             {/* Expanded content */}
-            <motion.div animate={{ height: isExpanded ? "auto" : 0 }} className="overflow-hidden" initial={false} transition={{ duration: 0.2 }}>
+            {isExpanded && (
                 <div className="border-border/50 border-t p-3 sm:p-4">
                     <div className="grid grid-cols-4 gap-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8">
                         {result.operators.map((op) => (
@@ -61,7 +60,7 @@ export function CombinationResult({ result, defaultExpanded = false }: Combinati
                         ))}
                     </div>
                 </div>
-            </motion.div>
+            )}
         </div>
     );
 }

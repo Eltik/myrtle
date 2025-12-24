@@ -1,4 +1,4 @@
-import { TOP_OPERATOR_TAG_ID, SENIOR_OPERATOR_TAG_ID, TAG_GROUP_MAP } from "./constants";
+import { SENIOR_OPERATOR_TAG_ID, TAG_GROUP_MAP, TOP_OPERATOR_TAG_ID } from "./constants";
 import type { GachaTag, RecruitableOperator, RecruitmentTag, TagCombinationResult, TagType } from "./types";
 
 /**

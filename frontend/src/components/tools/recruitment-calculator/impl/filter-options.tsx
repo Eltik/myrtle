@@ -1,7 +1,7 @@
 "use client";
 
-import { Switch } from "~/components/ui/shadcn/switch";
 import { Label } from "~/components/ui/shadcn/label";
+import { Switch } from "~/components/ui/shadcn/switch";
 
 interface FilterOptionsProps {
     showLowRarity: boolean;

@@ -2,7 +2,7 @@
 
 import { Check } from "lucide-react";
 import { cn } from "~/lib/utils";
-import { TAG_GROUP_LABELS, TAG_GROUP_ORDER, TOP_OPERATOR_TAG_ID, SENIOR_OPERATOR_TAG_ID } from "./constants";
+import { SENIOR_OPERATOR_TAG_ID, TAG_GROUP_LABELS, TAG_GROUP_ORDER, TOP_OPERATOR_TAG_ID } from "./constants";
 import type { RecruitmentTag, TagType } from "./types";
 
 interface TagSelectorProps {
@@ -36,7 +36,7 @@ export function TagSelector({ tags, selectedTags, onTagToggle, maxTags }: TagSel
                                 return (
                                     <button
                                         className={cn(
-                                            "group relative inline-flex items-center rounded-lg px-2.5 py-1.5 font-medium text-[13px] transition-all duration-150 ease-out",
+                                            "group relative inline-flex items-center rounded-lg px-2.5 py-1.5 font-medium text-[13px]",
                                             // Base unselected state
                                             !isSelected && "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground",
                                             // Selected state
@@ -53,22 +53,7 @@ export function TagSelector({ tags, selectedTags, onTagToggle, maxTags }: TagSel
                                         onClick={() => !isDisabled && onTagToggle(tag.id)}
                                         type="button"
                                     >
-                                        {/* Fixed-width icon container to prevent layout shift */}
-                                        <span
-                                            className={cn(
-                                                "inline-flex w-0 items-center justify-center overflow-hidden transition-all duration-150 ease-out",
-                                                isSelected && "mr-1 w-3",
-                                            )}
-                                        >
-                                            <Check
-                                                className={cn(
-                                                    "h-3 w-3 transition-transform duration-150 ease-out",
-                                                    isSelected ? "scale-100" : "scale-0",
-                                                    isHighPriority ? "text-amber-400" : "text-primary",
-                                                )}
-                                                strokeWidth={3}
-                                            />
-                                        </span>
+                                        {isSelected && <Check className={cn("mr-1 h-3 w-3", isHighPriority ? "text-amber-400" : "text-primary")} strokeWidth={3} />}
                                         {tag.name}
                                     </button>
                                 );
