@@ -93,6 +93,10 @@ enum Commands {
         /// If not specified, will try to find it in ArkAssets folder
         #[arg(short, long)]
         manifest: Option<PathBuf>,
+
+        /// Also reorganize plain text files (story, etc.) to proper paths
+        #[arg(long, default_value = "true")]
+        reorganize: bool,
     },
 
     /// ArkModels workflow (extract Spine models)
@@ -126,6 +130,21 @@ enum Commands {
         /// Delete existing output directory
         #[arg(short, long, default_value = "false")]
         delete: bool,
+    },
+
+    /// Reorganize extracted files from hash folders to proper game paths
+    Reorganize {
+        /// Source directory (containing anon/ folder with hash-based subfolders)
+        #[arg(short, long)]
+        input: PathBuf,
+
+        /// Destination directory (default: same as input for in-place)
+        #[arg(short, long)]
+        output: Option<PathBuf>,
+
+        /// Path to resource manifest (.idx file)
+        #[arg(short, long)]
+        manifest: Option<PathBuf>,
     },
 }
 
@@ -175,8 +194,15 @@ fn main() -> Result<()> {
             output,
             delete,
             manifest,
+            reorganize,
         } => {
             assets_unpacker::decode_textasset::main(&input, &output, delete, manifest.as_deref())?;
+
+            // Also reorganize plain text files if enabled
+            if reorganize {
+                println!("\nReorganizing plain text files...");
+                assets_unpacker::reorganize::main(&input, Some(&output), manifest.as_deref())?;
+            }
         }
         Commands::Models { input, output } => {
             // TODO: Implement properly
@@ -259,6 +285,13 @@ fn main() -> Result<()> {
             }
 
             println!("\nTotal portraits extracted: {}", total_extracted);
+        }
+        Commands::Reorganize {
+            input,
+            output,
+            manifest,
+        } => {
+            assets_unpacker::reorganize::main(&input, output.as_deref(), manifest.as_deref())?;
         }
     }
 

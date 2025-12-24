@@ -1521,12 +1521,6 @@ fn collect_spine_texture_info(
     spine_textures
 }
 
-/// Check if a texture should be excluded from root (is a spine texture, not full artwork)
-/// Check if a number is a power of 2
-fn is_power_of_two(n: u32) -> bool {
-    n > 0 && (n & (n - 1)) == 0
-}
-
 fn is_spine_texture(
     name: &str,
     width: u32,
