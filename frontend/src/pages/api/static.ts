@@ -33,8 +33,11 @@ interface RecruitmentTag {
 }
 
 interface OperatorOutcome {
+    id: string;
     name: string;
     rarity: number;
+    profession: string;
+    position: string;
     guaranteed: boolean;
     tags: string[];
 }
@@ -75,10 +78,13 @@ const RARITY_TIER_MAP: Record<string, number> = {
     TIER_1: 1,
 };
 
-// Backend operator structure (simplified for recruitment)
+// Backend operator structure (from recruitment calculate)
 interface BackendOperator {
+    id: string;
     name: string;
     rarity: string; // e.g., "TIER_6"
+    profession: string;
+    position: string;
     tag_list?: string[];
 }
 
@@ -328,8 +334,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                             const allHighRarity = group.operators.every((o) => (RARITY_TIER_MAP[o.rarity] ?? 1) >= 4);
 
                             operatorOutcomes.push({
+                                id: op.id,
                                 name: op.name,
                                 rarity,
+                                profession: op.profession,
+                                position: op.position,
                                 guaranteed: hasTopOperator || hasSeniorOperator || allHighRarity,
                                 tags: body.tags, // Use the selected tag IDs
                             });

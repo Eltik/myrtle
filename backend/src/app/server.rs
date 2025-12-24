@@ -14,6 +14,7 @@ use crate::app::middleware::rate_limit::{RateLimitStore, rate_limit};
 use crate::app::middleware::static_assets::serve_asset;
 use crate::app::routes::avatar::serve_avatar;
 use crate::app::routes::get_user::{get_user_by_path, get_user_by_query};
+use crate::app::routes::portrait::serve_portrait;
 use crate::app::routes::static_data;
 use crate::app::routes::yostar::login::{login_by_query, login_by_server, login_no_server};
 use crate::app::routes::yostar::refresh::{refresh_by_query, refresh_by_server, refresh_no_server};
@@ -57,6 +58,7 @@ fn create_router(state: AppState) -> Router {
         .route("/", get(root))
         .route("/health", get(health))
         .route("/cdn/avatar/{avatar_id}", get(serve_avatar))
+        .route("/cdn/portrait/{char_id}", get(serve_portrait))
         .route("/get-user", get(get_user_by_query))
         .route("/get-user/{uid}", get(get_user_by_path))
         .route("/send-code", post(send_code_by_query))

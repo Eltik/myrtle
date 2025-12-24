@@ -3,15 +3,16 @@ use axum::{
     http::{HeaderMap, StatusCode},
     response::Response,
 };
+use regex::Regex;
 use serde::Deserialize;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use crate::app::routes::static_data::{
     fields::{FieldsParam, filter_fields},
     handler::cached_handler,
 };
 use crate::app::state::AppState;
-use crate::core::local::types::operator::{OperatorPosition, OperatorProfession, OperatorRarity};
+use crate::core::local::types::operator::{Operator, OperatorPosition, OperatorProfession, OperatorRarity};
 
 #[derive(Deserialize)]
 pub struct GachaQuery {
@@ -22,6 +23,93 @@ pub struct GachaQuery {
 #[derive(Deserialize)]
 pub struct CalculateQuery {
     pub recruitment: Option<String>,
+}
+
+/// Name substitutions for operators with localization differences
+fn get_name_substitutions() -> HashMap<String, String> {
+    let mut subs = HashMap::new();
+    subs.insert("justice knight".to_string(), "'justice knight'".to_string());
+    subs.insert("サーマル-ex".to_string(), "thrm-ex".to_string());
+    subs.insert("샤미르".to_string(), "샤마르".to_string());
+    subs
+}
+
+/// Parse the recruitDetail string to extract recruitable operator names
+/// Returns a HashSet of lowercase operator names that are in the recruitment pool
+fn parse_recruit_pool(
+    recruit_detail: &str,
+    operators: &HashMap<String, Operator>,
+) -> HashSet<String> {
+    let mut recruit_names: HashSet<String> = HashSet::new();
+
+    // Build a name -> operator id map (lowercase names)
+    let name_to_id: HashMap<String, String> = operators
+        .iter()
+        .map(|(id, op)| (op.name.to_lowercase(), id.clone()))
+        .collect();
+
+    let substitutions = get_name_substitutions();
+
+    // Pattern 1: <@rc.eml>Name</> - recruitment-only operators (robots, starters)
+    let re_eml = Regex::new(r"(?i)<@rc\.eml>([^<]+)</>").unwrap();
+
+    // Pattern 2: / Name - operators separated by slashes
+    // We split by common separators and filter out non-operator content
+    let re_slash = Regex::new(r"(?i)(?:/\s*|\n\s*|\\n\s*)([^\r\n/★<>]+)").unwrap();
+
+    // Extract recruitment-only operators (Pattern 1)
+    for cap in re_eml.captures_iter(recruit_detail) {
+        if let Some(m) = cap.get(1) {
+            let mut name = m.as_str().trim().to_lowercase();
+
+            // Apply substitutions
+            if let Some(sub) = substitutions.get(&name) {
+                name = sub.clone();
+            }
+
+            if name_to_id.contains_key(&name) {
+                recruit_names.insert(name);
+            }
+        }
+    }
+
+    // Extract regular operators (Pattern 2)
+    for cap in re_slash.captures_iter(recruit_detail) {
+        if let Some(m) = cap.get(1) {
+            let mut name = m.as_str().trim().to_lowercase();
+
+            // Skip empty names, star ratings, and dashes
+            if name.is_empty() || name.starts_with('-') || name.ends_with('-') || name.chars().all(|c| c == '★' || c.is_whitespace()) {
+                continue;
+            }
+
+            // Apply substitutions
+            if let Some(sub) = substitutions.get(&name) {
+                name = sub.clone();
+            }
+
+            if name_to_id.contains_key(&name) {
+                recruit_names.insert(name);
+            }
+        }
+    }
+
+    recruit_names
+}
+
+/// Get the set of operator IDs that are in the recruitment pool
+fn get_recruitable_operator_ids(
+    recruit_detail: &str,
+    operators: &HashMap<String, Operator>,
+) -> HashSet<String> {
+    let recruit_names = parse_recruit_pool(recruit_detail, operators);
+
+    // Map names back to IDs
+    operators
+        .iter()
+        .filter(|(_, op)| recruit_names.contains(&op.name.to_lowercase()))
+        .map(|(id, _)| id.clone())
+        .collect()
 }
 
 /// GET /static/gacha
@@ -199,36 +287,60 @@ pub async fn calculate_recruitment(
                 }));
             }
 
-            // Filter operators that match ALL selected tags
+            // Get the recruitment pool - only operators listed in recruitDetail
+            let recruitable_ids = get_recruitable_operator_ids(
+                &state.game_data.gacha.recruit_detail,
+                &state.game_data.operators,
+            );
+
+            // Check if Top Operator tag is selected (allows 6-star operators)
+            let has_top_operator = tag_ids.contains(&11);
+
+            // Filter operators that:
+            // 1. Are in the recruitment pool
+            // 2. Match ALL selected tags
+            // 3. Are <= 5 star unless Top Operator tag is selected
             let matching_operators: Vec<_> = state
                 .game_data
                 .operators
-                .values()
-                .filter(|op| {
+                .iter()
+                .filter(|(id, op)| {
+                    // Must be in recruitment pool
+                    if !recruitable_ids.contains(*id) {
+                        return false;
+                    }
+
+                    // Unless Top Operator tag is selected, exclude 6-star operators
+                    if !has_top_operator && op.rarity == OperatorRarity::SixStar {
+                        return false;
+                    }
+
+                    // Must match all selected tags
                     selected_tags.iter().all(|tag| {
                         match tag.tag_id {
                             // Position tags
                             9 => op.position == OperatorPosition::Melee,
                             10 => op.position == OperatorPosition::Ranged,
                             // Class tags
-                            1 => op.profession == OperatorProfession::Guard, // WARRIOR -> Guard
+                            1 => op.profession == OperatorProfession::Guard,
                             2 => op.profession == OperatorProfession::Sniper,
-                            3 => op.profession == OperatorProfession::Defender, // TANK -> Defender
+                            3 => op.profession == OperatorProfession::Defender,
                             4 => op.profession == OperatorProfession::Medic,
-                            5 => op.profession == OperatorProfession::Supporter, // SUPPORT -> Supporter
+                            5 => op.profession == OperatorProfession::Supporter,
                             6 => op.profession == OperatorProfession::Caster,
-                            7 => op.profession == OperatorProfession::Specialist, // SPECIAL -> Specialist
-                            8 => op.profession == OperatorProfession::Vanguard, // PIONEER -> Vanguard
+                            7 => op.profession == OperatorProfession::Specialist,
+                            8 => op.profession == OperatorProfession::Vanguard,
                             // Rarity tags
-                            11 => op.rarity == OperatorRarity::SixStar, // Top Operator
-                            14 => op.rarity == OperatorRarity::FiveStar, // Senior Operator
-                            17 => op.rarity == OperatorRarity::TwoStar, // Starter
-                            28 => op.rarity == OperatorRarity::OneStar, // Robot
+                            11 => op.rarity == OperatorRarity::SixStar,
+                            14 => op.rarity == OperatorRarity::FiveStar,
+                            17 => op.rarity == OperatorRarity::TwoStar,
+                            28 => op.rarity == OperatorRarity::OneStar,
                             // Affix tags - check tagList
                             _ => op.tag_list.contains(&tag.tag_name),
                         }
                     })
                 })
+                .map(|(_, op)| op)
                 .collect();
 
             Some(serde_json::json!({
