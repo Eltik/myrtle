@@ -119,8 +119,8 @@ A high-performance Rust implementation of an Arknights game asset extractor and 
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/Assets-Unpacker.git
-cd Assets-Unpacker
+git clone https://github.com/Eltik/myrtle.moe.git
+cd assets/unpacker
 
 # Build release version
 cargo build --release
@@ -951,16 +951,10 @@ Contributions are welcome! Please:
 ## Related Projects
 
 - [Ark-Unpacker](https://github.com/ArknightsAssets/Ark-Unpacker) - Original Python implementation
-- [unity-rs](https://github.com/yourusername/unity-rs) - Rust Unity asset parser
+- [unity-rs](../unity-rs) - Rust Unity asset parser
+- [downloader](../downloader) - Asset downloader
 - [AssetStudio](https://github.com/Perfare/AssetStudio) - Unity asset extraction tool (C#)
 - [UnityPy](https://github.com/K0lb3/UnityPy) - Python Unity asset parser
-
-## Support
-
-For questions, issues, or feature requests:
-- Open an issue on GitHub
-- Check existing issues for solutions
-- Enable debug logging and include output with bug reports
 
 ---
 

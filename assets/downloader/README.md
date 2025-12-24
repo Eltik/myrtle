@@ -1381,18 +1381,11 @@ Open an issue describing:
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Acknowledgments
-
-- [ArkAssetsTool](https://github.com/ChaomengOrion/ArkAssetsTool) - Original implementation that this project is based on
-- [unity-rs](https://github.com/Eltik/UnityRs) - Rust Unity asset parsing library
-- Arknights - Game assets belong to Hypergryph/Yostar
-- Rust Community - Amazing ecosystem and tools
-
 ## Related Projects
 
 - [ArkAssetsTool](https://github.com/ChaomengOrion/ArkAssetsTool) - Original Rust implementation
-- [Assets-Unpacker](https://github.com/Eltik/Assets-Unpacker) - Rust asset extraction tool
-- [unity-rs](https://github.com/Eltik/UnityRs) - Rust Unity asset parser
+- [unpacker](../unpacker) - Rust asset extraction tool
+- [unity-rs](../unity-rs) - Rust Unity asset parser
 - [Ark-Unpacker](https://github.com/ArknightsAssets/Ark-Unpacker) - Python implementation
 
 ## Support

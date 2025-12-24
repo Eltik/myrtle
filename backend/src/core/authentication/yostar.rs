@@ -199,7 +199,7 @@ pub async fn submit_auth(
 ) -> Result<AuthResponse, FetchError> {
     let body = AuthBody {
         account: email,
-        code: code,
+        code,
     };
 
     let base_url = server.yostar_domain().expect("Server not supported");
