@@ -1,86 +1,44 @@
 # Arknights Asset Downloader
 
-<div align="center">
+A high-performance Rust implementation for downloading and unpacking Arknights game assets. This tool handles downloading, unpacking, and version management of game assets with production-grade reliability.
 
-[![Rust](https://img.shields.io/badge/rust-%23000000.svg?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org/)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=for-the-badge)](LICENSE)
+## Table of Contents
 
-**A high-performance, production-ready Rust implementation for downloading and unpacking Arknights game assets**
-
-[Features](#-features) •
-[Installation](#-installation) •
-[Quick Start](#-quick-start) •
-[Documentation](#-documentation) •
-[Examples](#-examples) •
-[Production](#-production-deployment)
-
-</div>
-
----
-
-## 📋 Table of Contents
-
-- [Overview](#-overview)
-- [Features](#-features)
-- [Installation](#-installation)
-- [Quick Start](#-quick-start)
-- [Usage](#-usage)
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Usage](#usage)
   - [Basic Usage](#basic-usage)
   - [Advanced Usage](#advanced-usage)
   - [Version Checking](#version-checking)
-- [Command Line Interface](#-command-line-interface)
-- [Architecture](#-architecture)
-- [Asset Processing](#-asset-processing)
-- [Production Deployment](#-production-deployment)
-- [API Reference](#-api-reference)
-- [Examples](#-examples)
-- [Performance](#-performance)
-- [Troubleshooting](#-troubleshooting)
-- [Development](#-development)
-- [Contributing](#-contributing)
-- [License](#-license)
+- [Command Line Interface](#command-line-interface)
+- [Architecture](#architecture)
+- [Asset Processing](#asset-processing)
+- [Production Deployment](#production-deployment)
+- [API Reference](#api-reference)
+- [Examples](#examples)
+- [Performance](#performance)
+- [Troubleshooting](#troubleshooting)
+- [Development](#development)
+- [Contributing](#contributing)
+- [License](#license)
 
----
-
-## 🌟 Overview
-
-Arknights Asset Downloader is a **robust, multi-threaded asset management system** for the Arknights mobile game. Built in Rust for maximum performance and safety, it handles downloading, unpacking, and version management of game assets with production-grade reliability.
-
-### Why Rust?
-
-- 🚀 **Performance**: Multi-threaded downloads with optimal resource usage
-- 🔒 **Safety**: Memory-safe with zero-cost abstractions
-- ⚡ **Concurrency**: Rayon-powered parallel processing
-- 🎯 **Reliability**: Comprehensive error handling and recovery
-- 📦 **Zero Runtime**: No garbage collection pauses
-
-### Key Capabilities
-
-- Download assets from Official and Bilibili servers
-- Automatic duplicate detection (skips existing files)
-- Multi-threaded parallel downloads and processing
-- Unity asset bundle unpacking and conversion
-- Automatic version tracking and update detection
-- Production-ready monitoring and automation support
-
----
-
-## ✨ Features
+## Features
 
 ### Core Features
 
 | Feature | Description |
 |---------|-------------|
-| 🌐 **Multi-Server Support** | Official (Global) and Bilibili (CN) servers |
-| 🔄 **Smart Caching** | MD5-based duplicate detection and skip |
-| ⚡ **Parallel Processing** | Concurrent downloads, unzipping, and unpacking |
-| 📦 **Asset Conversion** | Automatic conversion to usable formats |
-| 🎨 **Format Support** | Images (PNG), Audio (WAV/OGG), Text (JSON), Fonts (TTF/OTF), Meshes (OBJ) |
-| 🔐 **Decryption** | Built-in AES decryption for game data |
-| 📊 **Progress Tracking** | Real-time progress bars and statistics |
-| 🎯 **Selective Download** | Interactive package selection |
-| 🔍 **Version Monitoring** | Automatic update detection and tracking |
-| 🏭 **Production Ready** | Designed for CI/CD, cron jobs, and automation |
+| Multi-Server Support | Official (Global) and Bilibili (CN) servers |
+| Smart Caching | MD5-based duplicate detection and skip |
+| Parallel Processing | Concurrent downloads, unzipping, and unpacking |
+| Asset Conversion | Automatic conversion to usable formats |
+| Format Support | Images (PNG), Audio (WAV/OGG), Text (JSON), Fonts (TTF/OTF), Meshes (OBJ) |
+| Decryption | Built-in AES decryption for game data |
+| Progress Tracking | Real-time progress bars and statistics |
+| Selective Download | Interactive package selection |
+| Version Monitoring | Automatic update detection and tracking |
+| Production Ready | Designed for CI/CD, cron jobs, and automation |
 
 ### Asset Processing Capabilities
 
@@ -88,16 +46,14 @@ Arknights Asset Downloader is a **robust, multi-threaded asset management system
 
 | Asset Type | Output Format | Features |
 |------------|--------------|----------|
-| **Texture2D** | PNG | ✅ Alpha channel merging<br>✅ Sprite atlas support |
-| **Sprite** | PNG | ✅ Alpha channel support<br>✅ Proper coordinate handling |
-| **AudioClip** | WAV/OGG/etc | ✅ All Unity audio formats<br>✅ Named sample extraction |
-| **TextAsset** | JSON/TXT | ✅ AES decryption<br>✅ BSON support<br>✅ Format auto-detection |
-| **Font** | TTF/OTF | ✅ TrueType and OpenType<br>✅ Auto format detection |
-| **Mesh** | OBJ | ✅ 3D model export<br>✅ Wavefront OBJ format |
+| Texture2D | PNG | Alpha channel merging, Sprite atlas support |
+| Sprite | PNG | Alpha channel support, Proper coordinate handling |
+| AudioClip | WAV/OGG/etc | All Unity audio formats, Named sample extraction |
+| TextAsset | JSON/TXT | AES decryption, BSON support, Format auto-detection |
+| Font | TTF/OTF | TrueType and OpenType, Auto format detection |
+| Mesh | OBJ | 3D model export, Wavefront OBJ format |
 
----
-
-## 🔧 Installation
+## Installation
 
 ### Prerequisites
 
@@ -138,9 +94,7 @@ cargo build
 cargo run -- --help
 ```
 
----
-
-## 🚀 Quick Start
+## Quick Start
 
 ### Basic Download (All Assets)
 
@@ -183,9 +137,7 @@ cargo run --release --example check_updates
 cargo run --release --example automated_monitor
 ```
 
----
-
-## 📖 Usage
+## Usage
 
 ### Basic Usage
 
@@ -300,15 +252,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let status = ArkAssets::check_for_updates(Servers::OFFICIAL, "./ArkAssets")?;
 
     match status {
-        UpdateStatus::NoUpdate => println!("✓ Up to date"),
-        UpdateStatus::FirstCheck => println!("✓ Version baseline created"),
+        UpdateStatus::NoUpdate => println!("Up to date"),
+        UpdateStatus::FirstCheck => println!("Version baseline created"),
         UpdateStatus::ResourceUpdate { new_version, .. } => {
-            println!("⚠️  New resource version: {}", new_version);
+            println!("New resource version: {}", new_version);
         }
         UpdateStatus::BothUpdated { new_res_version, new_client_version, .. } => {
-            println!("⚠️  Major update!");
-            println!("   Resources: {}", new_res_version);
-            println!("   Client: {}", new_client_version);
+            println!("Major update!");
+            println!("  Resources: {}", new_res_version);
+            println!("  Client: {}", new_client_version);
         }
         _ => {}
     }
@@ -331,9 +283,7 @@ if let Some(version) = ArkAssets::load_version_cache(Servers::OFFICIAL, "./ArkAs
 }
 ```
 
----
-
-## 💻 Command Line Interface
+## Command Line Interface
 
 ### Synopsis
 
@@ -371,9 +321,7 @@ cargo run --release -- \
   --packages "gamedata/excel,gamedata/levels"
 ```
 
----
-
-## 🏗️ Architecture
+## Architecture
 
 ### High-Level Overview
 
@@ -469,9 +417,7 @@ Uses `unity-rs` library to:
 - Convert to standard formats
 - Handle encryption/compression
 
----
-
-## 🎨 Asset Processing
+## Asset Processing
 
 ### Processing Pipeline
 
@@ -577,7 +523,7 @@ Process:
 
 ### Alpha Channel Merging
 
-Arknights stores some textures with **separate alpha channels**:
+Arknights stores some textures with separate alpha channels:
 
 ```
 Example:
@@ -593,18 +539,16 @@ Process:
 
 This ensures transparency is properly preserved in character sprites and UI elements.
 
----
-
-## 🏭 Production Deployment
+## Production Deployment
 
 ### Use Cases
 
-- 🤖 **Automated Data Mining**: Extract game data for wikis/databases
-- 📊 **Analytics**: Track asset changes over time
-- 🎮 **Game Tools**: Build character viewers, team builders
-- 🔔 **Update Notifications**: Alert users when new content drops
-- 🗄️ **Asset Archival**: Maintain historical records of game assets
-- 🧪 **Research**: Study game design and asset structure
+- **Automated Data Mining**: Extract game data for wikis/databases
+- **Analytics**: Track asset changes over time
+- **Game Tools**: Build character viewers, team builders
+- **Update Notifications**: Alert users when new content drops
+- **Asset Archival**: Maintain historical records of game assets
+- **Research**: Study game design and asset structure
 
 ### Deployment Patterns
 
@@ -641,7 +585,7 @@ if [ $EXIT_CODE -eq 10 ] || [ $EXIT_CODE -eq 12 ]; then
     # Optional: Send notification
     curl -X POST https://discord.com/api/webhooks/YOUR_WEBHOOK \
       -H "Content-Type: application/json" \
-      -d '{"content": "🔔 Arknights update detected - download starting"}'
+      -d '{"content": "Arknights update detected - download starting"}'
 
     # Download will happen automatically if ARK_AUTO_DOWNLOAD=true
 fi
@@ -816,7 +760,7 @@ jobs:
       run: |
         curl -X POST ${{ secrets.DISCORD_WEBHOOK }} \
           -H "Content-Type: application/json" \
-          -d '{"content": "🔔 Arknights update detected!"}'
+          -d '{"content": "Arknights update detected!"}'
 
     - name: Upload assets (if updated)
       if: steps.check.outputs.exit_code == '10' || steps.check.outputs.exit_code == '12'
@@ -953,9 +897,7 @@ for batch in packages.chunks(10) {
 }
 ```
 
----
-
-## 📚 API Reference
+## API Reference
 
 ### ArkAssets
 
@@ -981,8 +923,6 @@ Creates a new `ArkAssets` instance by fetching version and package metadata.
 let assets = ArkAssets::new(Servers::OFFICIAL)?;
 ```
 
----
-
 #### download()
 
 ```rust
@@ -1004,8 +944,6 @@ Interactive download mode with package selection.
 ```rust
 assets.download("./ArkAssets")?;
 ```
-
----
 
 #### download_fromlist()
 
@@ -1034,8 +972,6 @@ Download specific packages (non-interactive).
 let packages = vec!["gamedata/excel".to_string()];
 assets.download_fromlist(&packages, "./ArkAssets", 6)?;
 ```
-
----
 
 #### check_for_updates()
 
@@ -1066,8 +1002,6 @@ match ArkAssets::check_for_updates(Servers::OFFICIAL, "./data")? {
 }
 ```
 
----
-
 #### load_version_cache()
 
 ```rust
@@ -1091,8 +1025,6 @@ if let Some(version) = ArkAssets::load_version_cache(Servers::OFFICIAL, "./data"
 }
 ```
 
----
-
 #### save_version_cache()
 
 ```rust
@@ -1105,8 +1037,6 @@ pub fn save_version_cache(
 ```
 
 Manually save version cache (rarely needed - `check_for_updates` does this automatically).
-
----
 
 ### Enums
 
@@ -1149,9 +1079,7 @@ pub struct VersionInfo {
 }
 ```
 
----
-
-## 🧪 Examples
+## Examples
 
 The project includes comprehensive examples in the `examples/` directory:
 
@@ -1169,7 +1097,7 @@ cargo run --example check_updates
 
 Checking for updates...
 
-✓ No updates available - you're on the latest version!
+No updates available - you're on the latest version!
 
 Current Versions:
   Resource Version: 24-02-02-10-18-07-831840
@@ -1201,17 +1129,15 @@ ARK_SERVER=bilibili ARK_SAVEDIR=/data/ark cargo run --example automated_monitor
 [Monitor] Save Directory: ./ArkAssets
 [Monitor] Auto-download: true
 
-[Monitor] ⚠️  RESOURCE UPDATE DETECTED!
+[Monitor] RESOURCE UPDATE DETECTED!
 [Monitor]   Old: 24-02-02-10-18-07-831840
 [Monitor]   New: 24-02-09-15-22-33-941721
 [Monitor] Auto-download enabled - starting download...
 [Download] Initializing asset downloader...
-[Download] ✓ Download completed successfully!
+[Download] Download completed successfully!
 ```
 
----
-
-## ⚡ Performance
+## Performance
 
 ### Benchmarks
 
@@ -1243,9 +1169,7 @@ Hardware: MacBook Pro M1 Max, 64GB RAM, 1Gbps connection
 | Disk I/O | 100-200 MB/s | 500 MB/s |
 | Network | 50-100 MB/s | Bandwidth limit |
 
----
-
-## 🔧 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -1259,8 +1183,6 @@ Hardware: MacBook Pro M1 Max, 64GB RAM, 1Gbps connection
 - Check firewall/proxy settings
 - Try different server: `--server bilibili`
 
----
-
 #### "Download failed: Connection refused"
 
 **Cause:** CDN is blocking requests.
@@ -1269,8 +1191,6 @@ Hardware: MacBook Pro M1 Max, 64GB RAM, 1Gbps connection
 - Use VPN (for region-locked content)
 - Wait and retry later
 - Check if CDN URL has changed
-
----
 
 #### "Unzip error" or "Unpack error"
 
@@ -1282,15 +1202,11 @@ Hardware: MacBook Pro M1 Max, 64GB RAM, 1Gbps connection
 - Check disk space
 - Verify file MD5 hash
 
----
-
 #### Downloads hang at 100%
 
-**Cause:** This was a threading issue - **FIXED** in latest version.
+**Cause:** This was a threading issue - fixed in latest version.
 
 **Solution:** Update to latest version.
-
----
 
 #### "No such file or directory" errors
 
@@ -1302,8 +1218,6 @@ mkdir -p ./ArkAssets
 cargo run --release -- --savedir ./ArkAssets
 ```
 
----
-
 #### High memory usage
 
 **Cause:** Too many concurrent operations.
@@ -1313,8 +1227,6 @@ cargo run --release -- --savedir ./ArkAssets
 - Download in batches
 - Close other applications
 
----
-
 #### Version cache always shows "FirstCheck"
 
 **Cause:** Cache file not being created or wrong path.
@@ -1323,8 +1235,6 @@ cargo run --release -- --savedir ./ArkAssets
 - Check `{savedir}/version_cache_official.json` exists
 - Verify write permissions
 - Check `savedir` path is correct
-
----
 
 ### Debug Mode
 
@@ -1340,9 +1250,7 @@ This will show:
 - Thread spawning
 - Error stack traces
 
----
-
-## 🛠️ Development
+## Development
 
 ### Project Structure
 
@@ -1429,9 +1337,7 @@ cargo test -- --nocapture
 cargo test -- --ignored
 ```
 
----
-
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Here's how you can help:
 
@@ -1471,82 +1377,31 @@ Open an issue describing:
 - Add documentation comments for public APIs
 - Write tests for new functionality
 
----
-
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-```
-MIT License
+## Acknowledgments
 
-Copyright (c) 2024
+- [ArkAssetsTool](https://github.com/ChaomengOrion/ArkAssetsTool) - Original implementation that this project is based on
+- [unity-rs](https://github.com/Eltik/UnityRs) - Rust Unity asset parsing library
+- Arknights - Game assets belong to Hypergryph/Yostar
+- Rust Community - Amazing ecosystem and tools
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+## Related Projects
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-```
+- [ArkAssetsTool](https://github.com/ChaomengOrion/ArkAssetsTool) - Original Rust implementation
+- [Assets-Unpacker](https://github.com/Eltik/Assets-Unpacker) - Rust asset extraction tool
+- [unity-rs](https://github.com/Eltik/UnityRs) - Rust Unity asset parser
+- [Ark-Unpacker](https://github.com/ArknightsAssets/Ark-Unpacker) - Python implementation
 
----
+## Support
 
-## 🙏 Acknowledgments
-
-- **Arknights** - Game assets and inspiration
-- **HyperGryph** - Game developers
-- **unity-rs** - Unity asset parsing library
-- **Rust Community** - Amazing ecosystem and tools
+For questions, issues, or feature requests:
+- Open an issue on GitHub
+- Check existing issues for solutions
+- Enable debug logging and include output with bug reports
 
 ---
 
-## 📞 Support
-
-- 📧 **Email**: your.email@example.com
-- 💬 **Discord**: Your Discord Server
-- 🐛 **Issues**: [GitHub Issues](https://github.com/yourusername/arknights-downloader/issues)
-- 📖 **Docs**: [Wiki](https://github.com/yourusername/arknights-downloader/wiki)
-
----
-
-## 🗺️ Roadmap
-
-### Planned Features
-
-- [ ] GUI application (Tauri/egui)
-- [ ] Incremental updates (delta downloads)
-- [ ] Asset diff viewer
-- [ ] Multiple language support
-- [ ] Database export (PostgreSQL/SQLite)
-- [ ] REST API server mode
-- [ ] Webhook notifications
-- [ ] Download resume on failure
-- [ ] Asset hash verification
-- [ ] Compression for storage
-
-### Future Improvements
-
-- [ ] Async/await throughout
-- [ ] More asset type support
-- [ ] Better error messages
-- [ ] Performance profiling
-- [ ] Memory optimization
-- [ ] Windows binary releases
-- [ ] macOS binary releases
-- [ ] Linux binary releases
-
----
-
-<div align="center">
-
-**Built with ❤️ and Rust**
-
-If this project helped you, please consider giving it a ⭐!
-
-[⬆ Back to Top](#arknights-asset-downloader)
-
-</div>
+**Note**: This tool is for educational and archival purposes only. All game assets remain the property of their respective copyright holders.
