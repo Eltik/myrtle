@@ -91,11 +91,13 @@ export function DisclosureTrigger({ children, className }: { children: React.Rea
                         "aria-expanded"?: boolean;
                         tabIndex?: number;
                         onKeyDown?: (e: { key: string; preventDefault: () => void }) => void;
+                        "data-state"?: "open" | "closed";
                     }>;
                     return React.cloneElement(childElement, {
                         onClick: toggle,
                         role: "button",
                         "aria-expanded": open,
+                        "data-state": open ? "open" : "closed",
                         tabIndex: 0,
                         onKeyDown: (e: { key: string; preventDefault: () => void }) => {
                             if (e.key === "Enter" || e.key === " ") {
@@ -103,7 +105,7 @@ export function DisclosureTrigger({ children, className }: { children: React.Rea
                                 toggle();
                             }
                         },
-                        className: cn(className, childElement.props.className),
+                        className: cn("group", className, childElement.props.className),
                     });
                 }
                 return child;
