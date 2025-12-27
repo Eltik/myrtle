@@ -1,8 +1,9 @@
 "use client";
 
-import { Check, ChevronDown } from "lucide-react";
-import { cn } from "~/lib/utils";
+import { ChevronDown } from "lucide-react";
+import { motion } from "motion/react";
 import { Disclosure, DisclosureContent, DisclosureTrigger } from "~/components/ui/motion-primitives/disclosure";
+import { cn } from "~/lib/utils";
 import { SENIOR_OPERATOR_TAG_ID, TAG_GROUP_LABELS, TAG_GROUP_ORDER, TOP_OPERATOR_TAG_ID } from "./constants";
 import type { RecruitmentTag, TagType } from "./types";
 
@@ -23,11 +24,11 @@ export function TagSelector({ tags, selectedTags, onTagToggle, maxTags }: TagSel
                 if (!groupTags || groupTags.length === 0) return null;
 
                 return (
-                    <Disclosure key={groupKey} open={true} className="rounded-md border border-border">
+                    <Disclosure className="rounded-md border border-border" key={groupKey} open={true}>
                         <DisclosureTrigger>
                             <div className="flex w-full items-center justify-between rounded-lg bg-muted/50 px-3 py-2.5">
                                 <span className="font-semibold text-foreground/80 text-sm tracking-wide">{TAG_GROUP_LABELS[groupKey]}</span>
-                                <ChevronDown className="group-data-[state=closed]:rotate-90 h-4 w-4 transition-transform duration-200" />
+                                <ChevronDown className="h-4 w-4 transition-transform duration-200 group-data-[state=closed]:rotate-90" />
                             </div>
                         </DisclosureTrigger>
                         <DisclosureContent>
@@ -38,7 +39,8 @@ export function TagSelector({ tags, selectedTags, onTagToggle, maxTags }: TagSel
                                     const isHighPriority = tag.id === TOP_OPERATOR_TAG_ID || tag.id === SENIOR_OPERATOR_TAG_ID;
 
                                     return (
-                                        <button
+                                        <motion.button
+                                            whileHover={{ scale: 1.05 }}
                                             className={cn(
                                                 "group relative inline-flex items-center rounded-lg px-2.5 py-1.5 font-medium text-[13px]",
                                                 // Base unselected state
@@ -55,10 +57,12 @@ export function TagSelector({ tags, selectedTags, onTagToggle, maxTags }: TagSel
                                             disabled={isDisabled}
                                             key={tag.id}
                                             onClick={() => !isDisabled && onTagToggle(tag.id)}
+                                            transition={{ duration: 0.1 }}
                                             type="button"
+                                            whileTap={{ scale: 0.95, opacity: 0.7, filter: "blur(0.5px)" }}
                                         >
                                             {tag.name}
-                                        </button>
+                                        </motion.button>
                                     );
                                 })}
                             </div>
