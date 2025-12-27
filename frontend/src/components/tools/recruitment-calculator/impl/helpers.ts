@@ -1,4 +1,4 @@
-import { SENIOR_OPERATOR_TAG_ID, TAG_GROUP_MAP, TOP_OPERATOR_TAG_ID } from "./constants";
+import { SENIOR_OPERATOR_TAG_ID, TAG_ID_TO_TYPE_MAP, TOP_OPERATOR_TAG_ID } from "./constants";
 import type { GachaTag, RecruitableOperator, RecruitmentTag, TagCombinationResult, TagType } from "./types";
 
 /**
@@ -18,12 +18,13 @@ export function rarityToNumber(rarity: string): number {
 
 /**
  * Transform backend tags to frontend format with type information
+ * Uses TagId for categorization since the game's TagGroup equals TagId
  */
 export function transformTags(tags: GachaTag[]): RecruitmentTag[] {
     return tags.map((tag) => ({
         id: tag.tagId,
         name: tag.tagName,
-        type: TAG_GROUP_MAP[tag.tagGroup] ?? ("affix" as TagType),
+        type: TAG_ID_TO_TYPE_MAP[tag.tagId] ?? ("affix" as TagType),
     }));
 }
 
