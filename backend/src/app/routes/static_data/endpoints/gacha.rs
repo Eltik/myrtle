@@ -370,3 +370,51 @@ pub async fn calculate_recruitment_by_path(
     )
     .await
 }
+
+/// GET /static/gacha/recruitable
+/// Returns ALL operators in the recruitment pool with their tag data
+/// This endpoint is designed for client-side recruitment calculation
+pub async fn get_recruitable_operators(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Result<Response, StatusCode> {
+    let cache_key = "static:gacha:recruitable".to_string();
+
+    cached_handler(
+        &mut state.redis.clone(),
+        &cache_key,
+        3600,
+        &headers,
+        || async {
+            // Get the recruitment pool - only operators listed in recruitDetail
+            let recruitable_ids = get_recruitable_operator_ids(
+                &state.game_data.gacha.recruit_detail,
+                &state.game_data.operators,
+            );
+
+            // Build list of recruitable operators with minimal data needed for client-side calculation
+            let recruitable_operators: Vec<_> = state
+                .game_data
+                .operators
+                .iter()
+                .filter(|(id, _)| recruitable_ids.contains(*id))
+                .map(|(_, op)| {
+                    serde_json::json!({
+                        "id": op.id,
+                        "name": op.name,
+                        "rarity": op.rarity,
+                        "profession": op.profession,
+                        "position": op.position,
+                        "tagList": op.tag_list
+                    })
+                })
+                .collect();
+
+            Some(serde_json::json!({
+                "operators": recruitable_operators,
+                "total": recruitable_operators.len()
+            }))
+        },
+    )
+    .await
+}

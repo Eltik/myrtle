@@ -50,6 +50,17 @@ export interface RecruitableOperator {
     position: string;
 }
 
+// Recruitable operator with tag data for client-side calculation
+// This is fetched from /static/gacha/recruitable endpoint
+export interface RecruitableOperatorWithTags {
+    id: string;
+    name: string;
+    rarity: string; // "TIER_6", "TIER_5", etc. (raw from backend)
+    profession: string; // "WARRIOR", "SNIPER", etc.
+    position: string; // "MELEE", "RANGED"
+    tagList: string[]; // Affix tags like "Nuker", "DPS", etc.
+}
+
 export interface TagCombinationResult {
     tags: number[];
     tagNames: string[];
