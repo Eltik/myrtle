@@ -7,7 +7,6 @@ import { MAX_SELECTED_TAGS } from "./impl/constants";
 import { FilterOptions } from "./impl/filter-options";
 import { calculateRecruitmentResults, groupTagsByType, transformTags } from "./impl/helpers";
 import { ResultsList } from "./impl/results-list";
-import { SelectedTagsDisplay } from "./impl/selected-tags-display";
 import { TagSelector } from "./impl/tag-selector";
 import type { GachaTag, TagCombinationResult } from "./impl/types";
 
@@ -36,10 +35,6 @@ export function RecruitmentCalculator({ tags }: RecruitmentCalculatorProps) {
             }
             return [...prev, tagId];
         });
-    }, []);
-
-    const handleRemoveTag = useCallback((tagId: number) => {
-        setSelectedTags((prev) => prev.filter((t) => t !== tagId));
     }, []);
 
     const handleClearAll = useCallback(() => {
@@ -130,8 +125,6 @@ export function RecruitmentCalculator({ tags }: RecruitmentCalculatorProps) {
                 </div>
 
                 <TagSelector maxTags={MAX_SELECTED_TAGS} onTagToggle={handleTagToggle} selectedTags={selectedTags} tags={groupedTags} />
-
-                <SelectedTagsDisplay onClearAll={handleClearAll} onRemoveTag={handleRemoveTag} selectedTagIds={selectedTags} tags={transformedTags} />
             </div>
 
             {/* Options & Results Section */}
