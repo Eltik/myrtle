@@ -1,9 +1,9 @@
 "use client";
 
+import { motion } from "motion/react";
 import Image from "next/image";
 import { CLASS_DISPLAY, CLASS_ICON, RARITY_COLORS } from "~/components/operators/list/constants";
 import { RarityStars } from "~/components/operators/list/ui/impl/rarity-stars";
-import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/shadcn/tooltip";
 import { cn } from "~/lib/utils";
 import type { RecruitableOperator } from "./types";
 
@@ -17,38 +17,38 @@ export function OperatorResultCard({ operator }: OperatorResultCardProps) {
     const professionIcon = CLASS_ICON[operator.profession] ?? operator.profession.toLowerCase();
 
     return (
-        <Tooltip>
-            <TooltipTrigger asChild>
-                <div className="group relative flex flex-col items-center">
-                    {/* Avatar container */}
-                    <div className={cn("relative h-14 w-14 overflow-hidden rounded-lg border border-border/50 bg-card sm:h-16 sm:w-16", "group-hover:border-primary/50")}>
-                        {/* Operator portrait */}
-                        <Image alt={operator.name} className="h-full w-full object-cover" height={64} src={`/api/cdn/portrait/${operator.id}`} width={64} />
+        <motion.div className="group card-hover-transition relative flex aspect-2/3 overflow-clip rounded-md border border-muted/50 bg-card contain-content" whileHover={{ scale: 1.05 }}>
+            {/* Operator portrait */}
+            <div className={cn("absolute inset-0 origin-center transform-gpu transition-all duration-200 ease-out")}>
+                <Image alt={operator.name} className="h-full w-full rounded-lg object-cover" height={128} src={`/api/cdn/portrait/${operator.id}`} unoptimized width={128} />
+            </div>
 
-                        {/* Class icon */}
-                        <div className="absolute right-0.5 bottom-0.5 h-4 w-4 opacity-70">
-                            <Image alt={professionDisplay} height={16} src={`/api/cdn/upk/arts/ui/[uc]charcommon/icon_profession_${professionIcon}.png`} width={16} />
+            {/* Bottom info bar */}
+            <div className="absolute inset-x-0 bottom-0 z-10">
+                <div className="relative">
+                    {/* Gradient overlay */}
+                    <div className="h-24 w-full bg-linear-to-t from-black/90 via-black/60 to-transparent" />
+
+                    {/* Content */}
+                    <div className="absolute inset-0 flex flex-col justify-end p-2">
+                        {/* Name */}
+                        <span className="truncate font-bold text-sm text-white">{operator.name}</span>
+
+                        <div className="flex items-center justify-between">
+                            {/* Rarity stars */}
+                            <RarityStars className="flex" rarity={operator.rarity} starClassName="text-[10px]" />
+
+                            {/* Class icon */}
+                            <div className="h-5 w-5">
+                                <Image alt={professionDisplay} height={20} src={`/api/cdn/upk/arts/ui/[uc]charcommon/icon_profession_${professionIcon}.png`} width={20} />
+                            </div>
                         </div>
-
-                        {/* Rarity bar */}
-                        <div className="absolute inset-x-0 bottom-0 h-0.5" style={{ backgroundColor: rarityColor }} />
                     </div>
 
-                    {/* Name */}
-                    <span className="mt-1 max-w-16 truncate text-center font-medium text-[10px] text-muted-foreground group-hover:text-foreground sm:text-xs">{operator.name}</span>
-
-                    {/* Rarity stars */}
-                    <RarityStars className="flex" rarity={operator.rarity} starClassName="text-[8px] sm:text-[10px]" />
+                    {/* Rarity color bar */}
+                    <div className="h-0.5 w-full" style={{ backgroundColor: rarityColor }} />
                 </div>
-            </TooltipTrigger>
-            <TooltipContent variant="dark">
-                <div className="space-y-0.5">
-                    <p className="font-semibold">{operator.name}</p>
-                    <p className="font-medium text-xs" style={{ color: rarityColor }}>
-                        {operator.rarity}★ {professionDisplay}
-                    </p>
-                </div>
-            </TooltipContent>
-        </Tooltip>
+            </div>
+        </motion.div>
     );
 }
