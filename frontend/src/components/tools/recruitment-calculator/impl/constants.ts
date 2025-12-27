@@ -3,16 +3,30 @@ import type { TagType } from "./types";
 // Maximum number of tags that can be selected
 export const MAX_SELECTED_TAGS = 5;
 
-// Tag group ID to type mapping (from backend tagGroup field)
-// Group 0: Qualification (Top Operator, Senior Operator, Starter, Robot)
-// Group 1: Position (Melee, Ranged)
-// Group 2: Class (Guard, Sniper, etc.)
-// Group 3: Affix (Healing, DPS, etc.)
-export const TAG_GROUP_MAP: Record<number, TagType> = {
-    0: "qualification",
-    1: "position",
-    2: "class",
-    3: "affix",
+// Tag ID to type mapping
+// The game's TagGroup field equals TagId, so we must categorize by TagId
+// Position: Melee (9), Ranged (10)
+// Class: Guard (1), Sniper (2), Defender (3), Medic (4), Supporter (5), Caster (6), Specialist (7), Vanguard (8)
+// Qualification: Top Operator (11), Senior Operator (14), Starter (17), Robot (28)
+// Affix: Everything else
+export const TAG_ID_TO_TYPE_MAP: Record<number, TagType> = {
+    // Class tags (1-8)
+    1: "class", // Guard
+    2: "class", // Sniper
+    3: "class", // Defender
+    4: "class", // Medic
+    5: "class", // Supporter
+    6: "class", // Caster
+    7: "class", // Specialist
+    8: "class", // Vanguard
+    // Position tags (9-10)
+    9: "position", // Melee
+    10: "position", // Ranged
+    // Qualification tags
+    11: "qualification", // Top Operator
+    14: "qualification", // Senior Operator
+    17: "qualification", // Starter
+    28: "qualification", // Robot
 };
 
 // Display order for tag groups
