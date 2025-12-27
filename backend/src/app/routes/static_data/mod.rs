@@ -70,6 +70,10 @@ pub fn router() -> Router<AppState> {
         .route("/gacha", get(endpoints::gacha::get_all_gacha))
         .route("/gacha/recruitment", get(endpoints::gacha::get_recruitment))
         .route(
+            "/gacha/recruitable",
+            get(endpoints::gacha::get_recruitable_operators),
+        )
+        .route(
             "/gacha/calculate",
             get(endpoints::gacha::calculate_recruitment),
         )

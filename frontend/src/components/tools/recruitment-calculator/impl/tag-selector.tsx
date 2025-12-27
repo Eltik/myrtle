@@ -40,26 +40,30 @@ export function TagSelector({ tags, selectedTags, onTagToggle, maxTags }: TagSel
 
                                     return (
                                         <motion.button
-                                            whileHover={{ scale: 1.05 }}
+                                            animate={{
+                                                opacity: isDisabled ? 0.35 : 1,
+                                                scale: isDisabled ? 0.95 : 1,
+                                            }}
                                             className={cn(
-                                                "group relative inline-flex items-center rounded-lg px-2.5 py-1.5 font-medium text-[13px]",
+                                                "group relative inline-flex items-center rounded-lg px-2.5 py-1.5 font-medium text-[13px] transition-colors",
                                                 // Base unselected state
-                                                !isSelected && "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground",
+                                                !isSelected && !isDisabled && "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground",
                                                 // Selected state
                                                 isSelected && !isHighPriority && "bg-primary/15 text-primary ring-1 ring-primary/30",
                                                 // High priority unselected
-                                                isHighPriority && !isSelected && "bg-amber-500/10 text-amber-500/70 hover:bg-amber-500/20 hover:text-amber-400",
+                                                isHighPriority && !isSelected && !isDisabled && "bg-amber-500/10 text-amber-500/70 hover:bg-amber-500/20 hover:text-amber-400",
                                                 // High priority selected
                                                 isHighPriority && isSelected && "bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/40",
                                                 // Disabled state
-                                                isDisabled && "cursor-not-allowed opacity-30 hover:bg-muted/50 hover:text-muted-foreground",
+                                                isDisabled && "cursor-not-allowed bg-muted/30 text-muted-foreground/50",
                                             )}
                                             disabled={isDisabled}
                                             key={tag.id}
                                             onClick={() => !isDisabled && onTagToggle(tag.id)}
-                                            transition={{ duration: 0.1 }}
+                                            transition={{ duration: 0.15 }}
                                             type="button"
-                                            whileTap={{ scale: 0.95, opacity: 0.7, filter: "blur(0.5px)" }}
+                                            whileHover={!isDisabled ? { scale: 1.05 } : undefined}
+                                            whileTap={!isDisabled ? { scale: 0.95, opacity: 0.7, filter: "blur(0.5px)" } : undefined}
                                         >
                                             {tag.name}
                                         </motion.button>

@@ -1,25 +1,24 @@
 "use client";
 
-import { Calculator, Loader2, RotateCcw } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Calculator, RotateCcw } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
 import { Button } from "~/components/ui/shadcn/button";
+import { calculateResultsLocally } from "./impl/client-calculator";
 import { MAX_SELECTED_TAGS } from "./impl/constants";
 import { FilterOptions } from "./impl/filter-options";
-import { calculateRecruitmentResults, groupTagsByType, transformTags } from "./impl/helpers";
+import { groupTagsByType, transformTags } from "./impl/helpers";
 import { ResultsList } from "./impl/results-list";
 import { TagSelector } from "./impl/tag-selector";
-import type { GachaTag, TagCombinationResult } from "./impl/types";
+import type { GachaTag, RecruitableOperatorWithTags } from "./impl/types";
 
 interface RecruitmentCalculatorProps {
     tags: GachaTag[];
+    recruitableOperators: RecruitableOperatorWithTags[];
 }
 
-export function RecruitmentCalculator({ tags }: RecruitmentCalculatorProps) {
+export function RecruitmentCalculator({ tags, recruitableOperators }: RecruitmentCalculatorProps) {
     const [selectedTags, setSelectedTags] = useState<number[]>([]);
-    const [showLowRarity, setShowLowRarity] = useState(false);
     const [includeRobots, setIncludeRobots] = useState(true);
-    const [results, setResults] = useState<TagCombinationResult[]>([]);
-    const [isCalculating, setIsCalculating] = useState(false);
 
     // Transform and group tags
     const transformedTags = useMemo(() => transformTags(tags), [tags]);
@@ -39,7 +38,6 @@ export function RecruitmentCalculator({ tags }: RecruitmentCalculatorProps) {
 
     const handleClearAll = useCallback(() => {
         setSelectedTags([]);
-        setResults([]);
     }, []);
 
     // Convert selected tag IDs to tag objects for calculation
@@ -52,43 +50,17 @@ export function RecruitmentCalculator({ tags }: RecruitmentCalculatorProps) {
             .filter(Boolean) as { id: number; name: string }[];
     }, [selectedTags, transformedTags]);
 
-    // Calculate results when tags or options change
-    useEffect(() => {
+    // Calculate results locally (instant, no API calls)
+    const results = useMemo(() => {
         if (selectedTagObjects.length === 0) {
-            setResults([]);
-            return;
+            return [];
         }
 
-        let cancelled = false;
-        setIsCalculating(true);
-
-        // Debounce the calculation
-        const timer = setTimeout(async () => {
-            try {
-                const newResults = await calculateRecruitmentResults(selectedTagObjects, {
-                    showLowRarity,
-                    includeRobots,
-                });
-                if (!cancelled) {
-                    setResults(newResults);
-                }
-            } catch (error) {
-                console.error("Failed to calculate recruitment results:", error);
-                if (!cancelled) {
-                    setResults([]);
-                }
-            } finally {
-                if (!cancelled) {
-                    setIsCalculating(false);
-                }
-            }
-        }, 300);
-
-        return () => {
-            cancelled = true;
-            clearTimeout(timer);
-        };
-    }, [selectedTagObjects, showLowRarity, includeRobots]);
+        return calculateResultsLocally(selectedTagObjects, recruitableOperators, {
+            showLowRarity: true, // Always show all rarity groups
+            includeRobots,
+        });
+    }, [selectedTagObjects, recruitableOperators, includeRobots]);
 
     const highValueCount = results.filter((r) => r.guaranteedRarity >= 5).length;
 
@@ -132,18 +104,17 @@ export function RecruitmentCalculator({ tags }: RecruitmentCalculatorProps) {
                 <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                     <div className="flex items-center gap-2">
                         <h2 className="font-semibold text-foreground">Results</h2>
-                        {isCalculating && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-                        {!isCalculating && results.length > 0 && (
+                        {results.length > 0 && (
                             <>
                                 <span className="rounded-full bg-muted px-2 py-0.5 font-medium text-muted-foreground text-xs">{results.length} combinations</span>
                                 {highValueCount > 0 && <span className="rounded-full bg-amber-500/20 px-2 py-0.5 font-medium text-amber-400 text-xs">{highValueCount} high-value</span>}
                             </>
                         )}
                     </div>
-                    <FilterOptions includeRobots={includeRobots} onIncludeRobotsChange={setIncludeRobots} onShowLowRarityChange={setShowLowRarity} showLowRarity={showLowRarity} />
+                    <FilterOptions includeRobots={includeRobots} onIncludeRobotsChange={setIncludeRobots} />
                 </div>
 
-                <ResultsList results={results} showLowRarity={showLowRarity} />
+                <ResultsList results={results} />
             </div>
 
             {/* Footer note */}

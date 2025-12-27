@@ -5,16 +5,14 @@ import type { TagCombinationResult } from "./types";
 
 interface ResultsListProps {
     results: TagCombinationResult[];
-    showLowRarity: boolean;
 }
 
-export function ResultsList({ results, showLowRarity }: ResultsListProps) {
+export function ResultsList({ results }: ResultsListProps) {
     // Separate high-value results (5*+) from regular results
     const highValueResults = results.filter((r) => r.guaranteedRarity >= 5);
     const regularResults = results.filter((r) => r.guaranteedRarity < 5);
 
     const hasResults = results.length > 0;
-    const showRegular = regularResults.length > 0 && (showLowRarity || highValueResults.length === 0);
 
     if (!hasResults) {
         return (
@@ -42,7 +40,7 @@ export function ResultsList({ results, showLowRarity }: ResultsListProps) {
             )}
 
             {/* Regular combinations */}
-            {showRegular && (
+            {regularResults.length > 0 && (
                 <div className="space-y-3">
                     {highValueResults.length > 0 && <span className="font-semibold text-muted-foreground text-sm">Other Combinations</span>}
                     <div className="space-y-3">
