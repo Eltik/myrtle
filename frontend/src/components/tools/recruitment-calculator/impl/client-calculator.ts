@@ -1,5 +1,5 @@
 import { SENIOR_OPERATOR_TAG_ID, TOP_OPERATOR_TAG_ID } from "./constants";
-import type { RecruitableOperator, RecruitableOperatorWithTags, TagCombinationResult } from "./types";
+import type { CalculatorOptions, OperatorSortMode, RecruitableOperator, RecruitableOperatorWithTags, TagCombinationResult } from "./types";
 
 /**
  * Convert rarity string to number
@@ -14,6 +14,39 @@ function rarityToNumber(rarity: string): number {
         TIER_1: 1,
     };
     return rarityMap[rarity] ?? 1;
+}
+
+/**
+ * Get sort priority for "common-first" mode
+ * Common operators (4★, 3★, 2★) appear before uncommon (5★, 1★)
+ * Order: 4★ → 3★ → 2★ → 5★ → 1★
+ */
+function getCommonFirstPriority(rarity: number): number {
+    const priorityMap: Record<number, number> = {
+        4: 0, // Most common, shown first
+        3: 1,
+        2: 2,
+        5: 3, // Uncommon
+        1: 4, // Robots, shown last
+        6: 5, // 6★ rarely in recruitment pool anyway
+    };
+    return priorityMap[rarity] ?? 99;
+}
+
+/**
+ * Sort operators based on the selected sort mode
+ */
+function sortOperators(operators: RecruitableOperator[], mode: OperatorSortMode): RecruitableOperator[] {
+    return [...operators].sort((a, b) => {
+        if (mode === "common-first") {
+            const priorityDiff = getCommonFirstPriority(a.rarity) - getCommonFirstPriority(b.rarity);
+            // Secondary sort by rarity within same priority group (for clarity)
+            if (priorityDiff !== 0) return priorityDiff;
+            return b.rarity - a.rarity;
+        }
+        // Default: highest rarity first
+        return b.rarity - a.rarity;
+    });
 }
 
 /**
@@ -89,15 +122,8 @@ function getCombinations<T>(arr: T[], maxSize: number): T[][] {
 /**
  * Calculate recruitment results
  */
-export function calculateResults(
-    selectedTags: { id: number; name: string }[],
-    allOperators: RecruitableOperatorWithTags[],
-    options: {
-        showLowRarity?: boolean;
-        includeRobots?: boolean;
-    } = {},
-): TagCombinationResult[] {
-    const { showLowRarity = false, includeRobots = true } = options;
+export function calculateResults(selectedTags: { id: number; name: string }[], allOperators: RecruitableOperatorWithTags[], options: CalculatorOptions = {}): TagCombinationResult[] {
+    const { showLowRarity = false, includeRobots = true, operatorSortMode = "rarity-desc" } = options;
 
     if (selectedTags.length === 0) return [];
 
@@ -159,7 +185,7 @@ export function calculateResults(
         results.push({
             tags: tagIds,
             tagNames: combo.map((t) => t.name),
-            operators: filteredOps.sort((a, b) => b.rarity - a.rarity),
+            operators: sortOperators(filteredOps, operatorSortMode),
             guaranteedRarity,
             minRarity,
             maxRarity,
