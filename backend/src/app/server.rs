@@ -12,6 +12,7 @@ use tokio::sync::RwLock;
 
 use crate::app::middleware::rate_limit::{RateLimitStore, rate_limit};
 use crate::app::middleware::static_assets::serve_asset;
+use crate::app::routes::auth::update_settings::update_settings;
 use crate::app::routes::auth::verify::verify_token;
 use crate::app::routes::avatar::serve_avatar;
 use crate::app::routes::get_user::{get_user_by_path, get_user_by_query};
@@ -69,6 +70,7 @@ fn create_router(state: AppState) -> Router {
             post(send_code_by_email_and_server),
         )
         .route("/auth/verify", post(verify_token))
+        .route("/auth/update-settings", post(update_settings))
         .route("/login", post(login_by_query))
         .route("/login/{email}/{code}", post(login_no_server))
         .route("/login/{email}/{code}/{server}", post(login_by_server))
