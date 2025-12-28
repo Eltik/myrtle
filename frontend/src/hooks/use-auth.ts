@@ -10,6 +10,7 @@ const USER_CACHE_KEY = "myrtle_user_cache";
  */
 export interface CachedUserData {
     status: {
+        uid: string;
         nickName: string;
         level: number;
         secretary: string;
@@ -37,6 +38,7 @@ function hasAuthIndicator(): boolean {
 function extractCacheData(user: User): CachedUserData {
     return {
         status: {
+            uid: user.status.uid,
             nickName: user.status.nickName,
             level: user.status.level,
             secretary: user.status.secretary,

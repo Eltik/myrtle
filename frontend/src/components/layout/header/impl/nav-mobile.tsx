@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, Menu } from "lucide-react";
+import { Cog, LogOut, Menu } from "lucide-react";
 import Link from "next/link";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "~/components/ui/shadcn/accordion";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/shadcn/avatar";
@@ -93,10 +93,16 @@ export function NavMobile({ pathname, user, loading, logout, mobileMenuOpen, set
                                     <AvatarFallback className="bg-primary/20 text-primary text-xs">{user.status.nickName.slice(0, 1) ?? "E"}</AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1 overflow-hidden">
-                                    <p className="truncate font-medium text-foreground text-sm">{user.status.nickName}</p>
+                                    <Link className="truncate font-medium text-sm hover:underline" href={`/user/${user.status.uid}`}>
+                                        {user.status.nickName}
+                                    </Link>
                                     <p className="text-muted-foreground text-xs">Level {user.status.level}</p>
                                 </div>
                             </div>
+                            <Link className="flex w-full items-center justify-start rounded-md border border-input bg-background px-4 py-2 font-medium text-foreground text-sm hover:bg-secondary" href="/settings" onClick={() => setMobileMenuOpen(false)}>
+                                <Cog className="mr-2 h-4 w-4" />
+                                Settings
+                            </Link>
                             <Button
                                 className="w-full justify-start text-destructive hover:bg-destructive/10 hover:text-destructive"
                                 onClick={() => {
