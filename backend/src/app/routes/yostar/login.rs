@@ -73,7 +73,7 @@ async fn login_impl(
     )
     .await
     .map_err(|e| {
-        eprintln!("Login error: {:?}", e);
+        eprintln!("Login error: {e:?}");
         ApiError::Internal("Internal server error.".into())
     })?;
 

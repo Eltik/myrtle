@@ -96,7 +96,7 @@ fn process_chararts(chararts_path: &Path, characters: &mut HashMap<String, Chibi
             } else {
                 character.skins.push(ChibiSkin {
                     name: "default".to_string(),
-                    path: format!("/upk/chararts/{}", char_id),
+                    path: format!("/upk/chararts/{char_id}"),
                     has_spine_data: false,
                     animation_types: HashMap::new(),
                 });
@@ -116,7 +116,7 @@ fn process_chararts(chararts_path: &Path, characters: &mut HashMap<String, Chibi
                 // 3. Any subdirectory that contains spine files (fallback for mismatched names)
                 let possible_dirs = [
                     anim_path.join(&char_id),
-                    anim_path.join(format!("build_{}", char_id)),
+                    anim_path.join(format!("build_{char_id}")),
                 ];
 
                 let mut found_spine_dir: Option<(std::path::PathBuf, String)> = None;
@@ -138,7 +138,7 @@ fn process_chararts(chararts_path: &Path, characters: &mut HashMap<String, Chibi
                             let sub_path = sub_entry.path();
                             if sub_path.is_dir() {
                                 // Check if this directory has spine files
-                                if let Some(_) = collect_spine_files(&sub_path) {
+                                if collect_spine_files(&sub_path).is_some() {
                                     if let Some(dir_name) =
                                         sub_path.file_name().and_then(|n| n.to_str())
                                     {
@@ -158,22 +158,13 @@ fn process_chararts(chararts_path: &Path, characters: &mut HashMap<String, Chibi
                         // Format paths for the API using the actual subdirectory name
                         let formatted = SpineFiles {
                             atlas: spine_files.atlas.map(|f| {
-                                format!(
-                                    "/upk/chararts/{}/{}/{}/{}",
-                                    char_id, anim_dir, subdir_name, f
-                                )
+                                format!("/upk/chararts/{char_id}/{anim_dir}/{subdir_name}/{f}")
                             }),
                             skel: spine_files.skel.map(|f| {
-                                format!(
-                                    "/upk/chararts/{}/{}/{}/{}",
-                                    char_id, anim_dir, subdir_name, f
-                                )
+                                format!("/upk/chararts/{char_id}/{anim_dir}/{subdir_name}/{f}")
                             }),
                             png: spine_files.png.map(|f| {
-                                format!(
-                                    "/upk/chararts/{}/{}/{}/{}",
-                                    char_id, anim_dir, subdir_name, f
-                                )
+                                format!("/upk/chararts/{char_id}/{anim_dir}/{subdir_name}/{f}")
                             }),
                         };
                         default_skin.animation_types.insert(anim_key, formatted);
@@ -244,28 +235,19 @@ fn process_skinpack(skinpack_path: &Path, characters: &mut HashMap<String, Chibi
                             // Use dir_name (original directory) for paths, skin_id (normalized) for grouping
                             let formatted = SpineFiles {
                                 atlas: spine_files.atlas.map(|f| {
-                                    format!(
-                                        "/upk/skinpack/{}/{}/{}/{}",
-                                        char_id, anim_dir, dir_name, f
-                                    )
+                                    format!("/upk/skinpack/{char_id}/{anim_dir}/{dir_name}/{f}")
                                 }),
                                 skel: spine_files.skel.map(|f| {
-                                    format!(
-                                        "/upk/skinpack/{}/{}/{}/{}",
-                                        char_id, anim_dir, dir_name, f
-                                    )
+                                    format!("/upk/skinpack/{char_id}/{anim_dir}/{dir_name}/{f}")
                                 }),
                                 png: spine_files.png.map(|f| {
-                                    format!(
-                                        "/upk/skinpack/{}/{}/{}/{}",
-                                        char_id, anim_dir, dir_name, f
-                                    )
+                                    format!("/upk/skinpack/{char_id}/{anim_dir}/{dir_name}/{f}")
                                 }),
                             };
 
                             skin_ids
                                 .entry(skin_id)
-                                .or_insert_with(HashMap::new)
+                                .or_default()
                                 .insert(*anim_type, formatted);
                         }
                     }
@@ -279,7 +261,7 @@ fn process_skinpack(skinpack_path: &Path, characters: &mut HashMap<String, Chibi
 
                 let skin = ChibiSkin {
                     name: skin_name,
-                    path: format!("/upk/skinpack/{}", char_id),
+                    path: format!("/upk/skinpack/{char_id}"),
                     has_spine_data: true,
                     animation_types: anim_types
                         .into_iter()
@@ -329,25 +311,25 @@ fn process_dynchars(dynchars_path: &Path, characters: &mut HashMap<String, Chibi
                 let formatted = SpineFiles {
                     atlas: spine_files
                         .atlas
-                        .map(|f| format!("/upk/arts/dynchars/{}/{}", skin_id, f)),
+                        .map(|f| format!("/upk/arts/dynchars/{skin_id}/{f}")),
                     skel: spine_files
                         .skel
-                        .map(|f| format!("/upk/arts/dynchars/{}/{}", skin_id, f)),
+                        .map(|f| format!("/upk/arts/dynchars/{skin_id}/{f}")),
                     png: spine_files
                         .png
-                        .map(|f| format!("/upk/arts/dynchars/{}/{}", skin_id, f)),
+                        .map(|f| format!("/upk/arts/dynchars/{skin_id}/{f}")),
                 };
 
                 // Extract skin name
                 let skin_name = extract_skin_name(&skin_id, &char_id);
-                let dyn_skin_name = format!("dyn_{}", skin_name);
+                let dyn_skin_name = format!("dyn_{skin_name}");
 
                 let mut anim_types = HashMap::new();
                 anim_types.insert("dynamic".to_string(), formatted);
 
                 let skin = ChibiSkin {
                     name: dyn_skin_name,
-                    path: format!("/upk/arts/dynchars/{}", skin_id),
+                    path: format!("/upk/arts/dynchars/{skin_id}"),
                     has_spine_data: true,
                     animation_types: anim_types,
                 };

@@ -41,7 +41,7 @@ fn appended_custom(lang: &LangType) -> &'static str {
 fn build_voice_url(voice_asset: &str, lang: &LangType) -> String {
     let parts: Vec<&str> = voice_asset.split('/').collect();
     if parts.len() < 2 {
-        return format!("/audio/sound_beta_2/voice/{}.wav", voice_asset);
+        return format!("/audio/sound_beta_2/voice/{voice_asset}.wav");
     }
 
     let original_dir = parts[0];
@@ -102,7 +102,7 @@ fn enrich_voice(id: &str, raw: &RawVoice, voice_lang_dict: &HashMap<String, Voic
             .map(|lang| {
                 let cv_name = vl
                     .dict
-                    .get(&format!("{:?}", lang).to_uppercase())
+                    .get(&format!("{lang:?}").to_uppercase())
                     .or_else(|| {
                         // Try to find by matching voice_lang_type
                         vl.dict.values().find(|e| &e.voice_lang_type == lang)

@@ -21,6 +21,12 @@ pub struct EventEmitter {
     sender: broadcast::Sender<ConfigEvent>,
 }
 
+impl Default for EventEmitter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl EventEmitter {
     pub fn new() -> Self {
         let (sender, _) = broadcast::channel(32);

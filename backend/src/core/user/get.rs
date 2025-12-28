@@ -27,19 +27,19 @@ fn save_debug_logs(raw_json: &str, error: &serde_json::Error) {
 
     // Create timestamped folder name
     let timestamp = Utc::now().format("%Y-%m-%d_%H-%M-%S").to_string();
-    let folder_name = format!("parse_error_{}", timestamp);
+    let folder_name = format!("parse_error_{timestamp}");
     let folder_path = Path::new(DEBUG_LOGS_DIR).join(&folder_name);
 
     // Create directories
     if let Err(e) = fs::create_dir_all(&folder_path) {
-        eprintln!("Failed to create debug folder: {}", e);
+        eprintln!("Failed to create debug folder: {e}");
         return;
     }
 
     // Save raw JSON
     let json_path = folder_path.join("sync_data.json");
     if let Err(e) = fs::write(&json_path, raw_json) {
-        eprintln!("Failed to write JSON: {}", e);
+        eprintln!("Failed to write JSON: {e}");
     }
 
     // Build error report
@@ -89,11 +89,11 @@ Raw Error:
     // Save error report
     let report_path = folder_path.join("error_report.txt");
     if let Err(e) = fs::write(&report_path, &error_report) {
-        eprintln!("Failed to write error report: {}", e);
+        eprintln!("Failed to write error report: {e}");
     }
 
     // Also print to console
-    eprintln!("\n{}", error_report);
+    eprintln!("\n{error_report}");
     eprintln!("Debug files saved to: {}\n", folder_path.display());
 }
 

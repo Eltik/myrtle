@@ -13,7 +13,7 @@ const U8_SECRET: &[u8] = b"91240f70c09a08a6bc72af1a5c8d4670";
 type HmacSha1 = Hmac<Sha1>;
 
 #[derive(Debug, Clone, Copy, Serialize)]
-enum PID {
+enum Pid {
     #[serde(rename = "US-ARKNIGHTS")]
     UsArknights,
     #[serde(rename = "JP-AK")]
@@ -22,13 +22,13 @@ enum PID {
     KrArknights,
 }
 
-impl From<Server> for PID {
+impl From<Server> for Pid {
     fn from(server: Server) -> Self {
         match server {
-            Server::EN => PID::UsArknights,
-            Server::JP => PID::JpAk,
-            Server::KR => PID::KrArknights,
-            _ => PID::UsArknights,
+            Server::EN => Pid::UsArknights,
+            Server::JP => Pid::JpAk,
+            Server::KR => Pid::KrArknights,
+            _ => Pid::UsArknights,
         }
     }
 }
@@ -37,7 +37,7 @@ impl From<Server> for PID {
 #[serde(rename_all = "PascalCase")]
 struct HeadersInner {
     #[serde(rename = "PID")]
-    pid: PID,
+    pid: Pid,
     channel: &'static str,
     platform: &'static str,
     version: &'static str,
@@ -70,11 +70,11 @@ pub fn generate_headers(
     device_id: Option<&str>,
 ) -> HashMap<&'static str, String> {
     let pid = if server == Server::EN {
-        PID::UsArknights
+        Pid::UsArknights
     } else if server == Server::JP {
-        PID::JpAk
+        Pid::JpAk
     } else {
-        PID::KrArknights
+        Pid::KrArknights
     };
 
     let lang = if server == Server::EN {
@@ -119,9 +119,9 @@ pub fn generate_headers(
     let json_string = serde_json::to_string(&headers_inner).unwrap();
 
     let mut hasher = Md5::new();
-    hasher.update(format!("{}{}{}", json_string, body, SECRET));
+    hasher.update(format!("{json_string}{body}{SECRET}"));
     let hash = hasher.finalize();
-    let sign = format!("{:X}", hash);
+    let sign = format!("{hash:X}");
 
     let header_auth = HeaderAuth {
         head: headers_inner,

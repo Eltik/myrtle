@@ -8,13 +8,13 @@ pub fn setup_event_listeners(events: &Arc<EventEmitter>) {
         while let Ok(event) = rx.recv().await {
             match event {
                 ConfigEvent::NetworkLoaded(server) => {
-                    println!("Network config loaded for {:?}", server);
+                    println!("Network config loaded for {server:?}");
                 }
                 ConfigEvent::NetworkInitiated => {
                     println!("All network configs loaded!");
                 }
                 ConfigEvent::VersionLoaded(server) => {
-                    println!("Version config loaded for {:?}", server);
+                    println!("Version config loaded for {server:?}");
                 }
                 ConfigEvent::VersionInitiated => {
                     println!("All version configs loaded!");
@@ -26,13 +26,13 @@ pub fn setup_event_listeners(events: &Arc<EventEmitter>) {
                     println!("Login successful for uid: {}", session.uid);
                 }
                 ConfigEvent::AuthLoginError(error) => {
-                    eprintln!("Login failed: {}", error);
+                    eprintln!("Login failed: {error}");
                 }
                 ConfigEvent::DatabaseUserCreated { uid, server } => {
-                    println!("User created: {} ({})", uid, server);
+                    println!("User created: {uid} ({server})");
                 }
                 ConfigEvent::DatabaseUserUpdated { uid, server } => {
-                    println!("User updated: {} ({})", uid, server);
+                    println!("User updated: {uid} ({server})");
                 }
             }
         }

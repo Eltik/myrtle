@@ -18,6 +18,7 @@ use crate::core::local::{
 };
 
 /// Pre-enriches all operators once at startup (instead of per-request)
+#[allow(clippy::too_many_arguments)]
 pub fn enrich_all_operators(
     raw_operators: &HashMap<String, RawOperator>,
     skills: &HashMap<String, Skill>,
@@ -48,6 +49,7 @@ pub fn enrich_all_operators(
         .collect()
 }
 
+#[allow(clippy::too_many_arguments)]
 fn enrich_operator(
     id: &str,
     raw: &RawOperator,

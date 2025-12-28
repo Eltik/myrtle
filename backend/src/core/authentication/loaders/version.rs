@@ -42,7 +42,7 @@ async fn load_single_server(client: &Client, config: &Arc<RwLock<GlobalConfig>>,
     };
 
     let Some(url) = hv_url else {
-        eprintln!("No HV domain found for {:?}, skipping version load", server);
+        eprintln!("No HV domain found for {server:?}, skipping version load");
         return;
     };
 
@@ -60,13 +60,13 @@ async fn load_single_server(client: &Client, config: &Arc<RwLock<GlobalConfig>>,
         Ok(Ok(version_info)) => {
             let mut config = config.write().await;
             config.versions.insert(server, version_info);
-            println!("Version config loaded for {:?}", server);
+            println!("Version config loaded for {server:?}");
         }
         Ok(Err(e)) => {
-            eprintln!("Error loading version config for {:?}: {}", server, e);
+            eprintln!("Error loading version config for {server:?}: {e}");
         }
         Err(_) => {
-            eprintln!("Timeout loading version config for {:?}", server);
+            eprintln!("Timeout loading version config for {server:?}");
         }
     }
 }

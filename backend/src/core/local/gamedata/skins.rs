@@ -47,14 +47,14 @@ fn format_skin_url(skin_id: &str, char_id: &str) -> String {
     if skin_id.contains('@') {
         // Special skin: char_002_amiya@epoque#4 → /upk/skinpack/char_002_amiya/char_002_amiya_epoque#4.png
         let formatted = skin_id.replace('@', "_");
-        format!("/upk/skinpack/{}/{}.png", char_id, formatted)
+        format!("/upk/skinpack/{char_id}/{formatted}.png")
     } else if skin_id.contains('#') {
         // Base skin: char_285_medic2#1 → /upk/chararts/char_285_medic2/char_285_medic2_1.png
         let formatted = skin_id.replace('#', "_");
-        format!("/upk/chararts/{}/{}.png", char_id, formatted)
+        format!("/upk/chararts/{char_id}/{formatted}.png")
     } else {
         // Fallback (shouldn't happen)
-        format!("/upk/chararts/{}/{}.png", char_id, skin_id)
+        format!("/upk/chararts/{char_id}/{skin_id}.png")
     }
 }
 

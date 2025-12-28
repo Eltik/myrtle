@@ -22,7 +22,7 @@ pub async fn rate_limit(
 ) -> Result<Response, StatusCode> {
     let ip = addr.ip().to_string();
     let path = request.uri().path().to_string();
-    let key = format!("{}:{}", ip, path);
+    let key = format!("{ip}:{path}");
 
     let mut map = store.write().await;
     let now = Instant::now();

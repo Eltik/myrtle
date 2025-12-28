@@ -40,7 +40,7 @@ async fn find_user(state: &AppState, uid: &str) -> Result<Json<User>, ApiError> 
     let mut user = User::find_by_uid(&state.db, uid)
         .await
         .map_err(|e| {
-            eprintln!("Database error: {:?}", e);
+            eprintln!("Database error: {e:?}");
             ApiError::Internal("Internal server error.".into())
         })?
         .ok_or(ApiError::NotFound("No user found.".into()))?;
