@@ -18,6 +18,7 @@ use crate::core::authentication::{
     generate::generate_headers,
 };
 
+#[allow(clippy::too_many_arguments)]
 pub async fn fetch(
     client: &Client,
     config: &Arc<RwLock<GlobalConfig>>,
@@ -43,7 +44,7 @@ pub async fn fetch(
     }
 
     if let Some(ep) = endpoint {
-        url = format!("{}/{}", url, ep);
+        url = format!("{url}/{ep}");
     }
 
     let mut request = if body.is_some() {
@@ -142,7 +143,7 @@ pub async fn fetch_url(
     assign_headers: bool,
 ) -> Result<Response, FetchError> {
     let full_url = match endpoint {
-        Some(ep) => format!("{}/{}", url, ep),
+        Some(ep) => format!("{url}/{ep}"),
         None => url.to_string(),
     };
 

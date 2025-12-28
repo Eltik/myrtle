@@ -29,7 +29,7 @@ where
     Fut: Future<Output = Option<T>>,
 {
     // Check If-None-Match (ETag)
-    let etag_key = format!("{}:etag", cache_key);
+    let etag_key = format!("{cache_key}:etag");
     if let Some(if_none_match) = headers.get(header::IF_NONE_MATCH) {
         if let Ok(stored_etag) = redis.get::<&str, String>(&etag_key).await {
             if if_none_match.to_str().ok() == Some(&stored_etag) {
@@ -43,7 +43,7 @@ where
     }
 
     // Check cache for pre-compressed data
-    let compressed_key = format!("{}:gz", cache_key);
+    let compressed_key = format!("{cache_key}:gz");
     if let Ok(cached) = redis.get::<&str, Vec<u8>>(&compressed_key).await {
         if !cached.is_empty() {
             let etag: String = redis
@@ -70,9 +70,7 @@ where
     let hash = Md5::digest(&json);
     let etag = format!(
         "\"{}\"",
-        hash.iter()
-            .map(|b| format!("{:02x}", b))
-            .collect::<String>()
+        hash.iter().map(|b| format!("{b:02x}")).collect::<String>()
     );
 
     // Store in cache

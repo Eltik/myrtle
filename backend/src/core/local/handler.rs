@@ -38,9 +38,9 @@ pub enum DataError {
 impl fmt::Display for DataError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            DataError::Io(e) => write!(f, "IO error: {}", e),
-            DataError::Parse { table, error } => write!(f, "Failed to parse {}: {}", table, error),
-            DataError::Missing { table } => write!(f, "Missing table file: {}", table),
+            DataError::Io(e) => write!(f, "IO error: {e}"),
+            DataError::Parse { table, error } => write!(f, "Failed to parse {table}: {error}"),
+            DataError::Missing { table } => write!(f, "Missing table file: {table}"),
         }
     }
 }
@@ -65,7 +65,7 @@ impl DataHandler {
     }
 
     pub fn load_table<T: DeserializeOwned>(&self, table_name: &str) -> Result<T, DataError> {
-        let path = self.data_dir.join(format!("{}.json", table_name));
+        let path = self.data_dir.join(format!("{table_name}.json"));
         let file = std::fs::File::open(&path).map_err(|e| {
             if e.kind() == std::io::ErrorKind::NotFound {
                 DataError::Missing {
@@ -102,7 +102,7 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
         match handler.load_table::<SkillTableFile>("skill_table") {
             Ok(skill_table) => skill_table.skills,
             Err(e) => {
-                eprintln!("Warning: Failed to load skill_table: {}", e);
+                eprintln!("Warning: Failed to load skill_table: {e}");
                 HashMap::new()
             }
         };
@@ -117,7 +117,7 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
             equip_track_dict: uniequip_table.equip_track_dict,
         },
         Err(e) => {
-            eprintln!("Warning: Failed to load uniequip_table: {}", e);
+            eprintln!("Warning: Failed to load uniequip_table: {e}");
             RawModules::default()
         }
     };
@@ -127,7 +127,7 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
         match handler.load_table::<BattleEquipTableFile>("battle_equip_table") {
             Ok(battle_equip_table) => battle_equip_table.equips,
             Err(e) => {
-                eprintln!("Warning: Failed to load battle_equip_table: {}", e);
+                eprintln!("Warning: Failed to load battle_equip_table: {e}");
                 HashMap::new()
             }
         };
@@ -143,7 +143,7 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
             handbook_stage_time: handbook_table.handbook_stage_time,
         },
         Err(e) => {
-            eprintln!("Warning: Failed to load handbook_info_table: {}", e);
+            eprintln!("Warning: Failed to load handbook_info_table: {e}");
             Handbook::default()
         }
     };
@@ -163,7 +163,7 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
             }
         }
         Err(e) => {
-            eprintln!("Warning: Failed to load skin_table: {}", e);
+            eprintln!("Warning: Failed to load skin_table: {e}");
             SkinData::default()
         }
     };
@@ -178,7 +178,7 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
             char_voucher_items: item_table.char_voucher_items,
         },
         Err(e) => {
-            eprintln!("Warning: Failed to load item_table: {}", e);
+            eprintln!("Warning: Failed to load item_table: {e}");
             Materials::default()
         }
     };
@@ -187,7 +187,7 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
     let ranges: Ranges = match handler.load_table::<Ranges>("range_table") {
         Ok(range_data) => range_data,
         Err(e) => {
-            eprintln!("Warning: Failed to load range_table: {}", e);
+            eprintln!("Warning: Failed to load range_table: {e}");
             HashMap::new()
         }
     };
@@ -196,7 +196,7 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
     let favor: Favor = match handler.load_table::<Favor>("favor_table") {
         Ok(favor_data) => favor_data,
         Err(e) => {
-            eprintln!("Warning: Failed to load favor_table: {}", e);
+            eprintln!("Warning: Failed to load favor_table: {e}");
             Favor::default()
         }
     };
@@ -217,7 +217,7 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
             }
         }
         Err(e) => {
-            eprintln!("Warning: Failed to load charword_table: {}", e);
+            eprintln!("Warning: Failed to load charword_table: {e}");
             Voices::default()
         }
     };
@@ -246,7 +246,7 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
             special_gacha_percent_dict: gacha_table.special_gacha_percent_dict,
         },
         Err(e) => {
-            eprintln!("Warning: Failed to load gacha_table: {}", e);
+            eprintln!("Warning: Failed to load gacha_table: {e}");
             GachaData::default()
         }
     };
@@ -367,7 +367,7 @@ pub fn init_game_data_or_default(data_dir: &Path, assets_dir: &Path) -> GameData
     match init_game_data(data_dir, assets_dir) {
         Ok(data) => data,
         Err(e) => {
-            eprintln!("Warning: Failed to load game data: {}", e);
+            eprintln!("Warning: Failed to load game data: {e}");
             eprintln!("Starting with empty game data");
             GameData::default()
         }

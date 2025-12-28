@@ -32,7 +32,7 @@ pub async fn update_settings(
     let user = User::find_by_uid(&state.db, &claims.uid)
         .await
         .map_err(|e| {
-            eprintln!("Database error: {:?}", e);
+            eprintln!("Database error: {e:?}");
             ApiError::Internal("Internal server error.".into())
         })?
         .ok_or(ApiError::NotFound("User not found.".into()))?;
@@ -44,7 +44,7 @@ pub async fn update_settings(
     let updated_user = User::update_settings(&state.db, user.id, merged_settings)
         .await
         .map_err(|e| {
-            eprintln!("Failed to update settings: {:?}", e);
+            eprintln!("Failed to update settings: {e:?}");
             ApiError::Internal("Failed to update settings.".into())
         })?;
 

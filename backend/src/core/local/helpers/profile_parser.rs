@@ -10,9 +10,19 @@ pub fn parse_operator_profile(
         return None;
     }
 
-    let basic_text = story_text_audio.get(0)?.stories.get(0)?.story_text.as_str();
+    let basic_text = story_text_audio
+        .first()?
+        .stories
+        .first()?
+        .story_text
+        .as_str();
 
-    let physical_text = story_text_audio.get(1)?.stories.get(0)?.story_text.as_str();
+    let physical_text = story_text_audio
+        .get(1)?
+        .stories
+        .first()?
+        .story_text
+        .as_str();
 
     let basic_info = parse_basic_info(basic_text);
     let physical_exam = parse_physical_exam(physical_text);

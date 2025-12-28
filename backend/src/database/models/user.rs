@@ -105,7 +105,7 @@ impl User {
         nickname: &str,
     ) -> Result<Vec<Self>, sqlx::Error> {
         sqlx::query_as::<_, Self>("SELECT * FROM users WHERE data->>'nickname' ILIKE $1")
-            .bind(format!("%{}%", nickname))
+            .bind(format!("%{nickname}%"))
             .fetch_all(pool)
             .await
     }

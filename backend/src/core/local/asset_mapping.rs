@@ -35,13 +35,13 @@ impl AssetMappings {
         // Spritepack is at {assets_dir}/upk/spritepack
         let spritepack = assets_dir.join("upk/spritepack");
 
-        eprintln!("Scanning spritepack directory: {:?}", spritepack);
+        eprintln!("Scanning spritepack directory: {spritepack:?}");
 
         let mut mappings = Self::new();
 
         // Scan avatar directories
         for i in 0..20 {
-            let dir_name = format!("ui_char_avatar_{}", i);
+            let dir_name = format!("ui_char_avatar_{i}");
             let dir_path = spritepack.join(&dir_name);
             if dir_path.exists() {
                 if let Ok(entries) = std::fs::read_dir(&dir_path) {
@@ -61,7 +61,7 @@ impl AssetMappings {
 
         // Scan skin portrait directories
         for i in 0..15 {
-            let dir_name = format!("arts_shop_skin_portrait_{}", i);
+            let dir_name = format!("arts_shop_skin_portrait_{i}");
             let dir_path = spritepack.join(&dir_name);
             if dir_path.exists() {
                 if let Ok(entries) = std::fs::read_dir(&dir_path) {
@@ -81,7 +81,7 @@ impl AssetMappings {
 
         // Scan module big image directories
         for i in 0..25 {
-            let dir_name = format!("ui_equip_big_img_hub_{}", i);
+            let dir_name = format!("ui_equip_big_img_hub_{i}");
             let dir_path = spritepack.join(&dir_name);
             if dir_path.exists() {
                 if let Ok(entries) = std::fs::read_dir(&dir_path) {
@@ -101,7 +101,7 @@ impl AssetMappings {
 
         // Scan module small image directories
         for i in 0..25 {
-            let dir_name = format!("ui_equip_small_img_hub_{}", i);
+            let dir_name = format!("ui_equip_small_img_hub_{i}");
             let dir_path = spritepack.join(&dir_name);
             if dir_path.exists() {
                 if let Ok(entries) = std::fs::read_dir(&dir_path) {
@@ -121,7 +121,7 @@ impl AssetMappings {
 
         // Scan skill icon directories
         for i in 0..10 {
-            let dir_name = format!("skill_icons_{}", i);
+            let dir_name = format!("skill_icons_{i}");
             let dir_path = spritepack.join(&dir_name);
             if dir_path.exists() {
                 if let Ok(entries) = std::fs::read_dir(&dir_path) {
@@ -149,12 +149,12 @@ impl AssetMappings {
                         if let Some(dir_name) = entry.file_name().to_str() {
                             // Directory name is the skill icon name (e.g., skill_icon_skchr_angel2_3)
                             // File inside is {dir_name}.png
-                            let png_path = entry.path().join(format!("{}.png", dir_name));
+                            let png_path = entry.path().join(format!("{dir_name}.png"));
                             if png_path.exists() {
                                 // Use special marker for arts/skills location
                                 mappings.skill_icons.insert(
                                     dir_name.to_string(),
-                                    format!("arts_skills:{}", dir_name),
+                                    format!("arts_skills:{dir_name}"),
                                 );
                             }
                         }
@@ -166,7 +166,7 @@ impl AssetMappings {
         // Scan portraits from {assets_dir}/upk/arts/charportraits/pack{N}/*.png
         let charportraits_dir = assets_dir.join("upk/arts/charportraits");
 
-        eprintln!("Scanning charportraits directory: {:?}", charportraits_dir);
+        eprintln!("Scanning charportraits directory: {charportraits_dir:?}");
 
         if charportraits_dir.exists() {
             if let Ok(pack_dirs) = std::fs::read_dir(&charportraits_dir) {
@@ -195,7 +195,7 @@ impl AssetMappings {
         // Scan full character art from {assets_dir}/upk/chararts/{char_id}/
         let chararts_dir = assets_dir.join("upk/chararts");
 
-        eprintln!("Scanning chararts directory: {:?}", chararts_dir);
+        eprintln!("Scanning chararts directory: {chararts_dir:?}");
 
         if chararts_dir.exists() {
             if let Ok(entries) = std::fs::read_dir(&chararts_dir) {
@@ -205,8 +205,8 @@ impl AssetMappings {
                             // Only process char_xxx directories
                             if dir_name.starts_with("char_") {
                                 // Check which versions exist
-                                let e0_path = entry.path().join(format!("{}_1.png", dir_name));
-                                let e2_path = entry.path().join(format!("{}_2.png", dir_name));
+                                let e0_path = entry.path().join(format!("{dir_name}_1.png"));
+                                let e2_path = entry.path().join(format!("{dir_name}_2.png"));
                                 let has_e0 = e0_path.exists();
                                 let has_e2 = e2_path.exists();
                                 if has_e0 || has_e2 {
@@ -241,7 +241,7 @@ impl AssetMappings {
                                 mappings
                                     .item_icons
                                     .entry(base_name.to_string())
-                                    .or_insert_with(|| format!("spritepack:{}", dir_name));
+                                    .or_insert_with(|| format!("spritepack:{dir_name}"));
                             }
                         }
                     }
@@ -286,22 +286,22 @@ impl AssetMappings {
     /// Get avatar path
     pub fn get_avatar_path(&self, avatar_id: &str) -> String {
         if let Some(dir) = self.avatars.get(avatar_id) {
-            format!("/upk/spritepack/{}/{}.png", dir, avatar_id)
+            format!("/upk/spritepack/{dir}/{avatar_id}.png")
         } else {
             // Fallback - try first directory
-            format!("/upk/spritepack/ui_char_avatar_0/{}.png", avatar_id)
+            format!("/upk/spritepack/ui_char_avatar_0/{avatar_id}.png")
         }
     }
 
     /// Get skin portrait path (for skins with @ or # in ID)
     pub fn get_skin_portrait_path(&self, portrait_id: &str) -> String {
         if let Some(dir) = self.skin_portraits.get(portrait_id) {
-            format!("/upk/spritepack/{}/{}.png", dir, portrait_id)
+            format!("/upk/spritepack/{dir}/{portrait_id}.png")
         } else if let Some(dir) = self.avatars.get(portrait_id) {
             // Fallback to avatar directories for default skins
-            format!("/upk/spritepack/{}/{}.png", dir, portrait_id)
+            format!("/upk/spritepack/{dir}/{portrait_id}.png")
         } else {
-            format!("/upk/spritepack/ui_char_avatar_0/{}.png", portrait_id)
+            format!("/upk/spritepack/ui_char_avatar_0/{portrait_id}.png")
         }
     }
 
@@ -313,11 +313,10 @@ impl AssetMappings {
             return None;
         }
         if let Some(dir) = self.module_big.get(equip_icon) {
-            Some(format!("/upk/spritepack/{}/{}.png", dir, equip_icon))
+            Some(format!("/upk/spritepack/{dir}/{equip_icon}.png"))
         } else {
             Some(format!(
-                "/upk/spritepack/ui_equip_big_img_hub_0/{}.png",
-                equip_icon
+                "/upk/spritepack/ui_equip_big_img_hub_0/{equip_icon}.png"
             ))
         }
     }
@@ -330,11 +329,10 @@ impl AssetMappings {
             return None;
         }
         if let Some(dir) = self.module_small.get(equip_icon) {
-            Some(format!("/upk/spritepack/{}/{}.png", dir, equip_icon))
+            Some(format!("/upk/spritepack/{dir}/{equip_icon}.png"))
         } else {
             Some(format!(
-                "/upk/spritepack/ui_equip_small_img_hub_0/{}.png",
-                equip_icon
+                "/upk/spritepack/ui_equip_small_img_hub_0/{equip_icon}.png"
             ))
         }
     }
@@ -344,15 +342,15 @@ impl AssetMappings {
     /// Path format: /upk/arts/charportraits/{pack}/{portrait_name}.png
     pub fn get_portrait_path(&self, char_id: &str) -> Option<String> {
         // Try E2 portrait first (e.g., char_002_amiya_2.png)
-        let e2_name = format!("{}_2", char_id);
+        let e2_name = format!("{char_id}_2");
         if let Some(pack) = self.portraits.get(&e2_name) {
-            return Some(format!("/upk/arts/charportraits/{}/{}.png", pack, e2_name));
+            return Some(format!("/upk/arts/charportraits/{pack}/{e2_name}.png"));
         }
 
         // Try E0 portrait (e.g., char_002_amiya_1.png)
-        let e0_name = format!("{}_1", char_id);
+        let e0_name = format!("{char_id}_1");
         if let Some(pack) = self.portraits.get(&e0_name) {
-            return Some(format!("/upk/arts/charportraits/{}/{}.png", pack, e0_name));
+            return Some(format!("/upk/arts/charportraits/{pack}/{e0_name}.png"));
         }
 
         None
@@ -366,9 +364,9 @@ impl AssetMappings {
             Some((has_e0, has_e2)) => {
                 // Prefer E2, fallback to E0
                 if *has_e2 {
-                    Some(format!("/upk/chararts/{}/{}_2.png", char_id, char_id))
+                    Some(format!("/upk/chararts/{char_id}/{char_id}_2.png"))
                 } else if *has_e0 {
-                    Some(format!("/upk/chararts/{}/{}_1.png", char_id, char_id))
+                    Some(format!("/upk/chararts/{char_id}/{char_id}_1.png"))
                 } else {
                     None
                 }
@@ -385,17 +383,17 @@ impl AssetMappings {
     /// Get skill icon path
     /// skill_id: e.g., "skchr_phatm2_1" -> looks up "skill_icon_skchr_phatm2_1" in mappings
     pub fn get_skill_icon_path(&self, skill_id: &str) -> String {
-        let icon_name = format!("skill_icon_{}", skill_id);
+        let icon_name = format!("skill_icon_{skill_id}");
         if let Some(dir) = self.skill_icons.get(&icon_name) {
             // Check for arts/skills alternate location (prefixed with "arts_skills:")
             if let Some(subdir) = dir.strip_prefix("arts_skills:") {
-                format!("/upk/arts/skills/{}/{}.png", subdir, icon_name)
+                format!("/upk/arts/skills/{subdir}/{icon_name}.png")
             } else {
-                format!("/upk/spritepack/{}/{}.png", dir, icon_name)
+                format!("/upk/spritepack/{dir}/{icon_name}.png")
             }
         } else {
             // Fallback to skill_icons_0
-            format!("/upk/spritepack/skill_icons_0/{}.png", icon_name)
+            format!("/upk/spritepack/skill_icons_0/{icon_name}.png")
         }
     }
 
@@ -404,16 +402,16 @@ impl AssetMappings {
     pub fn get_item_icon_path(&self, icon_id: &str) -> String {
         if let Some(location) = self.item_icons.get(icon_id) {
             if let Some(dir) = location.strip_prefix("spritepack:") {
-                format!("/upk/spritepack/{}/{}.png", dir, icon_id)
+                format!("/upk/spritepack/{dir}/{icon_id}.png")
             } else if location == "arts_items" {
-                format!("/upk/arts/items/icons/{}.png", icon_id)
+                format!("/upk/arts/items/icons/{icon_id}.png")
             } else {
                 // Fallback for any other format
-                format!("/upk/arts/items/icons/{}.png", icon_id)
+                format!("/upk/arts/items/icons/{icon_id}.png")
             }
         } else {
             // Fallback to default items directory
-            format!("/upk/arts/items/icons/{}.png", icon_id)
+            format!("/upk/arts/items/icons/{icon_id}.png")
         }
     }
 }

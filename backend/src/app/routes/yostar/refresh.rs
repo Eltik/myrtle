@@ -82,7 +82,7 @@ async fn refresh_impl(
     )
     .await
     .map_err(|e| {
-        eprintln!("Refresh fetch error: {:?}", e);
+        eprintln!("Refresh fetch error: {e:?}");
         ApiError::Internal("Internal server error.".into())
     })?;
 
@@ -135,7 +135,7 @@ async fn refresh_impl(
         7, // 7 days expiry
     )
     .map_err(|e| {
-        eprintln!("JWT error: {:?}", e);
+        eprintln!("JWT error: {e:?}");
         ApiError::Internal("Failed to generate token.".into())
     })?;
 

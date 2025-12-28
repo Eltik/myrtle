@@ -46,7 +46,7 @@ pub async fn calculate_trust_level(
 ) -> Result<Response, StatusCode> {
     let trust = params.trust.ok_or(StatusCode::BAD_REQUEST)?;
 
-    let cache_key = format!("static:trust:calculate:{}", trust);
+    let cache_key = format!("static:trust:calculate:{trust}");
 
     cached_handler(
         &mut state.redis.clone(),
@@ -87,7 +87,7 @@ pub async fn calculate_trust_by_path(
     Path(trust): Path<i32>,
     headers: HeaderMap,
 ) -> Result<Response, StatusCode> {
-    let cache_key = format!("static:trust:calculate:{}", trust);
+    let cache_key = format!("static:trust:calculate:{trust}");
 
     cached_handler(
         &mut state.redis.clone(),

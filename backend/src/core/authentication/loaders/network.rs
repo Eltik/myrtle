@@ -48,7 +48,7 @@ pub async fn load_network_config(
 
 async fn load_single_server(client: &Client, config: &Arc<RwLock<GlobalConfig>>, server: Server) {
     let Some(url) = server.network_route() else {
-        eprintln!("No network route for {:?}", server);
+        eprintln!("No network route for {server:?}");
         return;
     };
 
@@ -95,13 +95,13 @@ async fn load_single_server(client: &Client, config: &Arc<RwLock<GlobalConfig>>,
                     domains.insert(domain, url);
                 }
             }
-            println!("Network config loaded for {:?}", server);
+            println!("Network config loaded for {server:?}");
         }
         Ok(Err(e)) => {
-            eprintln!("Error loading network config for {:?}: {}", server, e);
+            eprintln!("Error loading network config for {server:?}: {e}");
         }
         Err(_) => {
-            eprintln!("Timeout loading network config for {:?}", server);
+            eprintln!("Timeout loading network config for {server:?}");
         }
     }
 }

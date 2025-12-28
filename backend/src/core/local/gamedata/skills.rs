@@ -33,7 +33,7 @@ pub fn enrich_all_skills(
 }
 
 pub fn enrich_skills(
-    raw_skills: &Vec<OperatorSkillRef>,
+    raw_skills: &[OperatorSkillRef],
     skill_table: &HashMap<String, Skill>,
     materials: &Materials,
 ) -> Vec<EnrichedSkill> {
@@ -110,13 +110,13 @@ fn get_item_icon_info(item_id: &str, materials: &Materials) -> (Option<String>, 
     // Look up in exp_items table - exp items use their id as the icon name
     if materials.exp_items.contains_key(item_id) {
         let icon_id = Some(item_id.to_string());
-        let image = Some(format!("/upk/arts/items/icons/{}.png", item_id));
+        let image = Some(format!("/upk/arts/items/icons/{item_id}.png"));
         return (icon_id, image);
     }
 
     // Fallback: use the item_id as icon_id
     (
         Some(item_id.to_string()),
-        Some(format!("/upk/arts/items/icons/{}.png", item_id)),
+        Some(format!("/upk/arts/items/icons/{item_id}.png")),
     )
 }

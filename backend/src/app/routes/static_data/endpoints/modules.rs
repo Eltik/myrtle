@@ -143,7 +143,7 @@ pub async fn get_module_details(
     Path(id): Path<String>,
     headers: HeaderMap,
 ) -> Result<Response, StatusCode> {
-    let cache_key = format!("static:modules:details:{}", id);
+    let cache_key = format!("static:modules:details:{id}");
 
     cached_handler(
         &mut state.redis.clone(),
