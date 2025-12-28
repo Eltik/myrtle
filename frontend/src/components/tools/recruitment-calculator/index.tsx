@@ -1,7 +1,7 @@
 "use client";
 
 import { Calculator, RotateCcw } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "~/components/ui/shadcn/button";
 import { calculateResults } from "./impl/client-calculator";
 import { MAX_SELECTED_TAGS } from "./impl/constants";
@@ -9,7 +9,9 @@ import { FilterOptions } from "./impl/filter-options";
 import { groupTagsByType, transformTags } from "./impl/helpers";
 import { ResultsList } from "./impl/results-list";
 import { TagSelector } from "./impl/tag-selector";
-import type { GachaTag, RecruitableOperatorWithTags } from "./impl/types";
+import type { GachaTag, OperatorSortMode, RecruitableOperatorWithTags } from "./impl/types";
+
+const STORAGE_KEY_SORT_MODE = "recruitment-operator-sort-mode";
 
 interface RecruitmentCalculatorProps {
     tags: GachaTag[];
@@ -19,6 +21,21 @@ interface RecruitmentCalculatorProps {
 export function RecruitmentCalculator({ tags, recruitableOperators }: RecruitmentCalculatorProps) {
     const [selectedTags, setSelectedTags] = useState<number[]>([]);
     const [includeRobots, setIncludeRobots] = useState(true);
+    const [operatorSortMode, setOperatorSortMode] = useState<OperatorSortMode>("rarity-desc");
+
+    // Load saved sort mode from localStorage
+    useEffect(() => {
+        const saved = localStorage.getItem(STORAGE_KEY_SORT_MODE);
+        if (saved === "common-first" || saved === "rarity-desc") {
+            setOperatorSortMode(saved);
+        }
+    }, []);
+
+    // Persist sort mode to localStorage
+    const handleSortModeChange = useCallback((mode: OperatorSortMode) => {
+        setOperatorSortMode(mode);
+        localStorage.setItem(STORAGE_KEY_SORT_MODE, mode);
+    }, []);
 
     // Transform and group tags
     const transformedTags = useMemo(() => transformTags(tags), [tags]);
@@ -59,8 +76,9 @@ export function RecruitmentCalculator({ tags, recruitableOperators }: Recruitmen
         return calculateResults(selectedTagObjects, recruitableOperators, {
             showLowRarity: true, // Always show all rarity groups
             includeRobots,
+            operatorSortMode,
         });
-    }, [selectedTagObjects, recruitableOperators, includeRobots]);
+    }, [selectedTagObjects, recruitableOperators, includeRobots, operatorSortMode]);
 
     const highValueCount = results.filter((r) => r.guaranteedRarity >= 5).length;
 
@@ -111,7 +129,7 @@ export function RecruitmentCalculator({ tags, recruitableOperators }: Recruitmen
                             </>
                         )}
                     </div>
-                    <FilterOptions includeRobots={includeRobots} onIncludeRobotsChange={setIncludeRobots} />
+                    <FilterOptions includeRobots={includeRobots} onIncludeRobotsChange={setIncludeRobots} onOperatorSortModeChange={handleSortModeChange} operatorSortMode={operatorSortMode} />
                 </div>
 
                 <ResultsList results={results} />

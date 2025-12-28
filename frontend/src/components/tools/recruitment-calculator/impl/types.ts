@@ -69,3 +69,14 @@ export interface TagCombinationResult {
     minRarity: number;
     maxRarity: number;
 }
+
+// Sorting mode for operators within results
+// "rarity-desc" = highest rarity first (default, 6★→5★→4★→3★→2★→1★)
+// "common-first" = common operators first (4★→3★→2★→5★→1★)
+export type OperatorSortMode = "rarity-desc" | "common-first";
+
+export interface CalculatorOptions {
+    showLowRarity?: boolean;
+    includeRobots?: boolean;
+    operatorSortMode?: OperatorSortMode;
+}
