@@ -1,6 +1,8 @@
 "use client";
 
-import { Clipboard } from "lucide-react";
+import { Check, Clipboard } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { InView } from "~/components/ui/motion-primitives/in-view";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/shadcn/avatar";
@@ -14,10 +16,14 @@ interface UserHeaderProps {
 }
 
 export function UserHeader({ data }: UserHeaderProps) {
+    const [isCopied, setIsCopied] = useState(false);
+
     const handleCopyUsername = () => {
         const username = `${data.status.nickName && data.status.nickName.length > 0 ? data.status.nickName : "Unknown"}#${data.status.nickNumber}`;
         void navigator.clipboard.writeText(username);
         toast.success("Copied username to clipboard!");
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
     };
 
     return (
@@ -42,9 +48,27 @@ export function UserHeader({ data }: UserHeaderProps) {
                                         {data.status.nickName && data.status.nickName.length > 0 ? data.status.nickName : "Unknown"}
                                         <span className="text-muted-foreground">#{data.status.nickNumber}</span>
                                     </div>
-                                    <button className="hidden cursor-pointer rounded-md border p-2 transition-all duration-150 hover:bg-secondary md:block" onClick={handleCopyUsername} onKeyDown={(e) => e.key === "Enter" && handleCopyUsername()} tabIndex={0} type="button">
-                                        <Clipboard size={15} />
-                                    </button>
+                                    <motion.button
+                                        animate={{ scale: isCopied ? [1, 0.85, 1] : 1 }}
+                                        className="relative hidden size-[34px] cursor-pointer items-center justify-center rounded-md border transition-colors duration-150 hover:bg-secondary md:flex"
+                                        onClick={handleCopyUsername}
+                                        onKeyDown={(e) => e.key === "Enter" && handleCopyUsername()}
+                                        tabIndex={0}
+                                        transition={{ duration: 0.15, ease: "easeOut" }}
+                                        type="button"
+                                    >
+                                        <AnimatePresence mode="wait">
+                                            {isCopied ? (
+                                                <motion.div animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }} exit={{ opacity: 0, scale: 0.6, filter: "blur(3px)" }} initial={{ opacity: 0, scale: 0.6, filter: "blur(3px)" }} key="check" transition={{ duration: 0.12, ease: "easeOut" }}>
+                                                    <Check size={15} />
+                                                </motion.div>
+                                            ) : (
+                                                <motion.div animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }} exit={{ opacity: 0, scale: 0.6, filter: "blur(3px)" }} initial={{ opacity: 0, scale: 0.6, filter: "blur(3px)" }} key="clipboard" transition={{ duration: 0.12, ease: "easeOut" }}>
+                                                    <Clipboard size={15} />
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </motion.button>
                                 </div>
                             </CardTitle>
                             <CardDescription>
