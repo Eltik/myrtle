@@ -1,23 +1,8 @@
-import { parse, serialize } from "cookie";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { z } from "zod";
 import { env } from "~/env";
+import { clearAuthCookies, getSessionFromCookie } from "~/lib/auth";
 import type { User } from "~/types/api";
 
-// Valid Arknights server regions
-const AKServerSchema = z.enum(["en", "jp", "kr", "cn", "bili", "tw"]);
-
-// Session cookie validation schema
-const SessionSchema = z.object({
-    uid: z.string().min(1, "UID is required"),
-    secret: z.string().min(1, "Secret is required"),
-    seqnum: z.number().int().min(0),
-    server: AKServerSchema,
-});
-
-type SessionData = z.infer<typeof SessionSchema>;
-
-// API response types
 interface SuccessResponse {
     success: true;
     user: User;
@@ -30,50 +15,7 @@ interface ErrorResponse {
 
 type ApiResponse = SuccessResponse | ErrorResponse;
 
-/**
- * Parse and validate session from cookie
- */
-function getSessionFromCookie(req: NextApiRequest): SessionData | null {
-    const cookies = parse(req.headers.cookie ?? "");
-    const sessionCookie = cookies.auth_session;
-
-    if (!sessionCookie) {
-        return null;
-    }
-
-    try {
-        const sessionData = JSON.parse(sessionCookie);
-        const parseResult = SessionSchema.safeParse(sessionData);
-        return parseResult.success ? parseResult.data : null;
-    } catch {
-        return null;
-    }
-}
-
-/**
- * Clear auth cookies helper
- */
-function clearAuthCookies(res: NextApiResponse) {
-    res.setHeader("Set-Cookie", [
-        serialize("auth_session", "", {
-            httpOnly: true,
-            secure: env.NODE_ENV === "production",
-            sameSite: "strict",
-            path: "/",
-            maxAge: 0,
-        }),
-        serialize("auth_indicator", "", {
-            httpOnly: false,
-            secure: env.NODE_ENV === "production",
-            sameSite: "strict",
-            path: "/",
-            maxAge: 0,
-        }),
-    ]);
-}
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
-    // Only allow POST
     if (req.method !== "POST") {
         res.setHeader("Allow", ["POST"]);
         return res.status(405).json({
@@ -83,7 +25,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     try {
-        // Get session from cookie
         const session = getSessionFromCookie(req);
 
         if (!session) {
@@ -99,7 +40,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         const backendUrl = new URL("/get-user", env.BACKEND_URL);
         backendUrl.searchParams.set("uid", uid);
 
-        // Call backend to get user data
         const userResponse = await fetch(backendUrl.toString(), {
             method: "GET",
             headers: {

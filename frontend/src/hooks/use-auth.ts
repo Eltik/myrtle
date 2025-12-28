@@ -165,5 +165,23 @@ export function useAuth() {
         }
     }, []);
 
-    return { user, loading, login, logout, fetchUser, verify };
+    // Refresh profile from game servers and update local state
+    const refreshProfile = useCallback(async (): Promise<{ success: boolean; message?: string }> => {
+        try {
+            const res = await fetch("/api/settings/refresh-profile", { method: "POST" });
+            const data = await res.json();
+
+            if (data.success && data.user) {
+                // Update local state with refreshed user data
+                setUser(data.user);
+                setCachedUser(data.user);
+            }
+
+            return { success: data.success, message: data.message };
+        } catch {
+            return { success: false, message: "Failed to refresh profile" };
+        }
+    }, []);
+
+    return { user, loading, login, logout, fetchUser, verify, refreshProfile };
 }
