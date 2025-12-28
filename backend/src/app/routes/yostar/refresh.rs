@@ -1,7 +1,10 @@
 use crate::{
     app::{error::ApiError, state::AppState},
     core::{
-        authentication::constants::{AuthSession, Server},
+        authentication::{
+            constants::{AuthSession, Server},
+            jwt,
+        },
         user::{self},
     },
     database::models::user::{CreateUser, User},
@@ -11,7 +14,7 @@ use axum::{
     Json,
     extract::{Path, Query, State},
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
 pub struct RefreshQuery {
@@ -21,11 +24,17 @@ pub struct RefreshQuery {
     pub server: Option<Server>,
 }
 
+#[derive(Serialize)]
+pub struct RefreshResponse {
+    pub user: serde_json::Value,
+    pub site_token: String,
+}
+
 // /refresh?uid={uid}&secret={secret}&seqnum={seqnum}&server={server}
 pub async fn refresh_by_query(
     State(state): State<AppState>,
     Query(params): Query<RefreshQuery>,
-) -> Result<Json<serde_json::Value>, ApiError> {
+) -> Result<Json<RefreshResponse>, ApiError> {
     let uid = params
         .uid
         .ok_or(ApiError::BadRequest("Missing 'uid' parameter.".into()))?;
@@ -43,7 +52,7 @@ pub async fn refresh_by_query(
 pub async fn refresh_no_server(
     State(state): State<AppState>,
     Path((uid, secret, seqnum)): Path<(String, String, u32)>,
-) -> Result<Json<serde_json::Value>, ApiError> {
+) -> Result<Json<RefreshResponse>, ApiError> {
     refresh_impl(&state, &uid, &secret, &seqnum, Server::EN).await
 }
 
@@ -51,7 +60,7 @@ pub async fn refresh_no_server(
 pub async fn refresh_by_server(
     State(state): State<AppState>,
     Path((uid, secret, seqnum, server)): Path<(String, String, u32, Server)>,
-) -> Result<Json<serde_json::Value>, ApiError> {
+) -> Result<Json<RefreshResponse>, ApiError> {
     refresh_impl(&state, &uid, &secret, &seqnum, server).await
 }
 
@@ -61,7 +70,7 @@ async fn refresh_impl(
     secret: &str,
     seqnum: &u32,
     server: Server,
-) -> Result<Json<serde_json::Value>, ApiError> {
+) -> Result<Json<RefreshResponse>, ApiError> {
     let mut session = AuthSession::new(Some(uid), Some(secret), Some(*seqnum), None);
 
     let data = user::get::get(
@@ -86,8 +95,8 @@ async fn refresh_impl(
         .await
         .map_err(|_| ApiError::Internal("Database error.".into()))?;
 
-    if let Some(existing_user) = existing {
-        User::update_data(&state.db, existing_user.id, user_json.clone())
+    let user = if let Some(existing_user) = existing {
+        let updated = User::update_data(&state.db, existing_user.id, user_json.clone())
             .await
             .map_err(|_| ApiError::Internal("Failed to update user.".into()))?;
 
@@ -95,8 +104,10 @@ async fn refresh_impl(
             uid: uid.to_string(),
             server: server.as_str().to_string(),
         });
+
+        updated
     } else {
-        User::create(
+        let created = User::create(
             &state.db,
             CreateUser {
                 uid: uid.to_string(),
@@ -111,7 +122,25 @@ async fn refresh_impl(
             uid: uid.to_string(),
             server: server.as_str().to_string(),
         });
-    }
 
-    Ok(Json(user_json))
+        created
+    };
+
+    let site_token = jwt::create_token(
+        &state.jwt_secret,
+        user.id,
+        &user.uid,
+        &user.server,
+        &user.role,
+        7, // 7 days expiry
+    )
+    .map_err(|e| {
+        eprintln!("JWT error: {:?}", e);
+        ApiError::Internal("Failed to generate token.".into())
+    })?;
+
+    Ok(Json(RefreshResponse {
+        user: user_json,
+        site_token,
+    }))
 }

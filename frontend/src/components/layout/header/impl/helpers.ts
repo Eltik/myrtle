@@ -7,7 +7,7 @@ export function isNavItemActive(item: NavItem, pathname: string): boolean {
     }
 
     // Special case: Users tab should also match /user/[id] profile pages
-    if (item.label === "Users" && pathname.startsWith("/user/")) {
+    if (item.label === "Players" && pathname.startsWith("/user/")) {
         return true;
     }
 

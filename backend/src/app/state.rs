@@ -18,6 +18,7 @@ pub struct AppState {
     pub client: Client,
     pub game_data: Arc<GameData>,
     pub redis: MultiplexedConnection,
+    pub jwt_secret: String,
 }
 
 static GLOBAL_CONFIG: OnceLock<Arc<RwLock<GlobalConfig>>> = OnceLock::new();

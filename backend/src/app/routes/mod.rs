@@ -1,3 +1,4 @@
+pub mod auth;
 pub mod avatar;
 pub mod get_user;
 pub mod portrait;

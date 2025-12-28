@@ -149,5 +149,19 @@ export function useAuth() {
         setCachedUser(null);
     }, []);
 
-    return { user, loading, login, logout, fetchUser };
+    const verify = useCallback(async (): Promise<{ valid: boolean; role?: string }> => {
+        try {
+            const res = await fetch("/api/auth/verify", { method: "POST" });
+            const data = await res.json();
+
+            if (data.success && data.data?.valid) {
+                return { valid: true, role: data.data.role };
+            }
+            return { valid: false };
+        } catch {
+            return { valid: false };
+        }
+    }, []);
+
+    return { user, loading, login, logout, fetchUser, verify };
 }

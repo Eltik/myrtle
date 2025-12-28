@@ -9,7 +9,10 @@ pub struct User {
     pub uid: String,
     pub server: String,
     pub data: serde_json::Value,
+    pub settings: serde_json::Value,
+    pub role: String,
     pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 // For inserting new users (without id/created_at)
@@ -70,7 +73,7 @@ impl User {
         sqlx::query_as::<_, Self>(
             r#"
             UPDATE users
-            SET data = $1
+            SET data = $1, updated_at = NOW()
             WHERE id = $2
             RETURNING *
             "#,
@@ -105,5 +108,41 @@ impl User {
             .bind(format!("%{}%", nickname))
             .fetch_all(pool)
             .await
+    }
+
+    /// Update user settings
+    pub async fn update_settings(
+        pool: &PgPool,
+        id: Uuid,
+        settings: serde_json::Value,
+    ) -> Result<Self, sqlx::Error> {
+        sqlx::query_as::<_, Self>(
+            r#"
+            UPDATE users
+            SET settings = $1, updated_at = NOW()
+            WHERE id = $2
+            RETURNING *
+            "#,
+        )
+        .bind(&settings)
+        .bind(id)
+        .fetch_one(pool)
+        .await
+    }
+
+    /// Update user role
+    pub async fn update_role(pool: &PgPool, id: Uuid, role: &str) -> Result<Self, sqlx::Error> {
+        sqlx::query_as::<_, Self>(
+            r#"
+            UPDATE users
+            SET role = $1, updated_at = NOW()
+            WHERE id = $2
+            RETURNING *
+            "#,
+        )
+        .bind(role)
+        .bind(id)
+        .fetch_one(pool)
+        .await
     }
 }
