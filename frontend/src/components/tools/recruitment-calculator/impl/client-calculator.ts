@@ -18,7 +18,6 @@ function rarityToNumber(rarity: string): number {
 
 /**
  * Check if an operator matches a specific tag
- * This mirrors the backend logic in gacha.rs
  */
 function operatorMatchesTag(op: RecruitableOperatorWithTags, tagId: number, tagName: string): boolean {
     const rarity = rarityToNumber(op.rarity);
@@ -88,10 +87,9 @@ function getCombinations<T>(arr: T[], maxSize: number): T[][] {
 }
 
 /**
- * Calculate recruitment results entirely on the client side
- * This uses pre-fetched operator data to avoid API calls
+ * Calculate recruitment results
  */
-export function calculateResultsLocally(
+export function calculateResults(
     selectedTags: { id: number; name: string }[],
     allOperators: RecruitableOperatorWithTags[],
     options: {
