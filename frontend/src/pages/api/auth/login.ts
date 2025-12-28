@@ -23,6 +23,11 @@ const LoginSchema = z.object({
 
 type LoginInput = z.infer<typeof LoginSchema>;
 
+interface BackendRefreshResponse {
+    user: User;
+    site_token: string;
+}
+
 // Backend response type
 interface BackendLoginResponse {
     uid: string;
@@ -126,7 +131,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             });
         }
 
-        const user: User = await refreshResponse.json();
+        const refreshData: BackendRefreshResponse = await refreshResponse.json();
+        const user = refreshData.user;
 
         // Step 3: Set session cookies (seqnum incremented after refresh)
         const sessionData = JSON.stringify({
@@ -138,6 +144,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
         res.setHeader("Set-Cookie", [
             serialize("auth_session", sessionData, {
+                httpOnly: true,
+                secure: env.NODE_ENV === "production",
+                sameSite: "strict",
+                path: "/",
+                maxAge: 60 * 60 * 24 * 7, // 1 week
+            }),
+            serialize("site_token", refreshData.site_token, {
                 httpOnly: true,
                 secure: env.NODE_ENV === "production",
                 sameSite: "strict",

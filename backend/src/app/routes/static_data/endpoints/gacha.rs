@@ -12,7 +12,9 @@ use crate::app::routes::static_data::{
     handler::cached_handler,
 };
 use crate::app::state::AppState;
-use crate::core::local::types::operator::{Operator, OperatorPosition, OperatorProfession, OperatorRarity};
+use crate::core::local::types::operator::{
+    Operator, OperatorPosition, OperatorProfession, OperatorRarity,
+};
 
 #[derive(Deserialize)]
 pub struct GachaQuery {
@@ -79,7 +81,11 @@ fn parse_recruit_pool(
             let mut name = m.as_str().trim().to_lowercase();
 
             // Skip empty names, star ratings, and dashes
-            if name.is_empty() || name.starts_with('-') || name.ends_with('-') || name.chars().all(|c| c == '★' || c.is_whitespace()) {
+            if name.is_empty()
+                || name.starts_with('-')
+                || name.ends_with('-')
+                || name.chars().all(|c| c == '★' || c.is_whitespace())
+            {
                 continue;
             }
 

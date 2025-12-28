@@ -20,14 +20,21 @@ export default function handler(req: NextApiRequest, res: NextApiResponse<ApiRes
             secure: env.NODE_ENV === "production",
             sameSite: "strict",
             path: "/",
-            maxAge: 0, // Expire immediately
+            maxAge: 0,
         }),
         serialize("auth_indicator", "", {
             httpOnly: false,
             secure: env.NODE_ENV === "production",
             sameSite: "strict",
             path: "/",
-            maxAge: 0, // Expire immediately
+            maxAge: 0,
+        }),
+        serialize("site_token", "", {
+            httpOnly: true,
+            secure: env.NODE_ENV === "production",
+            sameSite: "strict",
+            path: "/",
+            maxAge: 0,
         }),
     ]);
 

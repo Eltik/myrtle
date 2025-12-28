@@ -12,6 +12,7 @@ use tokio::sync::RwLock;
 
 use crate::app::middleware::rate_limit::{RateLimitStore, rate_limit};
 use crate::app::middleware::static_assets::serve_asset;
+use crate::app::routes::auth::verify::verify_token;
 use crate::app::routes::avatar::serve_avatar;
 use crate::app::routes::get_user::{get_user_by_path, get_user_by_query};
 use crate::app::routes::portrait::serve_portrait;
@@ -67,6 +68,7 @@ fn create_router(state: AppState) -> Router {
             "/send-code/{email}/{server}",
             post(send_code_by_email_and_server),
         )
+        .route("/auth/verify", post(verify_token))
         .route("/login", post(login_by_query))
         .route("/login/{email}/{code}", post(login_no_server))
         .route("/login/{email}/{code}/{server}", post(login_by_server))
@@ -150,6 +152,8 @@ pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let redis_client = redis::Client::open(redis_url)?;
     let redis = redis_client.get_multiplexed_async_connection().await?;
 
+    let jwt_secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
+
     // Create app state
     let state = AppState {
         db,
@@ -158,6 +162,7 @@ pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
         client,
         game_data,
         redis,
+        jwt_secret,
     };
 
     // Start cron jobs

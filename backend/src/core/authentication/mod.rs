@@ -2,6 +2,7 @@ pub mod config;
 pub mod constants;
 pub mod generate;
 pub mod get;
+pub mod jwt;
 pub mod loaders;
 pub mod login;
 pub mod yostar;

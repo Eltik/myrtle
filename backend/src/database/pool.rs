@@ -18,7 +18,10 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             uid VARCHAR(255) NOT NULL UNIQUE,
             server VARCHAR(50) NOT NULL,
             data JSONB NOT NULL DEFAULT '{}',
-            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            settings JSONB NOT NULL DEFAULT '{}',
+            role VARCHAR(50) NOT NULL DEFAULT 'user',
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )
     "#,
     )
