@@ -47,13 +47,17 @@ export function TagSelector({ tags, selectedTags, onTagToggle, maxTags }: TagSel
                                             className={cn(
                                                 "group relative inline-flex items-center rounded-lg px-2.5 py-1.5 font-medium text-[13px] transition-colors",
                                                 // Base unselected state
-                                                !isSelected && !isDisabled && "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground",
+                                                !isSelected && !isDisabled && !isHighPriority && "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground",
                                                 // Selected state
                                                 isSelected && !isHighPriority && "bg-primary/15 text-primary ring-1 ring-primary/30",
-                                                // High priority unselected
-                                                isHighPriority && !isSelected && !isDisabled && "bg-amber-500/10 text-amber-500/70 hover:bg-amber-500/20 hover:text-amber-400",
-                                                // High priority selected
-                                                isHighPriority && isSelected && "bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/40",
+                                                // Top Operator (6*) unselected
+                                                tag.id === TOP_OPERATOR_TAG_ID && !isSelected && !isDisabled && "bg-orange-500/15 text-orange-600 hover:bg-orange-500/25 hover:text-orange-500",
+                                                // Top Operator (6*) selected
+                                                tag.id === TOP_OPERATOR_TAG_ID && isSelected && "bg-orange-500/25 text-orange-500 ring-1 ring-orange-500/50",
+                                                // Senior Operator (5*) unselected
+                                                tag.id === SENIOR_OPERATOR_TAG_ID && !isSelected && !isDisabled && "bg-yellow-500/12 text-yellow-600 hover:bg-yellow-500/22 hover:text-yellow-500",
+                                                // Senior Operator (5*) selected
+                                                tag.id === SENIOR_OPERATOR_TAG_ID && isSelected && "bg-yellow-500/22 text-yellow-500 ring-1 ring-yellow-500/40",
                                                 // Disabled state
                                                 isDisabled && "cursor-not-allowed bg-muted/30 text-muted-foreground/50",
                                             )}

@@ -3,7 +3,7 @@
 import { Calculator, RotateCcw } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { Button } from "~/components/ui/shadcn/button";
-import { calculateResultsLocally } from "./impl/client-calculator";
+import { calculateResults } from "./impl/client-calculator";
 import { MAX_SELECTED_TAGS } from "./impl/constants";
 import { FilterOptions } from "./impl/filter-options";
 import { groupTagsByType, transformTags } from "./impl/helpers";
@@ -50,13 +50,13 @@ export function RecruitmentCalculator({ tags, recruitableOperators }: Recruitmen
             .filter(Boolean) as { id: number; name: string }[];
     }, [selectedTags, transformedTags]);
 
-    // Calculate results locally (instant, no API calls)
+    // Calculate results
     const results = useMemo(() => {
         if (selectedTagObjects.length === 0) {
             return [];
         }
 
-        return calculateResultsLocally(selectedTagObjects, recruitableOperators, {
+        return calculateResults(selectedTagObjects, recruitableOperators, {
             showLowRarity: true, // Always show all rarity groups
             includeRobots,
         });

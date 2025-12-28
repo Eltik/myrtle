@@ -18,18 +18,18 @@ export function CombinationResult({ result, defaultExpanded = false }: Combinati
     const [isOpen, setIsOpen] = useState(defaultExpanded);
 
     const guaranteedColor = RARITY_COLORS[result.guaranteedRarity] ?? "#ffffff";
-    const isHighValue = result.guaranteedRarity >= 5;
+    const _isHighValue = result.guaranteedRarity >= 5;
     const hasTopOperator = result.tags.includes(TOP_OPERATOR_TAG_ID);
     const hasSeniorOperator = result.tags.includes(SENIOR_OPERATOR_TAG_ID);
 
     return (
-        <div className={cn("overflow-hidden rounded-lg border", isHighValue ? "border-amber-500/20 bg-amber-500/3" : "border-border bg-card/50")}>
+        <div className={cn("overflow-hidden rounded-lg border", result.guaranteedRarity === 6 ? "border-orange-500/30 bg-orange-500/15" : result.guaranteedRarity === 5 ? "border-yellow-500/25 bg-yellow-500/12" : "border-border bg-card/50")}>
             <Disclosure onOpenChange={setIsOpen} open={isOpen}>
                 <DisclosureTrigger>
                     <div className="flex w-full items-center justify-between p-3 text-left hover:bg-muted/30 data-[state=open]:bg-muted/30 sm:p-4">
                         <div className="flex flex-wrap items-center gap-2">
                             {/* Guaranteed rarity badge */}
-                            <span className={cn("flex items-center gap-1 rounded-md px-2 py-0.5 font-bold text-xs", isHighValue ? "bg-amber-500/10" : "bg-muted")} style={{ color: guaranteedColor }}>
+                            <span className={cn("flex items-center gap-1 rounded-md px-2 py-0.5 font-bold text-xs", result.guaranteedRarity === 6 ? "bg-orange-500/25" : result.guaranteedRarity === 5 ? "bg-yellow-500/22" : "bg-muted")} style={{ color: guaranteedColor }}>
                                 {result.guaranteedRarity}★{result.guaranteedRarity < result.maxRarity && `~${result.maxRarity}★`}
                             </span>
 

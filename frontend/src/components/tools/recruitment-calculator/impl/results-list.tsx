@@ -27,10 +27,6 @@ export function ResultsList({ results }: ResultsListProps) {
             {/* High value combinations */}
             {highValueResults.length > 0 && (
                 <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                        <span className="font-semibold text-amber-400 text-sm">Guaranteed 5★+ Combinations</span>
-                        <span className="rounded bg-amber-500/20 px-1.5 py-0.5 font-medium text-amber-400 text-xs">{highValueResults.length}</span>
-                    </div>
                     <div className="space-y-3">
                         {highValueResults.map((result, index) => (
                             <CombinationResult defaultExpanded={index === 0} key={result.tags.join("-")} result={result} />
