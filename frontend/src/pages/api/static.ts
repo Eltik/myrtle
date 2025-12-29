@@ -156,6 +156,7 @@ interface RequestBody {
     fields?: string[];
     tags?: string[];
     recruitment?: string;
+    limit?: number;
 }
 
 // Use NextApiRequest and NextApiResponse for Pages Router
@@ -198,14 +199,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             }
             case "operators": {
                 let endpoint = body.id ? `/static/operators/${body.id}` : "/static/operators";
+                const queryParams: string[] = [];
+
+                // Add limit query parameter (default to 1000 for fetching all operators)
+                const limit = body.limit ?? 1000;
+                queryParams.push(`limit=${limit}`);
+
                 // Add fields query parameter if specified
                 if (body.fields && body.fields.length > 0) {
                     const fieldsParam = body.fields.join(",");
-                    endpoint += `?fields=${encodeURIComponent(fieldsParam)}`;
+                    queryParams.push(`fields=${encodeURIComponent(fieldsParam)}`);
+                }
+
+                if (queryParams.length > 0) {
+                    endpoint += `?${queryParams.join("&")}`;
                 }
 
                 const fieldsKey = body.fields ? [...body.fields].sort().join(",") : "all";
-                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-operators-${body.id ?? "all"}-fields-${fieldsKey}`;
+                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-operators-${body.id ?? "all"}-fields-${fieldsKey}-limit-${limit}`;
                 const operators = await fetchData<{ operators?: Partial<Operator>[]; operator?: Partial<Operator> }>(endpoint, cacheKey);
 
                 // Handle both single operator and list responses

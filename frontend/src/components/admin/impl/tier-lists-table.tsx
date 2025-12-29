@@ -1,114 +1,92 @@
 "use client";
 
-import { ArrowUpDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RefreshCw, Search, SlidersHorizontal } from "lucide-react";
+import { ArrowUpDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Edit, Eye, LayoutList, MoreHorizontal, Plus, RefreshCw, Search, SlidersHorizontal, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
-import type { RecentUser } from "~/types/frontend/admin";
-import { Avatar, AvatarFallback } from "../../ui/shadcn/avatar";
+import type { TierListSummary } from "~/types/frontend/admin";
 import { Badge } from "../../ui/shadcn/badge";
 import { Button } from "../../ui/shadcn/button";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuSeparator, DropdownMenuTrigger } from "../../ui/shadcn/dropdown-menu";
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "../../ui/shadcn/dropdown-menu";
 import { Input } from "../../ui/shadcn/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/shadcn/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../ui/shadcn/table";
 
-interface UsersTableProps {
-    users: RecentUser[];
+interface TierListsTableProps {
+    tierLists: TierListSummary[];
     loading?: boolean;
     onRefresh?: () => void;
+    onEdit?: (tierList: TierListSummary) => void;
+    onDelete?: (tierList: TierListSummary) => void;
+    onCreate?: () => void;
+    onView?: (tierList: TierListSummary) => void;
 }
 
-type SortField = "nickname" | "uid" | "level" | "server" | "role" | "createdAt";
+type SortField = "name" | "operatorCount" | "tierCount" | "versionCount" | "createdAt" | "updatedAt";
 type SortOrder = "asc" | "desc";
 
-const ROLE_COLORS: Record<string, string> = {
-    super_admin: "bg-red-500/10 text-red-500 border-red-500/20",
-    tier_list_admin: "bg-orange-500/10 text-orange-500 border-orange-500/20",
-    tier_list_editor: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-    user: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
+const STATUS_COLORS = {
+    active: "bg-green-500/10 text-green-500 border-green-500/20",
+    inactive: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
 };
 
-const SERVER_COLORS: Record<string, string> = {
-    en: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-    jp: "bg-pink-500/10 text-pink-400 border-pink-500/20",
-    kr: "bg-purple-500/10 text-purple-400 border-purple-500/20",
-    cn: "bg-red-500/10 text-red-400 border-red-500/20",
-    bili: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
-    tw: "bg-green-500/10 text-green-400 border-green-500/20",
-};
-
-function RoleBadge({ role }: { role: string }) {
-    const colorClass = ROLE_COLORS[role] ?? ROLE_COLORS.user;
-    const displayName = role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-
+function StatusBadge({ isActive }: { isActive: boolean }) {
+    const colorClass = isActive ? STATUS_COLORS.active : STATUS_COLORS.inactive;
     return (
         <Badge className={`${colorClass} border font-medium`} variant="outline">
-            {displayName}
+            {isActive ? "Active" : "Inactive"}
         </Badge>
     );
 }
 
-function ServerBadge({ server }: { server: string }) {
-    const colorClass = SERVER_COLORS[server] ?? "bg-zinc-500/10 text-zinc-400 border-zinc-500/20";
-
-    return (
-        <Badge className={`${colorClass} border font-mono text-xs`} variant="outline">
-            {server.toUpperCase()}
-        </Badge>
-    );
-}
-
-export function UsersTable({ users, loading = false, onRefresh }: UsersTableProps) {
+export function TierListsTable({ tierLists, loading = false, onRefresh, onEdit, onDelete, onCreate, onView }: TierListsTableProps) {
     const [searchQuery, setSearchQuery] = useState("");
-    const [roleFilter, setRoleFilter] = useState<string>("all");
-    const [serverFilter, setServerFilter] = useState<string>("all");
-    const [sortField, setSortField] = useState<SortField>("createdAt");
+    const [statusFilter, setStatusFilter] = useState<string>("all");
+    const [sortField, setSortField] = useState<SortField>("updatedAt");
     const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
 
-    const filteredAndSortedUsers = useMemo(() => {
-        const result = users.filter((user) => {
-            const matchesSearch = searchQuery === "" || user.nickname.toLowerCase().includes(searchQuery.toLowerCase()) || user.uid.toLowerCase().includes(searchQuery.toLowerCase());
+    const filteredAndSortedTierLists = useMemo(() => {
+        const result = tierLists.filter((tierList) => {
+            const matchesSearch = searchQuery === "" || tierList.name.toLowerCase().includes(searchQuery.toLowerCase()) || tierList.slug.toLowerCase().includes(searchQuery.toLowerCase());
 
-            const matchesRole = roleFilter === "all" || user.role === roleFilter;
-            const matchesServer = serverFilter === "all" || user.server === serverFilter;
+            const matchesStatus = statusFilter === "all" || (statusFilter === "active" ? tierList.isActive : !tierList.isActive);
 
-            return matchesSearch && matchesRole && matchesServer;
+            return matchesSearch && matchesStatus;
         });
 
         result.sort((a, b) => {
             let comparison = 0;
             switch (sortField) {
-                case "nickname":
-                    comparison = a.nickname.localeCompare(b.nickname);
+                case "name":
+                    comparison = a.name.localeCompare(b.name);
                     break;
-                case "uid":
-                    comparison = a.uid.localeCompare(b.uid);
+                case "operatorCount":
+                    comparison = a.operatorCount - b.operatorCount;
                     break;
-                case "level":
-                    comparison = a.level - b.level;
+                case "tierCount":
+                    comparison = a.tierCount - b.tierCount;
                     break;
-                case "server":
-                    comparison = a.server.localeCompare(b.server);
-                    break;
-                case "role":
-                    comparison = a.role.localeCompare(b.role);
+                case "versionCount":
+                    comparison = a.versionCount - b.versionCount;
                     break;
                 case "createdAt":
                     comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+                    break;
+                case "updatedAt":
+                    comparison = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
                     break;
             }
             return sortOrder === "asc" ? comparison : -comparison;
         });
 
         return result;
-    }, [users, searchQuery, roleFilter, serverFilter, sortField, sortOrder]);
+    }, [tierLists, searchQuery, statusFilter, sortField, sortOrder]);
 
-    const totalPages = Math.ceil(filteredAndSortedUsers.length / itemsPerPage);
-    const paginatedUsers = useMemo(() => {
+    const totalPages = Math.ceil(filteredAndSortedTierLists.length / itemsPerPage);
+    const paginatedTierLists = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
-        return filteredAndSortedUsers.slice(startIndex, startIndex + itemsPerPage);
-    }, [filteredAndSortedUsers, currentPage, itemsPerPage]);
+        return filteredAndSortedTierLists.slice(startIndex, startIndex + itemsPerPage);
+    }, [filteredAndSortedTierLists, currentPage, itemsPerPage]);
 
     const toggleSort = (field: SortField) => {
         if (sortField === field) {
@@ -119,40 +97,30 @@ export function UsersTable({ users, loading = false, onRefresh }: UsersTableProp
         }
     };
 
-    const hasActiveFilters = searchQuery !== "" || roleFilter !== "all" || serverFilter !== "all";
+    const hasActiveFilters = searchQuery !== "" || statusFilter !== "all";
 
     const clearFilters = () => {
         setSearchQuery("");
-        setRoleFilter("all");
-        setServerFilter("all");
+        setStatusFilter("all");
     };
 
     const handlePageChange = (page: number) => {
         setCurrentPage(Math.max(1, Math.min(page, totalPages)));
     };
 
-    // Get unique servers from users
-    const availableServers = useMemo(() => {
-        return [...new Set(users.map((u) => u.server))].sort();
-    }, [users]);
-
-    // Get unique roles from users
-    const availableRoles = useMemo(() => {
-        return [...new Set(users.map((u) => u.role))].sort();
-    }, [users]);
-
     return (
         <div className="overflow-hidden rounded-xl border bg-card text-card-foreground">
             {/* Header */}
             <div className="flex flex-col gap-3 border-b px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
-                    <h3 className="font-medium text-base">User Management</h3>
+                    <LayoutList className="size-5 text-primary" />
+                    <h3 className="font-medium text-base">Tier List Management</h3>
                     <div className="hidden h-5 w-px bg-border sm:block" />
                     <div className="hidden items-center gap-2 sm:flex">
                         {/* Search */}
                         <div className="relative">
                             <Search className="-translate-y-1/2 absolute top-1/2 left-2.5 h-3.5 w-3.5 text-muted-foreground" />
-                            <Input className="h-8 w-[200px] border-border/50 bg-muted/50 pl-8 text-sm" onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search users..." value={searchQuery} />
+                            <Input className="h-8 w-[200px] border-border/50 bg-muted/50 pl-8 text-sm" onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search tier lists..." value={searchQuery} />
                         </div>
 
                         {/* Filter Dropdown */}
@@ -165,37 +133,19 @@ export function UsersTable({ users, loading = false, onRefresh }: UsersTableProp
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="start" className="w-48">
-                                {/* Role Filter */}
                                 <DropdownMenuGroup>
                                     <div className="px-2 py-1.5">
-                                        <p className="mb-1.5 font-medium text-muted-foreground text-xs">Role</p>
+                                        <p className="mb-1.5 font-medium text-muted-foreground text-xs">Status</p>
                                         <div className="space-y-1">
-                                            <DropdownMenuCheckboxItem checked={roleFilter === "all"} onCheckedChange={() => setRoleFilter("all")}>
-                                                All Roles
+                                            <DropdownMenuCheckboxItem checked={statusFilter === "all"} onCheckedChange={() => setStatusFilter("all")}>
+                                                All
                                             </DropdownMenuCheckboxItem>
-                                            {availableRoles.map((role) => (
-                                                <DropdownMenuCheckboxItem checked={roleFilter === role} key={role} onCheckedChange={() => setRoleFilter(role)}>
-                                                    {role.replace(/_/g, " ")}
-                                                </DropdownMenuCheckboxItem>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </DropdownMenuGroup>
-                                <DropdownMenuSeparator />
-
-                                {/* Server Filter */}
-                                <DropdownMenuGroup>
-                                    <div className="px-2 py-1.5">
-                                        <p className="mb-1.5 font-medium text-muted-foreground text-xs">Server</p>
-                                        <div className="space-y-1">
-                                            <DropdownMenuCheckboxItem checked={serverFilter === "all"} onCheckedChange={() => setServerFilter("all")}>
-                                                All Servers
+                                            <DropdownMenuCheckboxItem checked={statusFilter === "active"} onCheckedChange={() => setStatusFilter("active")}>
+                                                Active
                                             </DropdownMenuCheckboxItem>
-                                            {availableServers.map((server) => (
-                                                <DropdownMenuCheckboxItem checked={serverFilter === server} key={server} onCheckedChange={() => setServerFilter(server)}>
-                                                    {server.toUpperCase()}
-                                                </DropdownMenuCheckboxItem>
-                                            ))}
+                                            <DropdownMenuCheckboxItem checked={statusFilter === "inactive"} onCheckedChange={() => setStatusFilter("inactive")}>
+                                                Inactive
+                                            </DropdownMenuCheckboxItem>
                                         </div>
                                     </div>
                                 </DropdownMenuGroup>
@@ -214,11 +164,16 @@ export function UsersTable({ users, loading = false, onRefresh }: UsersTableProp
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground text-sm">{filteredAndSortedUsers.length} users</span>
+                    <span className="text-muted-foreground text-sm">{filteredAndSortedTierLists.length} tier lists</span>
+                    {onCreate && (
+                        <Button className="h-8 gap-1.5" onClick={onCreate} size="sm" variant="default">
+                            <Plus className="h-3.5 w-3.5" />
+                            <span className="hidden sm:inline">Create</span>
+                        </Button>
+                    )}
                     {onRefresh && (
                         <Button className="h-8 gap-1.5" disabled={loading} onClick={onRefresh} size="sm" variant="outline">
                             <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
-                            <span className="hidden sm:inline">Refresh</span>
                         </Button>
                     )}
                 </div>
@@ -240,32 +195,17 @@ export function UsersTable({ users, loading = false, onRefresh }: UsersTableProp
                     <DropdownMenuContent align="end" className="w-48">
                         <DropdownMenuGroup>
                             <div className="px-2 py-1.5">
-                                <p className="mb-1.5 font-medium text-muted-foreground text-xs">Role</p>
+                                <p className="mb-1.5 font-medium text-muted-foreground text-xs">Status</p>
                                 <div className="space-y-1">
-                                    <DropdownMenuCheckboxItem checked={roleFilter === "all"} onCheckedChange={() => setRoleFilter("all")}>
-                                        All Roles
+                                    <DropdownMenuCheckboxItem checked={statusFilter === "all"} onCheckedChange={() => setStatusFilter("all")}>
+                                        All
                                     </DropdownMenuCheckboxItem>
-                                    {availableRoles.map((role) => (
-                                        <DropdownMenuCheckboxItem checked={roleFilter === role} key={role} onCheckedChange={() => setRoleFilter(role)}>
-                                            {role.replace(/_/g, " ")}
-                                        </DropdownMenuCheckboxItem>
-                                    ))}
-                                </div>
-                            </div>
-                        </DropdownMenuGroup>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuGroup>
-                            <div className="px-2 py-1.5">
-                                <p className="mb-1.5 font-medium text-muted-foreground text-xs">Server</p>
-                                <div className="space-y-1">
-                                    <DropdownMenuCheckboxItem checked={serverFilter === "all"} onCheckedChange={() => setServerFilter("all")}>
-                                        All Servers
+                                    <DropdownMenuCheckboxItem checked={statusFilter === "active"} onCheckedChange={() => setStatusFilter("active")}>
+                                        Active
                                     </DropdownMenuCheckboxItem>
-                                    {availableServers.map((server) => (
-                                        <DropdownMenuCheckboxItem checked={serverFilter === server} key={server} onCheckedChange={() => setServerFilter(server)}>
-                                            {server.toUpperCase()}
-                                        </DropdownMenuCheckboxItem>
-                                    ))}
+                                    <DropdownMenuCheckboxItem checked={statusFilter === "inactive"} onCheckedChange={() => setStatusFilter("inactive")}>
+                                        Inactive
+                                    </DropdownMenuCheckboxItem>
                                 </div>
                             </div>
                         </DropdownMenuGroup>
@@ -292,75 +232,101 @@ export function UsersTable({ users, loading = false, onRefresh }: UsersTableProp
                     <TableHeader>
                         <TableRow className="bg-muted/30 hover:bg-muted/30">
                             <TableHead className="w-[200px]">
-                                <button className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground" onClick={() => toggleSort("nickname")} type="button">
-                                    <span>User</span>
+                                <button className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground" onClick={() => toggleSort("name")} type="button">
+                                    <span>Name</span>
+                                    <ArrowUpDown className="h-3 w-3" />
+                                </button>
+                            </TableHead>
+                            <TableHead className="w-[100px]">Status</TableHead>
+                            <TableHead className="w-20">
+                                <button className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground" onClick={() => toggleSort("tierCount")} type="button">
+                                    <span>Tiers</span>
+                                    <ArrowUpDown className="h-3 w-3" />
+                                </button>
+                            </TableHead>
+                            <TableHead className="w-[100px]">
+                                <button className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground" onClick={() => toggleSort("operatorCount")} type="button">
+                                    <span>Operators</span>
+                                    <ArrowUpDown className="h-3 w-3" />
+                                </button>
+                            </TableHead>
+                            <TableHead className="w-[100px]">
+                                <button className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground" onClick={() => toggleSort("versionCount")} type="button">
+                                    <span>Versions</span>
                                     <ArrowUpDown className="h-3 w-3" />
                                 </button>
                             </TableHead>
                             <TableHead className="w-[120px]">
-                                <button className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground" onClick={() => toggleSort("uid")} type="button">
-                                    <span>UID</span>
+                                <button className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground" onClick={() => toggleSort("updatedAt")} type="button">
+                                    <span>Updated</span>
                                     <ArrowUpDown className="h-3 w-3" />
                                 </button>
                             </TableHead>
-                            <TableHead className="w-20">
-                                <button className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground" onClick={() => toggleSort("level")} type="button">
-                                    <span>Level</span>
-                                    <ArrowUpDown className="h-3 w-3" />
-                                </button>
-                            </TableHead>
-                            <TableHead className="w-20">
-                                <button className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground" onClick={() => toggleSort("server")} type="button">
-                                    <span>Server</span>
-                                    <ArrowUpDown className="h-3 w-3" />
-                                </button>
-                            </TableHead>
-                            <TableHead className="w-[140px]">
-                                <button className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground" onClick={() => toggleSort("role")} type="button">
-                                    <span>Role</span>
-                                    <ArrowUpDown className="h-3 w-3" />
-                                </button>
-                            </TableHead>
-                            <TableHead className="w-[140px]">
-                                <button className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground" onClick={() => toggleSort("createdAt")} type="button">
-                                    <span>Created</span>
-                                    <ArrowUpDown className="h-3 w-3" />
-                                </button>
-                            </TableHead>
+                            <TableHead className="w-[60px]">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {paginatedUsers.length === 0 ? (
+                        {paginatedTierLists.length === 0 ? (
                             <TableRow>
-                                <TableCell className="h-24 text-center text-muted-foreground" colSpan={6}>
-                                    No users found.
+                                <TableCell className="h-24 text-center text-muted-foreground" colSpan={7}>
+                                    No tier lists found.
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            paginatedUsers.map((user) => (
-                                <TableRow className="border-border/50" key={user.id}>
+                            paginatedTierLists.map((tierList) => (
+                                <TableRow className="border-border/50" key={tierList.id}>
                                     <TableCell>
-                                        <div className="flex items-center gap-2.5">
-                                            <Avatar className="size-7">
-                                                <AvatarFallback className="text-xs">{user.nickname[0]}</AvatarFallback>
-                                            </Avatar>
-                                            <span className="font-medium text-sm">{user.nickname}</span>
+                                        <div className="flex flex-col">
+                                            <span className="font-medium text-sm">{tierList.name}</span>
+                                            <span className="font-mono text-muted-foreground text-xs">{tierList.slug}</span>
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <span className="font-mono text-muted-foreground text-sm">{user.uid}</span>
+                                        <StatusBadge isActive={tierList.isActive} />
                                     </TableCell>
                                     <TableCell>
-                                        <span className="text-sm">{user.level}</span>
+                                        <span className="font-mono text-sm">{tierList.tierCount}</span>
                                     </TableCell>
                                     <TableCell>
-                                        <ServerBadge server={user.server} />
+                                        <span className="font-mono text-sm">{tierList.operatorCount}</span>
                                     </TableCell>
                                     <TableCell>
-                                        <RoleBadge role={user.role} />
+                                        <span className="font-mono text-sm">{tierList.versionCount}</span>
                                     </TableCell>
                                     <TableCell>
-                                        <span className="text-muted-foreground text-sm">{new Date(user.createdAt).toLocaleDateString()}</span>
+                                        <span className="text-muted-foreground text-sm">{new Date(tierList.updatedAt).toLocaleDateString()}</span>
+                                    </TableCell>
+                                    <TableCell>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button className="h-8 w-8" size="icon" variant="ghost">
+                                                        <MoreHorizontal className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    {onView && (
+                                                        <DropdownMenuItem onClick={() => onView(tierList)}>
+                                                            <Eye className="mr-2 h-4 w-4" />
+                                                            View
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                    {onEdit && (
+                                                        <DropdownMenuItem onClick={() => onEdit(tierList)}>
+                                                            <Edit className="mr-2 h-4 w-4" />
+                                                            Edit
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                    {onDelete && (
+                                                        <>
+                                                            <DropdownMenuSeparator />
+                                                            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => onDelete(tierList)}>
+                                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                                Delete
+                                                            </DropdownMenuItem>
+                                                        </>
+                                                    )}
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -374,7 +340,7 @@ export function UsersTable({ users, loading = false, onRefresh }: UsersTableProp
                 <div className="flex flex-col items-center justify-between gap-4 border-t px-4 py-3 sm:flex-row">
                     <div className="flex items-center gap-2 text-muted-foreground text-sm">
                         <span>
-                            Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredAndSortedUsers.length)} of {filteredAndSortedUsers.length}
+                            Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredAndSortedTierLists.length)} of {filteredAndSortedTierLists.length}
                         </span>
                         <div className="hidden h-4 w-px bg-border sm:block" />
                         <div className="flex items-center gap-2">
