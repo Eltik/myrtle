@@ -1,6 +1,6 @@
 use axum::middleware;
-use axum::routing::post;
-use axum::{Router, response::Json, routing::get};
+use axum::routing::{delete, get, post, put};
+use axum::{Router, response::Json};
 use reqwest::Client;
 use serde::Serialize;
 use std::collections::HashMap;
@@ -18,6 +18,7 @@ use crate::app::routes::avatar::serve_avatar;
 use crate::app::routes::get_user::{get_user_by_path, get_user_by_query};
 use crate::app::routes::portrait::serve_portrait;
 use crate::app::routes::static_data;
+use crate::app::routes::tier_lists;
 use crate::app::routes::yostar::login::{login_by_query, login_by_server, login_no_server};
 use crate::app::routes::yostar::refresh::{refresh_by_query, refresh_by_server, refresh_no_server};
 use crate::app::routes::yostar::send_code::{
@@ -81,6 +82,94 @@ fn create_router(state: AppState) -> Router {
             post(refresh_by_server),
         )
         .nest("/static", static_router)
+        // Tier lists
+        .route("/tier-lists", get(tier_lists::list::list_tier_lists))
+        .route("/tier-lists", post(tier_lists::create::create_tier_list))
+        .route("/tier-lists/{slug}", get(tier_lists::get::get_tier_list))
+        .route(
+            "/tier-lists/{slug}",
+            put(tier_lists::update::update_tier_list),
+        )
+        .route(
+            "/tier-lists/{slug}",
+            delete(tier_lists::update::delete_tier_list),
+        )
+        // Tier list tiers
+        .route(
+            "/tier-lists/{slug}/tiers",
+            get(tier_lists::tiers::list_tiers),
+        )
+        .route(
+            "/tier-lists/{slug}/tiers",
+            post(tier_lists::tiers::create_tier),
+        )
+        .route(
+            "/tier-lists/{slug}/tiers/{tier_id}",
+            put(tier_lists::tiers::update_tier),
+        )
+        .route(
+            "/tier-lists/{slug}/tiers/{tier_id}",
+            delete(tier_lists::tiers::delete_tier),
+        )
+        .route(
+            "/tier-lists/{slug}/tiers/reorder",
+            post(tier_lists::tiers::reorder_tiers),
+        )
+        // Tier list placements
+        .route(
+            "/tier-lists/{slug}/placements",
+            get(tier_lists::placements::list_placements),
+        )
+        .route(
+            "/tier-lists/{slug}/placements",
+            post(tier_lists::placements::add_placement),
+        )
+        .route(
+            "/tier-lists/{slug}/placements/{placement_id}",
+            put(tier_lists::placements::update_placement),
+        )
+        .route(
+            "/tier-lists/{slug}/placements/{placement_id}",
+            delete(tier_lists::placements::remove_placement),
+        )
+        .route(
+            "/tier-lists/{slug}/placements/{placement_id}/move",
+            post(tier_lists::placements::move_placement),
+        )
+        // Tier list versions
+        .route(
+            "/tier-lists/{slug}/versions",
+            get(tier_lists::versions::list_versions),
+        )
+        .route(
+            "/tier-lists/{slug}/versions/{version}",
+            get(tier_lists::versions::get_version),
+        )
+        .route(
+            "/tier-lists/{slug}/changelog",
+            get(tier_lists::versions::get_changelog),
+        )
+        .route(
+            "/tier-lists/{slug}/operator/{operator_id}/history",
+            get(tier_lists::versions::get_operator_history),
+        )
+        .route(
+            "/tier-lists/{slug}/publish",
+            post(tier_lists::versions::publish_version),
+        )
+        // Tier list permissions
+        .route(
+            "/tier-lists/{slug}/permissions",
+            get(tier_lists::permissions::list_permissions),
+        )
+        .route(
+            "/tier-lists/{slug}/permissions",
+            post(tier_lists::permissions::grant_permission),
+        )
+        .route(
+            "/tier-lists/{slug}/permissions/{user_id}/{permission}",
+            delete(tier_lists::permissions::revoke_permission),
+        )
         .layer(middleware::from_fn_with_state(
             rate_store.clone(),
             rate_limit,

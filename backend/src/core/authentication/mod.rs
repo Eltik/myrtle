@@ -5,6 +5,7 @@ pub mod get;
 pub mod jwt;
 pub mod loaders;
 pub mod login;
+pub mod permissions;
 pub mod yostar;
 
 use std::{sync::Arc, time::Duration};
