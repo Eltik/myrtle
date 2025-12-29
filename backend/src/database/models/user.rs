@@ -104,7 +104,7 @@ impl User {
         pool: &PgPool,
         nickname: &str,
     ) -> Result<Vec<Self>, sqlx::Error> {
-        sqlx::query_as::<_, Self>("SELECT * FROM users WHERE data->>'nickname' ILIKE $1")
+        sqlx::query_as::<_, Self>("SELECT * FROM users WHERE data->'status'->>'nickName' ILIKE $1")
             .bind(format!("%{nickname}%"))
             .fetch_all(pool)
             .await
