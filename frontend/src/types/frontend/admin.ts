@@ -64,3 +64,66 @@ export interface AdminStats {
     tierLists: TierListStats;
     recentActivity: RecentActivity[];
 }
+
+// Tier list management types for admin panel
+export interface TierListManagementData {
+    tierList: TierListSummary;
+    tiers: TierManagementData[];
+}
+
+export interface TierManagementData {
+    id: string;
+    name: string;
+    displayOrder: number;
+    color: string | null;
+    description: string | null;
+    placements: PlacementManagementData[];
+}
+
+export interface PlacementManagementData {
+    id: string;
+    operatorId: string;
+    operatorName: string;
+    operatorRarity: number;
+    subOrder: number;
+    notes: string | null;
+}
+
+export interface CreateTierListPayload {
+    name: string;
+    slug: string;
+    description?: string;
+    isActive?: boolean;
+}
+
+export interface UpdateTierListPayload {
+    name?: string;
+    description?: string;
+    isActive?: boolean;
+}
+
+export interface CreateTierPayload {
+    name: string;
+    displayOrder: number;
+    color?: string;
+    description?: string;
+}
+
+export interface UpdateTierPayload {
+    name?: string;
+    displayOrder?: number;
+    color?: string;
+    description?: string;
+}
+
+export interface CreatePlacementPayload {
+    tierId: string;
+    operatorId: string;
+    subOrder?: number;
+    notes?: string;
+}
+
+export interface MovePlacementPayload {
+    newTierId: string;
+    newSubOrder?: number;
+}

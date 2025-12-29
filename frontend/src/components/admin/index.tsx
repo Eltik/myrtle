@@ -3,6 +3,7 @@ import type { AdminRole, AdminStats } from "~/types/frontend/admin";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/shadcn/card";
 import { Header } from "./impl/header";
 import { StatsGrid } from "./impl/stats-grid";
+import { TierListManagement } from "./impl/tier-list-management";
 import { UsersTable } from "./impl/users-table";
 
 interface AdminPanelProps {
@@ -37,6 +38,9 @@ export function AdminPanel({ user, role, stats, statsLoading, onRefresh }: Admin
 
             {/* Users Table */}
             {stats && stats.users.recentUsers.length > 0 && <UsersTable loading={statsLoading} onRefresh={onRefresh} users={stats.users.recentUsers} />}
+
+            {/* Tier List Management */}
+            <TierListManagement loading={statsLoading} onRefresh={onRefresh} tierLists={stats?.tierLists.tierLists ?? []} />
 
             {/* Recent Activity */}
             {stats && stats.recentActivity.length > 0 && (
