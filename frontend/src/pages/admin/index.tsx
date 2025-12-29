@@ -1,13 +1,11 @@
 "use client";
 
-import { ShieldCheck } from "lucide-react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/shadcn/card";
+import { useCallback, useEffect, useState } from "react";
+import { AdminPanel } from "~/components/admin";
 import { useAuth } from "~/hooks/use-auth";
-
-type AdminRole = "super_admin" | "tier_list_admin";
+import type { AdminRole, AdminStats } from "~/types/frontend/admin";
 
 const ADMIN_ROLES: AdminRole[] = ["super_admin", "tier_list_admin"];
 
@@ -20,6 +18,25 @@ export default function AdminPage() {
     const { user, loading, verify } = useAuth();
     const [role, setRole] = useState<string | null>(null);
     const [authorized, setAuthorized] = useState<boolean | null>(null);
+    const [stats, setStats] = useState<AdminStats | null>(null);
+    const [statsLoading, setStatsLoading] = useState(true);
+
+    // Fetch admin stats
+    const fetchStats = useCallback(async () => {
+        setStatsLoading(true);
+        try {
+            const res = await fetch("/api/admin/stats");
+            const data = await res.json();
+
+            if (data.success && data.data) {
+                setStats(data.data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch admin stats:", error);
+        } finally {
+            setStatsLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
         async function checkPermissions() {
@@ -43,6 +60,13 @@ export default function AdminPage() {
         }
     }, [user, loading, verify]);
 
+    // Fetch stats once authorized
+    useEffect(() => {
+        if (authorized === true) {
+            fetchStats();
+        }
+    }, [authorized, fetchStats]);
+
     // Redirect to 404 if not authorized
     useEffect(() => {
         if (authorized === false) {
@@ -65,6 +89,11 @@ export default function AdminPage() {
         );
     }
 
+    // Safety check - should never happen given the auth flow above
+    if (!user) {
+        return null;
+    }
+
     // Authorized admin view
     return (
         <>
@@ -73,27 +102,7 @@ export default function AdminPage() {
                 <meta content="Admin panel" name="description" />
             </Head>
 
-            <div className="mx-auto max-w-4xl space-y-6">
-                <div className="space-y-2">
-                    <div className="flex items-center gap-3">
-                        <ShieldCheck className="h-8 w-8 text-primary" />
-                        <h1 className="font-bold text-3xl">Admin Panel</h1>
-                    </div>
-                    <p className="text-muted-foreground">
-                        Logged in as <span className="font-medium">{user?.status.nickName}</span> with role <span className="font-mono text-primary">{role}</span>
-                    </p>
-                </div>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Admin Dashboard</CardTitle>
-                        <CardDescription>Administrative tools and management</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-muted-foreground text-sm">Admin functionality coming soon.</p>
-                    </CardContent>
-                </Card>
-            </div>
+            <AdminPanel onRefresh={fetchStats} role={role as AdminRole} stats={stats} statsLoading={statsLoading} user={user} />
         </>
     );
 }

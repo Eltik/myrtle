@@ -17,6 +17,7 @@ use crate::app::routes::auth::verify::verify_token;
 use crate::app::routes::avatar::serve_avatar;
 use crate::app::routes::get_user::{get_user_by_path, get_user_by_query};
 use crate::app::routes::portrait::serve_portrait;
+use crate::app::routes::admin;
 use crate::app::routes::static_data;
 use crate::app::routes::tier_lists;
 use crate::app::routes::yostar::login::{login_by_query, login_by_server, login_no_server};
@@ -170,6 +171,8 @@ fn create_router(state: AppState) -> Router {
             "/tier-lists/{slug}/permissions/{user_id}/{permission}",
             delete(tier_lists::permissions::revoke_permission),
         )
+        // Admin routes
+        .route("/admin/stats", get(admin::stats::get_stats))
         .layer(middleware::from_fn_with_state(
             rate_store.clone(),
             rate_limit,
