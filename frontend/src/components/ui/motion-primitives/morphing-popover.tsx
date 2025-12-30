@@ -122,7 +122,7 @@ function MorphingPopoverContent({ children, className, ...props }: MorphingPopov
         if (!context.isOpen) return;
 
         const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-            const target = event.target as Node;
+            const target = event.target as HTMLElement;
 
             // Don't close if clicking inside the content
             if (ref.current?.contains(target)) {
@@ -131,6 +131,11 @@ function MorphingPopoverContent({ children, className, ...props }: MorphingPopov
 
             // Don't close if clicking the trigger (toggle will handle it)
             if (context.triggerRef.current?.contains(target)) {
+                return;
+            }
+
+            // Don't close if clicking inside Radix UI portals (Select, DropdownMenu, Popover, etc.)
+            if (target.closest("[data-radix-popper-content-wrapper]") || target.closest("[data-radix-select-viewport]") || target.closest("[data-radix-menu-content]") || target.closest("[role='listbox']")) {
                 return;
             }
 
