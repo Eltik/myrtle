@@ -1,9 +1,9 @@
 "use client";
 
-import { DndContext, DragOverlay, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
-import { SortableContext, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates, useSortable } from "@dnd-kit/sortable";
+import { DndContext, DragOverlay, KeyboardSensor, PointerSensor, closestCenter, useDroppable, useSensor, useSensors, type DragEndEvent, type DragOverEvent, type DragStartEvent } from "@dnd-kit/core";
+import { SortableContext, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ArrowLeft, Check, ChevronDown, ChevronUp, GripVertical, Palette, Plus, Save, Settings, Trash2, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronDown, ChevronUp, GripVertical, Plus, Save, Settings, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import type { Tier, TierListResponse, TierPlacement, TierWithPlacements } from "~/types/api/impl/tier-list";
@@ -137,6 +137,56 @@ function DragOverlayCard({ operator }: DragOverlayCardProps) {
     );
 }
 
+// Sortable tier row component - uses prefixed ID to distinguish from operator placements
+interface SortableTierRowProps {
+    tier: EditableTier;
+    children: (dragHandleProps: React.HTMLAttributes<HTMLDivElement>) => React.ReactNode;
+}
+
+function SortableTierRow({ tier, children }: SortableTierRowProps) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+        id: `tier-row-${tier.id}`,
+    });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+    };
+
+    return (
+        <div ref={setNodeRef} style={style}>
+            {children({ ...attributes, ...listeners })}
+        </div>
+    );
+}
+
+// Droppable tier zone for cross-tier dragging
+interface DroppableTierZoneProps {
+    tierId: string;
+    isOver: boolean;
+    children: React.ReactNode;
+}
+
+function DroppableTierZone({ tierId, isOver, children }: DroppableTierZoneProps) {
+    const { setNodeRef } = useDroppable({
+        id: `tier-drop-${tierId}`,
+        data: { tierId },
+    });
+
+    return (
+        <div
+            className={cn(
+                "min-h-[60px] rounded-md p-4 transition-colors",
+                isOver && "bg-primary/10 ring-2 ring-primary ring-inset",
+            )}
+            ref={setNodeRef}
+        >
+            {children}
+        </div>
+    );
+}
+
 export function TierListEditor({ tierListData, operatorsData, allOperators, operatorsLoading = false, onBack, onSave }: TierListEditorProps) {
     const [tiers, setTiers] = useState<EditableTier[]>(tierListData.tiers.map((t) => ({ ...t })));
     const [tierListName, setTierListName] = useState(tierListData.tier_list.name);
@@ -148,7 +198,8 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
     const [operatorSearch, setOperatorSearch] = useState("");
     const [expandedTiers, setExpandedTiers] = useState<Set<string>>(new Set(tiers.map((t) => t.id)));
     const [activeDragId, setActiveDragId] = useState<string | null>(null);
-    const [activeDragTierId, setActiveDragTierId] = useState<string | null>(null);
+    const [activeDragType, setActiveDragType] = useState<"operator" | "tier" | null>(null);
+    const [overTierId, setOverTierId] = useState<string | null>(null);
 
     // Drag and drop sensors
     const sensors = useSensors(
@@ -162,15 +213,26 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
         }),
     );
 
-    // Get operators already in the tier list
-    const placedOperatorIds = useMemo(() => {
-        const ids = new Set<string>();
+    // Get operators already in the tier list with their tier info
+    const placedOperators = useMemo(() => {
+        const map = new Map<string, { tierId: string; tierName: string }>();
         for (const tier of tiers) {
             for (const placement of tier.placements) {
-                ids.add(placement.operator_id);
+                map.set(placement.operator_id, { tierId: tier.id, tierName: tier.name });
             }
         }
-        return ids;
+        return map;
+    }, [tiers]);
+
+    // Map placement IDs to their tier IDs for quick lookup during drag
+    const placementToTierMap = useMemo(() => {
+        const map = new Map<string, string>();
+        for (const tier of tiers) {
+            for (const placement of tier.placements) {
+                map.set(placement.id, tier.id);
+            }
+        }
+        return map;
     }, [tiers]);
 
     // Filter operators for dialog (show all, mark placed ones)
@@ -231,40 +293,6 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
         setTiers(tiers.filter((tier) => tier.id !== tierId));
     };
 
-    const handleMoveTierUp = (index: number) => {
-        if (index === 0) return;
-        const newTiers = [...tiers];
-        const currentTier = newTiers[index];
-        const prevTier = newTiers[index - 1];
-        if (currentTier && prevTier) {
-            newTiers[index - 1] = currentTier;
-            newTiers[index] = prevTier;
-        }
-        // Update display orders
-        newTiers.forEach((tier, i) => {
-            tier.display_order = i;
-            tier.isModified = true;
-        });
-        setTiers(newTiers);
-    };
-
-    const handleMoveTierDown = (index: number) => {
-        if (index === tiers.length - 1) return;
-        const newTiers = [...tiers];
-        const currentTier = newTiers[index];
-        const nextTier = newTiers[index + 1];
-        if (currentTier && nextTier) {
-            newTiers[index] = nextTier;
-            newTiers[index + 1] = currentTier;
-        }
-        // Update display orders
-        newTiers.forEach((tier, i) => {
-            tier.display_order = i;
-            tier.isModified = true;
-        });
-        setTiers(newTiers);
-    };
-
     const handleAddOperatorToTier = (tierId: string, operator: OperatorFromList) => {
         setTiers(
             tiers.map((tier) => {
@@ -300,38 +328,172 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
         );
     };
 
-    const handleDragStart = (event: DragStartEvent, tierId: string) => {
-        setActiveDragId(event.active.id as string);
-        setActiveDragTierId(tierId);
+    // Unified drag handlers for single DndContext
+    const handleDragStart = (event: DragStartEvent) => {
+        const id = event.active.id as string;
+        setActiveDragId(id);
+
+        if (id.startsWith("tier-row-")) {
+            setActiveDragType("tier");
+        } else {
+            setActiveDragType("operator");
+        }
     };
 
-    const handleDragEnd = (event: DragEndEvent, tierId: string) => {
+    const handleDragOver = (event: DragOverEvent) => {
+        const { over } = event;
+
+        // Only track tier hover for operator drags
+        if (activeDragType !== "operator") {
+            setOverTierId(null);
+            return;
+        }
+
+        if (!over) {
+            setOverTierId(null);
+            return;
+        }
+
+        const overId = over.id as string;
+
+        // Check if hovering over a tier drop zone
+        if (overId.startsWith("tier-drop-")) {
+            const tierId = overId.replace("tier-drop-", "");
+            setOverTierId(tierId);
+        } else if (!overId.startsWith("tier-row-")) {
+            // Hovering over another placement - find its tier
+            const tierId = placementToTierMap.get(overId);
+            setOverTierId(tierId ?? null);
+        } else {
+            setOverTierId(null);
+        }
+    };
+
+    const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
+        const dragType = activeDragType;
 
         setActiveDragId(null);
-        setActiveDragTierId(null);
+        setActiveDragType(null);
+        setOverTierId(null);
 
-        if (!over || active.id === over.id) return;
+        if (!over) return;
 
-        setTiers(
-            tiers.map((tier) => {
-                if (tier.id !== tierId) return tier;
+        const activeId = active.id as string;
+        const overId = over.id as string;
 
-                const sortedPlacements = [...tier.placements].sort((a, b) => a.sub_order - b.sub_order);
-                const oldIndex = sortedPlacements.findIndex((p) => p.id === active.id);
-                const newIndex = sortedPlacements.findIndex((p) => p.id === over.id);
+        // Handle tier row reordering
+        if (dragType === "tier") {
+            if (activeId === overId) return;
 
-                if (oldIndex === -1 || newIndex === -1) return tier;
+            const actualActiveId = activeId.replace("tier-row-", "");
+            const actualOverId = overId.replace("tier-row-", "");
 
-                const newPlacements = arrayMove(sortedPlacements, oldIndex, newIndex);
+            const oldIndex = tiers.findIndex((t) => t.id === actualActiveId);
+            const newIndex = tiers.findIndex((t) => t.id === actualOverId);
 
-                return {
-                    ...tier,
-                    placements: newPlacements.map((p, i) => ({ ...p, sub_order: i })),
-                    isModified: true,
-                };
-            }),
-        );
+            if (oldIndex === -1 || newIndex === -1) return;
+
+            const newTiers = arrayMove(tiers, oldIndex, newIndex).map((tier, i) => ({
+                ...tier,
+                display_order: i,
+                isModified: true,
+            }));
+
+            setTiers(newTiers);
+            return;
+        }
+
+        // Handle operator placement reordering/moving
+        const sourceTierId = placementToTierMap.get(activeId);
+        if (!sourceTierId) return;
+
+        // Determine target tier
+        let targetTierId: string | null = null;
+        let targetPlacementId: string | null = null;
+
+        if (overId.startsWith("tier-drop-")) {
+            targetTierId = overId.replace("tier-drop-", "");
+        } else if (overId.startsWith("tier-row-")) {
+            // Dropped on tier row - ignore
+            return;
+        } else {
+            targetTierId = placementToTierMap.get(overId) ?? null;
+            targetPlacementId = overId;
+        }
+
+        if (!targetTierId) return;
+
+        // Same tier - reorder within tier
+        if (sourceTierId === targetTierId) {
+            if (activeId === overId) return;
+
+            setTiers(
+                tiers.map((tier) => {
+                    if (tier.id !== sourceTierId) return tier;
+
+                    const sortedPlacements = [...tier.placements].sort((a, b) => a.sub_order - b.sub_order);
+                    const oldIndex = sortedPlacements.findIndex((p) => p.id === activeId);
+                    const newIndex = targetPlacementId
+                        ? sortedPlacements.findIndex((p) => p.id === targetPlacementId)
+                        : sortedPlacements.length;
+
+                    if (oldIndex === -1 || newIndex === -1) return tier;
+
+                    const newPlacements = arrayMove(sortedPlacements, oldIndex, newIndex);
+
+                    return {
+                        ...tier,
+                        placements: newPlacements.map((p, i) => ({ ...p, sub_order: i })),
+                        isModified: true,
+                    };
+                }),
+            );
+        } else {
+            // Cross-tier move
+            setTiers(
+                tiers.map((tier) => {
+                    if (tier.id === sourceTierId) {
+                        const newPlacements = tier.placements
+                            .filter((p) => p.id !== activeId)
+                            .sort((a, b) => a.sub_order - b.sub_order)
+                            .map((p, i) => ({ ...p, sub_order: i }));
+                        return { ...tier, placements: newPlacements, isModified: true };
+                    }
+
+                    if (tier.id === targetTierId) {
+                        const sourceTier = tiers.find((t) => t.id === sourceTierId);
+                        const movedPlacement = sourceTier?.placements.find((p) => p.id === activeId);
+                        if (!movedPlacement) return tier;
+
+                        const sortedPlacements = [...tier.placements].sort((a, b) => a.sub_order - b.sub_order);
+
+                        let insertIndex = sortedPlacements.length;
+                        if (targetPlacementId) {
+                            const targetIndex = sortedPlacements.findIndex((p) => p.id === targetPlacementId);
+                            if (targetIndex !== -1) insertIndex = targetIndex;
+                        }
+
+                        const updatedPlacement: TierPlacement = {
+                            ...movedPlacement,
+                            tier_id: targetTierId,
+                            id: movedPlacement.id.startsWith("new-") ? movedPlacement.id : `new-moved-${Date.now()}-${movedPlacement.operator_id}`,
+                        };
+
+                        const newPlacements = [...sortedPlacements];
+                        newPlacements.splice(insertIndex, 0, updatedPlacement);
+
+                        return {
+                            ...tier,
+                            placements: newPlacements.map((p, i) => ({ ...p, sub_order: i })),
+                            isModified: true,
+                        };
+                    }
+
+                    return tier;
+                }),
+            );
+        }
     };
 
     const handleSave = async () => {
@@ -349,10 +511,13 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
                 tiers: tiers.map((tier, index) => ({
                     ...tier,
                     display_order: index,
-                    placements: tier.placements.map((p, pIndex) => ({
-                        ...p,
-                        sub_order: pIndex,
-                    })),
+                    // Sort placements by sub_order and re-index to ensure correct order is saved
+                    placements: [...tier.placements]
+                        .sort((a, b) => a.sub_order - b.sub_order)
+                        .map((p, pIndex) => ({
+                            ...p,
+                            sub_order: pIndex,
+                        })),
                 })),
             };
             await onSave(updatedData);
@@ -420,173 +585,203 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
             </Card>
 
             {/* Tiers Management */}
-            <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-lg">Tiers ({tiers.length})</h3>
-                    <Button onClick={handleAddTier} size="sm" variant="outline">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Tier
-                    </Button>
-                </div>
+            <Card>
+                <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">Tiers ({tiers.length})</CardTitle>
+                        <Button onClick={handleAddTier} size="sm" variant="outline">
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add Tier
+                        </Button>
+                    </div>
+                </CardHeader>
+                <CardContent className="space-y-0 p-0">
+                    {tiers.length > 0 ? (
+                        /* Single DndContext for both tier rows and operators */
+                        <DndContext
+                            collisionDetection={closestCenter}
+                            onDragEnd={handleDragEnd}
+                            onDragOver={handleDragOver}
+                            onDragStart={handleDragStart}
+                            sensors={sensors}
+                        >
+                            {/* SortableContext for tier rows */}
+                            <SortableContext
+                                items={tiers.map((t) => `tier-row-${t.id}`)}
+                                strategy={verticalListSortingStrategy}
+                            >
+                                {/* SortableContext for all operator placements */}
+                                <SortableContext
+                                    items={tiers.flatMap((t) => t.placements.map((p) => p.id))}
+                                    strategy={rectSortingStrategy}
+                                >
+                                    <div className="divide-y">
+                                        {tiers.map((tier) => {
+                                            const tierColor = tier.color || DEFAULT_TIER_COLORS[tier.name] || "#888888";
+                                            const isExpanded = expandedTiers.has(tier.id);
+                                            const sourceTierId = activeDragId ? placementToTierMap.get(activeDragId) : null;
+                                            const isDropTarget = overTierId === tier.id && sourceTierId !== tier.id;
 
-                <div className="space-y-3">
-                    {tiers.map((tier, index) => {
-                        const tierColor = tier.color || DEFAULT_TIER_COLORS[tier.name] || "#888888";
-                        const isExpanded = expandedTiers.has(tier.id);
+                                            return (
+                                                <SortableTierRow key={tier.id} tier={tier}>
+                                                    {(dragHandleProps) => (
+                                                        <>
+                                                            {/* Tier Header */}
+                                                            <div className="flex items-center gap-2 bg-muted/30 px-4 py-2">
+                                                                {/* Drag handle */}
+                                                                <div
+                                                                    className="flex h-7 w-7 cursor-grab items-center justify-center rounded-md hover:bg-muted active:cursor-grabbing"
+                                                                    {...dragHandleProps}
+                                                                >
+                                                                    <GripVertical className="h-4 w-4 text-muted-foreground" />
+                                                                </div>
 
-                        return (
-                            <Card className="overflow-hidden" key={tier.id}>
-                                {/* Tier Header */}
-                                <div className="flex items-center gap-2 border-b bg-muted/30 px-4 py-2">
-                                    <div className="flex items-center gap-1">
-                                        <Button className="h-7 w-7 cursor-grab" size="icon" variant="ghost">
-                                            <GripVertical className="h-4 w-4 text-muted-foreground" />
-                                        </Button>
-                                        <Button className="h-7 w-7" disabled={index === 0} onClick={() => handleMoveTierUp(index)} size="icon" variant="ghost">
-                                            <ChevronUp className="h-4 w-4" />
-                                        </Button>
-                                        <Button className="h-7 w-7" disabled={index === tiers.length - 1} onClick={() => handleMoveTierDown(index)} size="icon" variant="ghost">
-                                            <ChevronDown className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-
-                                    <div className="h-8 w-12 rounded" style={{ backgroundColor: tierColor }} />
-
-                                    <Input className="h-8 w-24 font-semibold" onChange={(e) => handleUpdateTier(tier.id, { name: e.target.value })} value={tier.name} />
-
-                                    <Input className="hidden h-8 flex-1 sm:block" onChange={(e) => handleUpdateTier(tier.id, { description: e.target.value || null })} placeholder="Description (optional)" value={tier.description ?? ""} />
-
-                                    {/* Color Picker */}
-                                    <Popover>
-                                        <PopoverTrigger asChild>
-                                            <Button className="h-8 w-8" size="icon" variant="outline">
-                                                <Palette className="h-4 w-4" />
-                                            </Button>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-3">
-                                            <div className="grid grid-cols-6 gap-2">
-                                                {PRESET_COLORS.map((color) => (
-                                                    <button
-                                                        className={cn("h-6 w-6 rounded border-2", tier.color === color ? "border-foreground" : "border-transparent")}
-                                                        key={color}
-                                                        onClick={() => handleUpdateTier(tier.id, { color })}
-                                                        style={{ backgroundColor: color }}
-                                                        type="button"
-                                                    />
-                                                ))}
-                                            </div>
-                                            <Separator className="my-2" />
-                                            <Input className="h-8" onChange={(e) => handleUpdateTier(tier.id, { color: e.target.value })} placeholder="#000000" type="text" value={tier.color ?? ""} />
-                                        </PopoverContent>
-                                    </Popover>
-
-                                    <Badge variant="secondary">{tier.placements.length} ops</Badge>
-
-                                    <Button className="h-8 w-8" onClick={() => toggleTierExpanded(tier.id)} size="icon" variant="ghost">
-                                        {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                                    </Button>
-
-                                    <Button className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDeleteTier(tier.id)} size="icon" variant="ghost">
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                </div>
-
-                                {/* Tier Content */}
-                                <Disclosure open={isExpanded}>
-                                    <DisclosureTrigger>
-                                        <span className="sr-only">Toggle tier content</span>
-                                    </DisclosureTrigger>
-                                    <DisclosureContent>
-                                        <CardContent className="p-4">
-                                            {tier.placements.length > 0 ? (
-                                                <DndContext
-                                                    collisionDetection={closestCenter}
-                                                    onDragEnd={(event) => handleDragEnd(event, tier.id)}
-                                                    onDragStart={(event) => handleDragStart(event, tier.id)}
-                                                    sensors={sensors}
-                                                >
-                                                    <SortableContext
-                                                        items={tier.placements.sort((a, b) => a.sub_order - b.sub_order).map((p) => p.id)}
-                                                        strategy={rectSortingStrategy}
-                                                    >
-                                                        <div className="grid grid-cols-5 gap-2 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12">
-                                                            {tier.placements
-                                                                .sort((a, b) => a.sub_order - b.sub_order)
-                                                                .map((placement) => {
-                                                                    const operator = operatorsData[placement.operator_id];
-                                                                    if (!operator) return null;
-
-                                                                    return (
-                                                                        <SortableOperatorCard
-                                                                            key={placement.id}
-                                                                            onRemove={() => handleRemoveOperatorFromTier(tier.id, placement.id)}
-                                                                            operator={operator}
-                                                                            placement={placement}
+                                                                {/* Color block with popover */}
+                                                                <Popover>
+                                                                    <PopoverTrigger asChild>
+                                                                        <button
+                                                                            className="h-8 w-12 cursor-pointer rounded transition-all hover:ring-2 hover:ring-primary hover:ring-offset-2"
+                                                                            style={{ backgroundColor: tierColor }}
+                                                                            type="button"
                                                                         />
-                                                                    );
-                                                                })}
+                                                                    </PopoverTrigger>
+                                                                    <PopoverContent className="w-auto p-3">
+                                                                        <div className="grid grid-cols-6 gap-2">
+                                                                            {PRESET_COLORS.map((color) => (
+                                                                                <button
+                                                                                    className={cn("h-6 w-6 rounded border-2", tier.color === color ? "border-foreground" : "border-transparent")}
+                                                                                    key={color}
+                                                                                    onClick={() => handleUpdateTier(tier.id, { color })}
+                                                                                    style={{ backgroundColor: color }}
+                                                                                    type="button"
+                                                                                />
+                                                                            ))}
+                                                                        </div>
+                                                                        <Separator className="my-2" />
+                                                                        <Input className="h-8" onChange={(e) => handleUpdateTier(tier.id, { color: e.target.value })} placeholder="#000000" type="text" value={tier.color ?? ""} />
+                                                                    </PopoverContent>
+                                                                </Popover>
 
-                                                            {/* Add operator button */}
-                                                            <button
-                                                                className="flex aspect-square items-center justify-center rounded-md border-2 border-muted-foreground/30 border-dashed transition-colors hover:border-primary hover:bg-primary/5"
-                                                                onClick={() => {
-                                                                    setSelectedTierForAdd(tier.id);
-                                                                    setAddOperatorDialogOpen(true);
-                                                                }}
-                                                                type="button"
-                                                            >
-                                                                <Plus className="h-6 w-6 text-muted-foreground" />
-                                                            </button>
-                                                        </div>
-                                                    </SortableContext>
+                                                                <Input className="h-8 w-24 font-semibold" onChange={(e) => handleUpdateTier(tier.id, { name: e.target.value })} value={tier.name} />
 
-                                                    {/* Drag overlay for visual feedback */}
-                                                    <DragOverlay>
-                                                        {activeDragId && activeDragTierId === tier.id ? (
-                                                            (() => {
-                                                                const placement = tier.placements.find((p) => p.id === activeDragId);
-                                                                const operator = placement ? operatorsData[placement.operator_id] : null;
-                                                                return operator ? <DragOverlayCard operator={operator} /> : null;
-                                                            })()
-                                                        ) : null}
-                                                    </DragOverlay>
-                                                </DndContext>
-                                            ) : (
-                                                <div className="flex flex-col items-center justify-center gap-2 py-8">
-                                                    <p className="text-muted-foreground text-sm">No operators in this tier</p>
-                                                    <Button
-                                                        onClick={() => {
-                                                            setSelectedTierForAdd(tier.id);
-                                                            setAddOperatorDialogOpen(true);
-                                                        }}
-                                                        size="sm"
-                                                        variant="outline"
-                                                    >
-                                                        <Plus className="mr-2 h-4 w-4" />
-                                                        Add Operators
-                                                    </Button>
+                                                                <Input className="hidden h-8 flex-1 sm:block" onChange={(e) => handleUpdateTier(tier.id, { description: e.target.value || null })} placeholder="Description (optional)" value={tier.description ?? ""} />
+
+                                                                <Badge variant="secondary">{tier.placements.length} ops</Badge>
+
+                                                                <Button className="h-8 w-8" onClick={() => toggleTierExpanded(tier.id)} size="icon" variant="ghost">
+                                                                    {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                                                </Button>
+
+                                                                <Button className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDeleteTier(tier.id)} size="icon" variant="ghost">
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </Button>
+                                                            </div>
+
+                                                            {/* Tier Content */}
+                                                            <Disclosure open={isExpanded}>
+                                                                <DisclosureTrigger>
+                                                                    <span className="sr-only">Toggle tier content</span>
+                                                                </DisclosureTrigger>
+                                                                <DisclosureContent>
+                                                                    <DroppableTierZone isOver={isDropTarget} tierId={tier.id}>
+                                                                        {tier.placements.length > 0 ? (
+                                                                            <div className="grid grid-cols-5 gap-2 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12">
+                                                                                {[...tier.placements]
+                                                                                    .sort((a, b) => a.sub_order - b.sub_order)
+                                                                                    .map((placement) => {
+                                                                                        const operator = operatorsData[placement.operator_id];
+                                                                                        if (!operator) return null;
+
+                                                                                        return (
+                                                                                            <SortableOperatorCard
+                                                                                                key={placement.id}
+                                                                                                onRemove={() => handleRemoveOperatorFromTier(tier.id, placement.id)}
+                                                                                                operator={operator}
+                                                                                                placement={placement}
+                                                                                            />
+                                                                                        );
+                                                                                    })}
+
+                                                                                {/* Add operator button */}
+                                                                                <button
+                                                                                    className="flex aspect-square items-center justify-center rounded-md border-2 border-muted-foreground/30 border-dashed transition-colors hover:border-primary hover:bg-primary/5"
+                                                                                    onClick={() => {
+                                                                                        setSelectedTierForAdd(tier.id);
+                                                                                        setAddOperatorDialogOpen(true);
+                                                                                    }}
+                                                                                    type="button"
+                                                                                >
+                                                                                    <Plus className="h-6 w-6 text-muted-foreground" />
+                                                                                </button>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="flex flex-col items-center justify-center gap-2 py-4">
+                                                                                <p className="text-muted-foreground text-sm">No operators in this tier</p>
+                                                                                <Button
+                                                                                    onClick={() => {
+                                                                                        setSelectedTierForAdd(tier.id);
+                                                                                        setAddOperatorDialogOpen(true);
+                                                                                    }}
+                                                                                    size="sm"
+                                                                                    variant="outline"
+                                                                                >
+                                                                                    <Plus className="mr-2 h-4 w-4" />
+                                                                                    Add Operators
+                                                                                </Button>
+                                                                            </div>
+                                                                        )}
+                                                                    </DroppableTierZone>
+                                                                </DisclosureContent>
+                                                            </Disclosure>
+                                                        </>
+                                                    )}
+                                                </SortableTierRow>
+                                            );
+                                        })}
+                                    </div>
+                                </SortableContext>
+                            </SortableContext>
+
+                            {/* Drag overlay */}
+                            <DragOverlay>
+                                {activeDragId && activeDragType === "tier" ? (
+                                    (() => {
+                                        const tierId = activeDragId.replace("tier-row-", "");
+                                        const tier = tiers.find((t) => t.id === tierId);
+                                        return tier ? (
+                                            <div className="rounded-md border bg-card shadow-lg">
+                                                <div className="flex items-center gap-2 bg-muted/30 px-4 py-2">
+                                                    <GripVertical className="h-4 w-4 text-muted-foreground" />
+                                                    <div
+                                                        className="h-8 w-12 rounded"
+                                                        style={{ backgroundColor: tier.color || "#888888" }}
+                                                    />
+                                                    <span className="font-semibold">{tier.name}</span>
                                                 </div>
-                                            )}
-                                        </CardContent>
-                                    </DisclosureContent>
-                                </Disclosure>
-                            </Card>
-                        );
-                    })}
-                </div>
-
-                {tiers.length === 0 && (
-                    <Card className="py-12">
-                        <div className="flex flex-col items-center justify-center gap-2">
+                                            </div>
+                                        ) : null;
+                                    })()
+                                ) : activeDragId && activeDragType === "operator" ? (
+                                    (() => {
+                                        const tier = tiers.find((t) => t.placements.some((p) => p.id === activeDragId));
+                                        const placement = tier?.placements.find((p) => p.id === activeDragId);
+                                        const operator = placement ? operatorsData[placement.operator_id] : null;
+                                        return operator ? <DragOverlayCard operator={operator} /> : null;
+                                    })()
+                                ) : null}
+                            </DragOverlay>
+                        </DndContext>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center gap-2 py-12">
                             <p className="text-muted-foreground">No tiers configured</p>
                             <Button onClick={handleAddTier} variant="outline">
                                 <Plus className="mr-2 h-4 w-4" />
                                 Add First Tier
                             </Button>
                         </div>
-                    </Card>
-                )}
-            </div>
+                    )}
+                </CardContent>
+            </Card>
 
             {/* Add Operator Dialog */}
             <Dialog onOpenChange={setAddOperatorDialogOpen} open={addOperatorDialogOpen}>
@@ -600,7 +795,7 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
                         <div className="flex items-center gap-2">
                             <Input className="flex-1" onChange={(e) => setOperatorSearch(e.target.value)} placeholder="Search operators..." value={operatorSearch} />
                             <span className="whitespace-nowrap text-muted-foreground text-sm">
-                                {filteredOperators.length} / {allOperators.length} operators
+                                {filteredOperators.filter((op) => !placedOperators.has(op.id ?? "")).length} available / {placedOperators.size} placed
                             </span>
                         </div>
 
@@ -615,17 +810,19 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
                                     {filteredOperators.map((operator) => {
                                         const rarityNum = rarityToNumber(operator.rarity);
                                         const rarityColor = RARITY_COLORS[rarityNum] ?? "#ffffff";
-                                        const isPlaced = placedOperatorIds.has(operator.id ?? "");
+                                        const placementInfo = placedOperators.get(operator.id ?? "");
+                                        const isPlaced = !!placementInfo;
 
                                         return (
                                             <button
                                                 className={cn(
-                                                    "group relative aspect-square overflow-hidden rounded-md border bg-card transition-all hover:ring-2 hover:ring-primary",
-                                                    isPlaced && "opacity-50 ring-1 ring-green-500/50",
+                                                    "group relative aspect-square overflow-hidden rounded-md border bg-card transition-all",
+                                                    isPlaced ? "cursor-not-allowed opacity-40 grayscale" : "hover:ring-2 hover:ring-primary",
                                                 )}
+                                                disabled={isPlaced}
                                                 key={operator.id}
                                                 onClick={() => {
-                                                    if (selectedTierForAdd) {
+                                                    if (selectedTierForAdd && !isPlaced) {
                                                         handleAddOperatorToTier(selectedTierForAdd, operator);
                                                     }
                                                 }}
@@ -634,13 +831,16 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
                                                 <Image alt={operator.name} className="h-full w-full object-cover" fill src={`/api/cdn${operator.portrait}`} />
                                                 <div className="absolute bottom-0 h-1 w-full" style={{ backgroundColor: rarityColor }} />
                                                 {isPlaced && (
-                                                    <div className="absolute top-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-green-500">
-                                                        <Check className="h-3 w-3 text-white" />
+                                                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/70">
+                                                        <Check className="h-5 w-5 text-green-500" />
+                                                        <span className="mt-0.5 px-1 text-center font-medium text-[9px] text-muted-foreground">{placementInfo.tierName}</span>
                                                     </div>
                                                 )}
-                                                <div className="absolute inset-0 flex items-end bg-gradient-to-t from-background/80 to-transparent p-1 opacity-0 transition-opacity group-hover:opacity-100">
-                                                    <p className="w-full truncate text-center text-xs">{operator.name}</p>
-                                                </div>
+                                                {!isPlaced && (
+                                                    <div className="absolute inset-0 flex items-end bg-gradient-to-t from-background/80 to-transparent p-1 opacity-0 transition-opacity group-hover:opacity-100">
+                                                        <p className="w-full truncate text-center text-xs">{operator.name}</p>
+                                                    </div>
+                                                )}
                                             </button>
                                         );
                                     })}

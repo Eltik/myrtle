@@ -73,7 +73,10 @@ export function TierListManagement({ tierLists, loading = false, onRefresh }: Ti
     const fetchTierListData = useCallback(async (slug: string) => {
         setEditorLoading(true);
         try {
-            const response = await fetch(`/api/tier-lists/${slug}`);
+            // Add cache-busting timestamp for admin fetches
+            const response = await fetch(`/api/tier-lists/${slug}?_t=${Date.now()}`, {
+                cache: "no-store",
+            });
             if (!response.ok) {
                 throw new Error("Failed to fetch tier list");
             }
@@ -175,31 +178,41 @@ export function TierListManagement({ tierLists, loading = false, onRefresh }: Ti
                 // Update tiers and placements
                 // For simplicity, we'll send the full tier structure
                 // The backend should handle creating/updating/deleting as needed
+                const syncPayload = {
+                    tiers: data.tiers.map((tier) => ({
+                        id: tier.id.startsWith("new-") ? null : tier.id,
+                        name: tier.name,
+                        display_order: tier.display_order,
+                        color: tier.color,
+                        description: tier.description,
+                        placements: tier.placements.map((p) => ({
+                            id: p.id.startsWith("new-") ? null : p.id,
+                            operator_id: p.operator_id,
+                            sub_order: p.sub_order,
+                            notes: p.notes,
+                        })),
+                    })),
+                };
+
+                console.log("Syncing tier list with payload:", JSON.stringify(syncPayload, null, 2));
+
                 const tiersResponse = await fetch(`/api/tier-lists/${data.tier_list.slug}/sync`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        tiers: data.tiers.map((tier) => ({
-                            id: tier.id.startsWith("new-") ? null : tier.id,
-                            name: tier.name,
-                            display_order: tier.display_order,
-                            color: tier.color,
-                            description: tier.description,
-                            placements: tier.placements.map((p) => ({
-                                id: p.id.startsWith("new-") ? null : p.id,
-                                operator_id: p.operator_id,
-                                sub_order: p.sub_order,
-                                notes: p.notes,
-                            })),
-                        })),
-                    }),
+                    body: JSON.stringify(syncPayload),
                 });
 
                 if (!tiersResponse.ok) {
+                    const errorData = await tiersResponse.json().catch(() => ({}));
+                    console.error("Sync failed:", errorData);
                     throw new Error("Failed to update tiers");
                 }
 
                 toast.success("Tier list saved successfully");
+
+                // Refetch the tier list to get fresh data from backend and verify save worked
+                await fetchTierListData(data.tier_list.slug);
+
                 onRefresh?.();
             } catch (error) {
                 console.error("Failed to save tier list:", error);
@@ -207,7 +220,7 @@ export function TierListManagement({ tierLists, loading = false, onRefresh }: Ti
                 throw error;
             }
         },
-        [onRefresh],
+        [onRefresh, fetchTierListData],
     );
 
     const handleBack = useCallback(() => {

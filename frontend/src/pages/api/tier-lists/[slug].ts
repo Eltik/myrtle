@@ -31,11 +31,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     try {
         if (req.method === "GET") {
             // GET /tier-lists/{slug} - Get tier list with all tiers and placements (public)
+            // Add cache-busting for admin requests (when _t parameter is present)
+            const bustCache = req.query._t !== undefined;
             const response = await fetch(`${backendUrl}/tier-lists/${slug}`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
+                    ...(bustCache && { "Cache-Control": "no-cache, no-store, must-revalidate" }),
                 },
+                cache: bustCache ? "no-store" : undefined,
             });
 
             if (!response.ok) {

@@ -244,19 +244,24 @@ pub async fn update_placement(
     let placement_uuid = Uuid::parse_str(&placement_id)
         .map_err(|_| ApiError::BadRequest("Invalid placement ID".into()))?;
 
-    // Update notes if provided
-    let placement = if let Some(notes) = body.notes {
-        TierPlacement::update_notes(&state.db, placement_uuid, Some(notes))
-            .await
-            .map_err(|e| {
-                eprintln!("Failed to update placement: {e:?}");
-                ApiError::Internal("Failed to update placement".into())
-            })?
-            .ok_or_else(|| ApiError::NotFound("Placement not found".into()))?
-    } else {
-        // Just fetch the placement if no update
+    // Check if any updates were provided
+    if body.notes.is_none() && body.sub_order.is_none() {
         return Err(ApiError::BadRequest("No updates provided".into()));
-    };
+    }
+
+    // Update placement with provided fields
+    let placement = TierPlacement::update(
+        &state.db,
+        placement_uuid,
+        body.sub_order,
+        body.notes.map(Some),
+    )
+    .await
+    .map_err(|e| {
+        eprintln!("Failed to update placement: {e:?}");
+        ApiError::Internal("Failed to update placement".into())
+    })?
+    .ok_or_else(|| ApiError::NotFound("Placement not found".into()))?;
 
     let operator = state.game_data.operators.get(&placement.operator_id);
     let tier = Tier::find_by_id(&state.db, placement.tier_id)
