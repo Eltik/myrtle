@@ -60,7 +60,7 @@ export function ResponsiveFilterContainer({ open, onOpenChange, hasActiveFilters
             <MorphingPopoverTrigger>
                 <FilterTriggerButton activeFilterCount={activeFilterCount} hasActiveFilters={hasActiveFilters} isOpen={open} />
             </MorphingPopoverTrigger>
-            <MorphingPopoverContent className="w-[calc(100vw-2rem)] max-w-4xl bg-card p-0 drop-shadow-2xl backdrop-blur-md sm:w-[600px] md:w-[700px] lg:w-[900px]">{children}</MorphingPopoverContent>
+            <MorphingPopoverContent className="w-[calc(100vw-2rem)] max-w-4xl bg-card/95 p-0 drop-shadow-2xl backdrop-blur-md sm:w-[600px] md:w-[700px] lg:w-[900px]">{children}</MorphingPopoverContent>
         </MorphingPopover>
     );
 }

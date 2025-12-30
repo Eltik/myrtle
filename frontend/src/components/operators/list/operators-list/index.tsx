@@ -162,7 +162,7 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                     </AnimatePresence>
 
                     {/* Sort Controls - Always visible next to view toggle */}
-                    <motion.div className="flex items-center gap-1 rounded-lg border border-border bg-secondary/50 p-1" layout transition={TOGGLE_TRANSITION}>
+                    <motion.div className="flex h-10 items-center gap-1 rounded-lg border border-border bg-secondary/50 px-1" layout transition={TOGGLE_TRANSITION}>
                         <Select onValueChange={(value) => setSortBy(value as SortOption)} value={filters.sortBy}>
                             <SelectTrigger className="h-8 w-22 border-0 bg-transparent px-2.5 text-sm shadow-none focus:ring-0 focus-visible:ring-0">
                                 <SelectValue placeholder="Sort by" />

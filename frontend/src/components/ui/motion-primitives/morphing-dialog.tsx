@@ -183,7 +183,7 @@ function MorphingDialogContent({ children, className, style }: MorphingDialogCon
     useClickOutside(containerRef, (event) => {
         // Ignore clicks inside Radix UI portals (Select, DropdownMenu, Popover, etc.)
         const target = event.target as HTMLElement;
-        if (target.closest("[data-radix-popper-content-wrapper]") || target.closest("[data-radix-select-viewport]")) {
+        if (target.closest("[data-radix-popper-content-wrapper]") || target.closest("[data-radix-select-viewport]") || target.closest("[data-radix-menu-content]") || target.closest("[role='listbox']")) {
             return;
         }
         if (isOpen) {
