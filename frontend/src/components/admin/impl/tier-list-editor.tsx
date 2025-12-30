@@ -3,7 +3,7 @@
 import { closestCenter, DndContext, type DragEndEvent, type DragOverEvent, DragOverlay, type DragStartEvent, KeyboardSensor, PointerSensor, useDroppable, useSensor, useSensors } from "@dnd-kit/core";
 import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ArrowLeft, Check, ChevronDown, ChevronUp, GripVertical, Plus, Save, Settings, Trash2, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronDown, ChevronUp, GripVertical, Plus, Save, Settings, Trash2, Upload, X } from "lucide-react";
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import { cn, rarityToNumber } from "~/lib/utils";
@@ -52,6 +52,7 @@ interface TierListEditorProps {
     operatorsLoading?: boolean;
     onBack: () => void;
     onSave?: (data: TierListResponse) => Promise<void>;
+    onPublish?: () => void;
 }
 
 interface EditableTier extends TierWithPlacements {
@@ -177,7 +178,7 @@ function DroppableTierZone({ tierId, isOver, children }: DroppableTierZoneProps)
     );
 }
 
-export function TierListEditor({ tierListData, operatorsData, allOperators, operatorsLoading = false, onBack, onSave }: TierListEditorProps) {
+export function TierListEditor({ tierListData, operatorsData, allOperators, operatorsLoading = false, onBack, onSave, onPublish }: TierListEditorProps) {
     const [tiers, setTiers] = useState<EditableTier[]>(tierListData.tiers.map((t) => ({ ...t })));
     const [tierListName, setTierListName] = useState(tierListData.tier_list.name);
     const [tierListDescription, setTierListDescription] = useState(tierListData.tier_list.description ?? "");
@@ -540,6 +541,12 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
                         <Save className="mr-2 h-4 w-4" />
                         {saving ? "Saving..." : "Save Changes"}
                     </Button>
+                    {onPublish && (
+                        <Button disabled={hasChanges || saving} onClick={onPublish} variant="secondary">
+                            <Upload className="mr-2 h-4 w-4" />
+                            Publish Version
+                        </Button>
+                    )}
                 </div>
             </div>
 

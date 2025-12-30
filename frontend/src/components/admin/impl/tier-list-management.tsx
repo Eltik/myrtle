@@ -8,6 +8,7 @@ import type { TierListSummary } from "~/types/frontend/admin";
 import { TransitionPanel } from "../../ui/motion-primitives/transition-panel";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../../ui/shadcn/alert-dialog";
 import { CreateTierListDialog } from "./create-tier-list-dialog";
+import { PublishVersionDialog } from "./publish-version-dialog";
 import { TierListEditor } from "./tier-list-editor";
 import { TierListsTable } from "./tier-lists-table";
 
@@ -28,6 +29,7 @@ export function TierListManagement({ tierLists, loading = false, onRefresh }: Ti
     const [editorLoading, setEditorLoading] = useState(false);
     const [createDialogOpen, setCreateDialogOpen] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [publishDialogOpen, setPublishDialogOpen] = useState(false);
     const [tierListToDelete, setTierListToDelete] = useState<TierListSummary | null>(null);
     const [deleting, setDeleting] = useState(false);
     const [operatorsLoading, setOperatorsLoading] = useState(true);
@@ -229,6 +231,32 @@ export function TierListManagement({ tierLists, loading = false, onRefresh }: Ti
         setTierListData(null);
     }, []);
 
+    const handleOpenPublishDialog = useCallback(() => {
+        setPublishDialogOpen(true);
+    }, []);
+
+    const handlePublish = useCallback(
+        async (data: { changelog: string; change_summary: string | null }) => {
+            if (!tierListData) return;
+
+            const response = await fetch(`/api/tier-lists/${tierListData.tier_list.slug}/publish`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || "Failed to publish version");
+            }
+
+            const result = await response.json();
+            toast.success(`Published version ${result.version.version} successfully`);
+            onRefresh?.();
+        },
+        [tierListData, onRefresh],
+    );
+
     const variants = {
         enter: { opacity: 0, x: viewMode === "editor" ? 20 : -20 },
         center: { opacity: 1, x: 0 },
@@ -247,7 +275,7 @@ export function TierListManagement({ tierLists, loading = false, onRefresh }: Ti
                         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                     </div>
                 ) : tierListData ? (
-                    <TierListEditor allOperators={allOperators} onBack={handleBack} onSave={handleSave} operatorsData={operatorsData} operatorsLoading={operatorsLoading} tierListData={tierListData} />
+                    <TierListEditor allOperators={allOperators} onBack={handleBack} onPublish={handleOpenPublishDialog} onSave={handleSave} operatorsData={operatorsData} operatorsLoading={operatorsLoading} tierListData={tierListData} />
                 ) : null}
             </TransitionPanel>
 
@@ -271,6 +299,9 @@ export function TierListManagement({ tierLists, loading = false, onRefresh }: Ti
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* Publish Version Dialog */}
+            <PublishVersionDialog onOpenChange={setPublishDialogOpen} onPublish={handlePublish} open={publishDialogOpen} tierListName={tierListData?.tier_list.name ?? "Tier List"} />
         </>
     );
 }

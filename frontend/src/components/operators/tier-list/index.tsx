@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, ClipboardList, History } from "lucide-react";
+import { BookOpen, ChevronRight, ClipboardList, History } from "lucide-react";
 import { useState } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "~/components/ui/shadcn/accordion";
 import { Badge } from "~/components/ui/shadcn/badge";
@@ -8,6 +8,7 @@ import { Card } from "~/components/ui/shadcn/card";
 import type { TierListResponse, TierListVersionSummary } from "~/types/api/impl/tier-list";
 import type { OperatorFromList } from "~/types/api/operators";
 import { TierRow } from "./impl/tier-row";
+import { VersionDetailDialog } from "./impl/version-detail-dialog";
 
 interface TierListViewProps {
     tierListData: TierListResponse;
@@ -18,6 +19,13 @@ interface TierListViewProps {
 export function TierListView({ tierListData, operatorsData, versions }: TierListViewProps) {
     const [hoveredOperator, setHoveredOperator] = useState<string | null>(null);
     const [isGrayscaleActive, setIsGrayscaleActive] = useState(false);
+    const [selectedVersion, setSelectedVersion] = useState<TierListVersionSummary | null>(null);
+    const [versionDialogOpen, setVersionDialogOpen] = useState(false);
+
+    const handleVersionClick = (version: TierListVersionSummary) => {
+        setSelectedVersion(version);
+        setVersionDialogOpen(true);
+    };
 
     const handleOperatorHover = (operatorId: string | null, isHovered: boolean) => {
         if (isHovered) {
@@ -110,22 +118,30 @@ export function TierListView({ tierListData, operatorsData, versions }: TierList
                             </div>
                         </AccordionTrigger>
                         <AccordionContent>
-                            <div className="space-y-4 text-muted-foreground">
+                            <div className="space-y-2 text-muted-foreground">
                                 {versions.length > 0 ? (
                                     versions.map((version) => (
-                                        <div className="border-primary/30 border-l-2 pl-3" key={version.id}>
-                                            <div className="flex items-center gap-2">
-                                                <p className="font-medium text-foreground text-sm">
-                                                    {new Date(version.published_at).toLocaleDateString("en-US", {
-                                                        year: "numeric",
-                                                        month: "long",
-                                                        day: "numeric",
-                                                    })}
-                                                </p>
-                                                <Badge variant="outline">v{version.version}</Badge>
+                                        <button
+                                            className="group w-full rounded-md border border-transparent p-3 text-left transition-colors hover:border-border hover:bg-muted/50"
+                                            key={version.id}
+                                            onClick={() => handleVersionClick(version)}
+                                            type="button"
+                                        >
+                                            <div className="flex items-center justify-between gap-2">
+                                                <div className="flex items-center gap-2">
+                                                    <p className="font-medium text-foreground text-sm">
+                                                        {new Date(version.published_at).toLocaleDateString("en-US", {
+                                                            year: "numeric",
+                                                            month: "long",
+                                                            day: "numeric",
+                                                        })}
+                                                    </p>
+                                                    <Badge variant="outline">v{version.version}</Badge>
+                                                </div>
+                                                <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
                                             </div>
-                                            {version.change_summary && <p className="mt-1 text-sm">{version.change_summary}</p>}
-                                        </div>
+                                            {version.change_summary && <p className="mt-1 text-muted-foreground text-sm">{version.change_summary}</p>}
+                                        </button>
                                     ))
                                 ) : (
                                     <>
@@ -173,6 +189,14 @@ export function TierListView({ tierListData, operatorsData, versions }: TierList
                     })}
                 </p>
             </div>
+
+            {/* Version Detail Dialog */}
+            <VersionDetailDialog
+                onOpenChange={setVersionDialogOpen}
+                open={versionDialogOpen}
+                tierListSlug={tierListData.tier_list.slug}
+                version={selectedVersion}
+            />
         </div>
     );
 }
