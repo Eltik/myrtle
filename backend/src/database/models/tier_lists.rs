@@ -608,6 +608,7 @@ impl TierListVersion {
 // ============================================================================
 
 impl TierChangeLog {
+    #![allow(clippy::all)]
     pub async fn create(
         pool: &PgPool,
         tier_list_id: Uuid,

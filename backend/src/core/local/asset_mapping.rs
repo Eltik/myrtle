@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use std::path::Path;
 
+use crate::events::AssetStats;
+
 /// Maps asset file names to their full directory paths
 #[derive(Debug, Clone, Default)]
 pub struct AssetMappings {
@@ -22,24 +24,26 @@ pub struct AssetMappings {
     pub item_icons: HashMap<String, String>,
 }
 
+/// Result of building asset mappings, includes stats for logging
+pub struct AssetMappingResult {
+    pub mappings: AssetMappings,
+    pub stats: AssetStats,
+}
+
 impl AssetMappings {
     pub fn new() -> Self {
         Self::default()
     }
 
     /// Build mappings by scanning the asset directories
-    /// assets_dir is the ASSETS_DIR environment variable path (e.g., /assets/Unpacked/)
-    /// - Spritepacks at {assets_dir}/upk/spritepack/
-    /// - Portraits at {assets_dir}/portraits/
-    pub fn build(assets_dir: &Path) -> Self {
-        // Spritepack is at {assets_dir}/upk/spritepack
+    /// Returns both the mappings and statistics for logging
+    pub fn build(assets_dir: &Path) -> AssetMappingResult {
         let spritepack = assets_dir.join("upk/spritepack");
 
-        eprintln!("Scanning spritepack directory: {spritepack:?}");
-
         let mut mappings = Self::new();
+        let mut stats = AssetStats::default();
 
-        // Scan avatar directories
+        // Scan avatar directories (20 dirs)
         for i in 0..20 {
             let dir_name = format!("ui_char_avatar_{i}");
             let dir_path = spritepack.join(&dir_name);
@@ -58,8 +62,9 @@ impl AssetMappings {
                 }
             }
         }
+        stats.avatars = mappings.avatars.len();
 
-        // Scan skin portrait directories
+        // Scan skin portrait directories (15 dirs)
         for i in 0..15 {
             let dir_name = format!("arts_shop_skin_portrait_{i}");
             let dir_path = spritepack.join(&dir_name);
@@ -78,8 +83,9 @@ impl AssetMappings {
                 }
             }
         }
+        stats.skin_portraits = mappings.skin_portraits.len();
 
-        // Scan module big image directories
+        // Scan module big image directories (25 dirs)
         for i in 0..25 {
             let dir_name = format!("ui_equip_big_img_hub_{i}");
             let dir_path = spritepack.join(&dir_name);
@@ -98,8 +104,9 @@ impl AssetMappings {
                 }
             }
         }
+        stats.module_big = mappings.module_big.len();
 
-        // Scan module small image directories
+        // Scan module small image directories (25 dirs)
         for i in 0..25 {
             let dir_name = format!("ui_equip_small_img_hub_{i}");
             let dir_path = spritepack.join(&dir_name);
@@ -118,8 +125,10 @@ impl AssetMappings {
                 }
             }
         }
+        stats.module_small = mappings.module_small.len();
 
-        // Scan skill icon directories
+        // Scan skill icon directories (10 dirs)
+        let skill_count_before = mappings.skill_icons.len();
         for i in 0..10 {
             let dir_name = format!("skill_icons_{i}");
             let dir_path = spritepack.join(&dir_name);
@@ -138,20 +147,18 @@ impl AssetMappings {
                 }
             }
         }
+        stats.skill_icons = mappings.skill_icons.len() - skill_count_before;
 
         // Scan alternate skill icons location at {assets_dir}/upk/arts/skills/
-        // Some newer skill icons are stored here instead of spritepack
         let arts_skills_dir = assets_dir.join("upk/arts/skills");
+        let skill_alt_count_before = mappings.skill_icons.len();
         if arts_skills_dir.exists() {
             if let Ok(entries) = std::fs::read_dir(&arts_skills_dir) {
                 for entry in entries.flatten() {
                     if entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
                         if let Some(dir_name) = entry.file_name().to_str() {
-                            // Directory name is the skill icon name (e.g., skill_icon_skchr_angel2_3)
-                            // File inside is {dir_name}.png
                             let png_path = entry.path().join(format!("{dir_name}.png"));
                             if png_path.exists() {
-                                // Use special marker for arts/skills location
                                 mappings.skill_icons.insert(
                                     dir_name.to_string(),
                                     format!("arts_skills:{dir_name}"),
@@ -162,12 +169,10 @@ impl AssetMappings {
                 }
             }
         }
+        stats.skill_icons_alt = mappings.skill_icons.len() - skill_alt_count_before;
 
         // Scan portraits from {assets_dir}/upk/arts/charportraits/pack{N}/*.png
         let charportraits_dir = assets_dir.join("upk/arts/charportraits");
-
-        eprintln!("Scanning charportraits directory: {charportraits_dir:?}");
-
         if charportraits_dir.exists() {
             if let Ok(pack_dirs) = std::fs::read_dir(&charportraits_dir) {
                 for pack_dir in pack_dirs.flatten() {
@@ -191,20 +196,16 @@ impl AssetMappings {
                 }
             }
         }
+        stats.portraits = mappings.portraits.len();
 
         // Scan full character art from {assets_dir}/upk/chararts/{char_id}/
         let chararts_dir = assets_dir.join("upk/chararts");
-
-        eprintln!("Scanning chararts directory: {chararts_dir:?}");
-
         if chararts_dir.exists() {
             if let Ok(entries) = std::fs::read_dir(&chararts_dir) {
                 for entry in entries.flatten() {
                     if entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
                         if let Some(dir_name) = entry.file_name().to_str() {
-                            // Only process char_xxx directories
                             if dir_name.starts_with("char_") {
-                                // Check which versions exist
                                 let e0_path = entry.path().join(format!("{dir_name}_1.png"));
                                 let e2_path = entry.path().join(format!("{dir_name}_2.png"));
                                 let has_e0 = e0_path.exists();
@@ -220,6 +221,7 @@ impl AssetMappings {
                 }
             }
         }
+        stats.chararts = mappings.chararts.len();
 
         // Scan item icon directories in spritepack
         let item_icon_dirs = [
@@ -229,6 +231,7 @@ impl AssetMappings {
             "ui_item_icons_h1_classpotential_0",
             "ui_item_icons_h1_potential_0",
         ];
+        let item_count_before = mappings.item_icons.len();
         for dir_name in &item_icon_dirs {
             let dir_path = spritepack.join(dir_name);
             if dir_path.exists() {
@@ -237,7 +240,6 @@ impl AssetMappings {
                         if let Some(file_name) = entry.file_name().to_str() {
                             if file_name.ends_with(".png") {
                                 let base_name = file_name.trim_end_matches(".png");
-                                // Only insert if not already present (first directory wins)
                                 mappings
                                     .item_icons
                                     .entry(base_name.to_string())
@@ -248,16 +250,17 @@ impl AssetMappings {
                 }
             }
         }
+        stats.item_icons = mappings.item_icons.len() - item_count_before;
 
         // Also scan the standard arts/items/icons directory
         let arts_items_dir = assets_dir.join("upk/arts/items/icons");
+        let item_arts_count_before = mappings.item_icons.len();
         if arts_items_dir.exists() {
             if let Ok(entries) = std::fs::read_dir(&arts_items_dir) {
                 for entry in entries.flatten() {
                     if let Some(file_name) = entry.file_name().to_str() {
                         if file_name.ends_with(".png") {
                             let base_name = file_name.trim_end_matches(".png");
-                            // Only insert if not already present (spritepack takes priority)
                             mappings
                                 .item_icons
                                 .entry(base_name.to_string())
@@ -267,20 +270,9 @@ impl AssetMappings {
                 }
             }
         }
+        stats.item_icons_arts = mappings.item_icons.len() - item_arts_count_before;
 
-        eprintln!(
-            "Built asset mappings: {} avatars, {} skin portraits, {} module big, {} module small, {} skill icons, {} portraits, {} chararts, {} item icons",
-            mappings.avatars.len(),
-            mappings.skin_portraits.len(),
-            mappings.module_big.len(),
-            mappings.module_small.len(),
-            mappings.skill_icons.len(),
-            mappings.portraits.len(),
-            mappings.chararts.len(),
-            mappings.item_icons.len()
-        );
-
-        mappings
+        AssetMappingResult { mappings, stats }
     }
 
     /// Get avatar path

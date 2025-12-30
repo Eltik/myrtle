@@ -86,7 +86,7 @@ function SortableOperatorCard({ placement, operator, onRemove }: SortableOperato
             <Image alt={operator.name} className="h-full w-full object-cover" fill src={`/api/cdn${operator.portrait}`} />
 
             {/* Vignette overlay for name visibility */}
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-black/70 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
 
             <div className="absolute bottom-0 h-1 w-full" style={{ backgroundColor: rarityColor }} />
 
@@ -787,7 +787,7 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
                                                     </div>
                                                 )}
                                                 {!isPlaced && (
-                                                    <div className="absolute inset-0 flex items-end bg-gradient-to-t from-background/80 to-transparent p-1 opacity-0 transition-opacity group-hover:opacity-100">
+                                                    <div className="absolute inset-0 flex items-end bg-linear-to-t from-background/80 to-transparent p-1 opacity-0 transition-opacity group-hover:opacity-100">
                                                         <p className="w-full truncate text-center text-xs">{operator.name}</p>
                                                     </div>
                                                 )}

@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::fmt;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 use serde::de::DeserializeOwned;
 
@@ -22,6 +23,7 @@ use crate::core::local::types::skin::{SkinData, SkinTableFile};
 use crate::core::local::types::trust::Favor;
 use crate::core::local::types::voice::{Voices, VoicesTableFile};
 use crate::core::local::types::{GameData, operator::CharacterTable};
+use crate::events::{ChibiStats, ConfigEvent, EventEmitter};
 
 #[derive(Debug)]
 pub enum DataError {
@@ -87,11 +89,17 @@ impl DataHandler {
     }
 }
 
-pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, DataError> {
+pub fn init_game_data(
+    data_dir: &Path,
+    assets_dir: &Path,
+    events: &Arc<EventEmitter>,
+) -> Result<GameData, DataError> {
     let handler = DataHandler::new(data_dir);
 
     // ============ Build Asset Mappings (early, needed for skins/modules) ============
-    let asset_mappings = AssetMappings::build(assets_dir);
+    let asset_result = AssetMappings::build(assets_dir);
+    let asset_mappings = asset_result.mappings;
+    events.emit(ConfigEvent::AssetMappingsBuilt(asset_result.stats));
 
     // ============ Load Character Table ============
     let character_table = handler.load_table::<CharacterTable>("character_table")?;
@@ -102,7 +110,10 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
         match handler.load_table::<SkillTableFile>("skill_table") {
             Ok(skill_table) => skill_table.skills,
             Err(e) => {
-                eprintln!("Warning: Failed to load skill_table: {e}");
+                events.emit(ConfigEvent::GameDataTableWarning {
+                    table: "skill_table".to_string(),
+                    error: e.to_string(),
+                });
                 HashMap::new()
             }
         };
@@ -117,7 +128,10 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
             equip_track_dict: uniequip_table.equip_track_dict,
         },
         Err(e) => {
-            eprintln!("Warning: Failed to load uniequip_table: {e}");
+            events.emit(ConfigEvent::GameDataTableWarning {
+                table: "uniequip_table".to_string(),
+                error: e.to_string(),
+            });
             RawModules::default()
         }
     };
@@ -127,7 +141,10 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
         match handler.load_table::<BattleEquipTableFile>("battle_equip_table") {
             Ok(battle_equip_table) => battle_equip_table.equips,
             Err(e) => {
-                eprintln!("Warning: Failed to load battle_equip_table: {e}");
+                events.emit(ConfigEvent::GameDataTableWarning {
+                    table: "battle_equip_table".to_string(),
+                    error: e.to_string(),
+                });
                 HashMap::new()
             }
         };
@@ -143,7 +160,10 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
             handbook_stage_time: handbook_table.handbook_stage_time,
         },
         Err(e) => {
-            eprintln!("Warning: Failed to load handbook_info_table: {e}");
+            events.emit(ConfigEvent::GameDataTableWarning {
+                table: "handbook_info_table".to_string(),
+                error: e.to_string(),
+            });
             Handbook::default()
         }
     };
@@ -163,7 +183,10 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
             }
         }
         Err(e) => {
-            eprintln!("Warning: Failed to load skin_table: {e}");
+            events.emit(ConfigEvent::GameDataTableWarning {
+                table: "skin_table".to_string(),
+                error: e.to_string(),
+            });
             SkinData::default()
         }
     };
@@ -178,7 +201,10 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
             char_voucher_items: item_table.char_voucher_items,
         },
         Err(e) => {
-            eprintln!("Warning: Failed to load item_table: {e}");
+            events.emit(ConfigEvent::GameDataTableWarning {
+                table: "item_table".to_string(),
+                error: e.to_string(),
+            });
             Materials::default()
         }
     };
@@ -187,7 +213,10 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
     let ranges: Ranges = match handler.load_table::<Ranges>("range_table") {
         Ok(range_data) => range_data,
         Err(e) => {
-            eprintln!("Warning: Failed to load range_table: {e}");
+            events.emit(ConfigEvent::GameDataTableWarning {
+                table: "range_table".to_string(),
+                error: e.to_string(),
+            });
             HashMap::new()
         }
     };
@@ -196,7 +225,10 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
     let favor: Favor = match handler.load_table::<Favor>("favor_table") {
         Ok(favor_data) => favor_data,
         Err(e) => {
-            eprintln!("Warning: Failed to load favor_table: {e}");
+            events.emit(ConfigEvent::GameDataTableWarning {
+                table: "favor_table".to_string(),
+                error: e.to_string(),
+            });
             Favor::default()
         }
     };
@@ -217,7 +249,10 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
             }
         }
         Err(e) => {
-            eprintln!("Warning: Failed to load charword_table: {e}");
+            events.emit(ConfigEvent::GameDataTableWarning {
+                table: "charword_table".to_string(),
+                error: e.to_string(),
+            });
             Voices::default()
         }
     };
@@ -246,15 +281,26 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
             special_gacha_percent_dict: gacha_table.special_gacha_percent_dict,
         },
         Err(e) => {
-            eprintln!("Warning: Failed to load gacha_table: {e}");
+            events.emit(ConfigEvent::GameDataTableWarning {
+                table: "gacha_table".to_string(),
+                error: e.to_string(),
+            });
             GachaData::default()
         }
     };
 
     // ============ Load Chibi Data ============
-    let chibis = init_chibi_data(assets_dir);
+    let chibi_result = init_chibi_data(assets_dir);
+    let chibis = chibi_result.data;
+    events.emit(ConfigEvent::ChibiDataLoaded(ChibiStats {
+        operators: chibi_result.operator_count,
+        chararts_processed: chibi_result.chararts_count,
+        skinpack_processed: chibi_result.skinpack_count,
+        dynchars_processed: chibi_result.dynchars_count,
+    }));
 
     // ============ Enrich Data ============
+    events.emit(ConfigEvent::GameDataEnrichmentStarted);
     let skills = enrich_all_skills(raw_skills, &asset_mappings);
 
     let operators = enrich_all_operators(
@@ -347,6 +393,8 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
         battle_equip,
     };
 
+    events.emit(ConfigEvent::GameDataEnrichmentComplete);
+
     Ok(GameData {
         operators,
         skills,
@@ -363,12 +411,18 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
     })
 }
 
-pub fn init_game_data_or_default(data_dir: &Path, assets_dir: &Path) -> GameData {
-    match init_game_data(data_dir, assets_dir) {
+pub fn init_game_data_or_default(
+    data_dir: &Path,
+    assets_dir: &Path,
+    events: &Arc<EventEmitter>,
+) -> GameData {
+    match init_game_data(data_dir, assets_dir, events) {
         Ok(data) => data,
         Err(e) => {
-            eprintln!("Warning: Failed to load game data: {e}");
-            eprintln!("Starting with empty game data");
+            events.emit(ConfigEvent::GameDataTableWarning {
+                table: "game_data".to_string(),
+                error: e.to_string(),
+            });
             GameData::default()
         }
     }

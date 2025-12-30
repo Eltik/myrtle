@@ -13,8 +13,17 @@ const ANIM_SUBDIRS: [(&str, AnimationType); 3] = [
     ("Building", AnimationType::Dorm),
 ];
 
+/// Result of initializing chibi data, includes stats for logging
+pub struct ChibiDataResult {
+    pub data: ChibiData,
+    pub operator_count: usize,
+    pub chararts_count: usize,
+    pub skinpack_count: usize,
+    pub dynchars_count: usize,
+}
+
 /// Crawl local chibi asset directories and build chibi data
-pub fn init_chibi_data(assets_dir: &Path) -> ChibiData {
+pub fn init_chibi_data(assets_dir: &Path) -> ChibiDataResult {
     // Assets are in upk/ subdirectory
     let upk_dir = assets_dir.join("upk");
 
@@ -23,23 +32,27 @@ pub fn init_chibi_data(assets_dir: &Path) -> ChibiData {
     let dynchars_path = upk_dir.join("arts").join("dynchars");
 
     let mut characters: HashMap<String, ChibiCharacter> = HashMap::new();
+    let mut chararts_count = 0;
+    let mut skinpack_count = 0;
+    let mut dynchars_count = 0;
 
     // Process chararts (base skins)
     if chararts_path.exists() {
-        process_chararts(&chararts_path, &mut characters);
+        chararts_count = process_chararts(&chararts_path, &mut characters);
     }
 
     // Process skinpack (operator skins)
     if skinpack_path.exists() {
-        process_skinpack(&skinpack_path, &mut characters);
+        skinpack_count = process_skinpack(&skinpack_path, &mut characters);
     }
 
     // Process dynchars (dynamic illustrations)
     if dynchars_path.exists() {
-        process_dynchars(&dynchars_path, &mut characters);
+        dynchars_count = process_dynchars(&dynchars_path, &mut characters);
     }
 
     let characters_vec: Vec<ChibiCharacter> = characters.into_values().collect();
+    let operator_count = characters_vec.len();
 
     // Build lookup map
     let by_operator: HashMap<String, ChibiCharacter> = characters_vec
@@ -47,21 +60,28 @@ pub fn init_chibi_data(assets_dir: &Path) -> ChibiData {
         .map(|c| (c.operator_code.clone(), c.clone()))
         .collect();
 
-    println!(
-        "Chibi data loaded: {} operators with spine data",
-        characters_vec.len()
-    );
-
-    ChibiData {
-        raw_items: Vec::new(),
-        characters: characters_vec,
-        by_operator,
+    ChibiDataResult {
+        data: ChibiData {
+            raw_items: Vec::new(),
+            characters: characters_vec,
+            by_operator,
+        },
+        operator_count,
+        chararts_count,
+        skinpack_count,
+        dynchars_count,
     }
 }
 
 /// Process chararts directory (base skins)
 /// Structure: chararts/{char_id}/{AnimType}/{char_id}/*.atlas, *.skel, *.png
-fn process_chararts(chararts_path: &Path, characters: &mut HashMap<String, ChibiCharacter>) {
+/// Returns the count of processed entries
+fn process_chararts(
+    chararts_path: &Path,
+    characters: &mut HashMap<String, ChibiCharacter>,
+) -> usize {
+    let mut count = 0;
+
     if let Ok(entries) = fs::read_dir(chararts_path) {
         for entry in entries.flatten() {
             let path = entry.path();
@@ -73,6 +93,8 @@ fn process_chararts(chararts_path: &Path, characters: &mut HashMap<String, Chibi
                 Some(name) if name.starts_with("char_") => name.to_string(),
                 _ => continue,
             };
+
+            count += 1;
 
             // Initialize character if not exists
             let character = characters
@@ -174,11 +196,19 @@ fn process_chararts(chararts_path: &Path, characters: &mut HashMap<String, Chibi
             }
         }
     }
+
+    count
 }
 
 /// Process skinpack directory (operator skins)
 /// Structure: skinpack/{char_id}/{AnimType}/{skin_id}/*.atlas, *.skel, *.png
-fn process_skinpack(skinpack_path: &Path, characters: &mut HashMap<String, ChibiCharacter>) {
+/// Returns the count of processed skin entries
+fn process_skinpack(
+    skinpack_path: &Path,
+    characters: &mut HashMap<String, ChibiCharacter>,
+) -> usize {
+    let mut count = 0;
+
     if let Ok(entries) = fs::read_dir(skinpack_path) {
         for entry in entries.flatten() {
             let path = entry.path();
@@ -256,6 +286,8 @@ fn process_skinpack(skinpack_path: &Path, characters: &mut HashMap<String, Chibi
 
             // Add collected skins to character
             for (skin_id, anim_types) in skin_ids {
+                count += 1;
+
                 // Extract skin name from skin_id (e.g., "char_002_amiya_epoque#4" -> "epoque#4")
                 let skin_name = extract_skin_name(&skin_id, &char_id);
 
@@ -273,11 +305,19 @@ fn process_skinpack(skinpack_path: &Path, characters: &mut HashMap<String, Chibi
             }
         }
     }
+
+    count
 }
 
 /// Process dynchars directory (dynamic illustrations)
 /// Structure: dynchars/{skin_id}/*.atlas, *.skel, *.png
-fn process_dynchars(dynchars_path: &Path, characters: &mut HashMap<String, ChibiCharacter>) {
+/// Returns the count of processed entries
+fn process_dynchars(
+    dynchars_path: &Path,
+    characters: &mut HashMap<String, ChibiCharacter>,
+) -> usize {
+    let mut count = 0;
+
     if let Ok(entries) = fs::read_dir(dynchars_path) {
         for entry in entries.flatten() {
             let path = entry.path();
@@ -308,6 +348,8 @@ fn process_dynchars(dynchars_path: &Path, characters: &mut HashMap<String, Chibi
 
             // Collect spine files from this directory
             if let Some(spine_files) = collect_spine_files(&path) {
+                count += 1;
+
                 let formatted = SpineFiles {
                     atlas: spine_files
                         .atlas
@@ -338,6 +380,8 @@ fn process_dynchars(dynchars_path: &Path, characters: &mut HashMap<String, Chibi
             }
         }
     }
+
+    count
 }
 
 /// Spine files found in a directory (just filenames, not full paths)
