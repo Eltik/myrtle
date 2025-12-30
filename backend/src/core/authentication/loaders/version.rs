@@ -18,20 +18,28 @@ pub async fn load_version_config(
 ) {
     match server {
         Some(s) => {
-            load_single_server(client, config, s).await;
-            events.emit(ConfigEvent::VersionLoaded(s));
+            let success = load_single_server(client, config, s).await;
+            if success {
+                events.emit(ConfigEvent::VersionLoaded(s));
+            }
         }
         None => {
             for &s in Server::all() {
-                load_single_server(client, config, s).await;
-                events.emit(ConfigEvent::VersionLoaded(s));
+                let success = load_single_server(client, config, s).await;
+                if success {
+                    events.emit(ConfigEvent::VersionLoaded(s));
+                }
             }
             events.emit(ConfigEvent::VersionInitiated);
         }
     }
 }
 
-async fn load_single_server(client: &Client, config: &Arc<RwLock<GlobalConfig>>, server: Server) {
+async fn load_single_server(
+    client: &Client,
+    config: &Arc<RwLock<GlobalConfig>>,
+    server: Server,
+) -> bool {
     let hv_url = {
         let config = config.read().await;
         config
@@ -42,8 +50,8 @@ async fn load_single_server(client: &Client, config: &Arc<RwLock<GlobalConfig>>,
     };
 
     let Some(url) = hv_url else {
-        eprintln!("No HV domain found for {server:?}, skipping version load");
-        return;
+        // No HV domain found - silently skip
+        return false;
     };
 
     let url = url.replace("{0}", "Android");
@@ -60,14 +68,10 @@ async fn load_single_server(client: &Client, config: &Arc<RwLock<GlobalConfig>>,
         Ok(Ok(version_info)) => {
             let mut config = config.write().await;
             config.versions.insert(server, version_info);
-            println!("Version config loaded for {server:?}");
+            true
         }
-        Ok(Err(e)) => {
-            eprintln!("Error loading version config for {server:?}: {e}");
-        }
-        Err(_) => {
-            eprintln!("Timeout loading version config for {server:?}");
-        }
+        Ok(Err(_)) => false,
+        Err(_) => false,
     }
 }
 

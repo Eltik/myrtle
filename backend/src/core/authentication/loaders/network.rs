@@ -33,23 +33,31 @@ pub async fn load_network_config(
 ) {
     match server {
         Some(s) => {
-            load_single_server(client, config, s).await;
-            events.emit(ConfigEvent::NetworkLoaded(s));
+            let success = load_single_server(client, config, s).await;
+            if success {
+                events.emit(ConfigEvent::NetworkLoaded(s));
+            }
         }
         None => {
             for &s in Server::all() {
-                load_single_server(client, config, s).await;
-                events.emit(ConfigEvent::NetworkLoaded(s));
+                let success = load_single_server(client, config, s).await;
+                if success {
+                    events.emit(ConfigEvent::NetworkLoaded(s));
+                }
             }
             events.emit(ConfigEvent::NetworkInitiated);
         }
     }
 }
 
-async fn load_single_server(client: &Client, config: &Arc<RwLock<GlobalConfig>>, server: Server) {
+async fn load_single_server(
+    client: &Client,
+    config: &Arc<RwLock<GlobalConfig>>,
+    server: Server,
+) -> bool {
     let Some(url) = server.network_route() else {
-        eprintln!("No network route for {server:?}");
-        return;
+        // No network route for this server - silently skip
+        return false;
     };
 
     let result = timeout(CONFIG_TIMEOUT, async {
@@ -95,14 +103,10 @@ async fn load_single_server(client: &Client, config: &Arc<RwLock<GlobalConfig>>,
                     domains.insert(domain, url);
                 }
             }
-            println!("Network config loaded for {server:?}");
+            true
         }
-        Ok(Err(e)) => {
-            eprintln!("Error loading network config for {server:?}: {e}");
-        }
-        Err(_) => {
-            eprintln!("Timeout loading network config for {server:?}");
-        }
+        Ok(Err(_)) => false,
+        Err(_) => false,
     }
 }
 

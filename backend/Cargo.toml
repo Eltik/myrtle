@@ -33,3 +33,4 @@ regex = "1.12.2"
 flate2 = "1.1.5"
 redis = { version = "0.32.7", features = ["aio", "tokio-comp"] }
 jsonwebtoken = { version = "10.2.0", features = ["rust_crypto"] }
+colored = "3"

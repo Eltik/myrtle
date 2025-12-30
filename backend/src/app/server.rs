@@ -29,8 +29,8 @@ use crate::app::state::{AppState, get_global_config, init_global_config};
 use crate::core::authentication::{config::GlobalConfig, loaders};
 use crate::core::local::handler::init_game_data_or_default;
 use crate::database::pool::{create_pool, init_tables};
-use crate::events::EventEmitter;
 use crate::events::setup_event_listeners::setup_event_listeners;
+use crate::events::{ConfigEvent, EventEmitter, GameDataStats};
 
 #[derive(Serialize)]
 struct HealthResponse {
@@ -202,18 +202,24 @@ pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize global accessor for cron jobs
     init_global_config(config.clone());
 
+    // Emit server starting event
+    events.emit(ConfigEvent::ServerStarting);
+
     // Load all configuration
-    println!("Loading configuration...");
+    events.emit(ConfigEvent::ConfigLoadStarted);
     loaders::init_all(&client, &config, &events).await;
-    println!("Configuration loaded");
+    events.emit(ConfigEvent::ConfigLoadComplete);
 
     // Create database pool
+    events.emit(ConfigEvent::DatabaseConnecting);
     let db = create_pool(&database_url).await?;
+    events.emit(ConfigEvent::DatabaseConnected);
 
     // Initialize database tables
     init_tables(&db).await?;
+    events.emit(ConfigEvent::DatabaseTablesInitialized);
 
-    // Load game data.
+    // Load game data
     let data_dir = std::env::var("DATA_DIR")
         .map(PathBuf::from)
         .unwrap_or_else(|_| PathBuf::from("data"));
@@ -222,29 +228,35 @@ pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
         .map(PathBuf::from)
         .unwrap_or_else(|_| PathBuf::from("assets"));
 
-    println!("Loading game data from: {data_dir:?}");
-    println!("Loading assets from: {assets_dir:?}");
+    events.emit(ConfigEvent::GameDataLoadStarted {
+        data_dir: data_dir.display().to_string(),
+        assets_dir: assets_dir.display().to_string(),
+    });
 
-    let game_data = Arc::new(init_game_data_or_default(&data_dir, &assets_dir));
+    let game_data = Arc::new(init_game_data_or_default(&data_dir, &assets_dir, &events));
 
     if game_data.is_loaded() {
-        println!(
-            "Game data loaded: {} operators, {} skills, {} modules, {} skins, {} items, {} handbook entries, {} chibis",
-            game_data.operators.len(),
-            game_data.skills.len(),
-            game_data.modules.equip_dict.len(),
-            game_data.skins.char_skins.len(),
-            game_data.materials.items.len(),
-            game_data.handbook.handbook_dict.len(),
-            game_data.chibis.characters.len()
-        );
+        events.emit(ConfigEvent::GameDataLoaded(GameDataStats {
+            operators: game_data.operators.len(),
+            skills: game_data.skills.len(),
+            modules: game_data.modules.equip_dict.len(),
+            skins: game_data.skins.char_skins.len(),
+            items: game_data.materials.items.len(),
+            handbook_entries: game_data.handbook.handbook_dict.len(),
+            chibis: game_data.chibis.characters.len(),
+            ranges: game_data.ranges.len(),
+            gacha_pools: game_data.gacha.gacha_pool_client.len(),
+            voices: game_data.voices.char_words.len(),
+        }));
     } else {
-        println!("Warning: Running with empty game data");
+        events.emit(ConfigEvent::GameDataEmpty);
     }
 
+    events.emit(ConfigEvent::RedisConnecting);
     let redis_url = std::env::var("REDIS_URL").expect("REDIS_URL must be set");
     let redis_client = redis::Client::open(redis_url)?;
     let redis = redis_client.get_multiplexed_async_connection().await?;
+    events.emit(ConfigEvent::RedisConnected);
 
     let jwt_secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
 
@@ -260,11 +272,11 @@ pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     // Start cron jobs
-    spawn_reload_job(state.client.clone(), events, 3600);
+    spawn_reload_job(state.client.clone(), events.clone(), 3600);
 
     // Create TCP listener
     let listener = TcpListener::bind("0.0.0.0:3060").await?;
-    println!("Server running on http://0.0.0.0:3060");
+    events.emit(ConfigEvent::ServerStarted { port: 3060 });
 
     // Start server
     axum::serve(
@@ -284,7 +296,7 @@ fn spawn_reload_job(client: Client, events: Arc<EventEmitter>, interval_secs: u6
             interval.tick().await;
             let config = get_global_config();
             loaders::reload_all(&client, &config, &events).await;
-            println!("Configuration reloaded");
+            events.emit(ConfigEvent::ConfigReloaded);
         }
     });
 }
