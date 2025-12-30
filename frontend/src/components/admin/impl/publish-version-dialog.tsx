@@ -65,13 +65,7 @@ export function PublishVersionDialog({ open, onOpenChange, onPublish, tierListNa
                 <form className="space-y-4" onSubmit={handleSubmit}>
                     <div className="space-y-2">
                         <Label htmlFor="publish-summary">Change Summary</Label>
-                        <Textarea
-                            id="publish-summary"
-                            onChange={(e) => setChangeSummary(e.target.value)}
-                            placeholder="Brief summary shown in the changelog header (e.g., 'Balance adjustments for patch 2.3')"
-                            rows={2}
-                            value={changeSummary}
-                        />
+                        <Textarea id="publish-summary" onChange={(e) => setChangeSummary(e.target.value)} placeholder="Brief summary shown in the changelog header (e.g., 'Balance adjustments for patch 2.3')" rows={2} value={changeSummary} />
                         <p className="text-muted-foreground text-xs">Optional but recommended. This is the short summary users see first.</p>
                     </div>
 
