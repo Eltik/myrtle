@@ -1,12 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import type { TierListResponse } from "~/types/api/impl/tier-list";
 import type { OperatorFromList } from "~/types/api/operators";
 import type { TierListSummary } from "~/types/frontend/admin";
 import { TransitionPanel } from "../../ui/motion-primitives/transition-panel";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../../ui/shadcn/alert-dialog";
-import { toast } from "sonner";
 import { CreateTierListDialog } from "./create-tier-list-dialog";
 import { TierListEditor } from "./tier-list-editor";
 import { TierListsTable } from "./tier-lists-table";
