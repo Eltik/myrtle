@@ -1,6 +1,9 @@
 import { useCallback, useMemo, useState } from "react";
 import { rarityToNumber } from "~/lib/utils";
 import type { OperatorFromList } from "~/types/api/operators";
+import { CLASS_SORT_ORDER } from "../../constants";
+
+export type SortOption = "name" | "rarity" | "class" | "hp" | "atk" | "def" | "res" | "cost" | "block" | "aspd";
 
 export interface FilterState {
     searchQuery: string;
@@ -13,7 +16,7 @@ export interface FilterState {
     selectedGenders: string[];
     selectedRaces: string[];
     selectedArtists: string[];
-    sortBy: "name" | "rarity";
+    sortBy: SortOption;
     sortOrder: "asc" | "desc";
 }
 
@@ -43,7 +46,7 @@ export interface UseOperatorFiltersReturn {
     setSelectedGenders: (genders: string[]) => void;
     setSelectedRaces: (races: string[]) => void;
     setSelectedArtists: (artists: string[]) => void;
-    setSortBy: (sortBy: "name" | "rarity") => void;
+    setSortBy: (sortBy: SortOption) => void;
     setSortOrder: (order: "asc" | "desc") => void;
 
     // Actions
@@ -66,7 +69,7 @@ export function useOperatorFilters(data: OperatorFromList[]): UseOperatorFilters
     const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
     const [selectedRaces, setSelectedRaces] = useState<string[]>([]);
     const [selectedArtists, setSelectedArtists] = useState<string[]>([]);
-    const [sortBy, setSortBy] = useState<"name" | "rarity">("rarity");
+    const [sortBy, setSortBy] = useState<SortOption>("rarity");
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
     // Compute available filter options from data
@@ -192,15 +195,108 @@ export function useOperatorFilters(data: OperatorFromList[]): UseOperatorFilters
             });
         }
 
+        // Helper to get max-level stats from an operator
+        const getMaxStats = (op: OperatorFromList) => {
+            const lastPhase = op.phases?.[op.phases.length - 1];
+            const lastFrame = lastPhase?.AttributesKeyFrames?.[lastPhase.AttributesKeyFrames.length - 1];
+            return lastFrame?.Data;
+        };
+
         // Sorting
         result.sort((a, b) => {
-            if (sortBy === "name") {
-                return sortOrder === "asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+            let comparison = 0;
+
+            switch (sortBy) {
+                case "name":
+                    comparison = a.name.localeCompare(b.name);
+                    break;
+
+                case "class": {
+                    const aClassOrder = CLASS_SORT_ORDER[a.profession] ?? 99;
+                    const bClassOrder = CLASS_SORT_ORDER[b.profession] ?? 99;
+                    comparison = aClassOrder - bClassOrder;
+                    // Secondary: name
+                    if (comparison === 0) {
+                        return a.name.localeCompare(b.name);
+                    }
+                    break;
+                }
+
+                case "hp": {
+                    const aStats = getMaxStats(a);
+                    const bStats = getMaxStats(b);
+                    comparison = (bStats?.MaxHp ?? 0) - (aStats?.MaxHp ?? 0);
+                    break;
+                }
+
+                case "atk": {
+                    const aStats = getMaxStats(a);
+                    const bStats = getMaxStats(b);
+                    comparison = (bStats?.Atk ?? 0) - (aStats?.Atk ?? 0);
+                    break;
+                }
+
+                case "def": {
+                    const aStats = getMaxStats(a);
+                    const bStats = getMaxStats(b);
+                    comparison = (bStats?.Def ?? 0) - (aStats?.Def ?? 0);
+                    break;
+                }
+
+                case "res": {
+                    const aStats = getMaxStats(a);
+                    const bStats = getMaxStats(b);
+                    comparison = (bStats?.MagicResistance ?? 0) - (aStats?.MagicResistance ?? 0);
+                    break;
+                }
+
+                case "cost": {
+                    const aStats = getMaxStats(a);
+                    const bStats = getMaxStats(b);
+                    comparison = (bStats?.Cost ?? 0) - (aStats?.Cost ?? 0);
+                    break;
+                }
+
+                case "block": {
+                    const aStats = getMaxStats(a);
+                    const bStats = getMaxStats(b);
+                    comparison = (bStats?.BlockCnt ?? 0) - (aStats?.BlockCnt ?? 0);
+                    break;
+                }
+
+                case "aspd": {
+                    const aStats = getMaxStats(a);
+                    const bStats = getMaxStats(b);
+                    comparison = (bStats?.AttackSpeed ?? 0) - (aStats?.AttackSpeed ?? 0);
+                    break;
+                }
+
+                default: {
+                    // "rarity" and fallback
+                    // Primary sort: Rarity
+                    const aRarity = rarityToNumber(a.rarity);
+                    const bRarity = rarityToNumber(b.rarity);
+                    comparison = bRarity - aRarity;
+
+                    if (comparison === 0) {
+                        // Secondary sort: Class (when rarity is the same)
+                        const aClassOrder = CLASS_SORT_ORDER[a.profession] ?? 99;
+                        const bClassOrder = CLASS_SORT_ORDER[b.profession] ?? 99;
+                        const classComparison = aClassOrder - bClassOrder;
+
+                        if (classComparison !== 0) {
+                            return classComparison;
+                        }
+
+                        // Tertiary sort: Name (when rarity and class are the same)
+                        return a.name.localeCompare(b.name);
+                    }
+                    break;
+                }
             }
 
-            const aRarity = rarityToNumber(a.rarity);
-            const bRarity = rarityToNumber(b.rarity);
-            return sortOrder === "asc" ? aRarity - bRarity : bRarity - aRarity;
+            // Apply sort order
+            return sortOrder === "asc" ? -comparison : comparison;
         });
 
         return result;

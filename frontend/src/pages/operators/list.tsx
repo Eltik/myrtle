@@ -24,7 +24,7 @@ export const getServerSideProps = async () => {
 
     const params = new URLSearchParams({
         limit: "1000",
-        fields: ["id", "name", "nationId", "groupId", "teamId", "position", "isSpChar", "rarity", "profession", "subProfessionId", "profile", "artists", "portrait"].join(","),
+        fields: ["id", "name", "nationId", "groupId", "teamId", "position", "isSpChar", "rarity", "profession", "subProfessionId", "profile", "artists", "portrait", "phases", "handbook"].join(","),
     });
 
     const data = (await (

@@ -7,8 +7,9 @@ import { AnimatedBackground } from "~/components/ui/motion-primitives/animated-b
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/shadcn/select";
 import { cn } from "~/lib/utils";
 import type { OperatorFromList } from "~/types/api/operators";
-import { CLASSES, GENDERS, ITEMS_PER_PAGE, RARITIES } from "../constants";
+import { CLASSES, GENDERS, ITEMS_PER_PAGE, RARITIES, SORT_OPTIONS } from "../constants";
 import { useOperatorFilters } from "../hooks";
+import type { SortOption } from "../hooks/impl/use-operator-filters";
 import { OperatorCard } from "../operator-card";
 import { OperatorFilters } from "../operator-filters";
 import { Pagination } from "../ui/impl/pagination";
@@ -162,23 +163,18 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
 
                     {/* Sort Controls - Always visible next to view toggle */}
                     <motion.div className="flex items-center gap-1 rounded-lg border border-border bg-secondary/50 p-1" layout transition={TOGGLE_TRANSITION}>
-                        <AnimatedBackground
-                            className="rounded-md bg-primary"
-                            defaultValue={filters.sortBy}
-                            onValueChange={(value) => {
-                                if (value === "rarity" || value === "name") {
-                                    setSortBy(value);
-                                }
-                            }}
-                            transition={TOGGLE_TRANSITION}
-                        >
-                            <button className={cn("flex h-8 cursor-pointer items-center justify-center rounded-md px-2.5 text-sm transition-colors duration-150", filters.sortBy === "rarity" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground")} data-id="rarity" type="button">
-                                Rarity
-                            </button>
-                            <button className={cn("flex h-8 cursor-pointer items-center justify-center rounded-md px-2.5 text-sm transition-colors duration-150", filters.sortBy === "name" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground")} data-id="name" type="button">
-                                Name
-                            </button>
-                        </AnimatedBackground>
+                        <Select onValueChange={(value) => setSortBy(value as SortOption)} value={filters.sortBy}>
+                            <SelectTrigger className="h-8 w-22 border-0 bg-transparent px-2.5 text-sm shadow-none focus:ring-0 focus-visible:ring-0">
+                                <SelectValue placeholder="Sort by" />
+                            </SelectTrigger>
+                            <SelectContent align="start" className="min-w-32 rounded-lg border-border bg-card/75 backdrop-blur-sm">
+                                {SORT_OPTIONS.map((option) => (
+                                    <SelectItem className="cursor-pointer rounded-md" key={option.value} value={option.value}>
+                                        {option.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                         <button className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground" onClick={() => setSortOrder(filters.sortOrder === "asc" ? "desc" : "asc")} type="button">
                             {filters.sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
                         </button>

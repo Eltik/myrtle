@@ -43,7 +43,7 @@ export function ResponsiveFilterContainer({ open, onOpenChange, hasActiveFilters
                     <FilterTriggerButton activeFilterCount={activeFilterCount} hasActiveFilters={hasActiveFilters} isOpen={open} />
                 </MorphingDialogTrigger>
                 <MorphingDialogContainer>
-                    <MorphingDialogContent className="relative max-h-[85vh] w-[calc(100vw-2rem)] overflow-y-auto rounded-xl border border-border bg-card/95 backdrop-blur-sm">
+                    <MorphingDialogContent className="relative max-h-[85vh] w-[calc(100vw-2rem)] overflow-y-auto rounded-xl border border-border bg-card/90 backdrop-blur-md">
                         <MorphingDialogClose className="absolute top-3 right-3 z-10 flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-secondary/50 text-muted-foreground transition-colors hover:text-foreground">
                             <X className="h-4 w-4" />
                         </MorphingDialogClose>
@@ -60,7 +60,7 @@ export function ResponsiveFilterContainer({ open, onOpenChange, hasActiveFilters
             <MorphingPopoverTrigger>
                 <FilterTriggerButton activeFilterCount={activeFilterCount} hasActiveFilters={hasActiveFilters} isOpen={open} />
             </MorphingPopoverTrigger>
-            <MorphingPopoverContent className="w-[calc(100vw-2rem)] max-w-4xl bg-card/95 p-0 drop-shadow-2xl backdrop-blur-sm sm:w-[600px] md:w-[700px] lg:w-[900px]">{children}</MorphingPopoverContent>
+            <MorphingPopoverContent className="w-[calc(100vw-2rem)] max-w-4xl bg-card p-0 drop-shadow-2xl backdrop-blur-md sm:w-[600px] md:w-[700px] lg:w-[900px]">{children}</MorphingPopoverContent>
         </MorphingPopover>
     );
 }
