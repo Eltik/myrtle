@@ -1,0 +1,65 @@
+
+---
+
+## Running the Built Executables
+
+### Issue: STATUS_DLL_NOT_FOUND (Exit Code 0xc0000135)
+
+After building successfully, running the executables directly may fail with:
+```
+error: process didn't exit successfully (exit code: 0xc0000135, STATUS_DLL_NOT_FOUND)
+```
+
+**Cause:** The executables need runtime DLLs that aren't in your PATH:
+- **python313.dll** (from Python installation) - required by pyo3
+- **fmod.dll, fmodstudio.dll** (from FMOD) - required by libfmod
+- **MinGW runtime DLLs** (libgcc_s_seh-1.dll, libwinpthread-1.dll, etc.)
+
+### Solution: Use the Helper Scripts
+
+I've created `run.bat` helper scripts in each project directory:
+
+**Downloader:**
+```cmd
+cd downloader
+run.bat --help
+```
+
+**Unpacker:**
+```cmd
+cd unpacker
+run.bat --help
+```
+
+These scripts automatically add the necessary DLL directories to PATH before running.
+
+### Alternative: Add to System PATH Permanently
+
+Add these directories to your Windows PATH:
+1. `C:\Users\ianle\AppData\Local\Programs\Python\Python313`
+2. `C:\Users\ianle\Documents\myrtle\assets\unity-rs\src\resources\FMOD\Windows\x64`
+3. `C:\msys64\mingw64\bin` (already added during setup)
+
+Then you can run `cargo run` directly without the helper scripts.
+
+### Manual PATH Setup (Per Session)
+
+**PowerShell:**
+```powershell
+$env:Path = 'C:\Users\ianle\AppData\Local\Programs\Python\Python313;' + $env:Path
+$env:Path = 'C:\Users\ianle\Documents\myrtle\assets\unity-rs\src\resources\FMOD\Windows\x64;' + $env:Path
+cd downloader
+cargo run -- --help
+```
+
+**Command Prompt:**
+```cmd
+set PATH=C:\Users\ianle\AppData\Local\Programs\Python\Python313;%PATH%
+set PATH=C:\Users\ianle\Documents\myrtle\assets\unity-rs\src\resources\FMOD\Windows\x64;%PATH%
+cd downloader
+cargo run -- --help
+```
+
+---
+
+**Last Updated:** 2025-12-29
