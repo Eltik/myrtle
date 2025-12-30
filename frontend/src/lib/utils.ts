@@ -6,6 +6,44 @@ export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
 
+/**
+ * Calculates the relative luminance of a hex color.
+ * Uses the WCAG formula for calculating luminance.
+ * @param hex - A hex color string (with or without #)
+ * @returns A number between 0 (black) and 1 (white)
+ */
+export function getLuminance(hex: string): number {
+    // Remove # if present
+    const color = hex.replace("#", "");
+
+    // Parse RGB values
+    const r = Number.parseInt(color.substring(0, 2), 16) / 255;
+    const g = Number.parseInt(color.substring(2, 4), 16) / 255;
+    const b = Number.parseInt(color.substring(4, 6), 16) / 255;
+
+    // Apply gamma correction (sRGB to linear)
+    const toLinear = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+
+    const rLinear = toLinear(r);
+    const gLinear = toLinear(g);
+    const bLinear = toLinear(b);
+
+    // Calculate luminance using WCAG formula
+    return 0.2126 * rLinear + 0.7152 * gLinear + 0.0722 * bLinear;
+}
+
+/**
+ * Returns the optimal text color (black or white) based on background color.
+ * Uses WCAG luminance threshold for accessibility.
+ * @param backgroundColor - A hex color string for the background
+ * @returns "#000000" for light backgrounds, "#ffffff" for dark backgrounds
+ */
+export function getContrastTextColor(backgroundColor: string): string {
+    const luminance = getLuminance(backgroundColor);
+    // Threshold of 0.179 provides good contrast per WCAG guidelines
+    return luminance > 0.179 ? "#000000" : "#ffffff";
+}
+
 export const rarityToNumber = (rarity: OperatorRarity): number => {
     switch (rarity) {
         case "TIER_6":

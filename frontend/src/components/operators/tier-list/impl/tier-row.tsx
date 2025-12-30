@@ -1,6 +1,7 @@
 "use client";
 import type { Tier } from "~/types/api/impl/tier-list";
 import type { OperatorFromList } from "~/types/api/operators";
+import { getContrastTextColor } from "~/lib/utils";
 import { TierOperatorCard } from "./operator-card";
 
 interface TierRowProps {
@@ -26,18 +27,21 @@ const DEFAULT_TIER_COLORS: Record<string, string> = {
 export function TierRow({ tier, operators, hoveredOperator, isGrayscaleActive, onOperatorHover }: TierRowProps) {
     // Use tier color from database or fall back to default colors
     const tierColor = tier.color || DEFAULT_TIER_COLORS[tier.name] || "#888888";
+    // Calculate optimal text color based on background luminance
+    const textColor = getContrastTextColor(tierColor);
 
     return (
         <div className="flex flex-col gap-2 overflow-hidden rounded-lg border border-border bg-card/50 md:flex-row">
             {/* Tier Label */}
             <div
-                className="flex shrink-0 items-center justify-center px-6 py-4 font-bold text-2xl text-white md:w-24 md:flex-col md:text-3xl"
+                className="flex shrink-0 items-center justify-center px-6 py-4 font-bold text-2xl md:w-24 md:flex-col md:text-3xl"
                 style={{
                     backgroundColor: tierColor,
+                    color: textColor,
                 }}
             >
                 <span className="drop-shadow-md">{tier.name}</span>
-                {tier.description && <span className="mt-1 hidden text-center font-normal text-white/80 text-xs md:block">{tier.description}</span>}
+                {tier.description && <span className="mt-1 hidden text-center font-normal text-xs md:block" style={{ color: `${textColor}cc` }}>{tier.description}</span>}
             </div>
 
             {/* Operators Grid */}
