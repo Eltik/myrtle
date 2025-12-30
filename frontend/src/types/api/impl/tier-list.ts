@@ -11,6 +11,29 @@ export interface TierList {
     updated_at: string;
 }
 
+// Version types for changelog
+export interface TierListVersionSummary {
+    id: string;
+    version: number;
+    change_summary: string | null;
+    published_at: string;
+    published_by: string | null;
+}
+
+export interface TierListVersionDetail {
+    id: string;
+    version: number;
+    snapshot: unknown;
+    changelog: string;
+    change_summary: string | null;
+    published_at: string;
+    published_by: string | null;
+}
+
+export interface TierListVersionsResponse {
+    versions: TierListVersionSummary[];
+}
+
 export interface Tier {
     id: string;
     tier_list_id: string;
