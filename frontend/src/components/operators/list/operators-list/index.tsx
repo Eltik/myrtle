@@ -172,26 +172,14 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                             }}
                             transition={TOGGLE_TRANSITION}
                         >
-                            <button
-                                className={cn("flex h-8 cursor-pointer items-center justify-center rounded-md px-2.5 text-sm transition-colors duration-150", filters.sortBy === "rarity" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground")}
-                                data-id="rarity"
-                                type="button"
-                            >
+                            <button className={cn("flex h-8 cursor-pointer items-center justify-center rounded-md px-2.5 text-sm transition-colors duration-150", filters.sortBy === "rarity" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground")} data-id="rarity" type="button">
                                 Rarity
                             </button>
-                            <button
-                                className={cn("flex h-8 cursor-pointer items-center justify-center rounded-md px-2.5 text-sm transition-colors duration-150", filters.sortBy === "name" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground")}
-                                data-id="name"
-                                type="button"
-                            >
+                            <button className={cn("flex h-8 cursor-pointer items-center justify-center rounded-md px-2.5 text-sm transition-colors duration-150", filters.sortBy === "name" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground")} data-id="name" type="button">
                                 Name
                             </button>
                         </AnimatedBackground>
-                        <button
-                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                            onClick={() => setSortOrder(filters.sortOrder === "asc" ? "desc" : "asc")}
-                            type="button"
-                        >
+                        <button className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground" onClick={() => setSortOrder(filters.sortOrder === "asc" ? "desc" : "asc")} type="button">
                             {filters.sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
                         </button>
                     </motion.div>
