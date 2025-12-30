@@ -453,6 +453,47 @@ impl TierPlacement {
         .await
     }
 
+    pub async fn update_sub_order(
+        pool: &PgPool,
+        id: Uuid,
+        sub_order: i32,
+    ) -> Result<Option<Self>, sqlx::Error> {
+        sqlx::query_as::<_, Self>(
+            r#"
+            UPDATE tier_placements SET sub_order = $1, updated_at = NOW()
+            WHERE id = $2
+            RETURNING *
+            "#,
+        )
+        .bind(sub_order)
+        .bind(id)
+        .fetch_optional(pool)
+        .await
+    }
+
+    pub async fn update(
+        pool: &PgPool,
+        id: Uuid,
+        sub_order: Option<i32>,
+        notes: Option<Option<String>>,
+    ) -> Result<Option<Self>, sqlx::Error> {
+        sqlx::query_as::<_, Self>(
+            r#"
+            UPDATE tier_placements
+            SET sub_order = COALESCE($1, sub_order),
+                notes = COALESCE($2, notes),
+                updated_at = NOW()
+            WHERE id = $3
+            RETURNING *
+            "#,
+        )
+        .bind(sub_order)
+        .bind(notes)
+        .bind(id)
+        .fetch_optional(pool)
+        .await
+    }
+
     pub async fn delete(pool: &PgPool, id: Uuid) -> Result<bool, sqlx::Error> {
         let result = sqlx::query("DELETE FROM tier_placements WHERE id = $1")
             .bind(id)
