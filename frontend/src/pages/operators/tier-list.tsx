@@ -1,36 +1,213 @@
 import type { GetServerSidePropsContext, NextPage } from "next";
 import Head from "next/head";
 import { TierListView } from "~/components/operators/tier-list";
+import { TierListIndex } from "~/components/operators/tier-list/impl/tier-list-index";
 import { env } from "~/env";
 import type { Operator } from "~/types/api";
 import type { TierListResponse, TierListVersionSummary } from "~/types/api/impl/tier-list";
 import type { OperatorFromList } from "~/types/api/operators";
 
-interface TierListPageProps {
+interface TierListPreview {
+    id: string;
+    name: string;
+    slug: string;
+    description: string | null;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+    operatorCount: number;
+    tierCount: number;
+    topOperators: OperatorFromList[];
+}
+
+interface TierListDetailProps {
+    mode: "detail";
     tierListData: TierListResponse;
     operatorsData: Record<string, OperatorFromList>;
     versions: TierListVersionSummary[];
 }
 
-const TierListPage: NextPage<TierListPageProps> = ({ tierListData, operatorsData, versions }) => {
+interface TierListIndexProps {
+    mode: "index";
+    tierLists: TierListPreview[];
+}
+
+type TierListPageProps = TierListDetailProps | TierListIndexProps;
+
+const TierListPage: NextPage<TierListPageProps> = (props) => {
+    if (props.mode === "index") {
+        return (
+            <>
+                <Head>
+                    <title>Tier Lists - Arknights Operator Rankings</title>
+                    <meta content="Browse all Arknights operator tier lists and rankings. Find the best operators for your team." name="description" />
+                </Head>
+                <TierListIndex tierLists={props.tierLists} />
+            </>
+        );
+    }
+
     return (
         <>
             <Head>
-                <title>{tierListData.tier_list.name} - Operator Tier List</title>
-                <meta content={tierListData.tier_list.description ?? "View operator rankings and tier list"} name="description" />
+                <title>{props.tierListData.tier_list.name} - Operator Tier List</title>
+                <meta content={props.tierListData.tier_list.description ?? "View operator rankings and tier list"} name="description" />
             </Head>
-            <TierListView operatorsData={operatorsData} tierListData={tierListData} versions={versions} />
+            <TierListView operatorsData={props.operatorsData} tierListData={props.tierListData} versions={props.versions} />
         </>
     );
 };
 
 export const getServerSideProps = async (context: GetServerSidePropsContext) => {
     const backendURL = env.BACKEND_URL;
+    const tierListSlug = context.query.slug as string | undefined;
 
     try {
-        // Get slug from query params, default to "main" if not provided
-        const tierListSlug = (context.query.slug as string) || "main";
+        // If no slug provided, show the index page with all tier lists
+        if (!tierListSlug) {
+            // Fetch all tier lists
+            const tierListsResponse = await fetch(`${backendURL}/tier-lists`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
 
+            if (!tierListsResponse.ok) {
+                console.error("Failed to fetch tier lists");
+                return {
+                    props: {
+                        mode: "index" as const,
+                        tierLists: [],
+                    },
+                };
+            }
+
+            const tierListsData = (await tierListsResponse.json()) as {
+                tier_lists: Array<{
+                    id: string;
+                    name: string;
+                    slug: string;
+                    description: string | null;
+                    is_active: boolean;
+                    created_at: string;
+                    updated_at: string;
+                }>;
+            };
+
+            // Fetch operator data for previews
+            const operatorsBase = `${backendURL}/static/operators`;
+            const operatorParams = new URLSearchParams({
+                limit: "1000",
+                fields: ["id", "name", "portrait", "rarity"].join(","),
+            });
+
+            const operatorsResponse = await fetch(`${operatorsBase}?${operatorParams.toString()}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+
+            const operatorsJson = (await operatorsResponse.json()) as {
+                operators: Operator[];
+            };
+
+            const operatorsMap: Record<string, OperatorFromList> = {};
+            for (const op of operatorsJson.operators) {
+                if (op.id) {
+                    operatorsMap[op.id] = op as OperatorFromList;
+                }
+            }
+
+            // Fetch details for each tier list to get operator counts and top operators
+            const tierListsWithDetails: TierListPreview[] = await Promise.all(
+                tierListsData.tier_lists.map(async (tierList) => {
+                    try {
+                        const detailResponse = await fetch(`${backendURL}/tier-lists/${tierList.slug}`, {
+                            method: "GET",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                        });
+
+                        if (!detailResponse.ok) {
+                            return {
+                                id: tierList.id,
+                                name: tierList.name,
+                                slug: tierList.slug,
+                                description: tierList.description ?? null,
+                                is_active: tierList.is_active,
+                                created_at: tierList.created_at,
+                                updated_at: tierList.updated_at,
+                                operatorCount: 0,
+                                tierCount: 0,
+                                topOperators: [],
+                            };
+                        }
+
+                        const detailData = await detailResponse.json();
+                        const tiers = detailData.tiers || [];
+
+                        // Count operators and tiers
+                        let operatorCount = 0;
+                        const topOperatorIds: string[] = [];
+
+                        for (const tier of tiers) {
+                            const tierOperators = tier.operators || [];
+                            operatorCount += tierOperators.length;
+
+                            // Get top operators from highest tiers (first few tiers by display_order)
+                            if (topOperatorIds.length < 6) {
+                                for (const op of tierOperators) {
+                                    if (topOperatorIds.length < 6) {
+                                        topOperatorIds.push(op.operator_id);
+                                    }
+                                }
+                            }
+                        }
+
+                        // Get operator data for top operators
+                        const topOperators = topOperatorIds.map((id) => operatorsMap[id]).filter((op): op is OperatorFromList => op !== undefined);
+
+                        return {
+                            id: tierList.id,
+                            name: tierList.name,
+                            slug: tierList.slug,
+                            description: tierList.description ?? null,
+                            is_active: tierList.is_active,
+                            created_at: tierList.created_at,
+                            updated_at: tierList.updated_at,
+                            operatorCount,
+                            tierCount: tiers.length,
+                            topOperators,
+                        };
+                    } catch {
+                        return {
+                            id: tierList.id,
+                            name: tierList.name,
+                            slug: tierList.slug,
+                            description: tierList.description ?? null,
+                            is_active: tierList.is_active,
+                            created_at: tierList.created_at,
+                            updated_at: tierList.updated_at,
+                            operatorCount: 0,
+                            tierCount: 0,
+                            topOperators: [],
+                        };
+                    }
+                }),
+            );
+
+            return {
+                props: {
+                    mode: "index" as const,
+                    tierLists: tierListsWithDetails,
+                },
+            };
+        }
+
+        // Slug provided - show the specific tier list detail view
         const tierListResponse = await fetch(`${backendURL}/tier-lists/${tierListSlug}`, {
             method: "GET",
             headers: {
@@ -143,6 +320,7 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
 
         return {
             props: {
+                mode: "detail" as const,
                 tierListData,
                 operatorsData,
                 versions,
