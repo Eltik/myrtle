@@ -69,9 +69,7 @@ export function VersionDetailDialog({ open, onOpenChange, version, tierListSlug 
                         Version Details
                         {version && <Badge variant="secondary">v{version.version}</Badge>}
                     </DialogTitle>
-                    <DialogDescription>
-                        {version && `Published on ${formatDate(version.published_at)}`}
-                    </DialogDescription>
+                    <DialogDescription>{version && `Published on ${formatDate(version.published_at)}`}</DialogDescription>
                 </DialogHeader>
 
                 {loading ? (
@@ -79,9 +77,7 @@ export function VersionDetailDialog({ open, onOpenChange, version, tierListSlug 
                         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                     </div>
                 ) : error ? (
-                    <div className="rounded-md border border-destructive/50 bg-destructive/10 p-4 text-center text-destructive">
-                        {error}
-                    </div>
+                    <div className="rounded-md border border-destructive/50 bg-destructive/10 p-4 text-center text-destructive">{error}</div>
                 ) : details ? (
                     <div className="space-y-4">
                         {/* Version Info */}
@@ -112,9 +108,7 @@ export function VersionDetailDialog({ open, onOpenChange, version, tierListSlug 
                         <div className="space-y-2">
                             <h4 className="font-medium text-foreground text-sm">Changelog</h4>
                             <div className="max-h-[300px] overflow-y-auto rounded-md border border-border/50 bg-muted/30 p-4">
-                                <pre className="whitespace-pre-wrap font-sans text-muted-foreground text-sm leading-relaxed">
-                                    {details.changelog}
-                                </pre>
+                                <pre className="whitespace-pre-wrap font-sans text-muted-foreground text-sm leading-relaxed">{details.changelog}</pre>
                             </div>
                         </div>
                     </div>

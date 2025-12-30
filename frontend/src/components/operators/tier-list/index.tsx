@@ -1,10 +1,14 @@
 "use client";
 
-import { BookOpen, ChevronRight, ClipboardList, History } from "lucide-react";
+import { BookOpen, ChevronRight, ClipboardList, HelpCircle, History } from "lucide-react";
 import { useState } from "react";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "~/components/ui/shadcn/accordion";
 import { Badge } from "~/components/ui/shadcn/badge";
-import { Card } from "~/components/ui/shadcn/card";
+import { Button } from "~/components/ui/shadcn/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "~/components/ui/shadcn/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/shadcn/popover";
+import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
+import { Separator } from "~/components/ui/shadcn/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/shadcn/tabs";
 import type { TierListResponse, TierListVersionSummary } from "~/types/api/impl/tier-list";
 import type { OperatorFromList } from "~/types/api/operators";
 import { TierRow } from "./impl/tier-row";
@@ -21,6 +25,7 @@ export function TierListView({ tierListData, operatorsData, versions }: TierList
     const [isGrayscaleActive, setIsGrayscaleActive] = useState(false);
     const [selectedVersion, setSelectedVersion] = useState<TierListVersionSummary | null>(null);
     const [versionDialogOpen, setVersionDialogOpen] = useState(false);
+    const [changelogDialogOpen, setChangelogDialogOpen] = useState(false);
 
     const handleVersionClick = (version: TierListVersionSummary) => {
         setSelectedVersion(version);
@@ -37,134 +42,105 @@ export function TierListView({ tierListData, operatorsData, versions }: TierList
         }
     };
 
+    const latestVersion = versions[0];
+
     return (
         <div className="min-w-0 space-y-6">
             {/* Header */}
             <div className="space-y-2">
-                <h1 className="font-bold text-3xl text-foreground md:text-4xl">{tierListData.tier_list.name}</h1>
-                {tierListData.tier_list.description && <p className="text-muted-foreground">{tierListData.tier_list.description}</p>}
-            </div>
+                <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-1">
+                        <h1 className="font-bold text-3xl text-foreground md:text-4xl">{tierListData.tier_list.name}</h1>
+                        {tierListData.tier_list.description && <p className="text-muted-foreground text-sm">{tierListData.tier_list.description}</p>}
+                    </div>
 
-            {/* Info Accordion */}
-            <Card className="border-border/50 bg-card/50 py-0">
-                <Accordion className="px-4" collapsible type="single">
-                    <AccordionItem value="how-it-works">
-                        <AccordionTrigger>
-                            <div className="flex items-center gap-2">
-                                <BookOpen className="h-4 w-4 text-primary" />
-                                <span>How This Tier List Works</span>
-                            </div>
-                        </AccordionTrigger>
-                        <AccordionContent>
-                            <div className="space-y-3 text-muted-foreground">
-                                <p>
-                                    Operators are ranked based on their overall performance, versatility, and impact across various game modes. Each tier represents a general power level:
-                                </p>
-                                <ul className="list-inside list-disc space-y-1 pl-2">
-                                    <li><span className="font-medium text-foreground">S+ / S Tier:</span> Meta-defining operators that excel in most situations</li>
-                                    <li><span className="font-medium text-foreground">A+ / A Tier:</span> Strong operators with high impact and good versatility</li>
-                                    <li><span className="font-medium text-foreground">B+ / B Tier:</span> Solid choices that perform well in their niche</li>
-                                    <li><span className="font-medium text-foreground">C / D Tier:</span> Situational operators or those outclassed by alternatives</li>
-                                </ul>
-                                <p className="text-sm italic">
-                                    Note: Rankings may vary based on team composition, module upgrades, and specific stage requirements. Operators within the same tier are ordered left-to-right by general recommendation.
-                                </p>
-                            </div>
-                        </AccordionContent>
-                    </AccordionItem>
-
-                    <AccordionItem value="criteria">
-                        <AccordionTrigger>
-                            <div className="flex items-center gap-2">
-                                <ClipboardList className="h-4 w-4 text-primary" />
-                                <span>Ranking Criteria</span>
-                            </div>
-                        </AccordionTrigger>
-                        <AccordionContent>
-                            <div className="space-y-3 text-muted-foreground">
-                                <p>Operators are evaluated based on the following criteria:</p>
-                                <div className="grid gap-3 sm:grid-cols-2">
-                                    <div className="rounded-md border border-border/50 bg-muted/30 p-3">
-                                        <p className="font-medium text-foreground text-sm">Combat Performance</p>
-                                        <p className="text-xs">DPS output, survivability, crowd control effectiveness, and skill cycling</p>
-                                    </div>
-                                    <div className="rounded-md border border-border/50 bg-muted/30 p-3">
-                                        <p className="font-medium text-foreground text-sm">Versatility</p>
-                                        <p className="text-xs">Effectiveness across different stage types, enemy compositions, and team setups</p>
-                                    </div>
-                                    <div className="rounded-md border border-border/50 bg-muted/30 p-3">
-                                        <p className="font-medium text-foreground text-sm">Ease of Use</p>
-                                        <p className="text-xs">Deployment cost, skill timing requirements, and positioning flexibility</p>
-                                    </div>
-                                    <div className="rounded-md border border-border/50 bg-muted/30 p-3">
-                                        <p className="font-medium text-foreground text-sm">Investment Value</p>
-                                        <p className="text-xs">Performance relative to resource investment and availability of alternatives</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </AccordionContent>
-                    </AccordionItem>
-
-                    <AccordionItem className="border-b-0" value="changelog">
-                        <AccordionTrigger>
-                            <div className="flex items-center gap-2">
-                                <History className="h-4 w-4 text-primary" />
-                                <span>Changelog</span>
-                                {versions.length > 0 && (
-                                    <Badge className="ml-1" variant="secondary">
-                                        v{versions[0]?.version}
-                                    </Badge>
-                                )}
-                            </div>
-                        </AccordionTrigger>
-                        <AccordionContent>
-                            <div className="space-y-2 text-muted-foreground">
-                                {versions.length > 0 ? (
-                                    versions.map((version) => (
-                                        <button
-                                            className="group w-full rounded-md border border-transparent p-3 text-left transition-colors hover:border-border hover:bg-muted/50"
-                                            key={version.id}
-                                            onClick={() => handleVersionClick(version)}
-                                            type="button"
-                                        >
-                                            <div className="flex items-center justify-between gap-2">
-                                                <div className="flex items-center gap-2">
-                                                    <p className="font-medium text-foreground text-sm">
-                                                        {new Date(version.published_at).toLocaleDateString("en-US", {
-                                                            year: "numeric",
-                                                            month: "long",
-                                                            day: "numeric",
-                                                        })}
-                                                    </p>
-                                                    <Badge variant="outline">v{version.version}</Badge>
-                                                </div>
-                                                <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-                                            </div>
-                                            {version.change_summary && <p className="mt-1 text-muted-foreground text-sm">{version.change_summary}</p>}
-                                        </button>
-                                    ))
-                                ) : (
-                                    <>
-                                        <div className="border-primary/30 border-l-2 pl-3">
-                                            <p className="font-medium text-foreground text-sm">
-                                                {new Date(tierListData.tier_list.updated_at).toLocaleDateString("en-US", {
-                                                    year: "numeric",
-                                                    month: "long",
-                                                    day: "numeric",
-                                                })}
-                                            </p>
-                                            <p className="text-sm">Initial tier list release</p>
+                    {/* Info Button */}
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button className="shrink-0" size="icon" variant="ghost">
+                                <HelpCircle className="h-5 w-5 text-muted-foreground" />
+                                <span className="sr-only">Tier list information</span>
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent align="end" className="w-80">
+                            <Tabs defaultValue="how-it-works">
+                                <TabsList className="w-full">
+                                    <TabsTrigger className="flex-1 text-xs" value="how-it-works">
+                                        <BookOpen className="mr-1.5 h-3 w-3" />
+                                        How It Works
+                                    </TabsTrigger>
+                                    <Separator className="h-4" orientation="vertical" />
+                                    <TabsTrigger className="flex-1 text-xs" value="criteria">
+                                        <ClipboardList className="mr-1.5 h-3 w-3" />
+                                        Criteria
+                                    </TabsTrigger>
+                                </TabsList>
+                                <Separator className="my-3" />
+                                <TabsContent className="mt-0 space-y-2 text-muted-foreground text-sm" value="how-it-works">
+                                    <p>Operators are ranked by overall performance across game modes:</p>
+                                    <ul className="space-y-1 text-xs">
+                                        <li>
+                                            <span className="font-medium text-foreground">S+ / S:</span> Meta-defining, excel in most situations
+                                        </li>
+                                        <li>
+                                            <span className="font-medium text-foreground">A+ / A:</span> Strong impact and good versatility
+                                        </li>
+                                        <li>
+                                            <span className="font-medium text-foreground">B+ / B:</span> Solid choices in their niche
+                                        </li>
+                                        <li>
+                                            <span className="font-medium text-foreground">C / D:</span> Situational or outclassed
+                                        </li>
+                                    </ul>
+                                    <p className="text-muted-foreground/70 text-xs italic">Rankings vary by team comp and stage. Left-to-right = general recommendation.</p>
+                                </TabsContent>
+                                <TabsContent className="mt-0 space-y-2 text-muted-foreground text-sm" value="criteria">
+                                    <p className="text-xs">Operators are evaluated on:</p>
+                                    <div className="space-y-1.5">
+                                        <div className="rounded border border-border/50 bg-muted/30 p-2">
+                                            <p className="font-medium text-foreground text-xs">Combat Performance</p>
+                                            <p className="text-[10px]">DPS, survivability, CC, skill cycling</p>
                                         </div>
-                                        <p className="text-muted-foreground/70 text-xs italic">
-                                            Future updates will be documented here with detailed change notes.
-                                        </p>
-                                    </>
-                                )}
-                            </div>
-                        </AccordionContent>
-                    </AccordionItem>
-                </Accordion>
-            </Card>
+                                        <div className="rounded border border-border/50 bg-muted/30 p-2">
+                                            <p className="font-medium text-foreground text-xs">Versatility</p>
+                                            <p className="text-[10px]">Effectiveness across stages and teams</p>
+                                        </div>
+                                        <div className="rounded border border-border/50 bg-muted/30 p-2">
+                                            <p className="font-medium text-foreground text-xs">Ease of Use</p>
+                                            <p className="text-[10px]">Cost, timing, positioning flexibility</p>
+                                        </div>
+                                        <div className="rounded border border-border/50 bg-muted/30 p-2">
+                                            <p className="font-medium text-foreground text-xs">Investment Value</p>
+                                            <p className="text-[10px]">Performance vs resources spent</p>
+                                        </div>
+                                    </div>
+                                </TabsContent>
+                            </Tabs>
+                        </PopoverContent>
+                    </Popover>
+                </div>
+
+                {/* Version Info - Below title */}
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground text-sm">
+                    <span>
+                        Updated{" "}
+                        {new Date(tierListData.tier_list.updated_at).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                        })}
+                    </span>
+                    {versions.length > 0 && (
+                        <>
+                            <span className="text-muted-foreground/50">|</span>
+                            <button className="inline-flex items-center gap-1.5 text-primary hover:underline" onClick={() => setChangelogDialogOpen(true)} type="button">
+                                <History className="h-3.5 w-3.5" />
+                                <span>v{latestVersion?.version}</span>
+                            </button>
+                        </>
+                    )}
+                </div>
+            </div>
 
             {/* Tier List */}
             <div className="space-y-4">
@@ -178,25 +154,57 @@ export function TierListView({ tierListData, operatorsData, versions }: TierList
                 })}
             </div>
 
-            {/* Last Updated */}
-            <div className="flex items-center justify-center pt-4 text-muted-foreground text-sm">
-                <p>
-                    Last updated:{" "}
-                    {new Date(tierListData.tier_list.updated_at).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                    })}
-                </p>
-            </div>
+            {/* Changelog Dialog */}
+            <Dialog onOpenChange={setChangelogDialogOpen} open={changelogDialogOpen}>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <History className="h-5 w-5" />
+                            Changelog
+                        </DialogTitle>
+                        <DialogDescription>Version history and updates for this tier list</DialogDescription>
+                    </DialogHeader>
+                    <ScrollArea className="max-h-[60vh]">
+                        <div className="space-y-2 pr-4">
+                            {versions.length > 0 ? (
+                                versions.map((version) => (
+                                    <button
+                                        className="group w-full rounded-md border border-border p-3 text-left transition-colors hover:border-border hover:bg-muted/50"
+                                        key={version.id}
+                                        onClick={() => {
+                                            setChangelogDialogOpen(false);
+                                            handleVersionClick(version);
+                                        }}
+                                        type="button"
+                                    >
+                                        <div className="flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-2">
+                                                <p className="font-medium text-foreground text-sm">
+                                                    {new Date(version.published_at).toLocaleDateString("en-US", {
+                                                        year: "numeric",
+                                                        month: "long",
+                                                        day: "numeric",
+                                                    })}
+                                                </p>
+                                                <Badge variant="outline">v{version.version}</Badge>
+                                            </div>
+                                            <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                                        </div>
+                                        {version.change_summary && <p className="mt-1 text-muted-foreground text-sm">{version.change_summary}</p>}
+                                    </button>
+                                ))
+                            ) : (
+                                <div className="py-8 text-center text-muted-foreground">
+                                    <p>No versions published yet.</p>
+                                </div>
+                            )}
+                        </div>
+                    </ScrollArea>
+                </DialogContent>
+            </Dialog>
 
             {/* Version Detail Dialog */}
-            <VersionDetailDialog
-                onOpenChange={setVersionDialogOpen}
-                open={versionDialogOpen}
-                tierListSlug={tierListData.tier_list.slug}
-                version={selectedVersion}
-            />
+            <VersionDetailDialog onOpenChange={setVersionDialogOpen} open={versionDialogOpen} tierListSlug={tierListData.tier_list.slug} version={selectedVersion} />
         </div>
     );
 }
