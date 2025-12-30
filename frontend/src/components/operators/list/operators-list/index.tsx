@@ -1,6 +1,6 @@
 "use client";
 
-import { Grid3X3, LayoutList, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, Grid3X3, LayoutList, Search } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatedBackground } from "~/components/ui/motion-primitives/animated-background";
@@ -160,6 +160,42 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                         )}
                     </AnimatePresence>
 
+                    {/* Sort Controls - Always visible next to view toggle */}
+                    <motion.div className="flex items-center gap-1 rounded-lg border border-border bg-secondary/50 p-1" layout transition={TOGGLE_TRANSITION}>
+                        <AnimatedBackground
+                            className="rounded-md bg-primary"
+                            defaultValue={filters.sortBy}
+                            onValueChange={(value) => {
+                                if (value === "rarity" || value === "name") {
+                                    setSortBy(value);
+                                }
+                            }}
+                            transition={TOGGLE_TRANSITION}
+                        >
+                            <button
+                                className={cn("flex h-8 cursor-pointer items-center justify-center rounded-md px-2.5 text-sm transition-colors duration-150", filters.sortBy === "rarity" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground")}
+                                data-id="rarity"
+                                type="button"
+                            >
+                                Rarity
+                            </button>
+                            <button
+                                className={cn("flex h-8 cursor-pointer items-center justify-center rounded-md px-2.5 text-sm transition-colors duration-150", filters.sortBy === "name" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground")}
+                                data-id="name"
+                                type="button"
+                            >
+                                Name
+                            </button>
+                        </AnimatedBackground>
+                        <button
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                            onClick={() => setSortOrder(filters.sortOrder === "asc" ? "desc" : "asc")}
+                            type="button"
+                        >
+                            {filters.sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+                        </button>
+                    </motion.div>
+
                     {/* Filter Toggle - Responsive: Dialog on mobile, Popover on desktop */}
                     <ResponsiveFilterContainer activeFilterCount={activeFilterCount} hasActiveFilters={hasActiveFilters} onOpenChange={setShowFilters} open={showFilters}>
                         <OperatorFilters
@@ -178,8 +214,6 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                             onNationChange={setSelectedNations}
                             onRaceChange={setSelectedRaces}
                             onRarityChange={setSelectedRarities}
-                            onSortByChange={setSortBy}
-                            onSortOrderChange={setSortOrder}
                             onSubclassChange={setSelectedSubclasses}
                             races={filterOptions.races}
                             rarities={[...RARITIES]}
@@ -192,8 +226,6 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                             selectedRaces={filters.selectedRaces}
                             selectedRarities={filters.selectedRarities}
                             selectedSubclasses={filters.selectedSubclasses}
-                            sortBy={filters.sortBy}
-                            sortOrder={filters.sortOrder}
                             subclasses={filterOptions.subclasses}
                         />
                     </ResponsiveFilterContainer>
