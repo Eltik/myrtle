@@ -1,36 +1,35 @@
-import type { NextPage } from "next";
+import type { GetServerSidePropsContext, NextPage } from "next";
 import Head from "next/head";
 import { TierListView } from "~/components/operators/tier-list";
 import { env } from "~/env";
 import type { Operator } from "~/types/api";
-import type { TierListResponse } from "~/types/api/impl/tier-list";
+import type { TierListResponse, TierListVersionSummary } from "~/types/api/impl/tier-list";
 import type { OperatorFromList } from "~/types/api/operators";
 
 interface TierListPageProps {
     tierListData: TierListResponse;
     operatorsData: Record<string, OperatorFromList>;
+    versions: TierListVersionSummary[];
 }
 
-const TierListPage: NextPage<TierListPageProps> = ({ tierListData, operatorsData }) => {
+const TierListPage: NextPage<TierListPageProps> = ({ tierListData, operatorsData, versions }) => {
     return (
         <>
             <Head>
                 <title>{tierListData.tier_list.name} - Operator Tier List</title>
                 <meta content={tierListData.tier_list.description ?? "View operator rankings and tier list"} name="description" />
             </Head>
-            <TierListView operatorsData={operatorsData} tierListData={tierListData} />
+            <TierListView operatorsData={operatorsData} tierListData={tierListData} versions={versions} />
         </>
     );
 };
 
-export const getServerSideProps = async () => {
+export const getServerSideProps = async (context: GetServerSidePropsContext) => {
     const backendURL = env.BACKEND_URL;
 
     try {
-        // Fetch tier list data from backend
-        // TODO: Update this endpoint to match your actual backend API
-        // For now, using a placeholder slug - adjust as needed
-        const tierListSlug = "main"; // or get from query params
+        // Get slug from query params, default to "main" if not provided
+        const tierListSlug = (context.query.slug as string) || "main";
 
         const tierListResponse = await fetch(`${backendURL}/tier-lists/${tierListSlug}`, {
             method: "GET",
@@ -45,7 +44,40 @@ export const getServerSideProps = async () => {
             };
         }
 
-        const tierListData = (await tierListResponse.json()) as TierListResponse;
+        const rawData = await tierListResponse.json();
+
+        // Transform backend response to match frontend TierListResponse format
+        // Backend returns tier.operators, frontend expects tier.placements
+        // Note: Convert undefined to null for Next.js serialization
+        const tierListData: TierListResponse = {
+            tier_list: {
+                id: rawData.id,
+                name: rawData.name,
+                slug: rawData.slug,
+                description: rawData.description ?? null,
+                is_active: rawData.is_active ?? false,
+                created_by: rawData.created_by ?? null,
+                created_at: rawData.created_at ?? null,
+                updated_at: rawData.updated_at ?? null,
+            },
+            tiers: (rawData.tiers || []).map((tier: { id: string; name: string; display_order: number; color: string | null; description: string | null; operators?: Array<{ id: string; operator_id: string; sub_order: number; notes: string | null }> }) => ({
+                id: tier.id,
+                tier_list_id: rawData.id,
+                name: tier.name,
+                display_order: tier.display_order,
+                color: tier.color ?? null,
+                description: tier.description ?? null,
+                placements: (tier.operators || []).map((op) => ({
+                    id: op.id,
+                    tier_id: tier.id,
+                    operator_id: op.operator_id,
+                    sub_order: op.sub_order,
+                    notes: op.notes ?? null,
+                    created_at: rawData.created_at ?? null,
+                    updated_at: rawData.updated_at ?? null,
+                })),
+            })),
+        };
 
         // Get all unique operator IDs from placements
         const operatorIds = new Set<string>();
@@ -86,10 +118,34 @@ export const getServerSideProps = async () => {
             }
         }
 
+        // Fetch versions for changelog (don't fail if this errors)
+        let versions: TierListVersionSummary[] = [];
+        try {
+            const versionsResponse = await fetch(`${backendURL}/tier-lists/${tierListSlug}/versions?limit=20`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (versionsResponse.ok) {
+                const versionsData = (await versionsResponse.json()) as { versions: TierListVersionSummary[] };
+                versions = versionsData.versions.map((v) => ({
+                    ...v,
+                    change_summary: v.change_summary ?? null,
+                    published_by: v.published_by ?? null,
+                }));
+            }
+        } catch (versionsError) {
+            console.error("Error fetching versions:", versionsError);
+            // Continue without versions
+        }
+
         return {
             props: {
                 tierListData,
                 operatorsData,
+                versions,
             },
         };
     } catch (error) {
