@@ -159,10 +159,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             }
         }
 
-        // Update existing tiers
+        // Build a map of all current placements by operator_id to detect cross-tier moves
+        const currentPlacementsByOperator = new Map<string, { id: string; tier_id: string }>();
+        for (const tier of currentTiers) {
+            for (const op of tier.operators || []) {
+                currentPlacementsByOperator.set(op.operator_id, { id: op.id, tier_id: tier.id });
+            }
+        }
+
+        // Collect placement operations
+        const placementsToCreate: Array<{ tierId: string; placement: PlacementData }> = [];
+        const placementsToMove: Array<{ placementId: string; newTierId: string; placement: PlacementData }> = [];
+        const placementsToUpdate: Array<{ placementId: string; placement: PlacementData }> = [];
+        const placementIdsHandled = new Set<string>(); // Track placements we're keeping or moving
+
+        // Update existing tiers and collect placement operations
         for (const tier of tiersToUpdate) {
-            // Update tier metadata
-            await fetch(`${backendUrl}/tier-lists/${slug}/tiers/${tier.id}`, {
+            // Update tier metadata (excluding display_order - handled by reorder endpoint)
+            const tierUpdateResponse = await fetch(`${backendUrl}/tier-lists/${slug}/tiers/${tier.id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -170,63 +184,129 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
                 },
                 body: JSON.stringify({
                     name: tier.name,
-                    display_order: tier.display_order,
                     color: tier.color,
                     description: tier.description,
                 }),
             });
 
-            // Get current placements for this tier
-            const currentTier = currentTiers.find((t: { id: string }) => t.id === tier.id);
-            const currentPlacements = currentTier?.operators || [];
-
-            // Track which placements to keep
-            const placementIdsToKeep = new Set<string>();
+            if (!tierUpdateResponse.ok) {
+                console.error(`Failed to update tier ${tier.id}:`, await tierUpdateResponse.text());
+            }
 
             for (const placement of tier.placements) {
                 if (!placement.id || placement.id.startsWith("new-")) {
-                    // Create new placement
-                    await fetch(`${backendUrl}/tier-lists/${slug}/placements`, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Bearer ${siteToken}`,
-                        },
-                        body: JSON.stringify({
-                            tier_id: tier.id,
-                            operator_id: placement.operator_id,
-                            sub_order: placement.sub_order,
-                            notes: placement.notes,
-                        }),
-                    });
+                    // Check if this operator already exists elsewhere in the tier list (cross-tier move)
+                    const existingPlacement = currentPlacementsByOperator.get(placement.operator_id);
+                    if (existingPlacement && existingPlacement.tier_id !== tier.id) {
+                        // This is a cross-tier move - use move endpoint
+                        console.log(`Moving operator ${placement.operator_id} from tier ${existingPlacement.tier_id} to ${tier.id}`);
+                        placementsToMove.push({
+                            placementId: existingPlacement.id,
+                            newTierId: tier.id ?? "",
+                            placement,
+                        });
+                        placementIdsHandled.add(existingPlacement.id);
+                    } else if (!existingPlacement) {
+                        // Genuinely new placement
+                        placementsToCreate.push({ tierId: tier.id ?? "", placement });
+                    }
+                    // If existingPlacement.tier_id === tier.id, operator is already in this tier, skip
                 } else {
-                    placementIdsToKeep.add(placement.id);
-                    // Update existing placement (sub_order, notes)
-                    await fetch(`${backendUrl}/tier-lists/${slug}/placements/${placement.id}`, {
-                        method: "PUT",
-                        headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Bearer ${siteToken}`,
-                        },
-                        body: JSON.stringify({
-                            sub_order: placement.sub_order,
-                            notes: placement.notes,
-                        }),
-                    });
+                    placementIdsHandled.add(placement.id);
+                    // Queue for update
+                    placementsToUpdate.push({ placementId: placement.id, placement });
                 }
             }
+        }
 
-            // Delete placements that are no longer present
-            for (const currentPlacement of currentPlacements) {
-                if (!placementIdsToKeep.has(currentPlacement.id)) {
-                    await fetch(`${backendUrl}/tier-lists/${slug}/placements/${currentPlacement.id}`, {
-                        method: "DELETE",
-                        headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Bearer ${siteToken}`,
-                        },
-                    });
+        // Find placements to delete (not handled and not being moved)
+        const placementsToDelete: string[] = [];
+        for (const tier of currentTiers) {
+            for (const op of tier.operators || []) {
+                if (!placementIdsHandled.has(op.id)) {
+                    placementsToDelete.push(op.id);
                 }
+            }
+        }
+
+        // Execute placement operations
+
+        // 1. Move placements to different tiers (must happen first)
+        for (const { placementId, newTierId, placement } of placementsToMove) {
+            console.log(`Moving placement ${placementId} to tier ${newTierId}`);
+            const moveResponse = await fetch(`${backendUrl}/tier-lists/${slug}/placements/${placementId}/move`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${siteToken}`,
+                },
+                body: JSON.stringify({
+                    new_tier_id: newTierId,
+                    new_sub_order: placement.sub_order,
+                }),
+            });
+
+            if (!moveResponse.ok) {
+                const errorText = await moveResponse.text();
+                console.error(`Failed to move placement ${placementId}:`, errorText);
+            }
+        }
+
+        // 2. Create genuinely new placements
+        for (const { tierId, placement } of placementsToCreate) {
+            console.log(`Creating placement for operator ${placement.operator_id} in tier ${tierId}`);
+            const createResponse = await fetch(`${backendUrl}/tier-lists/${slug}/placements`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${siteToken}`,
+                },
+                body: JSON.stringify({
+                    tier_id: tierId,
+                    operator_id: placement.operator_id,
+                    sub_order: placement.sub_order,
+                    notes: placement.notes,
+                }),
+            });
+
+            if (!createResponse.ok) {
+                const errorText = await createResponse.text();
+                console.error(`Failed to create placement for ${placement.operator_id}:`, errorText);
+            }
+        }
+
+        // 3. Update existing placements (sub_order, notes)
+        for (const { placementId, placement } of placementsToUpdate) {
+            const updateResponse = await fetch(`${backendUrl}/tier-lists/${slug}/placements/${placementId}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${siteToken}`,
+                },
+                body: JSON.stringify({
+                    sub_order: placement.sub_order,
+                    notes: placement.notes,
+                }),
+            });
+
+            if (!updateResponse.ok) {
+                console.error(`Failed to update placement ${placementId}:`, await updateResponse.text());
+            }
+        }
+
+        // 4. Delete removed placements
+        for (const placementId of placementsToDelete) {
+            console.log(`Deleting placement ${placementId}`);
+            const deleteResponse = await fetch(`${backendUrl}/tier-lists/${slug}/placements/${placementId}`, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${siteToken}`,
+                },
+            });
+
+            if (!deleteResponse.ok) {
+                console.error(`Failed to delete placement ${placementId}:`, await deleteResponse.text());
             }
         }
 

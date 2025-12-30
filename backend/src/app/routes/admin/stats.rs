@@ -1,4 +1,4 @@
-use axum::{extract::State, http::HeaderMap, Json};
+use axum::{Json, extract::State, http::HeaderMap};
 use serde::Serialize;
 use std::collections::HashMap;
 
@@ -138,15 +138,14 @@ async fn fetch_user_stats(state: &AppState) -> Result<UserStats, ApiError> {
         })?;
 
     // Get counts by role
-    let role_counts: Vec<(String, i64)> = sqlx::query_as(
-        "SELECT role, COUNT(*) as count FROM users GROUP BY role",
-    )
-    .fetch_all(&state.db)
-    .await
-    .map_err(|e| {
-        eprintln!("Database error: {e:?}");
-        ApiError::Internal("Failed to fetch role counts".into())
-    })?;
+    let role_counts: Vec<(String, i64)> =
+        sqlx::query_as("SELECT role, COUNT(*) as count FROM users GROUP BY role")
+            .fetch_all(&state.db)
+            .await
+            .map_err(|e| {
+                eprintln!("Database error: {e:?}");
+                ApiError::Internal("Failed to fetch role counts".into())
+            })?;
 
     let mut by_role = RoleCounts {
         user: 0,
@@ -166,15 +165,14 @@ async fn fetch_user_stats(state: &AppState) -> Result<UserStats, ApiError> {
     }
 
     // Get counts by server
-    let server_counts: Vec<(String, i64)> = sqlx::query_as(
-        "SELECT server, COUNT(*) as count FROM users GROUP BY server",
-    )
-    .fetch_all(&state.db)
-    .await
-    .map_err(|e| {
-        eprintln!("Database error: {e:?}");
-        ApiError::Internal("Failed to fetch server counts".into())
-    })?;
+    let server_counts: Vec<(String, i64)> =
+        sqlx::query_as("SELECT server, COUNT(*) as count FROM users GROUP BY server")
+            .fetch_all(&state.db)
+            .await
+            .map_err(|e| {
+                eprintln!("Database error: {e:?}");
+                ApiError::Internal("Failed to fetch server counts".into())
+            })?;
 
     let by_server: HashMap<String, i64> = server_counts.into_iter().collect();
 
@@ -268,7 +266,9 @@ async fn fetch_tier_list_stats(state: &AppState) -> Result<TierListStats, ApiErr
     let mut tier_lists = Vec::new();
     for tl in tier_lists_raw {
         // Count tiers
-        let tiers = Tier::find_by_tier_list(&state.db, tl.id).await.unwrap_or_default();
+        let tiers = Tier::find_by_tier_list(&state.db, tl.id)
+            .await
+            .unwrap_or_default();
         let tier_count = tiers.len() as i64;
 
         // Count operators
@@ -278,13 +278,12 @@ async fn fetch_tier_list_stats(state: &AppState) -> Result<TierListStats, ApiErr
         let operator_count = placements.len() as i64;
 
         // Count versions
-        let version_count: i64 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM tier_list_versions WHERE tier_list_id = $1",
-        )
-        .bind(tl.id)
-        .fetch_one(&state.db)
-        .await
-        .unwrap_or(0);
+        let version_count: i64 =
+            sqlx::query_scalar("SELECT COUNT(*) FROM tier_list_versions WHERE tier_list_id = $1")
+                .bind(tl.id)
+                .fetch_one(&state.db)
+                .await
+                .unwrap_or(0);
 
         tier_lists.push(TierListSummary {
             id: tl.id.to_string(),
@@ -310,15 +309,14 @@ async fn fetch_tier_list_stats(state: &AppState) -> Result<TierListStats, ApiErr
 
 async fn fetch_recent_activity(state: &AppState) -> Result<Vec<RecentActivity>, ApiError> {
     // Get recent changes across all tier lists
-    let changes: Vec<TierChangeLog> = sqlx::query_as(
-        "SELECT * FROM tier_change_log ORDER BY changed_at DESC LIMIT 50",
-    )
-    .fetch_all(&state.db)
-    .await
-    .map_err(|e| {
-        eprintln!("Database error: {e:?}");
-        ApiError::Internal("Failed to fetch recent activity".into())
-    })?;
+    let changes: Vec<TierChangeLog> =
+        sqlx::query_as("SELECT * FROM tier_change_log ORDER BY changed_at DESC LIMIT 50")
+            .fetch_all(&state.db)
+            .await
+            .map_err(|e| {
+                eprintln!("Database error: {e:?}");
+                ApiError::Internal("Failed to fetch recent activity".into())
+            })?;
 
     let mut activities = Vec::new();
 

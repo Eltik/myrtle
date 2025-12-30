@@ -336,6 +336,18 @@ impl Tier {
         tier_list_id: Uuid,
         tier_orders: Vec<(Uuid, i32)>,
     ) -> Result<(), sqlx::Error> {
+        // First, set all display_orders to temporary negative values to avoid unique constraint violations
+        // when tiers swap positions
+        for (i, (tier_id, _)) in tier_orders.iter().enumerate() {
+            sqlx::query("UPDATE tiers SET display_order = $1 WHERE id = $2 AND tier_list_id = $3")
+                .bind(-(i as i32) - 1000) // Use negative values like -1000, -1001, etc.
+                .bind(tier_id)
+                .bind(tier_list_id)
+                .execute(pool)
+                .await?;
+        }
+
+        // Now set the final display_order values
         for (tier_id, order) in tier_orders {
             sqlx::query("UPDATE tiers SET display_order = $1 WHERE id = $2 AND tier_list_id = $3")
                 .bind(order)

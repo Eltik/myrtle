@@ -1,11 +1,12 @@
 "use client";
 
-import { DndContext, DragOverlay, KeyboardSensor, PointerSensor, closestCenter, useDroppable, useSensor, useSensors, type DragEndEvent, type DragOverEvent, type DragStartEvent } from "@dnd-kit/core";
-import { SortableContext, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { closestCenter, DndContext, type DragEndEvent, type DragOverEvent, DragOverlay, type DragStartEvent, KeyboardSensor, PointerSensor, useDroppable, useSensor, useSensors } from "@dnd-kit/core";
+import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ArrowLeft, Check, ChevronDown, ChevronUp, GripVertical, Plus, Save, Settings, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import { useMemo, useState } from "react";
+import { cn, rarityToNumber } from "~/lib/utils";
 import type { Tier, TierListResponse, TierPlacement, TierWithPlacements } from "~/types/api/impl/tier-list";
 import type { OperatorFromList } from "~/types/api/operators";
 import { Disclosure, DisclosureContent, DisclosureTrigger } from "../../ui/motion-primitives/disclosure";
@@ -20,7 +21,6 @@ import { ScrollArea } from "../../ui/shadcn/scroll-area";
 import { Separator } from "../../ui/shadcn/separator";
 import { Switch } from "../../ui/shadcn/switch";
 import { Textarea } from "../../ui/shadcn/textarea";
-import { cn, rarityToNumber } from "~/lib/utils";
 
 // Default tier colors
 const DEFAULT_TIER_COLORS: Record<string, string> = {
@@ -81,11 +81,7 @@ function SortableOperatorCard({ placement, operator, onRemove }: SortableOperato
     return (
         <div className="group relative aspect-square overflow-hidden rounded-md border bg-card" ref={setNodeRef} style={style}>
             {/* Drag handle overlay */}
-            <div
-                className="absolute inset-0 z-10 cursor-grab active:cursor-grabbing"
-                {...attributes}
-                {...listeners}
-            />
+            <div className="absolute inset-0 z-10 cursor-grab active:cursor-grabbing" {...attributes} {...listeners} />
 
             <Image alt={operator.name} className="h-full w-full object-cover" fill src={`/api/cdn${operator.portrait}`} />
 
@@ -175,13 +171,7 @@ function DroppableTierZone({ tierId, isOver, children }: DroppableTierZoneProps)
     });
 
     return (
-        <div
-            className={cn(
-                "min-h-[60px] rounded-md p-4 transition-colors",
-                isOver && "bg-primary/10 ring-2 ring-primary ring-inset",
-            )}
-            ref={setNodeRef}
-        >
+        <div className={cn("min-h-[60px] rounded-md p-4 transition-colors", isOver && "bg-primary/10 ring-2 ring-primary ring-inset")} ref={setNodeRef}>
             {children}
         </div>
     );
@@ -434,9 +424,7 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
 
                     const sortedPlacements = [...tier.placements].sort((a, b) => a.sub_order - b.sub_order);
                     const oldIndex = sortedPlacements.findIndex((p) => p.id === activeId);
-                    const newIndex = targetPlacementId
-                        ? sortedPlacements.findIndex((p) => p.id === targetPlacementId)
-                        : sortedPlacements.length;
+                    const newIndex = targetPlacementId ? sortedPlacements.findIndex((p) => p.id === targetPlacementId) : sortedPlacements.length;
 
                     if (oldIndex === -1 || newIndex === -1) return tier;
 
@@ -598,23 +586,11 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
                 <CardContent className="space-y-0 p-0">
                     {tiers.length > 0 ? (
                         /* Single DndContext for both tier rows and operators */
-                        <DndContext
-                            collisionDetection={closestCenter}
-                            onDragEnd={handleDragEnd}
-                            onDragOver={handleDragOver}
-                            onDragStart={handleDragStart}
-                            sensors={sensors}
-                        >
+                        <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd} onDragOver={handleDragOver} onDragStart={handleDragStart} sensors={sensors}>
                             {/* SortableContext for tier rows */}
-                            <SortableContext
-                                items={tiers.map((t) => `tier-row-${t.id}`)}
-                                strategy={verticalListSortingStrategy}
-                            >
+                            <SortableContext items={tiers.map((t) => `tier-row-${t.id}`)} strategy={verticalListSortingStrategy}>
                                 {/* SortableContext for all operator placements */}
-                                <SortableContext
-                                    items={tiers.flatMap((t) => t.placements.map((p) => p.id))}
-                                    strategy={rectSortingStrategy}
-                                >
+                                <SortableContext items={tiers.flatMap((t) => t.placements.map((p) => p.id))} strategy={rectSortingStrategy}>
                                     <div className="divide-y">
                                         {tiers.map((tier) => {
                                             const tierColor = tier.color || DEFAULT_TIER_COLORS[tier.name] || "#888888";
@@ -629,32 +605,19 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
                                                             {/* Tier Header */}
                                                             <div className="flex items-center gap-2 bg-muted/30 px-4 py-2">
                                                                 {/* Drag handle */}
-                                                                <div
-                                                                    className="flex h-7 w-7 cursor-grab items-center justify-center rounded-md hover:bg-muted active:cursor-grabbing"
-                                                                    {...dragHandleProps}
-                                                                >
+                                                                <div className="flex h-7 w-7 cursor-grab items-center justify-center rounded-md hover:bg-muted active:cursor-grabbing" {...dragHandleProps}>
                                                                     <GripVertical className="h-4 w-4 text-muted-foreground" />
                                                                 </div>
 
                                                                 {/* Color block with popover */}
                                                                 <Popover>
                                                                     <PopoverTrigger asChild>
-                                                                        <button
-                                                                            className="h-8 w-12 cursor-pointer rounded transition-all hover:ring-2 hover:ring-primary hover:ring-offset-2"
-                                                                            style={{ backgroundColor: tierColor }}
-                                                                            type="button"
-                                                                        />
+                                                                        <button className="h-8 w-12 cursor-pointer rounded transition-all hover:ring-2 hover:ring-primary hover:ring-offset-2" style={{ backgroundColor: tierColor }} type="button" />
                                                                     </PopoverTrigger>
                                                                     <PopoverContent className="w-auto p-3">
                                                                         <div className="grid grid-cols-6 gap-2">
                                                                             {PRESET_COLORS.map((color) => (
-                                                                                <button
-                                                                                    className={cn("h-6 w-6 rounded border-2", tier.color === color ? "border-foreground" : "border-transparent")}
-                                                                                    key={color}
-                                                                                    onClick={() => handleUpdateTier(tier.id, { color })}
-                                                                                    style={{ backgroundColor: color }}
-                                                                                    type="button"
-                                                                                />
+                                                                                <button className={cn("h-6 w-6 rounded border-2", tier.color === color ? "border-foreground" : "border-transparent")} key={color} onClick={() => handleUpdateTier(tier.id, { color })} style={{ backgroundColor: color }} type="button" />
                                                                             ))}
                                                                         </div>
                                                                         <Separator className="my-2" />
@@ -692,14 +655,7 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
                                                                                         const operator = operatorsData[placement.operator_id];
                                                                                         if (!operator) return null;
 
-                                                                                        return (
-                                                                                            <SortableOperatorCard
-                                                                                                key={placement.id}
-                                                                                                onRemove={() => handleRemoveOperatorFromTier(tier.id, placement.id)}
-                                                                                                operator={operator}
-                                                                                                placement={placement}
-                                                                                            />
-                                                                                        );
+                                                                                        return <SortableOperatorCard key={placement.id} onRemove={() => handleRemoveOperatorFromTier(tier.id, placement.id)} operator={operator} placement={placement} />;
                                                                                     })}
 
                                                                                 {/* Add operator button */}
@@ -744,31 +700,28 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
 
                             {/* Drag overlay */}
                             <DragOverlay>
-                                {activeDragId && activeDragType === "tier" ? (
-                                    (() => {
-                                        const tierId = activeDragId.replace("tier-row-", "");
-                                        const tier = tiers.find((t) => t.id === tierId);
-                                        return tier ? (
-                                            <div className="rounded-md border bg-card shadow-lg">
-                                                <div className="flex items-center gap-2 bg-muted/30 px-4 py-2">
-                                                    <GripVertical className="h-4 w-4 text-muted-foreground" />
-                                                    <div
-                                                        className="h-8 w-12 rounded"
-                                                        style={{ backgroundColor: tier.color || "#888888" }}
-                                                    />
-                                                    <span className="font-semibold">{tier.name}</span>
-                                                </div>
-                                            </div>
-                                        ) : null;
-                                    })()
-                                ) : activeDragId && activeDragType === "operator" ? (
-                                    (() => {
-                                        const tier = tiers.find((t) => t.placements.some((p) => p.id === activeDragId));
-                                        const placement = tier?.placements.find((p) => p.id === activeDragId);
-                                        const operator = placement ? operatorsData[placement.operator_id] : null;
-                                        return operator ? <DragOverlayCard operator={operator} /> : null;
-                                    })()
-                                ) : null}
+                                {activeDragId && activeDragType === "tier"
+                                    ? (() => {
+                                          const tierId = activeDragId.replace("tier-row-", "");
+                                          const tier = tiers.find((t) => t.id === tierId);
+                                          return tier ? (
+                                              <div className="rounded-md border bg-card shadow-lg">
+                                                  <div className="flex items-center gap-2 bg-muted/30 px-4 py-2">
+                                                      <GripVertical className="h-4 w-4 text-muted-foreground" />
+                                                      <div className="h-8 w-12 rounded" style={{ backgroundColor: tier.color || "#888888" }} />
+                                                      <span className="font-semibold">{tier.name}</span>
+                                                  </div>
+                                              </div>
+                                          ) : null;
+                                      })()
+                                    : activeDragId && activeDragType === "operator"
+                                      ? (() => {
+                                            const tier = tiers.find((t) => t.placements.some((p) => p.id === activeDragId));
+                                            const placement = tier?.placements.find((p) => p.id === activeDragId);
+                                            const operator = placement ? operatorsData[placement.operator_id] : null;
+                                            return operator ? <DragOverlayCard operator={operator} /> : null;
+                                        })()
+                                      : null}
                             </DragOverlay>
                         </DndContext>
                     ) : (
@@ -815,10 +768,7 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
 
                                         return (
                                             <button
-                                                className={cn(
-                                                    "group relative aspect-square overflow-hidden rounded-md border bg-card transition-all",
-                                                    isPlaced ? "cursor-not-allowed opacity-40 grayscale" : "hover:ring-2 hover:ring-primary",
-                                                )}
+                                                className={cn("group relative aspect-square overflow-hidden rounded-md border bg-card transition-all", isPlaced ? "cursor-not-allowed opacity-40 grayscale" : "hover:ring-2 hover:ring-primary")}
                                                 disabled={isPlaced}
                                                 key={operator.id}
                                                 onClick={() => {
@@ -846,9 +796,7 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
                                     })}
                                 </div>
                             ) : (
-                                <div className="flex h-full min-h-[200px] items-center justify-center text-muted-foreground">
-                                    No operators found matching your search
-                                </div>
+                                <div className="flex h-full min-h-[200px] items-center justify-center text-muted-foreground">No operators found matching your search</div>
                             )}
                         </ScrollArea>
                     </div>

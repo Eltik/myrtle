@@ -12,12 +12,12 @@ use tokio::sync::RwLock;
 
 use crate::app::middleware::rate_limit::{RateLimitStore, rate_limit};
 use crate::app::middleware::static_assets::serve_asset;
+use crate::app::routes::admin;
 use crate::app::routes::auth::update_settings::update_settings;
 use crate::app::routes::auth::verify::verify_token;
 use crate::app::routes::avatar::serve_avatar;
 use crate::app::routes::get_user::{get_user_by_path, get_user_by_query};
 use crate::app::routes::portrait::serve_portrait;
-use crate::app::routes::admin;
 use crate::app::routes::static_data;
 use crate::app::routes::tier_lists;
 use crate::app::routes::yostar::login::{login_by_query, login_by_server, login_no_server};
