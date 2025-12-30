@@ -69,6 +69,32 @@ export const CLASSES = ["WARRIOR", "SNIPER", "TANK", "MEDIC", "SUPPORT", "CASTER
 export const RARITIES = [6, 5, 4, 3, 2, 1] as const;
 export const GENDERS = ["Male", "Female", "Conviction"] as const;
 
+// Class sort order (for secondary sorting when rarity is the same)
+// Order: Vanguard > Guard > Defender > Sniper > Caster > Supporter > Medic > Specialist
+export const CLASS_SORT_ORDER: Record<string, number> = {
+    PIONEER: 0, // Vanguard
+    WARRIOR: 1, // Guard
+    TANK: 2, // Defender
+    SNIPER: 3,
+    CASTER: 4,
+    SUPPORT: 5, // Supporter
+    MEDIC: 6,
+    SPECIAL: 7, // Specialist
+};
+
+// Sort options with display names
+export const SORT_OPTIONS = [
+    { value: "rarity", label: "Rarity" },
+    { value: "name", label: "Name" },
+    { value: "class", label: "Class" },
+    { value: "hp", label: "HP" },
+    { value: "atk", label: "ATK" },
+    { value: "def", label: "DEF" },
+    { value: "res", label: "RES" },
+    { value: "cost", label: "Cost" },
+    { value: "block", label: "Block" },
+] as const;
+
 // Pagination
 export const ITEMS_PER_PAGE = 48;
 
