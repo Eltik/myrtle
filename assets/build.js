@@ -16,7 +16,7 @@ const __dirname = path.dirname(__filename);
 
 const SCRIPT_DIR = __dirname;
 const RUST_MIN_VERSION = "1.70.0";
-const BUILD_MODE = process.env.BUILD_MODE ?? "release";
+let BUILD_MODE = process.env.BUILD_MODE ?? "release";
 
 let CLEAN_BUILD = false;
 let RUN_TESTS = false;
@@ -114,7 +114,7 @@ function installRust() {
 
     const platform = os.platform();
 
-    if (platform === "darwin" || platform == "linux") {
+    if (platform === "darwin" || platform === "linux") {
         printMsg(NC, "Running rustup installer");
 
         try {
@@ -154,8 +154,11 @@ function installRust() {
 function checkCargo() {
     printStep("Installing Rust...");
 
+    const platform = os.platform();
+    const checkCommand = platform === "win32" ? "where cargo" : "command -v cargo";
+
     try {
-        execSync("command -v cargo", { stdio: "ignore" });
+        execSync(checkCommand, { stdio: "ignore" });
     } catch {
         printError("Cargo is not installed (should come with Rust)");
         return 1;
@@ -208,7 +211,32 @@ async function checkFMOD() {
                     { encoding: "utf8" }
                 ).trim();
             } catch {}
-            printMsg("", `  Found FMOD at: ${fmodPath}`);
+            printMsg(NC, `  Found FMOD at: ${fmodPath}`);
+        }
+    } else if (platform === "win32") {
+        // Check for FMOD in the unity-rs resources directory
+        const is64bit = process.arch === "x64" || process.env.PROCESSOR_ARCHITECTURE === "AMD64";
+        const fmodResourceDir = path.join(SCRIPT_DIR, "unity-rs", "src", "resources", "FMOD", "Windows", is64bit ? "x64" : "x86");
+
+        if (exists(path.join(fmodResourceDir, "fmod.dll"))) {
+            fmodFound = true;
+            fmodPath = fmodResourceDir;
+            printMsg(NC, `  Found FMOD at: ${fmodPath}`);
+        } else {
+            // Check system paths
+            const systemPaths = [
+                path.join(process.env.PROGRAMFILES || "C:\\Program Files", "FMOD SoundSystem", "FMOD Studio API Windows", "api", "core", "lib", is64bit ? "x64" : "x86"),
+                path.join(process.env["PROGRAMFILES(X86)"] || "C:\\Program Files (x86)", "FMOD SoundSystem", "FMOD Studio API Windows", "api", "core", "lib", is64bit ? "x64" : "x86"),
+            ];
+
+            for (const sysPath of systemPaths) {
+                if (exists(path.join(sysPath, "fmod.dll"))) {
+                    fmodFound = true;
+                    fmodPath = sysPath;
+                    printMsg(NC, `  Found FMOD at: ${fmodPath}`);
+                    break;
+                }
+            }
         }
     }
 
@@ -229,6 +257,13 @@ async function checkFMOD() {
             printMsg(NC, "    1. Download from: https://www.fmod.com/download");
             printMsg(NC, "    2. Extract and run: sudo cp libfmod.so.* /usr/local/lib/");
             printMsg(NC, "    3. Run: sudo ldconfig");
+        } else if (platform === "win32") {
+            printMsg(NC, "    1. Download FMOD Engine 2.02.22 (or any 2.02.xx) from: https://www.fmod.com/download");
+            printMsg(NC, "    2. For MinGW builds, create import libraries using create-fmod-libs.bat");
+            printMsg(NC, "    3. Copy DLLs and .a files to:");
+            printMsg(NC, `       ${path.join(SCRIPT_DIR, "unity-rs", "src", "resources", "FMOD", "Windows", process.arch === "x64" ? "x64" : "x86")}`);
+            printMsg(NC, "");
+            printMsg(NC, "    See FMOD_INSTALLATION_GUIDE.md for detailed instructions");
         }
         printMsg(NC, "");
 
@@ -482,6 +517,7 @@ async function main() {
         const arg = args.shift();
         switch (arg) {
             case "-h":
+            // @biome-ignore biome lint/suspicious/noFallthroughSwitchClause
             case "--help":
                 printUsage("");
                 process.exit(0);
