@@ -11,12 +11,15 @@ A modern, high-performance Next.js frontend for Arknights game data, player prof
 - [Pages](#pages)
 - [Components](#components)
   - [Layout Components](#layout-components)
+  - [Home Components](#home-components)
   - [Operator Components](#operator-components)
   - [User Components](#user-components)
+  - [Admin Components](#admin-components)
   - [Tool Components](#tool-components)
   - [UI Components](#ui-components)
 - [API Routes](#api-routes)
 - [Hooks](#hooks)
+- [Context](#context)
 - [Types](#types)
 - [Utilities](#utilities)
 - [Configuration](#configuration)
@@ -32,11 +35,14 @@ A modern, high-performance Next.js frontend for Arknights game data, player prof
 |---------|-------------|
 | Operator Database | Browse 200+ operators with detailed stats, skills, talents, and modules |
 | Player Profiles | View player data synced from Arknights servers via Yostar authentication |
+| Tier Lists | Community-created tier lists with version history and admin approval workflow |
 | Recruitment Calculator | Calculate optimal tag combinations for operator recruitment |
 | Responsive Design | Mobile-first design with breakpoints for all screen sizes |
-| Dark Theme | Native dark theme with OKLCH color system |
+| Light & Dark Mode | Full theme support with OKLCH color system and 12 color presets |
+| Theme Customization | Customizable accent color with hue slider and preset colors |
 | Spine Animations | Live chibi/dorm animations using PixiJS + Spine |
 | Voice Lines | Multilingual voice line playback (CN, JP, EN, KR) |
+| Admin Panel | Role-gated admin interface for tier list and user management |
 
 ### Technical Features
 
@@ -117,24 +123,34 @@ The development server runs at `http://localhost:3000`.
 ```
 frontend/
 ├── src/
-│   ├── components/           # React components
-│   │   ├── home/            # Homepage components
-│   │   ├── layout/          # Header, footer, navigation
-│   │   ├── operators/       # Operator list and detail views
-│   │   ├── tools/           # Recruitment calculator, etc.
+│   ├── components/           # React components (210+ files)
+│   │   ├── admin/           # Admin panel components
+│   │   ├── home/            # Homepage bento grid components
+│   │   ├── layout/          # Header, footer, navigation, login
+│   │   ├── operators/       # Operator list, detail, and tier-list views
+│   │   ├── tools/           # Recruitment calculator
 │   │   ├── user/            # Player profile components
 │   │   └── ui/              # Base UI components
-│   │       ├── shadcn/      # shadcn/ui components
-│   │       └── motion-primitives/  # Animation components
+│   │       ├── shadcn/      # shadcn/ui components (40+)
+│   │       └── motion-primitives/  # Animation components (25+)
+│   ├── context/             # React context providers
 │   ├── hooks/               # Custom React hooks
 │   ├── lib/                 # Utility functions
 │   ├── pages/               # Next.js pages and API routes
 │   │   ├── api/             # API endpoints
+│   │   │   ├── admin/       # Admin statistics
+│   │   │   ├── auth/        # Authentication endpoints
+│   │   │   ├── cdn/         # CDN proxy
+│   │   │   ├── settings/    # User settings
+│   │   │   └── tier-lists/  # Tier list management
 │   │   ├── operators/       # Operator pages
 │   │   ├── tools/           # Tool pages
-│   │   └── user/            # User profile pages
+│   │   ├── user/            # User profile pages
+│   │   └── admin/           # Admin pages
 │   ├── styles/              # Global CSS
 │   └── types/               # TypeScript types
+│       ├── api/             # API response types
+│       └── frontend/        # Frontend-specific types
 ├── public/                  # Static assets
 ├── biome.jsonc             # Biome config
 ├── components.json         # shadcn/ui config
@@ -147,11 +163,14 @@ frontend/
 
 | Route | Page | Description |
 |-------|------|-------------|
-| `/` | Home | Landing page with bento grid layout |
-| `/operators` | Operators List | Browse all operators with filters |
-| `/operators/[id]` | Operator Detail | Detailed operator information with tabs |
+| `/` | Home | Landing page with bento grid layout and animated sections |
+| `/operators` | Operator Detail | Detailed operator information with tabs (uses query params) |
+| `/operators/list` | Operators List | Browse all operators with filters and pagination |
+| `/operators/tier-list` | Tier List | Community tier lists with version history |
 | `/user/[id]` | User Profile | Player profile with characters, items, base |
 | `/tools/recruitment` | Recruitment Calculator | Calculate tag combinations |
+| `/settings` | Settings | User account settings and preferences |
+| `/admin` | Admin Panel | Role-gated admin interface for management |
 
 ### Data Fetching
 
@@ -177,9 +196,28 @@ Located in `src/components/layout/`:
 | `Header` | Navigation bar with desktop/mobile variants |
 | `NavDesktop` | Desktop navigation with dropdowns and hover effects |
 | `NavMobile` | Mobile slide-out sheet navigation |
+| `ThemeToggle` | Dark/light theme toggle with system preference |
 | `UserMenu` | User account dropdown with avatar |
 | `Login` | Authentication dialog with OTP flow |
+| `LoginContent` | Login form with email and code inputs |
 | `Footer` | Page footer with links and social icons |
+
+### Home Components
+
+Located in `src/components/home/`:
+
+| Component | Purpose |
+|-----------|---------|
+| `MainContent` | Hero section with animated text loop |
+| `BentoGrid` | Feature showcase grid layout |
+| `Community` | Community statistics section |
+| `EventsTimeline` | Game events timeline display |
+| `GetStarted` | Quick start guide section |
+| `Guides` | User guides and documentation |
+| `OperatorDatabase` | Operator database feature showcase |
+| `Planner` | Planning tools showcase |
+| `Statistics` | Game statistics display |
+| `StatsChart` | Chart-based statistics visualization |
 
 ### Operator Components
 
@@ -193,6 +231,10 @@ Located in `src/components/operators/`:
 | `OperatorCard` | Individual operator card (grid/list variants) |
 | `OperatorFilters` | Filter controls (class, rarity, faction, etc.) |
 | `useOperatorFilters` | Filter state management hook |
+| `ClassIcon` | Profession class icon display |
+| `FactionLogo` | Faction/nation logo display |
+| `RarityStars` | Star rating display |
+| `Pagination` | Pagination controls |
 
 #### Detail Components (`operators/detail/`)
 
@@ -213,6 +255,19 @@ Located in `src/components/operators/`:
 | `AudioContent` | Voice line player with language selection |
 | `LoreContent` | Operator lore and archive files |
 | `ChibiViewer` | PixiJS Spine animation renderer |
+| `OperatorRange` | Attack range grid visualization |
+| `StatCard` | Stat display card |
+
+#### Tier List Components (`operators/tier-list/`)
+
+| Component | Purpose |
+|-----------|---------|
+| `TierList` | Main tier list view container |
+| `TierListIndex` | Tier list selector and index |
+| `TierRow` | Individual tier row with operators |
+| `OperatorCard` | Operator card within tier |
+| `OperatorTooltip` | Hover tooltip for operator details |
+| `VersionDetailDialog` | Version history dialog |
 
 ### User Components
 
@@ -222,9 +277,32 @@ Located in `src/components/user/`:
 |-----------|---------|
 | `UserHeader` | Profile header with avatar and stats |
 | `CharactersGrid` | Operator collection with filters and sorting |
+| `CharacterFilters` | Character filter controls |
 | `CharacterCard` | Individual character with stats and dialog |
+| `CompactCard` | Compact character card view |
+| `CharacterDialog` | Character detail modal |
 | `ItemsGrid` | Inventory table with search and details |
-| `BaseView` | Base facilities (trading posts, factories) |
+| `ItemDetailCard` | Item detail display |
+| `BaseView` | Base facilities overview |
+| `FactoriesSection` | Factories display |
+| `TradingPostsSection` | Trading posts display |
+| `RoomCard` | Individual room display |
+
+### Admin Components
+
+Located in `src/components/admin/`:
+
+| Component | Purpose |
+|-----------|---------|
+| `AdminPanel` | Main admin interface container |
+| `Header` | Admin header with role display |
+| `StatsGrid` | Statistics grid display |
+| `TierListManagement` | Tier list management panel |
+| `TierListsTable` | Tier lists data table |
+| `TierListEditor` | Tier list editor interface |
+| `CreateTierListDialog` | Create new tier list modal |
+| `PublishVersionDialog` | Publish version modal |
+| `UsersTable` | Users management table |
 
 ### Tool Components
 
@@ -234,18 +312,26 @@ Located in `src/components/tools/`:
 |-----------|---------|
 | `RecruitmentCalculator` | Tag selection and result calculation |
 | `TagSelector` | Interactive tag buttons by category |
+| `FilterOptions` | Filter and search options |
 | `ResultsList` | Sorted recruitment outcomes |
 | `OperatorResultCard` | Individual operator result display |
+| `CombinationResult` | Combination outcome display |
 
 ### UI Components
 
 #### shadcn/ui (`src/components/ui/shadcn/`)
 
-40+ accessible components including: Accordion, Alert, Avatar, Badge, Button, Card, Checkbox, Command, Dialog, Dropdown, Form, Input, Label, Popover, Progress, Select, Sheet, Skeleton, Slider, Switch, Table, Tabs, Toast, Tooltip, and more.
+40+ accessible components including: Accordion, Alert, Alert Dialog, Aspect Ratio, Avatar, Badge, Breadcrumb, Button, Calendar, Card, Carousel, Chart, Checkbox, Collapsible, Command, Context Menu, Dialog, Drawer, Dropdown Menu, Form, Hover Card, Input, Input OTP, Label, Menubar, Navigation Menu, Pagination, Popover, Progress, Radio Group, Resizable, Scroll Area, Select, Separator, Sheet, Sidebar, Skeleton, Slider, Sonner (toast), Switch, Table, Tabs, Textarea, Toggle, Toggle Group, Tooltip, and more.
 
 #### Motion Primitives (`src/components/ui/motion-primitives/`)
 
-25+ animation components including: AnimatedGroup, AnimatedNumber, BorderTrail, Carousel, Disclosure, Dock, GlowEffect, ImageComparison, InfiniteSlider, InView, Magnetic, MorphingDialog, ProgressiveBlur, ScrollProgress, SlidingNumber, Spotlight, TextEffect, TextLoop, TextMorph, TextScramble, TextShimmer, Tilt, TransitionPanel, and more.
+25+ animation components including: AnimatedGroup, AnimatedNumber, BorderTrail, Carousel, Cursor, Disclosure, Dock, GlowEffect, ImageComparison, InfiniteSlider, InView, Magnetic, MorphingDialog, MorphingPopover, ProgressiveBlur, ScrollProgress, SlidingNumber, Spotlight, TextEffect, TextLoop, TextMorph, TextRoll, TextScramble, TextShimmer, TextShimmerWave, Tilt, ToolbarDynamic, ToolbarExpandable, TransitionPanel, and more.
+
+#### Other UI Components
+
+| Component | Purpose |
+|-----------|---------|
+| `HueSlider` | Custom color hue slider for theme customization |
 
 ## API Routes
 
@@ -257,6 +343,7 @@ Located in `src/components/tools/`:
 | `/api/auth/login` | POST | Authenticate with email + code |
 | `/api/auth/me` | POST | Get current user from session |
 | `/api/auth/logout` | POST | Clear session cookies |
+| `/api/auth/verify` | POST | Verify admin role |
 
 #### Authentication Flow
 
@@ -303,6 +390,29 @@ GET /api/cdn/upk/chararts/char_002_amiya/char_002_amiya_1.png
 GET /api/cdn/avatar/char_002_amiya
 ```
 
+### Settings
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/settings/refresh-profile` | POST | Refresh user profile from game servers |
+| `/api/settings/update-visibility` | POST | Update profile visibility settings |
+
+### Tier Lists
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/tier-lists/[slug]` | GET | Get tier list by slug |
+| `/api/tier-lists/[slug]/publish` | POST | Publish tier list version |
+| `/api/tier-lists/[slug]/sync` | POST | Sync tier list data |
+| `/api/tier-lists/[slug]/versions` | GET | Get all versions of a tier list |
+| `/api/tier-lists/[slug]/versions/[version]` | GET | Get specific version |
+
+### Admin
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/admin/stats` | GET | Get admin statistics |
+
 ## Hooks
 
 Located in `src/hooks/`:
@@ -312,13 +422,19 @@ Located in `src/hooks/`:
 Manages authentication state with localStorage caching for instant UI display.
 
 ```typescript
-const { user, loading, login, logout, fetchUser } = useAuth();
+const { user, loading, login, logout, fetchUser, refreshProfile, verifyAdmin } = useAuth();
 
 // Login
 await login("user@email.com", "123456", "en");
 
 // Logout
 await logout();
+
+// Refresh profile from game servers
+await refreshProfile();
+
+// Verify admin role
+const isAdmin = await verifyAdmin();
 ```
 
 ### useIsMobile
@@ -339,6 +455,33 @@ const ref = useRef<HTMLDivElement>(null);
 useClickOutside(ref, () => setOpen(false));
 ```
 
+## Context
+
+Located in `src/context/`:
+
+### AccentColorContext
+
+Manages theme color customization with OKLch color space.
+
+```typescript
+import { useAccentColor } from "~/context/accent-color-context";
+
+const { hue, setHue } = useAccentColor();
+
+// Set custom hue (0-360)
+setHue(200); // Blue
+
+// Use predefined preset
+import { COLOR_PRESETS } from "~/lib/color-utils";
+setHue(COLOR_PRESETS.find(p => p.name === "Purple")?.hue ?? 25);
+```
+
+**Features:**
+- 12 preset colors: Orange (default), Red, Rose, Pink, Purple, Violet, Blue, Cyan, Teal, Green, Lime, Yellow
+- OKLch color space for perceptually uniform colors
+- Generates CSS variables for theming
+- Persists to localStorage
+
 ## Types
 
 Located in `src/types/`:
@@ -356,6 +499,7 @@ Located in `src/types/`:
 | `Handbook` | Lore and profile data |
 | `User` | Complete player account state |
 | `ChibiCharacter` | Spine animation data |
+| `TierList` | Community tier list data with versions |
 
 ### Frontend Types (`types/frontend/`)
 
@@ -365,6 +509,10 @@ Located in `src/types/`:
 | `NormalizedRange` | Grid-based attack range |
 | `UISkin` | Processed skin for UI display |
 | `VoiceLine` | Formatted voice line with URL |
+| `MaterialCost` | Material cost for upgrades |
+| `SkillLevelCost` | Skill upgrade cost breakdown |
+| `AdminRole` | Admin role enumeration |
+| `AdminStats` | Admin statistics data |
 
 ## Utilities
 
@@ -375,12 +523,28 @@ Located in `src/lib/`:
 | Function | Description |
 |----------|-------------|
 | `cn()` | Merge Tailwind classes with conflict resolution |
+| `getLuminance()` | Calculate WCAG color luminance |
+| `getContrastTextColor()` | Choose optimal text color for background |
 | `rarityToNumber()` | Convert rarity enum to number (1-6) |
 | `formatProfession()` | Format profession code to display name |
-| `formatSubProfession()` | Format archetype code to display name |
+| `formatSubProfession()` | Format archetype code to display name (80+ mappings) |
 | `formatNationId()` | Format nation code to display name |
+| `formatGroupId()` | Format faction/group to display name |
+| `formatTeamId()` | Format team code to display name |
 | `getOperatorImageUrl()` | Build operator image URL from skin/phase |
 | `getAvatarById()` | Get GitHub avatar URL for character |
+| `normalizeSkinId()` | Normalize skin ID for URLs |
+
+### color-utils.ts
+
+| Function | Description |
+|----------|-------------|
+| `generatePrimaryColors()` | Generate CSS variables for hue in OKLch space |
+| `hueToPreviewColor()` | Convert hue to hex preview color |
+| `getStoredAccentHue()` | Load stored hue from localStorage |
+| `setStoredAccentHue()` | Save hue to localStorage |
+| `COLOR_PRESETS` | 12 preset colors with hues |
+| `DEFAULT_PRIMARY_HUE` | Default hue value (25/orange) |
 
 ### operator-stats.ts
 
@@ -406,6 +570,7 @@ Located in `src/lib/`:
 | `formatBlackboardValue()` | Format stat values with percentages |
 | `formatSkillLevel()` | Format level index to "Lv.1" or "M1" |
 | `getSpTypeLabel()` | Get SP recovery type label |
+| `getSkillTypeLabel()` | Get skill type label |
 
 ### operator-helpers.ts
 
@@ -414,6 +579,18 @@ Located in `src/lib/`:
 | `formatOperatorDescription()` | Format trait with blackboard interpolation |
 | `getActiveTalentCandidate()` | Get unlocked talent based on progress |
 | `phaseToIndex()` | Convert phase enum to index |
+| `blackboardToInterpolatedValues()` | Extract interpolated values from blackboard |
+
+### auth.ts
+
+| Function | Description |
+|----------|-------------|
+| `getSessionFromCookie()` | Extract session from request cookies |
+| `getSiteToken()` | Extract site token from cookies |
+| `setAuthCookies()` | Set authentication cookies in response |
+| `clearAuthCookies()` | Clear auth cookies |
+| `AKServerSchema` | Zod schema for Arknights servers |
+| `SessionSchema` | Session data validation schema |
 
 ## Configuration
 
@@ -443,6 +620,7 @@ const config = {
 - Strict mode enabled
 - Path alias: `~/*` → `./src/*`
 - Verbatim module syntax
+- Incremental compilation
 
 ### biome.jsonc
 
@@ -487,6 +665,10 @@ bun run format
 # Check all (lint + format)
 bun run check
 bun run check:write
+
+# Biome specific
+bun run biome:check
+bun run biome:write
 ```
 
 ## Troubleshooting
@@ -530,6 +712,13 @@ cat src/styles/globals.css
 1. Check browser console for CORS errors
 2. Verify Spine files exist at CDN path
 3. Check PixiJS compatibility with your browser
+
+#### Theme not persisting
+
+Clear and reset accent color storage:
+```javascript
+localStorage.removeItem('myrtle-accent-hue');
+```
 
 ### Debug Mode
 

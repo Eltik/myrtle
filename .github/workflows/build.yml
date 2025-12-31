@@ -1,0 +1,253 @@
+name: Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      build_assets:
+        description: 'Build assets tools'
+        required: false
+        default: true
+        type: boolean
+      build_backend:
+        description: 'Build backend'
+        required: false
+        default: true
+        type: boolean
+      build_frontend:
+        description: 'Build frontend'
+        required: false
+        default: true
+        type: boolean
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # ============================================
+  # Build Assets (Cross-platform)
+  # ============================================
+  build-assets:
+    name: Build Assets (${{ matrix.os }})
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.build_assets }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact_suffix: linux-x64
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact_suffix: macos-x64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact_suffix: macos-arm64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact_suffix: windows-x64
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-dev
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-assets-${{ hashFiles('assets/**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.target }}-cargo-assets-
+
+      - name: Build unity-rs
+        working-directory: assets/unity-rs
+        run: cargo build --release --target ${{ matrix.target }} --lib
+
+      - name: Build downloader
+        working-directory: assets/downloader
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Build unpacker
+        working-directory: assets/unpacker
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Prepare artifacts (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p artifacts
+          cp assets/downloader/target/${{ matrix.target }}/release/arknights-downloader artifacts/ || true
+          cp assets/unpacker/target/${{ matrix.target }}/release/assets-unpacker artifacts/ || true
+
+      - name: Prepare artifacts (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts
+          Copy-Item assets/downloader/target/${{ matrix.target }}/release/arknights-downloader.exe artifacts/ -ErrorAction SilentlyContinue
+          Copy-Item assets/unpacker/target/${{ matrix.target }}/release/assets-unpacker.exe artifacts/ -ErrorAction SilentlyContinue
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: assets-${{ matrix.artifact_suffix }}
+          path: artifacts/
+          if-no-files-found: warn
+
+  # ============================================
+  # Build Backend
+  # ============================================
+  build-backend:
+    name: Build Backend (${{ matrix.os }})
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.build_backend }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact_suffix: linux-x64
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact_suffix: macos-x64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact_suffix: macos-arm64
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            backend/target/
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-backend-${{ hashFiles('backend/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.target }}-cargo-backend-
+
+      - name: Build backend
+        working-directory: backend
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Prepare artifacts
+        run: |
+          mkdir -p artifacts
+          cp backend/target/${{ matrix.target }}/release/backend artifacts/ || true
+          cp backend/target/${{ matrix.target }}/release/manage-permissions artifacts/ || true
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-${{ matrix.artifact_suffix }}
+          path: artifacts/
+          if-no-files-found: warn
+
+  # ============================================
+  # Build Frontend
+  # ============================================
+  build-frontend:
+    name: Build Frontend
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.build_frontend }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            frontend/node_modules
+            ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('frontend/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: bun install --frozen-lockfile
+
+      - name: Build
+        working-directory: frontend
+        run: bun run build
+        env:
+          SKIP_ENV_VALIDATION: true
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: |
+            frontend/.next/
+            frontend/public/
+          if-no-files-found: warn
+
+  # ============================================
+  # Create Release (on tag push)
+  # ============================================
+  release:
+    name: Create Release
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [build-assets, build-backend, build-frontend]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Create release archives
+        run: |
+          cd artifacts
+          for dir in */; do
+            dir_name="${dir%/}"
+            if [ -d "$dir_name" ] && [ "$(ls -A $dir_name)" ]; then
+              tar -czvf "${dir_name}.tar.gz" -C "$dir_name" .
+            fi
+          done
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*.tar.gz
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref, '-beta') || contains(github.ref, '-alpha') }}

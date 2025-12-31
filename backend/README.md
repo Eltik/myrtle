@@ -1,6 +1,6 @@
 # Myrtle Backend
 
-A high-performance Rust backend for the Myrtle.moe Arknights companion application. This server provides user authentication via Yostar OAuth, player data synchronization, static game data APIs, and asset CDN functionality.
+A high-performance Rust backend for the Myrtle.moe Arknights companion application. This server provides user authentication via Yostar OAuth, player data synchronization, static game data APIs, asset CDN functionality, and community tier list management with versioning and permission controls.
 
 ## Table of Contents
 
@@ -18,6 +18,8 @@ A high-performance Rust backend for the Myrtle.moe Arknights companion applicati
   - [User Data](#user-data)
   - [Static Data](#static-data)
   - [CDN Assets](#cdn-assets)
+  - [Tier Lists](#tier-lists)
+  - [Admin](#admin)
 - [Game Data](#game-data)
 - [Database](#database)
 - [Caching](#caching)
@@ -34,12 +36,17 @@ A high-performance Rust backend for the Myrtle.moe Arknights companion applicati
 |---------|-------------|
 | Multi-Server Support | EN, JP, KR, CN, Bilibili, TW game servers |
 | Yostar OAuth | Email-based authentication flow |
+| JWT Authentication | Token-based session management with verification |
 | Player Sync | Fetch and store player game data |
+| User Settings | Configurable user preferences and settings |
+| Permission System | Role-based access control (admin/editor/viewer) |
 | Static Data API | Operators, skills, modules, materials, skins, and more |
+| Tier List Management | Create, edit, and version community tier lists |
 | Asset CDN | Serve avatars, portraits, and game assets |
 | Redis Caching | Response caching with ETag support |
 | Rate Limiting | Per-IP, per-endpoint rate limiting |
 | Auto-Reload | Hourly configuration refresh from game servers |
+| Admin Statistics | System monitoring and usage statistics |
 
 ### Static Data Endpoints
 
@@ -64,6 +71,17 @@ A high-performance Rust backend for the Myrtle.moe Arknights companion applicati
 | Avatars | `/cdn/avatar/{id}` | Operator avatar icons |
 | Portraits | `/cdn/portrait/{id}` | Full character portraits |
 | General | `/cdn/{path}` | Any asset from assets directory |
+
+### Tier List Management
+
+| Endpoint | Description |
+|----------|-------------|
+| `/tier-lists` | List and create tier lists |
+| `/tier-lists/{slug}` | Get, update, or delete a tier list |
+| `/tier-lists/{slug}/tiers` | Manage tiers within a list |
+| `/tier-lists/{slug}/placements` | Manage operator placements |
+| `/tier-lists/{slug}/versions` | Version history and snapshots |
+| `/tier-lists/{slug}/permissions` | User permission management |
 
 ## Installation
 
@@ -248,19 +266,26 @@ backend/
 │   │       ├── avatar.rs       # Avatar CDN
 │   │       ├── portrait.rs     # Portrait CDN
 │   │       ├── static_data/    # Static data API
-│   │       └── yostar/         # Authentication
+│   │       ├── yostar/         # Yostar OAuth login
+│   │       ├── auth/           # Token verification & settings
+│   │       ├── admin/          # Admin statistics
+│   │       └── tier_lists/     # Tier list management
 │   ├── core/
-│   │   ├── authentication/     # Yostar OAuth, headers, sessions
+│   │   ├── authentication/     # Yostar OAuth, JWT, headers, sessions
 │   │   ├── user/               # User data fetching & formatting
 │   │   ├── local/              # Game data loading & types
 │   │   ├── cron/               # Background jobs
 │   │   └── dps_calculator/     # DPS calculations (WIP)
 │   ├── database/
-│   │   ├── pool.rs             # PostgreSQL connection
-│   │   └── models/user.rs      # User model
+│   │   ├── pool.rs             # PostgreSQL connection & table init
+│   │   └── models/
+│   │       ├── user.rs         # User model
+│   │       └── tier_lists.rs   # Tier list models (6 tables)
 │   └── events/
 │       ├── mod.rs              # Event emitter
 │       └── setup_event_listeners.rs
+├── bin/
+│   └── manage_permissions.rs   # CLI tool for permission management
 ├── Cargo.toml
 └── README.md
 ```
@@ -320,7 +345,10 @@ Client Request
       ├──▶ /send-code ──▶ Yostar API
       ├──▶ /login ──▶ Yostar OAuth ──▶ Game Server Auth
       ├──▶ /refresh ──▶ Game Server ──▶ PostgreSQL
-      └──▶ /get-user ──▶ PostgreSQL
+      ├──▶ /get-user ──▶ PostgreSQL
+      ├──▶ /auth/* ──▶ JWT Verify ──▶ User Settings
+      ├──▶ /tier-lists/* ──▶ Permission Check ──▶ PostgreSQL
+      └──▶ /admin/* ──▶ Admin Check ──▶ Statistics
 ```
 
 ## API Reference
@@ -388,6 +416,46 @@ Authenticate with email and verification code.
   "uid": "12345678",
   "secret": "abc123...",
   "seqnum": 1
+}
+```
+
+#### POST /auth/verify
+
+Verify a JWT token and return user information.
+
+**Headers:**
+| Header | Required | Description |
+|--------|----------|-------------|
+| `Authorization` | Yes | Bearer token |
+
+**Response:**
+```json
+{
+  "valid": true,
+  "user": {
+    "uid": "12345678",
+    "server": "en",
+    "role": "user"
+  }
+}
+```
+
+#### POST /auth/update-settings
+
+Update user settings and preferences.
+
+**Headers:**
+| Header | Required | Description |
+|--------|----------|-------------|
+| `Authorization` | Yes | Bearer token |
+
+**Body:**
+```json
+{
+  "settings": {
+    "theme": "dark",
+    "notifications": true
+  }
 }
 ```
 
@@ -604,6 +672,148 @@ Serve any asset from the assets directory.
 curl http://localhost:3060/cdn/upk/arts/chararts/char_002_amiya.png
 ```
 
+### Tier Lists
+
+The tier list system allows creating, managing, and versioning community tier lists with permission-based access control.
+
+#### GET /tier-lists
+
+List all tier lists.
+
+```bash
+curl http://localhost:3060/tier-lists
+```
+
+#### POST /tier-lists
+
+Create a new tier list (requires authentication).
+
+**Headers:**
+| Header | Required | Description |
+|--------|----------|-------------|
+| `Authorization` | Yes | Bearer token |
+
+**Body:**
+```json
+{
+  "name": "Meta Tier List",
+  "slug": "meta-tier-list",
+  "description": "Community meta rankings"
+}
+```
+
+#### GET /tier-lists/{slug}
+
+Get a specific tier list with all tiers and placements.
+
+```bash
+curl http://localhost:3060/tier-lists/meta-tier-list
+```
+
+#### PUT /tier-lists/{slug}
+
+Update a tier list (requires edit permission).
+
+#### DELETE /tier-lists/{slug}
+
+Delete a tier list (requires owner permission).
+
+#### GET /tier-lists/{slug}/tiers
+
+Get all tiers in a tier list.
+
+#### POST /tier-lists/{slug}/tiers
+
+Create a new tier (requires edit permission).
+
+**Body:**
+```json
+{
+  "name": "S+",
+  "order": 0,
+  "color": "#FF0000"
+}
+```
+
+#### GET /tier-lists/{slug}/placements
+
+Get all operator placements in a tier list.
+
+#### POST /tier-lists/{slug}/placements
+
+Add an operator placement (requires edit permission).
+
+**Body:**
+```json
+{
+  "tier_id": "uuid",
+  "operator_id": "char_002_amiya",
+  "order": 0,
+  "notes": "Optional notes"
+}
+```
+
+#### GET /tier-lists/{slug}/versions
+
+Get version history for a tier list.
+
+#### POST /tier-lists/{slug}/versions
+
+Create a new version snapshot (requires edit permission).
+
+**Body:**
+```json
+{
+  "version": "1.0.0",
+  "changelog": "Initial release"
+}
+```
+
+#### GET /tier-lists/{slug}/permissions
+
+Get user permissions for a tier list.
+
+#### POST /tier-lists/{slug}/permissions
+
+Grant user permission (requires owner permission).
+
+**Body:**
+```json
+{
+  "user_id": "uuid",
+  "permission": "editor"
+}
+```
+
+### Admin
+
+#### GET /admin/stats
+
+Get system statistics (requires admin role).
+
+**Headers:**
+| Header | Required | Description |
+|--------|----------|-------------|
+| `Authorization` | Yes | Bearer token (admin) |
+
+**Response:**
+```json
+{
+  "users": {
+    "total": 1000,
+    "by_server": {
+      "en": 500,
+      "jp": 300,
+      "kr": 200
+    }
+  },
+  "tier_lists": {
+    "total": 50,
+    "active": 45
+  }
+}
+```
+
 ## Game Data
 
 ### Required Files
@@ -637,13 +847,15 @@ On startup, the server enriches raw game data:
 ### Asset Mappings
 
 The server scans `ASSETS_DIR` to build mappings for:
-- Avatar locations across `ui_char_avatar_0` through `ui_char_avatar_13`
-- Portrait locations across `pack0` through `pack12`
+- Avatar locations across `ui_char_avatar_0` through `ui_char_avatar_19` (20 directories)
+- Portrait locations across `pack0` through `pack14` (15 directories)
 - Skill icons, module images, item icons
 
 ## Database
 
 ### Schema
+
+#### Users Table
 
 ```sql
 CREATE TABLE users (
@@ -651,7 +863,77 @@ CREATE TABLE users (
     uid VARCHAR(255) NOT NULL UNIQUE,
     server VARCHAR(50) NOT NULL,
     data JSONB NOT NULL DEFAULT '{}',
+    settings JSONB NOT NULL DEFAULT '{}',
+    role VARCHAR(50) NOT NULL DEFAULT 'user',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+```
+
+#### Tier List Tables
+
+```sql
+-- Main tier list metadata
+CREATE TABLE tier_lists (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) NOT NULL UNIQUE,
+    description TEXT,
+    owner_id UUID NOT NULL REFERENCES users(id),
+    active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Individual tiers within a list
+CREATE TABLE tiers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tier_list_id UUID NOT NULL REFERENCES tier_lists(id) ON DELETE CASCADE,
+    name VARCHAR(50) NOT NULL,
+    "order" INTEGER NOT NULL,
+    color VARCHAR(7),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Operator placements within tiers
+CREATE TABLE tier_placements (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tier_id UUID NOT NULL REFERENCES tiers(id) ON DELETE CASCADE,
+    operator_id VARCHAR(255) NOT NULL,
+    "order" INTEGER NOT NULL,
+    notes TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Version snapshots
+CREATE TABLE tier_list_versions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tier_list_id UUID NOT NULL REFERENCES tier_lists(id) ON DELETE CASCADE,
+    version VARCHAR(50) NOT NULL,
+    snapshot JSONB NOT NULL,
+    changelog TEXT,
+    created_by UUID REFERENCES users(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Change audit log
+CREATE TABLE tier_change_log (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tier_list_id UUID NOT NULL REFERENCES tier_lists(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id),
+    action VARCHAR(50) NOT NULL,
+    details JSONB,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- User permissions per tier list
+CREATE TABLE tier_list_permissions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tier_list_id UUID NOT NULL REFERENCES tier_lists(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    permission VARCHAR(50) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(tier_list_id, user_id)
 );
 ```
 
@@ -672,6 +954,34 @@ User::search_by_nickname(&pool, "Doctor").await?;
 
 // List by server
 User::find_by_server(&pool, "en").await?;
+
+// Update settings
+User::update_settings(&pool, user_id, settings).await?;
+```
+
+### Tier List Model Operations
+
+```rust
+// Create tier list
+TierList::create(&pool, CreateTierList { name, slug, description, owner_id }).await?;
+
+// Find by slug
+TierList::find_by_slug(&pool, "meta-tier-list").await?;
+
+// List all active tier lists
+TierList::list_active(&pool).await?;
+
+// Create tier
+Tier::create(&pool, CreateTier { tier_list_id, name, order, color }).await?;
+
+// Create placement
+TierPlacement::create(&pool, CreatePlacement { tier_id, operator_id, order, notes }).await?;
+
+// Create version snapshot
+TierListVersion::create(&pool, tier_list_id, version, snapshot, changelog, user_id).await?;
+
+// Grant permission
+TierListPermission::grant(&pool, tier_list_id, user_id, permission).await?;
 ```
 
 ## Caching
@@ -748,6 +1058,28 @@ cargo watch -x run
 
 # With debug logging
 RUST_LOG=debug cargo run
+```
+
+### CLI Tools
+
+The project includes CLI tools for administrative tasks:
+
+#### Permission Manager
+
+Manage user permissions from the command line:
+
+```bash
+# Build the CLI tool
+cargo build --release --bin manage_permissions
+
+# Run the permission manager
+./target/release/manage_permissions
+
+# Grant admin role to a user
+./target/release/manage_permissions --uid 12345678 --role admin
+
+# List all admins
+./target/release/manage_permissions --list-admins
 ```
 
 ## Troubleshooting

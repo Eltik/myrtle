@@ -196,12 +196,7 @@ pub mod log {
 
     /// Print a key-value pair
     pub fn kv(key: &str, value: &str) {
-        println!(
-            "{} {} {}",
-            "│".dimmed(),
-            format!("{key}:").dimmed(),
-            value
-        );
+        println!("{} {} {}", "│".dimmed(), format!("{key}:").dimmed(), value);
     }
 
     /// Print a stat line (key: number)

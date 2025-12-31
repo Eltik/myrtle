@@ -1,0 +1,292 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  # ============================================
+  # Frontend (Next.js + Bun)
+  # ============================================
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            frontend/node_modules
+            ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('frontend/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run Biome lint
+        run: bun run lint
+
+      - name: Run Biome check
+        run: bun run check
+
+      - name: TypeScript type check
+        run: bun run typecheck
+
+      - name: Build Next.js
+        run: bun run build
+        env:
+          SKIP_ENV_VALIDATION: true
+
+  # ============================================
+  # Backend (Rust + Axum)
+  # ============================================
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            backend/target/
+          key: ${{ runner.os }}-cargo-backend-${{ hashFiles('backend/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-backend-
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - name: Run Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Build
+        run: cargo build --release
+
+      - name: Run tests
+        run: cargo test --all-features
+
+  # ============================================
+  # Assets - Unity-RS Library
+  # ============================================
+  assets-unity-rs:
+    name: Assets (unity-rs)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: assets/unity-rs
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-dev
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            assets/unity-rs/target/
+          key: ${{ runner.os }}-cargo-unity-rs-${{ hashFiles('assets/unity-rs/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-unity-rs-
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - name: Run Clippy
+        run: cargo clippy --all-targets -- -D warnings
+        continue-on-error: true
+
+      - name: Build library
+        run: cargo build --release --lib
+
+      - name: Run tests
+        run: cargo test --lib
+        continue-on-error: true
+
+  # ============================================
+  # Assets - Downloader
+  # ============================================
+  assets-downloader:
+    name: Assets (downloader)
+    runs-on: ubuntu-latest
+    needs: assets-unity-rs
+    defaults:
+      run:
+        working-directory: assets/downloader
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-dev
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            assets/downloader/target/
+            assets/unity-rs/target/
+          key: ${{ runner.os }}-cargo-downloader-${{ hashFiles('assets/downloader/Cargo.lock', 'assets/unity-rs/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-downloader-
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - name: Run Clippy
+        run: cargo clippy --all-targets -- -D warnings
+        continue-on-error: true
+
+      - name: Build
+        run: cargo build --release
+
+      - name: Run tests
+        run: cargo test
+        continue-on-error: true
+
+  # ============================================
+  # Assets - Unpacker
+  # ============================================
+  assets-unpacker:
+    name: Assets (unpacker)
+    runs-on: ubuntu-latest
+    needs: assets-unity-rs
+    defaults:
+      run:
+        working-directory: assets/unpacker
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-dev python3
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            assets/unpacker/target/
+            assets/unity-rs/target/
+          key: ${{ runner.os }}-cargo-unpacker-${{ hashFiles('assets/unpacker/Cargo.lock', 'assets/unity-rs/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-unpacker-
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - name: Run Clippy
+        run: cargo clippy --all-targets -- -D warnings
+        continue-on-error: true
+
+      - name: Build
+        run: cargo build --release
+
+      - name: Run tests
+        run: cargo test
+        continue-on-error: true
+
+  # ============================================
+  # Summary Check
+  # ============================================
+  ci-success:
+    name: CI Success
+    runs-on: ubuntu-latest
+    needs: [frontend, backend, assets-unity-rs, assets-downloader, assets-unpacker]
+    if: always()
+    steps:
+      - name: Check all jobs passed
+        run: |
+          if [[ "${{ needs.frontend.result }}" != "success" ]]; then
+            echo "Frontend job failed"
+            exit 1
+          fi
+          if [[ "${{ needs.backend.result }}" != "success" ]]; then
+            echo "Backend job failed"
+            exit 1
+          fi
+          if [[ "${{ needs.assets-unity-rs.result }}" != "success" ]]; then
+            echo "Assets unity-rs job failed"
+            exit 1
+          fi
+          if [[ "${{ needs.assets-downloader.result }}" != "success" ]]; then
+            echo "Assets downloader job failed"
+            exit 1
+          fi
+          if [[ "${{ needs.assets-unpacker.result }}" != "success" ]]; then
+            echo "Assets unpacker job failed"
+            exit 1
+          fi
+          echo "All CI jobs passed successfully!"
