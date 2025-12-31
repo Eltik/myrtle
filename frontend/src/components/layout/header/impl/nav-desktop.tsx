@@ -143,7 +143,7 @@ export function NavDesktop({ pathname }: NavDesktopProps) {
                     y: e.clientY - rect.top,
                 };
                 if (glowRef.current) {
-                    glowRef.current.style.background = `radial-gradient(120px circle at ${mousePosRef.current.x}px ${mousePosRef.current.y}px, oklch(0.75 0.15 25 / 0.25) 0%, transparent 65%)`;
+                    glowRef.current.style.background = `radial-gradient(120px circle at ${mousePosRef.current.x}px ${mousePosRef.current.y}px, var(--glow-nav) 0%, transparent 65%)`;
                 }
             }
             if (!isNavHovered) {
@@ -160,7 +160,7 @@ export function NavDesktop({ pathname }: NavDesktopProps) {
                     className="pointer-events-none absolute inset-0 z-0 rounded-full transition-opacity duration-300"
                     ref={glowRef}
                     style={{
-                        background: "radial-gradient(120px circle at 0px 0px, oklch(0.75 0.15 25 / 0.25) 0%, transparent 65%)",
+                        background: "radial-gradient(120px circle at 0px 0px, var(--glow-nav) 0%, transparent 65%)",
                         opacity: isNavHovered ? 1 : 0,
                     }}
                 />
@@ -181,8 +181,8 @@ export function NavDesktop({ pathname }: NavDesktopProps) {
                         width: Math.max(0, hoverStyle.width - 8),
                         opacity: hoverStyle.opacity,
                         transition: "all 300ms cubic-bezier(0.4, 0, 0.2, 1), opacity 200ms ease-out",
-                        background: "linear-gradient(90deg, oklch(0.75 0.15 25 / 0) 0%, oklch(0.75 0.15 25 / 0.8) 50%, oklch(0.75 0.15 25 / 0) 100%)",
-                        boxShadow: "0 0 6px oklch(0.75 0.15 25 / 0.6), 0 0 2px oklch(0.75 0.15 25 / 0.4)",
+                        background: "linear-gradient(90deg, transparent 0%, var(--glow-nav-line-center) 50%, transparent 100%)",
+                        boxShadow: "0 0 6px var(--glow-nav-line-shadow), 0 0 2px var(--glow-nav-line-shadow-soft)",
                     }}
                 />
 
@@ -193,7 +193,7 @@ export function NavDesktop({ pathname }: NavDesktopProps) {
                         opacity: activeIconStyle.opacity,
                         transform: "translateY(-50%)",
                         transition: "left 400ms cubic-bezier(0.4, 0, 0.2, 1), opacity 200ms ease-out",
-                        textShadow: "0 0 8px oklch(0.75 0.15 25 / 0.6)",
+                        textShadow: "0 0 8px var(--glow-text-icon)",
                     }}
                 >
                     ◎

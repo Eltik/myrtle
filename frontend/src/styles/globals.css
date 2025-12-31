@@ -170,14 +170,14 @@
 }
 
 .nav-pill-hover {
-    background: linear-gradient(180deg, oklch(0.65 0.18 25 / 0.15) 0%, oklch(0.65 0.18 25 / 0.1) 100%);
+    background: linear-gradient(180deg, var(--nav-pill-hover-start, oklch(0.65 0.18 25 / 0.15)) 0%, var(--nav-pill-hover-end, oklch(0.65 0.18 25 / 0.1)) 100%);
     box-shadow:
         inset 0 1px 1px oklch(1 0 0 / 0.1),
         inset 0 -1px 1px oklch(0 0 0 / 0.03);
 }
 
 .dark .nav-pill-hover {
-    background: linear-gradient(180deg, oklch(0.24 0.025 25 / 0.5) 0%, oklch(0.2 0.02 25 / 0.35) 100%);
+    background: linear-gradient(180deg, var(--nav-pill-hover-start, oklch(0.24 0.025 25 / 0.5)) 0%, var(--nav-pill-hover-end, oklch(0.2 0.02 25 / 0.35)) 100%);
     box-shadow:
         inset 0 1px 1px oklch(1 0 0 / 0.05),
         inset 0 -1px 1px oklch(0 0 0 / 0.1);

@@ -22,13 +22,13 @@ export function Header() {
                 <div
                     className="-bottom-px absolute inset-x-0 h-px"
                     style={{
-                        background: "linear-gradient(90deg, transparent, oklch(0.75 0.15 25 / 0.5), oklch(0.85 0.12 40 / 0.3), oklch(0.75 0.15 25 / 0.5), transparent)",
+                        background: "linear-gradient(90deg, transparent, var(--glow-header-border), var(--glow-header-border-secondary), var(--glow-header-border), transparent)",
                     }}
                 />
                 <div
                     className="-bottom-1 pointer-events-none absolute inset-x-0 h-4 blur-md"
                     style={{
-                        background: "linear-gradient(90deg, transparent 10%, oklch(0.75 0.15 25 / 0.15), oklch(0.80 0.10 35 / 0.1), oklch(0.75 0.15 25 / 0.15), transparent 90%)",
+                        background: "linear-gradient(90deg, transparent 10%, var(--glow-header), var(--glow-header-secondary), var(--glow-header), transparent 90%)",
                     }}
                 />
                 <div className="header-backdrop absolute inset-0 backdrop-blur" />
