@@ -105,7 +105,7 @@ jobs:
           Copy-Item assets/unpacker/target/${{ matrix.target }}/release/assets-unpacker.exe artifacts/ -ErrorAction SilentlyContinue
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: assets-${{ matrix.artifact_suffix }}
           path: artifacts/
@@ -165,7 +165,7 @@ jobs:
           cp backend/target/${{ matrix.target }}/release/manage-permissions artifacts/ || true
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: backend-${{ matrix.artifact_suffix }}
           path: artifacts/
@@ -209,7 +209,7 @@ jobs:
           SKIP_ENV_VALIDATION: true
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: frontend-build
           path: |
