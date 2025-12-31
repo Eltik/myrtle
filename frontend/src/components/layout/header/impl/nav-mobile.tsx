@@ -30,13 +30,7 @@ export function NavMobile({ pathname, user, loading, logout, mobileMenuOpen, set
                     <span className="sr-only">Open menu</span>
                 </Button>
             </SheetTrigger>
-            <SheetContent
-                className="w-[280px] overflow-y-auto border-border sm:w-[320px]"
-                side="left"
-                style={{
-                    background: "linear-gradient(180deg, oklch(0.15 0.005 285) 0%, oklch(0.12 0.005 285) 100%)",
-                }}
-            >
+            <SheetContent className="mobile-nav-bg w-[280px] overflow-y-auto border-border sm:w-[320px]" side="left">
                 <SheetHeader className="border-border border-b pb-4">
                     <SheetTitle className="flex items-center gap-2">
                         <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary" />

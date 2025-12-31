@@ -201,14 +201,14 @@ export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
                             {/* Elite Badge */}
                             {data.evolvePhase > 0 && (
                                 <div className="mb-0 h-5 w-5 sm:mb-1 sm:h-8 sm:w-8">
-                                    <Image alt={`Elite ${data.evolvePhase}`} className="h-full w-full object-contain" height={32} src={`/api/cdn/upk/arts/elite_hub/elite_${data.evolvePhase}.png`} unoptimized width={32} />
+                                    <Image alt={`Elite ${data.evolvePhase}`} className="icon-theme-aware h-full w-full object-contain" height={32} src={`/api/cdn/upk/arts/elite_hub/elite_${data.evolvePhase}.png`} unoptimized width={32} />
                                 </div>
                             )}
 
                             {/* Level Circle */}
                             {(data.evolvePhase > 0 || data.level > 1) && (
                                 <div
-                                    className="flex aspect-square h-8 flex-col items-center justify-center rounded-full border-2 bg-zinc-900 text-lg leading-none sm:h-12 sm:text-2xl"
+                                    className="flex aspect-square h-8 flex-col items-center justify-center rounded-full border-2 bg-secondary text-lg leading-none sm:h-12 sm:text-2xl"
                                     style={{
                                         borderColor: isAtMaxLevel ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
                                     }}
@@ -235,7 +235,7 @@ export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
                                         {hasM ? (
                                             <Image alt={`M${skill.specializeLevel}`} className="h-full w-full object-contain" height={24} src={`/api/cdn/upk/arts/specialized_hub/specialized_${skill.specializeLevel}.png`} unoptimized width={24} />
                                         ) : (
-                                            <div className="flex h-full w-full items-center justify-center rounded bg-zinc-800 font-bold text-[10px] text-zinc-300 sm:text-xs">{data.mainSkillLvl}</div>
+                                            <div className="flex h-full w-full items-center justify-center rounded bg-secondary font-bold text-[10px] text-secondary-foreground sm:text-xs">{data.mainSkillLvl}</div>
                                         )}
                                     </div>
                                 );
@@ -251,9 +251,9 @@ export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
                                 const typeLetter = module.typeName1?.slice(-1) ?? "X";
 
                                 return (
-                                    <div className="relative aspect-square h-6 overflow-hidden rounded bg-zinc-900 sm:h-8" key={module.uniEquipId} title={`${module.typeName1} Stage ${moduleLevel}`}>
+                                    <div className="relative aspect-square h-6 overflow-hidden rounded bg-secondary sm:h-8" key={module.uniEquipId} title={`${module.typeName1} Stage ${moduleLevel}`}>
                                         <Image alt={module.typeName1 ?? "Module"} className="h-full w-full object-contain" height={32} src={module.image ? `/api/cdn${module.image}` : `/api/cdn/upk/spritepack/ui_equip_big_img_hub_0/${module.uniEquipIcon}.png`} unoptimized width={32} />
-                                        <span className="absolute right-0 bottom-0 rounded-tl bg-zinc-900/90 px-0.5 font-medium text-[9px] leading-none sm:text-[10px]">
+                                        <span className="absolute right-0 bottom-0 rounded-tl bg-secondary/90 px-0.5 font-medium text-[9px] leading-none sm:text-[10px]">
                                             {typeLetter}
                                             {moduleLevel}
                                         </span>

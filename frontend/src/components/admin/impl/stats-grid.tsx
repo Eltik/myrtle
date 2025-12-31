@@ -11,7 +11,7 @@ export function StatsGrid({ stats }: { stats: AdminStats }) {
                     <span className="font-medium text-sm">Total Users</span>
                     <Users className="size-4 text-muted-foreground" />
                 </div>
-                <div className="rounded-lg border bg-neutral-800/50 p-4">
+                <div className="rounded-lg border bg-secondary/50 p-4">
                     <div className="flex items-center justify-between">
                         <span className="font-medium text-2xl tracking-tight sm:text-3xl">{stats.users.total}</span>
                         <div className="flex items-center gap-3">
@@ -41,7 +41,7 @@ export function StatsGrid({ stats }: { stats: AdminStats }) {
                     <span className="font-medium text-sm">Tier Lists</span>
                     <LayoutList className="size-4 text-muted-foreground" />
                 </div>
-                <div className="rounded-lg border bg-neutral-800/50 p-4">
+                <div className="rounded-lg border bg-secondary/50 p-4">
                     <div className="flex items-center justify-between">
                         <span className="font-medium text-2xl tracking-tight sm:text-3xl">{stats.tierLists.total}</span>
                         <div className="flex items-center gap-3">
@@ -69,7 +69,7 @@ export function StatsGrid({ stats }: { stats: AdminStats }) {
                     <span className="font-medium text-sm">Total Versions</span>
                     <History className="size-4 text-muted-foreground" />
                 </div>
-                <div className="rounded-lg border bg-neutral-800/50 p-4">
+                <div className="rounded-lg border bg-secondary/50 p-4">
                     <div className="flex items-center justify-between">
                         <span className="font-medium text-2xl tracking-tight sm:text-3xl">{stats.tierLists.totalVersions}</span>
                         <div className="flex items-center gap-3">
@@ -97,7 +97,7 @@ export function StatsGrid({ stats }: { stats: AdminStats }) {
                     <span className="font-medium text-sm">Operator Placements</span>
                     <Activity className="size-4 text-muted-foreground" />
                 </div>
-                <div className="rounded-lg border bg-neutral-800/50 p-4">
+                <div className="rounded-lg border bg-secondary/50 p-4">
                     <div className="flex items-center justify-between">
                         <span className="font-medium text-2xl tracking-tight sm:text-3xl">{stats.tierLists.totalPlacements}</span>
                         <div className="flex items-center gap-3">

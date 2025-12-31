@@ -155,16 +155,7 @@ export function NavDesktop({ pathname }: NavDesktopProps) {
 
     return (
         <div className="relative">
-            <nav
-                className="group relative hidden items-center gap-0.5 overflow-hidden rounded-full border border-border px-1 py-1 md:flex"
-                onMouseLeave={handleNavMouseLeave}
-                onMouseMove={handleNavMouseMove}
-                ref={navRef}
-                style={{
-                    background: "linear-gradient(180deg, oklch(0.18 0.008 285 / 0.5) 0%, oklch(0.14 0.006 285 / 0.4) 100%)",
-                    boxShadow: "inset 0 1px 1px oklch(1 0 0 / 0.04), inset 0 -1px 2px oklch(0 0 0 / 0.15), 0 1px 3px oklch(0 0 0 / 0.1), 0 0 1px oklch(0 0 0 / 0.1)",
-                }}
-            >
+            <nav className="nav-pill-bg group relative hidden items-center gap-0.5 overflow-hidden rounded-full border border-border px-1 py-1 md:flex" onMouseLeave={handleNavMouseLeave} onMouseMove={handleNavMouseMove} ref={navRef}>
                 <div
                     className="pointer-events-none absolute inset-0 z-0 rounded-full transition-opacity duration-300"
                     ref={glowRef}
@@ -174,15 +165,13 @@ export function NavDesktop({ pathname }: NavDesktopProps) {
                     }}
                 />
                 <div
-                    className="pointer-events-none absolute top-1 bottom-1 z-1 rounded-full"
+                    className="nav-pill-hover pointer-events-none absolute top-1 bottom-1 z-1 rounded-full"
                     style={{
                         left: hoverStyle.left,
                         width: hoverStyle.width,
                         opacity: hoverStyle.opacity,
                         transform: hoverStyle.opacity ? "scale(1)" : "scale(0.95)",
                         transition: "all 300ms cubic-bezier(0.4, 0, 0.2, 1), opacity 200ms ease-out",
-                        background: "linear-gradient(180deg, oklch(0.24 0.025 25 / 0.5) 0%, oklch(0.20 0.02 25 / 0.35) 100%)",
-                        boxShadow: "inset 0 1px 1px oklch(1 0 0 / 0.05), inset 0 -1px 1px oklch(0 0 0 / 0.1)",
                     }}
                 />
                 <div
@@ -260,12 +249,7 @@ export function NavDesktop({ pathname }: NavDesktopProps) {
                     transition: "transform 200ms ease-out, opacity 150ms ease-out",
                 }}
             >
-                <div
-                    className="overflow-hidden rounded-lg border border-border shadow-lg backdrop-blur-sm"
-                    style={{
-                        background: "linear-gradient(180deg, oklch(0.18 0.008 285 / 0.95) 0%, oklch(0.14 0.006 285 / 0.95) 100%)",
-                    }}
-                >
+                <div className="nav-dropdown-bg overflow-hidden rounded-lg border border-border shadow-lg backdrop-blur-sm">
                     {navItems.map(
                         (item, index) =>
                             item.dropdown && (

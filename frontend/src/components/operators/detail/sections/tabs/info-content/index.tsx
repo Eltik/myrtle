@@ -289,7 +289,7 @@ export const InfoContent = memo(function InfoContent({ operator }: InfoContentPr
                                         {operator.phases.map((_, idx) => (
                                             // biome-ignore lint/suspicious/noArrayIndexKey: Static array of promotion phases
                                             <button className={cn("flex h-10 w-10 items-center justify-center rounded-lg border transition-all", phaseIndex === idx ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50")} key={idx} onClick={() => setPhaseIndex(idx)} type="button">
-                                                <Image alt={`Elite ${idx}`} height={24} src={`/api/cdn/upk/arts/elite_hub/elite_${idx}.png`} width={24} />
+                                                <Image alt={`Elite ${idx}`} className="icon-theme-aware" height={24} src={`/api/cdn/upk/arts/elite_hub/elite_${idx}.png`} width={24} />
                                             </button>
                                         ))}
                                     </div>
@@ -451,7 +451,7 @@ export const InfoContent = memo(function InfoContent({ operator }: InfoContentPr
                                     {operator.phases.map((_, idx) => (
                                         // biome-ignore lint/suspicious/noArrayIndexKey: Static array of promotion phases
                                         <button className={cn("flex h-10 w-10 items-center justify-center rounded-lg border transition-all", phaseIndex === idx ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50")} key={idx} onClick={() => setPhaseIndex(idx)} type="button">
-                                            <Image alt={`Elite ${idx}`} height={24} src={`/api/cdn/upk/arts/elite_hub/elite_${idx}.png`} width={24} />
+                                            <Image alt={`Elite ${idx}`} className="icon-theme-aware" height={24} src={`/api/cdn/upk/arts/elite_hub/elite_${idx}.png`} width={24} />
                                         </button>
                                     ))}
                                 </div>

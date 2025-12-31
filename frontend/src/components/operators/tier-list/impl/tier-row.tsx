@@ -1,8 +1,8 @@
 "use client";
 import { useState } from "react";
+import { getContrastTextColor } from "~/lib/utils";
 import type { Tier } from "~/types/api/impl/tier-list";
 import type { OperatorFromList } from "~/types/api/operators";
-import { getContrastTextColor } from "~/lib/utils";
 import { TierOperatorCard } from "./operator-card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "~/components/ui/shadcn/dialog";
 import { Info } from "lucide-react";
