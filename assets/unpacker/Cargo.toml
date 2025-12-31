@@ -46,7 +46,7 @@ cbc = "0.1"
 cipher = "0.4"
 
 # BSON support for decoded data
-bson = "2.9"
+bson = "3.1"
 
 # FlatBuffers support (serialize feature enables serde::Serialize for Vector types)
 flatbuffers = { version = "25.9", features = ["serialize"] }
