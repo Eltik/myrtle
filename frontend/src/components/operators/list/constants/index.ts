@@ -1,4 +1,4 @@
-// Rarity color mappings
+// Rarity color mappings (for dark mode / on dark backgrounds)
 export const RARITY_COLORS: Record<number, string> = {
     6: "#f7a452",
     5: "#f7e79e",
@@ -6,6 +6,16 @@ export const RARITY_COLORS: Record<number, string> = {
     3: "#88c8e3",
     2: "#7ef2a3",
     1: "#ffffff",
+};
+
+// Rarity color mappings for light mode (darker variants for readability)
+export const RARITY_COLORS_LIGHT: Record<number, string> = {
+    6: "#c47a2a",
+    5: "#a89520",
+    4: "#7b5ba8",
+    3: "#3a8aab",
+    2: "#2a8f4a",
+    1: "#666666",
 };
 
 export const RARITY_BLUR_COLORS: Record<number, string> = {

@@ -1,11 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import { useTheme } from "next-themes";
 import { memo, useCallback, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { capitalize, formatSubProfession, rarityToNumber } from "~/lib/utils";
 import type { OperatorFromList } from "~/types/api/operators";
-import { RARITY_COLORS } from "../../list/constants";
+import { RARITY_COLORS, RARITY_COLORS_LIGHT } from "../../list/constants";
 import { FactionLogo } from "../../list/ui/impl/faction-logo";
 
 interface OperatorTooltipProps {
@@ -27,9 +28,10 @@ export const OperatorTooltip = memo(function OperatorTooltip({ operator, childre
     const [isVisible, setIsVisible] = useState(false);
     const [position, setPosition] = useState<TooltipPosition>({ x: 0, y: 0 });
     const triggerRef = useRef<HTMLDivElement>(null);
+    const { resolvedTheme } = useTheme();
 
     const rarityNum = rarityToNumber(operator.rarity);
-    const rarityColor = RARITY_COLORS[rarityNum] ?? "#ffffff";
+    const rarityColor = (resolvedTheme === "light" ? RARITY_COLORS_LIGHT : RARITY_COLORS)[rarityNum] ?? "#ffffff";
 
     const calculatePosition = useCallback(() => {
         if (!triggerRef.current) return;
