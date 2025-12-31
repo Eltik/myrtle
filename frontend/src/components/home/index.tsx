@@ -11,7 +11,7 @@ export function MainContent() {
                     className="text-primary"
                     interval={3}
                     style={{
-                        textShadow: "0 0 20px oklch(0.75 0.15 25 / 0.5), 0 0 40px oklch(0.75 0.15 25 / 0.3), 0 0 60px oklch(0.75 0.15 25 / 0.15)",
+                        textShadow: "0 0 20px var(--glow-text-strong), 0 0 40px var(--glow-text-medium), 0 0 60px var(--glow-text-soft)",
                     }}
                 >
                     <span>Arknights</span>
