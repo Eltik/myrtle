@@ -196,7 +196,7 @@ dependencies = [
  "hex-literal",
  "image 0.24.9",
  "indicatif",
- "rand 0.8.5",
+ "rand 0.9.2",
  "rayon",
  "regex",
  "reqwest",
