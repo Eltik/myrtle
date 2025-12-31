@@ -1,10 +1,13 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useTheme } from "next-themes";
 import { memo } from "react";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "~/components/ui/shadcn/hover-card";
 import { capitalize, cn, formatSubProfession, rarityToNumber } from "~/lib/utils";
 import type { OperatorFromList } from "~/types/api/operators";
-import { HOVER_DELAY, RARITY_BLUR_COLORS, RARITY_COLORS } from "../../constants";
+import { HOVER_DELAY, RARITY_BLUR_COLORS, RARITY_COLORS, RARITY_COLORS_LIGHT } from "../../constants";
 import { ClassIcon } from "./class-icon";
 import { FactionLogo } from "./faction-logo";
 
@@ -16,8 +19,10 @@ interface OperatorCardGridProps {
 }
 
 export const OperatorCardGrid = memo(function OperatorCardGrid({ operator, isHovered = false, shouldGrayscale = false, onHoverChange }: OperatorCardGridProps) {
+    const { resolvedTheme } = useTheme();
     const rarityNum = rarityToNumber(operator.rarity);
     const rarityColor = RARITY_COLORS[rarityNum] ?? "#ffffff";
+    const rarityTextColor = (resolvedTheme === "light" ? RARITY_COLORS_LIGHT : RARITY_COLORS)[rarityNum] ?? "#ffffff";
     const rarityBlurColor = RARITY_BLUR_COLORS[rarityNum] ?? "#aaaaaa";
     const operatorId = operator.id ?? "";
 
@@ -70,7 +75,7 @@ export const OperatorCardGrid = memo(function OperatorCardGrid({ operator, isHov
                             </div>
                         </div>
                         {/* Rarity and class info */}
-                        <p className="font-semibold text-xs" style={{ color: rarityColor }}>
+                        <p className="font-semibold text-xs" style={{ color: rarityTextColor }}>
                             {`${rarityNum}★ ${formatSubProfession(operator.subProfessionId.toLowerCase())}`}
                         </p>
                         {/* Position and race */}

@@ -125,7 +125,7 @@ export function RecruitmentCalculator({ tags, recruitableOperators }: Recruitmen
                         {results.length > 0 && (
                             <>
                                 <span className="rounded-full bg-muted px-2 py-0.5 font-medium text-muted-foreground text-xs">{results.length} combinations</span>
-                                {highValueCount > 0 && <span className="rounded-full bg-amber-500/20 px-2 py-0.5 font-medium text-amber-400 text-xs">{highValueCount} high-value</span>}
+                                {highValueCount > 0 && <span className="rounded-full bg-amber-500/15 px-2 py-0.5 font-medium text-amber-700 text-xs dark:bg-amber-500/20 dark:text-amber-400">{highValueCount} high-value</span>}
                             </>
                         )}
                     </div>
