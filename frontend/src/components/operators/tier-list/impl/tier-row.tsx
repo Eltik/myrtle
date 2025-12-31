@@ -1,8 +1,11 @@
 "use client";
+import { useState } from "react";
 import type { Tier } from "~/types/api/impl/tier-list";
 import type { OperatorFromList } from "~/types/api/operators";
 import { getContrastTextColor } from "~/lib/utils";
 import { TierOperatorCard } from "./operator-card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "~/components/ui/shadcn/dialog";
+import { Info } from "lucide-react";
 
 interface TierRowProps {
     tier: Tier;
@@ -29,20 +32,28 @@ export function TierRow({ tier, operators, hoveredOperator, isGrayscaleActive, o
     const tierColor = tier.color || DEFAULT_TIER_COLORS[tier.name] || "#888888";
     // Calculate optimal text color based on background luminance
     const textColor = getContrastTextColor(tierColor);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     return (
-        <div className="flex flex-col gap-2 overflow-hidden rounded-lg border border-border bg-card/50 md:flex-row">
-            {/* Tier Label */}
-            <div
-                className="flex shrink-0 items-center justify-center px-6 py-4 font-bold text-2xl md:w-24 md:flex-col md:text-3xl"
-                style={{
-                    backgroundColor: tierColor,
-                    color: textColor,
-                }}
-            >
-                <span className="drop-shadow-md">{tier.name}</span>
-                {tier.description && <span className="mt-1 hidden text-center font-normal text-xs md:block" style={{ color: `${textColor}cc` }}>{tier.description}</span>}
-            </div>
+        <>
+            <div className="flex flex-col gap-2 overflow-hidden rounded-lg border border-border bg-card/50 md:flex-row">
+                {/* Tier Label */}
+                <button
+                    type="button"
+                    onClick={() => tier.description && setIsDialogOpen(true)}
+                    className="flex shrink-0 items-center justify-center px-6 py-4 font-bold text-xl leading-tight transition-opacity md:w-40 md:flex-col md:text-2xl md:leading-snug hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-default disabled:opacity-100"
+                    disabled={!tier.description}
+                    style={{
+                        backgroundColor: tierColor,
+                        color: textColor,
+                    }}
+                    aria-label={tier.description ? `View details for ${tier.name} tier` : tier.name}
+                >
+                    <span className="wrap-break-word text-center drop-shadow-md hyphens-auto">{tier.name}</span>
+                    {tier.description && (
+                        <Info className="mt-1 h-4 w-4 opacity-60" aria-hidden="true" />
+                    )}
+                </button>
 
             {/* Operators Grid */}
             <div className="min-w-0 flex-1 p-3">
@@ -61,5 +72,34 @@ export function TierRow({ tier, operators, hoveredOperator, isGrayscaleActive, o
                 )}
             </div>
         </div>
+
+        {/* Tier Description Dialog */}
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogContent className="max-w-md">
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                        <div
+                            className="flex h-8 w-8 items-center justify-center rounded font-bold text-sm"
+                            style={{
+                                backgroundColor: tierColor,
+                                color: textColor,
+                            }}
+                        >
+                            {tier.name}
+                        </div>
+                        Tier Information
+                    </DialogTitle>
+                    <DialogDescription>
+                        Details about the {tier.name} tier
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                    <div className="rounded-md border border-border/50 bg-muted/30 p-4">
+                        <p className="text-foreground text-sm leading-relaxed">{tier.description}</p>
+                    </div>
+                </div>
+            </DialogContent>
+        </Dialog>
+    </>
     );
 }
