@@ -8,6 +8,7 @@ import { Button } from "~/components/ui/shadcn/button";
 import { useAuth } from "~/hooks/use-auth";
 import { NavDesktop } from "./impl/nav-desktop";
 import { NavMobile } from "./impl/nav-mobile";
+import { ThemeToggle } from "./impl/theme-toggle";
 import { UserMenu } from "./impl/user-menu";
 
 export function Header() {
@@ -30,18 +31,8 @@ export function Header() {
                         background: "linear-gradient(90deg, transparent 10%, oklch(0.75 0.15 25 / 0.15), oklch(0.80 0.10 35 / 0.1), oklch(0.75 0.15 25 / 0.15), transparent 90%)",
                     }}
                 />
-                <div
-                    className="absolute inset-0 backdrop-blur"
-                    style={{
-                        background: "linear-gradient(180deg, oklch(0.15 0.005 285 / 0.8) 0%, oklch(0.13 0.005 285 / 0.6) 100%)",
-                    }}
-                />
-                <div
-                    className="absolute inset-x-0 top-0 h-px"
-                    style={{
-                        background: "linear-gradient(90deg, transparent, oklch(1 0 0 / 0.05), transparent)",
-                    }}
-                />
+                <div className="header-backdrop absolute inset-0 backdrop-blur" />
+                <div className="header-top-line absolute inset-x-0 top-0 h-px" />
                 <div className="relative flex h-14 items-center justify-between px-4">
                     <Link className="flex items-center gap-2" href="/">
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">{/* tbd logo here */}</div>
@@ -59,6 +50,7 @@ export function Header() {
                                 <span className="sr-only">GitHub</span>
                             </Link>
                         </Button>
+                        <ThemeToggle />
                         <div className="hidden md:block">
                             <UserMenu loading={loading} logout={logout} user={user} />
                         </div>

@@ -1,4 +1,7 @@
+"use client";
+
 import Image from "next/image";
+import { cn } from "~/lib/utils";
 import { CLASS_DISPLAY, CLASS_ICON } from "../../constants";
 
 interface ClassIconProps {
@@ -11,5 +14,5 @@ export function ClassIcon({ profession, size = 24, className }: ClassIconProps) 
     const iconName = CLASS_ICON[profession] ?? profession.toLowerCase();
     const displayName = CLASS_DISPLAY[profession] ?? profession;
 
-    return <Image alt={displayName} className={className} height={size} src={`/api/cdn/upk/arts/ui/[uc]charcommon/icon_profession_${iconName}.png`} width={size} />;
+    return <Image alt={displayName} className={cn("icon-theme-aware", className)} height={size} src={`/api/cdn/upk/arts/ui/[uc]charcommon/icon_profession_${iconName}.png`} width={size} />;
 }

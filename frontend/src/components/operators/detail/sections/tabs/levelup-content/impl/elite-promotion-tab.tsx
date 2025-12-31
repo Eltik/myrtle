@@ -20,9 +20,9 @@ export function ElitePromotionTab({ operator }: ElitePromotionTabProps) {
                     <div className="rounded-lg border border-border bg-card/30 p-4" key={idx}>
                         <div className="mb-3 flex items-center gap-3">
                             <div className="flex items-center gap-2">
-                                <Image alt={`E${idx - 1}`} height={24} src={`/api/cdn/upk/arts/elite_hub/elite_${idx - 1}.png`} width={24} />
+                                <Image alt={`E${idx - 1}`} className="icon-theme-aware" height={24} src={`/api/cdn/upk/arts/elite_hub/elite_${idx - 1}.png`} width={24} />
                                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                                <Image alt={`E${idx}`} height={24} src={`/api/cdn/upk/arts/elite_hub/elite_${idx}.png`} width={24} />
+                                <Image alt={`E${idx}`} className="icon-theme-aware" height={24} src={`/api/cdn/upk/arts/elite_hub/elite_${idx}.png`} width={24} />
                             </div>
                             <span className="font-medium text-foreground">Elite {idx}</span>
                         </div>

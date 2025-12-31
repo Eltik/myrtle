@@ -113,7 +113,13 @@ export function OperatorFilters({
                                         <Tooltip key={cls}>
                                             <TooltipTrigger asChild>
                                                 <button className={cn("flex h-10 w-10 items-center justify-center rounded-lg border transition-all", selectedClasses.includes(cls) ? "border-primary bg-primary/20" : "border-border bg-secondary/50 hover:border-primary/50")} onClick={() => toggleClass(cls)} type="button">
-                                                    <Image alt={CLASS_DISPLAY[cls] ?? cls} className={cn("h-6 w-6", selectedClasses.includes(cls) ? "opacity-100" : "opacity-60")} height={24} src={`/api/cdn/upk/arts/ui/[uc]charcommon/icon_profession_${CLASS_ICON[cls] ?? cls.toLowerCase()}.png`} width={24} />
+                                                    <Image
+                                                        alt={CLASS_DISPLAY[cls] ?? cls}
+                                                        className={cn("icon-theme-aware h-6 w-6", selectedClasses.includes(cls) ? "opacity-100" : "opacity-60")}
+                                                        height={24}
+                                                        src={`/api/cdn/upk/arts/ui/[uc]charcommon/icon_profession_${CLASS_ICON[cls] ?? cls.toLowerCase()}.png`}
+                                                        width={24}
+                                                    />
                                                 </button>
                                             </TooltipTrigger>
                                             <TooltipContent>

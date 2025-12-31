@@ -90,7 +90,7 @@ export function CharacterDialog({ data, operator, operatorName, operatorProfessi
                             <h2 className="font-bold text-3xl text-white">{operatorName}</h2>
                             <div className="mt-2 flex items-center gap-3">
                                 <Image alt={`${starCount} Star`} className="h-6 w-auto object-contain" height={24} src={`/api/cdn/upk/arts/rarity_hub/rarity_yellow_${starCount - 1}.png`} unoptimized width={80} />
-                                <span className="rounded bg-neutral-700/50 px-2 py-0.5 text-neutral-200 text-sm">{operatorProfession}</span>
+                                <span className="rounded bg-black/50 px-2 py-0.5 text-sm text-white">{operatorProfession}</span>
                             </div>
                         </motion.div>
                     </div>
@@ -118,7 +118,7 @@ export function CharacterDialog({ data, operator, operatorName, operatorProfessi
                         }}
                     >
                         <div className="flex items-center justify-center rounded-md bg-muted/30 py-2">
-                            <Image alt={`Elite ${data.evolvePhase}`} className="h-6 w-6 object-contain" height={24} src={`/api/cdn/upk/arts/elite_hub/elite_${data.evolvePhase}.png`} unoptimized width={24} />
+                            <Image alt={`Elite ${data.evolvePhase}`} className="icon-theme-aware h-6 w-6 object-contain" height={24} src={`/api/cdn/upk/arts/elite_hub/elite_${data.evolvePhase}.png`} unoptimized width={24} />
                         </div>
                         <div className="flex flex-col items-center justify-center rounded-md bg-muted/30 px-2.5 py-1.5 sm:flex-row sm:justify-between">
                             <span className="text-[10px] text-muted-foreground sm:text-xs">Lvl</span>

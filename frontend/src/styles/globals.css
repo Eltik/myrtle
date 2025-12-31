@@ -50,40 +50,41 @@
 
 :root {
     --radius: 0.625rem;
-    --background: oklch(0.1822 0 0);
-    --foreground: oklch(0.97 0.005 285);
-    --card: oklch(0.17 0.005 285);
-    --card-foreground: oklch(0.97 0.005 285);
-    --popover: oklch(0.17 0.005 285);
-    --popover-foreground: oklch(0.97 0.005 285);
-    --primary: oklch(0.75 0.15 25);
-    --primary-foreground: oklch(0.13 0.005 285);
-    --secondary: oklch(0.22 0.005 285);
-    --secondary-foreground: oklch(0.97 0.005 285);
-    --muted: oklch(0.22 0.005 285);
-    --muted-foreground: oklch(0.65 0.01 285);
-    --accent: oklch(0.22 0.005 285);
-    --accent-foreground: oklch(0.97 0.005 285);
+    /* Light mode colors */
+    --background: oklch(0.985 0.002 285);
+    --foreground: oklch(0.145 0.005 285);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0.005 285);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0.005 285);
+    --primary: oklch(0.65 0.18 25);
+    --primary-foreground: oklch(0.985 0.002 285);
+    --secondary: oklch(0.94 0.005 285);
+    --secondary-foreground: oklch(0.205 0.005 285);
+    --muted: oklch(0.94 0.005 285);
+    --muted-foreground: oklch(0.45 0.01 285);
+    --accent: oklch(0.94 0.005 285);
+    --accent-foreground: oklch(0.205 0.005 285);
     --destructive: oklch(0.577 0.245 27.325);
-    --destructive-foreground: oklch(0.577 0.245 27.325);
-    --border: oklch(0.28 0.005 285);
-    --input: oklch(0.22 0.005 285);
-    --ring: oklch(0.75 0.15 25);
-    --chart-1: oklch(0.75 0.15 25);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
-    --chart-4: oklch(0.828 0.189 84.429);
-    --chart-5: oklch(0.769 0.188 70.08);
-    --sidebar: oklch(0.15 0.005 285);
-    --sidebar-foreground: oklch(0.97 0.005 285);
-    --sidebar-primary: oklch(0.75 0.15 25);
-    --sidebar-primary-foreground: oklch(0.13 0.005 285);
-    --sidebar-accent: oklch(0.22 0.005 285);
-    --sidebar-accent-foreground: oklch(0.97 0.005 285);
-    --sidebar-border: oklch(0.28 0.005 285);
-    --sidebar-ring: oklch(0.75 0.15 25);
-    --glow-primary: oklch(0.75 0.15 25 / 0.5);
-    --glow-primary-intense: oklch(0.75 0.15 25 / 0.8);
+    --destructive-foreground: oklch(0.985 0.002 285);
+    --border: oklch(0.88 0.005 285);
+    --input: oklch(0.88 0.005 285);
+    --ring: oklch(0.65 0.18 25);
+    --chart-1: oklch(0.65 0.18 25);
+    --chart-2: oklch(0.55 0.15 184.704);
+    --chart-3: oklch(0.45 0.12 227.392);
+    --chart-4: oklch(0.7 0.16 84.429);
+    --chart-5: oklch(0.65 0.16 70.08);
+    --sidebar: oklch(0.97 0.005 285);
+    --sidebar-foreground: oklch(0.145 0.005 285);
+    --sidebar-primary: oklch(0.65 0.18 25);
+    --sidebar-primary-foreground: oklch(0.985 0.002 285);
+    --sidebar-accent: oklch(0.94 0.005 285);
+    --sidebar-accent-foreground: oklch(0.205 0.005 285);
+    --sidebar-border: oklch(0.88 0.005 285);
+    --sidebar-ring: oklch(0.65 0.18 25);
+    --glow-primary: oklch(0.65 0.18 25 / 0.3);
+    --glow-primary-intense: oklch(0.65 0.18 25 / 0.5);
 }
 
 .dark {
@@ -119,6 +120,8 @@
     --sidebar-accent-foreground: oklch(0.97 0.005 285);
     --sidebar-border: oklch(0.28 0.005 285);
     --sidebar-ring: oklch(0.75 0.15 25);
+    --glow-primary: oklch(0.75 0.15 25 / 0.5);
+    --glow-primary-intense: oklch(0.75 0.15 25 / 0.8);
 }
 
 @layer base {
@@ -128,4 +131,100 @@
     body {
         @apply bg-background text-foreground;
     }
+}
+
+/* Header theme-aware styles */
+.header-backdrop {
+    background: linear-gradient(180deg, oklch(0.97 0.005 285 / 0.9) 0%, oklch(0.985 0.002 285 / 0.85) 100%);
+}
+
+.dark .header-backdrop {
+    background: linear-gradient(180deg, oklch(0.15 0.005 285 / 0.8) 0%, oklch(0.13 0.005 285 / 0.6) 100%);
+}
+
+.header-top-line {
+    background: linear-gradient(90deg, transparent, oklch(0 0 0 / 0.08), transparent);
+}
+
+.dark .header-top-line {
+    background: linear-gradient(90deg, transparent, oklch(1 0 0 / 0.05), transparent);
+}
+
+/* Navigation pill theme-aware styles */
+.nav-pill-bg {
+    background: linear-gradient(180deg, oklch(0.96 0.005 285 / 0.8) 0%, oklch(0.94 0.005 285 / 0.7) 100%);
+    box-shadow:
+        inset 0 1px 1px oklch(1 0 0 / 0.5),
+        inset 0 -1px 2px oklch(0 0 0 / 0.05),
+        0 1px 3px oklch(0 0 0 / 0.05),
+        0 0 1px oklch(0 0 0 / 0.05);
+}
+
+.dark .nav-pill-bg {
+    background: linear-gradient(180deg, oklch(0.18 0.008 285 / 0.5) 0%, oklch(0.14 0.006 285 / 0.4) 100%);
+    box-shadow:
+        inset 0 1px 1px oklch(1 0 0 / 0.04),
+        inset 0 -1px 2px oklch(0 0 0 / 0.15),
+        0 1px 3px oklch(0 0 0 / 0.1),
+        0 0 1px oklch(0 0 0 / 0.1);
+}
+
+.nav-pill-hover {
+    background: linear-gradient(180deg, oklch(0.65 0.18 25 / 0.15) 0%, oklch(0.65 0.18 25 / 0.1) 100%);
+    box-shadow:
+        inset 0 1px 1px oklch(1 0 0 / 0.1),
+        inset 0 -1px 1px oklch(0 0 0 / 0.03);
+}
+
+.dark .nav-pill-hover {
+    background: linear-gradient(180deg, oklch(0.24 0.025 25 / 0.5) 0%, oklch(0.2 0.02 25 / 0.35) 100%);
+    box-shadow:
+        inset 0 1px 1px oklch(1 0 0 / 0.05),
+        inset 0 -1px 1px oklch(0 0 0 / 0.1);
+}
+
+.nav-dropdown-bg {
+    background: linear-gradient(180deg, oklch(0.99 0 0 / 0.98) 0%, oklch(0.97 0.005 285 / 0.98) 100%);
+}
+
+.dark .nav-dropdown-bg {
+    background: linear-gradient(180deg, oklch(0.18 0.008 285 / 0.95) 0%, oklch(0.14 0.006 285 / 0.95) 100%);
+}
+
+/* Mobile nav sheet background */
+.mobile-nav-bg {
+    background: linear-gradient(180deg, oklch(0.98 0.002 285) 0%, oklch(0.96 0.005 285) 100%);
+}
+
+.dark .mobile-nav-bg {
+    background: linear-gradient(180deg, oklch(0.15 0.005 285) 0%, oklch(0.12 0.005 285) 100%);
+}
+
+/* Image overlay/vignette theme-aware styles */
+.image-vignette {
+    background: linear-gradient(to top, oklch(0 0 0 / 0.6) 0%, oklch(0 0 0 / 0.3) 40%, transparent 100%);
+}
+
+.image-vignette-strong {
+    background: linear-gradient(to top, oklch(0 0 0 / 0.9) 0%, oklch(0 0 0 / 0.6) 40%, transparent 100%);
+}
+
+/* Stat card backgrounds */
+.stat-card-bg {
+    @apply bg-secondary/50;
+}
+
+/* Badge backgrounds for light/dark */
+.badge-neutral {
+    @apply bg-secondary text-secondary-foreground;
+}
+
+/* Theme-aware icon filters for light mode */
+/* Used for icons that are white/light colored and need to be dark in light mode */
+.icon-theme-aware {
+    filter: invert(1) hue-rotate(180deg);
+}
+
+.dark .icon-theme-aware {
+    filter: none;
 }
