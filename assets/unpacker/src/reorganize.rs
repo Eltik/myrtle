@@ -555,7 +555,9 @@ fn is_raw_encrypted_file(path: &Path) -> bool {
 
         // If it has a hash suffix and contains _table or _data, it's likely raw encrypted
         if has_hash_suffix
-            && (filename.contains("_table") || filename.contains("_data") || filename.contains("_database"))
+            && (filename.contains("_table")
+                || filename.contains("_data")
+                || filename.contains("_database"))
         {
             // Verify by checking first few bytes for binary content
             if let Ok(data) = std::fs::read(path) {

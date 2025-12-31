@@ -1,11 +1,99 @@
-# To get started with Dependabot version updates, you'll need to specify which
-# package ecosystems to update and where the package manifests are located.
-# Please see the documentation for all configuration options:
+# Dependabot configuration for myrtle.moe
 # https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
 
 version: 2
 updates:
-  - package-ecosystem: "npm" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  # Frontend (Bun/npm)
+  - package-ecosystem: "npm"
+    directory: "/frontend"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "deps(frontend)"
+    labels:
+      - "dependencies"
+      - "frontend"
+    open-pull-requests-limit: 5
+    groups:
+      radix-ui:
+        patterns:
+          - "@radix-ui/*"
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react*"
+
+  # Backend (Rust/Cargo)
+  - package-ecosystem: "cargo"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "deps(backend)"
+    labels:
+      - "dependencies"
+      - "backend"
+    open-pull-requests-limit: 5
+    groups:
+      axum:
+        patterns:
+          - "axum*"
+          - "tower*"
+      tokio:
+        patterns:
+          - "tokio*"
+
+  # Assets - unity-rs (Rust/Cargo)
+  - package-ecosystem: "cargo"
+    directory: "/assets/unity-rs"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+    commit-message:
+      prefix: "deps(unity-rs)"
+    labels:
+      - "dependencies"
+      - "assets"
+    open-pull-requests-limit: 3
+
+  # Assets - downloader (Rust/Cargo)
+  - package-ecosystem: "cargo"
+    directory: "/assets/downloader"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+    commit-message:
+      prefix: "deps(downloader)"
+    labels:
+      - "dependencies"
+      - "assets"
+    open-pull-requests-limit: 3
+
+  # Assets - unpacker (Rust/Cargo)
+  - package-ecosystem: "cargo"
+    directory: "/assets/unpacker"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+    commit-message:
+      prefix: "deps(unpacker)"
+    labels:
+      - "dependencies"
+      - "assets"
+    open-pull-requests-limit: 3
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+    commit-message:
+      prefix: "deps(actions)"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    open-pull-requests-limit: 3

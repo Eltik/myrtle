@@ -1,13 +1,10 @@
 # myrtle.moe
 
-A comprehensive Arknights game information and calculation platform with an elegant, modern interface.
-
-## Notice:
-There will be a pause of development as I am working on recoding the entire project from TypeScript to Rust. However, due to the fact that I don't know Rust very well, it will take a bit of time. I will update the entire README.md file once everything is finished.
+A comprehensive Arknights game companion platform featuring operator databases, player profile syncing, community tier lists, and advanced game tools—all powered by a high-performance Rust backend and modern React frontend.
 
 [![GitHub license](https://img.shields.io/github/license/Eltik/myrtle.moe)](https://github.com/Eltik/myrtle.moe/blob/main/LICENSE)
-[![Frontend](https://img.shields.io/badge/Frontend-Next.js-blue)](frontend/)
-[![Backend](https://img.shields.io/badge/Backend-Bun-black)](backend/)
+[![Frontend](https://img.shields.io/badge/Frontend-Next.js_15-black)](frontend/)
+[![Backend](https://img.shields.io/badge/Backend-Rust/Axum-orange)](backend/)
 [![Demo](https://img.shields.io/badge/Demo-Live-brightgreen)](https://myrtle.moe)
 
 ## Table of Contents
@@ -17,194 +14,318 @@ There will be a pause of development as I am working on recoding the entire proj
 - [Project Structure](#project-structure)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Running the Application](#running-the-application)
+  - [Quick Start](#quick-start)
+  - [Asset Pipeline Setup](#asset-pipeline-setup)
 - [Technology Stack](#technology-stack)
 - [Architecture](#architecture)
+- [Documentation](#documentation)
 - [Contributing](#contributing)
 - [License](#license)
 - [Acknowledgements](#acknowledgements)
 
 ## Overview
 
-myrtle.moe is a feature-rich Arknights toolkit designed to provide players with accurate game data, advanced calculations, and intuitive visualizations. The platform offers a modern, responsive interface that makes it easy to research operators, calculate DPS, plan upgrades, and access game assets.
+myrtle.moe is a feature-rich Arknights toolkit designed to provide players with accurate game data, player profile synchronization, community tier lists, and intuitive visualizations. The platform offers a modern, responsive interface that makes it easy to research operators, view detailed statistics, plan upgrades, and access game assets.
 
 Named after the beloved Arknights operator Myrtle, this project aims to be the most comprehensive, accurate, and user-friendly Arknights resource available.
 
 ## Features
 
-- **Operator Database**: Complete information on all Arknights operators including stats, skills, talents, and modules
-- **DPS Calculator**: Advanced damage calculation system with support for all skill mechanics, talents, and buffs
-- **Asset Browser**: Direct access to game artwork, animations, audio, and other assets
-- **Team Builder**: Create and share team compositions with detailed synergy analysis
-- **Interactive Tools**: Intuitive tools for planning operator upgrades, material farming, and more
-- **Game Data API**: Robust API for accessing Arknights game data programmatically
-- **Modern UI**: Elegant, responsive interface built with Next.js and Tailwind CSS
+- **Operator Database**: Complete information on all 200+ Arknights operators including stats, skills, talents, modules, skins, voice lines, and lore
+- **Player Profile Sync**: Link your Arknights account to view your roster, inventory, and base layout synced directly from game servers
+- **Community Tier Lists**: Browse and create operator tier lists with version history, changelogs, and collaborative editing
+- **Recruitment Calculator**: Calculate optimal tag combinations for the recruitment system
+- **Asset Browser**: Direct access to game artwork, Spine animations, audio files, and other assets
+- **Game Data API**: Robust REST API for accessing Arknights game data programmatically
+- **Multi-Server Support**: Full support for EN, JP, KR, CN (Official/Bilibili), and TW servers
+- **Modern UI**: Elegant, responsive interface with dark/light themes and customizable accent colors
 
 ## Project Structure
 
-The myrtle.moe project is divided into three main components:
+```
+myrtle.moe/
+├── frontend/           # Next.js 15 web application (React 19, TypeScript, Tailwind CSS v4)
+├── backend/            # Rust API server (Axum, PostgreSQL, Redis)
+├── assets/             # Game asset processing toolkit
+│   ├── downloader/     # Multi-server asset downloader (Rust)
+│   ├── unpacker/       # High-performance asset extractor (Rust)
+│   ├── unity-rs/       # Unity asset parsing library (Rust port of UnityPy)
+│   ├── OpenArknightsFBS/ # FlatBuffers schemas for game data
+│   └── Unpacked/       # Extracted game assets (~90GB)
+└── .github/            # CI/CD workflows
+```
 
-- **[Frontend](frontend/)**: The user interface built with Next.js, T3 Stack, and Tailwind CSS
-- **[Backend](backend/)**: The API server and data processing engine built with Bun and TypeScript
-- **[Assets](assets/)**: Tools for downloading, unpacking, and processing Arknights game assets
-
-Each component has its own detailed README.md with specific setup instructions.
+Each component has its own detailed README with specific documentation.
 
 ## Getting Started
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) 18+ or [Bun](https://bun.sh/)
-- [PostgreSQL](https://www.postgresql.org/) database
-- [Redis](https://redis.io/) for caching
-- [Python 3.8+](https://www.python.org/downloads/) for asset processing
-- Sufficient disk space (~10GB) for game assets
+- [Rust](https://rustup.rs/) 1.75+ (2024 edition)
+- [Node.js](https://nodejs.org/) 20+ or [Bun](https://bun.sh/) 1.0+
+- [PostgreSQL](https://www.postgresql.org/) 14+
+- [Redis](https://redis.io/) 7+
+- ~100GB disk space for game assets (optional, for full asset extraction)
 
-### Installation
+### Quick Start
 
-1. Clone the repository:
+1. **Clone the repository**
 ```bash
 git clone https://github.com/Eltik/myrtle.moe.git
 cd myrtle.moe
 ```
 
-2. Set up and install each component:
-
-```bash
-###
-# Assets Toolkit
-# Necessary for the backend and frontend to work.
-###
-# Set up assets toolkit
-cd assets
-
-# Download assets to ./assets/Unpacked directory
-python assets/downloader/ark-downloader.py --output assets/ArkAssets
-
-# Install unpacker dependencies
-cd assets/unpacker/unpacker
-poetry install
-
-# Build unpacker
-python Build.py # For Windows
-
-chmod +x build_macos.sh # For MacOS
-./build_macos.sh
-
-# Run unpacker. If the unpacker starts stalling, stop the unpacker and add the --resume argument.
-./build/dist/ArkUnpacker-v4.0.0 -m ab -i ../../ArkAssets --image --text --audio --spine -o ../../Unpacked
-
-# Combine alpha assets
-cd ../../../ # Move back to main directory
-python assets/unpacker/helper/combine_alpha.py --input-dir ./assets/Unpacked --delete-alpha
-
-# Rename assets to proper naming convention
-python assets/unpacker/helper/rename_assets.py ./assets/Unpacked
-
-# Find missing assets, as when unpacking sometimes (especially if the unpacker stalled)
-# there will be assets that weren't unpacked properly.
-python assets/unpacker/missing/find-assets.py --find-missing --source-dir ./assets/ArkAssets --extracted-dir ./assets/Unpacked -o ./assets/unpacker/missing
-
-# Extract those missing assets
-python assets/unpacker/unpacker/Main.py -m ab -i ./assets/ArkAssets -o ./assets/Unpacked --target-list ./assets/unpacker/missing/missing_assets.json --image --spine --text --audio --resume --skip-problematic --timeout 20
-
-###
-# Backend
-###
-
-# Set up backend
-cd ../backend
-cp .env.example .env
-# Edit .env with your configuration
-bun install
-
-# Set up frontend
-cd ../frontend
-cp .env.example .env
-# Edit .env with your configuration
-bun install
-```
-```
-
-### Running the Application
-
-1. Start the backend server:
+2. **Set up the backend**
 ```bash
 cd backend
-bun run dev
+
+# Create environment file
+cat > .env << EOF
+DATABASE_URL=postgres://user:password@localhost/myrtle
+REDIS_URL=redis://127.0.0.1:6379
+JWT_SECRET=your-secret-key-here
+DATA_DIR=./data
+ASSETS_DIR=./assets
+EOF
+
+# Build and run
+cargo build --release
+cargo run --release
 ```
 
-2. Start the frontend development server:
+3. **Set up the frontend**
 ```bash
 cd frontend
+
+# Create environment file
+cat > .env << EOF
+BACKEND_URL=http://localhost:3060
+EOF
+
+# Install dependencies and run
+bun install
 bun run dev
 ```
 
-3. Open your browser and visit [http://localhost:3000](http://localhost:3000)
+4. **Access the application**
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:3060
 
-For detailed instructions on running each component, please refer to their individual README files.
+### Asset Pipeline Setup
+
+The asset pipeline downloads and extracts game assets from Arknights servers. This is optional but required for serving game images, audio, and animations.
+
+#### 1. Build the Asset Tools
+
+```bash
+cd assets
+
+# Build the downloader
+cd downloader
+cargo build --release
+
+# Build the unpacker
+cd ../unpacker
+cargo build --release
+
+# Return to assets directory
+cd ..
+```
+
+#### 2. Download Game Assets
+
+```bash
+# Set library path for FMOD audio support (macOS)
+export DYLD_LIBRARY_PATH=$(pwd)/unity-rs/src/resources/FMOD/Darwin:$DYLD_LIBRARY_PATH
+
+# Download assets (EN server example)
+./downloader/target/release/arknights-downloader \
+    --server en \
+    --savedir ./ArkAssets \
+    --threads 4
+```
+
+Supported servers: `en`, `jp`, `kr`, `official` (CN), `bilibili` (CN), `tw`
+
+#### 3. Extract Assets
+
+```bash
+# Extract all asset types
+./unpacker/target/release/assets-unpacker extract \
+    --input ./ArkAssets \
+    --output ./Unpacked \
+    --image true \
+    --text true \
+    --audio true \
+    --spine true \
+    --threads 4
+
+# Combine RGB + alpha textures into RGBA
+./unpacker/target/release/assets-unpacker combine \
+    --input ./Unpacked/upk \
+    --output ./Unpacked/cmb
+
+# Decode encrypted game data (FlatBuffers, AES)
+./unpacker/target/release/assets-unpacker decode \
+    --input ./Unpacked/upk \
+    --output ./Unpacked/decoded
+```
+
+#### 4. Link Assets to Backend
+
+```bash
+# Symlink or copy assets to backend
+ln -s $(pwd)/Unpacked ../backend/assets
+ln -s $(pwd)/Unpacked/decoded/gamedata/excel ../backend/data
+```
+
+For detailed asset pipeline documentation, see:
+- [Downloader README](assets/downloader/README.md)
+- [Unpacker README](assets/unpacker/README.md)
 
 ## Technology Stack
 
-- **Frontend**:
-  - [Next.js](https://nextjs.org/) - React framework
-  - [T3 Stack](https://create.t3.gg/) - Modern web development stack
-  - [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS
-  - [shadcn/ui](https://ui.shadcn.com/) - UI component library
-  - [Zustand](https://zustand-demo.pmnd.rs/) - State management
-  - [Framer Motion](https://www.framer.com/motion/) - Animations
+### Frontend
+| Technology | Purpose |
+|------------|---------|
+| [Next.js 15](https://nextjs.org/) | React framework with App Router |
+| [React 19](https://react.dev/) | UI library |
+| [TypeScript](https://www.typescriptlang.org/) | Type-safe JavaScript |
+| [Tailwind CSS v4](https://tailwindcss.com/) | Utility-first CSS with OKLCH colors |
+| [shadcn/ui](https://ui.shadcn.com/) | Radix-based component library |
+| [Motion](https://motion.dev/) | Animation primitives |
+| [PixiJS](https://pixijs.com/) + Pixi-Spine | Spine animation rendering |
 
-- **Backend**:
-  - [Bun](https://bun.sh/) - JavaScript runtime
-  - [TypeScript](https://www.typescriptlang.org/) - Type-safe JavaScript
-  - [PostgreSQL](https://www.postgresql.org/) - Database
-  - [Redis](https://redis.io/) - Caching
-  - [Zod](https://github.com/colinhacks/zod) - Schema validation
+### Backend
+| Technology | Purpose |
+|------------|---------|
+| [Rust](https://www.rust-lang.org/) | Systems programming language |
+| [Axum](https://github.com/tokio-rs/axum) | Async web framework |
+| [SQLx](https://github.com/launchbadge/sqlx) | Compile-time SQL queries |
+| [PostgreSQL](https://www.postgresql.org/) | Primary database |
+| [Redis](https://redis.io/) | Session cache & rate limiting |
+| [JWT](https://jwt.io/) | Authentication tokens |
 
-- **Assets Toolkit**:
-  - [Python](https://www.python.org/) - Primary language
-  - [UnityPy](https://pypi.org/project/UnityPy/) - Unity asset extraction
-  - [Pillow](https://pypi.org/project/Pillow/) - Image processing
+### Asset Toolkit
+| Component | Purpose |
+|-----------|---------|
+| [unity-rs](assets/unity-rs/) | Rust port of UnityPy for Unity asset parsing |
+| [downloader](assets/downloader/) | Multi-server asset downloader with version tracking |
+| [unpacker](assets/unpacker/) | High-performance asset extraction (9x faster than Python) |
+| [OpenArknightsFBS](assets/OpenArknightsFBS/) | FlatBuffers schemas for 59 game data tables |
 
 ## Architecture
 
-myrtle.moe follows a modern web application architecture:
-
 ```
-┌────────────┐      ┌────────────┐      ┌────────────┐
-│  Frontend  │◄────►│  Backend   │◄────►│ PostgreSQL │
-│  (Next.js) │      │ (Bun/TS)   │      │ Database   │
-└────────────┘      └────────────┘      └────────────┘
-                          │
-                          ▼
-                    ┌────────────┐      ┌────────────┐
-                    │   Redis    │      │ Processed  │
-                    │   Cache    │      │  Assets    │
-                    └────────────┘      └────────────┘
-                                              ▲
-                                              │
-                                        ┌────────────┐
-                                        │   Assets   │
-                                        │  Toolkit   │
-                                        └────────────┘
-                                              ▲
-                                              │
-                                        ┌────────────┐
-                                        │ Arknights  │
-                                        │ Game Data  │
-                                        └────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                            Arknights Servers                            │
+│                  (EN, JP, KR, CN Official, Bilibili, TW)               │
+└─────────────────────────────────────┬───────────────────────────────────┘
+                                      │
+                    ┌─────────────────▼─────────────────┐
+                    │        Asset Downloader           │
+                    │    (Rust, parallel downloads)     │
+                    └─────────────────┬─────────────────┘
+                                      │
+                    ┌─────────────────▼─────────────────┐
+                    │        Asset Unpacker             │
+                    │  (Textures, Audio, Spine, Data)   │
+                    └─────────────────┬─────────────────┘
+                                      │
+┌─────────────────┐     ┌─────────────▼─────────────┐     ┌─────────────────┐
+│    Frontend     │◄────┤        Backend            │◄────┤   PostgreSQL    │
+│   (Next.js 15)  │     │      (Rust/Axum)          │     │    Database     │
+│                 │     │                           │     └─────────────────┘
+│  - Operators    │     │  - REST API               │
+│  - Profiles     │     │  - Authentication         │     ┌─────────────────┐
+│  - Tier Lists   │     │  - Game Data              │◄────┤     Redis       │
+│  - Recruitment  │     │  - CDN Proxy              │     │     Cache       │
+│  - Settings     │     │  - Rate Limiting          │     └─────────────────┘
+└─────────────────┘     └───────────────────────────┘
+                                      │
+                        ┌─────────────▼─────────────┐
+                        │     Processed Assets      │
+                        │  (~90GB extracted data)   │
+                        │  - Images (PNG)           │
+                        │  - Audio (WAV)            │
+                        │  - Spine animations       │
+                        │  - Game tables (JSON)     │
+                        └───────────────────────────┘
 ```
 
-- The **Frontend** provides the user interface and communicates with the backend API
-- The **Backend** processes requests, performs calculations, and serves data
-- The **Assets Toolkit** downloads and processes game assets for use by the backend
-- **PostgreSQL** stores structured game data, user data, and calculation results
-- **Redis** provides caching for frequently accessed data to improve performance
+### Data Flow
+
+1. **Asset Pipeline**: Downloads raw game files from Arknights CDN, extracts textures/audio/animations, decodes encrypted game data
+2. **Backend**: Serves game data via REST API, handles authentication with Yostar OAuth, manages tier lists and user data
+3. **Frontend**: Renders operator database, player profiles, tier lists, and tools with real-time data from the backend
+
+## Documentation
+
+| Component | Documentation |
+|-----------|---------------|
+| Frontend | [frontend/README.md](frontend/README.md) |
+| Backend | [backend/README.md](backend/README.md) |
+| Asset Downloader | [assets/downloader/README.md](assets/downloader/README.md) |
+| Asset Unpacker | [assets/unpacker/README.md](assets/unpacker/README.md) |
+| Unity-RS Library | [assets/unity-rs/README.md](assets/unity-rs/README.md) |
+| FlatBuffers Schemas | [assets/OpenArknightsFBS/README.md](assets/OpenArknightsFBS/README.md) |
+
+## API Reference
+
+The backend exposes a comprehensive REST API:
+
+### Authentication
+```
+POST /login                    # Login with email + verification code
+POST /refresh                  # Refresh session token
+POST /send-code                # Request verification code
+```
+
+### Game Data
+```
+GET  /static/operators         # List all operators
+GET  /static/operators/{id}    # Get operator details
+GET  /static/skills            # List all skills
+GET  /static/modules           # List all modules
+GET  /static/materials         # List all materials
+GET  /static/skins             # List all skins
+GET  /static/gacha             # Gacha pool data
+```
+
+### User Data
+```
+GET  /get-user/{uid}           # Get user profile
+POST /auth/update-settings     # Update user settings
+```
+
+### Tier Lists
+```
+GET  /tier-lists               # List all tier lists
+GET  /tier-lists/{slug}        # Get tier list details
+POST /tier-lists               # Create tier list (admin)
+POST /tier-lists/{slug}/publish # Publish new version
+```
+
+### Assets
+```
+GET  /cdn/avatar/{id}          # Operator avatar image
+GET  /cdn/portrait/{id}        # Character portrait
+GET  /cdn/{path}               # Any game asset
+```
+
+For complete API documentation, see [backend/README.md](backend/README.md).
 
 ## Contributing
 
-Contributions are welcome! Please see the individual component READMEs for specific contribution guidelines.
+Contributions are welcome! Please follow these guidelines:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+For component-specific contribution guidelines, see the individual README files.
 
 ## License
 
@@ -212,10 +333,14 @@ TBD
 
 ## Acknowledgements
 
-This project was inspired by existing Arknights tools and would not be possible without:
+This project builds upon the work of many open-source projects and community contributions:
 
-- [ArkPRTS](https://github.com/thesadru/ArkPRTS) - Inspiration for many features
-- [Aceship/Arknights-Toolkit](https://github.com/Aceship/Arknights-Toolkit) - Amazing resource for game data
-- [isHarryh/Ark-Unpacker](https://github.com/isHarryh/Ark-Unpacker) - Essential tool for asset unpacking
-- [ChaomengOrion/ArkAssetsTool](https://github.com/ChaomengOrion/ArkAssetsTool) - Foundation for our asset downloader
-- The Arknights community for their continued support and feedback
+- [UnityPy](https://github.com/K0lb3/UnityPy) - Original Python library for Unity asset extraction (unity-rs is a Rust port)
+- [OpenArknightsFBS](https://github.com/MooncellWiki/OpenArknightsFBS) - Community-maintained FlatBuffers schemas
+- [ArkPRTS](https://github.com/thesadru/ArkPRTS) - Inspiration for authentication flow
+- [Aceship/Arknights-Toolkit](https://github.com/Aceship/Arknights-Toolkit) - Comprehensive game data resource
+- The Arknights community for continued support and feedback
+
+---
+
+**Note**: This project is not affiliated with Hypergryph, Yostar, or any official Arknights entities. All game data and assets are property of their respective owners.
