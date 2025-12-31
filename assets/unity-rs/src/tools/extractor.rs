@@ -300,10 +300,10 @@ pub struct CollectedObjects {
 }
 
 /// Get object by path_id from a list of objects
-fn get_object_by_pathid<'a>(
+fn get_object_by_pathid(
     pathid: i64,
-    objects: &'a [crate::files::object_reader::ObjectReader<()>],
-) -> Option<&'a crate::files::object_reader::ObjectReader<()>> {
+    objects: &[crate::files::object_reader::ObjectReader<()>],
+) -> Option<&crate::files::object_reader::ObjectReader<()>> {
     objects.iter().find(|obj| obj.path_id == pathid)
 }
 
@@ -540,12 +540,12 @@ fn collect_objects_for_spine(
     };
 
     let env = env_rc.borrow();
-    for (_name, file_rc) in &env.files {
+    for file_rc in env.files.values() {
         let file_ref = file_rc.borrow();
         match &*file_ref {
             crate::files::bundle_file::FileType::SerializedFile(sf_rc) => {
                 let sf = sf_rc.borrow();
-                for (_id, obj) in &sf.objects {
+                for obj in sf.objects.values() {
                     match obj.obj_type {
                         ClassIDType::MonoBehaviour => collected.monobehaviors.push(obj.clone()),
                         ClassIDType::TextAsset => collected.textassets.push(obj.clone()),
@@ -556,13 +556,13 @@ fn collect_objects_for_spine(
                 }
             }
             crate::files::bundle_file::FileType::BundleFile(bundle) => {
-                for (_bundle_name, bundle_file_rc) in &bundle.files {
+                for bundle_file_rc in bundle.files.values() {
                     let bundle_file_ref = bundle_file_rc.borrow();
                     if let crate::files::bundle_file::FileType::SerializedFile(sf_rc) =
                         &*bundle_file_ref
                     {
                         let sf = sf_rc.borrow();
-                        for (_id, obj) in &sf.objects {
+                        for obj in sf.objects.values() {
                             match obj.obj_type {
                                 ClassIDType::MonoBehaviour => {
                                     collected.monobehaviors.push(obj.clone())
@@ -666,13 +666,13 @@ fn save_spine_asset(
                     &temp_rgb,
                     true,
                 )
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+                .map_err(|e| io::Error::other(format!("{:?}", e)))?;
                 crate::export::texture_2d_converter::save_texture_as_png(
                     alpha_tex,
                     &temp_alpha,
                     true,
                 )
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+                .map_err(|e| io::Error::other(format!("{:?}", e)))?;
 
                 // Load and merge
                 if let (Ok(rgb_img), Ok(alpha_img)) =
@@ -700,10 +700,7 @@ fn save_spine_asset(
                         );
                     }
                     merged.save(&rgb_final_path).map_err(|e| {
-                        io::Error::new(
-                            io::ErrorKind::Other,
-                            format!("Failed to save merged texture: {}", e),
-                        )
+                        io::Error::other(format!("Failed to save merged texture: {}", e))
                     })?;
                     saved_count += 1;
                 }
@@ -718,7 +715,7 @@ fn save_spine_asset(
                     &rgb_final_path,
                     true,
                 )
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+                .map_err(|e| io::Error::other(format!("{:?}", e)))?;
                 saved_count += 1;
             }
         } else {
@@ -728,7 +725,7 @@ fn save_spine_asset(
                 &rgb_final_path,
                 true,
             )
-            .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+            .map_err(|e| io::Error::other(format!("{:?}", e)))?;
             saved_count += 1;
 
             // Save alpha texture separately with [alpha] suffix
@@ -740,7 +737,7 @@ fn save_spine_asset(
                     &alpha_final_path,
                     true,
                 )
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+                .map_err(|e| io::Error::other(format!("{:?}", e)))?;
                 saved_count += 1;
             }
         }
@@ -817,7 +814,7 @@ pub fn extract_assets<P: AsRef<Path>, S: AsRef<Path>>(
                 io::Error::new(io::ErrorKind::InvalidInput, "Invalid source path")
             })?,
         )
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+        .map_err(|e| io::Error::other(format!("{:?}", e)))?;
     } else {
         env.load_file(
             FileSource::Path(src_path.to_string_lossy().to_string()),
@@ -866,24 +863,24 @@ pub fn extract_assets<P: AsRef<Path>, S: AsRef<Path>>(
 
         {
             let env = env_rc.borrow();
-            for (_name, file_rc) in &env.files {
+            for file_rc in env.files.values() {
                 let file_ref = file_rc.borrow();
                 match &*file_ref {
                     crate::files::bundle_file::FileType::SerializedFile(sf_rc) => {
                         let sf = sf_rc.borrow();
-                        for (_id, obj) in &sf.objects {
+                        for obj in sf.objects.values() {
                             objects_to_extract.push(obj.clone());
                         }
                     }
                     crate::files::bundle_file::FileType::BundleFile(bundle) => {
                         // Handle SerializedFiles inside BundleFiles
-                        for (_bundle_name, bundle_file_rc) in &bundle.files {
+                        for bundle_file_rc in bundle.files.values() {
                             let bundle_file_ref = bundle_file_rc.borrow();
                             if let crate::files::bundle_file::FileType::SerializedFile(sf_rc) =
                                 &*bundle_file_ref
                             {
                                 let sf = sf_rc.borrow();
-                                for (_id, obj) in &sf.objects {
+                                for obj in sf.objects.values() {
                                     objects_to_extract.push(obj.clone());
                                 }
                             }
@@ -942,7 +939,7 @@ pub fn extract_assets_with_spine<P: AsRef<Path>, S: AsRef<Path>>(
                 io::Error::new(io::ErrorKind::InvalidInput, "Invalid source path")
             })?,
         )
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+        .map_err(|e| io::Error::other(format!("{:?}", e)))?;
     } else {
         env.load_file(
             FileSource::Path(src_path.to_string_lossy().to_string()),
@@ -1032,23 +1029,23 @@ pub fn extract_assets_with_spine<P: AsRef<Path>, S: AsRef<Path>>(
     let mut objects_to_extract = Vec::new();
     {
         let env = env_rc.borrow();
-        for (_name, file_rc) in &env.files {
+        for file_rc in env.files.values() {
             let file_ref = file_rc.borrow();
             match &*file_ref {
                 crate::files::bundle_file::FileType::SerializedFile(sf_rc) => {
                     let sf = sf_rc.borrow();
-                    for (_id, obj) in &sf.objects {
+                    for obj in sf.objects.values() {
                         objects_to_extract.push(obj.clone());
                     }
                 }
                 crate::files::bundle_file::FileType::BundleFile(bundle) => {
-                    for (_bundle_name, bundle_file_rc) in &bundle.files {
+                    for bundle_file_rc in bundle.files.values() {
                         let bundle_file_ref = bundle_file_rc.borrow();
                         if let crate::files::bundle_file::FileType::SerializedFile(sf_rc) =
                             &*bundle_file_ref
                         {
                             let sf = sf_rc.borrow();
-                            for (_id, obj) in &sf.objects {
+                            for obj in sf.objects.values() {
                                 objects_to_extract.push(obj.clone());
                             }
                         }
@@ -1169,7 +1166,7 @@ fn export_texture2d_with_collision(
     let mut obj_clone = obj.clone();
     let data = obj_clone
         .read(false)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+        .map_err(|e| io::Error::other(format!("{:?}", e)))?;
 
     let mut texture: Texture2D = match serde_json::from_value(data.clone()) {
         Ok(t) => t,
@@ -1194,7 +1191,7 @@ fn export_texture2d_with_collision(
     let final_path = no_namesake(&output);
 
     crate::export::texture_2d_converter::save_texture_as_png(&texture, &final_path, true)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+        .map_err(|e| io::Error::other(format!("{:?}", e)))?;
 
     Ok(Some(final_path))
 }
@@ -1209,7 +1206,7 @@ fn export_sprite_with_collision(
     let mut obj_clone = obj.clone();
     let data = obj_clone
         .read(false)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+        .map_err(|e| io::Error::other(format!("{:?}", e)))?;
 
     let sprite: Sprite = match serde_json::from_value(data.clone()) {
         Ok(s) => s,
@@ -1225,12 +1222,7 @@ fn export_sprite_with_collision(
         .assets_file
         .as_ref()
         .and_then(|weak| weak.upgrade())
-        .ok_or_else(|| {
-            io::Error::new(
-                io::ErrorKind::Other,
-                "Sprite's ObjectReader has no assets_file reference",
-            )
-        })?;
+        .ok_or_else(|| io::Error::other("Sprite's ObjectReader has no assets_file reference"))?;
 
     let output = path.with_extension("png");
     let final_path = no_namesake(&output);
@@ -1242,7 +1234,7 @@ fn export_sprite_with_collision(
             .to_str()
             .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "Invalid output path"))?,
     )
-    .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+    .map_err(|e| io::Error::other(format!("{:?}", e)))?;
 
     Ok(Some(final_path))
 }
@@ -1331,7 +1323,7 @@ fn export_texture2d(
     let mut obj_clone = obj.clone();
     let data = obj_clone
         .read(false)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+        .map_err(|e| io::Error::other(format!("{:?}", e)))?;
 
     // Try to deserialize to Texture2D struct
     let mut texture: Texture2D = match serde_json::from_value(data.clone()) {
@@ -1370,8 +1362,7 @@ fn export_texture2d(
             }
 
             // If we can't extract image data, export as JSON
-            let json = serde_json::to_string_pretty(&data)
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+            let json = serde_json::to_string_pretty(&data).map_err(io::Error::other)?;
             let output = path.with_extension("json");
             let mut file = fs::File::create(&output)?;
             file.write_all(json.as_bytes())?;
@@ -1392,7 +1383,7 @@ fn export_texture2d(
     // Use save_texture_as_png which handles both embedded and StreamData
     let output = path.with_extension("png");
     crate::export::texture_2d_converter::save_texture_as_png(&texture, &output, true)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+        .map_err(|e| io::Error::other(format!("{:?}", e)))?;
 
     Ok(Some(output))
 }
@@ -1406,7 +1397,7 @@ fn export_cubemap(
     let mut obj_clone = obj.clone();
     let data = obj_clone
         .read(false)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+        .map_err(|e| io::Error::other(format!("{:?}", e)))?;
 
     let cubemap: Cubemap = serde_json::from_value(data.clone()).map_err(|e| {
         if cfg!(debug_assertions) {
@@ -1416,7 +1407,7 @@ fn export_cubemap(
                 serde_json::to_string_pretty(&data).unwrap_or_default()
             );
         }
-        io::Error::new(io::ErrorKind::Other, e)
+        io::Error::other(e)
     })?;
 
     // Export cubemap data as raw binary (can be processed by other tools)
@@ -1441,7 +1432,7 @@ fn export_texture3d(
     let mut obj_clone = obj.clone();
     let data = obj_clone
         .read(false)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+        .map_err(|e| io::Error::other(format!("{:?}", e)))?;
 
     let texture3d: Texture3D = serde_json::from_value(data.clone()).map_err(|e| {
         if cfg!(debug_assertions) {
@@ -1451,7 +1442,7 @@ fn export_texture3d(
                 serde_json::to_string_pretty(&data).unwrap_or_default()
             );
         }
-        io::Error::new(io::ErrorKind::Other, e)
+        io::Error::other(e)
     })?;
 
     // Export 3D texture data as raw binary
@@ -1476,7 +1467,7 @@ fn export_rendertexture(
     let mut obj_clone = obj.clone();
     let data = obj_clone
         .read(false)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+        .map_err(|e| io::Error::other(format!("{:?}", e)))?;
 
     let render_texture: RenderTexture = serde_json::from_value(data.clone()).map_err(|e| {
         if cfg!(debug_assertions) {
@@ -1486,12 +1477,11 @@ fn export_rendertexture(
                 serde_json::to_string_pretty(&data).unwrap_or_default()
             );
         }
-        io::Error::new(io::ErrorKind::Other, e)
+        io::Error::other(e)
     })?;
 
     // RenderTexture is a render target, export metadata as JSON
-    let json = serde_json::to_string_pretty(&render_texture)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+    let json = serde_json::to_string_pretty(&render_texture).map_err(io::Error::other)?;
 
     let output = path.with_extension("json");
     let mut file = fs::File::create(&output)?;
@@ -1510,7 +1500,7 @@ fn export_sprite(
     let mut obj_clone = obj.clone();
     let data = obj_clone
         .read(false)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+        .map_err(|e| io::Error::other(format!("{:?}", e)))?;
 
     // Try to deserialize to Sprite struct
     let sprite: Sprite = match serde_json::from_value(data.clone()) {
@@ -1524,8 +1514,7 @@ fn export_sprite(
                 );
             }
 
-            let json = serde_json::to_string_pretty(&data)
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+            let json = serde_json::to_string_pretty(&data).map_err(io::Error::other)?;
             let output = path.with_extension("json");
             let mut file = fs::File::create(&output)?;
             file.write_all(json.as_bytes())?;
@@ -1538,12 +1527,7 @@ fn export_sprite(
         .assets_file
         .as_ref()
         .and_then(|weak| weak.upgrade())
-        .ok_or_else(|| {
-            io::Error::new(
-                io::ErrorKind::Other,
-                "Sprite's ObjectReader has no assets_file reference",
-            )
-        })?;
+        .ok_or_else(|| io::Error::other("Sprite's ObjectReader has no assets_file reference"))?;
 
     // Export sprite to PNG (pass Rc directly so it can be borrowed as needed inside)
     let output = path.with_extension("png");
@@ -1554,7 +1538,7 @@ fn export_sprite(
             .to_str()
             .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "Invalid output path"))?,
     )
-    .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+    .map_err(|e| io::Error::other(format!("{:?}", e)))?;
 
     Ok(Some(output))
 }
@@ -1568,14 +1552,14 @@ fn export_spriteatlas(
     let mut obj_clone = obj.clone();
     let data = obj_clone
         .read(false)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+        .map_err(|e| io::Error::other(format!("{:?}", e)))?;
 
     // Try to deserialize to SpriteAtlas struct
     let atlas: SpriteAtlas = serde_json::from_value(data.clone()).map_err(|e| {
         if cfg!(debug_assertions) {
             eprintln!("SpriteAtlas deserialize error: {}", e);
         }
-        io::Error::new(io::ErrorKind::Other, e)
+        io::Error::other(e)
     })?;
 
     // Get the SerializedFile from the ObjectReader
@@ -1584,10 +1568,7 @@ fn export_spriteatlas(
         .as_ref()
         .and_then(|weak| weak.upgrade())
         .ok_or_else(|| {
-            io::Error::new(
-                io::ErrorKind::Other,
-                "SpriteAtlas's ObjectReader has no assets_file reference",
-            )
+            io::Error::other("SpriteAtlas's ObjectReader has no assets_file reference")
         })?;
 
     // Export the atlas's packed texture(s) from m_RenderDataMap
@@ -1600,10 +1581,7 @@ fn export_spriteatlas(
                 // Read the texture
                 let assets_file_ref = assets_file.borrow();
                 let mut texture = texture_ptr.read(&assets_file_ref).map_err(|e| {
-                    io::Error::new(
-                        io::ErrorKind::Other,
-                        format!("Failed to read atlas texture: {}", e),
-                    )
+                    io::Error::other(format!("Failed to read atlas texture: {}", e))
                 })?;
 
                 // Set the object_reader so the texture can access StreamData
@@ -1615,7 +1593,7 @@ fn export_spriteatlas(
                 // Export as PNG with flip=true (standard vertical flip for Unity textures)
                 let output = path.with_extension("png");
                 crate::export::texture_2d_converter::save_texture_as_png(&texture, &output, true)
-                    .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+                    .map_err(|e| io::Error::other(format!("{:?}", e)))?;
 
                 return Ok(Some(output));
             }
@@ -1635,7 +1613,7 @@ fn export_material_standalone(
     let mut obj_clone = obj.clone();
     let data = obj_clone
         .read(false)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+        .map_err(|e| io::Error::other(format!("{:?}", e)))?;
 
     let material: Material = serde_json::from_value(data.clone()).map_err(|e| {
         if cfg!(debug_assertions) {
@@ -1645,12 +1623,12 @@ fn export_material_standalone(
                 serde_json::to_string_pretty(&data).unwrap_or_default()
             );
         }
-        io::Error::new(io::ErrorKind::Other, e)
+        io::Error::other(e)
     })?;
 
     // Export material to MTL format
     let mtl_content = crate::export::mesh_renderer_exporter::export_material(&material)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+        .map_err(|e| io::Error::other(format!("{:?}", e)))?;
 
     let output = path.with_extension("mtl");
     let mut file = fs::File::create(&output)?;
@@ -1668,7 +1646,7 @@ fn export_monoscript(
     let mut obj_clone = obj.clone();
     let data = obj_clone
         .read(false)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+        .map_err(|e| io::Error::other(format!("{:?}", e)))?;
 
     let script: MonoScript = serde_json::from_value(data.clone()).map_err(|e| {
         if cfg!(debug_assertions) {
@@ -1678,13 +1656,12 @@ fn export_monoscript(
                 serde_json::to_string_pretty(&data).unwrap_or_default()
             );
         }
-        io::Error::new(io::ErrorKind::Other, e)
+        io::Error::other(e)
     })?;
 
     // MonoScript is metadata about a C# script, not the actual source code
     // Export as JSON metadata
-    let json = serde_json::to_string_pretty(&script)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+    let json = serde_json::to_string_pretty(&script).map_err(io::Error::other)?;
 
     let output = path.with_extension("json");
     let mut file = fs::File::create(&output)?;
@@ -1702,7 +1679,7 @@ fn export_animationclip(
     let mut obj_clone = obj.clone();
     let data = obj_clone
         .read(false)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+        .map_err(|e| io::Error::other(format!("{:?}", e)))?;
 
     let anim: AnimationClip = serde_json::from_value(data.clone()).map_err(|e| {
         if cfg!(debug_assertions) {
@@ -1712,13 +1689,12 @@ fn export_animationclip(
                 serde_json::to_string_pretty(&data).unwrap_or_default()
             );
         }
-        io::Error::new(io::ErrorKind::Other, e)
+        io::Error::other(e)
     })?;
 
     // Export AnimationClip as JSON with all curve data
     // This can be imported into other tools or processed further
-    let json =
-        serde_json::to_string_pretty(&anim).map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+    let json = serde_json::to_string_pretty(&anim).map_err(io::Error::other)?;
 
     let output = path.with_extension("json");
     let mut file = fs::File::create(&output)?;
@@ -1736,7 +1712,7 @@ fn export_videoclip(
     let mut obj_clone = obj.clone();
     let data = obj_clone
         .read(false)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+        .map_err(|e| io::Error::other(format!("{:?}", e)))?;
 
     let video: VideoClip = serde_json::from_value(data.clone()).map_err(|e| {
         if cfg!(debug_assertions) {
@@ -1746,7 +1722,7 @@ fn export_videoclip(
                 serde_json::to_string_pretty(&data).unwrap_or_default()
             );
         }
-        io::Error::new(io::ErrorKind::Other, e)
+        io::Error::other(e)
     })?;
 
     // VideoClip data is usually in external resources
@@ -1763,8 +1739,7 @@ fn export_videoclip(
     }
 
     // If no raw data, export metadata as JSON
-    let json = serde_json::to_string_pretty(&video)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+    let json = serde_json::to_string_pretty(&video).map_err(io::Error::other)?;
 
     let output = path.with_extension("json");
     let mut file = fs::File::create(&output)?;
@@ -1782,7 +1757,7 @@ fn export_movietexture(
     let mut obj_clone = obj.clone();
     let data = obj_clone
         .read(false)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+        .map_err(|e| io::Error::other(format!("{:?}", e)))?;
 
     let movie: MovieTexture = serde_json::from_value(data.clone()).map_err(|e| {
         if cfg!(debug_assertions) {
@@ -1792,7 +1767,7 @@ fn export_movietexture(
                 serde_json::to_string_pretty(&data).unwrap_or_default()
             );
         }
-        io::Error::new(io::ErrorKind::Other, e)
+        io::Error::other(e)
     })?;
 
     // MovieTexture has embedded movie data
@@ -1818,7 +1793,7 @@ fn export_mesh(
     let mut obj_clone = obj.clone();
     let data = obj_clone
         .read(false)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+        .map_err(|e| io::Error::other(format!("{:?}", e)))?;
 
     // Try to deserialize to Mesh struct
     let mesh: Mesh = match serde_json::from_value(data.clone()) {
@@ -1829,8 +1804,7 @@ fn export_mesh(
                 eprintln!("Mesh deserialize error (exporting as JSON fallback): {}", e);
             }
 
-            let json = serde_json::to_string_pretty(&data)
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+            let json = serde_json::to_string_pretty(&data).map_err(io::Error::other)?;
             let output = path.with_extension("json");
             let mut file = fs::File::create(&output)?;
             file.write_all(json.as_bytes())?;
@@ -1839,7 +1813,7 @@ fn export_mesh(
     };
 
     let obj_data = crate::export::mesh_exporter::export_mesh(&mesh, "obj")
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+        .map_err(|e| io::Error::other(format!("{:?}", e)))?;
 
     let output = path.with_extension("obj");
     let mut file = fs::File::create(&output)?;
@@ -1857,7 +1831,7 @@ fn export_audioclip(
     let mut obj_clone = obj.clone();
     let data = obj_clone
         .read(false)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+        .map_err(|e| io::Error::other(format!("{:?}", e)))?;
 
     // Try to deserialize to AudioClip struct
     let mut audio: AudioClip = match serde_json::from_value(data.clone()) {
@@ -1894,8 +1868,7 @@ fn export_audioclip(
             }
 
             // If we can't extract audio data, export as JSON
-            let json = serde_json::to_string_pretty(&data)
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+            let json = serde_json::to_string_pretty(&data).map_err(io::Error::other)?;
             let output = path.with_extension("json");
             let mut file = fs::File::create(&output)?;
             file.write_all(json.as_bytes())?;
@@ -1907,7 +1880,7 @@ fn export_audioclip(
     audio.object_reader = Some(Box::new(obj.clone()));
 
     let samples = crate::export::audio_clip_converter::extract_audioclip_samples(&mut audio, true)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+        .map_err(|e| io::Error::other(format!("{:?}", e)))?;
 
     if samples.is_empty() {
         return Ok(None);
@@ -1938,12 +1911,11 @@ fn export_shader(
     let mut obj_clone = obj.clone();
     let data = obj_clone
         .read(false)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
-    let shader: Shader =
-        serde_json::from_value(data).map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+        .map_err(|e| io::Error::other(format!("{:?}", e)))?;
+    let shader: Shader = serde_json::from_value(data).map_err(io::Error::other)?;
 
     let shader_text = crate::export::shader_converter::export_shader(&shader)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
+        .map_err(|e| io::Error::other(format!("{:?}", e)))?;
 
     let output = path.with_extension("txt");
     let mut file = fs::File::create(&output)?;
@@ -1961,9 +1933,8 @@ fn export_textasset(
     let mut obj_clone = obj.clone();
     let data = obj_clone
         .read(false)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
-    let text: TextAsset =
-        serde_json::from_value(data).map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+        .map_err(|e| io::Error::other(format!("{:?}", e)))?;
+    let text: TextAsset = serde_json::from_value(data).map_err(io::Error::other)?;
 
     let script = text.m_Script.as_deref().unwrap_or("");
     if script.is_empty() {
@@ -1986,9 +1957,8 @@ fn export_font(
     let mut obj_clone = obj.clone();
     let data = obj_clone
         .read(false)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{:?}", e)))?;
-    let font: Font =
-        serde_json::from_value(data).map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+        .map_err(|e| io::Error::other(format!("{:?}", e)))?;
+    let font: Font = serde_json::from_value(data).map_err(io::Error::other)?;
 
     if let Some(ref font_data) = font.m_FontData {
         // Convert Vec<i8> to &[u8] for comparison
@@ -2015,8 +1985,7 @@ fn export_monobehaviour(
     // Try to export as JSON using TypeTree
     let mut obj_clone = obj.clone();
     if let Ok(data) = obj_clone.read_typetree(None, true, false) {
-        let json = serde_json::to_string_pretty(&data)
-            .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+        let json = serde_json::to_string_pretty(&data).map_err(io::Error::other)?;
 
         let output = path.with_extension("json");
         let mut file = fs::File::create(&output)?;

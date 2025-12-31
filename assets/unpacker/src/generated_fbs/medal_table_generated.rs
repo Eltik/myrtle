@@ -3403,7 +3403,7 @@ impl clz_Torappu_MedalDataT {
 /// `root_as_clz_torappu_medal_data_unchecked`.
 pub fn root_as_clz_torappu_medal_data(
     buf: &[u8],
-) -> Result<clz_Torappu_MedalData, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_MedalData<'_>, flatbuffers::InvalidFlatbuffer> {
     flatbuffers::root::<clz_Torappu_MedalData>(buf)
 }
 #[inline]
@@ -3415,7 +3415,7 @@ pub fn root_as_clz_torappu_medal_data(
 /// `size_prefixed_root_as_clz_torappu_medal_data_unchecked`.
 pub fn size_prefixed_root_as_clz_torappu_medal_data(
     buf: &[u8],
-) -> Result<clz_Torappu_MedalData, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_MedalData<'_>, flatbuffers::InvalidFlatbuffer> {
     flatbuffers::size_prefixed_root::<clz_Torappu_MedalData>(buf)
 }
 #[inline]
@@ -3448,7 +3448,7 @@ pub fn size_prefixed_root_as_clz_torappu_medal_data_with_opts<'b, 'o>(
 /// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_MedalData and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_MedalData`.
-pub unsafe fn root_as_clz_torappu_medal_data_unchecked(buf: &[u8]) -> clz_Torappu_MedalData {
+pub unsafe fn root_as_clz_torappu_medal_data_unchecked(buf: &[u8]) -> clz_Torappu_MedalData<'_> {
     unsafe { flatbuffers::root_unchecked::<clz_Torappu_MedalData>(buf) }
 }
 #[inline]
@@ -3457,7 +3457,7 @@ pub unsafe fn root_as_clz_torappu_medal_data_unchecked(buf: &[u8]) -> clz_Torapp
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_MedalData`.
 pub unsafe fn size_prefixed_root_as_clz_torappu_medal_data_unchecked(
     buf: &[u8],
-) -> clz_Torappu_MedalData {
+) -> clz_Torappu_MedalData<'_> {
     unsafe { flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_MedalData>(buf) }
 }
 #[inline]

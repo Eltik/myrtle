@@ -87,7 +87,7 @@ pub trait File: fmt::Debug {
 
     /// Returns an iterator over file names (HashMap keys)
     /// Python equivalent: self.files.keys()
-    fn keys(&self) -> std::collections::hash_map::Keys<String, Rc<RefCell<FileType>>> {
+    fn keys(&self) -> std::collections::hash_map::Keys<'_, String, Rc<RefCell<FileType>>> {
         self.files().keys()
     }
 
@@ -233,13 +233,13 @@ pub trait File: fmt::Debug {
 
     /// Returns an iterator over (name, file) pairs
     /// Python equivalent: self.files.items()
-    fn items(&self) -> std::collections::hash_map::Iter<String, Rc<RefCell<FileType>>> {
+    fn items(&self) -> std::collections::hash_map::Iter<'_, String, Rc<RefCell<FileType>>> {
         self.files().iter()
     }
 
     /// Returns an iterator over file values
     /// Python equivalent: self.files.values()
-    fn values(&self) -> std::collections::hash_map::Values<String, Rc<RefCell<FileType>>> {
+    fn values(&self) -> std::collections::hash_map::Values<'_, String, Rc<RefCell<FileType>>> {
         self.files().values()
     }
 
@@ -322,11 +322,8 @@ pub trait File: fmt::Debug {
                 }
 
                 // Get endian from the file
-                match &*file_rc.borrow() {
-                    FileType::Raw(reader) => {
-                        endian_to_copy = Some(reader.endian());
-                    }
-                    _ => {}
+                if let FileType::Raw(reader) = &*file_rc.borrow() {
+                    endian_to_copy = Some(reader.endian());
                 }
 
                 break;

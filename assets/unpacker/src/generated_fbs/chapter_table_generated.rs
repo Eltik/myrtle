@@ -883,7 +883,7 @@ impl clz_Torappu_SimpleKVTable_clz_Torappu_ChapterDataT {
 /// `root_as_clz_torappu_simple_kvtable_clz_torappu_chapter_data_unchecked`.
 pub fn root_as_clz_torappu_simple_kvtable_clz_torappu_chapter_data(
     buf: &[u8],
-) -> Result<clz_Torappu_SimpleKVTable_clz_Torappu_ChapterData, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_SimpleKVTable_clz_Torappu_ChapterData<'_>, flatbuffers::InvalidFlatbuffer> {
     flatbuffers::root::<clz_Torappu_SimpleKVTable_clz_Torappu_ChapterData>(buf)
 }
 #[inline]
@@ -895,7 +895,7 @@ pub fn root_as_clz_torappu_simple_kvtable_clz_torappu_chapter_data(
 /// `size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_chapter_data_unchecked`.
 pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_chapter_data(
     buf: &[u8],
-) -> Result<clz_Torappu_SimpleKVTable_clz_Torappu_ChapterData, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_SimpleKVTable_clz_Torappu_ChapterData<'_>, flatbuffers::InvalidFlatbuffer> {
     flatbuffers::size_prefixed_root::<clz_Torappu_SimpleKVTable_clz_Torappu_ChapterData>(buf)
 }
 #[inline]
@@ -935,7 +935,7 @@ pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_chapter_data
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_SimpleKVTable_clz_Torappu_ChapterData`.
 pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_chapter_data_unchecked(
     buf: &[u8],
-) -> clz_Torappu_SimpleKVTable_clz_Torappu_ChapterData {
+) -> clz_Torappu_SimpleKVTable_clz_Torappu_ChapterData<'_> {
     unsafe { flatbuffers::root_unchecked::<clz_Torappu_SimpleKVTable_clz_Torappu_ChapterData>(buf) }
 }
 #[inline]
@@ -944,7 +944,7 @@ pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_chapter_data_unchec
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_SimpleKVTable_clz_Torappu_ChapterData`.
 pub unsafe fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_chapter_data_unchecked(
     buf: &[u8],
-) -> clz_Torappu_SimpleKVTable_clz_Torappu_ChapterData {
+) -> clz_Torappu_SimpleKVTable_clz_Torappu_ChapterData<'_> {
     unsafe {
         flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_SimpleKVTable_clz_Torappu_ChapterData>(
             buf,

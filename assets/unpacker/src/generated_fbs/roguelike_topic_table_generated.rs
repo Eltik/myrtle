@@ -113974,7 +113974,7 @@ impl clz_Torappu_RoguelikeTopicTableT {
 /// `root_as_clz_torappu_roguelike_topic_table_unchecked`.
 pub fn root_as_clz_torappu_roguelike_topic_table(
     buf: &[u8],
-) -> Result<clz_Torappu_RoguelikeTopicTable, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_RoguelikeTopicTable<'_>, flatbuffers::InvalidFlatbuffer> {
     flatbuffers::root::<clz_Torappu_RoguelikeTopicTable>(buf)
 }
 #[inline]
@@ -113986,7 +113986,7 @@ pub fn root_as_clz_torappu_roguelike_topic_table(
 /// `size_prefixed_root_as_clz_torappu_roguelike_topic_table_unchecked`.
 pub fn size_prefixed_root_as_clz_torappu_roguelike_topic_table(
     buf: &[u8],
-) -> Result<clz_Torappu_RoguelikeTopicTable, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_RoguelikeTopicTable<'_>, flatbuffers::InvalidFlatbuffer> {
     flatbuffers::size_prefixed_root::<clz_Torappu_RoguelikeTopicTable>(buf)
 }
 #[inline]
@@ -114021,7 +114021,7 @@ pub fn size_prefixed_root_as_clz_torappu_roguelike_topic_table_with_opts<'b, 'o>
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_RoguelikeTopicTable`.
 pub unsafe fn root_as_clz_torappu_roguelike_topic_table_unchecked(
     buf: &[u8],
-) -> clz_Torappu_RoguelikeTopicTable {
+) -> clz_Torappu_RoguelikeTopicTable<'_> {
     unsafe { flatbuffers::root_unchecked::<clz_Torappu_RoguelikeTopicTable>(buf) }
 }
 #[inline]
@@ -114030,7 +114030,7 @@ pub unsafe fn root_as_clz_torappu_roguelike_topic_table_unchecked(
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_RoguelikeTopicTable`.
 pub unsafe fn size_prefixed_root_as_clz_torappu_roguelike_topic_table_unchecked(
     buf: &[u8],
-) -> clz_Torappu_RoguelikeTopicTable {
+) -> clz_Torappu_RoguelikeTopicTable<'_> {
     unsafe { flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_RoguelikeTopicTable>(buf) }
 }
 #[inline]

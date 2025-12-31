@@ -54,7 +54,7 @@ const GOB_MAP: [(usize, usize); 32] = [
 /// Ceiling division - divides a by b and rounds up
 /// Python: return (a + b - 1) // b
 pub fn ceil_divide(a: usize, b: usize) -> usize {
-    (a + b - 1) / b
+    a.div_ceil(b)
 }
 
 /// Texture format to block size mapping

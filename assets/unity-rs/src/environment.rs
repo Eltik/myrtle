@@ -160,7 +160,7 @@ impl Environment {
             let fp = Path::new(base_path).join(name);
             if fp.exists() {
                 return self
-                    .load_file_from_path(&fp.to_string_lossy().to_string(), is_dependency)
+                    .load_file_from_path(fp.to_string_lossy().as_ref(), is_dependency)
                     .map_err(|e| e.to_string());
             }
 
@@ -397,16 +397,13 @@ impl Environment {
                         // Recursively search bundle files
                         for inner_file_rc in bundle.files.values() {
                             let inner_ref = inner_file_rc.borrow();
-                            match &*inner_ref {
-                                FileType::SerializedFile(sf_rc) => {
-                                    let sf = sf_rc.borrow();
-                                    if !sf.is_dependency {
-                                        for obj in sf.objects.values() {
-                                            ret.push(obj.clone());
-                                        }
+                            if let FileType::SerializedFile(sf_rc) = &*inner_ref {
+                                let sf = sf_rc.borrow();
+                                if !sf.is_dependency {
+                                    for obj in sf.objects.values() {
+                                        ret.push(obj.clone());
                                     }
                                 }
-                                _ => {}
                             }
                         }
                     }
@@ -414,16 +411,13 @@ impl Environment {
                         // Recursively search web files
                         for inner_file_rc in web.files.values() {
                             let inner_ref = inner_file_rc.borrow();
-                            match &*inner_ref {
-                                FileType::SerializedFile(sf_rc) => {
-                                    let sf = sf_rc.borrow();
-                                    if !sf.is_dependency {
-                                        for obj in sf.objects.values() {
-                                            ret.push(obj.clone());
-                                        }
+                            if let FileType::SerializedFile(sf_rc) = &*inner_ref {
+                                let sf = sf_rc.borrow();
+                                if !sf.is_dependency {
+                                    for obj in sf.objects.values() {
+                                        ret.push(obj.clone());
                                     }
                                 }
-                                _ => {}
                             }
                         }
                     }
@@ -460,18 +454,15 @@ impl Environment {
                     // Recursively get container from bundle
                     for inner_file_rc in bundle.files.values() {
                         let inner_ref = inner_file_rc.borrow();
-                        match &*inner_ref {
-                            FileType::SerializedFile(sf_rc) => {
-                                let sf = sf_rc.borrow();
-                                if !sf.is_dependency {
-                                    for (path, &path_id) in sf.container.items() {
-                                        if let Some(obj) = sf.objects.get(&path_id) {
-                                            result.insert(path.clone(), obj.clone());
-                                        }
+                        if let FileType::SerializedFile(sf_rc) = &*inner_ref {
+                            let sf = sf_rc.borrow();
+                            if !sf.is_dependency {
+                                for (path, &path_id) in sf.container.items() {
+                                    if let Some(obj) = sf.objects.get(&path_id) {
+                                        result.insert(path.clone(), obj.clone());
                                     }
                                 }
                             }
-                            _ => {}
                         }
                     }
                 }
@@ -479,18 +470,15 @@ impl Environment {
                     // Recursively get container from web file
                     for inner_file_rc in web.files.values() {
                         let inner_ref = inner_file_rc.borrow();
-                        match &*inner_ref {
-                            FileType::SerializedFile(sf_rc) => {
-                                let sf = sf_rc.borrow();
-                                if !sf.is_dependency {
-                                    for (path, &path_id) in sf.container.items() {
-                                        if let Some(obj) = sf.objects.get(&path_id) {
-                                            result.insert(path.clone(), obj.clone());
-                                        }
+                        if let FileType::SerializedFile(sf_rc) = &*inner_ref {
+                            let sf = sf_rc.borrow();
+                            if !sf.is_dependency {
+                                for (path, &path_id) in sf.container.items() {
+                                    if let Some(obj) = sf.objects.get(&path_id) {
+                                        result.insert(path.clone(), obj.clone());
                                     }
                                 }
                             }
-                            _ => {}
                         }
                     }
                 }

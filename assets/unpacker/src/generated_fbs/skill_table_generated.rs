@@ -2815,7 +2815,8 @@ impl clz_Torappu_SimpleKVTable_clz_Torappu_SkillDataBundleT {
 /// `root_as_clz_torappu_simple_kvtable_clz_torappu_skill_data_bundle_unchecked`.
 pub fn root_as_clz_torappu_simple_kvtable_clz_torappu_skill_data_bundle(
     buf: &[u8],
-) -> Result<clz_Torappu_SimpleKVTable_clz_Torappu_SkillDataBundle, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_SimpleKVTable_clz_Torappu_SkillDataBundle<'_>, flatbuffers::InvalidFlatbuffer>
+{
     flatbuffers::root::<clz_Torappu_SimpleKVTable_clz_Torappu_SkillDataBundle>(buf)
 }
 #[inline]
@@ -2827,7 +2828,8 @@ pub fn root_as_clz_torappu_simple_kvtable_clz_torappu_skill_data_bundle(
 /// `size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_skill_data_bundle_unchecked`.
 pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_skill_data_bundle(
     buf: &[u8],
-) -> Result<clz_Torappu_SimpleKVTable_clz_Torappu_SkillDataBundle, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_SimpleKVTable_clz_Torappu_SkillDataBundle<'_>, flatbuffers::InvalidFlatbuffer>
+{
     flatbuffers::size_prefixed_root::<clz_Torappu_SimpleKVTable_clz_Torappu_SkillDataBundle>(buf)
 }
 #[inline]
@@ -2871,7 +2873,7 @@ pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_skill_data_b
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_SimpleKVTable_clz_Torappu_SkillDataBundle`.
 pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_skill_data_bundle_unchecked(
     buf: &[u8],
-) -> clz_Torappu_SimpleKVTable_clz_Torappu_SkillDataBundle {
+) -> clz_Torappu_SimpleKVTable_clz_Torappu_SkillDataBundle<'_> {
     unsafe {
         flatbuffers::root_unchecked::<clz_Torappu_SimpleKVTable_clz_Torappu_SkillDataBundle>(buf)
     }
@@ -2882,7 +2884,7 @@ pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_skill_data_bundle_u
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_SimpleKVTable_clz_Torappu_SkillDataBundle`.
 pub unsafe fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_skill_data_bundle_unchecked(
     buf: &[u8],
-) -> clz_Torappu_SimpleKVTable_clz_Torappu_SkillDataBundle {
+) -> clz_Torappu_SimpleKVTable_clz_Torappu_SkillDataBundle<'_> {
     unsafe {
         flatbuffers::size_prefixed_root_unchecked::<
             clz_Torappu_SimpleKVTable_clz_Torappu_SkillDataBundle,

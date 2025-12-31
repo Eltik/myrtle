@@ -2453,7 +2453,7 @@ impl clz_Torappu_CheckInTableT {
 /// `root_as_clz_torappu_check_in_table_unchecked`.
 pub fn root_as_clz_torappu_check_in_table(
     buf: &[u8],
-) -> Result<clz_Torappu_CheckInTable, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_CheckInTable<'_>, flatbuffers::InvalidFlatbuffer> {
     flatbuffers::root::<clz_Torappu_CheckInTable>(buf)
 }
 #[inline]
@@ -2465,7 +2465,7 @@ pub fn root_as_clz_torappu_check_in_table(
 /// `size_prefixed_root_as_clz_torappu_check_in_table_unchecked`.
 pub fn size_prefixed_root_as_clz_torappu_check_in_table(
     buf: &[u8],
-) -> Result<clz_Torappu_CheckInTable, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_CheckInTable<'_>, flatbuffers::InvalidFlatbuffer> {
     flatbuffers::size_prefixed_root::<clz_Torappu_CheckInTable>(buf)
 }
 #[inline]
@@ -2498,7 +2498,9 @@ pub fn size_prefixed_root_as_clz_torappu_check_in_table_with_opts<'b, 'o>(
 /// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_CheckInTable and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_CheckInTable`.
-pub unsafe fn root_as_clz_torappu_check_in_table_unchecked(buf: &[u8]) -> clz_Torappu_CheckInTable {
+pub unsafe fn root_as_clz_torappu_check_in_table_unchecked(
+    buf: &[u8],
+) -> clz_Torappu_CheckInTable<'_> {
     unsafe { flatbuffers::root_unchecked::<clz_Torappu_CheckInTable>(buf) }
 }
 #[inline]
@@ -2507,7 +2509,7 @@ pub unsafe fn root_as_clz_torappu_check_in_table_unchecked(buf: &[u8]) -> clz_To
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_CheckInTable`.
 pub unsafe fn size_prefixed_root_as_clz_torappu_check_in_table_unchecked(
     buf: &[u8],
-) -> clz_Torappu_CheckInTable {
+) -> clz_Torappu_CheckInTable<'_> {
     unsafe { flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_CheckInTable>(buf) }
 }
 #[inline]

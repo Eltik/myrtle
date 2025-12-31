@@ -598,7 +598,8 @@ impl clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffDataT {
 /// `root_as_clz_torappu_simple_kvtable_clz_torappu_epbreak_buff_data_unchecked`.
 pub fn root_as_clz_torappu_simple_kvtable_clz_torappu_epbreak_buff_data(
     buf: &[u8],
-) -> Result<clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData<'_>, flatbuffers::InvalidFlatbuffer>
+{
     flatbuffers::root::<clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData>(buf)
 }
 #[inline]
@@ -610,7 +611,8 @@ pub fn root_as_clz_torappu_simple_kvtable_clz_torappu_epbreak_buff_data(
 /// `size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_epbreak_buff_data_unchecked`.
 pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_epbreak_buff_data(
     buf: &[u8],
-) -> Result<clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData<'_>, flatbuffers::InvalidFlatbuffer>
+{
     flatbuffers::size_prefixed_root::<clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData>(buf)
 }
 #[inline]
@@ -654,7 +656,7 @@ pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_epbreak_buff
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData`.
 pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_epbreak_buff_data_unchecked(
     buf: &[u8],
-) -> clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData {
+) -> clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData<'_> {
     unsafe {
         flatbuffers::root_unchecked::<clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData>(buf)
     }
@@ -665,7 +667,7 @@ pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_epbreak_buff_data_u
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData`.
 pub unsafe fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_epbreak_buff_data_unchecked(
     buf: &[u8],
-) -> clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData {
+) -> clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData<'_> {
     unsafe {
         flatbuffers::size_prefixed_root_unchecked::<
             clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData,

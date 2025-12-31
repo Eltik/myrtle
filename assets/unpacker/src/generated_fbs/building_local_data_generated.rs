@@ -2101,7 +2101,7 @@ impl clz_Torappu_BuildingData_BuildingLocalDataT {
 /// `root_as_clz_torappu_building_data_building_local_data_unchecked`.
 pub fn root_as_clz_torappu_building_data_building_local_data(
     buf: &[u8],
-) -> Result<clz_Torappu_BuildingData_BuildingLocalData, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_BuildingData_BuildingLocalData<'_>, flatbuffers::InvalidFlatbuffer> {
     flatbuffers::root::<clz_Torappu_BuildingData_BuildingLocalData>(buf)
 }
 #[inline]
@@ -2113,7 +2113,7 @@ pub fn root_as_clz_torappu_building_data_building_local_data(
 /// `size_prefixed_root_as_clz_torappu_building_data_building_local_data_unchecked`.
 pub fn size_prefixed_root_as_clz_torappu_building_data_building_local_data(
     buf: &[u8],
-) -> Result<clz_Torappu_BuildingData_BuildingLocalData, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_BuildingData_BuildingLocalData<'_>, flatbuffers::InvalidFlatbuffer> {
     flatbuffers::size_prefixed_root::<clz_Torappu_BuildingData_BuildingLocalData>(buf)
 }
 #[inline]
@@ -2150,7 +2150,7 @@ pub fn size_prefixed_root_as_clz_torappu_building_data_building_local_data_with_
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_BuildingData_BuildingLocalData`.
 pub unsafe fn root_as_clz_torappu_building_data_building_local_data_unchecked(
     buf: &[u8],
-) -> clz_Torappu_BuildingData_BuildingLocalData {
+) -> clz_Torappu_BuildingData_BuildingLocalData<'_> {
     unsafe { flatbuffers::root_unchecked::<clz_Torappu_BuildingData_BuildingLocalData>(buf) }
 }
 #[inline]
@@ -2159,7 +2159,7 @@ pub unsafe fn root_as_clz_torappu_building_data_building_local_data_unchecked(
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_BuildingData_BuildingLocalData`.
 pub unsafe fn size_prefixed_root_as_clz_torappu_building_data_building_local_data_unchecked(
     buf: &[u8],
-) -> clz_Torappu_BuildingData_BuildingLocalData {
+) -> clz_Torappu_BuildingData_BuildingLocalData<'_> {
     unsafe {
         flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_BuildingData_BuildingLocalData>(buf)
     }

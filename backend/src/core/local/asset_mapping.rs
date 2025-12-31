@@ -47,17 +47,17 @@ impl AssetMappings {
         for i in 0..20 {
             let dir_name = format!("ui_char_avatar_{i}");
             let dir_path = spritepack.join(&dir_name);
-            if dir_path.exists() {
-                if let Ok(entries) = std::fs::read_dir(&dir_path) {
-                    for entry in entries.flatten() {
-                        if let Some(file_name) = entry.file_name().to_str() {
-                            if file_name.ends_with(".png") {
-                                let base_name = file_name.trim_end_matches(".png");
-                                mappings
-                                    .avatars
-                                    .insert(base_name.to_string(), dir_name.clone());
-                            }
-                        }
+            if dir_path.exists()
+                && let Ok(entries) = std::fs::read_dir(&dir_path)
+            {
+                for entry in entries.flatten() {
+                    if let Some(file_name) = entry.file_name().to_str()
+                        && file_name.ends_with(".png")
+                    {
+                        let base_name = file_name.trim_end_matches(".png");
+                        mappings
+                            .avatars
+                            .insert(base_name.to_string(), dir_name.clone());
                     }
                 }
             }
@@ -68,17 +68,17 @@ impl AssetMappings {
         for i in 0..15 {
             let dir_name = format!("arts_shop_skin_portrait_{i}");
             let dir_path = spritepack.join(&dir_name);
-            if dir_path.exists() {
-                if let Ok(entries) = std::fs::read_dir(&dir_path) {
-                    for entry in entries.flatten() {
-                        if let Some(file_name) = entry.file_name().to_str() {
-                            if file_name.ends_with(".png") {
-                                let base_name = file_name.trim_end_matches(".png");
-                                mappings
-                                    .skin_portraits
-                                    .insert(base_name.to_string(), dir_name.clone());
-                            }
-                        }
+            if dir_path.exists()
+                && let Ok(entries) = std::fs::read_dir(&dir_path)
+            {
+                for entry in entries.flatten() {
+                    if let Some(file_name) = entry.file_name().to_str()
+                        && file_name.ends_with(".png")
+                    {
+                        let base_name = file_name.trim_end_matches(".png");
+                        mappings
+                            .skin_portraits
+                            .insert(base_name.to_string(), dir_name.clone());
                     }
                 }
             }
@@ -89,17 +89,17 @@ impl AssetMappings {
         for i in 0..25 {
             let dir_name = format!("ui_equip_big_img_hub_{i}");
             let dir_path = spritepack.join(&dir_name);
-            if dir_path.exists() {
-                if let Ok(entries) = std::fs::read_dir(&dir_path) {
-                    for entry in entries.flatten() {
-                        if let Some(file_name) = entry.file_name().to_str() {
-                            if file_name.ends_with(".png") {
-                                let base_name = file_name.trim_end_matches(".png");
-                                mappings
-                                    .module_big
-                                    .insert(base_name.to_string(), dir_name.clone());
-                            }
-                        }
+            if dir_path.exists()
+                && let Ok(entries) = std::fs::read_dir(&dir_path)
+            {
+                for entry in entries.flatten() {
+                    if let Some(file_name) = entry.file_name().to_str()
+                        && file_name.ends_with(".png")
+                    {
+                        let base_name = file_name.trim_end_matches(".png");
+                        mappings
+                            .module_big
+                            .insert(base_name.to_string(), dir_name.clone());
                     }
                 }
             }
@@ -110,17 +110,17 @@ impl AssetMappings {
         for i in 0..25 {
             let dir_name = format!("ui_equip_small_img_hub_{i}");
             let dir_path = spritepack.join(&dir_name);
-            if dir_path.exists() {
-                if let Ok(entries) = std::fs::read_dir(&dir_path) {
-                    for entry in entries.flatten() {
-                        if let Some(file_name) = entry.file_name().to_str() {
-                            if file_name.ends_with(".png") {
-                                let base_name = file_name.trim_end_matches(".png");
-                                mappings
-                                    .module_small
-                                    .insert(base_name.to_string(), dir_name.clone());
-                            }
-                        }
+            if dir_path.exists()
+                && let Ok(entries) = std::fs::read_dir(&dir_path)
+            {
+                for entry in entries.flatten() {
+                    if let Some(file_name) = entry.file_name().to_str()
+                        && file_name.ends_with(".png")
+                    {
+                        let base_name = file_name.trim_end_matches(".png");
+                        mappings
+                            .module_small
+                            .insert(base_name.to_string(), dir_name.clone());
                     }
                 }
             }
@@ -132,17 +132,17 @@ impl AssetMappings {
         for i in 0..10 {
             let dir_name = format!("skill_icons_{i}");
             let dir_path = spritepack.join(&dir_name);
-            if dir_path.exists() {
-                if let Ok(entries) = std::fs::read_dir(&dir_path) {
-                    for entry in entries.flatten() {
-                        if let Some(file_name) = entry.file_name().to_str() {
-                            if file_name.ends_with(".png") {
-                                let base_name = file_name.trim_end_matches(".png");
-                                mappings
-                                    .skill_icons
-                                    .insert(base_name.to_string(), dir_name.clone());
-                            }
-                        }
+            if dir_path.exists()
+                && let Ok(entries) = std::fs::read_dir(&dir_path)
+            {
+                for entry in entries.flatten() {
+                    if let Some(file_name) = entry.file_name().to_str()
+                        && file_name.ends_with(".png")
+                    {
+                        let base_name = file_name.trim_end_matches(".png");
+                        mappings
+                            .skill_icons
+                            .insert(base_name.to_string(), dir_name.clone());
                     }
                 }
             }
@@ -152,19 +152,18 @@ impl AssetMappings {
         // Scan alternate skill icons location at {assets_dir}/upk/arts/skills/
         let arts_skills_dir = assets_dir.join("upk/arts/skills");
         let skill_alt_count_before = mappings.skill_icons.len();
-        if arts_skills_dir.exists() {
-            if let Ok(entries) = std::fs::read_dir(&arts_skills_dir) {
-                for entry in entries.flatten() {
-                    if entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
-                        if let Some(dir_name) = entry.file_name().to_str() {
-                            let png_path = entry.path().join(format!("{dir_name}.png"));
-                            if png_path.exists() {
-                                mappings.skill_icons.insert(
-                                    dir_name.to_string(),
-                                    format!("arts_skills:{dir_name}"),
-                                );
-                            }
-                        }
+        if arts_skills_dir.exists()
+            && let Ok(entries) = std::fs::read_dir(&arts_skills_dir)
+        {
+            for entry in entries.flatten() {
+                if entry.file_type().map(|t| t.is_dir()).unwrap_or(false)
+                    && let Some(dir_name) = entry.file_name().to_str()
+                {
+                    let png_path = entry.path().join(format!("{dir_name}.png"));
+                    if png_path.exists() {
+                        mappings
+                            .skill_icons
+                            .insert(dir_name.to_string(), format!("arts_skills:{dir_name}"));
                     }
                 }
             }
@@ -173,24 +172,22 @@ impl AssetMappings {
 
         // Scan portraits from {assets_dir}/upk/arts/charportraits/pack{N}/*.png
         let charportraits_dir = assets_dir.join("upk/arts/charportraits");
-        if charportraits_dir.exists() {
-            if let Ok(pack_dirs) = std::fs::read_dir(&charportraits_dir) {
-                for pack_dir in pack_dirs.flatten() {
-                    if pack_dir.file_type().map(|t| t.is_dir()).unwrap_or(false) {
-                        if let Some(pack_name) = pack_dir.file_name().to_str() {
-                            if let Ok(files) = std::fs::read_dir(pack_dir.path()) {
-                                for file in files.flatten() {
-                                    if let Some(file_name) = file.file_name().to_str() {
-                                        if file_name.ends_with(".png") {
-                                            let base_name = file_name.trim_end_matches(".png");
-                                            mappings.portraits.insert(
-                                                base_name.to_string(),
-                                                pack_name.to_string(),
-                                            );
-                                        }
-                                    }
-                                }
-                            }
+        if charportraits_dir.exists()
+            && let Ok(pack_dirs) = std::fs::read_dir(&charportraits_dir)
+        {
+            for pack_dir in pack_dirs.flatten() {
+                if pack_dir.file_type().map(|t| t.is_dir()).unwrap_or(false)
+                    && let Some(pack_name) = pack_dir.file_name().to_str()
+                    && let Ok(files) = std::fs::read_dir(pack_dir.path())
+                {
+                    for file in files.flatten() {
+                        if let Some(file_name) = file.file_name().to_str()
+                            && file_name.ends_with(".png")
+                        {
+                            let base_name = file_name.trim_end_matches(".png");
+                            mappings
+                                .portraits
+                                .insert(base_name.to_string(), pack_name.to_string());
                         }
                     }
                 }
@@ -200,23 +197,22 @@ impl AssetMappings {
 
         // Scan full character art from {assets_dir}/upk/chararts/{char_id}/
         let chararts_dir = assets_dir.join("upk/chararts");
-        if chararts_dir.exists() {
-            if let Ok(entries) = std::fs::read_dir(&chararts_dir) {
-                for entry in entries.flatten() {
-                    if entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
-                        if let Some(dir_name) = entry.file_name().to_str() {
-                            if dir_name.starts_with("char_") {
-                                let e0_path = entry.path().join(format!("{dir_name}_1.png"));
-                                let e2_path = entry.path().join(format!("{dir_name}_2.png"));
-                                let has_e0 = e0_path.exists();
-                                let has_e2 = e2_path.exists();
-                                if has_e0 || has_e2 {
-                                    mappings
-                                        .chararts
-                                        .insert(dir_name.to_string(), (has_e0, has_e2));
-                                }
-                            }
-                        }
+        if chararts_dir.exists()
+            && let Ok(entries) = std::fs::read_dir(&chararts_dir)
+        {
+            for entry in entries.flatten() {
+                if entry.file_type().map(|t| t.is_dir()).unwrap_or(false)
+                    && let Some(dir_name) = entry.file_name().to_str()
+                    && dir_name.starts_with("char_")
+                {
+                    let e0_path = entry.path().join(format!("{dir_name}_1.png"));
+                    let e2_path = entry.path().join(format!("{dir_name}_2.png"));
+                    let has_e0 = e0_path.exists();
+                    let has_e2 = e2_path.exists();
+                    if has_e0 || has_e2 {
+                        mappings
+                            .chararts
+                            .insert(dir_name.to_string(), (has_e0, has_e2));
                     }
                 }
             }
@@ -234,18 +230,18 @@ impl AssetMappings {
         let item_count_before = mappings.item_icons.len();
         for dir_name in &item_icon_dirs {
             let dir_path = spritepack.join(dir_name);
-            if dir_path.exists() {
-                if let Ok(entries) = std::fs::read_dir(&dir_path) {
-                    for entry in entries.flatten() {
-                        if let Some(file_name) = entry.file_name().to_str() {
-                            if file_name.ends_with(".png") {
-                                let base_name = file_name.trim_end_matches(".png");
-                                mappings
-                                    .item_icons
-                                    .entry(base_name.to_string())
-                                    .or_insert_with(|| format!("spritepack:{dir_name}"));
-                            }
-                        }
+            if dir_path.exists()
+                && let Ok(entries) = std::fs::read_dir(&dir_path)
+            {
+                for entry in entries.flatten() {
+                    if let Some(file_name) = entry.file_name().to_str()
+                        && file_name.ends_with(".png")
+                    {
+                        let base_name = file_name.trim_end_matches(".png");
+                        mappings
+                            .item_icons
+                            .entry(base_name.to_string())
+                            .or_insert_with(|| format!("spritepack:{dir_name}"));
                     }
                 }
             }
@@ -255,18 +251,18 @@ impl AssetMappings {
         // Also scan the standard arts/items/icons directory
         let arts_items_dir = assets_dir.join("upk/arts/items/icons");
         let item_arts_count_before = mappings.item_icons.len();
-        if arts_items_dir.exists() {
-            if let Ok(entries) = std::fs::read_dir(&arts_items_dir) {
-                for entry in entries.flatten() {
-                    if let Some(file_name) = entry.file_name().to_str() {
-                        if file_name.ends_with(".png") {
-                            let base_name = file_name.trim_end_matches(".png");
-                            mappings
-                                .item_icons
-                                .entry(base_name.to_string())
-                                .or_insert_with(|| "arts_items".to_string());
-                        }
-                    }
+        if arts_items_dir.exists()
+            && let Ok(entries) = std::fs::read_dir(&arts_items_dir)
+        {
+            for entry in entries.flatten() {
+                if let Some(file_name) = entry.file_name().to_str()
+                    && file_name.ends_with(".png")
+                {
+                    let base_name = file_name.trim_end_matches(".png");
+                    mappings
+                        .item_icons
+                        .entry(base_name.to_string())
+                        .or_insert_with(|| "arts_items".to_string());
                 }
             }
         }

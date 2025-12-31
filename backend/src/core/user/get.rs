@@ -193,19 +193,19 @@ fn format_skill(skill: &mut CharacterSkill, main_skill_lvl: i32, game_data: &Gam
         });
 
         // Add level-specific data if available
-        if let Some(level) = level_data {
-            if let serde_json::Value::Object(ref mut map) = static_data {
-                map.insert("name".to_string(), serde_json::json!(level.name));
-                map.insert(
-                    "description".to_string(),
-                    serde_json::json!(level.description),
-                );
-                map.insert("duration".to_string(), serde_json::json!(level.duration));
-                map.insert(
-                    "spData".to_string(),
-                    serde_json::to_value(&level.sp_data).unwrap_or_default(),
-                );
-            }
+        if let Some(level) = level_data
+            && let serde_json::Value::Object(ref mut map) = static_data
+        {
+            map.insert("name".to_string(), serde_json::json!(level.name));
+            map.insert(
+                "description".to_string(),
+                serde_json::json!(level.description),
+            );
+            map.insert("duration".to_string(), serde_json::json!(level.duration));
+            map.insert(
+                "spData".to_string(),
+                serde_json::to_value(&level.sp_data).unwrap_or_default(),
+            );
         }
 
         skill.r#static = Some(static_data);

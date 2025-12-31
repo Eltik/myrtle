@@ -3249,7 +3249,7 @@ impl clz_Torappu_EnemyHandBookDataGroupT {
 /// `root_as_clz_torappu_enemy_hand_book_data_group_unchecked`.
 pub fn root_as_clz_torappu_enemy_hand_book_data_group(
     buf: &[u8],
-) -> Result<clz_Torappu_EnemyHandBookDataGroup, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_EnemyHandBookDataGroup<'_>, flatbuffers::InvalidFlatbuffer> {
     flatbuffers::root::<clz_Torappu_EnemyHandBookDataGroup>(buf)
 }
 #[inline]
@@ -3261,7 +3261,7 @@ pub fn root_as_clz_torappu_enemy_hand_book_data_group(
 /// `size_prefixed_root_as_clz_torappu_enemy_hand_book_data_group_unchecked`.
 pub fn size_prefixed_root_as_clz_torappu_enemy_hand_book_data_group(
     buf: &[u8],
-) -> Result<clz_Torappu_EnemyHandBookDataGroup, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_EnemyHandBookDataGroup<'_>, flatbuffers::InvalidFlatbuffer> {
     flatbuffers::size_prefixed_root::<clz_Torappu_EnemyHandBookDataGroup>(buf)
 }
 #[inline]
@@ -3296,7 +3296,7 @@ pub fn size_prefixed_root_as_clz_torappu_enemy_hand_book_data_group_with_opts<'b
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_EnemyHandBookDataGroup`.
 pub unsafe fn root_as_clz_torappu_enemy_hand_book_data_group_unchecked(
     buf: &[u8],
-) -> clz_Torappu_EnemyHandBookDataGroup {
+) -> clz_Torappu_EnemyHandBookDataGroup<'_> {
     unsafe { flatbuffers::root_unchecked::<clz_Torappu_EnemyHandBookDataGroup>(buf) }
 }
 #[inline]
@@ -3305,7 +3305,7 @@ pub unsafe fn root_as_clz_torappu_enemy_hand_book_data_group_unchecked(
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_EnemyHandBookDataGroup`.
 pub unsafe fn size_prefixed_root_as_clz_torappu_enemy_hand_book_data_group_unchecked(
     buf: &[u8],
-) -> clz_Torappu_EnemyHandBookDataGroup {
+) -> clz_Torappu_EnemyHandBookDataGroup<'_> {
     unsafe { flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_EnemyHandBookDataGroup>(buf) }
 }
 #[inline]

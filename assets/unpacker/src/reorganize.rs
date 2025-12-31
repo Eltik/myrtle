@@ -359,12 +359,10 @@ pub fn reorganize_inplace(
 
                 // If destination exists, prefer files with actual dialogue content
                 // (full dialogue scripts vs short summaries)
-                if dest_path.exists() {
-                    if !should_overwrite(source_path, &dest_path) {
-                        stats.files_skipped += 1;
-                        folder_emptied = false;
-                        continue;
-                    }
+                if dest_path.exists() && !should_overwrite(source_path, &dest_path) {
+                    stats.files_skipped += 1;
+                    folder_emptied = false;
+                    continue;
                 }
 
                 // Create parent directory
@@ -425,13 +423,11 @@ pub fn reorganize_inplace(
     // Clean up empty hash folders (only in in-place mode)
     for dir in empty_dirs {
         // Double-check it's empty (no files, maybe just .DS_Store)
-        let is_empty = WalkDir::new(&dir)
+        let is_empty = !WalkDir::new(&dir)
             .min_depth(1)
             .into_iter()
             .filter_map(|e| e.ok())
-            .filter(|e| e.file_type().is_file() && e.file_name().to_string_lossy() != ".DS_Store")
-            .next()
-            .is_none();
+            .any(|e| e.file_type().is_file() && e.file_name().to_string_lossy() != ".DS_Store");
 
         if is_empty {
             if let Err(e) = std::fs::remove_dir_all(&dir) {

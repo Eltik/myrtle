@@ -23,7 +23,7 @@ fn test_extractor() {
     // Create fresh output directory
     fs::create_dir_all(&output_dir).unwrap();
 
-    let extracted = extract_assets(&samples_dir(), &output_dir, true).unwrap();
+    let extracted = extract_assets(samples_dir(), &output_dir, true).unwrap();
 
     println!("extract_assets reported {} files extracted", extracted);
     println!("Output directory: {}", output_dir.display());

@@ -3869,7 +3869,8 @@ impl clz_Torappu_SimpleKVTable_clz_Torappu_BattleEquipPackT {
 /// `root_as_clz_torappu_simple_kvtable_clz_torappu_battle_equip_pack_unchecked`.
 pub fn root_as_clz_torappu_simple_kvtable_clz_torappu_battle_equip_pack(
     buf: &[u8],
-) -> Result<clz_Torappu_SimpleKVTable_clz_Torappu_BattleEquipPack, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_SimpleKVTable_clz_Torappu_BattleEquipPack<'_>, flatbuffers::InvalidFlatbuffer>
+{
     flatbuffers::root::<clz_Torappu_SimpleKVTable_clz_Torappu_BattleEquipPack>(buf)
 }
 #[inline]
@@ -3881,7 +3882,8 @@ pub fn root_as_clz_torappu_simple_kvtable_clz_torappu_battle_equip_pack(
 /// `size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_battle_equip_pack_unchecked`.
 pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_battle_equip_pack(
     buf: &[u8],
-) -> Result<clz_Torappu_SimpleKVTable_clz_Torappu_BattleEquipPack, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_SimpleKVTable_clz_Torappu_BattleEquipPack<'_>, flatbuffers::InvalidFlatbuffer>
+{
     flatbuffers::size_prefixed_root::<clz_Torappu_SimpleKVTable_clz_Torappu_BattleEquipPack>(buf)
 }
 #[inline]
@@ -3925,7 +3927,7 @@ pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_battle_equip
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_SimpleKVTable_clz_Torappu_BattleEquipPack`.
 pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_battle_equip_pack_unchecked(
     buf: &[u8],
-) -> clz_Torappu_SimpleKVTable_clz_Torappu_BattleEquipPack {
+) -> clz_Torappu_SimpleKVTable_clz_Torappu_BattleEquipPack<'_> {
     unsafe {
         flatbuffers::root_unchecked::<clz_Torappu_SimpleKVTable_clz_Torappu_BattleEquipPack>(buf)
     }
@@ -3936,7 +3938,7 @@ pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_battle_equip_pack_u
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_SimpleKVTable_clz_Torappu_BattleEquipPack`.
 pub unsafe fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_battle_equip_pack_unchecked(
     buf: &[u8],
-) -> clz_Torappu_SimpleKVTable_clz_Torappu_BattleEquipPack {
+) -> clz_Torappu_SimpleKVTable_clz_Torappu_BattleEquipPack<'_> {
     unsafe {
         flatbuffers::size_prefixed_root_unchecked::<
             clz_Torappu_SimpleKVTable_clz_Torappu_BattleEquipPack,

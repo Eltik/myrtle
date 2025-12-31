@@ -5921,7 +5921,8 @@ impl clz_Torappu_Audio_Middleware_Data_TorappuAudioDataT {
 /// `root_as_clz_torappu_audio_middleware_data_torappu_audio_data_unchecked`.
 pub fn root_as_clz_torappu_audio_middleware_data_torappu_audio_data(
     buf: &[u8],
-) -> Result<clz_Torappu_Audio_Middleware_Data_TorappuAudioData, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_Audio_Middleware_Data_TorappuAudioData<'_>, flatbuffers::InvalidFlatbuffer>
+{
     flatbuffers::root::<clz_Torappu_Audio_Middleware_Data_TorappuAudioData>(buf)
 }
 #[inline]
@@ -5933,7 +5934,8 @@ pub fn root_as_clz_torappu_audio_middleware_data_torappu_audio_data(
 /// `size_prefixed_root_as_clz_torappu_audio_middleware_data_torappu_audio_data_unchecked`.
 pub fn size_prefixed_root_as_clz_torappu_audio_middleware_data_torappu_audio_data(
     buf: &[u8],
-) -> Result<clz_Torappu_Audio_Middleware_Data_TorappuAudioData, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_Audio_Middleware_Data_TorappuAudioData<'_>, flatbuffers::InvalidFlatbuffer>
+{
     flatbuffers::size_prefixed_root::<clz_Torappu_Audio_Middleware_Data_TorappuAudioData>(buf)
 }
 #[inline]
@@ -5975,7 +5977,7 @@ pub fn size_prefixed_root_as_clz_torappu_audio_middleware_data_torappu_audio_dat
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_Audio_Middleware_Data_TorappuAudioData`.
 pub unsafe fn root_as_clz_torappu_audio_middleware_data_torappu_audio_data_unchecked(
     buf: &[u8],
-) -> clz_Torappu_Audio_Middleware_Data_TorappuAudioData {
+) -> clz_Torappu_Audio_Middleware_Data_TorappuAudioData<'_> {
     unsafe {
         flatbuffers::root_unchecked::<clz_Torappu_Audio_Middleware_Data_TorappuAudioData>(buf)
     }
@@ -5986,7 +5988,7 @@ pub unsafe fn root_as_clz_torappu_audio_middleware_data_torappu_audio_data_unche
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_Audio_Middleware_Data_TorappuAudioData`.
 pub unsafe fn size_prefixed_root_as_clz_torappu_audio_middleware_data_torappu_audio_data_unchecked(
     buf: &[u8],
-) -> clz_Torappu_Audio_Middleware_Data_TorappuAudioData {
+) -> clz_Torappu_Audio_Middleware_Data_TorappuAudioData<'_> {
     unsafe {
         flatbuffers::size_prefixed_root_unchecked::<
             clz_Torappu_Audio_Middleware_Data_TorappuAudioData,

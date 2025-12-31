@@ -413,7 +413,7 @@ pub fn parse_file<R: BinaryReader + 'static>(
             BundleFile::load_files(&bundle_rc, blocks_reader, m_directory_info)?;
 
             let mut bundle_final = Rc::try_unwrap(bundle_rc)
-                .map_err(|_| io::Error::new(io::ErrorKind::Other, "Failed to unwrap BundleFile"))?
+                .map_err(|_| io::Error::other("Failed to unwrap BundleFile"))?
                 .into_inner();
 
             bundle_final.parent = parent;

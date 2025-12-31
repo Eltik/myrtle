@@ -63,14 +63,14 @@ pub async fn serve_portrait(
     );
 
     // Check If-None-Match (ETag)
-    if let Some(if_none_match) = headers.get(header::IF_NONE_MATCH) {
-        if if_none_match.to_str().ok() == Some(&etag) {
-            return Ok(Response::builder()
-                .status(StatusCode::NOT_MODIFIED)
-                .header(header::CACHE_CONTROL, "public, max-age=86400")
-                .body(Body::empty())
-                .unwrap());
-        }
+    if let Some(if_none_match) = headers.get(header::IF_NONE_MATCH)
+        && if_none_match.to_str().ok() == Some(&etag)
+    {
+        return Ok(Response::builder()
+            .status(StatusCode::NOT_MODIFIED)
+            .header(header::CACHE_CONTROL, "public, max-age=86400")
+            .body(Body::empty())
+            .unwrap());
     }
 
     // Stream file

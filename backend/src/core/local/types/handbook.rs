@@ -8,8 +8,9 @@ use super::serde_helpers::{deserialize_fb_map, deserialize_fb_map_or_default};
 // Enums
 // ============================================================================
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub enum OperatorGender {
+    #[default]
     Unknown,
     Female,
     Male,
@@ -18,14 +19,9 @@ pub enum OperatorGender {
     Conviction,
 }
 
-impl Default for OperatorGender {
-    fn default() -> Self {
-        Self::Unknown
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub enum OperatorBirthPlace {
+    #[default]
     Unknown,
     Undisclosed,
     Higashi,
@@ -67,13 +63,7 @@ pub enum OperatorBirthPlace {
     FarEast,
 }
 
-impl Default for OperatorBirthPlace {
-    fn default() -> Self {
-        Self::Unknown
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub enum OperatorRace {
     Undisclosed,
     Zalak,
@@ -99,6 +89,7 @@ pub enum OperatorRace {
     #[serde(rename = "Unknown (Suspected Liberi)")]
     UnknownSuspectedLiberi,
     Archosauria,
+    #[default]
     Unknown,
     Lupo,
     Forte,
@@ -121,12 +112,6 @@ pub enum OperatorRace {
     Elf,
     #[serde(rename = "Sa■&K?uSxw?")]
     Corrupted, // Special corrupted text for certain operators
-}
-
-impl Default for OperatorRace {
-    fn default() -> Self {
-        Self::Unknown
-    }
 }
 
 // ============================================================================

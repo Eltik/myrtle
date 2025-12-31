@@ -29,7 +29,7 @@ fn test_spritepacker_typetree() {
 
     println!("\n=== Analyzing portrait_hub.ab MonoBehaviour TypeTree ===\n");
 
-    for mut obj in env.objects() {
+    for obj in env.objects() {
         if obj.obj_type == unity_rs::ClassIDType::MonoBehaviour {
             println!("MonoBehaviour PathID: {}", obj.path_id);
 

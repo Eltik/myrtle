@@ -45,7 +45,7 @@ fn test_read_typetree_samples() {
 
     let mut objects_read = 0;
 
-    for (_name, file_rc) in &env.files {
+    for file_rc in env.files.values() {
         let file_ref = file_rc.borrow();
 
         // Helper to read TypeTree from SerializedFile
@@ -53,7 +53,7 @@ fn test_read_typetree_samples() {
             std::cell::RefCell<unity_rs::files::serialized_file::SerializedFile>,
         >| {
             let serialized_file = serialized_file_rc.borrow();
-            for (_id, obj) in &serialized_file.objects {
+            for obj in serialized_file.objects.values() {
                 let mut obj_clone = obj.clone();
                 // read_typetree should not fail for any object
                 let result = obj_clone.read_typetree(None, true, false);
@@ -71,7 +71,7 @@ fn test_read_typetree_samples() {
                 read_serialized(serialized_file_rc);
             }
             FileType::BundleFile(bundle) => {
-                for (_bundle_file_name, bundle_file_rc) in &bundle.files {
+                for bundle_file_rc in bundle.files.values() {
                     let bundle_file_ref = bundle_file_rc.borrow();
                     if let FileType::SerializedFile(sf_rc) = &*bundle_file_ref {
                         read_serialized(sf_rc);

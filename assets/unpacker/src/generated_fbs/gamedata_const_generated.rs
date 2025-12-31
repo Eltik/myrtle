@@ -7760,7 +7760,7 @@ impl clz_Torappu_GameDataConstsT {
 /// `root_as_clz_torappu_game_data_consts_unchecked`.
 pub fn root_as_clz_torappu_game_data_consts(
     buf: &[u8],
-) -> Result<clz_Torappu_GameDataConsts, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_GameDataConsts<'_>, flatbuffers::InvalidFlatbuffer> {
     flatbuffers::root::<clz_Torappu_GameDataConsts>(buf)
 }
 #[inline]
@@ -7772,7 +7772,7 @@ pub fn root_as_clz_torappu_game_data_consts(
 /// `size_prefixed_root_as_clz_torappu_game_data_consts_unchecked`.
 pub fn size_prefixed_root_as_clz_torappu_game_data_consts(
     buf: &[u8],
-) -> Result<clz_Torappu_GameDataConsts, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_GameDataConsts<'_>, flatbuffers::InvalidFlatbuffer> {
     flatbuffers::size_prefixed_root::<clz_Torappu_GameDataConsts>(buf)
 }
 #[inline]
@@ -7807,7 +7807,7 @@ pub fn size_prefixed_root_as_clz_torappu_game_data_consts_with_opts<'b, 'o>(
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_GameDataConsts`.
 pub unsafe fn root_as_clz_torappu_game_data_consts_unchecked(
     buf: &[u8],
-) -> clz_Torappu_GameDataConsts {
+) -> clz_Torappu_GameDataConsts<'_> {
     unsafe { flatbuffers::root_unchecked::<clz_Torappu_GameDataConsts>(buf) }
 }
 #[inline]
@@ -7816,7 +7816,7 @@ pub unsafe fn root_as_clz_torappu_game_data_consts_unchecked(
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_GameDataConsts`.
 pub unsafe fn size_prefixed_root_as_clz_torappu_game_data_consts_unchecked(
     buf: &[u8],
-) -> clz_Torappu_GameDataConsts {
+) -> clz_Torappu_GameDataConsts<'_> {
     unsafe { flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_GameDataConsts>(buf) }
 }
 #[inline]

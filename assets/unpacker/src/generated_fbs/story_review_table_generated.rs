@@ -3572,7 +3572,7 @@ impl clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientDataT {
 pub fn root_as_clz_torappu_simple_kvtable_clz_torappu_story_review_group_client_data(
     buf: &[u8],
 ) -> Result<
-    clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData,
+    clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData<'_>,
     flatbuffers::InvalidFlatbuffer,
 > {
     flatbuffers::root::<clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData>(buf)
@@ -3587,7 +3587,7 @@ pub fn root_as_clz_torappu_simple_kvtable_clz_torappu_story_review_group_client_
 pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_story_review_group_client_data(
     buf: &[u8],
 ) -> Result<
-    clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData,
+    clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData<'_>,
     flatbuffers::InvalidFlatbuffer,
 > {
     flatbuffers::size_prefixed_root::<
@@ -3642,7 +3642,7 @@ pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_story_review
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData`.
 pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_story_review_group_client_data_unchecked(
     buf: &[u8],
-) -> clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData {
+) -> clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData<'_> {
     unsafe {
         flatbuffers::root_unchecked::<
             clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData,
@@ -3655,7 +3655,7 @@ pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_story_review_group_
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData`.
 pub unsafe fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_story_review_group_client_data_unchecked(
     buf: &[u8],
-) -> clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData {
+) -> clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData<'_> {
     unsafe {
         flatbuffers::size_prefixed_root_unchecked::<
             clz_Torappu_SimpleKVTable_clz_Torappu_StoryReviewGroupClientData,

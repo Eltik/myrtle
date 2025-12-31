@@ -686,7 +686,7 @@ impl clz_Torappu_FavorTableT {
 /// `root_as_clz_torappu_favor_table_unchecked`.
 pub fn root_as_clz_torappu_favor_table(
     buf: &[u8],
-) -> Result<clz_Torappu_FavorTable, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_FavorTable<'_>, flatbuffers::InvalidFlatbuffer> {
     flatbuffers::root::<clz_Torappu_FavorTable>(buf)
 }
 #[inline]
@@ -698,7 +698,7 @@ pub fn root_as_clz_torappu_favor_table(
 /// `size_prefixed_root_as_clz_torappu_favor_table_unchecked`.
 pub fn size_prefixed_root_as_clz_torappu_favor_table(
     buf: &[u8],
-) -> Result<clz_Torappu_FavorTable, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_FavorTable<'_>, flatbuffers::InvalidFlatbuffer> {
     flatbuffers::size_prefixed_root::<clz_Torappu_FavorTable>(buf)
 }
 #[inline]
@@ -731,7 +731,7 @@ pub fn size_prefixed_root_as_clz_torappu_favor_table_with_opts<'b, 'o>(
 /// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_FavorTable and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_FavorTable`.
-pub unsafe fn root_as_clz_torappu_favor_table_unchecked(buf: &[u8]) -> clz_Torappu_FavorTable {
+pub unsafe fn root_as_clz_torappu_favor_table_unchecked(buf: &[u8]) -> clz_Torappu_FavorTable<'_> {
     unsafe { flatbuffers::root_unchecked::<clz_Torappu_FavorTable>(buf) }
 }
 #[inline]
@@ -740,7 +740,7 @@ pub unsafe fn root_as_clz_torappu_favor_table_unchecked(buf: &[u8]) -> clz_Torap
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_FavorTable`.
 pub unsafe fn size_prefixed_root_as_clz_torappu_favor_table_unchecked(
     buf: &[u8],
-) -> clz_Torappu_FavorTable {
+) -> clz_Torappu_FavorTable<'_> {
     unsafe { flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_FavorTable>(buf) }
 }
 #[inline]

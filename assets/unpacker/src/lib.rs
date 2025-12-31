@@ -1,3 +1,12 @@
+// Clippy allows for complex codebase
+#![allow(clippy::type_complexity)]
+#![allow(clippy::too_many_arguments)]
+#![allow(clippy::if_same_then_else)]
+#![allow(clippy::doc_lazy_continuation)]
+#![allow(clippy::manual_strip)]
+#![allow(clippy::redundant_guards)]
+#![allow(clippy::search_is_some)]
+
 pub mod collect_models;
 pub mod collect_voice;
 pub mod combine_rgb;

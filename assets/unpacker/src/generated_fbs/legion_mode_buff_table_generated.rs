@@ -1433,7 +1433,7 @@ impl clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffDataT {
 pub fn root_as_clz_torappu_simple_kvtable_clz_torappu_battle_legion_legion_mode_buff_data(
     buf: &[u8],
 ) -> Result<
-    clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffData,
+    clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffData<'_>,
     flatbuffers::InvalidFlatbuffer,
 > {
     flatbuffers::root::<clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffData>(buf)
@@ -1448,7 +1448,7 @@ pub fn root_as_clz_torappu_simple_kvtable_clz_torappu_battle_legion_legion_mode_
 pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_battle_legion_legion_mode_buff_data(
     buf: &[u8],
 ) -> Result<
-    clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffData,
+    clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffData<'_>,
     flatbuffers::InvalidFlatbuffer,
 > {
     flatbuffers::size_prefixed_root::<
@@ -1503,7 +1503,7 @@ pub fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_battle_legio
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffData`.
 pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_battle_legion_legion_mode_buff_data_unchecked(
     buf: &[u8],
-) -> clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffData {
+) -> clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffData<'_> {
     unsafe {
         flatbuffers::root_unchecked::<
             clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffData,
@@ -1516,7 +1516,7 @@ pub unsafe fn root_as_clz_torappu_simple_kvtable_clz_torappu_battle_legion_legio
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffData`.
 pub unsafe fn size_prefixed_root_as_clz_torappu_simple_kvtable_clz_torappu_battle_legion_legion_mode_buff_data_unchecked(
     buf: &[u8],
-) -> clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffData {
+) -> clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffData<'_> {
     unsafe {
         flatbuffers::size_prefixed_root_unchecked::<
             clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffData,

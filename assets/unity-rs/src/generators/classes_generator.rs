@@ -1,3 +1,4 @@
+#![allow(clippy::only_used_in_recursion)]
 //! ClassesGenerator - Generates Rust structs for Unity classes from TPK data
 //!
 //! This is a build-time code generator that:
@@ -19,7 +20,7 @@ use unity_rs::helpers::tpk::{get_tpk_typetree, TpkUnityNode};
 
 thread_local! {
     /// Tracks types currently being generated to detect recursion
-    static GENERATION_STACK: RefCell<Vec<String>> = RefCell::new(Vec::new());
+    static GENERATION_STACK: RefCell<Vec<String>> = const { RefCell::new(Vec::new()) };
 }
 
 /// Global caches for class and type information
@@ -760,7 +761,7 @@ fn main() {
             // Track inheritance dependencies
             if let Some(ref base_name) = base {
                 deps.entry(base_name.clone())
-                    .or_insert_with(Vec::new)
+                    .or_default()
                     .push(name.clone());
             }
         }

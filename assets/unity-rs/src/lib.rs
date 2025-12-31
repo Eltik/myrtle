@@ -1,3 +1,15 @@
+// Clippy allows for complex codebase
+#![allow(clippy::type_complexity)]
+#![allow(clippy::too_many_arguments)]
+#![allow(clippy::len_without_is_empty)]
+#![allow(clippy::empty_line_after_doc_comments)]
+#![allow(clippy::large_enum_variant)]
+#![allow(clippy::field_reassign_with_default)]
+#![allow(clippy::needless_range_loop)]
+#![allow(clippy::needless_late_init)]
+#![allow(clippy::match_single_binding)]
+#![allow(clippy::only_used_in_recursion)]
+
 // Module declarations
 pub mod classes;
 pub mod config;

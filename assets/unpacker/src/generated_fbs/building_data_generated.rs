@@ -35050,7 +35050,7 @@ impl clz_Torappu_BuildingDataT {
 /// `root_as_clz_torappu_building_data_unchecked`.
 pub fn root_as_clz_torappu_building_data(
     buf: &[u8],
-) -> Result<clz_Torappu_BuildingData, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_BuildingData<'_>, flatbuffers::InvalidFlatbuffer> {
     flatbuffers::root::<clz_Torappu_BuildingData>(buf)
 }
 #[inline]
@@ -35062,7 +35062,7 @@ pub fn root_as_clz_torappu_building_data(
 /// `size_prefixed_root_as_clz_torappu_building_data_unchecked`.
 pub fn size_prefixed_root_as_clz_torappu_building_data(
     buf: &[u8],
-) -> Result<clz_Torappu_BuildingData, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_BuildingData<'_>, flatbuffers::InvalidFlatbuffer> {
     flatbuffers::size_prefixed_root::<clz_Torappu_BuildingData>(buf)
 }
 #[inline]
@@ -35095,7 +35095,9 @@ pub fn size_prefixed_root_as_clz_torappu_building_data_with_opts<'b, 'o>(
 /// Assumes, without verification, that a buffer of bytes contains a clz_Torappu_BuildingData and returns it.
 /// # Safety
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_BuildingData`.
-pub unsafe fn root_as_clz_torappu_building_data_unchecked(buf: &[u8]) -> clz_Torappu_BuildingData {
+pub unsafe fn root_as_clz_torappu_building_data_unchecked(
+    buf: &[u8],
+) -> clz_Torappu_BuildingData<'_> {
     unsafe { flatbuffers::root_unchecked::<clz_Torappu_BuildingData>(buf) }
 }
 #[inline]
@@ -35104,7 +35106,7 @@ pub unsafe fn root_as_clz_torappu_building_data_unchecked(buf: &[u8]) -> clz_Tor
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_BuildingData`.
 pub unsafe fn size_prefixed_root_as_clz_torappu_building_data_unchecked(
     buf: &[u8],
-) -> clz_Torappu_BuildingData {
+) -> clz_Torappu_BuildingData<'_> {
     unsafe { flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_BuildingData>(buf) }
 }
 #[inline]
