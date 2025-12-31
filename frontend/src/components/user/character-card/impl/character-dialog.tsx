@@ -3,8 +3,6 @@
 import { motion, useScroll, useTransform } from "motion/react";
 import Image from "next/image";
 import { useState } from "react";
-import { AnimatedGroup } from "~/components/ui/motion-primitives/animated-group";
-import { AnimatedNumber } from "~/components/ui/motion-primitives/animated-number";
 import { MorphingDialogClose, MorphingDialogContainer, MorphingDialogContent } from "~/components/ui/motion-primitives/morphing-dialog";
 import { Separator } from "~/components/ui/shadcn/separator";
 import type { CharacterData, CharacterStatic } from "~/types/api/impl/user";
@@ -20,9 +18,7 @@ function StatItem({ label, value }: StatItemProps) {
     return (
         <div className="flex items-center justify-between rounded-md bg-muted/30 px-2.5 py-1.5">
             <span className="text-muted-foreground text-xs">{label}</span>
-            <span className="font-medium text-sm tabular-nums">
-                <AnimatedNumber springOptions={{ bounce: 0, duration: 400 }} value={value} />
-            </span>
+            <span className="font-medium text-sm tabular-nums">{value}</span>
         </div>
     );
 }
@@ -96,27 +92,7 @@ export function CharacterDialog({ data, operator, operatorName, operatorProfessi
                     </div>
 
                     {/* Quick Stats */}
-                    <AnimatedGroup
-                        className="mb-5 grid grid-cols-4 gap-1.5"
-                        variants={{
-                            container: {
-                                visible: {
-                                    transition: {
-                                        staggerChildren: 0.05,
-                                    },
-                                },
-                            },
-                            item: {
-                                hidden: { opacity: 0, scale: 0.95, filter: "blur(4px)" },
-                                visible: {
-                                    opacity: 1,
-                                    scale: 1,
-                                    filter: "blur(0px)",
-                                    transition: { type: "spring", stiffness: 200, damping: 20 },
-                                },
-                            },
-                        }}
-                    >
+                    <div className="mb-5 grid grid-cols-4 gap-1.5">
                         <div className="flex items-center justify-center rounded-md bg-muted/30 py-2">
                             <Image alt={`Elite ${data.evolvePhase}`} className="icon-theme-aware h-6 w-6 object-contain" height={24} src={`/api/cdn/upk/arts/elite_hub/elite_${data.evolvePhase}.png`} unoptimized width={24} />
                         </div>
@@ -131,7 +107,7 @@ export function CharacterDialog({ data, operator, operatorName, operatorProfessi
                             <span className="text-[10px] text-muted-foreground sm:text-xs">Trust</span>
                             <span className="font-medium text-sm tabular-nums">{operator?.trust ?? 0}%</span>
                         </div>
-                    </AnimatedGroup>
+                    </div>
 
                     {/* Battle Stats */}
                     {stats && (
@@ -140,14 +116,14 @@ export function CharacterDialog({ data, operator, operatorName, operatorProfessi
                                 <h3 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">Stats</h3>
                                 <Separator className="flex-1" />
                             </div>
-                            <AnimatedGroup className="grid grid-cols-2 gap-1.5 sm:grid-cols-3" preset="blur-slide">
+                            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
                                 <StatItem label="HP" value={stats.maxHp} />
                                 <StatItem label="ATK" value={stats.atk} />
                                 <StatItem label="DEF" value={stats.def} />
                                 <StatItem label="RES" value={stats.magicResistance} />
                                 <StatItem label="DP Cost" value={stats.cost} />
                                 <StatItem label="Block" value={stats.blockCnt} />
-                            </AnimatedGroup>
+                            </div>
                         </div>
                     )}
 
@@ -159,11 +135,11 @@ export function CharacterDialog({ data, operator, operatorName, operatorProfessi
                             <Separator className="flex-1" />
                         </div>
                         {data.skills && data.skills.length > 0 ? (
-                            <AnimatedGroup className="space-y-1.5" preset="blur-slide">
+                            <div className="space-y-1.5">
                                 {data.skills.map((skill, index) => (
                                     <SkillItem index={index} isDefaultSkill={data.defaultSkillIndex === index} key={skill.skillId} mainSkillLvl={data.mainSkillLvl} size="large" skill={skill} />
                                 ))}
-                            </AnimatedGroup>
+                            </div>
                         ) : (
                             <p className="text-muted-foreground text-xs">No skills found.</p>
                         )}
@@ -182,7 +158,7 @@ export function CharacterDialog({ data, operator, operatorName, operatorProfessi
                                 const isLocked = equipData?.locked === 1;
                                 return module.typeName1 !== "ORIGINAL" && moduleLevel > 0 && !isLocked;
                             }) ? (
-                                <AnimatedGroup className="space-y-1.5" preset="blur-slide">
+                                <div className="space-y-1.5">
                                     {operator.modules
                                         .map((module) => {
                                             const equipData = data.equip[module.uniEquipId];
@@ -197,7 +173,7 @@ export function CharacterDialog({ data, operator, operatorName, operatorProfessi
                                             return <ModuleItem isEquipped={isEquipped} key={module.uniEquipId} module={module} moduleLevel={moduleLevel} size="large" />;
                                         })
                                         .filter(Boolean)}
-                                </AnimatedGroup>
+                                </div>
                             ) : (
                                 <p className="text-muted-foreground text-xs">No modules unlocked.</p>
                             )
