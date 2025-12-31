@@ -207,7 +207,7 @@ impl ArkAssets {
                 "Game Versions: {} Material Versions: {}",
                 client_version, asset_version
             ),
-            &vec![1, 32],
+            &[1, 32],
         );
 
         let (hot_update_list, total_size, ab_size) =
@@ -220,7 +220,7 @@ impl ArkAssets {
                 scale(total_size, 1024.0, 2),
                 scale(ab_size, 1024.0, 2)
             ),
-            &vec![1, 32],
+            &[1, 32],
         );
 
         Ok(ArkAssets {
@@ -526,12 +526,12 @@ impl ArkAssets {
             );
 
             options.push((item.clone(), formatted.clone(), vec![1, 34]));
-            printc(&formatted, &vec![1, 34]);
+            printc(&formatted, &[1, 34]);
         }
 
         printc(
             "Download Options [Download All=A, Select Download=C, Cancel=Other]: ",
-            &vec![1, 36],
+            &[1, 36],
         );
 
         let mut input = String::new();
@@ -543,7 +543,7 @@ impl ArkAssets {
         if inp == "A" || inp == "a" {
             back(1);
             clear();
-            printc("Start Downloading All", &vec![1, 36]);
+            printc("Start Downloading All", &[1, 36]);
 
             let all_keys: Vec<String> = self.hot_update_list.keys().cloned().collect();
             self.download_fromlist(&all_keys, savedir, 6)?;
@@ -565,11 +565,11 @@ impl ArkAssets {
                     scale(total_size, 1024.0, 2),
                     chosen
                 ),
-                &vec![1, 36],
+                &[1, 36],
             );
             printc(
                 "[Up/Down Arrow=Select, Left Arrow=Remove, Right Arrow=Add, ESC Key=Confirm]",
-                &vec![1, 33],
+                &[1, 33],
             );
 
             loop {
@@ -603,7 +603,7 @@ impl ArkAssets {
 
                                 // Update color to yellow [1, 33] and display
                                 clear();
-                                printc(&options[pos].1, &vec![1, 33, 100]);
+                                printc(&options[pos].1, &[1, 33, 100]);
                                 options[pos].2 = vec![1, 33];
 
                                 // Python line 174: Update status display
@@ -634,7 +634,7 @@ impl ArkAssets {
                                         scale(total_size, 1024.0, 2),
                                         chosen
                                     ),
-                                    &vec![1, 36],
+                                    &[1, 36],
                                 );
                                 back(options.len() - pos);
                             }
@@ -645,7 +645,7 @@ impl ArkAssets {
 
                                 // Update color back to blue [1, 34] and display
                                 clear();
-                                printc(&options[pos].1, &vec![1, 34, 100]);
+                                printc(&options[pos].1, &[1, 34, 100]);
                                 options[pos].2 = vec![1, 34];
 
                                 // Python line 185: Update status display
@@ -676,7 +676,7 @@ impl ArkAssets {
                                         scale(total_size, 1024.0, 2),
                                         chosen
                                     ),
-                                    &vec![1, 36],
+                                    &[1, 36],
                                 );
                                 back(options.len() - pos);
                             }
@@ -687,11 +687,11 @@ impl ArkAssets {
                 }
             }
 
-            printc("Start Download", &vec![1, 36]);
+            printc("Start Download", &[1, 36]);
             self.download_fromlist(&chosen, savedir, 6)?;
             Ok(())
         } else {
-            printc("Download Canceled", &vec![1, 33]);
+            printc("Download Canceled", &[1, 33]);
             Ok(())
         }
     }
@@ -756,7 +756,7 @@ impl ArkAssets {
                         count -= 1;
                         continue;
                     } else {
-                        printc(&format!("[{}] Will be Updated", filename), &vec![1, 33]);
+                        printc(&format!("[{}] Will be Updated", filename), &[1, 33]);
 
                         // Python lines 237-240: Delete old file and unpack directory
                         let file_path = PathBuf::from(savedir).join(filename);
@@ -906,7 +906,7 @@ impl ArkAssets {
                             format!("dat size: {}", scale(length as i64, 1024.0, 2)),
                             "█".repeat(bar_width)
                         ),
-                        &vec![1, 34],
+                        &[1, 34],
                     );
                 }
 
@@ -1210,7 +1210,7 @@ impl ArkAssets {
                     // Silent error handling (matches Python's pass)
                     if let Err(e) = unzip_unpack_result {
                         let _lock_guard = lock.lock().unwrap();
-                        printc(&format!("Error processing {}: {}", filename, e), &vec![31]);
+                        printc(&format!("Error processing {}: {}", filename, e), &[31]);
                     }
 
                     // Update main progress bar
@@ -1218,7 +1218,7 @@ impl ArkAssets {
                 }
                 Err(e) => {
                     let _lock_guard = lock.lock().unwrap();
-                    printc(&format!("Error: {}", e), &vec![31]);
+                    printc(&format!("Error: {}", e), &[31]);
                     pbar.inc(1);
                 }
             }
@@ -1310,7 +1310,7 @@ impl ArkAssets {
                     format!("dat size: {}", scale(length as i64, 1024.0, 2)),
                     "█".repeat(bar_width)
                 ),
-                &vec![1, 34],
+                &[1, 34],
             );
         }
 

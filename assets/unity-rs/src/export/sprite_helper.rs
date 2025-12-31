@@ -134,7 +134,7 @@ fn get_image_from_texture2d(texture: &Texture2D, flip: bool) -> UnityResult<Rgba
 
         get_resource_data(
             source_path,
-            &mut *assets_file_mut,
+            &mut assets_file_mut,
             stream_data.offset.unwrap_or(0) as usize,
             stream_data.size.unwrap_or(0) as usize,
         )?
@@ -229,32 +229,32 @@ pub fn get_image(
 
     let original_image = get_image_from_texture2d(&texture_obj, false)?;
 
-    let result_image =
-        if let Some(ref alpha_tex) = alpha_texture.as_ref().filter(|a| a.m_path_id != 0) {
-            // Decode the alpha texture (non-null)
-            let mut alpha_texture_obj = {
-                let assets_file_ref = assets_file.borrow();
-                alpha_tex.read(&assets_file_ref).map_err(|e| {
-                    UnityError::Other(format!(
-                        "Failed to read alpha texture with path_id {}: {}",
-                        alpha_tex.m_path_id, e
-                    ))
-                })?
-            };
-
-            // Set the object_reader so the texture can access StreamData
-            if let Some(obj_reader) = assets_file.borrow().objects.get(&alpha_tex.m_path_id) {
-                alpha_texture_obj.object_reader = Some(Box::new(obj_reader.clone()));
-            }
-
-            let alpha_image = get_image_from_texture2d(&alpha_texture_obj, false)?;
-
-            // Merge RGB from original with Alpha from alpha_image
-            // Python: Image.merge("RGBA", (*original_image.split()[:3], alpha_image.split()[0]))
-            merge_rgb_and_alpha(&original_image, &alpha_image)?
-        } else {
-            original_image
+    let result_image = if let Some(alpha_tex) = alpha_texture.as_ref().filter(|a| a.m_path_id != 0)
+    {
+        // Decode the alpha texture (non-null)
+        let mut alpha_texture_obj = {
+            let assets_file_ref = assets_file.borrow();
+            alpha_tex.read(&assets_file_ref).map_err(|e| {
+                UnityError::Other(format!(
+                    "Failed to read alpha texture with path_id {}: {}",
+                    alpha_tex.m_path_id, e
+                ))
+            })?
         };
+
+        // Set the object_reader so the texture can access StreamData
+        if let Some(obj_reader) = assets_file.borrow().objects.get(&alpha_tex.m_path_id) {
+            alpha_texture_obj.object_reader = Some(Box::new(obj_reader.clone()));
+        }
+
+        let alpha_image = get_image_from_texture2d(&alpha_texture_obj, false)?;
+
+        // Merge RGB from original with Alpha from alpha_image
+        // Python: Image.merge("RGBA", (*original_image.split()[:3], alpha_image.split()[0]))
+        merge_rgb_and_alpha(&original_image, &alpha_image)?
+    } else {
+        original_image
+    };
 
     // Cache the result
     cache.insert(cache_id, result_image.clone());
@@ -324,7 +324,7 @@ pub fn get_image_from_sprite(
 ) -> UnityResult<RgbaImage> {
     // Step 1: Find the atlas
     // Python lines 63-73
-    let atlas = if let Some(ref sprite_atlas_ptr) =
+    let atlas = if let Some(sprite_atlas_ptr) =
         sprite.m_SpriteAtlas.as_ref().filter(|p| p.m_path_id != 0)
     {
         // Direct atlas reference (only if PathID is not 0/null)

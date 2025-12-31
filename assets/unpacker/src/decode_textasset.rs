@@ -224,7 +224,7 @@ fn find_manifest(rootdir: &Path) -> Option<PathBuf> {
         if let Ok(entries) = std::fs::read_dir(&current) {
             for entry in entries.flatten() {
                 let path = entry.path();
-                if path.extension().map_or(false, |ext| ext == "idx") {
+                if path.extension().is_some_and(|ext| ext == "idx") {
                     log::info!("Found manifest: {:?}", path);
                     return Some(path);
                 }

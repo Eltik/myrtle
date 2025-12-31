@@ -7,30 +7,22 @@ use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
+#[derive(Default)]
 pub enum EnemyLevel {
+    #[default]
     Normal,
     Elite,
     Boss,
 }
 
-impl Default for EnemyLevel {
-    fn default() -> Self {
-        Self::Normal
-    }
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[derive(Default)]
 pub enum DamageType {
+    #[default]
     Physic,
     Magic,
     NoDamage,
-}
-
-impl Default for DamageType {
-    fn default() -> Self {
-        Self::Physic
-    }
 }
 
 // ============================================================================

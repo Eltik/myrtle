@@ -76,12 +76,12 @@ impl<T> ObjectReader<T> {
 
         // 2. Read path_id (version-dependent format)
         let path_id = if big_id_enabled != 0 {
-            reader_ref.read_i64().map_err(|e| e.to_string())? as i64
+            reader_ref.read_i64().map_err(|e| e.to_string())?
         } else if header.version < 14 {
             reader_ref.read_i32().map_err(|e| e.to_string())? as i64
         } else {
             reader_ref.align_stream(4);
-            reader_ref.read_i64().map_err(|e| e.to_string())? as i64
+            reader_ref.read_i64().map_err(|e| e.to_string())?
         };
 
         // 3. Read byte_start (version-dependent size)
@@ -698,10 +698,7 @@ impl<T> ObjectReader<T> {
 
         // Get the path from the container using this object's path_id
         // Python: self.assets_file._container.path_dict.get(self.path_id)
-        Ok(assets_file
-            .container
-            .get_path(self.path_id)
-            .map(|s| s.clone()))
+        Ok(assets_file.container.get_path(self.path_id).cloned())
     }
 
     /// Gets the Rust class type for this object from ClassIDTypeToClassMap

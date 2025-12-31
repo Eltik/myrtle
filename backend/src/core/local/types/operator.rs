@@ -13,22 +13,19 @@ use super::skill::SkillLevel;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
+#[derive(Default)]
 pub enum OperatorPosition {
     Ranged,
+    #[default]
     Melee,
     All,
     None,
 }
 
-impl Default for OperatorPosition {
-    fn default() -> Self {
-        Self::Melee
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub enum OperatorPhase {
     #[serde(rename = "PHASE_0")]
+    #[default]
     Elite0,
     #[serde(rename = "PHASE_1")]
     Elite1,
@@ -36,13 +33,7 @@ pub enum OperatorPhase {
     Elite2,
 }
 
-impl Default for OperatorPhase {
-    fn default() -> Self {
-        Self::Elite0
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub enum OperatorRarity {
     #[serde(rename = "TIER_6")]
     SixStar,
@@ -55,22 +46,18 @@ pub enum OperatorRarity {
     #[serde(rename = "TIER_2")]
     TwoStar,
     #[serde(rename = "TIER_1")]
+    #[default]
     OneStar,
 }
 
-impl Default for OperatorRarity {
-    fn default() -> Self {
-        Self::OneStar
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub enum OperatorProfession {
     #[serde(rename = "MEDIC")]
     Medic,
     #[serde(rename = "CASTER")]
     Caster,
     #[serde(rename = "WARRIOR")]
+    #[default]
     Guard,
     #[serde(rename = "PIONEER")]
     Vanguard,
@@ -86,12 +73,6 @@ pub enum OperatorProfession {
     Token,
     #[serde(rename = "TRAP")]
     Trap,
-}
-
-impl Default for OperatorProfession {
-    fn default() -> Self {
-        Self::Guard
-    }
 }
 
 // ============================================================================

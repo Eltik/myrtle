@@ -81,7 +81,7 @@ pub fn save_texture_as_png(texture: &Texture2D, output_path: &Path, flip: bool) 
 
         get_resource_data(
             source_path,
-            &mut *assets_file_mut,
+            &mut assets_file_mut,
             stream_data.offset.unwrap_or(0) as usize,
             stream_data.size.unwrap_or(0) as usize,
         )?
@@ -635,7 +635,7 @@ fn decode_bgr24(data: &[u8], width: u32, height: u32) -> UnityResult<RgbaImage> 
 /// # Python Equivalent
 /// Python line 543: (TF.Alpha8, pillow, "RGBA", "raw", "A")
 fn decode_alpha8(data: &[u8], width: u32, height: u32) -> UnityResult<RgbaImage> {
-    let expected_size = (width * height * 1) as usize; // 1 byte per pixel
+    let expected_size = (width * height) as usize; // 1 byte per pixel
     if data.len() != expected_size {
         return Err(UnityError::Other(format!(
             "Invalid Alpha8 data size: expected {} bytes, got {}",
@@ -668,7 +668,7 @@ fn decode_alpha8(data: &[u8], width: u32, height: u32) -> UnityResult<RgbaImage>
 /// # Python Equivalent
 /// Python line 551: (TF.R8, pillow, "RGB", "raw", "R")
 fn decode_r8(data: &[u8], width: u32, height: u32) -> UnityResult<RgbaImage> {
-    let expected_size = (width * height * 1) as usize; // 1 byte per pixel
+    let expected_size = (width * height) as usize; // 1 byte per pixel
     if data.len() != expected_size {
         return Err(UnityError::Other(format!(
             "Invalid R8 data size: expected {} bytes, got {}",
@@ -1840,8 +1840,8 @@ fn decode_bc6h(data: &[u8], width: u32, height: u32) -> UnityResult<RgbaImage> {
         get_padded_dimensions(width, height, block_size.0, block_size.1);
 
     // BC6H: 4x4 blocks, 16 bytes per block
-    let blocks_x = (padded_width + 3) / 4;
-    let blocks_y = (padded_height + 3) / 4;
+    let blocks_x = padded_width.div_ceil(4);
+    let blocks_y = padded_height.div_ceil(4);
     let total_blocks = (blocks_x * blocks_y) as usize;
 
     // Verify we have enough data
@@ -1931,8 +1931,8 @@ fn decode_bc7(data: &[u8], width: u32, height: u32) -> UnityResult<RgbaImage> {
         get_padded_dimensions(width, height, block_size.0, block_size.1);
 
     // BC7: 4x4 blocks, 16 bytes per block
-    let blocks_x = (padded_width + 3) / 4;
-    let blocks_y = (padded_height + 3) / 4;
+    let blocks_x = padded_width.div_ceil(4);
+    let blocks_y = padded_height.div_ceil(4);
     let total_blocks = (blocks_x * blocks_y) as usize;
 
     // Verify we have enough data
@@ -2162,8 +2162,8 @@ fn get_padded_dimensions(
     block_width: u32,
     block_height: u32,
 ) -> (u32, u32) {
-    let padded_width = ((width + block_width - 1) / block_width) * block_width;
-    let padded_height = ((height + block_height - 1) / block_height) * block_height;
+    let padded_width = width.div_ceil(block_width) * block_width;
+    let padded_height = height.div_ceil(block_height) * block_height;
     (padded_width, padded_height)
 }
 

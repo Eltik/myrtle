@@ -33,7 +33,7 @@ fn test_debug_sprite_json() {
         );
 
         println!("Files loaded: {}", env.files.len());
-        for (_name, file_rc) in &env.files {
+        for file_rc in env.files.values() {
             let file_ref = file_rc.borrow();
             match &*file_ref {
                 FileType::SerializedFile(serialized_file_rc) => {
@@ -66,7 +66,7 @@ fn test_debug_sprite_json() {
                 }
                 FileType::BundleFile(bundle) => {
                     println!("Found BundleFile with {} files", bundle.files.len());
-                    for (_bundle_name, bundle_file_rc) in &bundle.files {
+                    for bundle_file_rc in bundle.files.values() {
                         let bundle_file_ref = bundle_file_rc.borrow();
                         if let FileType::SerializedFile(serialized_file_rc) = &*bundle_file_ref {
                             let serialized_file = serialized_file_rc.borrow();
@@ -125,33 +125,30 @@ fn test_debug_audioclip_json() {
             false,
         );
 
-        for (_name, file_rc) in &env.files {
+        for file_rc in env.files.values() {
             let file_ref = file_rc.borrow();
-            match &*file_ref {
-                FileType::SerializedFile(serialized_file_rc) => {
-                    let serialized_file = serialized_file_rc.borrow();
-                    for obj in serialized_file.objects.values() {
-                        if obj.obj_type == ClassIDType::AudioClip {
-                            println!("\n=== Found AudioClip ===");
-                            println!("Path ID: {}", obj.path_id);
+            if let FileType::SerializedFile(serialized_file_rc) = &*file_ref {
+                let serialized_file = serialized_file_rc.borrow();
+                for obj in serialized_file.objects.values() {
+                    if obj.obj_type == ClassIDType::AudioClip {
+                        println!("\n=== Found AudioClip ===");
+                        println!("Path ID: {}", obj.path_id);
 
-                            let mut reader = obj.clone();
-                            match reader.read(false) {
-                                Ok(json) => {
-                                    println!(
-                                        "JSON (pretty):\n{}",
-                                        serde_json::to_string_pretty(&json).unwrap()
-                                    );
-                                    return; // Just show the first one
-                                }
-                                Err(e) => {
-                                    println!("Error reading: {}", e);
-                                }
+                        let mut reader = obj.clone();
+                        match reader.read(false) {
+                            Ok(json) => {
+                                println!(
+                                    "JSON (pretty):\n{}",
+                                    serde_json::to_string_pretty(&json).unwrap()
+                                );
+                                return; // Just show the first one
+                            }
+                            Err(e) => {
+                                println!("Error reading: {}", e);
                             }
                         }
                     }
                 }
-                _ => {}
             }
         }
     }

@@ -183,9 +183,9 @@ pub fn get_ref_type_node(
     }
 
     for ref_type in ref_types {
-        if ref_type.m_class_name.as_ref().map(|s| s.as_str()) == Some(cls)
-            && ref_type.m_name_space.as_ref().map(|s| s.as_str()) == Some(ns)
-            && ref_type.m_assembly_name.as_ref().map(|s| s.as_str()) == Some(asm)
+        if ref_type.m_class_name.as_deref() == Some(cls)
+            && ref_type.m_name_space.as_deref() == Some(ns)
+            && ref_type.m_assembly_name.as_deref() == Some(asm)
         {
             return Ok(ref_type.node.clone());
         }
@@ -473,117 +473,113 @@ pub fn read_value<'a, R: BinaryReader>(
         type_name => {
             if let Some(result) = read_primitive_type(type_name, reader) {
                 UnityValue::Json(result?)
-            } else {
-                if type_name == "pair" {
-                    let first = read_value(&node.m_children[0], reader, config, ref_types)?;
-                    let second = read_value(&node.m_children[1], reader, config, ref_types)?;
-                    UnityValue::Json(json!([first.to_json(), second.to_json()]))
-                } else if type_name == "ReferencedObject" {
-                    let mut value = Map::new();
-                    for child in &node.m_children {
-                        if child.m_type == "ReferencedObjectData" {
-                            let ref_type_node = get_ref_type_node(&json!(value), ref_types)?;
-                            if let Some(ref_node) = ref_type_node {
-                                value.insert(
-                                    child.m_name.clone(),
-                                    read_value(&ref_node, reader, config, ref_types)?.to_json(),
-                                );
-                            }
-                        } else {
+            } else if type_name == "pair" {
+                let first = read_value(&node.m_children[0], reader, config, ref_types)?;
+                let second = read_value(&node.m_children[1], reader, config, ref_types)?;
+                UnityValue::Json(json!([first.to_json(), second.to_json()]))
+            } else if type_name == "ReferencedObject" {
+                let mut value = Map::new();
+                for child in &node.m_children {
+                    if child.m_type == "ReferencedObjectData" {
+                        let ref_type_node = get_ref_type_node(&json!(value), ref_types)?;
+                        if let Some(ref_node) = ref_type_node {
                             value.insert(
                                 child.m_name.clone(),
-                                read_value(child, reader, config, ref_types)?.to_json(),
+                                read_value(&ref_node, reader, config, ref_types)?.to_json(),
                             );
-                        }
-                    }
-
-                    UnityValue::Json(Value::Object(value))
-                } else if !node.m_children.is_empty() {
-                    // Resolve numeric type IDs to actual type names before checking for Array
-                    let first_child_type = resolve_type_id(&node.m_children[0].m_type);
-
-                    if first_child_type == "Array" {
-                        if metaflag_is_aligned(node.m_children[0].m_meta_flag) {
-                            align = true;
-                        }
-
-                        let size = reader.read_i32().map_err(|e| e.to_string())? as usize;
-                        let subtype = &node.m_children[0].m_children[1];
-                        if metaflag_is_aligned(subtype.m_meta_flag) {
-                            read_value_array(subtype, reader, config, size, ref_types)?
-                        } else {
-                            let mut arr = Vec::new();
-                            for _ in 0..size {
-                                arr.push(read_value(subtype, reader, config, ref_types)?.to_json());
-                            }
-                            UnityValue::Json(json!(arr))
                         }
                     } else {
-                        // Non-array complex types
-                        let mut value = Map::new();
-                        for child in &node.m_children {
-                            if child.m_type == "ManagedReferencesRegistry" {
-                                if config.has_registry {
-                                    continue;
-                                } else {
-                                    *config = config.copy();
-                                    config.has_registry = true;
-                                }
-                            }
-                            let field_name = if config.as_dict {
-                                child.m_name.clone()
-                            } else {
-                                child.clean_name.clone()
-                            };
+                        value.insert(
+                            child.m_name.clone(),
+                            read_value(child, reader, config, ref_types)?.to_json(),
+                        );
+                    }
+                }
 
-                            value.insert(
-                                field_name,
-                                read_value(child, reader, config, ref_types)?.to_json(),
-                            );
+                UnityValue::Json(Value::Object(value))
+            } else if !node.m_children.is_empty() {
+                // Resolve numeric type IDs to actual type names before checking for Array
+                let first_child_type = resolve_type_id(&node.m_children[0].m_type);
+
+                if first_child_type == "Array" {
+                    if metaflag_is_aligned(node.m_children[0].m_meta_flag) {
+                        align = true;
+                    }
+
+                    let size = reader.read_i32().map_err(|e| e.to_string())? as usize;
+                    let subtype = &node.m_children[0].m_children[1];
+                    if metaflag_is_aligned(subtype.m_meta_flag) {
+                        read_value_array(subtype, reader, config, size, ref_types)?
+                    } else {
+                        let mut arr = Vec::new();
+                        for _ in 0..size {
+                            arr.push(read_value(subtype, reader, config, ref_types)?.to_json());
                         }
-
-                        if !config.as_dict {
-                            if node.m_type.starts_with("PPtr<") {
-                                let m_file_id =
-                                    value.get("m_FileID").and_then(|v| v.as_i64()).unwrap_or(0)
-                                        as i32;
-                                let m_path_id =
-                                    value.get("m_PathID").and_then(|v| v.as_i64()).unwrap_or(0);
-
-                                UnityValue::PPtr(PPtr::new(m_file_id, m_path_id))
-                            } else {
-                                // Try to create typed object (Python line 239-258)
-                                if let Some(class_id) = get_class_id_from_name(&node.m_type) {
-                                    // We have a mapping! Try to deserialize into typed object
-                                    match deserialize_typed_object(
-                                        class_id,
-                                        Value::Object(value.clone()),
-                                    ) {
-                                        Ok(typed_obj) => {
-                                            // Success! Return the typed object
-                                            UnityValue::Object(typed_obj)
-                                        }
-                                        Err(_) => {
-                                            // Deserialization failed, fall back to UnknownObject
-                                            let unknown =
-                                                UnknownObject::new(Some(node.clone()), value);
-                                            UnityValue::Object(Box::new(unknown))
-                                        }
-                                    }
-                                } else {
-                                    // No mapping exists, use UnknownObject
-                                    let unknown = UnknownObject::new(Some(node.clone()), value);
-                                    UnityValue::Object(Box::new(unknown))
-                                }
-                            }
-                        } else {
-                            UnityValue::Json(Value::Object(value))
-                        }
+                        UnityValue::Json(json!(arr))
                     }
                 } else {
-                    // Handle nodes with no children - should not normally happen
-                    UnityValue::Json(Value::Null)
+                    // Non-array complex types
+                    let mut value = Map::new();
+                    for child in &node.m_children {
+                        if child.m_type == "ManagedReferencesRegistry" {
+                            if config.has_registry {
+                                continue;
+                            } else {
+                                *config = config.copy();
+                                config.has_registry = true;
+                            }
+                        }
+                        let field_name = if config.as_dict {
+                            child.m_name.clone()
+                        } else {
+                            child.clean_name.clone()
+                        };
+
+                        value.insert(
+                            field_name,
+                            read_value(child, reader, config, ref_types)?.to_json(),
+                        );
+                    }
+
+                    if !config.as_dict {
+                        if node.m_type.starts_with("PPtr<") {
+                            let m_file_id =
+                                value.get("m_FileID").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+                            let m_path_id =
+                                value.get("m_PathID").and_then(|v| v.as_i64()).unwrap_or(0);
+
+                            UnityValue::PPtr(PPtr::new(m_file_id, m_path_id))
+                        } else {
+                            // Try to create typed object (Python line 239-258)
+                            if let Some(class_id) = get_class_id_from_name(&node.m_type) {
+                                // We have a mapping! Try to deserialize into typed object
+                                match deserialize_typed_object(
+                                    class_id,
+                                    Value::Object(value.clone()),
+                                ) {
+                                    Ok(typed_obj) => {
+                                        // Success! Return the typed object
+                                        UnityValue::Object(typed_obj)
+                                    }
+                                    Err(_) => {
+                                        // Deserialization failed, fall back to UnknownObject
+                                        let unknown = UnknownObject::new(Some(node.clone()), value);
+                                        UnityValue::Object(Box::new(unknown))
+                                    }
+                                }
+                            } else {
+                                // No mapping exists, use UnknownObject
+                                let unknown = UnknownObject::new(Some(node.clone()), value);
+                                UnityValue::Object(Box::new(unknown))
+                            }
+                        }
+                    } else {
+                        UnityValue::Json(Value::Object(value))
+                    }
                 }
+            } else {
+                // Handle nodes with no children - should not normally happen
+                UnityValue::Json(Value::Null)
             }
         }
     };
@@ -681,63 +677,61 @@ pub fn read_value_array<'a, R: BinaryReader>(
                 } else {
                     let mut arr = Vec::new();
                     for _ in 0..size {
-                        let item = read_value(&subtype, reader, config, ref_types)?.to_json();
+                        let item = read_value(subtype, reader, config, ref_types)?.to_json();
                         arr.push(item)
                     }
                     UnityValue::Json(json!(arr))
                 }
-            } else {
-                if config.as_dict {
-                    let mut arr = Vec::new();
-                    for _ in 0..size {
-                        let mut item = Map::new();
-                        for child in &node.m_children {
-                            item.insert(
-                                child.m_name.clone(),
-                                read_value(child, reader, config, ref_types)?.to_json(),
-                            );
-                        }
-                        arr.push(Value::Object(item));
+            } else if config.as_dict {
+                let mut arr = Vec::new();
+                for _ in 0..size {
+                    let mut item = Map::new();
+                    for child in &node.m_children {
+                        item.insert(
+                            child.m_name.clone(),
+                            read_value(child, reader, config, ref_types)?.to_json(),
+                        );
                     }
-                    UnityValue::Json(json!(arr))
-                } else if node.m_type.starts_with("PPtr<") {
-                    // Note: node.m_type not type_name
-                    let mut arr = Vec::new();
-                    for _ in 0..size {
-                        let mut item = Map::new();
-                        for child in &node.m_children {
-                            item.insert(
-                                child.m_name.clone(),
-                                read_value(child, reader, config, ref_types)?.to_json(),
-                            );
-                        }
-                        // Construct PPtr representation
-                        let m_file_id =
-                            item.get("m_FileID").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
-                        let m_path_id = item.get("m_PathID").and_then(|v| v.as_i64()).unwrap_or(0);
-                        arr.push(json!({
-                            "_type": "PPtr",
-                            "m_FileID": m_file_id,
-                            "m_PathID": m_path_id
-                        }));
-                    }
-                    UnityValue::Json(json!(arr))
-                } else {
-                    // For now, return dicts like as_dict mode
-                    // Python lines 341-383 have complex class construction
-                    let mut arr = Vec::new();
-                    for _ in 0..size {
-                        let mut item = Map::new();
-                        for child in &node.m_children {
-                            item.insert(
-                                child.clean_name.clone(),
-                                read_value(child, reader, config, ref_types)?.to_json(),
-                            );
-                        }
-                        arr.push(Value::Object(item));
-                    }
-                    UnityValue::Json(json!(arr))
+                    arr.push(Value::Object(item));
                 }
+                UnityValue::Json(json!(arr))
+            } else if node.m_type.starts_with("PPtr<") {
+                // Note: node.m_type not type_name
+                let mut arr = Vec::new();
+                for _ in 0..size {
+                    let mut item = Map::new();
+                    for child in &node.m_children {
+                        item.insert(
+                            child.m_name.clone(),
+                            read_value(child, reader, config, ref_types)?.to_json(),
+                        );
+                    }
+                    // Construct PPtr representation
+                    let m_file_id =
+                        item.get("m_FileID").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
+                    let m_path_id = item.get("m_PathID").and_then(|v| v.as_i64()).unwrap_or(0);
+                    arr.push(json!({
+                        "_type": "PPtr",
+                        "m_FileID": m_file_id,
+                        "m_PathID": m_path_id
+                    }));
+                }
+                UnityValue::Json(json!(arr))
+            } else {
+                // For now, return dicts like as_dict mode
+                // Python lines 341-383 have complex class construction
+                let mut arr = Vec::new();
+                for _ in 0..size {
+                    let mut item = Map::new();
+                    for child in &node.m_children {
+                        item.insert(
+                            child.clean_name.clone(),
+                            read_value(child, reader, config, ref_types)?.to_json(),
+                        );
+                    }
+                    arr.push(Value::Object(item));
+                }
+                UnityValue::Json(json!(arr))
             }
         }
     };
@@ -940,39 +934,37 @@ pub fn write_value<W: BinaryWriter>(
 
         let subtype = &node.m_children[0].m_children[1];
         for sub_value in arr {
-            write_value(sub_value, &subtype, writer, config, ref_types)?;
+            write_value(sub_value, subtype, writer, config, ref_types)?;
+        }
+    } else if config.as_dict {
+        for child in &node.m_children {
+            if child.m_type == "ManagedReferencesRegistry" {
+                if config.has_registry {
+                    continue;
+                } else {
+                    *config = config.copy();
+                    config.has_registry = true;
+                }
+            }
+            let field = value
+                .get(&child.m_name)
+                .ok_or_else(|| format!("Missing field: {}", child.m_name))?;
+            write_value(field, child, writer, config, ref_types)?;
         }
     } else {
-        if config.as_dict {
-            for child in &node.m_children {
-                if child.m_type == "ManagedReferencesRegistry" {
-                    if config.has_registry {
-                        continue;
-                    } else {
-                        *config = config.copy();
-                        config.has_registry = true;
-                    }
+        for child in &node.m_children {
+            if child.m_type == "ManagedReferencesRegistry" {
+                if config.has_registry {
+                    continue;
+                } else {
+                    *config = config.copy();
+                    config.has_registry = true;
                 }
-                let field = value
-                    .get(&child.m_name)
-                    .ok_or_else(|| format!("Missing field: {}", child.m_name))?;
-                write_value(field, child, writer, config, ref_types)?;
             }
-        } else {
-            for child in &node.m_children {
-                if child.m_type == "ManagedReferencesRegistry" {
-                    if config.has_registry {
-                        continue;
-                    } else {
-                        *config = config.copy();
-                        config.has_registry = true;
-                    }
-                }
-                let field = value
-                    .get(&child.clean_name)
-                    .ok_or_else(|| format!("Missing field: {}", child.clean_name))?;
-                write_value(field, child, writer, config, ref_types)?;
-            }
+            let field = value
+                .get(&child.clean_name)
+                .ok_or_else(|| format!("Missing field: {}", child.clean_name))?;
+            write_value(field, child, writer, config, ref_types)?;
         }
     }
 

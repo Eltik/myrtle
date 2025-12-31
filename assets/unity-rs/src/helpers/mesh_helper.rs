@@ -880,7 +880,7 @@ impl MeshHandler {
                         component_data
                             .into_iter()
                             .map(|v| {
-                                let x = v.get(0).copied().unwrap_or(0.0);
+                                let x = v.first().copied().unwrap_or(0.0);
                                 let y = v.get(1).copied().unwrap_or(0.0);
                                 let z = v.get(2).copied().unwrap_or(0.0);
                                 let w = v.get(3).copied().unwrap_or(1.0);
@@ -895,7 +895,7 @@ impl MeshHandler {
                         component_data
                             .into_iter()
                             .map(|v| {
-                                let r = v.get(0).copied().unwrap_or(1.0);
+                                let r = v.first().copied().unwrap_or(1.0);
                                 let g = v.get(1).copied().unwrap_or(1.0);
                                 let b = v.get(2).copied().unwrap_or(1.0);
                                 let a = v.get(3).copied().unwrap_or(1.0);
@@ -942,7 +942,7 @@ impl MeshHandler {
                         component_data
                             .into_iter()
                             .map(|v| {
-                                let w0 = v.get(0).copied().unwrap_or(0.0);
+                                let w0 = v.first().copied().unwrap_or(0.0);
                                 let w1 = v.get(1).copied().unwrap_or(0.0);
                                 let w2 = v.get(2).copied().unwrap_or(0.0);
                                 let w3 = v.get(3).copied().unwrap_or(0.0);
@@ -957,7 +957,7 @@ impl MeshHandler {
                         component_data
                             .into_iter()
                             .map(|v| {
-                                let i0 = v.get(0).copied().unwrap_or(0.0) as i32;
+                                let i0 = v.first().copied().unwrap_or(0.0) as i32;
                                 let i1 = v.get(1).copied().unwrap_or(0.0) as i32;
                                 let i2 = v.get(2).copied().unwrap_or(0.0) as i32;
                                 let i3 = v.get(3).copied().unwrap_or(0.0) as i32;
@@ -997,7 +997,7 @@ impl MeshHandler {
                         component_data
                             .into_iter()
                             .map(|v| {
-                                let r = v.get(0).copied().unwrap_or(1.0);
+                                let r = v.first().copied().unwrap_or(1.0);
                                 let g = v.get(1).copied().unwrap_or(1.0);
                                 let b = v.get(2).copied().unwrap_or(1.0);
                                 let a = v.get(3).copied().unwrap_or(1.0);
@@ -1025,7 +1025,7 @@ impl MeshHandler {
                             component_data
                                 .into_iter()
                                 .map(|v| {
-                                    let x = v.get(0).copied().unwrap_or(0.0);
+                                    let x = v.first().copied().unwrap_or(0.0);
                                     let y = v.get(1).copied().unwrap_or(0.0);
                                     let z = v.get(2).copied().unwrap_or(0.0);
                                     let w = v.get(3).copied().unwrap_or(1.0);
@@ -1045,7 +1045,7 @@ impl MeshHandler {
                         component_data
                             .into_iter()
                             .map(|v| {
-                                let x = v.get(0).copied().unwrap_or(0.0);
+                                let x = v.first().copied().unwrap_or(0.0);
                                 let y = v.get(1).copied().unwrap_or(0.0);
                                 let z = v.get(2).copied().unwrap_or(0.0);
                                 let w = v.get(3).copied().unwrap_or(1.0);
@@ -1238,7 +1238,7 @@ impl MeshHandler {
                                 .iter()
                                 .map(|v| {
                                     (
-                                        v.get(0).copied().unwrap_or(0.0),
+                                        v.first().copied().unwrap_or(0.0),
                                         v.get(1).copied().unwrap_or(0.0),
                                     )
                                 })
@@ -1411,7 +1411,6 @@ impl MeshHandler {
                 let zsqr = 1.0 - x * x - y * y;
 
                 let mut z;
-                let w;
 
                 if zsqr >= 0.0 {
                     z = zsqr.sqrt();
@@ -1425,7 +1424,7 @@ impl MeshHandler {
                 if sign_z == 0 {
                     z = -z;
                 }
-                w = if sign_w > 0 { 1.0 } else { -1.0 };
+                let w = if sign_w > 0 { 1.0 } else { -1.0 };
 
                 tangents.push((x, y, z, w));
             }
@@ -1818,7 +1817,7 @@ impl MeshHandler {
                 MeshTopology::Quads => {
                     // Convert quads to triangles (Python lines 698-707)
                     let indices = self.read_indices(index_buffer, first_index, index_count)?;
-                    let mut tri_list = Vec::with_capacity((index_count / 2) as usize);
+                    let mut tri_list = Vec::with_capacity(index_count / 2);
 
                     for i in (0..index_count).step_by(4) {
                         if i + 3 >= index_count {

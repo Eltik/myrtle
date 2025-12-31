@@ -152,10 +152,7 @@ impl WebFile {
                 FileType::SerializedFile(sf_rc) => {
                     let mut serialized_file = sf_rc.borrow_mut();
                     let saved_bytes = serialized_file.save().map_err(|e| {
-                        io::Error::new(
-                            io::ErrorKind::Other,
-                            format!("Failed to save SerializedFile: {}", e),
-                        )
+                        io::Error::other(format!("Failed to save SerializedFile: {}", e))
                     })?;
                     file_data.insert(name.clone(), saved_bytes);
                 }
@@ -177,10 +174,10 @@ impl WebFile {
         let mut writer = EndianBinaryWriter::new(Endian::Little);
         writer
             .write_string_to_null(signature)
-            .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+            .map_err(io::Error::other)?;
 
         let writer_position = writer.position();
-        let path_bytes_total: usize = files_to_save.keys().map(|path| path.as_bytes().len()).sum();
+        let path_bytes_total: usize = files_to_save.keys().map(|path| path.len()).sum();
         let per_file_overhead = 12 * files_to_save.len();
         let fixed_offset = 4;
 
@@ -206,12 +203,8 @@ impl WebFile {
         let final_bytes = writer.to_bytes();
 
         match packer {
-            "gzip" => {
-                compress_gzip(&final_bytes).map_err(|e| io::Error::new(io::ErrorKind::Other, e))
-            }
-            "brotli" => {
-                compress_brotli(&final_bytes).map_err(|e| io::Error::new(io::ErrorKind::Other, e))
-            }
+            "gzip" => compress_gzip(&final_bytes).map_err(io::Error::other),
+            "brotli" => compress_brotli(&final_bytes).map_err(io::Error::other),
             _ => Ok(final_bytes),
         }
     }

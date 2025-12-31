@@ -461,7 +461,7 @@ impl TpkUnityClass {
 
         let name = u16::from_le_bytes([header_buf[0], header_buf[1]]);
         let base = u16::from_le_bytes([header_buf[2], header_buf[3]]);
-        let flags_value = header_buf[4] as u8;
+        let flags_value = header_buf[4];
 
         let flags = TpkUnityClassFlags::from_bits(flags_value).ok_or_else(|| {
             std::io::Error::new(
@@ -768,8 +768,8 @@ impl TpkFile {
         // Parse header
         let magic = u32::from_le_bytes([header[0], header[1], header[2], header[3]]);
         let version_number = header[4] as i8;
-        let compression_type_byte = header[5] as u8;
-        let data_type_byte = header[6] as u8;
+        let compression_type_byte = header[5];
+        let data_type_byte = header[6];
         // header[7] is reserved (1 byte)
         // header[8-11] is reserved (4 bytes) - second reserved field
         let compressed_size = i32::from_le_bytes([header[12], header[13], header[14], header[15]]);
@@ -834,7 +834,7 @@ impl TpkFile {
                 self.compressed_bytes.clone()
             }
             TpkCompressionType::Lz4 => {
-                lz4::block::decompress(&self.compressed_bytes, Some(self.uncompressed_size as i32))
+                lz4::block::decompress(&self.compressed_bytes, Some(self.uncompressed_size))
                     .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?
             }
             TpkCompressionType::Lzma => {

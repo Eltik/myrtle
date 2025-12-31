@@ -82,7 +82,7 @@ pub fn get_mesh(renderer: &dyn Object) -> UnityResult<Option<Mesh>> {
             mesh_ptr
                 .read(assets_file)
                 .map(Some)
-                .map_err(|e| UnityError::Other(e))
+                .map_err(UnityError::Other)
         }
 
         "MeshRenderer" => {
@@ -107,7 +107,7 @@ pub fn get_mesh(renderer: &dyn Object) -> UnityResult<Option<Mesh>> {
 
             let game_object = game_object_ptr
                 .read(assets_file)
-                .map_err(|e| UnityError::Other(e))?;
+                .map_err(UnityError::Other)?;
 
             // Python lines 31-44: Iterate through components
             // for comp in m_GameObject.m_Component:
@@ -151,9 +151,7 @@ pub fn get_mesh(renderer: &dyn Object) -> UnityResult<Option<Mesh>> {
 
                     // Python lines 43-44: if filter.m_Mesh: return filter.m_Mesh.read()
                     if let Some(ref mesh_pptr) = filter.m_Mesh {
-                        return mesh_pptr
-                            .try_read(assets_file)
-                            .map_err(|e| UnityError::Other(e));
+                        return mesh_pptr.try_read(assets_file).map_err(UnityError::Other);
                     }
                 }
             }
@@ -302,7 +300,7 @@ pub fn export_mesh_renderer(renderer: &Renderer, export_dir: &str) -> UnityResul
                         Err(_) => continue,
                     };
 
-                    let tex_name = if !tex.m_Name.as_ref().map_or(true, |v| v.is_empty()) {
+                    let tex_name = if !tex.m_Name.as_ref().is_none_or(|v| v.is_empty()) {
                         format!("{}.png", tex.m_Name.as_deref().unwrap_or("unnamed"))
                     } else {
                         format!("{}.png", key)
@@ -330,11 +328,7 @@ pub fn export_mesh_renderer(renderer: &Renderer, export_dir: &str) -> UnityResul
     // IMPORTANT: Keep None values as empty strings to preserve index alignment with submeshes
     let material_names_vec: Vec<String> = material_names
         .iter()
-        .map(|n| {
-            n.as_ref()
-                .map(|s| s.clone())
-                .unwrap_or_else(|| String::new())
-        })
+        .map(|n| n.clone().unwrap_or_else(String::new))
         .collect();
 
     let obj_content = export_mesh_obj(&mesh, Some(material_names_vec))?;
@@ -375,7 +369,7 @@ pub fn export_material(mat: &Material) -> UnityResult<String> {
         .map(|colors_vec| {
             colors_vec
                 .iter()
-                .map(|(name, color)| (name.name.clone().unwrap_or_default(), color.clone()))
+                .map(|(name, color)| (name.name.clone().unwrap_or_default(), *color))
                 .collect()
         })
         .unwrap_or_default();
@@ -510,7 +504,7 @@ pub fn export_material(mat: &Material) -> UnityResult<String> {
 
                     // Python line 169: texName = f"{tex.m_Name if tex.m_Name else key}.png"
                     // Use tex.m_Name if not empty, otherwise use key
-                    let tex_name = if !tex.m_Name.as_ref().map_or(true, |v| v.is_empty()) {
+                    let tex_name = if !tex.m_Name.as_ref().is_none_or(|v| v.is_empty()) {
                         format!("{}.png", tex.m_Name.as_deref().unwrap_or("unnamed"))
                     } else {
                         format!("{}.png", key)

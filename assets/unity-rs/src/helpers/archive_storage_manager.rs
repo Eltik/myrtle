@@ -329,8 +329,7 @@ impl ArchiveStorageDecryptor {
         let original_byte = data[offset];
         // Python lines 118-121: calculate in larger type then % 256
         let low = (self.index[(original_byte & 0xF) as usize].wrapping_sub(b) as u32) & 0xF;
-        let high =
-            (0x10 as u32) * (self.index[(original_byte >> 4) as usize].wrapping_sub(b) as u32);
+        let high = 0x10_u32 * (self.index[(original_byte >> 4) as usize].wrapping_sub(b) as u32);
         data[offset] = ((low | high) % 256) as u8;
 
         let decrypted = data[offset];

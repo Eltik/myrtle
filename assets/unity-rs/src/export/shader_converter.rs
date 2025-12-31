@@ -221,7 +221,7 @@ fn convert_serialized_shader_parsed_form(
     if !parsed_form
         .m_FallbackName
         .as_ref()
-        .map_or(true, |v| v.is_empty())
+        .is_none_or(|v| v.is_empty())
     {
         sb.push_str(&format!(
             "Fallback \"{}\"\n",
@@ -233,7 +233,7 @@ fn convert_serialized_shader_parsed_form(
     if !parsed_form
         .m_CustomEditorName
         .as_ref()
-        .map_or(true, |v| v.is_empty())
+        .is_none_or(|v| v.is_empty())
     {
         sb.push_str(&format!(
             "CustomEditor \"{}\"\n",
@@ -306,7 +306,7 @@ fn convert_serialized_pass(
 
         // Python lines 158-160: GrabPass texture name
         if pass_type == kPassTypeGrab {
-            if !pass.m_TextureName.as_ref().map_or(true, |v| v.is_empty()) {
+            if !pass.m_TextureName.as_ref().is_none_or(|v| v.is_empty()) {
                 sb.push_str(&format!(
                     " \"{}\"\n",
                     pass.m_TextureName.as_deref().unwrap_or("")
@@ -494,7 +494,7 @@ fn convert_serialized_shader_state(state: &SerializedShaderState) -> UnityResult
     let mut sb = String::new();
 
     // Python lines 271-272: Name
-    if !state.m_Name.as_ref().map_or(true, |v| v.is_empty()) {
+    if !state.m_Name.as_ref().is_none_or(|v| v.is_empty()) {
         sb.push_str(&format!(
             " Name \"{}\"\n",
             state.m_Name.as_deref().unwrap_or("")
@@ -544,7 +544,7 @@ fn convert_serialized_shader_state(state: &SerializedShaderState) -> UnityResult
                 8 => sb.push_str("Always"),   // kFuncAlways
                 _ => {}
             }
-            sb.push_str("\n");
+            sb.push('\n');
         }
     }
 
@@ -565,7 +565,7 @@ fn convert_serialized_shader_state(state: &SerializedShaderState) -> UnityResult
                 1 => sb.push_str("Front"), // kCullFront
                 _ => {}
             }
-            sb.push_str("\n");
+            sb.push('\n');
         }
     }
 
@@ -692,7 +692,7 @@ fn convert_serialized_property(prop: &SerializedProperty) -> UnityResult<String>
                 .m_DefTexture
                 .as_ref()
                 .and_then(|t| t.m_TexDim)
-                .and_then(|d| TextureDimension::from_i32(d))
+                .and_then(TextureDimension::from_i32)
                 .unwrap_or(TextureDimension::kTexDimAny);
             match tex_dim {
                 TextureDimension::kTexDimAny => sb.push_str("any"),
@@ -744,7 +744,7 @@ fn convert_serialized_property(prop: &SerializedProperty) -> UnityResult<String>
         }
     }
 
-    sb.push_str("\n");
+    sb.push('\n');
     Ok(sb)
 }
 
@@ -1017,7 +1017,7 @@ impl ShaderSubProgram {
         }
 
         // Python lines 640-646: local keywords (version-dependent)
-        let local_keywords = if version >= 201806140 && version < 202012090 {
+        let local_keywords = if (201806140..202012090).contains(&version) {
             let local_keyword_size = reader.read_i32()? as usize;
             let mut local_kw = Vec::with_capacity(local_keyword_size);
             for _ in 0..local_keyword_size {
@@ -1067,7 +1067,7 @@ impl ShaderSubProgram {
             }
         }
 
-        sb.push_str("\"");
+        sb.push('"');
 
         // Python lines 673-734: program code based on type
         if !self.program_code.is_empty() {
@@ -1152,7 +1152,7 @@ impl ShaderSubProgram {
             }
         }
 
-        sb.push_str("\"");
+        sb.push('"');
         Ok(sb)
     }
 }

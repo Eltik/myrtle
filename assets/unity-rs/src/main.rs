@@ -5,7 +5,7 @@ fn main() -> std::io::Result<()> {
     // Create a test file
     std::fs::write(
         "test.bin",
-        &[
+        [
             3, 0, 0, 0, // i32: 3
             10, 0, 0, 0, // i32: 10
             20, 0, 0, 0, // i32: 20

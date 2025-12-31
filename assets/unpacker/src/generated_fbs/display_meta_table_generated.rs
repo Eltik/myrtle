@@ -15580,7 +15580,7 @@ impl clz_Torappu_DisplayMetaDataT {
 /// `root_as_clz_torappu_display_meta_data_unchecked`.
 pub fn root_as_clz_torappu_display_meta_data(
     buf: &[u8],
-) -> Result<clz_Torappu_DisplayMetaData, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_DisplayMetaData<'_>, flatbuffers::InvalidFlatbuffer> {
     flatbuffers::root::<clz_Torappu_DisplayMetaData>(buf)
 }
 #[inline]
@@ -15592,7 +15592,7 @@ pub fn root_as_clz_torappu_display_meta_data(
 /// `size_prefixed_root_as_clz_torappu_display_meta_data_unchecked`.
 pub fn size_prefixed_root_as_clz_torappu_display_meta_data(
     buf: &[u8],
-) -> Result<clz_Torappu_DisplayMetaData, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_DisplayMetaData<'_>, flatbuffers::InvalidFlatbuffer> {
     flatbuffers::size_prefixed_root::<clz_Torappu_DisplayMetaData>(buf)
 }
 #[inline]
@@ -15627,7 +15627,7 @@ pub fn size_prefixed_root_as_clz_torappu_display_meta_data_with_opts<'b, 'o>(
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_DisplayMetaData`.
 pub unsafe fn root_as_clz_torappu_display_meta_data_unchecked(
     buf: &[u8],
-) -> clz_Torappu_DisplayMetaData {
+) -> clz_Torappu_DisplayMetaData<'_> {
     unsafe { flatbuffers::root_unchecked::<clz_Torappu_DisplayMetaData>(buf) }
 }
 #[inline]
@@ -15636,7 +15636,7 @@ pub unsafe fn root_as_clz_torappu_display_meta_data_unchecked(
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_DisplayMetaData`.
 pub unsafe fn size_prefixed_root_as_clz_torappu_display_meta_data_unchecked(
     buf: &[u8],
-) -> clz_Torappu_DisplayMetaData {
+) -> clz_Torappu_DisplayMetaData<'_> {
     unsafe { flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_DisplayMetaData>(buf) }
 }
 #[inline]

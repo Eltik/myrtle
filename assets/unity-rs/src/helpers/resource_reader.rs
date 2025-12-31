@@ -75,9 +75,9 @@ pub fn get_resource_data(
     // If not found, try loading dependencies (Python lines 27-32)
     if reader.is_none() {
         // Load dependencies with possible names
-        let _ = assets_file
+        assets_file
             .load_dependencies(possible_names.clone())
-            .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+            .map_err(io::Error::other)?;
 
         // Try again to find resource
         for possible_name in &possible_names {

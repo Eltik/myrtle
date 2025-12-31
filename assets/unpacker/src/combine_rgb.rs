@@ -121,7 +121,7 @@ pub fn calc_similarity(rgb_path: &Path, alpha_path: &Path, precision: u32) -> Re
     // Calculate mean absolute difference
     let mut total_diff: u64 = 0;
     for (rgb_pixel, alpha_pixel) in rgb_small.pixels().zip(alpha_small.pixels()) {
-        let diff = (rgb_pixel.0[0] as i32 - alpha_pixel.0[0] as i32).abs() as u64;
+        let diff = (rgb_pixel.0[0] as i32 - alpha_pixel.0[0] as i32).unsigned_abs() as u64;
         total_diff += diff;
     }
 

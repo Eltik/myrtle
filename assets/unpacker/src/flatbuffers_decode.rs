@@ -39,7 +39,7 @@ pub fn is_flatbuffer(data: &[u8]) -> bool {
     let vtable_size = u16::from_le_bytes([data[vtable_pos], data[vtable_pos + 1]]) as usize;
 
     // Sanity check vtable size
-    vtable_size >= 4 && vtable_size < 1000 && vtable_pos + vtable_size <= data.len()
+    (4..1000).contains(&vtable_size) && vtable_pos + vtable_size <= data.len()
 }
 
 /// Guess the root type from filename
@@ -605,10 +605,10 @@ pub fn decode_flatbuffer(data: &[u8], filename: &str) -> Result<Value> {
                         schema_type
                     );
                 } else {
-                    return Ok(value);
+                    Ok(value)
                 }
             } else {
-                return Ok(value);
+                Ok(value)
             }
         }
         Ok(Err(e)) => {
@@ -672,10 +672,9 @@ pub fn extract_strings(data: &[u8]) -> Vec<String> {
             if let Ok(s) = std::str::from_utf8(str_data) {
                 if s.chars()
                     .all(|c| c.is_ascii_graphic() || c.is_ascii_whitespace() || !c.is_ascii())
+                    && s.len() >= 2
                 {
-                    if s.len() >= 2 {
-                        strings.push(s.to_string());
-                    }
+                    strings.push(s.to_string());
                 }
             }
         }

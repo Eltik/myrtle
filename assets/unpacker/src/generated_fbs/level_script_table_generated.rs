@@ -674,7 +674,7 @@ impl clz_Torappu_Battle_LevelScriptDataMapT {
 /// `root_as_clz_torappu_battle_level_script_data_map_unchecked`.
 pub fn root_as_clz_torappu_battle_level_script_data_map(
     buf: &[u8],
-) -> Result<clz_Torappu_Battle_LevelScriptDataMap, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_Battle_LevelScriptDataMap<'_>, flatbuffers::InvalidFlatbuffer> {
     flatbuffers::root::<clz_Torappu_Battle_LevelScriptDataMap>(buf)
 }
 #[inline]
@@ -686,7 +686,7 @@ pub fn root_as_clz_torappu_battle_level_script_data_map(
 /// `size_prefixed_root_as_clz_torappu_battle_level_script_data_map_unchecked`.
 pub fn size_prefixed_root_as_clz_torappu_battle_level_script_data_map(
     buf: &[u8],
-) -> Result<clz_Torappu_Battle_LevelScriptDataMap, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_Battle_LevelScriptDataMap<'_>, flatbuffers::InvalidFlatbuffer> {
     flatbuffers::size_prefixed_root::<clz_Torappu_Battle_LevelScriptDataMap>(buf)
 }
 #[inline]
@@ -723,7 +723,7 @@ pub fn size_prefixed_root_as_clz_torappu_battle_level_script_data_map_with_opts<
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_Battle_LevelScriptDataMap`.
 pub unsafe fn root_as_clz_torappu_battle_level_script_data_map_unchecked(
     buf: &[u8],
-) -> clz_Torappu_Battle_LevelScriptDataMap {
+) -> clz_Torappu_Battle_LevelScriptDataMap<'_> {
     unsafe { flatbuffers::root_unchecked::<clz_Torappu_Battle_LevelScriptDataMap>(buf) }
 }
 #[inline]
@@ -732,7 +732,7 @@ pub unsafe fn root_as_clz_torappu_battle_level_script_data_map_unchecked(
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_Battle_LevelScriptDataMap`.
 pub unsafe fn size_prefixed_root_as_clz_torappu_battle_level_script_data_map_unchecked(
     buf: &[u8],
-) -> clz_Torappu_Battle_LevelScriptDataMap {
+) -> clz_Torappu_Battle_LevelScriptDataMap<'_> {
     unsafe {
         flatbuffers::size_prefixed_root_unchecked::<clz_Torappu_Battle_LevelScriptDataMap>(buf)
     }

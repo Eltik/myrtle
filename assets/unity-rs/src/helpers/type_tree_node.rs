@@ -217,7 +217,7 @@ impl TypeTreeNode {
     }
 
     /// Returns an iterator over all nodes in depth-first order
-    pub fn traverse(&self) -> TypeTreeTraverseIter {
+    pub fn traverse(&self) -> TypeTreeTraverseIter<'_> {
         TypeTreeTraverseIter { stack: vec![self] }
     }
 
@@ -392,7 +392,7 @@ impl TypeTreeNode {
             vec![(&mut dummy_root as *mut TypeTreeNode, 1)];
 
         while !stack.is_empty() {
-            let (parent_ptr, count) = stack.last().unwrap().clone();
+            let (parent_ptr, count) = *stack.last().unwrap();
 
             if count == 1 {
                 stack.pop();
@@ -451,9 +451,9 @@ impl TypeTreeNode {
             }
         }
 
-        Ok(dummy_root.m_children.into_iter().next().ok_or_else(|| {
+        dummy_root.m_children.into_iter().next().ok_or_else(|| {
             std::io::Error::new(std::io::ErrorKind::InvalidData, "No root node found")
-        })?)
+        })
     }
 
     /// Parses a TypeTreeNode tree from blob format
@@ -912,7 +912,7 @@ pub fn clean_name_str(name: &str) -> String {
     }
 
     // Prepend 'x' if starts with digit
-    if name.chars().next().map_or(false, |c| c.is_ascii_digit()) {
+    if name.chars().next().is_some_and(|c| c.is_ascii_digit()) {
         name = format!("x{}", name);
     }
 

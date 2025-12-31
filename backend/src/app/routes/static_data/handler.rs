@@ -30,35 +30,34 @@ where
 {
     // Check If-None-Match (ETag)
     let etag_key = format!("{cache_key}:etag");
-    if let Some(if_none_match) = headers.get(header::IF_NONE_MATCH) {
-        if let Ok(stored_etag) = redis.get::<&str, String>(&etag_key).await {
-            if if_none_match.to_str().ok() == Some(&stored_etag) {
-                return Ok(Response::builder()
-                    .status(StatusCode::NOT_MODIFIED)
-                    .header(header::CACHE_CONTROL, "public, max-age=3600")
-                    .body(Body::empty())
-                    .unwrap());
-            }
-        }
+    if let Some(if_none_match) = headers.get(header::IF_NONE_MATCH)
+        && let Ok(stored_etag) = redis.get::<&str, String>(&etag_key).await
+        && if_none_match.to_str().ok() == Some(&stored_etag)
+    {
+        return Ok(Response::builder()
+            .status(StatusCode::NOT_MODIFIED)
+            .header(header::CACHE_CONTROL, "public, max-age=3600")
+            .body(Body::empty())
+            .unwrap());
     }
 
     // Check cache for pre-compressed data
     let compressed_key = format!("{cache_key}:gz");
-    if let Ok(cached) = redis.get::<&str, Vec<u8>>(&compressed_key).await {
-        if !cached.is_empty() {
-            let etag: String = redis
-                .get::<&str, String>(&etag_key)
-                .await
-                .unwrap_or_default();
-            return Ok(Response::builder()
-                .status(StatusCode::OK)
-                .header(header::CONTENT_TYPE, "application/json")
-                .header(header::CONTENT_ENCODING, "gzip")
-                .header(header::CACHE_CONTROL, "public, max-age=3600")
-                .header(header::ETAG, etag)
-                .body(Body::from(cached))
-                .unwrap());
-        }
+    if let Ok(cached) = redis.get::<&str, Vec<u8>>(&compressed_key).await
+        && !cached.is_empty()
+    {
+        let etag: String = redis
+            .get::<&str, String>(&etag_key)
+            .await
+            .unwrap_or_default();
+        return Ok(Response::builder()
+            .status(StatusCode::OK)
+            .header(header::CONTENT_TYPE, "application/json")
+            .header(header::CONTENT_ENCODING, "gzip")
+            .header(header::CACHE_CONTROL, "public, max-age=3600")
+            .header(header::ETAG, etag)
+            .body(Body::from(cached))
+            .unwrap());
     }
 
     // Cache miss - fetch data

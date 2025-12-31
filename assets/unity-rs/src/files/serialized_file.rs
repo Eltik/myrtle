@@ -419,9 +419,8 @@ impl ObjectInfo {
         let class_id = if version < 16 {
             reader.read_i16()? as i32
         } else {
-            let type_index = reader.read_i32()?;
             // type_id is actually the index into types array
-            type_index // In Python this looks up the class_id from types
+            reader.read_i32()? // In Python this looks up the class_id from types
         };
 
         let current_pos = reader.position();
@@ -675,7 +674,7 @@ impl SerializedFile {
                 &header,
                 &types,
             )
-            .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+            .map_err(io::Error::other)?;
             objects.insert(obj.path_id, obj);
         }
 
@@ -883,8 +882,8 @@ impl SerializedFile {
         // Write objects
         meta_writer.write_i32(self.objects.len() as i32)?;
         for obj in self.objects.values_mut() {
-            obj.write(&header, &mut meta_writer, &mut data_writer)
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+            obj.write(header, &mut meta_writer, &mut data_writer)
+                .map_err(io::Error::other)?;
             data_writer.align_stream(8)?;
         }
 
@@ -1054,7 +1053,7 @@ impl SerializedFile {
 
         // Build version tuple, padding with 0s if needed
         self.version = (
-            version_parts.get(0).copied().unwrap_or(0),
+            version_parts.first().copied().unwrap_or(0),
             version_parts.get(1).copied().unwrap_or(0),
             version_parts.get(2).copied().unwrap_or(0),
             version_parts.get(3).copied().unwrap_or(0),

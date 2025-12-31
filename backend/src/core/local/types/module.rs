@@ -10,20 +10,18 @@ use super::serde_helpers::{deserialize_fb_map, deserialize_fb_map_option};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
+#[derive(Default)]
 pub enum ModuleType {
+    #[default]
     Initial,
     Advanced,
 }
 
-impl Default for ModuleType {
-    fn default() -> Self {
-        Self::Initial
-    }
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[derive(Default)]
 pub enum ModuleTarget {
+    #[default]
     Trait,
     TraitDataOnly,
     TalentDataOnly,
@@ -32,12 +30,6 @@ pub enum ModuleTarget {
     OverwriteBattleData,
     #[serde(other)]
     Unknown,
-}
-
-impl Default for ModuleTarget {
-    fn default() -> Self {
-        Self::Trait
-    }
 }
 
 // ============================================================================

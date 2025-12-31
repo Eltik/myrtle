@@ -34,7 +34,6 @@ A high-performance Rust backend for the Myrtle.moe Arknights companion applicati
 
 | Feature | Description |
 |---------|-------------|
-| Multi-Server Support | EN, JP, KR, CN, Bilibili, TW game servers |
 | Yostar OAuth | Email-based authentication flow |
 | JWT Authentication | Token-based session management with verification |
 | Player Sync | Fetch and store player game data |
@@ -87,7 +86,7 @@ A high-performance Rust backend for the Myrtle.moe Arknights companion applicati
 
 ### Prerequisites
 
-- **Rust** 1.85+ (Edition 2024)
+- **Rust** 1.85+
 - **PostgreSQL** 14+
 - **Redis** 6+
 - **Game Data** JSON files (from asset extraction)
@@ -148,8 +147,8 @@ createdb myrtle
 cat > .env << 'EOF'
 DATABASE_URL=postgres://localhost/myrtle
 REDIS_URL=redis://127.0.0.1:6379
-DATA_DIR=./data
-ASSETS_DIR=./assets
+DATA_DIR=../assets/Unpacked/gamedata/excel
+ASSETS_DIR=../assets/Unpacked
 EOF
 ```
 
@@ -171,15 +170,16 @@ data/
 ├── gacha_table.json
 └── handbook_info_table.json
 ```
+You don't have to worry about this if you have already unpacked assets using the unpacker.
 
 ### 4. Start the Server
 
 ```bash
 # Development
-cargo run
+cargo run --bin backend
 
 # Production
-cargo run --release
+cargo run --bin backend --release
 
 # Server starts on http://0.0.0.0:3060
 ```
@@ -216,7 +216,7 @@ ASSETS_DIR=/opt/myrtle/assets/Unpacked
 ```bash
 # Load environment and start
 source .env
-cargo run --release
+cargo run --bin backend --release
 
 # Output:
 # Loading configuration...
@@ -453,8 +453,7 @@ Update user settings and preferences.
 ```json
 {
   "settings": {
-    "theme": "dark",
-    "notifications": true
+    "publicProfile": true
   }
 }
 ```
@@ -1151,7 +1150,7 @@ Enable detailed logging:
 
 ```bash
 # All debug output
-RUST_LOG=debug cargo run
+RUST_LOG=debug cargo run --bin backend
 
 # Specific module
 RUST_LOG=backend::core::authentication=debug cargo run

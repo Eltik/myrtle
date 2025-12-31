@@ -44,12 +44,12 @@ fn test_read_single() {
             );
 
             // Read all objects in this file
-            for (_name, file_rc) in &env.files {
+            for file_rc in env.files.values() {
                 let file_ref = file_rc.borrow();
 
                 if let FileType::SerializedFile(serialized_file_rc) = &*file_ref {
                     let serialized_file = serialized_file_rc.borrow();
-                    for (_id, obj) in &serialized_file.objects {
+                    for obj in serialized_file.objects.values() {
                         // Clone the object to get mutable access
                         let mut obj_clone = obj.clone();
                         let _ = obj_clone.read(false);
@@ -72,12 +72,12 @@ fn test_read_batch() {
     println!("load_folder loaded {} files", env.files.len());
 
     // Read all objects across all files
-    for (_name, file_rc) in &env.files {
+    for file_rc in env.files.values() {
         let file_ref = file_rc.borrow();
 
         if let FileType::SerializedFile(serialized_file_rc) = &*file_ref {
             let serialized_file = serialized_file_rc.borrow();
-            for (_id, obj) in &serialized_file.objects {
+            for obj in serialized_file.objects.values() {
                 let mut obj_clone = obj.clone();
                 let _ = obj_clone.read(false);
             }
@@ -94,12 +94,12 @@ fn test_read_typetree() {
 
     env.load_folder(samples.to_str().unwrap()).unwrap();
 
-    for (_name, file_rc) in &env.files {
+    for file_rc in env.files.values() {
         let file_ref = file_rc.borrow();
 
         if let FileType::SerializedFile(serialized_file_rc) = &*file_ref {
             let serialized_file = serialized_file_rc.borrow();
-            for (_id, obj) in &serialized_file.objects {
+            for obj in serialized_file.objects.values() {
                 let mut obj_clone = obj.clone();
                 // Read TypeTree (should not fail for any object)
                 let _ = obj_clone.read_typetree(None, true, false).unwrap();
@@ -135,14 +135,14 @@ fn test_mesh() {
     env.load_folder(samples.to_str().unwrap()).unwrap();
 
     let mut found_mesh = false;
-    for (_name, file_rc) in &env.files {
+    for file_rc in env.files.values() {
         let file_ref = file_rc.borrow();
 
         // Check both SerializedFiles and BundleFiles for Mesh objects
         match &*file_ref {
             FileType::SerializedFile(serialized_file_rc) => {
                 let serialized_file = serialized_file_rc.borrow();
-                for (_id, obj) in &serialized_file.objects {
+                for obj in serialized_file.objects.values() {
                     if obj.obj_type == unity_rs::ClassIDType::Mesh {
                         found_mesh = true;
 
@@ -175,11 +175,11 @@ fn test_mesh() {
             }
             FileType::BundleFile(bundle) => {
                 // Search inside bundle files
-                for (_bundle_file_name, bundle_file_rc) in &bundle.files {
+                for bundle_file_rc in bundle.files.values() {
                     let bundle_file_ref = bundle_file_rc.borrow();
                     if let FileType::SerializedFile(sf_rc) = &*bundle_file_ref {
                         let sf = sf_rc.borrow();
-                        for (_id, obj) in &sf.objects {
+                        for obj in sf.objects.values() {
                             if obj.obj_type == unity_rs::ClassIDType::Mesh {
                                 found_mesh = true;
 
@@ -369,13 +369,13 @@ fn test_audioclip() {
     );
 
     let mut found_audioclip = false;
-    for (_name, file_rc) in &env.files {
+    for file_rc in env.files.values() {
         let file_ref = file_rc.borrow();
 
         match &*file_ref {
             FileType::SerializedFile(serialized_file_rc) => {
                 let serialized_file = serialized_file_rc.borrow();
-                for (_id, obj) in &serialized_file.objects {
+                for obj in serialized_file.objects.values() {
                     if obj.obj_type == unity_rs::ClassIDType::AudioClip {
                         found_audioclip = true;
 
@@ -390,11 +390,11 @@ fn test_audioclip() {
             }
             FileType::BundleFile(bundle) => {
                 // Search inside bundle files for AudioClip objects
-                for (_bundle_name, bundle_file_rc) in &bundle.files {
+                for bundle_file_rc in bundle.files.values() {
                     let bundle_file_ref = bundle_file_rc.borrow();
                     if let FileType::SerializedFile(sf_rc) = &*bundle_file_ref {
                         let sf = sf_rc.borrow();
-                        for (_id, obj) in &sf.objects {
+                        for obj in sf.objects.values() {
                             if obj.obj_type == unity_rs::ClassIDType::AudioClip {
                                 found_audioclip = true;
 
@@ -426,7 +426,7 @@ fn test_save_dict() {
 
     env.load_folder(samples.to_str().unwrap()).unwrap();
 
-    for (_name, file_rc) in &env.files {
+    for file_rc in env.files.values() {
         let file_ref = file_rc.borrow();
 
         if let FileType::SerializedFile(_serialized_file) = &*file_ref {

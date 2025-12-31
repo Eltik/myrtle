@@ -64,7 +64,7 @@ pub fn extract_audioclip_samples(
 
         get_resource_data(
             source_path,
-            &mut *assets_file_mut,
+            &mut assets_file_mut,
             offset as usize,
             size as usize,
         )?

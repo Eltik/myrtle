@@ -282,9 +282,9 @@ impl Resource {
 /// Parse atlas file to extract texture filenames
 fn parse_atlas_textures(atlas_content: &str) -> Vec<String> {
     let mut textures = Vec::new();
-    let mut lines = atlas_content.lines().peekable();
+    let lines = atlas_content.lines().peekable();
 
-    while let Some(line) = lines.next() {
+    for line in lines {
         let trimmed = line.trim();
         // Atlas format: texture filename is on its own line ending with .png
         // followed by size:, format:, filter:, etc.
@@ -899,7 +899,7 @@ fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Re
                         };
                         texture_objects_by_size
                             .entry(name.to_string())
-                            .or_insert_with(Vec::new)
+                            .or_default()
                             .push((width, height, colored_pixels, obj.path_id, obj.clone()));
                     }
                 }
@@ -1078,7 +1078,7 @@ fn extract_spine_assets(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Re
     }
 
     // Save complete Spine assets
-    for (_key, asset) in &spine_groups {
+    for asset in spine_groups.values() {
         if asset.skel_data.is_none() && asset.atlas_data.is_none() {
             continue;
         }
@@ -1700,15 +1700,15 @@ fn ab_resolve(
                                                 .collect::<Vec<u8>>()
                                         })
                                     }) {
-                                        if !script_bytes.is_empty() {
-                                            if std::fs::write(&output_path, &script_bytes).is_ok() {
-                                                saved_count += 1;
-                                                saved = true;
-                                                log::debug!(
-                                                    "Saved text asset (bytes): {:?}",
-                                                    output_path
-                                                );
-                                            }
+                                        if !script_bytes.is_empty()
+                                            && std::fs::write(&output_path, &script_bytes).is_ok()
+                                        {
+                                            saved_count += 1;
+                                            saved = true;
+                                            log::debug!(
+                                                "Saved text asset (bytes): {:?}",
+                                                output_path
+                                            );
                                         }
                                     }
                                 }
@@ -1722,15 +1722,15 @@ fn ab_resolve(
                                                 .collect::<Vec<u8>>()
                                         })
                                     }) {
-                                        if !bytes.is_empty() {
-                                            if std::fs::write(&output_path, &bytes).is_ok() {
-                                                saved_count += 1;
-                                                saved = true;
-                                                log::debug!(
-                                                    "Saved text asset (m_Bytes): {:?}",
-                                                    output_path
-                                                );
-                                            }
+                                        if !bytes.is_empty()
+                                            && std::fs::write(&output_path, &bytes).is_ok()
+                                        {
+                                            saved_count += 1;
+                                            saved = true;
+                                            log::debug!(
+                                                "Saved text asset (m_Bytes): {:?}",
+                                                output_path
+                                            );
                                         }
                                     }
                                 }
@@ -1964,7 +1964,7 @@ fn texture_to_image(texture: &unity_rs::generated::Texture2D) -> Result<image::R
 
         unity_rs::helpers::resource_reader::get_resource_data(
             source_path,
-            &mut *assets_file_mut,
+            &mut assets_file_mut,
             stream_data.offset.unwrap_or(0) as usize,
             stream_data.size.unwrap_or(0) as usize,
         )
@@ -2017,11 +2017,7 @@ fn extract_sprite_atlases(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> 
                 Ok(data) => {
                     if let Ok(sprite_atlas) = serde_json::from_value::<SpriteAtlas>(data) {
                         // Get the atlas name
-                        let atlas_name = sprite_atlas
-                            .m_Name
-                            .as_ref()
-                            .map(|s| s.as_str())
-                            .unwrap_or("SpriteAtlas");
+                        let atlas_name = sprite_atlas.m_Name.as_deref().unwrap_or("SpriteAtlas");
 
                         // Get the packed sprites
                         if let Some(packed_sprites) = &sprite_atlas.m_PackedSprites {
@@ -2536,10 +2532,11 @@ fn extract_images_with_combination(
                             };
 
                             if let Some(texture_name) = texture_name_opt {
-                                sprite_groups
-                                    .entry(texture_name)
-                                    .or_insert_with(Vec::new)
-                                    .push((name.clone(), sprite.clone(), Rc::clone(&assets_file)));
+                                sprite_groups.entry(texture_name).or_default().push((
+                                    name.clone(),
+                                    sprite.clone(),
+                                    Rc::clone(&assets_file),
+                                ));
                             }
                         }
                     }
@@ -2723,7 +2720,7 @@ pub fn main(
     let (normal_files, skipped_files): (Vec<_>, Vec<_>) = if skip_large_mb > 0 {
         let (keep, skip): (Vec<_>, Vec<_>) = normal_files
             .into_iter()
-            .chain(large_files.into_iter())
+            .chain(large_files)
             .partition(|f| f.size < skip_threshold);
 
         if !skip.is_empty() {
@@ -2743,10 +2740,7 @@ pub fn main(
         (keep, skip)
     } else {
         // No skip, combine normal and large files
-        let all: Vec<_> = normal_files
-            .into_iter()
-            .chain(large_files.into_iter())
-            .collect();
+        let all: Vec<_> = normal_files.into_iter().chain(large_files).collect();
         (all, Vec::new())
     };
 
@@ -2893,14 +2887,14 @@ pub fn main(
                     }
 
                     // Save manifest every 50 files (more frequent for safety)
-                    if file_count % 50 == 0 {
+                    if file_count.is_multiple_of(50) {
                         if let Err(e) = manifest.lock().unwrap().save(&manifest_path) {
                             log::warn!("Failed to save incremental manifest: {}", e);
                         }
                     }
 
                     // Log memory usage every 10 files to track leaks
-                    if file_count % 10 == 0 {
+                    if file_count.is_multiple_of(10) {
                         sys.refresh_all();
                         if let Some(process) = sys.process(pid) {
                             let current_memory = process.memory();
@@ -2975,7 +2969,10 @@ pub fn main(
                     manifest.lock().unwrap().update(file, count);
 
                     // Save manifest every 50 files (more frequent for safety)
-                    if save_counter.fetch_add(1, Ordering::Relaxed) % 50 == 0 {
+                    if save_counter
+                        .fetch_add(1, Ordering::Relaxed)
+                        .is_multiple_of(50)
+                    {
                         if let Err(e) = manifest.lock().unwrap().save(&manifest_path) {
                             log::warn!("Failed to save incremental manifest: {}", e);
                         }

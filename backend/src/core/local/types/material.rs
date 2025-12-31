@@ -7,9 +7,10 @@ use super::serde_helpers::deserialize_fb_map;
 // Enums
 // ============================================================================
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub enum ItemRarity {
     #[serde(rename = "TIER_1")]
+    #[default]
     Tier1,
     #[serde(rename = "TIER_2")]
     Tier2,
@@ -23,35 +24,26 @@ pub enum ItemRarity {
     Tier6,
 }
 
-impl Default for ItemRarity {
-    fn default() -> Self {
-        Self::Tier1
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub enum ItemClass {
     #[serde(rename = "MATERIAL")]
     Material,
     #[serde(rename = "CONSUME")]
     Consumable,
     #[serde(rename = "NORMAL")]
+    #[default]
     Normal,
     #[serde(rename = "NONE")]
     None,
 }
 
-impl Default for ItemClass {
-    fn default() -> Self {
-        Self::Normal
-    }
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[derive(Default)]
 pub enum ItemType {
     Gold,
     CardExp,
+    #[default]
     Material,
     Diamond,
     DiamondShd,
@@ -120,15 +112,11 @@ pub enum ItemType {
     Unknown,
 }
 
-impl Default for ItemType {
-    fn default() -> Self {
-        Self::Material
-    }
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
+#[derive(Default)]
 pub enum ItemOccPer {
+    #[default]
     Usual,
     Almost,
     Always,
@@ -136,49 +124,31 @@ pub enum ItemOccPer {
     Often,
 }
 
-impl Default for ItemOccPer {
-    fn default() -> Self {
-        Self::Usual
-    }
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
+#[derive(Default)]
 pub enum BuildingRoomType {
+    #[default]
     Workshop,
     Manufacture,
 }
 
-impl Default for BuildingRoomType {
-    fn default() -> Self {
-        Self::Workshop
-    }
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[derive(Default)]
 pub enum VoucherItemType {
+    #[default]
     OptionalVoucherPick,
     MaterialIssueVoucher,
 }
 
-impl Default for VoucherItemType {
-    fn default() -> Self {
-        Self::OptionalVoucherPick
-    }
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
+#[derive(Default)]
 pub enum VoucherDisplayType {
+    #[default]
     None,
     Divide,
-}
-
-impl Default for VoucherDisplayType {
-    fn default() -> Self {
-        Self::None
-    }
 }
 
 // ============================================================================

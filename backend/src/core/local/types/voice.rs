@@ -9,7 +9,9 @@ use super::serde_helpers::deserialize_fb_map;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[derive(Default)]
 pub enum PlaceType {
+    #[default]
     HomePlace,
     NewYear,
     Greeting,
@@ -45,15 +47,11 @@ pub enum PlaceType {
     LoadingPanel,
 }
 
-impl Default for PlaceType {
-    fn default() -> Self {
-        Self::HomePlace
-    }
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[derive(Default)]
 pub enum LangType {
+    #[default]
     CnMandarin,
     Jp,
     Kr,
@@ -66,38 +64,23 @@ pub enum LangType {
     Fre,
 }
 
-impl Default for LangType {
-    fn default() -> Self {
-        Self::CnMandarin
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub enum VoiceType {
     #[serde(rename = "ENUM")]
+    #[default]
     Enum,
     #[serde(rename = "ONLY_TEXT")]
     OnlyText,
 }
 
-impl Default for VoiceType {
-    fn default() -> Self {
-        Self::Enum
-    }
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
+#[derive(Default)]
 pub enum UnlockType {
+    #[default]
     Direct,
     Favor,
     Awake,
-}
-
-impl Default for UnlockType {
-    fn default() -> Self {
-        Self::Direct
-    }
 }
 
 // ============================================================================

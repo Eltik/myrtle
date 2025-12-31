@@ -408,7 +408,7 @@ impl BundleFile {
 
         let version = self
             .get_version_tuple()
-            .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
+            .map_err(|e| io::Error::other(e.to_string()))?;
 
         if version.0 < 2020
             || (version.0 == 2020 && version < (2020, 3, 34))
@@ -550,16 +550,14 @@ impl BundleFile {
 
         writer
             .write_string_to_null(&self.signature)
-            .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
-        writer
-            .write_u32(self.version)
-            .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+            .map_err(io::Error::other)?;
+        writer.write_u32(self.version).map_err(io::Error::other)?;
         writer
             .write_string_to_null(&self.version_player)
-            .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+            .map_err(io::Error::other)?;
         writer
             .write_string_to_null(&self.version_engine)
-            .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+            .map_err(io::Error::other)?;
 
         if self.signature == "UnityArchive" {
             return Err(io::Error::new(
@@ -646,7 +644,7 @@ impl BundleFile {
 
             data_writer
                 .write_bytes(&file_bytes)
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+                .map_err(io::Error::other)?;
 
             files.push((name.clone(), flags, file_bytes.len()));
         }
@@ -667,7 +665,7 @@ impl BundleFile {
         file_data = file_data_compressed;
 
         let mut block_writer = EndianBinaryWriter::new(Endian::Big);
-        block_writer.write(&vec![0u8; 16])?;
+        block_writer.write(&[0u8; 16])?;
 
         block_writer.write_i32(block_info.len() as i32)?;
         for (block_uncompressed_size, block_compressed_size, block_flag) in block_info {
@@ -695,7 +693,7 @@ impl BundleFile {
             block_writer.write_u32(f_flag)?;
             block_writer
                 .write_string_to_null(&f_name)
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+                .map_err(io::Error::other)?;
         }
 
         let mut block_data = block_writer.to_bytes();

@@ -3034,7 +3034,8 @@ impl clz_Torappu_Battle_Cooperate_CooperateModeBattleDataT {
 /// `root_as_clz_torappu_battle_cooperate_cooperate_mode_battle_data_unchecked`.
 pub fn root_as_clz_torappu_battle_cooperate_cooperate_mode_battle_data(
     buf: &[u8],
-) -> Result<clz_Torappu_Battle_Cooperate_CooperateModeBattleData, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_Battle_Cooperate_CooperateModeBattleData<'_>, flatbuffers::InvalidFlatbuffer>
+{
     flatbuffers::root::<clz_Torappu_Battle_Cooperate_CooperateModeBattleData>(buf)
 }
 #[inline]
@@ -3046,7 +3047,8 @@ pub fn root_as_clz_torappu_battle_cooperate_cooperate_mode_battle_data(
 /// `size_prefixed_root_as_clz_torappu_battle_cooperate_cooperate_mode_battle_data_unchecked`.
 pub fn size_prefixed_root_as_clz_torappu_battle_cooperate_cooperate_mode_battle_data(
     buf: &[u8],
-) -> Result<clz_Torappu_Battle_Cooperate_CooperateModeBattleData, flatbuffers::InvalidFlatbuffer> {
+) -> Result<clz_Torappu_Battle_Cooperate_CooperateModeBattleData<'_>, flatbuffers::InvalidFlatbuffer>
+{
     flatbuffers::size_prefixed_root::<clz_Torappu_Battle_Cooperate_CooperateModeBattleData>(buf)
 }
 #[inline]
@@ -3090,7 +3092,7 @@ pub fn size_prefixed_root_as_clz_torappu_battle_cooperate_cooperate_mode_battle_
 /// Callers must trust the given bytes do indeed contain a valid `clz_Torappu_Battle_Cooperate_CooperateModeBattleData`.
 pub unsafe fn root_as_clz_torappu_battle_cooperate_cooperate_mode_battle_data_unchecked(
     buf: &[u8],
-) -> clz_Torappu_Battle_Cooperate_CooperateModeBattleData {
+) -> clz_Torappu_Battle_Cooperate_CooperateModeBattleData<'_> {
     unsafe {
         flatbuffers::root_unchecked::<clz_Torappu_Battle_Cooperate_CooperateModeBattleData>(buf)
     }
@@ -3101,7 +3103,7 @@ pub unsafe fn root_as_clz_torappu_battle_cooperate_cooperate_mode_battle_data_un
 /// Callers must trust the given bytes do indeed contain a valid size prefixed `clz_Torappu_Battle_Cooperate_CooperateModeBattleData`.
 pub unsafe fn size_prefixed_root_as_clz_torappu_battle_cooperate_cooperate_mode_battle_data_unchecked(
     buf: &[u8],
-) -> clz_Torappu_Battle_Cooperate_CooperateModeBattleData {
+) -> clz_Torappu_Battle_Cooperate_CooperateModeBattleData<'_> {
     unsafe {
         flatbuffers::size_prefixed_root_unchecked::<
             clz_Torappu_Battle_Cooperate_CooperateModeBattleData,
