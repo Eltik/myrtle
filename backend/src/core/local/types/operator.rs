@@ -441,6 +441,8 @@ pub struct Operator {
     pub phases: Vec<Phase>,
     pub skills: Vec<EnrichedSkill>,
     pub display_token_dict: Option<HashMap<String, bool>>,
+    #[serde(default)]
+    pub drones: Vec<Drone>,
     pub talents: Vec<Talent>,
     pub potential_ranks: Vec<PotentialRank>,
     pub favor_key_frames: Vec<AttributeKeyFrame>,
