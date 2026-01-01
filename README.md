@@ -202,7 +202,7 @@ For detailed asset pipeline documentation, see:
 | [unity-rs](assets/unity-rs/) | Rust port of UnityPy for Unity asset parsing |
 | [downloader](assets/downloader/) | Multi-server asset downloader with version tracking |
 | [unpacker](assets/unpacker/) | High-performance asset extraction (9x faster than Python) |
-| [OpenArknightsFBS](assets/OpenArknightsFBS/) | FlatBuffers schemas for 59 game data tables |
+| [OpenArknightsFBS](https://github.com/MooncellWiki/OpenArknightsFBS/tree/YoStar) | FlatBuffers schemas for 59 game data tables |
 
 ## Architecture
 

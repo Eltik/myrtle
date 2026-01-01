@@ -9,6 +9,8 @@
 #![allow(clippy::needless_late_init)]
 #![allow(clippy::match_single_binding)]
 #![allow(clippy::only_used_in_recursion)]
+#![allow(clippy::uninlined_format_args)]
+#![allow(clippy::unwrap_or_default)]
 
 // Module declarations
 pub mod classes;

@@ -6,6 +6,7 @@
 #![allow(clippy::manual_strip)]
 #![allow(clippy::redundant_guards)]
 #![allow(clippy::search_is_some)]
+#![allow(clippy::uninlined_format_args)]
 
 pub mod collect_models;
 pub mod collect_voice;

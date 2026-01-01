@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       build_assets:
-        description: 'Build assets tools'
+        description: 'Build assets tools (requires FMOD - usually skip in CI)'
         required: false
-        default: true
+        default: false
         type: boolean
       build_backend:
         description: 'Build backend'
@@ -28,10 +28,11 @@ env:
 jobs:
   # ============================================
   # Build Assets (Cross-platform)
+  # Note: Requires FMOD library - only runs on manual dispatch with build_assets=true
   # ============================================
   build-assets:
     name: Build Assets (${{ matrix.os }})
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.build_assets }}
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.build_assets }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
