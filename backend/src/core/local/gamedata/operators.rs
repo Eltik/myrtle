@@ -11,7 +11,9 @@ use crate::core::local::{
         handbook::Handbook,
         material::Materials,
         module::{BattleEquip, RawModules},
-        operator::{EvolveCost, LevelUpCostItem, Operator, Phase, RawOperator},
+        operator::{
+            Drone, EvolveCost, LevelUpCostItem, Operator, OperatorProfession, Phase, RawOperator,
+        },
         skill::Skill,
         skin::SkinData,
     },
@@ -21,6 +23,7 @@ use crate::core::local::{
 #[allow(clippy::too_many_arguments)]
 pub fn enrich_all_operators(
     raw_operators: &HashMap<String, RawOperator>,
+    drones: &HashMap<String, Drone>,
     skills: &HashMap<String, Skill>,
     modules: &RawModules,
     battle_equip: &BattleEquip,
@@ -36,6 +39,7 @@ pub fn enrich_all_operators(
             let enriched = enrich_operator(
                 id,
                 raw,
+                drones,
                 skills,
                 modules,
                 battle_equip,
@@ -53,6 +57,7 @@ pub fn enrich_all_operators(
 fn enrich_operator(
     id: &str,
     raw: &RawOperator,
+    drones: &HashMap<String, Drone>,
     skills: &HashMap<String, Skill>,
     modules: &RawModules,
     battle_equip: &BattleEquip,
@@ -75,6 +80,17 @@ fn enrich_operator(
     // Enrich skill level up costs
     let enriched_all_skill_level_up =
         enrich_all_skill_level_up(&raw.all_skill_lvlup, materials, asset_mappings);
+
+    // Resolve drones from display_token_dict
+    let operator_drones = raw
+        .display_token_dict
+        .as_ref()
+        .map(|dict| {
+            dict.keys()
+                .filter_map(|key| drones.get(key).cloned())
+                .collect()
+        })
+        .unwrap_or_default();
 
     Operator {
         id: Some(id.to_string()),
@@ -105,6 +121,7 @@ fn enrich_operator(
         phases: enriched_phases,
         skills: enriched_skills,
         display_token_dict: raw.display_token_dict.clone(),
+        drones: operator_drones,
         talents: raw.talents.clone().unwrap_or_default(),
         potential_ranks: raw.potential_ranks.clone(),
         favor_key_frames: raw.favor_key_frames.clone().unwrap_or_default(),
@@ -225,4 +242,67 @@ fn get_item_icon_info(
         Some(item_id.to_string()),
         Some(asset_mappings.get_item_icon_path(item_id)),
     )
+}
+
+/// Convert OperatorProfession enum to its serialized string representation
+fn profession_to_string(profession: &OperatorProfession) -> String {
+    match profession {
+        OperatorProfession::Medic => "MEDIC".to_string(),
+        OperatorProfession::Caster => "CASTER".to_string(),
+        OperatorProfession::Guard => "WARRIOR".to_string(),
+        OperatorProfession::Vanguard => "PIONEER".to_string(),
+        OperatorProfession::Sniper => "SNIPER".to_string(),
+        OperatorProfession::Specialist => "SPECIAL".to_string(),
+        OperatorProfession::Supporter => "SUPPORT".to_string(),
+        OperatorProfession::Defender => "TANK".to_string(),
+        OperatorProfession::Token => "TOKEN".to_string(),
+        OperatorProfession::Trap => "TRAP".to_string(),
+    }
+}
+
+/// Extract all drones/tokens from the character table
+/// Drones are entries that don't start with "char_" (e.g., "token_10000_silent")
+pub fn extract_all_drones(raw_operators: &HashMap<String, RawOperator>) -> HashMap<String, Drone> {
+    raw_operators
+        .par_iter()
+        .filter(|(id, _)| !id.starts_with("char_"))
+        .map(|(id, raw)| {
+            let drone = Drone {
+                id: Some(id.clone()),
+                name: raw.name.clone(),
+                description: raw.description.clone().unwrap_or_default(),
+                can_use_general_potential_item: raw.can_use_general_potential_item,
+                can_use_activity_potential_item: raw.can_use_activity_potential_item,
+                potential_item_id: raw.potential_item_id.clone(),
+                activity_potential_item_id: raw.activity_potential_item_id.clone(),
+                classic_potential_item_id: raw.classic_potential_item_id.clone(),
+                nation_id: raw.nation_id.clone(),
+                group_id: raw.group_id.clone(),
+                team_id: raw.team_id.clone(),
+                display_number: raw.display_number.clone(),
+                appellation: raw.appellation.clone(),
+                position: raw.position.clone(),
+                tag_list: raw.tag_list.clone().unwrap_or_default(),
+                item_usage: raw.item_usage.clone(),
+                item_desc: raw.item_desc.clone(),
+                item_obtain_approach: raw.item_obtain_approach.clone(),
+                is_not_obtainable: raw.is_not_obtainable,
+                is_sp_char: raw.is_sp_char,
+                max_potential_level: raw.max_potential_level,
+                rarity: raw.rarity.clone(),
+                profession: profession_to_string(&raw.profession),
+                sub_profession_id: raw.sub_profession_id.clone().unwrap_or_default(),
+                trait_data: raw.trait_data.clone(),
+                phases: raw.phases.clone(),
+                skills: raw.skills.clone(),
+                display_token_dict: raw.display_token_dict.clone(),
+                talents: raw.talents.clone().unwrap_or_default(),
+                potential_ranks: raw.potential_ranks.clone(),
+                favor_key_frames: None,
+                all_skill_lvlup: raw.all_skill_lvlup.clone(),
+                modules: Vec::new(),
+            };
+            (id.clone(), drone)
+        })
+        .collect()
 }

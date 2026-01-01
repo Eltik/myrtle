@@ -7,7 +7,7 @@ use serde::de::DeserializeOwned;
 
 use crate::core::local::asset_mapping::AssetMappings;
 use crate::core::local::gamedata::chibi::init_chibi_data;
-use crate::core::local::gamedata::operators::enrich_all_operators;
+use crate::core::local::gamedata::operators::{enrich_all_operators, extract_all_drones};
 use crate::core::local::gamedata::skills::enrich_all_skills;
 use crate::core::local::gamedata::skins::enrich_all_skins;
 use crate::core::local::gamedata::voice::enrich_all_voices;
@@ -303,8 +303,12 @@ pub fn init_game_data(
     events.emit(ConfigEvent::GameDataEnrichmentStarted);
     let skills = enrich_all_skills(raw_skills, &asset_mappings);
 
+    // Extract drones/tokens from the character table (needed for operator enrichment)
+    let drones = extract_all_drones(&raw_operators);
+
     let operators = enrich_all_operators(
         &raw_operators,
+        &drones,
         &skills,
         &raw_modules,
         &battle_equip,

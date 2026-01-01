@@ -1,2 +1,1 @@
-pub mod calculator;
-pub mod operators;
+pub mod operator_data;
