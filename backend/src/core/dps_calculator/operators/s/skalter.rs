@@ -1,0 +1,92 @@
+//! DPS calculations for Skalter
+//!
+//! Auto-generated from ArknightsDpsCompare damage_formulas.py
+
+use super::super::super::operator_data::OperatorData;
+use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
+
+/// Skalter operator implementation
+pub struct Skalter {
+    pub unit: OperatorUnit,
+}
+
+impl Skalter {
+    /// Available skills for this operator
+    pub const AVAILABLE_SKILLS: &'static [i32] = &[1, 3];
+
+    /// Available modules for this operator
+    pub const AVAILABLE_MODULES: &'static [i32] = &[1];
+
+    /// Creates a new Skalter operator
+    pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
+        let unit = OperatorUnit::new(
+            operator_data,
+            params,
+            3, // default_skill_index
+            1, // default_potential
+            1, // default_module_index
+            Self::AVAILABLE_SKILLS.to_vec(),
+        );
+
+        Self { unit }
+    }
+
+    /// Calculates DPS against an enemy
+    ///
+    /// Original Python implementation:
+    ///
+    /// if self.skill != 3: return res * 0
+    /// atkbuff = 0.08 if self.module == 1 and self.module_dmg else 0
+    /// if self.talent2_dmg: atkbuff += self.talent2_params[0]
+    /// skill_scale = self.skill_params[0]
+    /// final_atk = self.atk * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
+    /// dps = final_atk * skill_scale * np.fmax(1,-defense) * self.targets
+    /// if self.talent_dmg: dps *= 2
+    /// return dps
+    #[allow(
+        unused_variables,
+        unused_mut,
+        unused_assignments,
+        unused_parens,
+        clippy::excessive_precision,
+        clippy::unnecessary_cast,
+        clippy::collapsible_if,
+        clippy::double_parens
+    )]
+    pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
+        let defense = enemy.defense;
+        let res = enemy.res;
+
+        // UNTRANSLATED: if self.skill != 3: return res * 0
+        let mut atkbuff =
+            if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {
+                0.08
+            } else {
+                0.0
+            };
+        // UNTRANSLATED: if self.talent2_dmg: atkbuff += self.talent2_params[0]
+        let mut skill_scale = self.unit.skill_parameters[0];
+        let mut final_atk =
+            self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
+        
+        // UNTRANSLATED: if self.talent_dmg: dps *= 2
+        final_atk
+            * skill_scale
+            * ((1) as f64).max((-defense) as f64)
+            * (self.unit.targets as f64)
+    }
+}
+
+impl std::ops::Deref for Skalter {
+    type Target = OperatorUnit;
+
+    fn deref(&self) -> &Self::Target {
+        &self.unit
+    }
+}
+
+impl std::ops::DerefMut for Skalter {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.unit
+    }
+}

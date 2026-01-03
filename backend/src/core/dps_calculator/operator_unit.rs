@@ -37,6 +37,8 @@ pub struct OperatorUnit {
 
     pub operator_module: Option<OperatorModule>,
     pub operator_module_level: i32,
+    pub module_index: i32,
+    pub module_level: i32,
 
     pub skill_index: i32,
     pub skill_parameters: Vec<f64>,
@@ -78,6 +80,9 @@ pub struct OperatorUnit {
     pub buff_atk: f64,
     pub buff_atk_flat: f64,
     pub buff_fragile: f64,
+
+    // Operator-specific fields for advanced calculations
+    pub shreds: Vec<f64>, // Defense shred values [def_shred_mult, def_shred_flat, res_shred_mult, res_shred_flat]
 }
 
 impl OperatorUnit {
@@ -103,37 +108,27 @@ impl OperatorUnit {
         let trait_damage = if !all_cond {
             false
         } else {
-            conditionals
-                .and_then(|c| c.trait_damage)
-                .unwrap_or(true)
+            conditionals.and_then(|c| c.trait_damage).unwrap_or(true)
         };
         let talent_damage = if !all_cond {
             false
         } else {
-            conditionals
-                .and_then(|c| c.talent_damage)
-                .unwrap_or(true)
+            conditionals.and_then(|c| c.talent_damage).unwrap_or(true)
         };
         let talent2_damage = if !all_cond {
             false
         } else {
-            conditionals
-                .and_then(|c| c.talent2_damage)
-                .unwrap_or(true)
+            conditionals.and_then(|c| c.talent2_damage).unwrap_or(true)
         };
         let skill_damage = if !all_cond {
             false
         } else {
-            conditionals
-                .and_then(|c| c.skill_damage)
-                .unwrap_or(true)
+            conditionals.and_then(|c| c.skill_damage).unwrap_or(true)
         };
         let module_damage = if !all_cond {
             false
         } else {
-            conditionals
-                .and_then(|c| c.module_damage)
-                .unwrap_or(true)
+            conditionals.and_then(|c| c.module_damage).unwrap_or(true)
         };
 
         // Set attack interval
@@ -159,9 +154,9 @@ impl OperatorUnit {
 
         // Calculate potential
         let param_potential = params.potential.unwrap_or(-1);
-        let potential = if param_potential >= 1 && param_potential <= 6 {
+        let potential = if (1..=6).contains(&param_potential) {
             param_potential
-        } else if default_potential >= 1 && default_potential <= 6 {
+        } else if (1..=6).contains(&default_potential) {
             default_potential
         } else {
             1
@@ -208,31 +203,41 @@ impl OperatorUnit {
 
         // Calculate skill level
         let mastery_level = params.mastery_level.unwrap_or(-1);
-        let skill_level = if mastery_level > 0 && mastery_level + 6 < MAX_SKILL_LEVELS[elite as usize] {
-            match mastery_level {
-                3 => 9,
-                2 => 8,
-                1 => 7,
-                _ => 9,
-            }
-        } else {
-            MAX_SKILL_LEVELS[elite as usize]
-        };
+        let skill_level =
+            if mastery_level > 0 && mastery_level + 6 < MAX_SKILL_LEVELS[elite as usize] {
+                match mastery_level {
+                    3 => 9,
+                    2 => 8,
+                    1 => 7,
+                    _ => 9,
+                }
+            } else {
+                MAX_SKILL_LEVELS[elite as usize]
+            };
 
         // Calculate trust (already got default above, but need to clamp)
-        let trust = if trust >= 0 && trust < 100 { trust } else { 100 };
+        let trust = if (0..100).contains(&trust) {
+            trust
+        } else {
+            100
+        };
 
         // Calculate module
         let mut operator_module: Option<OperatorModule> = None;
         let mut operator_module_level = 0;
+        let mut module_index: i32 = -1;
+        let mut module_level: i32 = 0;
 
         let max_level_e2 = MAX_LEVELS[2][(rarity - 1) as usize];
         if elite == 2 && level >= max_level_e2 - 30 {
             let available_modules = &operator_data.available_modules;
 
             // Get default module if valid index
-            if default_module_index >= 0 && (default_module_index as usize) < available_modules.len() {
+            if default_module_index >= 0
+                && (default_module_index as usize) < available_modules.len()
+            {
                 operator_module = Some(available_modules[default_module_index as usize].clone());
+                module_index = default_module_index;
             }
 
             if !available_modules.is_empty() {
@@ -240,9 +245,12 @@ impl OperatorUnit {
 
                 if param_module_index == -1 {
                     operator_module = None;
+                    module_index = -1;
                 } else {
                     if (param_module_index as usize) < available_modules.len() {
-                        operator_module = Some(available_modules[param_module_index as usize].clone());
+                        operator_module =
+                            Some(available_modules[param_module_index as usize].clone());
+                        module_index = param_module_index;
                     }
 
                     let param_module_level = params.module_level.unwrap_or(-1);
@@ -258,6 +266,8 @@ impl OperatorUnit {
                     if trust < 100 {
                         operator_module_level = operator_module_level.min(2);
                     }
+
+                    module_level = operator_module_level;
                 }
             }
         }
@@ -368,8 +378,7 @@ impl OperatorUnit {
             for talent_data in &operator_data.talent1_parameters {
                 if elite >= talent_data.required_promotion
                     && talent_data.required_promotion >= current_promo
-                {
-                    if level >= talent_data.required_level
+                    && level >= talent_data.required_level
                         && talent_data.required_level >= current_req_level
                     {
                         let op_module_id = operator_module
@@ -378,8 +387,8 @@ impl OperatorUnit {
                             .unwrap_or("");
 
                         if op_module_id.is_empty() {
-                            if talent_data.required_module_id.is_empty() {
-                                if potential > talent_data.required_potential
+                            if talent_data.required_module_id.is_empty()
+                                && potential > talent_data.required_potential
                                     && potential > current_req_potential
                                 {
                                     talent1_parameters = talent_data.talent_data.clone();
@@ -388,7 +397,6 @@ impl OperatorUnit {
                                     current_req_potential = talent_data.required_potential;
                                     current_req_module_lvl = talent_data.required_module_level;
                                 }
-                            }
                         } else {
                             let required_module_id = if !talent_data.required_module_id.is_empty() {
                                 talent_data.required_module_id.clone()
@@ -396,9 +404,7 @@ impl OperatorUnit {
                                 let module_index = operator_data
                                     .available_modules
                                     .iter()
-                                    .position(|m| {
-                                        m.module.id.as_deref() == Some(op_module_id)
-                                    });
+                                    .position(|m| m.module.id.as_deref() == Some(op_module_id));
 
                                 match module_index {
                                     Some(1) => operator_data
@@ -414,11 +420,10 @@ impl OperatorUnit {
                                 }
                             };
 
-                            if op_module_id == required_module_id || required_module_id.is_empty() {
-                                if operator_module_level >= talent_data.required_module_level
+                            if (op_module_id == required_module_id || required_module_id.is_empty())
+                                && operator_module_level >= talent_data.required_module_level
                                     && operator_module_level >= current_req_module_lvl
-                                {
-                                    if potential > talent_data.required_potential
+                                    && potential > talent_data.required_potential
                                         && potential > current_req_potential
                                     {
                                         talent1_parameters = talent_data.talent_data.clone();
@@ -427,11 +432,8 @@ impl OperatorUnit {
                                         current_req_potential = talent_data.required_potential;
                                         current_req_module_lvl = talent_data.required_module_level;
                                     }
-                                }
-                            }
                         }
                     }
-                }
             }
             // Suppress unused variable warnings
             let _ = current_promo;
@@ -451,8 +453,7 @@ impl OperatorUnit {
             for talent_data in &operator_data.talent2_parameters {
                 if elite >= talent_data.required_promotion
                     && talent_data.required_promotion >= current_promo
-                {
-                    if level >= talent_data.required_level
+                    && level >= talent_data.required_level
                         && talent_data.required_level >= current_req_level
                     {
                         let op_module_id = operator_module
@@ -461,8 +462,8 @@ impl OperatorUnit {
                             .unwrap_or("");
 
                         if op_module_id.is_empty() {
-                            if talent_data.required_module_id.is_empty() {
-                                if potential > talent_data.required_potential
+                            if talent_data.required_module_id.is_empty()
+                                && potential > talent_data.required_potential
                                     && potential > current_req_potential
                                 {
                                     talent2_parameters = talent_data.talent_data.clone();
@@ -471,7 +472,6 @@ impl OperatorUnit {
                                     current_req_potential = talent_data.required_potential;
                                     current_req_module_lvl = talent_data.required_module_level;
                                 }
-                            }
                         } else {
                             let required_module_id = if !talent_data.required_module_id.is_empty() {
                                 talent_data.required_module_id.clone()
@@ -479,9 +479,7 @@ impl OperatorUnit {
                                 let module_index = operator_data
                                     .available_modules
                                     .iter()
-                                    .position(|m| {
-                                        m.module.id.as_deref() == Some(op_module_id)
-                                    });
+                                    .position(|m| m.module.id.as_deref() == Some(op_module_id));
 
                                 match module_index {
                                     Some(1) => operator_data
@@ -497,11 +495,10 @@ impl OperatorUnit {
                                 }
                             };
 
-                            if op_module_id == required_module_id || required_module_id.is_empty() {
-                                if operator_module_level >= talent_data.required_module_level
+                            if (op_module_id == required_module_id || required_module_id.is_empty())
+                                && operator_module_level >= talent_data.required_module_level
                                     && operator_module_level >= current_req_module_lvl
-                                {
-                                    if potential > talent_data.required_potential
+                                    && potential > talent_data.required_potential
                                         && potential > current_req_potential
                                     {
                                         talent2_parameters = talent_data.talent_data.clone();
@@ -510,11 +507,8 @@ impl OperatorUnit {
                                         current_req_potential = talent_data.required_potential;
                                         current_req_module_lvl = talent_data.required_module_level;
                                     }
-                                }
-                            }
                         }
                     }
-                }
             }
             // Suppress unused variable warnings
             let _ = current_promo;
@@ -587,9 +581,9 @@ impl OperatorUnit {
 
         let buff_atk_flat = params.buffs.flat_atk.unwrap_or(0) as f64;
         if buff_atk_flat > 0.0 {
-            buff_name += &format!(" atk+{:.0}", buff_atk_flat);
+            buff_name += &format!(" atk+{buff_atk_flat:.0}");
         } else if buff_atk_flat < 0.0 {
-            buff_name += &format!(" atk{:.0}", buff_atk_flat);
+            buff_name += &format!(" atk{buff_atk_flat:.0}");
         }
 
         let buff_fragile = params.buffs.fragile.unwrap_or(0.0) as f64;
@@ -600,7 +594,7 @@ impl OperatorUnit {
         }
 
         if sp_boost > 0.0 {
-            buff_name += &format!(" +{:.0}SP/s", sp_boost);
+            buff_name += &format!(" +{sp_boost:.0}SP/s");
         }
 
         if let Some(ref shred) = params.shred {
@@ -613,13 +607,13 @@ impl OperatorUnit {
                 buff_name += &format!(" -shredDef{:.0}%def", 100.0 * (1.0 - shred_def as f64));
             }
             if shred_def_flat != 0 {
-                buff_name += &format!(" -shredDef{:.0}def", shred_def_flat);
+                buff_name += &format!(" -shredDef{shred_def_flat:.0}def");
             }
             if shred_res != 1 {
                 buff_name += &format!(" -shredRes{:.0}%res", 100.0 * (1.0 - shred_res as f64));
             }
             if shred_res_flat != 0 {
-                buff_name += &format!(" -shredRes{:.0}res", shred_res_flat);
+                buff_name += &format!(" -shredRes{shred_res_flat:.0}res");
             }
         }
 
@@ -648,6 +642,8 @@ impl OperatorUnit {
 
             operator_module,
             operator_module_level,
+            module_index,
+            module_level,
 
             skill_index,
             skill_parameters,
@@ -689,6 +685,9 @@ impl OperatorUnit {
             buff_atk,
             buff_atk_flat,
             buff_fragile,
+
+            // Default shreds: [1, 0, 1, 0] means no shred applied
+            shreds: vec![1.0, 0.0, 1.0, 0.0],
         }
     }
 
@@ -713,11 +712,11 @@ impl OperatorUnit {
             (final_atk - enemy.defense).max(final_atk * 0.05)
         };
 
-        let dps = ((hits * hit_dmg) / self.attack_interval as f64)
-            * ((self.attack_speed + extra.aspd) / 100.0)
-            * aoe;
+        
 
-        dps
+        ((hits * hit_dmg) / self.attack_interval as f64)
+            * ((self.attack_speed + extra.aspd) / 100.0)
+            * aoe
     }
 
     pub fn skill_dps(&self, _enemy: &EnemyStats) -> f64 {
@@ -746,10 +745,10 @@ impl OperatorUnit {
 
             let cycle_dmg = skill_dps * self.skill_duration
                 + (off_skill_dps * self.skill_cost as f64) / (1.0 + self.sp_boost as f64);
-            let dps =
-                cycle_dmg / (self.skill_duration + self.skill_cost as f64 / (1.0 + self.sp_boost as f64));
+            
 
-            dps
+            cycle_dmg
+                / (self.skill_duration + self.skill_cost as f64 / (1.0 + self.sp_boost as f64))
         }
     }
 }

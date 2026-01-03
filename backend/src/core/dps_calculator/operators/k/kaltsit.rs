@@ -1,0 +1,131 @@
+//! DPS calculations for Kaltsit
+//!
+//! Auto-generated from ArknightsDpsCompare damage_formulas.py
+
+use super::super::super::operator_data::OperatorData;
+use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
+
+/// Kaltsit operator implementation
+pub struct Kaltsit {
+    pub unit: OperatorUnit,
+}
+
+impl Kaltsit {
+    /// Available skills for this operator
+    pub const AVAILABLE_SKILLS: &'static [i32] = &[1, 2, 3];
+
+    /// Available modules for this operator
+    pub const AVAILABLE_MODULES: &'static [i32] = &[1, 2, 3];
+
+    /// Creates a new Kaltsit operator
+    pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
+        let unit = OperatorUnit::new(
+            operator_data,
+            params,
+            3, // default_skill_index
+            1, // default_potential
+            2, // default_module_index
+            Self::AVAILABLE_SKILLS.to_vec(),
+        );
+
+        Self { unit }
+    }
+
+    /// Calculates DPS against an enemy
+    ///
+    /// Original Python implementation:
+    ///
+    /// aspd = 0
+    /// if self.module == 2 and self.talent_dmg:
+    /// if self.module_lvl == 2: aspd = 12
+    /// if self.module_lvl == 3: aspd = 20
+    /// atkbuff = 0.25 * (self.module_lvl - 1) if self.module == 3 else 0
+    ///
+    /// if self.skill < 2:
+    /// final_atk = self.drone_atk * (1 + self.buff_atk + atkbuff) + self.buff_atk_flat
+    /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)
+    /// dps = hitdmg/self.drone_atk_interval * (self.attack_speed+aspd)/100
+    /// if self.skill == 2:
+    /// final_atk = self.drone_atk * (1 + self.buff_atk + self.skill_params[1] + atkbuff) + self.buff_atk_flat
+    /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)
+    /// dps = hitdmg/self.drone_atk_interval * (self.attack_speed+aspd)/100 * min(self.targets,3)
+    /// if self.skill == 3:
+    /// final_atk = self.drone_atk * (1 + self.buff_atk + self.skill_params[0] * 0.5 + atkbuff) + self.buff_atk_flat
+    /// dps = final_atk/self.drone_atk_interval * (self.attack_speed+aspd)/100 * np.fmax(-defense, 1)
+    /// return dps
+    #[allow(
+        unused_variables,
+        unused_mut,
+        unused_assignments,
+        unused_parens,
+        clippy::excessive_precision,
+        clippy::unnecessary_cast,
+        clippy::collapsible_if,
+        clippy::double_parens
+    )]
+    pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
+        let defense = enemy.defense;
+        let res = enemy.res;
+
+        let mut dps: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+
+        aspd = 0.0;
+        if (self.unit.module_index as f64) == 2.0 && self.unit.talent_damage {
+            if (self.unit.module_level as f64) == 2.0 {
+                aspd = 12.0;
+            }
+            if (self.unit.module_level as f64) == 3.0 {
+                aspd = 20.0;
+            }
+        }
+        atkbuff = if ((self.unit.module_index as f64) as f64) == 3.0 {
+            0.25 * (((self.unit.module_level as f64) as f64) - 1.0)
+        } else {
+            0.0
+        };
+        if (self.unit.skill_index as f64) < 2.0 {
+            final_atk = self.unit.drone_atk * (1.0 + self.unit.buff_atk + atkbuff)
+                + self.unit.buff_atk_flat;
+            hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
+            dps = hitdmg / (self.unit.drone_atk_interval as f64) * (self.unit.attack_speed + aspd)
+                / 100.0;
+        }
+        if (self.unit.skill_index as f64) == 2.0 {
+            final_atk = self.unit.drone_atk
+                * (1.0 + self.unit.buff_atk + self.unit.skill_parameters[1] + atkbuff)
+                + self.unit.buff_atk_flat;
+            hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
+            dps = hitdmg / (self.unit.drone_atk_interval as f64) * (self.unit.attack_speed + aspd)
+                / 100.0
+                * ((self.unit.targets as f64) as f64).min((3) as f64);
+        }
+        if (self.unit.skill_index as f64) == 3.0 {
+            final_atk = self.unit.drone_atk
+                * (1.0 + self.unit.buff_atk + self.unit.skill_parameters[0] * 0.5 + atkbuff)
+                + self.unit.buff_atk_flat;
+            dps = final_atk / (self.unit.drone_atk_interval as f64)
+                * (self.unit.attack_speed + aspd)
+                / 100.0
+                * ((-defense) as f64).max((1) as f64);
+        }
+        dps
+    }
+}
+
+impl std::ops::Deref for Kaltsit {
+    type Target = OperatorUnit;
+
+    fn deref(&self) -> &Self::Target {
+        &self.unit
+    }
+}
+
+impl std::ops::DerefMut for Kaltsit {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.unit
+    }
+}
