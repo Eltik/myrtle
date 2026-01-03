@@ -1,3 +1,5 @@
+#![allow(clippy::module_inception)]
+
 mod ebenholz;
 mod ela;
 mod entelechia;

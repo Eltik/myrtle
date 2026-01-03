@@ -1,3 +1,5 @@
+#![allow(clippy::module_inception)]
+
 mod jackie;
 mod jaye;
 mod jessica;

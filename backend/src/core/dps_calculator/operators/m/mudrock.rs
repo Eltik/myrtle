@@ -2,8 +2,8 @@
 //!
 //! Auto-generated from ArknightsDpsCompare damage_formulas.py
 
-use super::super::super::operator_data::OperatorData;
 use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
+use super::super::super::operator_data::OperatorData;
 
 /// Mudrock operator implementation
 pub struct Mudrock {
@@ -34,7 +34,7 @@ impl Mudrock {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
+    /// 
     /// atkbuff = self.skill_params[0] if self.skill == 3 else 0
     /// if self.module == 2 and self.module_dmg: atkbuff += 0.08
     /// dmg = self.talent2_params[1] if self.module == 2 and self.module_lvl > 1 and self.talent2_dmg else 1
@@ -43,7 +43,7 @@ impl Mudrock {
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05) * dmg
     /// dps = hitdmg/atk_interval * self.attack_speed/100
     /// if self.skill == 3: dps *= min(self.targets,3)
-    ///
+    /// 
     /// if self.skill == 2 and self.hits > 0:
     /// atk_scale = self.skill_params[0]
     /// skilldmg = np.fmax(final_atk * atk_scale - defense, final_atk * atk_scale * 0.05) * dmg
@@ -54,71 +54,38 @@ impl Mudrock {
     /// skillcycle = spcost / (self.hits+extra_sp) + 1.2
     /// dps += skilldmg / skillcycle * self.targets
     /// return dps
-    #[allow(
-        unused_variables,
-        unused_mut,
-        unused_assignments,
-        unused_parens,
-        clippy::excessive_precision,
-        clippy::unnecessary_cast,
-        clippy::collapsible_if,
-        clippy::double_parens
-    )]
+    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op)]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let defense = enemy.defense;
         let res = enemy.res;
 
         let mut atk_interval: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
         let mut skilldmg: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
 
-        atkbuff = if ((self.unit.skill_index as f64) as f64) == 3.0 {
-            self.unit.skill_parameters[0]
-        } else {
-            0.0
-        };
+        atkbuff = if ((self.unit.skill_index as f64) as f64) == 3.0 { self.unit.skill_parameters[0] } else { 0.0 };
         // UNTRANSLATED: if self.module == 2 and self.module_dmg: atkbuff += 0.08
-        let mut dmg = if ((self.unit.module_index as f64) as f64) == 2.0
-            && ((self.unit.module_level as f64) as f64) > 1.0
-            && self.unit.talent2_damage
-        {
-            self.unit.talent2_parameters[1]
-        } else {
-            1.0
-        };
+        let mut dmg = if ((self.unit.module_index as f64) as f64) == 2.0 && ((self.unit.module_level as f64) as f64) > 1.0 && self.unit.talent2_damage { self.unit.talent2_parameters[1] } else { 1.0 };
         final_atk = self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
-        atk_interval = if ((self.unit.skill_index as f64) as f64) == 3.0 {
-            (self.unit.attack_interval as f64) * 0.7
-        } else {
-            (self.unit.attack_interval as f64)
-        };
+        atk_interval = if ((self.unit.skill_index as f64) as f64) == 3.0 { (self.unit.attack_interval as f64) * 0.7 } else { (self.unit.attack_interval as f64) };
         hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64) * dmg;
-        dps = hitdmg / atk_interval * self.unit.attack_speed / 100.0;
+        dps = hitdmg/atk_interval * self.unit.attack_speed/ 100.0;
         // UNTRANSLATED: if self.skill == 3: dps *= min(self.targets,3)
-        if (self.unit.skill_index as f64) == 2.0
-            && 1.0 /* self.hits - needs manual implementation */ > 0.0
-        {
-            atk_scale = self.unit.skill_parameters[0];
-            skilldmg = ((final_atk * atk_scale - defense) as f64)
-                .max((final_atk * atk_scale * 0.05) as f64)
-                * dmg;
-            let mut spcost = (self.unit.skill_cost as f64);
-            let mut extra_sp = if ((self.unit.module_index as f64) as f64) == 1.0 {
-                (((self.unit.module_level as f64) as f64) - 1.0) / 9.0
-            } else {
-                0.0
-            };
-            // UNTRANSLATED: if self.module_lvl == 2: extra_sp *= (spcost-1)/spcost
-            // UNTRANSLATED: if self.module_lvl == 3: extra_sp *= (2*spcost-3)/(2*spcost)
-            let mut skillcycle =
-                spcost / (1.0 /* self.hits - needs manual implementation */+extra_sp) + 1.2;
-            dps += skilldmg / skillcycle * (self.unit.targets as f64);
+        if (self.unit.skill_index as f64) == 2.0 && 1.0 /* self.hits - needs manual implementation */ > 0.0 {
+        atk_scale = self.unit.skill_parameters[0];
+        skilldmg = ((final_atk * atk_scale - defense) as f64).max((final_atk * atk_scale * 0.05) as f64) * dmg;
+        let mut spcost = (self.unit.skill_cost as f64);
+        let mut extra_sp = if ((self.unit.module_index as f64) as f64) == 1.0 { (((self.unit.module_level as f64) as f64)-1.0)/ 9.0 } else { 0.0 };
+        // UNTRANSLATED: if self.module_lvl == 2: extra_sp *= (spcost-1)/spcost
+        // UNTRANSLATED: if self.module_lvl == 3: extra_sp *= (2*spcost-3)/(2*spcost)
+        let mut skillcycle = spcost / (1.0 /* self.hits - needs manual implementation */+extra_sp) + 1.2;
+        dps += skilldmg / skillcycle * (self.unit.targets as f64);
         }
-        dps
+        return dps;
     }
 }
 

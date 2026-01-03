@@ -1,0 +1,3679 @@
+[
+  {
+    "class_name": "Aak",
+    "display_name": "Aak",
+    "char_id": "char_225_haak",
+    "rust_module": "aak",
+    "skills": [
+      1,
+      3
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Absinthe",
+    "display_name": "Absinthe",
+    "char_id": "char_405_absin",
+    "rust_module": "absinthe",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Aciddrop",
+    "display_name": "Aciddrop",
+    "char_id": "char_366_acdrop",
+    "rust_module": "aciddrop",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Adnachiel",
+    "display_name": "Adnachiel",
+    "char_id": "char_211_adnach",
+    "rust_module": "adnachiel",
+    "skills": [
+      1
+    ],
+    "modules": [],
+    "default_module": -1
+  },
+  {
+    "class_name": "Amiya",
+    "display_name": "Amiya",
+    "char_id": "char_002_amiya",
+    "rust_module": "amiya",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "AmiyaGuard",
+    "display_name": "AmiyaGuard",
+    "char_id": "char_1001_amiya2",
+    "rust_module": "amiya_guard",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "AmiyaMedic",
+    "display_name": "AmiyaMedic",
+    "char_id": "char_1037_amiya3",
+    "rust_module": "amiya_medic",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Andreana",
+    "display_name": "Andreana",
+    "char_id": "char_218_cuttle",
+    "rust_module": "andreana",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Angelina",
+    "display_name": "Angelina",
+    "char_id": "char_291_aglina",
+    "rust_module": "angelina",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      2,
+      1
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Aosta",
+    "display_name": "Aosta",
+    "char_id": "char_346_aosta",
+    "rust_module": "aosta",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "April",
+    "display_name": "April",
+    "char_id": "char_365_aprl",
+    "rust_module": "april",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Archetto",
+    "display_name": "Archetto",
+    "char_id": "char_332_archet",
+    "rust_module": "archetto",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      2,
+      1
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Arene",
+    "display_name": "Arene",
+    "char_id": "char_271_spikes",
+    "rust_module": "arene",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Asbestos",
+    "display_name": "Asbestos",
+    "char_id": "char_378_asbest",
+    "rust_module": "asbestos",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Ascalon",
+    "display_name": "Ascalon",
+    "char_id": "char_4132_ascln",
+    "rust_module": "ascalon",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Ash",
+    "display_name": "Ash",
+    "char_id": "char_456_ash",
+    "rust_module": "ash",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      2,
+      1
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Ashlock",
+    "display_name": "Ashlock",
+    "char_id": "char_431_ashlok",
+    "rust_module": "ashlock",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Astesia",
+    "display_name": "Astesia",
+    "char_id": "char_274_astesi",
+    "rust_module": "astesia",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Astgenne",
+    "display_name": "Astgenne",
+    "char_id": "char_135_halo",
+    "rust_module": "astgenne",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Aurora",
+    "display_name": "Aurora",
+    "char_id": "char_422_aurora",
+    "rust_module": "aurora",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Ayerscarpe",
+    "display_name": "Ayerscarpe",
+    "char_id": "char_294_ayer",
+    "rust_module": "ayerscarpe",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Bagpipe",
+    "display_name": "Bagpipe",
+    "char_id": "char_222_bpipe",
+    "rust_module": "bagpipe",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Beehunter",
+    "display_name": "Beehunter",
+    "char_id": "char_137_brownb",
+    "rust_module": "beehunter",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Beeswax",
+    "display_name": "Beeswax",
+    "char_id": "char_344_beewax",
+    "rust_module": "beeswax",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Bibeak",
+    "display_name": "Bibeak",
+    "char_id": "char_252_bibeak",
+    "rust_module": "bibeak",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Blaze",
+    "display_name": "Blaze",
+    "char_id": "char_017_huang",
+    "rust_module": "blaze",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "BlazeAlter",
+    "display_name": "BlazeAlter",
+    "char_id": "char_1040_blaze2",
+    "rust_module": "blaze_alter",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Blemishine",
+    "display_name": "Blemishine",
+    "char_id": "char_423_blemsh",
+    "rust_module": "blemishine",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      2,
+      1
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Blitz",
+    "display_name": "Blitz",
+    "char_id": "char_457_blitz",
+    "rust_module": "blitz",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "BluePoison",
+    "display_name": "BluePoison",
+    "char_id": "char_129_bluep",
+    "rust_module": "blue_poison",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Broca",
+    "display_name": "Broca",
+    "char_id": "char_356_broca",
+    "rust_module": "broca",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Bryophyta",
+    "display_name": "Bryophyta",
+    "char_id": "char_4106_bryota",
+    "rust_module": "bryophyta",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Cantabile",
+    "display_name": "Cantabile",
+    "char_id": "char_497_ctable",
+    "rust_module": "cantabile",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Caper",
+    "display_name": "Caper",
+    "char_id": "char_4100_caper",
+    "rust_module": "caper",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Carnelian",
+    "display_name": "Carnelian",
+    "char_id": "char_426_billro",
+    "rust_module": "carnelian",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Castle3",
+    "display_name": "Castle3",
+    "char_id": "char_286_cast3",
+    "rust_module": "castle_3",
+    "skills": [
+      0
+    ],
+    "modules": [],
+    "default_module": -1
+  },
+  {
+    "class_name": "Catapult",
+    "display_name": "Catapult",
+    "char_id": "char_282_catap",
+    "rust_module": "catapult",
+    "skills": [
+      1
+    ],
+    "modules": [],
+    "default_module": -1
+  },
+  {
+    "class_name": "Ceobe",
+    "display_name": "Ceobe",
+    "char_id": "char_2013_cerber",
+    "rust_module": "ceobe",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Chen",
+    "display_name": "Chen",
+    "char_id": "char_010_chen",
+    "rust_module": "chen",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "ChenAlter",
+    "display_name": "ChenAlter",
+    "char_id": "char_1013_chen2",
+    "rust_module": "chen_alter",
+    "skills": [
+      1,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Chongyue",
+    "display_name": "Chongyue",
+    "char_id": "char_2024_chyue",
+    "rust_module": "chongyue",
+    "skills": [
+      1,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "CivilightEterna",
+    "display_name": "CivilightEterna",
+    "char_id": "char_4134_cetsyr",
+    "rust_module": "civilight_eterna",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Click",
+    "display_name": "Click",
+    "char_id": "char_328_cammou",
+    "rust_module": "click",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Coldshot",
+    "display_name": "Coldshot",
+    "char_id": "char_4104_coldst",
+    "rust_module": "coldshot",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Contrail",
+    "display_name": "Contrail",
+    "char_id": "char_4165_ctrail",
+    "rust_module": "contrail",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [],
+    "default_module": -1
+  },
+  {
+    "class_name": "Conviction",
+    "display_name": "Conviction",
+    "char_id": "char_159_peacok",
+    "rust_module": "conviction",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Crownslayer",
+    "display_name": "Crownslayer",
+    "char_id": "char_1502_crosly",
+    "rust_module": "crownslayer",
+    "skills": [
+      1,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Dagda",
+    "display_name": "Dagda",
+    "char_id": "char_157_dagda",
+    "rust_module": "dagda",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Defense",
+    "display_name": "12F",
+    "char_id": "char_009_12fce",
+    "rust_module": "defense",
+    "skills": [
+      0
+    ],
+    "modules": [],
+    "default_module": -1
+  },
+  {
+    "class_name": "Degenbrecher",
+    "display_name": "Degenbrecher",
+    "char_id": "char_4116_blkkgt",
+    "rust_module": "degenbrecher",
+    "skills": [
+      1,
+      3
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Diamante",
+    "display_name": "Diamante",
+    "char_id": "char_499_kaitou",
+    "rust_module": "diamante",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Dobermann",
+    "display_name": "Dobermann",
+    "char_id": "char_130_doberm",
+    "rust_module": "dobermann",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Doc",
+    "display_name": "Doc",
+    "char_id": "char_4125_rdoc",
+    "rust_module": "doc",
+    "skills": [
+      1
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Dorothy",
+    "display_name": "Dorothy",
+    "char_id": "char_4048_doroth",
+    "rust_module": "dorothy",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      2,
+      1
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Durin",
+    "display_name": "Durin",
+    "char_id": "char_501_durin",
+    "rust_module": "durin",
+    "skills": [
+      0
+    ],
+    "modules": [],
+    "default_module": -1
+  },
+  {
+    "class_name": "Durnar",
+    "display_name": "Durnar",
+    "char_id": "char_260_durnar",
+    "rust_module": "durnar",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Dusk",
+    "display_name": "Dusk",
+    "char_id": "char_2015_dusk",
+    "rust_module": "dusk",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2,
+      3
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Ebenholz",
+    "display_name": "Ebenholz",
+    "char_id": "char_4046_ebnhlz",
+    "rust_module": "ebenholz",
+    "skills": [
+      1,
+      3
+    ],
+    "modules": [
+      1,
+      2,
+      3
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Ela",
+    "display_name": "Ela",
+    "char_id": "char_4123_ela",
+    "rust_module": "ela",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      3
+    ],
+    "default_module": 3
+  },
+  {
+    "class_name": "Entelechia",
+    "display_name": "Entelechia",
+    "char_id": "char_4010_etlchi",
+    "rust_module": "entelechia",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Erato",
+    "display_name": "Erato",
+    "char_id": "char_4043_erato",
+    "rust_module": "erato",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Estelle",
+    "display_name": "Estelle",
+    "char_id": "char_127_estell",
+    "rust_module": "estelle",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Ethan",
+    "display_name": "Ethan",
+    "char_id": "char_355_ethan",
+    "rust_module": "ethan",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Eunectes",
+    "display_name": "Eunectes",
+    "char_id": "char_416_zumama",
+    "rust_module": "eunectes",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2,
+      3
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "ExecutorAlter",
+    "display_name": "ExecutorAlter",
+    "char_id": "char_1032_excu2",
+    "rust_module": "executor_alter",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Exusiai",
+    "display_name": "Exusiai",
+    "char_id": "char_103_angel",
+    "rust_module": "exusiai",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "ExusiaiAlter",
+    "display_name": "ExusiaiAlter",
+    "char_id": "char_1041_angel2",
+    "rust_module": "exusiai_alter",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Eyjafjalla",
+    "display_name": "Eyjafjalla",
+    "char_id": "char_180_amgoat",
+    "rust_module": "eyjafjalla",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "FangAlter",
+    "display_name": "FangAlter",
+    "char_id": "char_1036_fang2",
+    "rust_module": "fang_alter",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Fartooth",
+    "display_name": "Fartooth",
+    "char_id": "char_430_fartth",
+    "rust_module": "fartooth",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Fiammetta",
+    "display_name": "Fiammetta",
+    "char_id": "char_300_phenxi",
+    "rust_module": "fiammetta",
+    "skills": [
+      1,
+      3
+    ],
+    "modules": [
+      2,
+      1
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Figurino",
+    "display_name": "Figurino",
+    "char_id": "char_4155_talr",
+    "rust_module": "figurino",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Firewhistle",
+    "display_name": "Firewhistle",
+    "char_id": "char_493_firwhl",
+    "rust_module": "firewhistle",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Flamebringer",
+    "display_name": "Flamebringer",
+    "char_id": "char_131_flameb",
+    "rust_module": "flamebringer",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Flametail",
+    "display_name": "Flametail",
+    "char_id": "char_420_flamtl",
+    "rust_module": "flametail",
+    "skills": [
+      1,
+      3
+    ],
+    "modules": [
+      2,
+      1
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Flint",
+    "display_name": "Flint",
+    "char_id": "char_415_flint",
+    "rust_module": "flint",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Folinic",
+    "display_name": "Folinic",
+    "char_id": "char_345_folnic",
+    "rust_module": "folinic",
+    "skills": [
+      2
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Franka",
+    "display_name": "Franka",
+    "char_id": "char_106_franka",
+    "rust_module": "franka",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Frost",
+    "display_name": "Frost",
+    "char_id": "char_458_rfrost",
+    "rust_module": "frost",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Frostleaf",
+    "display_name": "Frostleaf",
+    "char_id": "char_193_frostl",
+    "rust_module": "frostleaf",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Fuze",
+    "display_name": "Fuze",
+    "char_id": "char_4126_fuze",
+    "rust_module": "fuze",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "GavialAlter",
+    "display_name": "GavialAlter",
+    "char_id": "char_1026_gvial2",
+    "rust_module": "gavial_alter",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Gladiia",
+    "display_name": "Gladiia",
+    "char_id": "char_474_glady",
+    "rust_module": "gladiia",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Gnosis",
+    "display_name": "Gnosis",
+    "char_id": "char_206_gnosis",
+    "rust_module": "gnosis",
+    "skills": [
+      1,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Goldenglow",
+    "display_name": "Goldenglow",
+    "char_id": "char_377_gdglow",
+    "rust_module": "goldenglow",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [],
+    "default_module": -1
+  },
+  {
+    "class_name": "Gracebearer",
+    "display_name": "Gracebearer",
+    "char_id": "char_4187_graceb",
+    "rust_module": "gracebearer",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [],
+    "default_module": -1
+  },
+  {
+    "class_name": "Grani",
+    "display_name": "Grani",
+    "char_id": "char_220_grani",
+    "rust_module": "grani",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "GreyThroat",
+    "display_name": "GreyThroat",
+    "char_id": "char_367_swllow",
+    "rust_module": "grey_throat",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "GreyyAlter",
+    "display_name": "GreyyAlter",
+    "char_id": "char_1027_greyy2",
+    "rust_module": "greyy_alter",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Hadiya",
+    "display_name": "Hadiya",
+    "char_id": "char_394_hadiya",
+    "rust_module": "hadiya",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [],
+    "default_module": -1
+  },
+  {
+    "class_name": "Harmonie",
+    "display_name": "Harmonie",
+    "char_id": "char_297_hamoni",
+    "rust_module": "harmonie",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Haze",
+    "display_name": "Haze",
+    "char_id": "char_141_nights",
+    "rust_module": "haze",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Hellagur",
+    "display_name": "Hellagur",
+    "char_id": "char_188_helage",
+    "rust_module": "hellagur",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Hibiscus",
+    "display_name": "HibiscusAlter",
+    "char_id": "char_1024_hbisc2",
+    "rust_module": "hibiscus",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Highmore",
+    "display_name": "Highmore",
+    "char_id": "char_4066_highmo",
+    "rust_module": "highmore",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Hoederer",
+    "display_name": "Hoederer",
+    "char_id": "char_4088_hodrer",
+    "rust_module": "hoederer",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Hoolheyak",
+    "display_name": "Hoolheyak",
+    "char_id": "char_4027_heyak",
+    "rust_module": "hoolheyak",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2,
+      3
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Horn",
+    "display_name": "Horn",
+    "char_id": "char_4039_horn",
+    "rust_module": "horn",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Hoshiguma",
+    "display_name": "Hoshiguma",
+    "char_id": "char_136_hsguma",
+    "rust_module": "hoshiguma",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      2,
+      1
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "HoshigumaAlter",
+    "display_name": "HoshigumaAlter",
+    "char_id": "char_1044_hsgma2",
+    "rust_module": "hoshiguma_alter",
+    "skills": [
+      1,
+      3
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Humus",
+    "display_name": "Humus",
+    "char_id": "char_491_humus",
+    "rust_module": "humus",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Iana",
+    "display_name": "Iana",
+    "char_id": "char_4124_iana",
+    "rust_module": "iana",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Ifrit",
+    "display_name": "Ifrit",
+    "char_id": "char_134_ifrit",
+    "rust_module": "ifrit",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      3
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Indra",
+    "display_name": "Indra",
+    "char_id": "char_155_tiger",
+    "rust_module": "indra",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Ines",
+    "display_name": "Ines",
+    "char_id": "char_4087_ines",
+    "rust_module": "ines",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Insider",
+    "display_name": "Insider",
+    "char_id": "char_498_inside",
+    "rust_module": "insider",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Irene",
+    "display_name": "Irene",
+    "char_id": "char_4009_irene",
+    "rust_module": "irene",
+    "skills": [
+      1,
+      3
+    ],
+    "modules": [
+      2,
+      1
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Jaye",
+    "display_name": "Jaye",
+    "char_id": "char_272_strong",
+    "rust_module": "jaye",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Jessica",
+    "display_name": "Jessica",
+    "char_id": "char_235_jesica",
+    "rust_module": "jessica",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "JessicaAlter",
+    "display_name": "JessicaAlter",
+    "char_id": "char_1034_jesca2",
+    "rust_module": "jessica_alter",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "JusticeKnight",
+    "display_name": "JusticeKnight",
+    "char_id": "char_4000_jnight",
+    "rust_module": "justice_knight",
+    "skills": [
+      0
+    ],
+    "modules": [],
+    "default_module": -1
+  },
+  {
+    "class_name": "Kafka",
+    "display_name": "Kafka",
+    "char_id": "char_214_kafka",
+    "rust_module": "kafka",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Kaltsit",
+    "display_name": "Kaltsit",
+    "char_id": "char_003_kalts",
+    "rust_module": "kaltsit",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2,
+      3
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Kazemaru",
+    "display_name": "Kazemaru",
+    "char_id": "char_4016_kazema",
+    "rust_module": "kazemaru",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Kirara",
+    "display_name": "Kirara",
+    "char_id": "char_478_kirara",
+    "rust_module": "kirara",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Kjera",
+    "display_name": "Kjera",
+    "char_id": "char_4013_kjera",
+    "rust_module": "kjera",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Kroos",
+    "display_name": "Kroos",
+    "char_id": "char_124_kroos",
+    "rust_module": "kroos",
+    "skills": [
+      1
+    ],
+    "modules": [],
+    "default_module": -1
+  },
+  {
+    "class_name": "KroosAlter",
+    "display_name": "KroosAlter",
+    "char_id": "char_1021_kroos2",
+    "rust_module": "kroos_alter",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "LaPluma",
+    "display_name": "LaPluma",
+    "char_id": "char_421_crow",
+    "rust_module": "la_pluma",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Laios",
+    "display_name": "Laios",
+    "char_id": "char_4142_laios",
+    "rust_module": "laios",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Lappland",
+    "display_name": "Lappland",
+    "char_id": "char_140_whitew",
+    "rust_module": "lappland",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "LapplandAlter",
+    "display_name": "LapplandAlter",
+    "char_id": "char_1038_whitw2",
+    "rust_module": "lappland_alter",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Lava3star",
+    "display_name": "Lava",
+    "char_id": "char_121_lava",
+    "rust_module": "lava_3star",
+    "skills": [
+      1
+    ],
+    "modules": [],
+    "default_module": -1
+  },
+  {
+    "class_name": "Lavaalt",
+    "display_name": "LavaAlter",
+    "char_id": "char_1011_lava2",
+    "rust_module": "lavaalt",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Lee",
+    "display_name": "Lee",
+    "char_id": "char_322_lmlee",
+    "rust_module": "lee",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "LeiziAlter",
+    "display_name": "LeiziAlter",
+    "char_id": "char_1043_leizi2",
+    "rust_module": "leizi_alter",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Lemuen",
+    "display_name": "Lemuen",
+    "char_id": "char_4193_lemuen",
+    "rust_module": "lemuen",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Lessing",
+    "display_name": "Lessing",
+    "char_id": "char_4011_lessng",
+    "rust_module": "lessing",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Leto",
+    "display_name": "Leto",
+    "char_id": "char_194_leto",
+    "rust_module": "leto",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Lin",
+    "display_name": "Lin",
+    "char_id": "char_4080_lin",
+    "rust_module": "lin",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Ling",
+    "display_name": "Ling",
+    "char_id": "char_2023_ling",
+    "rust_module": "ling",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Logos",
+    "display_name": "Logos",
+    "char_id": "char_4133_logos",
+    "rust_module": "logos",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      3,
+      2
+    ],
+    "default_module": 3
+  },
+  {
+    "class_name": "Lucilla",
+    "display_name": "Lucilla",
+    "char_id": "char_4079_haini",
+    "rust_module": "lucilla",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Lunacub",
+    "display_name": "Lunacub",
+    "char_id": "char_4014_lunacu",
+    "rust_module": "lunacub",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "LuoXiaohei",
+    "display_name": "LuoXiaohei",
+    "char_id": "char_4067_lolxh",
+    "rust_module": "luo_xiaohei",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Lutonada",
+    "display_name": "Lutonada",
+    "char_id": "char_4130_luton",
+    "rust_module": "lutonada",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Magallan",
+    "display_name": "Magallan",
+    "char_id": "char_248_mgllan",
+    "rust_module": "magallan",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Manticore",
+    "display_name": "Manticore",
+    "char_id": "char_215_mantic",
+    "rust_module": "manticore",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Marcille",
+    "display_name": "Marcille",
+    "char_id": "char_4141_marcil",
+    "rust_module": "marcille",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Matoimaru",
+    "display_name": "Matoimaru",
+    "char_id": "char_289_gyuki",
+    "rust_module": "matoimaru",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "May",
+    "display_name": "May",
+    "char_id": "char_133_mm",
+    "rust_module": "may",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Melantha",
+    "display_name": "Melantha",
+    "char_id": "char_208_melan",
+    "rust_module": "melantha",
+    "skills": [
+      1
+    ],
+    "modules": [],
+    "default_module": -1
+  },
+  {
+    "class_name": "Meteor",
+    "display_name": "Meteor",
+    "char_id": "char_126_shotst",
+    "rust_module": "meteor",
+    "skills": [
+      1
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Meteorite",
+    "display_name": "Meteorite",
+    "char_id": "char_219_meteo",
+    "rust_module": "meteorite",
+    "skills": [
+      1
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Midnight",
+    "display_name": "Midnight",
+    "char_id": "char_283_midn",
+    "rust_module": "midnight",
+    "skills": [
+      1
+    ],
+    "modules": [],
+    "default_module": -1
+  },
+  {
+    "class_name": "Minimalist",
+    "display_name": "Minimalist",
+    "char_id": "char_4054_malist",
+    "rust_module": "minimalist",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Mint",
+    "display_name": "Mint",
+    "char_id": "char_388_mint",
+    "rust_module": "mint",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "MissChristine",
+    "display_name": "MissChristine",
+    "char_id": "char_4198_christ",
+    "rust_module": "miss_christine",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "MisumiUika",
+    "display_name": "MisumiUika",
+    "char_id": "char_4184_dolris",
+    "rust_module": "misumi_uika",
+    "skills": [
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Mizuki",
+    "display_name": "Mizuki",
+    "char_id": "char_437_mizuki",
+    "rust_module": "mizuki",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2,
+      3
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Mlynar",
+    "display_name": "Mlynar",
+    "char_id": "char_4064_mlynar",
+    "rust_module": "mlynar",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Mon3tr",
+    "display_name": "Mon3tr",
+    "char_id": "char_4179_monstr",
+    "rust_module": "mon_3tr",
+    "skills": [
+      3
+    ],
+    "modules": [],
+    "default_module": -1
+  },
+  {
+    "class_name": "Morgan",
+    "display_name": "Morgan",
+    "char_id": "char_154_morgan",
+    "rust_module": "morgan",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Mostima",
+    "display_name": "Mostima",
+    "char_id": "char_213_mostma",
+    "rust_module": "mostima",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      2,
+      1
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Mountain",
+    "display_name": "Mountain",
+    "char_id": "char_264_f12yin",
+    "rust_module": "mountain",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      2,
+      1
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Mousse",
+    "display_name": "Mousse",
+    "char_id": "char_185_frncat",
+    "rust_module": "mousse",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "MrNothing",
+    "display_name": "MrNothing",
+    "char_id": "char_455_nothin",
+    "rust_module": "mr_nothing",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Mudrock",
+    "display_name": "Mudrock",
+    "char_id": "char_311_mudrok",
+    "rust_module": "mudrock",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Muelsyse",
+    "display_name": "Muelsyse",
+    "char_id": "char_249_mlyss",
+    "rust_module": "muelsyse",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Narantuya",
+    "display_name": "Narantuya",
+    "char_id": "char_4138_narant",
+    "rust_module": "narantuya",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "NearlAlter",
+    "display_name": "NearlAlter",
+    "char_id": "char_1014_nearl2",
+    "rust_module": "nearl_alter",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Necrass",
+    "display_name": "Eblana",
+    "char_id": "char_450_necras",
+    "rust_module": "necrass",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Nian",
+    "display_name": "Nian",
+    "char_id": "char_2014_nian",
+    "rust_module": "nian",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Nymph",
+    "display_name": "Nymph",
+    "char_id": "char_4146_nymph",
+    "rust_module": "nymph",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Odda",
+    "display_name": "Odda",
+    "char_id": "char_4131_odda",
+    "rust_module": "odda",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Pallas",
+    "display_name": "Pallas",
+    "char_id": "char_485_pallas",
+    "rust_module": "pallas",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Passenger",
+    "display_name": "Passenger",
+    "char_id": "char_472_pasngr",
+    "rust_module": "passenger",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Penance",
+    "display_name": "Penance",
+    "char_id": "char_4065_judge",
+    "rust_module": "penance",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Pepe",
+    "display_name": "Pepe",
+    "char_id": "char_4058_pepe",
+    "rust_module": "pepe",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      3
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Phantom",
+    "display_name": "Phantom",
+    "char_id": "char_250_phatom",
+    "rust_module": "phantom",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2,
+      3
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Pinecone",
+    "display_name": "Pinecone",
+    "char_id": "char_440_pinecn",
+    "rust_module": "pinecone",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Pith",
+    "display_name": "Pith",
+    "char_id": "char_509_acast",
+    "rust_module": "pith",
+    "skills": [
+      1
+    ],
+    "modules": [],
+    "default_module": -1
+  },
+  {
+    "class_name": "Platinum",
+    "display_name": "Platinum",
+    "char_id": "char_204_platnm",
+    "rust_module": "platinum",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Plume",
+    "display_name": "Plume",
+    "char_id": "char_192_falco",
+    "rust_module": "plume",
+    "skills": [
+      1
+    ],
+    "modules": [],
+    "default_module": -1
+  },
+  {
+    "class_name": "Popukar",
+    "display_name": "Popukar",
+    "char_id": "char_281_popka",
+    "rust_module": "popukar",
+    "skills": [
+      1
+    ],
+    "modules": [],
+    "default_module": -1
+  },
+  {
+    "class_name": "Pozemka",
+    "display_name": "Pozemka",
+    "char_id": "char_4055_bgsnow",
+    "rust_module": "pozemka",
+    "skills": [
+      1,
+      3
+    ],
+    "modules": [
+      2,
+      1
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "PramanixAlter",
+    "display_name": "PramanixAlter",
+    "char_id": "char_1046_sbell2",
+    "rust_module": "pramanix_alter",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "ProjektRed",
+    "display_name": "ProjektRed",
+    "char_id": "char_144_red",
+    "rust_module": "projekt_red",
+    "skills": [
+      1
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Provence",
+    "display_name": "Provence",
+    "char_id": "char_145_prove",
+    "rust_module": "provence",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Pudding",
+    "display_name": "Pudding",
+    "char_id": "char_4004_pudd",
+    "rust_module": "pudding",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Qiubai",
+    "display_name": "Qiubai",
+    "char_id": "char_4082_qiubai",
+    "rust_module": "qiubai",
+    "skills": [
+      1,
+      3
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Quartz",
+    "display_name": "Quartz",
+    "char_id": "char_4063_quartz",
+    "rust_module": "quartz",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Raidian",
+    "display_name": "Raidian",
+    "char_id": "char_4195_radian",
+    "rust_module": "raidian",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      3,
+      2
+    ],
+    "default_module": 3
+  },
+  {
+    "class_name": "Rangers",
+    "display_name": "Rangers",
+    "char_id": "char_503_rang",
+    "rust_module": "rangers",
+    "skills": [
+      0
+    ],
+    "modules": [],
+    "default_module": -1
+  },
+  {
+    "class_name": "Ray",
+    "display_name": "Ray",
+    "char_id": "char_4117_ray",
+    "rust_module": "ray",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "ReedAlter",
+    "display_name": "ReedAlter",
+    "char_id": "char_1020_reed2",
+    "rust_module": "reed_alter",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Res",
+    "display_name": "12F",
+    "char_id": "char_009_12fce",
+    "rust_module": "res",
+    "skills": [
+      0
+    ],
+    "modules": [],
+    "default_module": -1
+  },
+  {
+    "class_name": "Rockrock",
+    "display_name": "Rockrock",
+    "char_id": "char_4040_rockr",
+    "rust_module": "rockrock",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Rosa",
+    "display_name": "Rosa",
+    "char_id": "char_197_poca",
+    "rust_module": "rosa",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Rosmontis",
+    "display_name": "Rosmontis",
+    "char_id": "char_391_rosmon",
+    "rust_module": "rosmontis",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      3
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Saga",
+    "display_name": "Saga",
+    "char_id": "char_362_saga",
+    "rust_module": "saga",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      2,
+      1
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "SandReckoner",
+    "display_name": "SandReckoner",
+    "char_id": "char_4140_lasher",
+    "rust_module": "sand_reckoner",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "SanktaMiksaparato",
+    "display_name": "SanktaMiksaparato",
+    "char_id": "char_4194_rmixer",
+    "rust_module": "sankta_miksaparato",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Savage",
+    "display_name": "Savage",
+    "char_id": "char_230_savage",
+    "rust_module": "savage",
+    "skills": [
+      1
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Scavenger",
+    "display_name": "Scavenger",
+    "char_id": "char_149_scave",
+    "rust_module": "scavenger",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Scene",
+    "display_name": "Scene",
+    "char_id": "char_336_folivo",
+    "rust_module": "scene",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Schwarz",
+    "display_name": "Schwarz",
+    "char_id": "char_340_shwaz",
+    "rust_module": "schwarz",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Shalem",
+    "display_name": "Shalem",
+    "char_id": "char_4025_aprot2",
+    "rust_module": "shalem",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Sharp",
+    "display_name": "Sharp",
+    "char_id": "char_508_aguard",
+    "rust_module": "sharp",
+    "skills": [
+      1
+    ],
+    "modules": [],
+    "default_module": -1
+  },
+  {
+    "class_name": "Sideroca",
+    "display_name": "Sideroca",
+    "char_id": "char_333_sidero",
+    "rust_module": "sideroca",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Siege",
+    "display_name": "Siege",
+    "char_id": "char_112_siege",
+    "rust_module": "siege",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "SilverAsh",
+    "display_name": "SilverAsh",
+    "char_id": "char_172_svrash",
+    "rust_module": "silver_ash",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Skadi",
+    "display_name": "Skadi",
+    "char_id": "char_263_skadi",
+    "rust_module": "skadi",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      2,
+      1
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Skalter",
+    "display_name": "SkadiAlter",
+    "char_id": "char_1012_skadi2",
+    "rust_module": "skalter",
+    "skills": [
+      1,
+      3
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Snegurochka",
+    "display_name": "Snegurochka",
+    "char_id": "char_4208_wintim",
+    "rust_module": "snegurochka",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Specter",
+    "display_name": "Specter",
+    "char_id": "char_143_ghost",
+    "rust_module": "specter",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "SpecterAlter",
+    "display_name": "SpecterAlter",
+    "char_id": "char_1023_ghost2",
+    "rust_module": "specter_alter",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Stainless",
+    "display_name": "Stainless",
+    "char_id": "char_4072_ironmn",
+    "rust_module": "stainless",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Steward",
+    "display_name": "Steward",
+    "char_id": "char_210_stward",
+    "rust_module": "steward",
+    "skills": [
+      1
+    ],
+    "modules": [],
+    "default_module": -1
+  },
+  {
+    "class_name": "Stormeye",
+    "display_name": "Stormeye",
+    "char_id": "char_511_asnipe",
+    "rust_module": "stormeye",
+    "skills": [
+      1
+    ],
+    "modules": [],
+    "default_module": -1
+  },
+  {
+    "class_name": "Surfer",
+    "display_name": "Surfer",
+    "char_id": "char_4052_surfer",
+    "rust_module": "surfer",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [],
+    "default_module": -1
+  },
+  {
+    "class_name": "Surtr",
+    "display_name": "Surtr",
+    "char_id": "char_350_surtr",
+    "rust_module": "surtr",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Suzuran",
+    "display_name": "Suzuran",
+    "char_id": "char_358_lisa",
+    "rust_module": "suzuran",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "SwireAlt",
+    "display_name": "SwireAlter",
+    "char_id": "char_1033_swire2",
+    "rust_module": "swire_alt",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2,
+      3
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Tachanka",
+    "display_name": "Tachanka",
+    "char_id": "char_459_tachak",
+    "rust_module": "tachanka",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Tecno",
+    "display_name": "Tecno",
+    "char_id": "char_4164_tecno",
+    "rust_module": "tecno",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Tequila",
+    "display_name": "Tequila",
+    "char_id": "char_486_takila",
+    "rust_module": "tequila",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "TerraResearchCommission",
+    "display_name": "TerraResearchCommission",
+    "char_id": "char_4077_palico",
+    "rust_module": "terra_research_commission",
+    "skills": [
+      0
+    ],
+    "modules": [],
+    "default_module": -1
+  },
+  {
+    "class_name": "TexasAlter",
+    "display_name": "TexasAlter",
+    "char_id": "char_1028_texas2",
+    "rust_module": "texas_alter",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Thorns",
+    "display_name": "Thorns",
+    "char_id": "char_293_thorns",
+    "rust_module": "thorns",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      3
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "ThornsAlter",
+    "display_name": "ThornsAlter",
+    "char_id": "char_1039_thorn2",
+    "rust_module": "thorns_alter",
+    "skills": [
+      2,
+      3
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "TinMan",
+    "display_name": "TinMan",
+    "char_id": "char_4151_tinman",
+    "rust_module": "tin_man",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Tippi",
+    "display_name": "Tippi",
+    "char_id": "char_4191_tippi",
+    "rust_module": "tippi",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [],
+    "default_module": -1
+  },
+  {
+    "class_name": "Toddifons",
+    "display_name": "Toddifons",
+    "char_id": "char_363_toddi",
+    "rust_module": "toddifons",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "TogawaSakiko",
+    "display_name": "TogawaSakiko",
+    "char_id": "char_4182_oblvns",
+    "rust_module": "togawa_sakiko",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Tomimi",
+    "display_name": "Tomimi",
+    "char_id": "char_411_tomimi",
+    "rust_module": "tomimi",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Totter",
+    "display_name": "Totter",
+    "char_id": "char_4062_totter",
+    "rust_module": "totter",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Tragodia",
+    "display_name": "Tragodia",
+    "char_id": "char_1042_phatm2",
+    "rust_module": "tragodia",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Typhon",
+    "display_name": "Typhon",
+    "char_id": "char_2012_typhon",
+    "rust_module": "typhon",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Ulpianus",
+    "display_name": "Ulpianus",
+    "char_id": "char_4145_ulpia",
+    "rust_module": "ulpianus",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Underflow",
+    "display_name": "Underflow",
+    "char_id": "char_4137_udflow",
+    "rust_module": "underflow",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Utage",
+    "display_name": "Utage",
+    "char_id": "char_337_utage",
+    "rust_module": "utage",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Vanilla",
+    "display_name": "Vanilla",
+    "char_id": "char_240_wyvern",
+    "rust_module": "vanilla",
+    "skills": [
+      1
+    ],
+    "modules": [],
+    "default_module": -1
+  },
+  {
+    "class_name": "Vendela",
+    "display_name": "Vendela",
+    "char_id": "char_494_vendla",
+    "rust_module": "vendela",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Vermeil",
+    "display_name": "Vermeil",
+    "char_id": "char_190_clour",
+    "rust_module": "vermeil",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Vetochki",
+    "display_name": "Vetochki",
+    "char_id": "char_4207_branch",
+    "rust_module": "vetochki",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Vigil",
+    "display_name": "Vigil",
+    "char_id": "char_427_vigil",
+    "rust_module": "vigil",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Vigna",
+    "display_name": "Vigna",
+    "char_id": "char_290_vigna",
+    "rust_module": "vigna",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Vina",
+    "display_name": "VinaVictoria",
+    "char_id": "char_1019_siege2",
+    "rust_module": "vina",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Virtuosa",
+    "display_name": "Virtuosa",
+    "char_id": "char_245_cello",
+    "rust_module": "virtuosa",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Viviana",
+    "display_name": "Viviana",
+    "char_id": "char_4098_vvana",
+    "rust_module": "viviana",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      3
+    ],
+    "default_module": 3
+  },
+  {
+    "class_name": "Vulcan",
+    "display_name": "Vulcan",
+    "char_id": "char_163_hpsts",
+    "rust_module": "vulcan",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Vulpisfoglia",
+    "display_name": "Vulpisfoglia",
+    "char_id": "char_4026_vulpis",
+    "rust_module": "vulpisfoglia",
+    "skills": [
+      1,
+      3
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "W",
+    "display_name": "W",
+    "char_id": "char_113_cqbw",
+    "rust_module": "w",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "WakabaMutsumi",
+    "display_name": "WakabaMutsumi",
+    "char_id": "char_4183_mortis",
+    "rust_module": "wakaba_mutsumi",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "Walter",
+    "display_name": "Wisadel",
+    "char_id": "char_1035_wisdel",
+    "rust_module": "walter",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Warmy",
+    "display_name": "Warmy",
+    "char_id": "char_4081_warmy",
+    "rust_module": "warmy",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Weedy",
+    "display_name": "Weedy",
+    "char_id": "char_400_weedy",
+    "rust_module": "weedy",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Whislash",
+    "display_name": "Whislash",
+    "char_id": "char_265_sophia",
+    "rust_module": "whislash",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Wildmane",
+    "display_name": "WildMane",
+    "char_id": "char_496_wildmn",
+    "rust_module": "wildmane",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Windscoot",
+    "display_name": "Windscoot",
+    "char_id": "char_445_wscoot",
+    "rust_module": "windscoot",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "YahataUmiri",
+    "display_name": "YahataUmiri",
+    "char_id": "char_4186_tmoris",
+    "rust_module": "yahata_umiri",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      2
+    ],
+    "default_module": 2
+  },
+  {
+    "class_name": "YatoAlter",
+    "display_name": "YatoAlter",
+    "char_id": "char_1029_yato2",
+    "rust_module": "yato_alter",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "Yu",
+    "display_name": "Yu",
+    "char_id": "char_2026_yu",
+    "rust_module": "yu",
+    "skills": [
+      2
+    ],
+    "modules": [],
+    "default_module": -1
+  },
+  {
+    "class_name": "YutenjiNyamu",
+    "display_name": "YutenjiNyamu",
+    "char_id": "char_4185_amoris",
+    "rust_module": "yutenji_nyamu",
+    "skills": [
+      1,
+      2
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "ZuoLe",
+    "display_name": "ZuoLe",
+    "char_id": "char_4121_zuole",
+    "rust_module": "zuo_le",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1,
+      2
+    ],
+    "default_module": 1
+  },
+  {
+    "class_name": "twelveF",
+    "display_name": "12F",
+    "char_id": "char_009_12fce",
+    "rust_module": "twelve_f",
+    "skills": [
+      0
+    ],
+    "modules": [],
+    "default_module": -1
+  }
+]

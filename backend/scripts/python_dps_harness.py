@@ -18,7 +18,11 @@ import json
 import argparse
 
 # Add the ArknightsDpsCompare path
-ARKDPS_PATH = os.environ.get('ARKDPS_PATH', '/Users/eltik/Documents/Coding/ArknightsDpsCompare')
+# Default to the submodule location relative to this script
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+BACKEND_DIR = os.path.dirname(SCRIPT_DIR)
+DEFAULT_ARKDPS_PATH = os.path.join(BACKEND_DIR, 'external', 'ArknightsDpsCompare')
+ARKDPS_PATH = os.environ.get('ARKDPS_PATH', DEFAULT_ARKDPS_PATH)
 sys.path.insert(0, ARKDPS_PATH)
 
 # Change to ArknightsDpsCompare directory so relative paths work

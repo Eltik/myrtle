@@ -2,8 +2,8 @@
 //!
 //! Auto-generated from ArknightsDpsCompare damage_formulas.py
 
-use super::super::super::operator_data::OperatorData;
 use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
+use super::super::super::operator_data::OperatorData;
 
 /// Provence operator implementation
 pub struct Provence {
@@ -34,7 +34,7 @@ impl Provence {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
+    /// 
     /// crate = 0
     /// cdmg = self.talent1_params[2]
     /// if self.elite > 0:
@@ -51,60 +51,39 @@ impl Provence {
     /// avghit =  crate * critdmg + (1-crate) * hitdmg
     /// dps = avghit/self.atk_interval * self.attack_speed/100
     /// return dps
-    #[allow(
-        unused_variables,
-        unused_mut,
-        unused_assignments,
-        unused_parens,
-        clippy::excessive_precision,
-        clippy::unnecessary_cast,
-        clippy::collapsible_if,
-        clippy::double_parens
-    )]
+    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op)]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
         let mut critdmg: f64 = 0.0;
-        let mut cdmg: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut cdmg: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
 
         let mut crit_rate = 0.0;
         cdmg = self.unit.talent1_parameters[2];
         if (self.unit.elite as f64) > 0.0 {
-            crit_rate = if self.unit.talent_damage {
-                self.unit.talent1_parameters[1]
-            } else {
-                self.unit.talent1_parameters[0]
-            };
+        crit_rate = if self.unit.talent_damage { self.unit.talent1_parameters[1] } else { self.unit.talent1_parameters[0] };
         }
         if (self.unit.skill_index as f64) < 2.0 {
-            skill_scale =
-                if self.unit.skill_damage && ((self.unit.skill_index as f64) as f64) == 1.0 {
-                    1.0 + self.unit.skill_parameters[1] * 5.0
-                } else {
-                    1.0
-                };
-            final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
-            hitdmg = ((final_atk * skill_scale - defense) as f64)
-                .max((final_atk * skill_scale * 0.05) as f64);
-            critdmg = ((final_atk * skill_scale * cdmg - defense) as f64)
-                .max((final_atk * skill_scale * cdmg * 0.05) as f64);
+        skill_scale = if self.unit.skill_damage && ((self.unit.skill_index as f64) as f64) == 1.0 { 1.0 + self.unit.skill_parameters[1] * 5.0 } else { 1.0 };
+        final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
+        hitdmg = ((final_atk * skill_scale - defense) as f64).max((final_atk * skill_scale * 0.05) as f64);
+        critdmg = ((final_atk * skill_scale * cdmg - defense) as f64).max((final_atk * skill_scale * cdmg * 0.05) as f64);
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            final_atk = self.unit.atk * (1.0 + self.unit.buff_atk + self.unit.skill_parameters[0])
-                + self.unit.buff_atk_flat;
-            hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
-            critdmg = ((final_atk * cdmg - defense) as f64).max((final_atk * cdmg * 0.05) as f64);
+        final_atk = self.unit.atk * (1.0 + self.unit.buff_atk + self.unit.skill_parameters[0]) + self.unit.buff_atk_flat;
+        hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
+        critdmg = ((final_atk * cdmg - defense) as f64).max((final_atk * cdmg * 0.05) as f64);
         }
-        avghit = crit_rate * critdmg + (1.0 - crit_rate) * hitdmg;
-        dps = avghit / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
-        dps
+        avghit = crit_rate * critdmg + (1.0 -crit_rate) * hitdmg;
+        dps = avghit/(self.unit.attack_interval as f64) * self.unit.attack_speed/ 100.0;
+        return dps;
     }
 }
 

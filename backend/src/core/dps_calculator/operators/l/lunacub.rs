@@ -2,8 +2,8 @@
 //!
 //! Auto-generated from ArknightsDpsCompare damage_formulas.py
 
-use super::super::super::operator_data::OperatorData;
 use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
+use super::super::super::operator_data::OperatorData;
 
 /// Lunacub operator implementation
 pub struct Lunacub {
@@ -34,7 +34,7 @@ impl Lunacub {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
+    /// 
     /// atk_shorter = 0.15 if self.elite == 2 else 0
     /// if self.module == 2: atk_shorter += 0.05 * (self.module_lvl - 1)
     /// if self.skill == 0: atk_shorter = 0
@@ -45,45 +45,21 @@ impl Lunacub {
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)
     /// dps = hitdmg/atk_interval * (self.attack_speed+aspd)/100
     /// return dps
-    #[allow(
-        unused_variables,
-        unused_mut,
-        unused_assignments,
-        unused_parens,
-        clippy::excessive_precision,
-        clippy::unnecessary_cast,
-        clippy::collapsible_if,
-        clippy::double_parens
-    )]
+    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op)]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut atk_shorter = if ((self.unit.elite as f64) as f64) == 2.0 {
-            0.15
-        } else {
-            0.0
-        };
+        let mut atk_shorter = if ((self.unit.elite as f64) as f64) == 2.0 { 0.15 } else { 0.0 };
         // UNTRANSLATED: if self.module == 2: atk_shorter += 0.05 * (self.module_lvl - 1)
-        if (self.unit.skill_index as f64) == 0.0 {
-            atk_shorter = 0.0;
-        }
-        let mut atk_interval = (self.unit.attack_interval as f64) * (1.0 - atk_shorter);
-        let mut atkbuff = if ((self.unit.skill_index as f64) as f64) == 1.0 {
-            self.unit.skill_parameters[0]
-        } else {
-            0.0
-        };
-        let mut aspd = if ((self.unit.skill_index as f64) as f64) == 2.0 {
-            self.unit.skill_parameters[0]
-        } else {
-            0.0
-        };
-        let mut final_atk =
-            self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
+        if (self.unit.skill_index as f64) == 0.0 { atk_shorter = 0.0; }
+        let mut atk_interval = (self.unit.attack_interval as f64) * (1.0 -atk_shorter);
+        let mut atkbuff = if ((self.unit.skill_index as f64) as f64) == 1.0 { self.unit.skill_parameters[0] } else { 0.0 };
+        let mut aspd = if ((self.unit.skill_index as f64) as f64) == 2.0 { self.unit.skill_parameters[0] } else { 0.0 };
+        let mut final_atk = self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
         let mut hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
-        
-        hitdmg / atk_interval * (self.unit.attack_speed + aspd) / 100.0
+        let mut dps = hitdmg/atk_interval * (self.unit.attack_speed+aspd)/ 100.0;
+        return dps;
     }
 }
 

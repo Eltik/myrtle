@@ -1,3 +1,5 @@
+#![allow(clippy::module_inception)]
+
 mod magallan;
 mod manticore;
 mod marcille;

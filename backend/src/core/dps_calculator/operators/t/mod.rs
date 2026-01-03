@@ -1,3 +1,5 @@
+#![allow(clippy::module_inception)]
+
 mod tachanka;
 mod tecno;
 mod tequila;
@@ -12,8 +14,8 @@ mod togawa_sakiko;
 mod tomimi;
 mod totter;
 mod tragodia;
-mod twelve_f;
 mod typhon;
+mod twelve_f;
 
 pub use tachanka::Tachanka;
 pub use tecno::Tecno;
@@ -29,5 +31,5 @@ pub use togawa_sakiko::TogawaSakiko;
 pub use tomimi::Tomimi;
 pub use totter::Totter;
 pub use tragodia::Tragodia;
-pub use twelve_f::TwelveF;
 pub use typhon::Typhon;
+pub use twelve_f::TwelveF;

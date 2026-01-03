@@ -1,3 +1,5 @@
+#![allow(clippy::module_inception)]
+
 mod kafka;
 mod kaltsit;
 mod kazemaru;

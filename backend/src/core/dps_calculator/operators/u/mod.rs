@@ -1,3 +1,5 @@
+#![allow(clippy::module_inception)]
+
 mod ulpianus;
 mod underflow;
 mod utage;

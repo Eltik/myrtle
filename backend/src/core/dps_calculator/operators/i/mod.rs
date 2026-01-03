@@ -1,3 +1,5 @@
+#![allow(clippy::module_inception)]
+
 mod iana;
 mod ifrit;
 mod indra;
