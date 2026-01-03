@@ -2,8 +2,8 @@
 //!
 //! Auto-generated from ArknightsDpsCompare damage_formulas.py
 
-use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
 use super::super::super::operator_data::OperatorData;
+use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
 
 /// Insider operator implementation
 pub struct Insider {
@@ -34,7 +34,7 @@ impl Insider {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    /// 
+    ///
     /// atk_scale = 1.1 if self.module == 1 and self.module_dmg else 1
     /// if self.skill < 2:
     /// skill_scale = self.skill_params[0] if self.skill == 1 else 1
@@ -47,7 +47,24 @@ impl Insider {
     /// hitdmg = np.fmax(final_atk  * atk_scale - defense, final_atk  * atk_scale * 0.05)
     /// dps = hitdmg / 0.7 * (self.attack_speed) / 100
     /// return dps
-    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op)]
+    #[allow(
+        unused_variables,
+        unused_mut,
+        unused_assignments,
+        unused_parens,
+        clippy::excessive_precision,
+        clippy::unnecessary_cast,
+        clippy::collapsible_if,
+        clippy::double_parens,
+        clippy::if_same_then_else,
+        clippy::nonminimal_bool,
+        clippy::overly_complex_bool_expr,
+        clippy::needless_return,
+        clippy::collapsible_else_if,
+        clippy::neg_multiply,
+        clippy::assign_op_pattern,
+        clippy::eq_op
+    )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let defense = enemy.defense;
         let res = enemy.res;
@@ -60,18 +77,29 @@ impl Insider {
         let mut skill_scale: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
 
-        atk_scale = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage { 1.1 } else { 1.0 };
+        atk_scale = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {
+            1.1
+        } else {
+            1.0
+        };
         if (self.unit.skill_index as f64) < 2.0 {
-        skill_scale = if ((self.unit.skill_index as f64) as f64) == 1.0 { self.unit.skill_parameters[0] } else { 1.0 };
-        final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
-        hitdmg = ((final_atk * skill_scale * atk_scale - defense) as f64).max((final_atk * skill_scale * atk_scale * 0.05) as f64);
-        dps = hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed) / 100.0;
+            skill_scale = if ((self.unit.skill_index as f64) as f64) == 1.0 {
+                self.unit.skill_parameters[0]
+            } else {
+                1.0
+            };
+            final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
+            hitdmg = ((final_atk * skill_scale * atk_scale - defense) as f64)
+                .max((final_atk * skill_scale * atk_scale * 0.05) as f64);
+            dps = hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed) / 100.0;
         }
         if (self.unit.skill_index as f64) == 2.0 {
-        atkbuff = self.unit.skill_parameters[0];
-        final_atk = self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
-        hitdmg = ((final_atk  * atk_scale - defense) as f64).max((final_atk  * atk_scale * 0.05) as f64);
-        dps = hitdmg / 0.7 * (self.unit.attack_speed) / 100.0;
+            atkbuff = self.unit.skill_parameters[0];
+            final_atk =
+                self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
+            hitdmg = ((final_atk * atk_scale - defense) as f64)
+                .max((final_atk * atk_scale * 0.05) as f64);
+            dps = hitdmg / 0.7 * (self.unit.attack_speed) / 100.0;
         }
         return dps;
     }

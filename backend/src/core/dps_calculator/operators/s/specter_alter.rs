@@ -2,8 +2,8 @@
 //!
 //! Auto-generated from ArknightsDpsCompare damage_formulas.py
 
-use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
 use super::super::super::operator_data::OperatorData;
+use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
 
 /// SpecterAlter operator implementation
 pub struct SpecterAlter {
@@ -34,16 +34,16 @@ impl SpecterAlter {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    /// 
+    ///
     /// atkbuff = self.skill_params[0] * min(self.skill,1) if self.trait_dmg else 0
     /// if not self.trait_dmg and self.module == 1: atkbuff += 0.15
-    /// 
+    ///
     /// if not self.trait_dmg:
     /// final_atk = self.atk * (1+atkbuff + self.buff_atk) + self.buff_atk_flat
     /// doll_scale = self.talent1_params[1]
     /// hitdmg = np.fmax(final_atk * doll_scale * (1-res/100), final_atk * doll_scale * 0.05)
     /// return hitdmg
-    /// 
+    ///
     /// if self.skill < 2:
     /// final_atk = self.atk * (1+atkbuff + self.buff_atk) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)
@@ -59,7 +59,24 @@ impl SpecterAlter {
     /// hitdmg = np.fmax(final_atk  - defense, final_atk * 0.05) * dmgbonus
     /// dps = dps = hitdmg/2.2 * self.attack_speed/100 * min(self.targets,2)
     /// return dps
-    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op)]
+    #[allow(
+        unused_variables,
+        unused_mut,
+        unused_assignments,
+        unused_parens,
+        clippy::excessive_precision,
+        clippy::unnecessary_cast,
+        clippy::collapsible_if,
+        clippy::double_parens,
+        clippy::if_same_then_else,
+        clippy::nonminimal_bool,
+        clippy::overly_complex_bool_expr,
+        clippy::needless_return,
+        clippy::collapsible_else_if,
+        clippy::neg_multiply,
+        clippy::assign_op_pattern,
+        clippy::eq_op
+    )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let defense = enemy.defense;
         let res = enemy.res;
@@ -70,30 +87,45 @@ impl SpecterAlter {
         let mut atk_interval: f64 = 0.0;
         let mut dps: f64 = 0.0;
 
-        atkbuff = if self.unit.trait_damage { self.unit.skill_parameters[0] * ((((self.unit.skill_index as f64) as f64)) as f64).min((1) as f64) } else { 0.0 };
+        atkbuff = if self.unit.trait_damage {
+            self.unit.skill_parameters[0]
+                * (((self.unit.skill_index as f64) as f64) as f64).min((1) as f64)
+        } else {
+            0.0
+        };
         // UNTRANSLATED: if not self.trait_dmg and self.module == 1: atkbuff += 0.15
         if !self.unit.trait_damage {
-        final_atk = self.unit.atk * (1.0 +atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
-        let mut doll_scale = self.unit.talent1_parameters[1];
-        hitdmg = ((final_atk * doll_scale * (1.0 -res/ 100.0)) as f64).max((final_atk * doll_scale * 0.05) as f64);
-        return hitdmg;
+            final_atk =
+                self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
+            let mut doll_scale = self.unit.talent1_parameters[1];
+            hitdmg = ((final_atk * doll_scale * (1.0 - res / 100.0)) as f64)
+                .max((final_atk * doll_scale * 0.05) as f64);
+            return hitdmg;
         }
         if (self.unit.skill_index as f64) < 2.0 {
-        final_atk = self.unit.atk * (1.0 +atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
-        hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
-        dps = hitdmg/(self.unit.attack_interval as f64) * self.unit.attack_speed/ 100.0;
+            final_atk =
+                self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
+            hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
+            dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
         }
         if (self.unit.skill_index as f64) == 2.0 {
-        final_atk = self.unit.atk * (1.0 +atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
-        hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
-        dps = hitdmg/(self.unit.attack_interval as f64) * (self.unit.attack_speed+self.unit.skill_parameters[1])/ 100.0;
+            final_atk =
+                self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
+            hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
+            dps = hitdmg / (self.unit.attack_interval as f64)
+                * (self.unit.attack_speed + self.unit.skill_parameters[1])
+                / 100.0;
         }
         if (self.unit.skill_index as f64) == 3.0 {
-        let mut dmgbonus = 1.0 + self.unit.skill_parameters[2];
-        if !self.unit.skill_damage { dmgbonus = 1.0; }
-        final_atk = self.unit.atk * (1.0 +atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
-        hitdmg = ((final_atk  - defense) as f64).max((final_atk * 0.05) as f64) * dmgbonus;
-        dps = hitdmg/2.2 * self.unit.attack_speed/ 100.0 * (((self.unit.targets as f64)) as f64).min((2) as f64);
+            let mut dmgbonus = 1.0 + self.unit.skill_parameters[2];
+            if !self.unit.skill_damage {
+                dmgbonus = 1.0;
+            }
+            final_atk =
+                self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
+            hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64) * dmgbonus;
+            dps = hitdmg / 2.2 * self.unit.attack_speed / 100.0
+                * ((self.unit.targets as f64) as f64).min((2) as f64);
         }
         return dps;
     }

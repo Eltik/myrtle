@@ -15,6 +15,10 @@ path = "src/bin/translate_operators.rs"
 name = "generate-dps-tests"
 path = "src/bin/generate_dps_tests.rs"
 
+[[test]]
+name = "dps_comparison_test"
+path = "tests/dps_comparison/dps_comparison_test.rs"
+
 [dependencies]
 axum = "0.8"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "fs"] }

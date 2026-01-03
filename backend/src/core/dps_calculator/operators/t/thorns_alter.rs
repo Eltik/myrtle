@@ -2,8 +2,8 @@
 //!
 //! Auto-generated from ArknightsDpsCompare damage_formulas.py
 
-use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
 use super::super::super::operator_data::OperatorData;
+use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
 
 /// ThornsAlter operator implementation
 pub struct ThornsAlter {
@@ -34,7 +34,7 @@ impl ThornsAlter {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    /// 
+    ///
     /// atkbuff = min(self.talent1_params)
     /// extra_duration = max(self.talent1_params)
     /// aspd = self.talent2_params[0] if self.elite > 2 else 0
@@ -42,7 +42,7 @@ impl ThornsAlter {
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)
     /// dps = hitdmg / self.atk_interval * (self.attack_speed + aspd) / 100
     /// if self.skill != 0 and not self.trait_dmg: dps *= 0
-    /// 
+    ///
     /// if self.skill == 2:
     /// skill_scale = self.skill_params[4]
     /// hitdmgarts = np.fmax(final_atk * skill_scale * (1-res/100), final_atk * skill_scale * 0.05)
@@ -62,7 +62,24 @@ impl ThornsAlter {
     /// if self.trait_dmg: dps += np.fmax(final_atk - newdef, final_atk * 0.05) / self.atk_interval * (self.attack_speed + aspd) / 100
     /// dps = dps / duration
     /// return dps
-    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op)]
+    #[allow(
+        unused_variables,
+        unused_mut,
+        unused_assignments,
+        unused_parens,
+        clippy::excessive_precision,
+        clippy::unnecessary_cast,
+        clippy::collapsible_if,
+        clippy::double_parens,
+        clippy::if_same_then_else,
+        clippy::nonminimal_bool,
+        clippy::overly_complex_bool_expr,
+        clippy::needless_return,
+        clippy::collapsible_else_if,
+        clippy::neg_multiply,
+        clippy::assign_op_pattern,
+        clippy::eq_op
+    )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let defense = enemy.defense;
         let res = enemy.res;
@@ -77,28 +94,43 @@ impl ThornsAlter {
         let mut aspd: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
 
-        atkbuff = self.unit.talent1_parameters.iter().cloned().fold(f64::INFINITY, f64::min);
-        let mut extra_duration = self.unit.talent1_parameters.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
-        aspd = if ((self.unit.elite as f64) as f64) > 2.0 { self.unit.talent2_parameters[0] } else { 0.0 };
+        atkbuff = self
+            .unit
+            .talent1_parameters
+            .iter()
+            .cloned()
+            .fold(f64::INFINITY, f64::min);
+        let mut extra_duration = self
+            .unit
+            .talent1_parameters
+            .iter()
+            .cloned()
+            .fold(f64::NEG_INFINITY, f64::max);
+        aspd = if ((self.unit.elite as f64) as f64) > 2.0 {
+            self.unit.talent2_parameters[0]
+        } else {
+            0.0
+        };
         final_atk = self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
         hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
         dps = hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd) / 100.0;
         // UNTRANSLATED: if self.skill != 0 and not self.trait_dmg: dps *= 0
         if (self.unit.skill_index as f64) == 2.0 {
-        skill_scale = self.unit.skill_parameters[4];
-        hitdmgarts = ((final_atk * skill_scale * (1.0 -res/ 100.0)) as f64).max((final_atk * skill_scale * 0.05) as f64);
-        dps += hitdmgarts * (self.unit.targets as f64);
+            skill_scale = self.unit.skill_parameters[4];
+            hitdmgarts = ((final_atk * skill_scale * (1.0 - res / 100.0)) as f64)
+                .max((final_atk * skill_scale * 0.05) as f64);
+            dps += hitdmgarts * (self.unit.targets as f64);
         }
         if (self.unit.skill_index as f64) == 3.0 {
-        let mut duration = self.unit.skill_parameters[2] + extra_duration;
-        let mut shred_base = self.unit.skill_parameters[10];
-        let mut shred_step = self.unit.skill_parameters[12];
-        let mut skill_scale_base = self.unit.skill_parameters[4];
-        let mut skill_scale_step = self.unit.skill_parameters[6];
-        dps = res * 0.0;
-        // UNTRANSLATED FOR LOOP: for i in range(int(duration)):
-        // TODO: Implement loop logic manually
-        dps = dps / duration;
+            let mut duration = self.unit.skill_parameters[2] + extra_duration;
+            let mut shred_base = self.unit.skill_parameters[10];
+            let mut shred_step = self.unit.skill_parameters[12];
+            let mut skill_scale_base = self.unit.skill_parameters[4];
+            let mut skill_scale_step = self.unit.skill_parameters[6];
+            dps = res * 0.0;
+            // UNTRANSLATED FOR LOOP: for i in range(int(duration)):
+            // TODO: Implement loop logic manually
+            dps = dps / duration;
         }
         return dps;
     }

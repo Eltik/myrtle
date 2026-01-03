@@ -2,8 +2,8 @@
 //!
 //! Auto-generated from ArknightsDpsCompare damage_formulas.py
 
-use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
 use super::super::super::operator_data::OperatorData;
+use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
 
 /// Fartooth operator implementation
 pub struct Fartooth {
@@ -34,7 +34,7 @@ impl Fartooth {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    /// 
+    ///
     /// atkbuff = 0
     /// aspd = 0
     /// atk_scale = 1.15 if self.module == 1 and self.module_dmg else 1
@@ -64,7 +64,24 @@ impl Fartooth {
     /// hitdmg = np.fmax(final_atk * atk_scale - defense, final_atk* atk_scale * 0.05)*dmgscale
     /// dps = hitdmg/(self.atk_interval/((self.attack_speed+aspd)/100))
     /// return dps
-    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op)]
+    #[allow(
+        unused_variables,
+        unused_mut,
+        unused_assignments,
+        unused_parens,
+        clippy::excessive_precision,
+        clippy::unnecessary_cast,
+        clippy::collapsible_if,
+        clippy::double_parens,
+        clippy::if_same_then_else,
+        clippy::nonminimal_bool,
+        clippy::overly_complex_bool_expr,
+        clippy::needless_return,
+        clippy::collapsible_else_if,
+        clippy::neg_multiply,
+        clippy::assign_op_pattern,
+        clippy::eq_op
+    )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let defense = enemy.defense;
         let res = enemy.res;
@@ -80,34 +97,48 @@ impl Fartooth {
 
         atkbuff = 0.0;
         aspd = 0.0;
-        atk_scale = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage { 1.15 } else { 1.0 };
+        atk_scale = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {
+            1.15
+        } else {
+            1.0
+        };
         // talent/module buffs
         atkbuff += self.unit.talent1_parameters[0];
         // UNTRANSLATED: try:
         aspd += self.unit.talent1_parameters[2];
         // UNTRANSLATED: pass
         if (self.unit.skill_index as f64) == 1.0 {
-        atkbuff += self.unit.skill_parameters[0];
-        aspd += self.unit.skill_parameters[1];
-        final_atk = self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
-        hitdmg = ((final_atk * atk_scale - defense) as f64).max((final_atk* atk_scale * 0.05) as f64);
-        dps = hitdmg/((self.unit.attack_interval as f64)/((self.unit.attack_speed+aspd)/ 100.0));
+            atkbuff += self.unit.skill_parameters[0];
+            aspd += self.unit.skill_parameters[1];
+            final_atk =
+                self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
+            hitdmg = ((final_atk * atk_scale - defense) as f64)
+                .max((final_atk * atk_scale * 0.05) as f64);
+            dps = hitdmg
+                / ((self.unit.attack_interval as f64) / ((self.unit.attack_speed + aspd) / 100.0));
         }
-        if [0.0, 2.0].contains(&(((self.unit.skill_index as f64)) as f64)) {
-        aspd += self.unit.skill_parameters[0] * (self.unit.skill_index as f64)/ 2.0;
-        final_atk = self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
-        hitdmg = ((final_atk * atk_scale - defense) as f64).max((final_atk* atk_scale * 0.05) as f64);
-        dps = hitdmg/((self.unit.attack_interval as f64)/((self.unit.attack_speed+aspd)/ 100.0));
+        if [0.0, 2.0].contains(&((self.unit.skill_index as f64) as f64)) {
+            aspd += self.unit.skill_parameters[0] * (self.unit.skill_index as f64) / 2.0;
+            final_atk =
+                self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
+            hitdmg = ((final_atk * atk_scale - defense) as f64)
+                .max((final_atk * atk_scale * 0.05) as f64);
+            dps = hitdmg
+                / ((self.unit.attack_interval as f64) / ((self.unit.attack_speed + aspd) / 100.0));
         }
         if (self.unit.skill_index as f64) == 3.0 {
-        atkbuff += self.unit.skill_parameters[0];
-        dmgscale = 1.0;
-        if self.unit.skill_damage {
-        dmgscale = self.unit.skill_parameters[1];
-        }
-        final_atk = self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
-        hitdmg = ((final_atk * atk_scale - defense) as f64).max((final_atk* atk_scale * 0.05) as f64)*dmgscale;
-        dps = hitdmg/((self.unit.attack_interval as f64)/((self.unit.attack_speed+aspd)/ 100.0));
+            atkbuff += self.unit.skill_parameters[0];
+            dmgscale = 1.0;
+            if self.unit.skill_damage {
+                dmgscale = self.unit.skill_parameters[1];
+            }
+            final_atk =
+                self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
+            hitdmg = ((final_atk * atk_scale - defense) as f64)
+                .max((final_atk * atk_scale * 0.05) as f64)
+                * dmgscale;
+            dps = hitdmg
+                / ((self.unit.attack_interval as f64) / ((self.unit.attack_speed + aspd) / 100.0));
         }
         return dps;
     }

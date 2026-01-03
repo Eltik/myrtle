@@ -2,8 +2,8 @@
 //!
 //! Auto-generated from ArknightsDpsCompare damage_formulas.py
 
-use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
 use super::super::super::operator_data::OperatorData;
+use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
 
 /// Phantom operator implementation
 pub struct Phantom {
@@ -34,7 +34,7 @@ impl Phantom {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    /// 
+    ///
     /// if self.skill == 2:
     /// selfhit = 0
     /// clonehit = 0
@@ -61,9 +61,26 @@ impl Phantom {
     /// dps = hitdmg /self.atk_interval * self.attack_speed/100
     /// if self.talent_dmg:
     /// dps += hitdmg_clone /self.drone_atk_interval * self.attack_speed/100
-    /// 
+    ///
     /// return dps
-    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op)]
+    #[allow(
+        unused_variables,
+        unused_mut,
+        unused_assignments,
+        unused_parens,
+        clippy::excessive_precision,
+        clippy::unnecessary_cast,
+        clippy::collapsible_if,
+        clippy::double_parens,
+        clippy::if_same_then_else,
+        clippy::nonminimal_bool,
+        clippy::overly_complex_bool_expr,
+        clippy::needless_return,
+        clippy::collapsible_else_if,
+        clippy::neg_multiply,
+        clippy::assign_op_pattern,
+        clippy::eq_op
+    )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let defense = enemy.defense;
         let res = enemy.res;
@@ -78,29 +95,61 @@ impl Phantom {
         let mut dps: f64 = 0.0;
 
         if (self.unit.skill_index as f64) == 2.0 {
-        let mut selfhit = 0.0;
-        let mut clonehit = 0.0;
-        mainbuff = if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage { 0.1 } else { 0.0 };
-        atkbuff = if ((self.unit.module_index as f64) as f64) == 2.0 && ((self.unit.module_level as f64) as f64) > 1.0 && self.unit.talent_damage { 0.1 } else { 0.0 };
-        let mut rate = self.unit.skill_parameters[1];
-        let mut count = ((self.unit.skill_parameters[0]) as f64).trunc();
-        // UNTRANSLATED FOR LOOP: for i in range(count):
-        // TODO: Implement loop logic manually
-        dps = selfhit /(self.unit.attack_interval as f64) * self.unit.attack_speed/ 100.0 / count;
-        if self.unit.talent_damage {
-        dps += clonehit /(self.unit.drone_atk_interval as f64) * self.unit.attack_speed/ 100.0 / count;
-        }
+            let mut selfhit = 0.0;
+            let mut clonehit = 0.0;
+            mainbuff = if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage
+            {
+                0.1
+            } else {
+                0.0
+            };
+            atkbuff = if ((self.unit.module_index as f64) as f64) == 2.0
+                && ((self.unit.module_level as f64) as f64) > 1.0
+                && self.unit.talent_damage
+            {
+                0.1
+            } else {
+                0.0
+            };
+            let mut rate = self.unit.skill_parameters[1];
+            let mut count = ((self.unit.skill_parameters[0]) as f64).trunc();
+            // UNTRANSLATED FOR LOOP: for i in range(count):
+            // TODO: Implement loop logic manually
+            dps = selfhit / (self.unit.attack_interval as f64) * self.unit.attack_speed
+                / 100.0
+                / count;
+            if self.unit.talent_damage {
+                dps += clonehit / (self.unit.drone_atk_interval as f64) * self.unit.attack_speed
+                    / 100.0
+                    / count;
+            }
         } else {
-        mainbuff = if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage { 0.1 } else { 0.0 };
-        atkbuff = if ((self.unit.module_index as f64) as f64) == 2.0 && ((self.unit.module_level as f64) as f64) > 1.0 && self.unit.talent_damage { 0.1 } else { 0.0 };
-        final_atk = self.unit.atk * (1.0 + atkbuff + mainbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
-        final_clone = self.unit.drone_atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
-        hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
-        hitdmg_clone = ((final_clone - defense) as f64).max((final_clone * 0.05) as f64);
-        dps = hitdmg /(self.unit.attack_interval as f64) * self.unit.attack_speed/ 100.0;
-        if self.unit.talent_damage {
-        dps += hitdmg_clone /(self.unit.drone_atk_interval as f64) * self.unit.attack_speed/ 100.0;
-        }
+            mainbuff = if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage
+            {
+                0.1
+            } else {
+                0.0
+            };
+            atkbuff = if ((self.unit.module_index as f64) as f64) == 2.0
+                && ((self.unit.module_level as f64) as f64) > 1.0
+                && self.unit.talent_damage
+            {
+                0.1
+            } else {
+                0.0
+            };
+            final_atk = self.unit.atk * (1.0 + atkbuff + mainbuff + self.unit.buff_atk)
+                + self.unit.buff_atk_flat;
+            final_clone = self.unit.drone_atk * (1.0 + atkbuff + self.unit.buff_atk)
+                + self.unit.buff_atk_flat;
+            hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
+            hitdmg_clone = ((final_clone - defense) as f64).max((final_clone * 0.05) as f64);
+            dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
+            if self.unit.talent_damage {
+                dps += hitdmg_clone / (self.unit.drone_atk_interval as f64)
+                    * self.unit.attack_speed
+                    / 100.0;
+            }
         }
         return dps;
     }

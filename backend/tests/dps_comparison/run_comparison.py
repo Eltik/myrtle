@@ -13,12 +13,13 @@ import sys
 import os
 import json
 import argparse
-from python_dps_harness import calculate_dps, list_operators
 
-# Add paths
+# Add paths before importing python_dps_harness
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 BACKEND_DIR = os.path.dirname(os.path.dirname(SCRIPT_DIR))
 sys.path.insert(0, os.path.join(BACKEND_DIR, 'scripts'))
+
+from python_dps_harness import calculate_dps
 
 
 def load_test_cases():

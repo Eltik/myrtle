@@ -20,11 +20,19 @@ A high-performance Rust backend for the Myrtle.moe Arknights companion applicati
   - [CDN Assets](#cdn-assets)
   - [Tier Lists](#tier-lists)
   - [Admin](#admin)
+- [DPS Calculator](#dps-calculator)
+- [Testing](#testing)
+  - [Running Tests](#running-tests)
+  - [DPS Comparison Tests](#dps-comparison-tests)
+  - [Generating Test Files](#generating-test-files)
 - [Game Data](#game-data)
+- [External Dependencies](#external-dependencies)
 - [Database](#database)
 - [Caching](#caching)
 - [Rate Limiting](#rate-limiting)
 - [Development](#development)
+  - [CLI Tools](#cli-tools)
+  - [Scripts](#scripts)
 - [Troubleshooting](#troubleshooting)
 - [License](#license)
 
@@ -46,6 +54,7 @@ A high-performance Rust backend for the Myrtle.moe Arknights companion applicati
 | Rate Limiting | Per-IP, per-endpoint rate limiting |
 | Auto-Reload | Hourly configuration refresh from game servers |
 | Admin Statistics | System monitoring and usage statistics |
+| DPS Calculator | Operator damage calculations translated from Python |
 
 ### Static Data Endpoints
 
@@ -253,6 +262,10 @@ backend/
 ├── src/
 │   ├── main.rs                 # Entry point
 │   ├── lib.rs                  # Module exports
+│   ├── bin/
+│   │   ├── generate_dps_tests.rs   # Generate DPS comparison test files
+│   │   ├── manage_permissions.rs   # CLI tool for permission management
+│   │   └── translate_operators.rs  # Python-to-Rust operator translator
 │   ├── app/
 │   │   ├── mod.rs
 │   │   ├── server.rs           # Axum server setup
@@ -275,7 +288,14 @@ backend/
 │   │   ├── user/               # User data fetching & formatting
 │   │   ├── local/              # Game data loading & types
 │   │   ├── cron/               # Background jobs
-│   │   └── dps_calculator/     # DPS calculations (WIP)
+│   │   └── dps_calculator/     # DPS calculations (256 operators)
+│   │       ├── mod.rs
+│   │       ├── operator_data.rs    # Operator stats and data loading
+│   │       ├── operator_unit.rs    # OperatorUnit struct for calculations
+│   │       └── operators/          # Individual operator implementations
+│   │           ├── a/              # Aak, Absinthe, Aciddrop, etc.
+│   │           ├── b/              # Bagpipe, Blaze, etc.
+│   │           └── ...             # Organized alphabetically (a-z)
 │   ├── database/
 │   │   ├── pool.rs             # PostgreSQL connection & table init
 │   │   └── models/
@@ -284,8 +304,17 @@ backend/
 │   └── events/
 │       ├── mod.rs              # Event emitter
 │       └── setup_event_listeners.rs
-├── bin/
-│   └── manage_permissions.rs   # CLI tool for permission management
+├── scripts/
+│   ├── python_dps_harness.py       # Python harness for DPS calculations
+│   └── extract_operator_data.py    # Extract operator data from Python source
+├── tests/
+│   └── dps_comparison/
+│       ├── dps_comparison_test.rs  # Generated Rust integration tests
+│       ├── run_comparison.py       # Python test runner
+│       ├── test_config.json        # Test case configurations
+│       └── operators.json          # Extracted operator metadata
+├── external/
+│   └── ArknightsDpsCompare/        # Git submodule - reference implementation
 ├── Cargo.toml
 └── README.md
 ```
@@ -813,6 +842,215 @@ Get system statistics (requires admin role).
 }
 ```
 
+## DPS Calculator
+
+The backend includes a comprehensive DPS (Damage Per Second) calculator that has been translated from the Python [ArknightsDpsCompare](https://github.com/WhoAteMyCQQkie/ArknightsDpsCompare) project.
+
+### Overview
+
+| Metric | Value |
+|--------|-------|
+| Operators Implemented | 256 |
+| Test Cases | 2,870 |
+| Success Rate | 99.65% (2,860/2,870) |
+
+### How It Works
+
+The DPS calculator computes damage output for operators based on:
+
+- **Operator Stats**: ATK, attack interval, skill multipliers
+- **Enemy Stats**: Defense (DEF) and Resistance (RES)
+- **Skill Selection**: Different skills have different damage formulas
+- **Module Selection**: Modules can modify stats and behavior
+
+### Architecture
+
+```rust
+// Core calculation unit
+pub struct OperatorUnit {
+    pub base_atk: f64,
+    pub attack_interval: f64,
+    pub skill: i32,
+    pub module: i32,
+    // ... additional fields
+}
+
+impl OperatorUnit {
+    pub fn calculate_dps(&self, defense: f64, res: f64) -> f64 {
+        // Operator-specific damage calculation
+    }
+}
+```
+
+Each operator has its own implementation file in `src/core/dps_calculator/operators/` organized alphabetically:
+
+```
+operators/
+├── a/
+│   ├── aak.rs
+│   ├── absinthe.rs
+│   └── ...
+├── b/
+│   ├── bagpipe.rs
+│   ├── blaze.rs
+│   └── ...
+└── ...
+```
+
+### Usage
+
+```rust
+use backend::core::dps_calculator::operators::silverash::Silverash;
+
+// Create operator unit with skill 3, no module
+let unit = Silverash::new(3, -1);
+
+// Calculate DPS against 500 DEF, 0 RES
+let dps = unit.calculate_dps(500.0, 0.0);
+println!("SilverAsh S3 DPS: {:.2}", dps);
+```
+
+### Reference Implementation
+
+The Rust implementations are validated against the Python reference:
+- **Source**: `external/ArknightsDpsCompare/damagecalc/damage_formulas.py`
+- **Data**: `external/ArknightsDpsCompare/Database/JsonReader.py`
+
+## Testing
+
+### Running Tests
+
+```bash
+# Run all tests
+cargo test
+
+# Run with output
+cargo test -- --nocapture
+
+# Run specific test
+cargo test test_name
+
+# Run DPS comparison tests only
+cargo test --test dps_comparison_test
+```
+
+### DPS Comparison Tests
+
+The DPS comparison test suite validates the Rust implementations against the Python reference. It includes **2,870 test cases** covering **257 operators** across multiple scenarios.
+
+#### Test Configuration
+
+Each test case specifies:
+- Operator name
+- Skill index (0-based)
+- Module index (-1 for none)
+- Defense value
+- Resistance value
+
+Test scenarios per operator:
+| Defense | Resistance | Scenario |
+|---------|------------|----------|
+| 0 | 0 | Baseline (no mitigation) |
+| 300 | 0 | Low defense |
+| 0 | 20 | Low resistance |
+| 500 | 30 | Medium defense + resistance |
+| 1000 | 50 | High defense + resistance |
+
+#### Running Python Comparison
+
+The Python runner executes the reference implementation and outputs DPS values:
+
+```bash
+# Run all test cases
+python3 tests/dps_comparison/run_comparison.py
+
+# Save results to JSON
+python3 tests/dps_comparison/run_comparison.py --output results.json
+
+# Generate Rust expected values
+python3 tests/dps_comparison/run_comparison.py --rust-values
+```
+
+Example output:
+```
+Running 2870 test cases from test_config.json...
+  [1/2870] Aak S1 def=0 res=0 -> DPS: 815.45
+  [2/2870] Aak S1 def=300 res=0 -> DPS: 584.68
+  ...
+Completed: 2860 successful, 10 errors
+```
+
+#### Running Rust Integration Tests
+
+```bash
+# Run DPS integration tests
+cargo test --test dps_comparison_test
+
+# Run with detailed output
+cargo test --test dps_comparison_test -- --nocapture
+```
+
+### Generating Test Files
+
+The test generation system extracts operator data from the Python source and generates test files automatically.
+
+#### Step 1: Extract Operator Data
+
+```bash
+# Generate operators.json from ArknightsDpsCompare source
+python3 scripts/extract_operator_data.py > tests/dps_comparison/operators.json
+```
+
+This script parses:
+- `external/ArknightsDpsCompare/Database/JsonReader.py` - Character IDs
+- `external/ArknightsDpsCompare/damagecalc/damage_formulas.py` - Skills and modules
+
+Output format (`operators.json`):
+```json
+[
+  {
+    "class_name": "Aak",
+    "display_name": "Aak",
+    "char_id": "char_225_haak",
+    "rust_module": "aak",
+    "skills": [1, 3],
+    "modules": [1, 2],
+    "default_module": 1
+  }
+]
+```
+
+#### Step 2: Generate Test Files
+
+```bash
+# Generate all test files from operators.json
+cargo run --bin generate-dps-tests
+```
+
+This generates:
+- `tests/dps_comparison/test_config.json` - Test case configurations
+- `tests/dps_comparison/dps_comparison_test.rs` - Rust integration tests
+- `tests/dps_comparison/run_comparison.py` - Python test runner
+
+#### Step 3: Run Tests
+
+```bash
+# Run Python comparison
+python3 tests/dps_comparison/run_comparison.py
+
+# Run Rust tests
+cargo test --test dps_comparison_test
+```
+
+### Test Files Reference
+
+| File | Description |
+|------|-------------|
+| `tests/dps_comparison/operators.json` | Extracted operator metadata (257 operators) |
+| `tests/dps_comparison/test_config.json` | Test case configurations (2,870 cases) |
+| `tests/dps_comparison/dps_comparison_test.rs` | Generated Rust integration tests |
+| `tests/dps_comparison/run_comparison.py` | Python test runner script |
+
 ## Game Data
 
 ### Required Files
@@ -849,6 +1087,46 @@ The server scans `ASSETS_DIR` to build mappings for:
 - Avatar locations across `ui_char_avatar_0` through `ui_char_avatar_19` (20 directories)
 - Portrait locations across `pack0` through `pack14` (15 directories)
 - Skill icons, module images, item icons
+
+## External Dependencies
+
+### ArknightsDpsCompare (Git Submodule)
+
+The project includes [ArknightsDpsCompare](https://github.com/WhoAteMyCQQkie/ArknightsDpsCompare) as a git submodule for DPS calculation reference data.
+
+#### Location
+
+```
+external/ArknightsDpsCompare/
+├── Database/
+│   ├── JsonReader.py      # Operator ID mappings (id_dict)
+│   └── StageAnimator.py   # Animation data
+└── damagecalc/
+    ├── damage_formulas.py # Operator damage implementations
+    ├── healing_formulas.py
+    ├── utils.py
+    └── commands.py
+```
+
+#### Setup
+
+```bash
+# Clone with submodules
+git clone --recurse-submodules https://github.com/Eltik/myrtle.moe.git
+
+# Or initialize after cloning
+git submodule update --init --recursive
+
+# Update submodule to latest
+git submodule update --remote external/ArknightsDpsCompare
+```
+
+#### Usage
+
+The submodule is used by:
+- `scripts/extract_operator_data.py` - Extracts operator metadata
+- `scripts/python_dps_harness.py` - Runs Python DPS calculations
+- `tests/dps_comparison/run_comparison.py` - Reference test runner
 
 ## Database
 
@@ -1061,7 +1339,7 @@ RUST_LOG=debug cargo run
 
 ### CLI Tools
 
-The project includes CLI tools for administrative tasks:
+The project includes several CLI tools for various tasks:
 
 #### Permission Manager
 
@@ -1080,6 +1358,104 @@ cargo build --release --bin manage_permissions
 # List all admins
 ./target/release/manage_permissions --list-admins
 ```
+
+#### DPS Test Generator
+
+Generate DPS comparison test files from operator data:
+
+```bash
+# Build and run
+cargo run --bin generate-dps-tests
+
+# Or build release binary
+cargo build --release --bin generate-dps-tests
+./target/release/generate-dps-tests
+```
+
+Output:
+```
+Generating DPS comparison tests...
+Output directory: tests/dps_comparison
+Loaded 257 operators from operators.json
+Generated 2870 test cases
+
+Generated test files:
+  - tests/dps_comparison/test_config.json
+  - tests/dps_comparison/dps_comparison_test.rs
+  - tests/dps_comparison/run_comparison.py
+```
+
+#### Operator Translator
+
+Translate Python operator implementations to Rust (development tool):
+
+```bash
+# Build and run
+cargo run --bin translate-operators
+
+# This parses damage_formulas.py and generates Rust code
+```
+
+### Scripts
+
+Python scripts for DPS calculation and data extraction:
+
+#### python_dps_harness.py
+
+Python harness for running DPS calculations against the reference implementation:
+
+```bash
+# Run from scripts directory
+cd scripts
+
+# Calculate DPS for an operator
+python3 -c "
+from python_dps_harness import calculate_dps
+result = calculate_dps('SilverAsh', defense=500, res=0, skill=2, module=1)
+print(f\"DPS: {result['dps']:.2f}\")
+"
+
+# List available operators
+python3 -c "
+from python_dps_harness import list_operators
+for op in list_operators()[:10]:
+    print(op)
+"
+```
+
+Functions available:
+| Function | Description |
+|----------|-------------|
+| `calculate_dps(operator, defense, res, skill, module)` | Calculate DPS for an operator |
+| `list_operators()` | List all available operator names |
+| `get_operator_info(operator)` | Get operator metadata |
+
+#### extract_operator_data.py
+
+Extract operator metadata from ArknightsDpsCompare source files:
+
+```bash
+# Generate operators.json
+python3 scripts/extract_operator_data.py > tests/dps_comparison/operators.json
+
+# Output goes to stdout, logs to stderr
+python3 scripts/extract_operator_data.py 2>/dev/null > operators.json
+```
+
+This script parses:
+- `id_dict` from `JsonReader.py` (operator name to char_id mapping)
+- Class definitions from `damage_formulas.py` (skills, modules)
+
+Output fields:
+| Field | Description |
+|-------|-------------|
+| `class_name` | Python class name (e.g., "SilverAsh") |
+| `display_name` | Display name from init (e.g., "SilverAsh") |
+| `char_id` | Game character ID (e.g., "char_003_kalts") |
+| `rust_module` | Rust module name (e.g., "silver_ash") |
+| `skills` | Available skill indices (e.g., [1, 2, 3]) |
+| `modules` | Available module indices (e.g., [1, 2]) |
+| `default_module` | Default module for testing |
 
 ## Troubleshooting
 

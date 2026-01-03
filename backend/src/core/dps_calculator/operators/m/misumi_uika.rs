@@ -2,8 +2,8 @@
 //!
 //! Auto-generated from ArknightsDpsCompare damage_formulas.py
 
-use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
 use super::super::super::operator_data::OperatorData;
+use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
 
 /// MisumiUika operator implementation
 pub struct MisumiUika {
@@ -34,7 +34,7 @@ impl MisumiUika {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    /// 
+    ///
     /// if self.skill == 2:
     /// skill_scale = self.skill_params[2] + self.talent2_params[1]
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
@@ -43,7 +43,24 @@ impl MisumiUika {
     /// else:
     /// dps = res * 0
     /// return dps
-    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op)]
+    #[allow(
+        unused_variables,
+        unused_mut,
+        unused_assignments,
+        unused_parens,
+        clippy::excessive_precision,
+        clippy::unnecessary_cast,
+        clippy::collapsible_if,
+        clippy::double_parens,
+        clippy::if_same_then_else,
+        clippy::nonminimal_bool,
+        clippy::overly_complex_bool_expr,
+        clippy::needless_return,
+        clippy::collapsible_else_if,
+        clippy::neg_multiply,
+        clippy::assign_op_pattern,
+        clippy::eq_op
+    )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let defense = enemy.defense;
         let res = enemy.res;
@@ -54,12 +71,13 @@ impl MisumiUika {
         let mut hitdmg: f64 = 0.0;
 
         if (self.unit.skill_index as f64) == 2.0 {
-        skill_scale = self.unit.skill_parameters[2] + self.unit.talent2_parameters[1];
-        final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
-        hitdmg = ((final_atk * skill_scale * (1.0 -res/ 100.0)) as f64).max((final_atk * skill_scale * 0.05) as f64);
-        dps = hitdmg / 0.3;
+            skill_scale = self.unit.skill_parameters[2] + self.unit.talent2_parameters[1];
+            final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
+            hitdmg = ((final_atk * skill_scale * (1.0 - res / 100.0)) as f64)
+                .max((final_atk * skill_scale * 0.05) as f64);
+            dps = hitdmg / 0.3;
         } else {
-        dps = res * 0.0;
+            dps = res * 0.0;
         }
         return dps;
     }
