@@ -3,10 +3,12 @@
 DPS Comparison Test Runner
 
 This script runs DPS calculations for all configured operators from test_config.json
-and outputs reference values that can be used in Rust tests.
+and can generate expected_dps.json for efficient Rust testing.
 
 Usage:
-    python run_comparison.py [--output results.json]
+    python run_comparison.py                    # Run and display results
+    python run_comparison.py --generate-expected # Generate expected_dps.json
+    python run_comparison.py --output results.json # Save full results
 """
 
 import sys
@@ -35,11 +37,17 @@ def load_test_cases():
         return json.load(f)
 
 
-def run_all_tests(output_file=None):
+def make_test_key(operator: str, skill: int, defense: float, res: float) -> str:
+    """Create a unique key for a test case."""
+    return f"{operator}_s{skill}_{int(defense)}_{int(res)}"
+
+
+def run_all_tests(output_file=None, generate_expected=False):
     """Run all test cases and collect results."""
     test_cases = load_test_cases()
     results = []
     errors = []
+    expected_dps = {}
 
     print(f"Running {len(test_cases)} test cases from test_config.json...")
 
@@ -53,14 +61,23 @@ def run_all_tests(output_file=None):
         )
 
         if 'error' in result:
-            errors.append(result)
+            errors.append({**tc, 'error': result['error']})
             print(f"  [{i+1}/{len(test_cases)}] {tc['operator']} S{tc['skill']+1} - ERROR: {result['error']}")
         else:
             results.append(result)
-            print(f"  [{i+1}/{len(test_cases)}] {tc['operator']} S{tc['skill']+1} def={tc['defense']:.0f} res={tc['res']:.0f} -> DPS: {result['dps']:.2f}")
+            dps = result['dps']
+            key = make_test_key(tc['operator'], tc['skill'], tc['defense'], tc['res'])
+            expected_dps[key] = dps
+            print(f"  [{i+1}/{len(test_cases)}] {tc['operator']} S{tc['skill']+1} def={tc['defense']:.0f} res={tc['res']:.0f} -> DPS: {dps:.2f}")
 
     print()
     print(f"Completed: {len(results)} successful, {len(errors)} errors")
+
+    if generate_expected:
+        expected_path = os.path.join(SCRIPT_DIR, 'expected_dps.json')
+        with open(expected_path, 'w') as f:
+            json.dump(expected_dps, f, indent=2, sort_keys=True)
+        print(f"Expected DPS values saved to {expected_path}")
 
     if output_file:
         with open(output_file, 'w') as f:
@@ -68,33 +85,19 @@ def run_all_tests(output_file=None):
                 'results': results,
                 'errors': errors,
             }, f, indent=2)
-        print(f"Results saved to {output_file}")
+        print(f"Full results saved to {output_file}")
 
     return results, errors
 
 
-def generate_rust_expected_values(results):
-    """Generate Rust code with expected values from Python results."""
-    print("\n// Expected DPS values from Python reference implementation")
-    print("// Copy these into your Rust tests\n")
-
-    for r in results:
-        skill_name = f"s{r.get('skill', 0) + 1}" if r.get('skill', -1) >= 0 else "base"
-        print(f"// {r['operator']} {skill_name} def={r['defense']:.0f} res={r['res']:.0f}")
-        print(f"// Expected DPS: {r['dps']:.2f}")
-        print()
-
-
 def main():
     parser = argparse.ArgumentParser(description='Run DPS comparison tests')
-    parser.add_argument('--output', '-o', help='Output JSON file for results')
-    parser.add_argument('--rust-values', action='store_true', help='Generate Rust expected values')
+    parser.add_argument('--output', '-o', help='Output JSON file for full results')
+    parser.add_argument('--generate-expected', action='store_true',
+                        help='Generate expected_dps.json for Rust tests')
     args = parser.parse_args()
 
-    results, errors = run_all_tests(args.output)
-
-    if args.rust_values:
-        generate_rust_expected_values(results)
+    results, errors = run_all_tests(args.output, args.generate_expected)
 
     sys.exit(0 if len(errors) == 0 else 1)
 

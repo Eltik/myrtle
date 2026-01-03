@@ -3666,7 +3666,7 @@
     "default_module": 1
   },
   {
-    "class_name": "twelveF",
+    "class_name": "TwelveF",
     "display_name": "12F",
     "char_id": "char_009_12fce",
     "rust_module": "twelve_f",
