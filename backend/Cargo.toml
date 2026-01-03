@@ -7,6 +7,14 @@ edition = "2024"
 name = "manage-permissions"
 path = "src/bin/manage_permissions.rs"
 
+[[bin]]
+name = "translate-operators"
+path = "src/bin/translate_operators.rs"
+
+[[bin]]
+name = "generate-dps-tests"
+path = "src/bin/generate_dps_tests.rs"
+
 [dependencies]
 axum = "0.8"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "fs"] }

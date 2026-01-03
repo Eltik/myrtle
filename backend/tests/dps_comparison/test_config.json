@@ -1,0 +1,3242 @@
+[
+  {
+    "defense": 0.0,
+    "module": -1,
+    "operator": "twelveF",
+    "operator_id": "char_009_12fce",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": -1,
+    "operator": "twelveF",
+    "operator_id": "char_009_12fce",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": -1,
+    "operator": "twelveF",
+    "operator_id": "char_009_12fce",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": -1,
+    "operator": "twelveF",
+    "operator_id": "char_009_12fce",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": -1,
+    "operator": "twelveF",
+    "operator_id": "char_009_12fce",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Aak",
+    "operator_id": "char_225_haak",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Aak",
+    "operator_id": "char_225_haak",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Aak",
+    "operator_id": "char_225_haak",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Aak",
+    "operator_id": "char_225_haak",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Aak",
+    "operator_id": "char_225_haak",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Aak",
+    "operator_id": "char_225_haak",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Aak",
+    "operator_id": "char_225_haak",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Aak",
+    "operator_id": "char_225_haak",
+    "res": 20.0,
+    "skill": 2
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Aak",
+    "operator_id": "char_225_haak",
+    "res": 30.0,
+    "skill": 2
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Aak",
+    "operator_id": "char_225_haak",
+    "res": 50.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Absinthe",
+    "operator_id": "char_405_absin",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Absinthe",
+    "operator_id": "char_405_absin",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Absinthe",
+    "operator_id": "char_405_absin",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Absinthe",
+    "operator_id": "char_405_absin",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Absinthe",
+    "operator_id": "char_405_absin",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Absinthe",
+    "operator_id": "char_405_absin",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Absinthe",
+    "operator_id": "char_405_absin",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Absinthe",
+    "operator_id": "char_405_absin",
+    "res": 20.0,
+    "skill": 1
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Absinthe",
+    "operator_id": "char_405_absin",
+    "res": 30.0,
+    "skill": 1
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Absinthe",
+    "operator_id": "char_405_absin",
+    "res": 50.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Aciddrop",
+    "operator_id": "char_366_acdrop",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Aciddrop",
+    "operator_id": "char_366_acdrop",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Aciddrop",
+    "operator_id": "char_366_acdrop",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Aciddrop",
+    "operator_id": "char_366_acdrop",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Aciddrop",
+    "operator_id": "char_366_acdrop",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Aciddrop",
+    "operator_id": "char_366_acdrop",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Aciddrop",
+    "operator_id": "char_366_acdrop",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Aciddrop",
+    "operator_id": "char_366_acdrop",
+    "res": 20.0,
+    "skill": 1
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Aciddrop",
+    "operator_id": "char_366_acdrop",
+    "res": 30.0,
+    "skill": 1
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Aciddrop",
+    "operator_id": "char_366_acdrop",
+    "res": 50.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": -1,
+    "operator": "Adnachiel",
+    "operator_id": "char_211_adnach",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": -1,
+    "operator": "Adnachiel",
+    "operator_id": "char_211_adnach",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": -1,
+    "operator": "Adnachiel",
+    "operator_id": "char_211_adnach",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": -1,
+    "operator": "Adnachiel",
+    "operator_id": "char_211_adnach",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": -1,
+    "operator": "Adnachiel",
+    "operator_id": "char_211_adnach",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Andreana",
+    "operator_id": "char_218_cuttle",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Andreana",
+    "operator_id": "char_218_cuttle",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Andreana",
+    "operator_id": "char_218_cuttle",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Andreana",
+    "operator_id": "char_218_cuttle",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Andreana",
+    "operator_id": "char_218_cuttle",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Andreana",
+    "operator_id": "char_218_cuttle",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Andreana",
+    "operator_id": "char_218_cuttle",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Andreana",
+    "operator_id": "char_218_cuttle",
+    "res": 20.0,
+    "skill": 1
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Andreana",
+    "operator_id": "char_218_cuttle",
+    "res": 30.0,
+    "skill": 1
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Andreana",
+    "operator_id": "char_218_cuttle",
+    "res": 50.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 2,
+    "operator": "Angelina",
+    "operator_id": "char_291_aglina",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": 2,
+    "operator": "Angelina",
+    "operator_id": "char_291_aglina",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 2,
+    "operator": "Angelina",
+    "operator_id": "char_291_aglina",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": 2,
+    "operator": "Angelina",
+    "operator_id": "char_291_aglina",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": 2,
+    "operator": "Angelina",
+    "operator_id": "char_291_aglina",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 2,
+    "operator": "Angelina",
+    "operator_id": "char_291_aglina",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 300.0,
+    "module": 2,
+    "operator": "Angelina",
+    "operator_id": "char_291_aglina",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 2,
+    "operator": "Angelina",
+    "operator_id": "char_291_aglina",
+    "res": 20.0,
+    "skill": 1
+  },
+  {
+    "defense": 500.0,
+    "module": 2,
+    "operator": "Angelina",
+    "operator_id": "char_291_aglina",
+    "res": 30.0,
+    "skill": 1
+  },
+  {
+    "defense": 1000.0,
+    "module": 2,
+    "operator": "Angelina",
+    "operator_id": "char_291_aglina",
+    "res": 50.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 2,
+    "operator": "Angelina",
+    "operator_id": "char_291_aglina",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 300.0,
+    "module": 2,
+    "operator": "Angelina",
+    "operator_id": "char_291_aglina",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 2,
+    "operator": "Angelina",
+    "operator_id": "char_291_aglina",
+    "res": 20.0,
+    "skill": 2
+  },
+  {
+    "defense": 500.0,
+    "module": 2,
+    "operator": "Angelina",
+    "operator_id": "char_291_aglina",
+    "res": 30.0,
+    "skill": 2
+  },
+  {
+    "defense": 1000.0,
+    "module": 2,
+    "operator": "Angelina",
+    "operator_id": "char_291_aglina",
+    "res": 50.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Aosta",
+    "operator_id": "char_346_aosta",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Aosta",
+    "operator_id": "char_346_aosta",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Aosta",
+    "operator_id": "char_346_aosta",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Aosta",
+    "operator_id": "char_346_aosta",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Aosta",
+    "operator_id": "char_346_aosta",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Aosta",
+    "operator_id": "char_346_aosta",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Aosta",
+    "operator_id": "char_346_aosta",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Aosta",
+    "operator_id": "char_346_aosta",
+    "res": 20.0,
+    "skill": 1
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Aosta",
+    "operator_id": "char_346_aosta",
+    "res": 30.0,
+    "skill": 1
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Aosta",
+    "operator_id": "char_346_aosta",
+    "res": 50.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "April",
+    "operator_id": "char_365_aprl",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "April",
+    "operator_id": "char_365_aprl",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "April",
+    "operator_id": "char_365_aprl",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "April",
+    "operator_id": "char_365_aprl",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "April",
+    "operator_id": "char_365_aprl",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "April",
+    "operator_id": "char_365_aprl",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "April",
+    "operator_id": "char_365_aprl",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "April",
+    "operator_id": "char_365_aprl",
+    "res": 20.0,
+    "skill": 1
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "April",
+    "operator_id": "char_365_aprl",
+    "res": 30.0,
+    "skill": 1
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "April",
+    "operator_id": "char_365_aprl",
+    "res": 50.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 2,
+    "operator": "Archetto",
+    "operator_id": "char_332_archet",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": 2,
+    "operator": "Archetto",
+    "operator_id": "char_332_archet",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 2,
+    "operator": "Archetto",
+    "operator_id": "char_332_archet",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": 2,
+    "operator": "Archetto",
+    "operator_id": "char_332_archet",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": 2,
+    "operator": "Archetto",
+    "operator_id": "char_332_archet",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 2,
+    "operator": "Archetto",
+    "operator_id": "char_332_archet",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 300.0,
+    "module": 2,
+    "operator": "Archetto",
+    "operator_id": "char_332_archet",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 2,
+    "operator": "Archetto",
+    "operator_id": "char_332_archet",
+    "res": 20.0,
+    "skill": 1
+  },
+  {
+    "defense": 500.0,
+    "module": 2,
+    "operator": "Archetto",
+    "operator_id": "char_332_archet",
+    "res": 30.0,
+    "skill": 1
+  },
+  {
+    "defense": 1000.0,
+    "module": 2,
+    "operator": "Archetto",
+    "operator_id": "char_332_archet",
+    "res": 50.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 2,
+    "operator": "Archetto",
+    "operator_id": "char_332_archet",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 300.0,
+    "module": 2,
+    "operator": "Archetto",
+    "operator_id": "char_332_archet",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 2,
+    "operator": "Archetto",
+    "operator_id": "char_332_archet",
+    "res": 20.0,
+    "skill": 2
+  },
+  {
+    "defense": 500.0,
+    "module": 2,
+    "operator": "Archetto",
+    "operator_id": "char_332_archet",
+    "res": 30.0,
+    "skill": 2
+  },
+  {
+    "defense": 1000.0,
+    "module": 2,
+    "operator": "Archetto",
+    "operator_id": "char_332_archet",
+    "res": 50.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Arene",
+    "operator_id": "char_333_sidero",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Arene",
+    "operator_id": "char_333_sidero",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Arene",
+    "operator_id": "char_333_sidero",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Arene",
+    "operator_id": "char_333_sidero",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Arene",
+    "operator_id": "char_333_sidero",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Arene",
+    "operator_id": "char_333_sidero",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Arene",
+    "operator_id": "char_333_sidero",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Arene",
+    "operator_id": "char_333_sidero",
+    "res": 20.0,
+    "skill": 1
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Arene",
+    "operator_id": "char_333_sidero",
+    "res": 30.0,
+    "skill": 1
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Arene",
+    "operator_id": "char_333_sidero",
+    "res": 50.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Asbestos",
+    "operator_id": "char_378_asbest",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Asbestos",
+    "operator_id": "char_378_asbest",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Asbestos",
+    "operator_id": "char_378_asbest",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Asbestos",
+    "operator_id": "char_378_asbest",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Asbestos",
+    "operator_id": "char_378_asbest",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Asbestos",
+    "operator_id": "char_378_asbest",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Asbestos",
+    "operator_id": "char_378_asbest",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Asbestos",
+    "operator_id": "char_378_asbest",
+    "res": 20.0,
+    "skill": 1
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Asbestos",
+    "operator_id": "char_378_asbest",
+    "res": 30.0,
+    "skill": 1
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Asbestos",
+    "operator_id": "char_378_asbest",
+    "res": 50.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Ascalon",
+    "operator_id": "char_4117_ray",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Ascalon",
+    "operator_id": "char_4117_ray",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Ascalon",
+    "operator_id": "char_4117_ray",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Ascalon",
+    "operator_id": "char_4117_ray",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Ascalon",
+    "operator_id": "char_4117_ray",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Ascalon",
+    "operator_id": "char_4117_ray",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Ascalon",
+    "operator_id": "char_4117_ray",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Ascalon",
+    "operator_id": "char_4117_ray",
+    "res": 20.0,
+    "skill": 1
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Ascalon",
+    "operator_id": "char_4117_ray",
+    "res": 30.0,
+    "skill": 1
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Ascalon",
+    "operator_id": "char_4117_ray",
+    "res": 50.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Ascalon",
+    "operator_id": "char_4117_ray",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Ascalon",
+    "operator_id": "char_4117_ray",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Ascalon",
+    "operator_id": "char_4117_ray",
+    "res": 20.0,
+    "skill": 2
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Ascalon",
+    "operator_id": "char_4117_ray",
+    "res": 30.0,
+    "skill": 2
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Ascalon",
+    "operator_id": "char_4117_ray",
+    "res": 50.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Ash",
+    "operator_id": "char_423_blemsh",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Ash",
+    "operator_id": "char_423_blemsh",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Ash",
+    "operator_id": "char_423_blemsh",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Ash",
+    "operator_id": "char_423_blemsh",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Ash",
+    "operator_id": "char_423_blemsh",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Ash",
+    "operator_id": "char_423_blemsh",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Ash",
+    "operator_id": "char_423_blemsh",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Ash",
+    "operator_id": "char_423_blemsh",
+    "res": 20.0,
+    "skill": 1
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Ash",
+    "operator_id": "char_423_blemsh",
+    "res": 30.0,
+    "skill": 1
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Ash",
+    "operator_id": "char_423_blemsh",
+    "res": 50.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Ash",
+    "operator_id": "char_423_blemsh",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Ash",
+    "operator_id": "char_423_blemsh",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Ash",
+    "operator_id": "char_423_blemsh",
+    "res": 20.0,
+    "skill": 2
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Ash",
+    "operator_id": "char_423_blemsh",
+    "res": 30.0,
+    "skill": 2
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Ash",
+    "operator_id": "char_423_blemsh",
+    "res": 50.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Ashlock",
+    "operator_id": "char_431_ashlok",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Ashlock",
+    "operator_id": "char_431_ashlok",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Ashlock",
+    "operator_id": "char_431_ashlok",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Ashlock",
+    "operator_id": "char_431_ashlok",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Ashlock",
+    "operator_id": "char_431_ashlok",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Ashlock",
+    "operator_id": "char_431_ashlok",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Ashlock",
+    "operator_id": "char_431_ashlok",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Ashlock",
+    "operator_id": "char_431_ashlok",
+    "res": 20.0,
+    "skill": 1
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Ashlock",
+    "operator_id": "char_431_ashlok",
+    "res": 30.0,
+    "skill": 1
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Ashlock",
+    "operator_id": "char_431_ashlok",
+    "res": 50.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Bagpipe",
+    "operator_id": "char_222_bpipe",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Bagpipe",
+    "operator_id": "char_222_bpipe",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Bagpipe",
+    "operator_id": "char_222_bpipe",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Bagpipe",
+    "operator_id": "char_222_bpipe",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Bagpipe",
+    "operator_id": "char_222_bpipe",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Bagpipe",
+    "operator_id": "char_222_bpipe",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Bagpipe",
+    "operator_id": "char_222_bpipe",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Bagpipe",
+    "operator_id": "char_222_bpipe",
+    "res": 20.0,
+    "skill": 1
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Bagpipe",
+    "operator_id": "char_222_bpipe",
+    "res": 30.0,
+    "skill": 1
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Bagpipe",
+    "operator_id": "char_222_bpipe",
+    "res": 50.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Bagpipe",
+    "operator_id": "char_222_bpipe",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Bagpipe",
+    "operator_id": "char_222_bpipe",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Bagpipe",
+    "operator_id": "char_222_bpipe",
+    "res": 20.0,
+    "skill": 2
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Bagpipe",
+    "operator_id": "char_222_bpipe",
+    "res": 30.0,
+    "skill": 2
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Bagpipe",
+    "operator_id": "char_222_bpipe",
+    "res": 50.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Blaze",
+    "operator_id": "char_017_huang",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Blaze",
+    "operator_id": "char_017_huang",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Blaze",
+    "operator_id": "char_017_huang",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Blaze",
+    "operator_id": "char_017_huang",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Blaze",
+    "operator_id": "char_017_huang",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Blaze",
+    "operator_id": "char_017_huang",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Blaze",
+    "operator_id": "char_017_huang",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Blaze",
+    "operator_id": "char_017_huang",
+    "res": 20.0,
+    "skill": 1
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Blaze",
+    "operator_id": "char_017_huang",
+    "res": 30.0,
+    "skill": 1
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Blaze",
+    "operator_id": "char_017_huang",
+    "res": 50.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "BluePoison",
+    "operator_id": "char_129_bluep",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "BluePoison",
+    "operator_id": "char_129_bluep",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "BluePoison",
+    "operator_id": "char_129_bluep",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "BluePoison",
+    "operator_id": "char_129_bluep",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "BluePoison",
+    "operator_id": "char_129_bluep",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "BluePoison",
+    "operator_id": "char_129_bluep",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "BluePoison",
+    "operator_id": "char_129_bluep",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "BluePoison",
+    "operator_id": "char_129_bluep",
+    "res": 20.0,
+    "skill": 1
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "BluePoison",
+    "operator_id": "char_129_bluep",
+    "res": 30.0,
+    "skill": 1
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "BluePoison",
+    "operator_id": "char_129_bluep",
+    "res": 50.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Ceobe",
+    "operator_id": "char_263_skadi",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Ceobe",
+    "operator_id": "char_263_skadi",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Ceobe",
+    "operator_id": "char_263_skadi",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Ceobe",
+    "operator_id": "char_263_skadi",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Ceobe",
+    "operator_id": "char_263_skadi",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Ceobe",
+    "operator_id": "char_263_skadi",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Ceobe",
+    "operator_id": "char_263_skadi",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Ceobe",
+    "operator_id": "char_263_skadi",
+    "res": 20.0,
+    "skill": 1
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Ceobe",
+    "operator_id": "char_263_skadi",
+    "res": 30.0,
+    "skill": 1
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Ceobe",
+    "operator_id": "char_263_skadi",
+    "res": 50.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Ceobe",
+    "operator_id": "char_263_skadi",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Ceobe",
+    "operator_id": "char_263_skadi",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Ceobe",
+    "operator_id": "char_263_skadi",
+    "res": 20.0,
+    "skill": 2
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Ceobe",
+    "operator_id": "char_263_skadi",
+    "res": 30.0,
+    "skill": 2
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Ceobe",
+    "operator_id": "char_263_skadi",
+    "res": 50.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Chen",
+    "operator_id": "char_010_chen",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Chen",
+    "operator_id": "char_010_chen",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Chen",
+    "operator_id": "char_010_chen",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Chen",
+    "operator_id": "char_010_chen",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Chen",
+    "operator_id": "char_010_chen",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Chen",
+    "operator_id": "char_010_chen",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Chen",
+    "operator_id": "char_010_chen",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Chen",
+    "operator_id": "char_010_chen",
+    "res": 20.0,
+    "skill": 1
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Chen",
+    "operator_id": "char_010_chen",
+    "res": 30.0,
+    "skill": 1
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Chen",
+    "operator_id": "char_010_chen",
+    "res": 50.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Chen",
+    "operator_id": "char_010_chen",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Chen",
+    "operator_id": "char_010_chen",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Chen",
+    "operator_id": "char_010_chen",
+    "res": 20.0,
+    "skill": 2
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Chen",
+    "operator_id": "char_010_chen",
+    "res": 30.0,
+    "skill": 2
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Chen",
+    "operator_id": "char_010_chen",
+    "res": 50.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 2,
+    "operator": "Exusiai",
+    "operator_id": "char_103_angel",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": 2,
+    "operator": "Exusiai",
+    "operator_id": "char_103_angel",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 2,
+    "operator": "Exusiai",
+    "operator_id": "char_103_angel",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": 2,
+    "operator": "Exusiai",
+    "operator_id": "char_103_angel",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": 2,
+    "operator": "Exusiai",
+    "operator_id": "char_103_angel",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 2,
+    "operator": "Exusiai",
+    "operator_id": "char_103_angel",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 300.0,
+    "module": 2,
+    "operator": "Exusiai",
+    "operator_id": "char_103_angel",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 2,
+    "operator": "Exusiai",
+    "operator_id": "char_103_angel",
+    "res": 20.0,
+    "skill": 1
+  },
+  {
+    "defense": 500.0,
+    "module": 2,
+    "operator": "Exusiai",
+    "operator_id": "char_103_angel",
+    "res": 30.0,
+    "skill": 1
+  },
+  {
+    "defense": 1000.0,
+    "module": 2,
+    "operator": "Exusiai",
+    "operator_id": "char_103_angel",
+    "res": 50.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 2,
+    "operator": "Exusiai",
+    "operator_id": "char_103_angel",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 300.0,
+    "module": 2,
+    "operator": "Exusiai",
+    "operator_id": "char_103_angel",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 2,
+    "operator": "Exusiai",
+    "operator_id": "char_103_angel",
+    "res": 20.0,
+    "skill": 2
+  },
+  {
+    "defense": 500.0,
+    "module": 2,
+    "operator": "Exusiai",
+    "operator_id": "char_103_angel",
+    "res": 30.0,
+    "skill": 2
+  },
+  {
+    "defense": 1000.0,
+    "module": 2,
+    "operator": "Exusiai",
+    "operator_id": "char_103_angel",
+    "res": 50.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Eyjafjalla",
+    "operator_id": "char_180_amgoat",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Eyjafjalla",
+    "operator_id": "char_180_amgoat",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Eyjafjalla",
+    "operator_id": "char_180_amgoat",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Eyjafjalla",
+    "operator_id": "char_180_amgoat",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Eyjafjalla",
+    "operator_id": "char_180_amgoat",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Eyjafjalla",
+    "operator_id": "char_180_amgoat",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Eyjafjalla",
+    "operator_id": "char_180_amgoat",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Eyjafjalla",
+    "operator_id": "char_180_amgoat",
+    "res": 20.0,
+    "skill": 1
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Eyjafjalla",
+    "operator_id": "char_180_amgoat",
+    "res": 30.0,
+    "skill": 1
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Eyjafjalla",
+    "operator_id": "char_180_amgoat",
+    "res": 50.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Eyjafjalla",
+    "operator_id": "char_180_amgoat",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Eyjafjalla",
+    "operator_id": "char_180_amgoat",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Eyjafjalla",
+    "operator_id": "char_180_amgoat",
+    "res": 20.0,
+    "skill": 2
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Eyjafjalla",
+    "operator_id": "char_180_amgoat",
+    "res": 30.0,
+    "skill": 2
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Eyjafjalla",
+    "operator_id": "char_180_amgoat",
+    "res": 50.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Ifrit",
+    "operator_id": "char_134_ifrit",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Ifrit",
+    "operator_id": "char_134_ifrit",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Ifrit",
+    "operator_id": "char_134_ifrit",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Ifrit",
+    "operator_id": "char_134_ifrit",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Ifrit",
+    "operator_id": "char_134_ifrit",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Ifrit",
+    "operator_id": "char_134_ifrit",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Ifrit",
+    "operator_id": "char_134_ifrit",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Ifrit",
+    "operator_id": "char_134_ifrit",
+    "res": 20.0,
+    "skill": 1
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Ifrit",
+    "operator_id": "char_134_ifrit",
+    "res": 30.0,
+    "skill": 1
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Ifrit",
+    "operator_id": "char_134_ifrit",
+    "res": 50.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Ifrit",
+    "operator_id": "char_134_ifrit",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Ifrit",
+    "operator_id": "char_134_ifrit",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Ifrit",
+    "operator_id": "char_134_ifrit",
+    "res": 20.0,
+    "skill": 2
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Ifrit",
+    "operator_id": "char_134_ifrit",
+    "res": 30.0,
+    "skill": 2
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Ifrit",
+    "operator_id": "char_134_ifrit",
+    "res": 50.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Mlynar",
+    "operator_id": "char_4064_mlynar",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Mlynar",
+    "operator_id": "char_4064_mlynar",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Mlynar",
+    "operator_id": "char_4064_mlynar",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Mlynar",
+    "operator_id": "char_4064_mlynar",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Mlynar",
+    "operator_id": "char_4064_mlynar",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Mlynar",
+    "operator_id": "char_4064_mlynar",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Mlynar",
+    "operator_id": "char_4064_mlynar",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Mlynar",
+    "operator_id": "char_4064_mlynar",
+    "res": 20.0,
+    "skill": 1
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Mlynar",
+    "operator_id": "char_4064_mlynar",
+    "res": 30.0,
+    "skill": 1
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Mlynar",
+    "operator_id": "char_4064_mlynar",
+    "res": 50.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Mlynar",
+    "operator_id": "char_4064_mlynar",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Mlynar",
+    "operator_id": "char_4064_mlynar",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Mlynar",
+    "operator_id": "char_4064_mlynar",
+    "res": 20.0,
+    "skill": 2
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Mlynar",
+    "operator_id": "char_4064_mlynar",
+    "res": 30.0,
+    "skill": 2
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Mlynar",
+    "operator_id": "char_4064_mlynar",
+    "res": 50.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Mountain",
+    "operator_id": "char_264_f12yin",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Mountain",
+    "operator_id": "char_264_f12yin",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Mountain",
+    "operator_id": "char_264_f12yin",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Mountain",
+    "operator_id": "char_264_f12yin",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Mountain",
+    "operator_id": "char_264_f12yin",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Mountain",
+    "operator_id": "char_264_f12yin",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Mountain",
+    "operator_id": "char_264_f12yin",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Mountain",
+    "operator_id": "char_264_f12yin",
+    "res": 20.0,
+    "skill": 1
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Mountain",
+    "operator_id": "char_264_f12yin",
+    "res": 30.0,
+    "skill": 1
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Mountain",
+    "operator_id": "char_264_f12yin",
+    "res": 50.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Mountain",
+    "operator_id": "char_264_f12yin",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Mountain",
+    "operator_id": "char_264_f12yin",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Mountain",
+    "operator_id": "char_264_f12yin",
+    "res": 20.0,
+    "skill": 2
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Mountain",
+    "operator_id": "char_264_f12yin",
+    "res": 30.0,
+    "skill": 2
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Mountain",
+    "operator_id": "char_264_f12yin",
+    "res": 50.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Mudrock",
+    "operator_id": "char_311_mudrok",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Mudrock",
+    "operator_id": "char_311_mudrok",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Mudrock",
+    "operator_id": "char_311_mudrok",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Mudrock",
+    "operator_id": "char_311_mudrok",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Mudrock",
+    "operator_id": "char_311_mudrok",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Mudrock",
+    "operator_id": "char_311_mudrok",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Mudrock",
+    "operator_id": "char_311_mudrok",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Mudrock",
+    "operator_id": "char_311_mudrok",
+    "res": 20.0,
+    "skill": 1
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Mudrock",
+    "operator_id": "char_311_mudrok",
+    "res": 30.0,
+    "skill": 1
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Mudrock",
+    "operator_id": "char_311_mudrok",
+    "res": 50.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Mudrock",
+    "operator_id": "char_311_mudrok",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Mudrock",
+    "operator_id": "char_311_mudrok",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Mudrock",
+    "operator_id": "char_311_mudrok",
+    "res": 20.0,
+    "skill": 2
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Mudrock",
+    "operator_id": "char_311_mudrok",
+    "res": 30.0,
+    "skill": 2
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Mudrock",
+    "operator_id": "char_311_mudrok",
+    "res": 50.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Rosa",
+    "operator_id": "char_197_poca",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Rosa",
+    "operator_id": "char_197_poca",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Rosa",
+    "operator_id": "char_197_poca",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Rosa",
+    "operator_id": "char_197_poca",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Rosa",
+    "operator_id": "char_197_poca",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Rosa",
+    "operator_id": "char_197_poca",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Rosa",
+    "operator_id": "char_197_poca",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Rosa",
+    "operator_id": "char_197_poca",
+    "res": 20.0,
+    "skill": 1
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Rosa",
+    "operator_id": "char_197_poca",
+    "res": 30.0,
+    "skill": 1
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Rosa",
+    "operator_id": "char_197_poca",
+    "res": 50.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Rosa",
+    "operator_id": "char_197_poca",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Rosa",
+    "operator_id": "char_197_poca",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Rosa",
+    "operator_id": "char_197_poca",
+    "res": 20.0,
+    "skill": 2
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Rosa",
+    "operator_id": "char_197_poca",
+    "res": 30.0,
+    "skill": 2
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Rosa",
+    "operator_id": "char_197_poca",
+    "res": 50.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Schwarz",
+    "operator_id": "char_340_shwaz",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Schwarz",
+    "operator_id": "char_340_shwaz",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Schwarz",
+    "operator_id": "char_340_shwaz",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Schwarz",
+    "operator_id": "char_340_shwaz",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Schwarz",
+    "operator_id": "char_340_shwaz",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Schwarz",
+    "operator_id": "char_340_shwaz",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Schwarz",
+    "operator_id": "char_340_shwaz",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Schwarz",
+    "operator_id": "char_340_shwaz",
+    "res": 20.0,
+    "skill": 1
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Schwarz",
+    "operator_id": "char_340_shwaz",
+    "res": 30.0,
+    "skill": 1
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Schwarz",
+    "operator_id": "char_340_shwaz",
+    "res": 50.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Schwarz",
+    "operator_id": "char_340_shwaz",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Schwarz",
+    "operator_id": "char_340_shwaz",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Schwarz",
+    "operator_id": "char_340_shwaz",
+    "res": 20.0,
+    "skill": 2
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Schwarz",
+    "operator_id": "char_340_shwaz",
+    "res": 30.0,
+    "skill": 2
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Schwarz",
+    "operator_id": "char_340_shwaz",
+    "res": 50.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "SilverAsh",
+    "operator_id": "char_172_svrash",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "SilverAsh",
+    "operator_id": "char_172_svrash",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "SilverAsh",
+    "operator_id": "char_172_svrash",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "SilverAsh",
+    "operator_id": "char_172_svrash",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "SilverAsh",
+    "operator_id": "char_172_svrash",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "SilverAsh",
+    "operator_id": "char_172_svrash",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "SilverAsh",
+    "operator_id": "char_172_svrash",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "SilverAsh",
+    "operator_id": "char_172_svrash",
+    "res": 20.0,
+    "skill": 1
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "SilverAsh",
+    "operator_id": "char_172_svrash",
+    "res": 30.0,
+    "skill": 1
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "SilverAsh",
+    "operator_id": "char_172_svrash",
+    "res": 50.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "SilverAsh",
+    "operator_id": "char_172_svrash",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "SilverAsh",
+    "operator_id": "char_172_svrash",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "SilverAsh",
+    "operator_id": "char_172_svrash",
+    "res": 20.0,
+    "skill": 2
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "SilverAsh",
+    "operator_id": "char_172_svrash",
+    "res": 30.0,
+    "skill": 2
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "SilverAsh",
+    "operator_id": "char_172_svrash",
+    "res": 50.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Surtr",
+    "operator_id": "char_350_surtr",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Surtr",
+    "operator_id": "char_350_surtr",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Surtr",
+    "operator_id": "char_350_surtr",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Surtr",
+    "operator_id": "char_350_surtr",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Surtr",
+    "operator_id": "char_350_surtr",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Surtr",
+    "operator_id": "char_350_surtr",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Surtr",
+    "operator_id": "char_350_surtr",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Surtr",
+    "operator_id": "char_350_surtr",
+    "res": 20.0,
+    "skill": 1
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Surtr",
+    "operator_id": "char_350_surtr",
+    "res": 30.0,
+    "skill": 1
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Surtr",
+    "operator_id": "char_350_surtr",
+    "res": 50.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Surtr",
+    "operator_id": "char_350_surtr",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Surtr",
+    "operator_id": "char_350_surtr",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Surtr",
+    "operator_id": "char_350_surtr",
+    "res": 20.0,
+    "skill": 2
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Surtr",
+    "operator_id": "char_350_surtr",
+    "res": 30.0,
+    "skill": 2
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Surtr",
+    "operator_id": "char_350_surtr",
+    "res": 50.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Thorns",
+    "operator_id": "char_293_thorns",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Thorns",
+    "operator_id": "char_293_thorns",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Thorns",
+    "operator_id": "char_293_thorns",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Thorns",
+    "operator_id": "char_293_thorns",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Thorns",
+    "operator_id": "char_293_thorns",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Thorns",
+    "operator_id": "char_293_thorns",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Thorns",
+    "operator_id": "char_293_thorns",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Thorns",
+    "operator_id": "char_293_thorns",
+    "res": 20.0,
+    "skill": 1
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Thorns",
+    "operator_id": "char_293_thorns",
+    "res": 30.0,
+    "skill": 1
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Thorns",
+    "operator_id": "char_293_thorns",
+    "res": 50.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Thorns",
+    "operator_id": "char_293_thorns",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "Thorns",
+    "operator_id": "char_293_thorns",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "Thorns",
+    "operator_id": "char_293_thorns",
+    "res": 20.0,
+    "skill": 2
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "Thorns",
+    "operator_id": "char_293_thorns",
+    "res": 30.0,
+    "skill": 2
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "Thorns",
+    "operator_id": "char_293_thorns",
+    "res": 50.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "W",
+    "operator_id": "char_113_cqbw",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "W",
+    "operator_id": "char_113_cqbw",
+    "res": 0.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "W",
+    "operator_id": "char_113_cqbw",
+    "res": 20.0,
+    "skill": 0
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "W",
+    "operator_id": "char_113_cqbw",
+    "res": 30.0,
+    "skill": 0
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "W",
+    "operator_id": "char_113_cqbw",
+    "res": 50.0,
+    "skill": 0
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "W",
+    "operator_id": "char_113_cqbw",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "W",
+    "operator_id": "char_113_cqbw",
+    "res": 0.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "W",
+    "operator_id": "char_113_cqbw",
+    "res": 20.0,
+    "skill": 1
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "W",
+    "operator_id": "char_113_cqbw",
+    "res": 30.0,
+    "skill": 1
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "W",
+    "operator_id": "char_113_cqbw",
+    "res": 50.0,
+    "skill": 1
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "W",
+    "operator_id": "char_113_cqbw",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 300.0,
+    "module": 1,
+    "operator": "W",
+    "operator_id": "char_113_cqbw",
+    "res": 0.0,
+    "skill": 2
+  },
+  {
+    "defense": 0.0,
+    "module": 1,
+    "operator": "W",
+    "operator_id": "char_113_cqbw",
+    "res": 20.0,
+    "skill": 2
+  },
+  {
+    "defense": 500.0,
+    "module": 1,
+    "operator": "W",
+    "operator_id": "char_113_cqbw",
+    "res": 30.0,
+    "skill": 2
+  },
+  {
+    "defense": 1000.0,
+    "module": 1,
+    "operator": "W",
+    "operator_id": "char_113_cqbw",
+    "res": 50.0,
+    "skill": 2
+  }
+]
