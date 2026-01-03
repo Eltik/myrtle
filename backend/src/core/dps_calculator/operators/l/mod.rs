@@ -1,3 +1,5 @@
+#![allow(clippy::module_inception)]
+
 mod la_pluma;
 mod laios;
 mod lappland;

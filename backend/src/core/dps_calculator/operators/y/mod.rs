@@ -1,3 +1,5 @@
+#![allow(clippy::module_inception)]
+
 mod yahata_umiri;
 mod yato_alter;
 mod yu;

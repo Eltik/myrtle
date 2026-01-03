@@ -1,3 +1,5 @@
+#![allow(clippy::module_inception)]
+
 mod gavial_alter;
 mod gladiia;
 mod gnosis;

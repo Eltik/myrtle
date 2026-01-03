@@ -1,3 +1,5 @@
+#![allow(clippy::module_inception)]
+
 mod saga;
 mod sand_reckoner;
 mod sankta_miksaparato;

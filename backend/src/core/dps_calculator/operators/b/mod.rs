@@ -1,3 +1,5 @@
+#![allow(clippy::module_inception)]
+
 mod bagpipe;
 mod beehunter;
 mod beeswax;

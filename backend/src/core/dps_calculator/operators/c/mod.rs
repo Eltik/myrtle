@@ -1,3 +1,5 @@
+#![allow(clippy::module_inception)]
+
 mod cantabile;
 mod caper;
 mod carnelian;

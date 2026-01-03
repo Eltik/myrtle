@@ -2,8 +2,8 @@
 //!
 //! Auto-generated from ArknightsDpsCompare damage_formulas.py
 
-use super::super::super::operator_data::OperatorData;
 use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
+use super::super::super::operator_data::OperatorData;
 
 /// Melantha operator implementation
 pub struct Melantha {
@@ -34,34 +34,20 @@ impl Melantha {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
+    /// 
     /// final_atk = self.atk * (1 + self.buff_atk + self.talent1_params[0] + self.skill_params[0]*self.skill) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)
     /// dps = hitdmg/self.atk_interval * self.attack_speed/100
     /// return dps
-    #[allow(
-        unused_variables,
-        unused_mut,
-        unused_assignments,
-        unused_parens,
-        clippy::excessive_precision,
-        clippy::unnecessary_cast,
-        clippy::collapsible_if,
-        clippy::double_parens
-    )]
+    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op)]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut final_atk = self.unit.atk
-            * (1.0
-                + self.unit.buff_atk
-                + self.unit.talent1_parameters[0]
-                + self.unit.skill_parameters[0] * (self.unit.skill_index as f64))
-            + self.unit.buff_atk_flat;
+        let mut final_atk = self.unit.atk * (1.0 + self.unit.buff_atk + self.unit.talent1_parameters[0] + self.unit.skill_parameters[0]*(self.unit.skill_index as f64)) + self.unit.buff_atk_flat;
         let mut hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
-        
-        hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0
+        let mut dps = hitdmg/(self.unit.attack_interval as f64) * self.unit.attack_speed/ 100.0;
+        return dps;
     }
 }
 

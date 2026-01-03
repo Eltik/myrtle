@@ -2,8 +2,8 @@
 //!
 //! Auto-generated from ArknightsDpsCompare damage_formulas.py
 
-use super::super::super::operator_data::OperatorData;
 use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
+use super::super::super::operator_data::OperatorData;
 
 /// Pith operator implementation
 pub struct Pith {
@@ -34,7 +34,7 @@ impl Pith {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
+    /// 
     /// newres = np.fmax(0, res - self.talent1_params[0])
     /// atkbuff = self.skill_params[0] * self.skill
     /// aspd = self.skill_params[1] * self.skill
@@ -42,16 +42,7 @@ impl Pith {
     /// hitdmg = np.fmax(final_atk * (1-newres/100), final_atk * 0.05)
     /// dps = hitdmg / self.atk_interval * (self.attack_speed + aspd) / 100
     /// return dps*self.targets
-    #[allow(
-        unused_variables,
-        unused_mut,
-        unused_assignments,
-        unused_parens,
-        clippy::excessive_precision,
-        clippy::unnecessary_cast,
-        clippy::collapsible_if,
-        clippy::double_parens
-    )]
+    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op)]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let defense = enemy.defense;
         let res = enemy.res;
@@ -59,13 +50,10 @@ impl Pith {
         let mut newres = ((0) as f64).max((res - self.unit.talent1_parameters[0]) as f64);
         let mut atkbuff = self.unit.skill_parameters[0] * (self.unit.skill_index as f64);
         let mut aspd = self.unit.skill_parameters[1] * (self.unit.skill_index as f64);
-        let mut final_atk =
-            self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
-        let mut hitdmg =
-            ((final_atk * (1.0 - newres / 100.0)) as f64).max((final_atk * 0.05) as f64);
-        let mut dps =
-            hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd) / 100.0;
-        dps * (self.unit.targets as f64)
+        let mut final_atk = self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
+        let mut hitdmg = ((final_atk * (1.0 -newres/ 100.0)) as f64).max((final_atk * 0.05) as f64);
+        let mut dps = hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd) / 100.0;
+        return dps*(self.unit.targets as f64);
     }
 }
 

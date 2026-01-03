@@ -1,3 +1,5 @@
+#![allow(clippy::module_inception)]
+
 mod dagda;
 mod degenbrecher;
 mod diamante;

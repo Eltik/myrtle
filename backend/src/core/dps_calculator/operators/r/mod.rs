@@ -1,3 +1,5 @@
+#![allow(clippy::module_inception)]
+
 mod raidian;
 mod rangers;
 mod ray;

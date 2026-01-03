@@ -1,3 +1,5 @@
+#![allow(clippy::module_inception)]
+
 mod w;
 mod wakaba_mutsumi;
 mod walter;

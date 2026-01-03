@@ -2,8 +2,8 @@
 //!
 //! Auto-generated from ArknightsDpsCompare damage_formulas.py
 
-use super::super::super::operator_data::OperatorData;
 use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
+use super::super::super::operator_data::OperatorData;
 
 /// Crownslayer operator implementation
 pub struct Crownslayer {
@@ -34,7 +34,7 @@ impl Crownslayer {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
+    /// 
     /// atkbuff = 0.1 if self.module_dmg and self.module == 2 else 0
     /// atk_scale = self.talent2_params[0] if self.talent2_dmg and self.elite == 2 else 1
     /// if self.skill < 2:
@@ -48,59 +48,34 @@ impl Crownslayer {
     /// dps = hitdmg
     /// if not self.skill_dmg: dps *= 1/3
     /// return dps
-    #[allow(
-        unused_variables,
-        unused_mut,
-        unused_assignments,
-        unused_parens,
-        clippy::excessive_precision,
-        clippy::unnecessary_cast,
-        clippy::collapsible_if,
-        clippy::double_parens
-    )]
+    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op)]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut dps: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
 
-        atkbuff = if self.unit.module_damage && ((self.unit.module_index as f64) as f64) == 2.0 {
-            0.1
-        } else {
-            0.0
-        };
-        atk_scale = if self.unit.talent2_damage && ((self.unit.elite as f64) as f64) == 2.0 {
-            self.unit.talent2_parameters[0]
-        } else {
-            1.0
-        };
+        atkbuff = if self.unit.module_damage && ((self.unit.module_index as f64) as f64) == 2.0 { 0.1 } else { 0.0 };
+        atk_scale = if self.unit.talent2_damage && ((self.unit.elite as f64) as f64) == 2.0 { self.unit.talent2_parameters[0] } else { 1.0 };
         if (self.unit.skill_index as f64) < 2.0 {
-            final_atk = self.unit.atk
-                * (1.0
-                    + self.unit.skill_parameters[0] * (self.unit.skill_index as f64)
-                    + self.unit.buff_atk
-                    + atkbuff)
-                + self.unit.buff_atk_flat;
-            hitdmg = ((final_atk * atk_scale - defense) as f64)
-                .max((final_atk * atk_scale * 0.05) as f64);
-            dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
+        final_atk = self.unit.atk * (1.0 + self.unit.skill_parameters[0]*(self.unit.skill_index as f64) + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
+        hitdmg = ((final_atk * atk_scale - defense) as f64).max((final_atk * atk_scale * 0.05) as f64);
+        dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            skill_scale = self.unit.skill_parameters[3];
-            final_atk =
-                self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
-            hitdmg = ((final_atk * skill_scale * atk_scale - defense) as f64)
-                .max((final_atk * skill_scale * atk_scale * 0.05) as f64);
-            dps = hitdmg;
-            // UNTRANSLATED: if not self.skill_dmg: dps *= 1/3
+        skill_scale = self.unit.skill_parameters[3];
+        final_atk = self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
+        hitdmg = ((final_atk * skill_scale * atk_scale - defense) as f64).max((final_atk * skill_scale * atk_scale * 0.05) as f64);
+        dps = hitdmg;
+        // UNTRANSLATED: if not self.skill_dmg: dps *= 1/3
         }
-        dps
+        return dps;
     }
 }
 

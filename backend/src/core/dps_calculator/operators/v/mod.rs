@@ -1,3 +1,5 @@
+#![allow(clippy::module_inception)]
+
 mod vanilla;
 mod vendela;
 mod vermeil;

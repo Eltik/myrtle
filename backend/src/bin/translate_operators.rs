@@ -81,7 +81,7 @@ impl PythonToRustTranslator {
         let mut indent_stack: Vec<(usize, bool)> = Vec::new();
 
         // Track if we're in a chain of skill checks at the same level
-        let mut last_skill_check_indent: Option<usize> = None;
+        let mut _last_skill_check_indent: Option<usize> = None;
 
         // Track if we're inside an untranslated block (like a for loop)
         let mut skip_until_indent: Option<usize> = None;
@@ -154,22 +154,23 @@ impl PythonToRustTranslator {
 
                 indent_stack.pop();
                 rust_lines.push(format!("{}}}", self.indent(self.indent_level)));
-                last_skill_check_indent = None;
+                _last_skill_check_indent = None;
             }
 
             // Handle return statement
             if trimmed.starts_with("return ") || trimmed.starts_with("return(") {
                 // Extract expression after return
-                let expr = if trimmed.starts_with("return ") {
-                    &trimmed[7..]
-                } else {
+                let expr = if let Some(stripped) = trimmed.strip_prefix("return ") {
+                    stripped
+                } else if let Some(inner) = trimmed.strip_prefix("return") {
                     // return(expr) - remove the outer parens
-                    let inner = &trimmed[7..]; // "(...)"
                     if inner.starts_with('(') && inner.ends_with(')') {
                         &inner[1..inner.len() - 1]
                     } else {
                         inner
                     }
+                } else {
+                    trimmed
                 };
 
                 // Check if it contains super() or recursive self method calls which we can't translate
@@ -210,8 +211,8 @@ impl PythonToRustTranslator {
                         let next_trimmed = next_line.trim();
                         if next_trimmed.starts_with("except:") {
                             // Found except - get the default value
-                            let except_stmt = if next_trimmed.starts_with("except: ") {
-                                &next_trimmed[8..]
+                            let except_stmt = if let Some(stripped) = next_trimmed.strip_prefix("except: ") {
+                                stripped
                             } else {
                                 break; // Multi-line except block - too complex
                             };
@@ -353,7 +354,7 @@ impl PythonToRustTranslator {
                 indent_stack.push((line_indent, is_skill_check));
 
                 if is_skill_check {
-                    last_skill_check_indent = Some(line_indent);
+                    _last_skill_check_indent = Some(line_indent);
                 }
                 continue;
             }
@@ -544,6 +545,9 @@ impl PythonToRustTranslator {
             .map(|l| l.len() - l.trim_start().len())
             .unwrap_or(0);
 
+        // Pre-compile regex outside the loop for performance
+        let var_re = Regex::new(r"\b([a-zA-Z_][a-zA-Z0-9_]*)\b").unwrap();
+
         for line in lines {
             let trimmed = line.trim();
             if trimmed.is_empty() {
@@ -579,7 +583,6 @@ impl PythonToRustTranslator {
             // Detect return at base level (end of branches)
             if line_indent == base_indent && trimmed.starts_with("return ") {
                 // Variables used in return should be shared
-                let var_re = Regex::new(r"\b([a-zA-Z_][a-zA-Z0-9_]*)\b").unwrap();
                 for cap in var_re.captures_iter(trimmed) {
                     let var = cap[1].to_string();
                     if vars_in_branch.contains_key(&var) {
@@ -662,6 +665,9 @@ impl PythonToRustTranslator {
         let mut i = 0;
         let chars: Vec<char> = line.chars().collect();
 
+        // Pre-compile regex outside loop for performance
+        let identifier_re = Regex::new(r"^[a-zA-Z_][a-zA-Z0-9_]*$").unwrap();
+
         while i < chars.len() {
             if chars[i] == '=' {
                 // Check it's not a compound assignment or comparison
@@ -693,10 +699,7 @@ impl PythonToRustTranslator {
                     }
 
                     // Validate var is a simple identifier
-                    if Regex::new(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
-                        .unwrap()
-                        .is_match(var_part)
-                    {
+                    if identifier_re.is_match(var_part) {
                         // Rename reserved Rust keywords
                         let var_name = self.rename_reserved_keyword(var_part);
                         return Some((var_name, expr_part));
@@ -942,6 +945,11 @@ impl PythonToRustTranslator {
         // Look for patterns like [0, 1, ...] or [0.0, 1.0, ...]
         // We need to handle arrays with complex expressions like [0, 1, 1.85+(0.85 as f64).powf(2)]
 
+        // Pre-compile regex patterns outside the loop for performance
+        let bare_int_re = Regex::new(r"^\d+$").unwrap();
+        let int_mul_div_re = Regex::new(r"^\d+\s*[*/]").unwrap();
+        let int_mul_div_replace_re = Regex::new(r"^(\d+)(\s*[*/])").unwrap();
+
         // Find array-like structures with commas
         let mut i = 0;
         let chars: Vec<char> = expr.chars().collect();
@@ -980,14 +988,13 @@ impl PythonToRustTranslator {
                             .map(|e| {
                                 let trimmed = e.trim();
                                 // Convert bare integers (like 0, 1)
-                                if Regex::new(r"^\d+$").unwrap().is_match(trimmed) {
+                                if bare_int_re.is_match(trimmed) {
                                     format!("{trimmed}.0")
                                 }
                                 // Convert integers at start of expression followed by * or /
                                 // e.g., "2 * 1.85" -> "2.0 * 1.85", "2*(..." -> "2.0*(...
-                                else if Regex::new(r"^\d+\s*[*/]").unwrap().is_match(trimmed) {
-                                    Regex::new(r"^(\d+)(\s*[*/])")
-                                        .unwrap()
+                                else if int_mul_div_re.is_match(trimmed) {
+                                    int_mul_div_replace_re
                                         .replace(trimmed, "$1.0$2")
                                         .to_string()
                                 } else {
@@ -1299,36 +1306,32 @@ impl PythonToRustTranslator {
     fn translate_np_fmax(&self, expr: &str) -> String {
         let mut result = expr.to_string();
 
-        loop {
-            if let Some(start) = result.find("np.fmax(") {
-                let args_start = start + 8;
+        while let Some(start) = result.find("np.fmax(") {
+            let args_start = start + 8;
 
-                // Find matching closing paren
-                let mut depth = 1;
-                let mut end = args_start;
-                let chars: Vec<char> = result[args_start..].chars().collect();
-                for (i, c) in chars.iter().enumerate() {
-                    match c {
-                        '(' => depth += 1,
-                        ')' => {
-                            depth -= 1;
-                            if depth == 0 {
-                                end = args_start + i;
-                                break;
-                            }
+            // Find matching closing paren
+            let mut depth = 1;
+            let mut end = args_start;
+            let chars: Vec<char> = result[args_start..].chars().collect();
+            for (i, c) in chars.iter().enumerate() {
+                match c {
+                    '(' => depth += 1,
+                    ')' => {
+                        depth -= 1;
+                        if depth == 0 {
+                            end = args_start + i;
+                            break;
                         }
-                        _ => {}
                     }
+                    _ => {}
                 }
+            }
 
-                let args_str = &result[args_start..end];
-                if let Some((arg1, arg2)) = self.split_args(args_str) {
-                    let replacement =
-                        format!("(({}) as f64).max(({}) as f64)", arg1.trim(), arg2.trim());
-                    result = format!("{}{}{}", &result[..start], replacement, &result[end + 1..]);
-                } else {
-                    break;
-                }
+            let args_str = &result[args_start..end];
+            if let Some((arg1, arg2)) = self.split_args(args_str) {
+                let replacement =
+                    format!("(({}) as f64).max(({}) as f64)", arg1.trim(), arg2.trim());
+                result = format!("{}{}{}", &result[..start], replacement, &result[end + 1..]);
             } else {
                 break;
             }
@@ -1341,35 +1344,31 @@ impl PythonToRustTranslator {
     fn translate_np_fmin(&self, expr: &str) -> String {
         let mut result = expr.to_string();
 
-        loop {
-            if let Some(start) = result.find("np.fmin(") {
-                let args_start = start + 8;
+        while let Some(start) = result.find("np.fmin(") {
+            let args_start = start + 8;
 
-                let mut depth = 1;
-                let mut end = args_start;
-                let chars: Vec<char> = result[args_start..].chars().collect();
-                for (i, c) in chars.iter().enumerate() {
-                    match c {
-                        '(' => depth += 1,
-                        ')' => {
-                            depth -= 1;
-                            if depth == 0 {
-                                end = args_start + i;
-                                break;
-                            }
+            let mut depth = 1;
+            let mut end = args_start;
+            let chars: Vec<char> = result[args_start..].chars().collect();
+            for (i, c) in chars.iter().enumerate() {
+                match c {
+                    '(' => depth += 1,
+                    ')' => {
+                        depth -= 1;
+                        if depth == 0 {
+                            end = args_start + i;
+                            break;
                         }
-                        _ => {}
                     }
+                    _ => {}
                 }
+            }
 
-                let args_str = &result[args_start..end];
-                if let Some((arg1, arg2)) = self.split_args(args_str) {
-                    let replacement =
-                        format!("(({}) as f64).min(({}) as f64)", arg1.trim(), arg2.trim());
-                    result = format!("{}{}{}", &result[..start], replacement, &result[end + 1..]);
-                } else {
-                    break;
-                }
+            let args_str = &result[args_start..end];
+            if let Some((arg1, arg2)) = self.split_args(args_str) {
+                let replacement =
+                    format!("(({}) as f64).min(({}) as f64)", arg1.trim(), arg2.trim());
+                result = format!("{}{}{}", &result[..start], replacement, &result[end + 1..]);
             } else {
                 break;
             }
@@ -1408,82 +1407,72 @@ impl PythonToRustTranslator {
         let max_re = Regex::new(r"(?:^|[^.])max\(").unwrap();
 
         // Handle min(a, b) - but not .min( which is already-translated method calls
-        loop {
-            // Match min( only when not preceded by .
-            if let Some(m) = min_re.find(&result) {
-                // Adjust start position if we matched a character before 'min'
-                let (start, args_start) = if result[m.start()..].starts_with("min(") {
-                    (m.start(), m.start() + 4) // "min(" is 4 chars
-                } else {
-                    (m.start() + 1, m.start() + 5) // skip the matched char, "min(" is 4 chars
-                };
+        while let Some(m) = min_re.find(&result) {
+            // Adjust start position if we matched a character before 'min'
+            let (start, args_start) = if result[m.start()..].starts_with("min(") {
+                (m.start(), m.start() + 4) // "min(" is 4 chars
+            } else {
+                (m.start() + 1, m.start() + 5) // skip the matched char, "min(" is 4 chars
+            };
 
-                let mut depth = 1;
-                let mut end = args_start;
-                let chars: Vec<char> = result[args_start..].chars().collect();
-                for (i, c) in chars.iter().enumerate() {
-                    match c {
-                        '(' => depth += 1,
-                        ')' => {
-                            depth -= 1;
-                            if depth == 0 {
-                                end = args_start + i;
-                                break;
-                            }
+            let mut depth = 1;
+            let mut end = args_start;
+            let chars: Vec<char> = result[args_start..].chars().collect();
+            for (i, c) in chars.iter().enumerate() {
+                match c {
+                    '(' => depth += 1,
+                    ')' => {
+                        depth -= 1;
+                        if depth == 0 {
+                            end = args_start + i;
+                            break;
                         }
-                        _ => {}
                     }
+                    _ => {}
                 }
+            }
 
-                let args_str = &result[args_start..end];
-                if let Some((arg1, arg2)) = self.split_args(args_str) {
-                    let replacement =
-                        format!("(({}) as f64).min(({}) as f64)", arg1.trim(), arg2.trim());
-                    result = format!("{}{}{}", &result[..start], replacement, &result[end + 1..]);
-                } else {
-                    break;
-                }
+            let args_str = &result[args_start..end];
+            if let Some((arg1, arg2)) = self.split_args(args_str) {
+                let replacement =
+                    format!("(({}) as f64).min(({}) as f64)", arg1.trim(), arg2.trim());
+                result = format!("{}{}{}", &result[..start], replacement, &result[end + 1..]);
             } else {
                 break;
             }
         }
 
         // Handle max(a, b) - but not .max( which is already-translated method calls
-        loop {
-            // Match max( only when not preceded by .
-            if let Some(m) = max_re.find(&result) {
-                // Adjust start position if we matched a character before 'max'
-                let (start, args_start) = if result[m.start()..].starts_with("max(") {
-                    (m.start(), m.start() + 4) // "max(" is 4 chars
-                } else {
-                    (m.start() + 1, m.start() + 5) // skip the matched char, "max(" is 4 chars
-                };
+        while let Some(m) = max_re.find(&result) {
+            // Adjust start position if we matched a character before 'max'
+            let (start, args_start) = if result[m.start()..].starts_with("max(") {
+                (m.start(), m.start() + 4) // "max(" is 4 chars
+            } else {
+                (m.start() + 1, m.start() + 5) // skip the matched char, "max(" is 4 chars
+            };
 
-                let mut depth = 1;
-                let mut end = args_start;
-                let chars: Vec<char> = result[args_start..].chars().collect();
-                for (i, c) in chars.iter().enumerate() {
-                    match c {
-                        '(' => depth += 1,
-                        ')' => {
-                            depth -= 1;
-                            if depth == 0 {
-                                end = args_start + i;
-                                break;
-                            }
+            let mut depth = 1;
+            let mut end = args_start;
+            let chars: Vec<char> = result[args_start..].chars().collect();
+            for (i, c) in chars.iter().enumerate() {
+                match c {
+                    '(' => depth += 1,
+                    ')' => {
+                        depth -= 1;
+                        if depth == 0 {
+                            end = args_start + i;
+                            break;
                         }
-                        _ => {}
                     }
+                    _ => {}
                 }
+            }
 
-                let args_str = &result[args_start..end];
-                if let Some((arg1, arg2)) = self.split_args(args_str) {
-                    let replacement =
-                        format!("(({}) as f64).max(({}) as f64)", arg1.trim(), arg2.trim());
-                    result = format!("{}{}{}", &result[..start], replacement, &result[end + 1..]);
-                } else {
-                    break;
-                }
+            let args_str = &result[args_start..end];
+            if let Some((arg1, arg2)) = self.split_args(args_str) {
+                let replacement =
+                    format!("(({}) as f64).max(({}) as f64)", arg1.trim(), arg2.trim());
+                result = format!("{}{}{}", &result[..start], replacement, &result[end + 1..]);
             } else {
                 break;
             }
@@ -1779,7 +1768,7 @@ impl PythonToRustTranslator {
                 // Trim whitespace from both sides of ** to handle "base ** exponent"
                 let before_trimmed = before.trim_end();
                 let after = after_raw.trim_start();
-                let whitespace_after_len = after_raw.len() - after.len();
+                let _whitespace_after_len = after_raw.len() - after.len();
 
                 // Find the base - handle parenthesized expressions
                 let base_start_in_trimmed;
@@ -1891,6 +1880,7 @@ impl PythonToRustTranslator {
         // Handle "X in [a, b, c]" -> "[a.0, b.0, c.0].contains(&((X) as f64))"
         // Convert array elements to floats and compare as f64 for consistency
         let in_list_re = Regex::new(r"(\S+)\s+in\s+\[([^\]]+)\]").unwrap();
+        let bare_int_re = Regex::new(r"^\d+$").unwrap();
         result = in_list_re
             .replace_all(&result, |caps: &regex::Captures| {
                 let item = &caps[1];
@@ -1900,7 +1890,7 @@ impl PythonToRustTranslator {
                     .split(',')
                     .map(|e| {
                         let trimmed = e.trim();
-                        if Regex::new(r"^\d+$").unwrap().is_match(trimmed) {
+                        if bare_int_re.is_match(trimmed) {
                             format!("{trimmed}.0")
                         } else {
                             trimmed.to_string()
@@ -1943,6 +1933,12 @@ fn parse_python_file(path: &Path) -> Result<Vec<OperatorClass>, String> {
     // Find all class definitions
     let class_pattern = Regex::new(r"(?m)^class\s+(\w+)\(Operator\):").unwrap();
 
+    // Pre-compile super pattern outside the loop for performance
+    let super_pattern = Regex::new(
+        r#"super\(\)\.__init__\(\s*"([^"]+)"\s*,\s*pp\s*,\s*\[([^\]]*)\]\s*,\s*\[([^\]]*)\](?:\s*,\s*(\d+))?(?:\s*,\s*(\d+))?(?:\s*,\s*(\d+))?"#,
+    )
+    .unwrap();
+
     // Collect all class positions
     let class_positions: Vec<(usize, &str)> = class_pattern
         .captures_iter(&content)
@@ -1972,11 +1968,6 @@ fn parse_python_file(path: &Path) -> Result<Vec<OperatorClass>, String> {
         let class_body = &content[*start_pos..end_pos];
 
         // Parse super().__init__
-        let super_pattern = Regex::new(
-            r#"super\(\)\.__init__\(\s*"([^"]+)"\s*,\s*pp\s*,\s*\[([^\]]*)\]\s*,\s*\[([^\]]*)\](?:\s*,\s*(\d+))?(?:\s*,\s*(\d+))?(?:\s*,\s*(\d+))?"#,
-        )
-        .unwrap();
-
         let (
             json_name,
             available_skills,
@@ -2109,10 +2100,11 @@ fn generate_rust_file(op: &OperatorClass) -> String {
     };
 
     // Clean up skill_dps body for display in comments
+    // Replace tabs with spaces to avoid clippy::tabs_in_doc_comments warning
     let skill_dps_comment = op
         .skill_dps_body
         .lines()
-        .map(|l| format!("    /// {}", l.trim()))
+        .map(|l| format!("    /// {}", l.trim().replace('\t', "    ")))
         .collect::<Vec<_>>()
         .join("\n");
 
@@ -2155,7 +2147,7 @@ impl {} {{
     ///
     /// Original Python implementation:
 {}
-    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens)]
+    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op)]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {{
         let defense = enemy.defense;
         let res = enemy.res;
@@ -2191,7 +2183,7 @@ impl {} {{
         let total_dmg_comment = op
             .total_dmg_body
             .lines()
-            .map(|l| format!("    /// {}", l.trim()))
+            .map(|l| format!("    /// {}", l.trim().replace('\t', "    ")))
             .collect::<Vec<_>>()
             .join("\n");
 
@@ -2201,7 +2193,7 @@ impl {} {{
     ///
     /// Original Python implementation:
 {total_dmg_comment}
-    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens)]
+    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op)]
     pub fn total_dmg(&self, enemy: &EnemyStats) -> f64 {{
         let defense = enemy.defense;
         let res = enemy.res;
@@ -2240,6 +2232,9 @@ impl std::ops::DerefMut for {struct_name} {{
 /// Generate mod.rs for a letter folder
 fn generate_mod_file(operators: &[&OperatorClass]) -> String {
     let mut output = String::new();
+
+    // Add module inception allow to handle cases like w/w.rs
+    output.push_str("#![allow(clippy::module_inception)]\n\n");
 
     // Sort operators alphabetically
     let mut sorted_ops: Vec<_> = operators.iter().collect();
@@ -2295,6 +2290,7 @@ fn to_upper_camel_case(s: &str) -> String {
 }
 
 /// Convert camelCase variable names to snake_case (e.g., "dpsNorm" -> "dps_norm")
+#[allow(dead_code)]
 fn camel_to_snake_case(s: &str) -> String {
     let mut result = String::new();
     let chars: Vec<char> = s.chars().collect();
