@@ -379,61 +379,61 @@ impl OperatorUnit {
                 if elite >= talent_data.required_promotion
                     && talent_data.required_promotion >= current_promo
                     && level >= talent_data.required_level
-                        && talent_data.required_level >= current_req_level
-                    {
-                        let op_module_id = operator_module
-                            .as_ref()
-                            .and_then(|m| m.module.id.as_deref())
-                            .unwrap_or("");
+                    && talent_data.required_level >= current_req_level
+                {
+                    let op_module_id = operator_module
+                        .as_ref()
+                        .and_then(|m| m.module.id.as_deref())
+                        .unwrap_or("");
 
-                        if op_module_id.is_empty() {
-                            if talent_data.required_module_id.is_empty()
-                                && potential > talent_data.required_potential
-                                    && potential > current_req_potential
-                                {
-                                    talent1_parameters = talent_data.talent_data.clone();
-                                    current_promo = talent_data.required_promotion;
-                                    current_req_level = talent_data.required_level;
-                                    current_req_potential = talent_data.required_potential;
-                                    current_req_module_lvl = talent_data.required_module_level;
-                                }
+                    if op_module_id.is_empty() {
+                        if talent_data.required_module_id.is_empty()
+                            && potential > talent_data.required_potential
+                            && potential > current_req_potential
+                        {
+                            talent1_parameters = talent_data.talent_data.clone();
+                            current_promo = talent_data.required_promotion;
+                            current_req_level = talent_data.required_level;
+                            current_req_potential = talent_data.required_potential;
+                            current_req_module_lvl = talent_data.required_module_level;
+                        }
+                    } else {
+                        let required_module_id = if !talent_data.required_module_id.is_empty() {
+                            talent_data.required_module_id.clone()
                         } else {
-                            let required_module_id = if !talent_data.required_module_id.is_empty() {
-                                talent_data.required_module_id.clone()
-                            } else {
-                                let module_index = operator_data
+                            let module_index = operator_data
+                                .available_modules
+                                .iter()
+                                .position(|m| m.module.id.as_deref() == Some(op_module_id));
+
+                            match module_index {
+                                Some(1) => operator_data
                                     .available_modules
-                                    .iter()
-                                    .position(|m| m.module.id.as_deref() == Some(op_module_id));
+                                    .get(1)
+                                    .and_then(|m| m.module.id.clone())
+                                    .unwrap_or_default(),
+                                _ => operator_data
+                                    .available_modules
+                                    .get(2)
+                                    .and_then(|m| m.module.id.clone())
+                                    .unwrap_or_default(),
+                            }
+                        };
 
-                                match module_index {
-                                    Some(1) => operator_data
-                                        .available_modules
-                                        .get(1)
-                                        .and_then(|m| m.module.id.clone())
-                                        .unwrap_or_default(),
-                                    _ => operator_data
-                                        .available_modules
-                                        .get(2)
-                                        .and_then(|m| m.module.id.clone())
-                                        .unwrap_or_default(),
-                                }
-                            };
-
-                            if (op_module_id == required_module_id || required_module_id.is_empty())
-                                && operator_module_level >= talent_data.required_module_level
-                                    && operator_module_level >= current_req_module_lvl
-                                    && potential > talent_data.required_potential
-                                        && potential > current_req_potential
-                                    {
-                                        talent1_parameters = talent_data.talent_data.clone();
-                                        current_promo = talent_data.required_promotion;
-                                        current_req_level = talent_data.required_level;
-                                        current_req_potential = talent_data.required_potential;
-                                        current_req_module_lvl = talent_data.required_module_level;
-                                    }
+                        if (op_module_id == required_module_id || required_module_id.is_empty())
+                            && operator_module_level >= talent_data.required_module_level
+                            && operator_module_level >= current_req_module_lvl
+                            && potential > talent_data.required_potential
+                            && potential > current_req_potential
+                        {
+                            talent1_parameters = talent_data.talent_data.clone();
+                            current_promo = talent_data.required_promotion;
+                            current_req_level = talent_data.required_level;
+                            current_req_potential = talent_data.required_potential;
+                            current_req_module_lvl = talent_data.required_module_level;
                         }
                     }
+                }
             }
             // Suppress unused variable warnings
             let _ = current_promo;
@@ -454,61 +454,61 @@ impl OperatorUnit {
                 if elite >= talent_data.required_promotion
                     && talent_data.required_promotion >= current_promo
                     && level >= talent_data.required_level
-                        && talent_data.required_level >= current_req_level
-                    {
-                        let op_module_id = operator_module
-                            .as_ref()
-                            .and_then(|m| m.module.id.as_deref())
-                            .unwrap_or("");
+                    && talent_data.required_level >= current_req_level
+                {
+                    let op_module_id = operator_module
+                        .as_ref()
+                        .and_then(|m| m.module.id.as_deref())
+                        .unwrap_or("");
 
-                        if op_module_id.is_empty() {
-                            if talent_data.required_module_id.is_empty()
-                                && potential > talent_data.required_potential
-                                    && potential > current_req_potential
-                                {
-                                    talent2_parameters = talent_data.talent_data.clone();
-                                    current_promo = talent_data.required_promotion;
-                                    current_req_level = talent_data.required_level;
-                                    current_req_potential = talent_data.required_potential;
-                                    current_req_module_lvl = talent_data.required_module_level;
-                                }
+                    if op_module_id.is_empty() {
+                        if talent_data.required_module_id.is_empty()
+                            && potential > talent_data.required_potential
+                            && potential > current_req_potential
+                        {
+                            talent2_parameters = talent_data.talent_data.clone();
+                            current_promo = talent_data.required_promotion;
+                            current_req_level = talent_data.required_level;
+                            current_req_potential = talent_data.required_potential;
+                            current_req_module_lvl = talent_data.required_module_level;
+                        }
+                    } else {
+                        let required_module_id = if !talent_data.required_module_id.is_empty() {
+                            talent_data.required_module_id.clone()
                         } else {
-                            let required_module_id = if !talent_data.required_module_id.is_empty() {
-                                talent_data.required_module_id.clone()
-                            } else {
-                                let module_index = operator_data
+                            let module_index = operator_data
+                                .available_modules
+                                .iter()
+                                .position(|m| m.module.id.as_deref() == Some(op_module_id));
+
+                            match module_index {
+                                Some(1) => operator_data
                                     .available_modules
-                                    .iter()
-                                    .position(|m| m.module.id.as_deref() == Some(op_module_id));
+                                    .get(1)
+                                    .and_then(|m| m.module.id.clone())
+                                    .unwrap_or_default(),
+                                _ => operator_data
+                                    .available_modules
+                                    .get(2)
+                                    .and_then(|m| m.module.id.clone())
+                                    .unwrap_or_default(),
+                            }
+                        };
 
-                                match module_index {
-                                    Some(1) => operator_data
-                                        .available_modules
-                                        .get(1)
-                                        .and_then(|m| m.module.id.clone())
-                                        .unwrap_or_default(),
-                                    _ => operator_data
-                                        .available_modules
-                                        .get(2)
-                                        .and_then(|m| m.module.id.clone())
-                                        .unwrap_or_default(),
-                                }
-                            };
-
-                            if (op_module_id == required_module_id || required_module_id.is_empty())
-                                && operator_module_level >= talent_data.required_module_level
-                                    && operator_module_level >= current_req_module_lvl
-                                    && potential > talent_data.required_potential
-                                        && potential > current_req_potential
-                                    {
-                                        talent2_parameters = talent_data.talent_data.clone();
-                                        current_promo = talent_data.required_promotion;
-                                        current_req_level = talent_data.required_level;
-                                        current_req_potential = talent_data.required_potential;
-                                        current_req_module_lvl = talent_data.required_module_level;
-                                    }
+                        if (op_module_id == required_module_id || required_module_id.is_empty())
+                            && operator_module_level >= talent_data.required_module_level
+                            && operator_module_level >= current_req_module_lvl
+                            && potential > talent_data.required_potential
+                            && potential > current_req_potential
+                        {
+                            talent2_parameters = talent_data.talent_data.clone();
+                            current_promo = talent_data.required_promotion;
+                            current_req_level = talent_data.required_level;
+                            current_req_potential = talent_data.required_potential;
+                            current_req_module_lvl = talent_data.required_module_level;
                         }
                     }
+                }
             }
             // Suppress unused variable warnings
             let _ = current_promo;
@@ -712,8 +712,6 @@ impl OperatorUnit {
             (final_atk - enemy.defense).max(final_atk * 0.05)
         };
 
-        
-
         ((hits * hit_dmg) / self.attack_interval as f64)
             * ((self.attack_speed + extra.aspd) / 100.0)
             * aoe
@@ -745,7 +743,6 @@ impl OperatorUnit {
 
             let cycle_dmg = skill_dps * self.skill_duration
                 + (off_skill_dps * self.skill_cost as f64) / (1.0 + self.sp_boost as f64);
-            
 
             cycle_dmg
                 / (self.skill_duration + self.skill_cost as f64 / (1.0 + self.sp_boost as f64))

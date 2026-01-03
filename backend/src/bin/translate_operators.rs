@@ -211,11 +211,12 @@ impl PythonToRustTranslator {
                         let next_trimmed = next_line.trim();
                         if next_trimmed.starts_with("except:") {
                             // Found except - get the default value
-                            let except_stmt = if let Some(stripped) = next_trimmed.strip_prefix("except: ") {
-                                stripped
-                            } else {
-                                break; // Multi-line except block - too complex
-                            };
+                            let except_stmt =
+                                if let Some(stripped) = next_trimmed.strip_prefix("except: ") {
+                                    stripped
+                                } else {
+                                    break; // Multi-line except block - too complex
+                                };
 
                             if let Some((except_var, default_expr)) =
                                 self.parse_assignment(except_stmt)
@@ -1293,9 +1294,7 @@ impl PythonToRustTranslator {
                 let rust_true = self.translate_expression(true_val);
                 let rust_false = self.translate_expression(false_val);
 
-                return format!(
-                    "if {rust_cond} {{ {rust_true} }} else {{ {rust_false} }}"
-                );
+                return format!("if {rust_cond} {{ {rust_true} }} else {{ {rust_false} }}");
             }
         }
 

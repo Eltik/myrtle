@@ -2,8 +2,8 @@
 //!
 //! Auto-generated from ArknightsDpsCompare damage_formulas.py
 
-use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
 use super::super::super::operator_data::OperatorData;
+use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
 
 /// Astgenne operator implementation
 pub struct Astgenne {
@@ -34,7 +34,7 @@ impl Astgenne {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    /// 
+    ///
     /// aspd = self.talent1_params[0] * self.talent1_params[2] if self.talent_dmg and self.elite > 0 else 0
     /// targetscaling = [0,1,2,3,4] if self.module == 2 else [0, 1, 1.85, 1.85+0.85**2, 1.85+0.85**2+0.85**3]
     /// if self.elite < 2: targetscaling = [0, 1, 1.85, 1.85+0.85**2, 1.85+0.85**2]
@@ -58,7 +58,7 @@ impl Astgenne {
     /// else:
     /// avghit = (skilldmg + int(atks_per_skillactivation) * hitdmg) / (int(atks_per_skillactivation)+1)
     /// dps = avghit/self.atk_interval*(self.attack_speed+aspd)/100
-    /// 
+    ///
     /// if self.skill == 2:
     /// final_atk = self.atk * (1 + self.buff_atk + self.skill_params[0]) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk * (1-res/100), final_atk * 0.05)
@@ -66,7 +66,24 @@ impl Astgenne {
     /// if self.targets > 1:
     /// dps = hitdmg/self.atk_interval*(self.attack_speed+aspd)/100 * 2 * targetscaling[targets]
     /// return dps
-    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op)]
+    #[allow(
+        unused_variables,
+        unused_mut,
+        unused_assignments,
+        unused_parens,
+        clippy::excessive_precision,
+        clippy::unnecessary_cast,
+        clippy::collapsible_if,
+        clippy::double_parens,
+        clippy::if_same_then_else,
+        clippy::nonminimal_bool,
+        clippy::overly_complex_bool_expr,
+        clippy::needless_return,
+        clippy::collapsible_else_if,
+        clippy::neg_multiply,
+        clippy::assign_op_pattern,
+        clippy::eq_op
+    )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let defense = enemy.defense;
         let res = enemy.res;
@@ -81,39 +98,85 @@ impl Astgenne {
         let mut sp_cost: f64 = 0.0;
         let mut skilldmg: f64 = 0.0;
 
-        aspd = if self.unit.talent_damage && ((self.unit.elite as f64) as f64) > 0.0 { self.unit.talent1_parameters[0] * self.unit.talent1_parameters[2] } else { 0.0 };
-        let mut targetscaling = if ((self.unit.module_index as f64) as f64) == 2.0 { [0.0, 1.0, 2.0, 3.0, 4.0] } else { [0.0, 1.0, 1.85, 1.85+(0.85 as f64).powf(2 as f64), 1.85+(0.85 as f64).powf(2 as f64)+(0.85 as f64).powf(3 as f64)] };
-        if (self.unit.elite as f64) < 2.0 { targetscaling = [0.0, 1.0, 1.85, 1.85+(0.85 as f64).powf(2 as f64), 1.85+(0.85 as f64).powf(2 as f64)]; }
-        let mut targets = ((4) as f64).min(((self.unit.targets as f64)) as f64);
+        aspd = if self.unit.talent_damage && ((self.unit.elite as f64) as f64) > 0.0 {
+            self.unit.talent1_parameters[0] * self.unit.talent1_parameters[2]
+        } else {
+            0.0
+        };
+        let mut targetscaling = if ((self.unit.module_index as f64) as f64) == 2.0 {
+            [0.0, 1.0, 2.0, 3.0, 4.0]
+        } else {
+            [
+                0.0,
+                1.0,
+                1.85,
+                1.85 + (0.85 as f64).powf(2 as f64),
+                1.85 + (0.85 as f64).powf(2 as f64) + (0.85 as f64).powf(3 as f64),
+            ]
+        };
+        if (self.unit.elite as f64) < 2.0 {
+            targetscaling = [
+                0.0,
+                1.0,
+                1.85,
+                1.85 + (0.85 as f64).powf(2 as f64),
+                1.85 + (0.85 as f64).powf(2 as f64),
+            ];
+        }
+        let mut targets = ((4) as f64).min((self.unit.targets as f64) as f64);
         // ###the actual skills
         if (self.unit.skill_index as f64) < 2.0 {
-        skill_scale = self.unit.skill_parameters[0];
-        sp_cost = (self.unit.skill_cost as f64);
-        final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
-        hitdmg = ((final_atk * (1.0 -res/ 100.0)) as f64).max((final_atk * 0.05) as f64) * targetscaling[(targets) as usize];
-        let mut skill_targetscaling = if ((self.unit.module_index as f64) as f64) == 2.0 { [0.0, 1.0, 4.0, 6.0, 8.0] } else { [0.0, 1.0, 2.0 * 1.85, 2.0*(1.85+(0.85 as f64).powf(2 as f64)), 2.0*(1.85+(0.85 as f64).powf(2 as f64)+(0.85 as f64).powf(3 as f64))] };
-        skilldmg = ((final_atk * skill_scale * (1.0 -res/ 100.0)) as f64).max((final_atk * skill_scale * 0.05) as f64) * skill_targetscaling[(targets) as usize];
-        if (self.unit.skill_index as f64) == 0.0 { skilldmg = hitdmg; }
-        sp_cost = sp_cost/(1.0 +(self.unit.sp_boost as f64)) + 1.2;
-        let mut atkcycle = (self.unit.attack_interval as f64)/((self.unit.attack_speed+aspd)/ 100.0);
-        let mut atks_per_skillactivation = sp_cost / atkcycle;
-        avghit = skilldmg;
-        if atks_per_skillactivation > 1.0 && (self.unit.skill_index as f64) == 1.0 {
-        if self.unit.skill_parameters[4] > 1.0 {
-        avghit = (skilldmg + (atks_per_skillactivation - 1.0) * hitdmg) / atks_per_skillactivation;
-        } else {
-        avghit = (skilldmg + ((atks_per_skillactivation) as f64).trunc() * hitdmg) / (((atks_per_skillactivation) as f64).trunc()+1.0);
-        }
-        }
-        dps = avghit/(self.unit.attack_interval as f64)*(self.unit.attack_speed+aspd)/ 100.0;
+            skill_scale = self.unit.skill_parameters[0];
+            sp_cost = (self.unit.skill_cost as f64);
+            final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
+            hitdmg = ((final_atk * (1.0 - res / 100.0)) as f64).max((final_atk * 0.05) as f64)
+                * targetscaling[(targets) as usize];
+            let mut skill_targetscaling = if ((self.unit.module_index as f64) as f64) == 2.0 {
+                [0.0, 1.0, 4.0, 6.0, 8.0]
+            } else {
+                [
+                    0.0,
+                    1.0,
+                    2.0 * 1.85,
+                    2.0 * (1.85 + (0.85 as f64).powf(2 as f64)),
+                    2.0 * (1.85 + (0.85 as f64).powf(2 as f64) + (0.85 as f64).powf(3 as f64)),
+                ]
+            };
+            skilldmg = ((final_atk * skill_scale * (1.0 - res / 100.0)) as f64)
+                .max((final_atk * skill_scale * 0.05) as f64)
+                * skill_targetscaling[(targets) as usize];
+            if (self.unit.skill_index as f64) == 0.0 {
+                skilldmg = hitdmg;
+            }
+            sp_cost = sp_cost / (1.0 + (self.unit.sp_boost as f64)) + 1.2;
+            let mut atkcycle =
+                (self.unit.attack_interval as f64) / ((self.unit.attack_speed + aspd) / 100.0);
+            let mut atks_per_skillactivation = sp_cost / atkcycle;
+            avghit = skilldmg;
+            if atks_per_skillactivation > 1.0 && (self.unit.skill_index as f64) == 1.0 {
+                if self.unit.skill_parameters[4] > 1.0 {
+                    avghit = (skilldmg + (atks_per_skillactivation - 1.0) * hitdmg)
+                        / atks_per_skillactivation;
+                } else {
+                    avghit = (skilldmg + ((atks_per_skillactivation) as f64).trunc() * hitdmg)
+                        / (((atks_per_skillactivation) as f64).trunc() + 1.0);
+                }
+            }
+            dps = avghit / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd)
+                / 100.0;
         }
         if (self.unit.skill_index as f64) == 2.0 {
-        final_atk = self.unit.atk * (1.0 + self.unit.buff_atk + self.unit.skill_parameters[0]) + self.unit.buff_atk_flat;
-        hitdmg = ((final_atk * (1.0 -res/ 100.0)) as f64).max((final_atk * 0.05) as f64);
-        dps = hitdmg/(self.unit.attack_interval as f64)*(self.unit.attack_speed+aspd)/ 100.0;
-        if (self.unit.targets as f64) > 1.0 {
-        dps = hitdmg/(self.unit.attack_interval as f64)*(self.unit.attack_speed+aspd)/ 100.0 * 2.0 * targetscaling[(targets) as usize];
-        }
+            final_atk = self.unit.atk * (1.0 + self.unit.buff_atk + self.unit.skill_parameters[0])
+                + self.unit.buff_atk_flat;
+            hitdmg = ((final_atk * (1.0 - res / 100.0)) as f64).max((final_atk * 0.05) as f64);
+            dps = hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd)
+                / 100.0;
+            if (self.unit.targets as f64) > 1.0 {
+                dps = hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd)
+                    / 100.0
+                    * 2.0
+                    * targetscaling[(targets) as usize];
+            }
         }
         return dps;
     }

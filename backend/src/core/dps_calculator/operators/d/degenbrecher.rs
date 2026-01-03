@@ -2,8 +2,8 @@
 //!
 //! Auto-generated from ArknightsDpsCompare damage_formulas.py
 
-use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
 use super::super::super::operator_data::OperatorData;
+use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
 
 /// Degenbrecher operator implementation
 pub struct Degenbrecher {
@@ -34,11 +34,11 @@ impl Degenbrecher {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    /// 
+    ///
     /// newdef = defense * (1 - self.talent2_params[0]) if self.elite == 2 else defense
     /// dmg = 1.1 if self.module == 1 else 1
     /// atk_scale = self.talent1_params[1] if self.elite > 0 else 1
-    /// 
+    ///
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
     /// if self.skill < 2:
     /// skill_scale = self.skill_params[0]
@@ -56,7 +56,7 @@ impl Degenbrecher {
     /// if self.skill == 0: avgskill = avghit
     /// average = (self.skill_cost * avghit + avgskill)/(self.skill_cost + 1)
     /// dps = average/self.atk_interval * self.attack_speed/100
-    /// 
+    ///
     /// if self.skill == 3:
     /// skill_scale = self.skill_params[2]
     /// last_scale = self.skill_params[6]
@@ -64,7 +64,24 @@ impl Degenbrecher {
     /// hitdmg2 = np.fmax(final_atk * atk_scale * last_scale - newdef, final_atk * atk_scale * last_scale * 0.05) * dmg
     /// dps = (10 * hitdmg1 + hitdmg2) * min(self.targets,self.skill_params[1])
     /// return dps
-    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op)]
+    #[allow(
+        unused_variables,
+        unused_mut,
+        unused_assignments,
+        unused_parens,
+        clippy::excessive_precision,
+        clippy::unnecessary_cast,
+        clippy::collapsible_if,
+        clippy::double_parens,
+        clippy::if_same_then_else,
+        clippy::nonminimal_bool,
+        clippy::overly_complex_bool_expr,
+        clippy::needless_return,
+        clippy::collapsible_else_if,
+        clippy::neg_multiply,
+        clippy::assign_op_pattern,
+        clippy::eq_op
+    )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let defense = enemy.defense;
         let res = enemy.res;
@@ -78,33 +95,81 @@ impl Degenbrecher {
         let mut avghit: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
 
-        let mut newdef = if ((self.unit.elite as f64) as f64) == 2.0 { defense * (1.0 - self.unit.talent2_parameters[0]) } else { defense };
-        let mut dmg = if ((self.unit.module_index as f64) as f64) == 1.0 { 1.1 } else { 1.0 };
-        atk_scale = if ((self.unit.elite as f64) as f64) > 0.0 { self.unit.talent1_parameters[1] } else { 1.0 };
+        let mut newdef = if ((self.unit.elite as f64) as f64) == 2.0 {
+            defense * (1.0 - self.unit.talent2_parameters[0])
+        } else {
+            defense
+        };
+        let mut dmg = if ((self.unit.module_index as f64) as f64) == 1.0 {
+            1.1
+        } else {
+            1.0
+        };
+        atk_scale = if ((self.unit.elite as f64) as f64) > 0.0 {
+            self.unit.talent1_parameters[1]
+        } else {
+            1.0
+        };
         final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
         if (self.unit.skill_index as f64) < 2.0 {
-        skill_scale = self.unit.skill_parameters[0];
-        hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64) * 2.0;
-        let mut hitdmg_crit = ((final_atk * atk_scale - newdef) as f64).max((final_atk * atk_scale * 0.05) as f64) * 2.0;
-        let mut hitdmg_tremble = ((final_atk - newdef) as f64).max((final_atk * 0.05) as f64) * 2.0;
-        skilldmg = ((final_atk * skill_scale - defense) as f64).max((final_atk * skill_scale * 0.05) as f64) * dmg * 2.0;
-        let mut skilldmg_crit = ((final_atk * skill_scale * atk_scale - newdef) as f64).max((final_atk * skill_scale * atk_scale * 0.05) as f64) * dmg * 2.0;
-        let mut skilldmg_tremble = ((final_atk * skill_scale - newdef) as f64).max((final_atk * skill_scale * 0.05) as f64) * dmg * 2.0;
-        let mut crit_rate = if ((self.unit.elite as f64) as f64) == 0.0 { 0.0 } else { self.unit.talent1_parameters[0] };
-        let mut relevant_attack_count = ((5.0 /((self.unit.attack_interval as f64) / self.unit.attack_speed * 100.0) as f64).trunc()) * 2.0;
-        let mut chance_that_no_crit_occured = ((1.0 -crit_rate) as f64).powf(relevant_attack_count as f64);
-        avghit = hitdmg_crit * crit_rate + hitdmg * (1.0 -crit_rate) * chance_that_no_crit_occured + hitdmg_tremble * (1.0 -crit_rate) * (1.0 - chance_that_no_crit_occured);
-        let mut avgskill = skilldmg_crit * crit_rate + skilldmg * (1.0 -crit_rate) * chance_that_no_crit_occured + skilldmg_tremble * (1.0 -crit_rate) * (1.0 - chance_that_no_crit_occured) * (((self.unit.targets as f64)) as f64).min((self.unit.skill_parameters[1]) as f64);
-        if (self.unit.skill_index as f64) == 0.0 { avgskill = avghit; }
-        let mut average = ((self.unit.skill_cost as f64) * avghit + avgskill)/((self.unit.skill_cost as f64) + 1.0);
-        dps = average/(self.unit.attack_interval as f64) * self.unit.attack_speed/ 100.0;
+            skill_scale = self.unit.skill_parameters[0];
+            hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64) * 2.0;
+            let mut hitdmg_crit = ((final_atk * atk_scale - newdef) as f64)
+                .max((final_atk * atk_scale * 0.05) as f64)
+                * 2.0;
+            let mut hitdmg_tremble =
+                ((final_atk - newdef) as f64).max((final_atk * 0.05) as f64) * 2.0;
+            skilldmg = ((final_atk * skill_scale - defense) as f64)
+                .max((final_atk * skill_scale * 0.05) as f64)
+                * dmg
+                * 2.0;
+            let mut skilldmg_crit = ((final_atk * skill_scale * atk_scale - newdef) as f64)
+                .max((final_atk * skill_scale * atk_scale * 0.05) as f64)
+                * dmg
+                * 2.0;
+            let mut skilldmg_tremble = ((final_atk * skill_scale - newdef) as f64)
+                .max((final_atk * skill_scale * 0.05) as f64)
+                * dmg
+                * 2.0;
+            let mut crit_rate = if ((self.unit.elite as f64) as f64) == 0.0 {
+                0.0
+            } else {
+                self.unit.talent1_parameters[0]
+            };
+            let mut relevant_attack_count = ((5.0
+                / ((self.unit.attack_interval as f64) / self.unit.attack_speed * 100.0) as f64)
+                .trunc())
+                * 2.0;
+            let mut chance_that_no_crit_occured =
+                ((1.0 - crit_rate) as f64).powf(relevant_attack_count as f64);
+            avghit = hitdmg_crit * crit_rate
+                + hitdmg * (1.0 - crit_rate) * chance_that_no_crit_occured
+                + hitdmg_tremble * (1.0 - crit_rate) * (1.0 - chance_that_no_crit_occured);
+            let mut avgskill = skilldmg_crit * crit_rate
+                + skilldmg * (1.0 - crit_rate) * chance_that_no_crit_occured
+                + skilldmg_tremble
+                    * (1.0 - crit_rate)
+                    * (1.0 - chance_that_no_crit_occured)
+                    * ((self.unit.targets as f64) as f64)
+                        .min((self.unit.skill_parameters[1]) as f64);
+            if (self.unit.skill_index as f64) == 0.0 {
+                avgskill = avghit;
+            }
+            let mut average = ((self.unit.skill_cost as f64) * avghit + avgskill)
+                / ((self.unit.skill_cost as f64) + 1.0);
+            dps = average / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
         }
         if (self.unit.skill_index as f64) == 3.0 {
-        skill_scale = self.unit.skill_parameters[2];
-        let mut last_scale = self.unit.skill_parameters[6];
-        let mut hitdmg1 = ((final_atk * atk_scale * skill_scale - newdef) as f64).max((final_atk * atk_scale * skill_scale * 0.05) as f64) * dmg;
-        let mut hitdmg2 = ((final_atk * atk_scale * last_scale - newdef) as f64).max((final_atk * atk_scale * last_scale * 0.05) as f64) * dmg;
-        dps = (10.0 * hitdmg1 + hitdmg2) * (((self.unit.targets as f64)) as f64).min((self.unit.skill_parameters[1]) as f64);
+            skill_scale = self.unit.skill_parameters[2];
+            let mut last_scale = self.unit.skill_parameters[6];
+            let mut hitdmg1 = ((final_atk * atk_scale * skill_scale - newdef) as f64)
+                .max((final_atk * atk_scale * skill_scale * 0.05) as f64)
+                * dmg;
+            let mut hitdmg2 = ((final_atk * atk_scale * last_scale - newdef) as f64)
+                .max((final_atk * atk_scale * last_scale * 0.05) as f64)
+                * dmg;
+            dps = (10.0 * hitdmg1 + hitdmg2)
+                * ((self.unit.targets as f64) as f64).min((self.unit.skill_parameters[1]) as f64);
         }
         return dps;
     }

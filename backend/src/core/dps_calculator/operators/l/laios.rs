@@ -2,8 +2,8 @@
 //!
 //! Auto-generated from ArknightsDpsCompare damage_formulas.py
 
-use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
 use super::super::super::operator_data::OperatorData;
+use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
 
 /// Laios operator implementation
 pub struct Laios {
@@ -34,10 +34,10 @@ impl Laios {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    /// 
+    ///
     /// aspd = 30 if self.module == 2 and self.module_dmg else 0
     /// new_defense = defense * (1-self.talent1_params[0]) if self.talent_dmg and self.elite > 0 else defense
-    /// 
+    ///
     /// if self.skill < 2:
     /// atkbuff = self.skill_params[1] if self.skill_dmg and self.skill == 1 else 0
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
@@ -51,9 +51,26 @@ impl Laios {
     /// dps = hitdmg / self.atk_interval * (self.attack_speed + aspd) / 100
     /// sp_cost = self.skill_cost / (1+self.sp_boost)
     /// dps = (dps * sp_cost + skilldmg) / (sp_cost + self.skill_params[1])
-    /// 
+    ///
     /// return dps
-    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op)]
+    #[allow(
+        unused_variables,
+        unused_mut,
+        unused_assignments,
+        unused_parens,
+        clippy::excessive_precision,
+        clippy::unnecessary_cast,
+        clippy::collapsible_if,
+        clippy::double_parens,
+        clippy::if_same_then_else,
+        clippy::nonminimal_bool,
+        clippy::overly_complex_bool_expr,
+        clippy::needless_return,
+        clippy::collapsible_else_if,
+        clippy::neg_multiply,
+        clippy::assign_op_pattern,
+        clippy::eq_op
+    )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let defense = enemy.defense;
         let res = enemy.res;
@@ -68,22 +85,39 @@ impl Laios {
         let mut skill_scale: f64 = 0.0;
         let mut skilldmg: f64 = 0.0;
 
-        aspd = if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage { 30.0 } else { 0.0 };
-        let mut new_defense = if self.unit.talent_damage && ((self.unit.elite as f64) as f64) > 0.0 { defense * (1.0 -self.unit.talent1_parameters[0]) } else { defense };
+        aspd = if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage {
+            30.0
+        } else {
+            0.0
+        };
+        let mut new_defense = if self.unit.talent_damage && ((self.unit.elite as f64) as f64) > 0.0
+        {
+            defense * (1.0 - self.unit.talent1_parameters[0])
+        } else {
+            defense
+        };
         if (self.unit.skill_index as f64) < 2.0 {
-        atkbuff = if self.unit.skill_damage && ((self.unit.skill_index as f64) as f64) == 1.0 { self.unit.skill_parameters[1] } else { 0.0 };
-        final_atk = self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
-        hitdmg = ((final_atk - new_defense) as f64).max((final_atk * 0.05) as f64);
-        dps = hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd) / 100.0;
+            atkbuff = if self.unit.skill_damage && ((self.unit.skill_index as f64) as f64) == 1.0 {
+                self.unit.skill_parameters[1]
+            } else {
+                0.0
+            };
+            final_atk =
+                self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
+            hitdmg = ((final_atk - new_defense) as f64).max((final_atk * 0.05) as f64);
+            dps = hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd)
+                / 100.0;
         }
         if (self.unit.skill_index as f64) == 2.0 {
-        skill_scale = self.unit.skill_parameters[0];
-        final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
-        hitdmg = ((final_atk - new_defense) as f64).max((final_atk * 0.05) as f64);
-        skilldmg = ((final_atk *skill_scale - new_defense) as f64).max((final_atk * skill_scale * 0.05) as f64);
-        dps = hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd) / 100.0;
-        sp_cost = (self.unit.skill_cost as f64) / (1.0 +(self.unit.sp_boost as f64));
-        dps = (dps * sp_cost + skilldmg) / (sp_cost + self.unit.skill_parameters[1]);
+            skill_scale = self.unit.skill_parameters[0];
+            final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
+            hitdmg = ((final_atk - new_defense) as f64).max((final_atk * 0.05) as f64);
+            skilldmg = ((final_atk * skill_scale - new_defense) as f64)
+                .max((final_atk * skill_scale * 0.05) as f64);
+            dps = hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd)
+                / 100.0;
+            sp_cost = (self.unit.skill_cost as f64) / (1.0 + (self.unit.sp_boost as f64));
+            dps = (dps * sp_cost + skilldmg) / (sp_cost + self.unit.skill_parameters[1]);
         }
         return dps;
     }

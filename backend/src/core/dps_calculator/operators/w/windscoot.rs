@@ -2,8 +2,8 @@
 //!
 //! Auto-generated from ArknightsDpsCompare damage_formulas.py
 
-use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
 use super::super::super::operator_data::OperatorData;
+use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
 
 /// Windscoot operator implementation
 pub struct Windscoot {
@@ -34,13 +34,13 @@ impl Windscoot {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    /// 
+    ///
     /// atkbuff = 2 if self.trait_dmg else 1
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
     /// extrahit = np.fmax(final_atk * self.talent1_params[0] - defense, final_atk * 0.05) if self.elite > 0 and self.trait_dmg and self.talent_dmg else 0
     /// if self.skill == 0:
     /// return res * 0
-    /// 
+    ///
     /// if self.skill == 1:
     /// aspd = self.skill_params[0]
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)
@@ -50,7 +50,24 @@ impl Windscoot {
     /// hitdmg = np.fmax(final_atk * atk_scale - defense, final_atk * atk_scale * 0.05)
     /// dps = (hitdmg+extrahit)/self.atk_interval * self.attack_speed/100 * min(self.targets, 2)
     /// return dps
-    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op)]
+    #[allow(
+        unused_variables,
+        unused_mut,
+        unused_assignments,
+        unused_parens,
+        clippy::excessive_precision,
+        clippy::unnecessary_cast,
+        clippy::collapsible_if,
+        clippy::double_parens,
+        clippy::if_same_then_else,
+        clippy::nonminimal_bool,
+        clippy::overly_complex_bool_expr,
+        clippy::needless_return,
+        clippy::collapsible_else_if,
+        clippy::neg_multiply,
+        clippy::assign_op_pattern,
+        clippy::eq_op
+    )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let defense = enemy.defense;
         let res = enemy.res;
@@ -65,19 +82,32 @@ impl Windscoot {
 
         atkbuff = if self.unit.trait_damage { 2.0 } else { 1.0 };
         final_atk = self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
-        let mut extrahit = if ((self.unit.elite as f64) as f64) > 0.0 && self.unit.trait_damage && self.unit.talent_damage { ((final_atk * self.unit.talent1_parameters[0] - defense) as f64).max((final_atk * 0.05) as f64) } else { 0.0 };
+        let mut extrahit = if ((self.unit.elite as f64) as f64) > 0.0
+            && self.unit.trait_damage
+            && self.unit.talent_damage
+        {
+            ((final_atk * self.unit.talent1_parameters[0] - defense) as f64)
+                .max((final_atk * 0.05) as f64)
+        } else {
+            0.0
+        };
         if (self.unit.skill_index as f64) == 0.0 {
-        return res * 0.0;
+            return res * 0.0;
         }
         if (self.unit.skill_index as f64) == 1.0 {
-        aspd = self.unit.skill_parameters[0];
-        hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
-        dps = (hitdmg+extrahit)/(self.unit.attack_interval as f64) * (self.unit.attack_speed+aspd)/ 100.0;
+            aspd = self.unit.skill_parameters[0];
+            hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
+            dps = (hitdmg + extrahit) / (self.unit.attack_interval as f64)
+                * (self.unit.attack_speed + aspd)
+                / 100.0;
         }
         if (self.unit.skill_index as f64) == 2.0 {
-        atk_scale = self.unit.skill_parameters[0];
-        hitdmg = ((final_atk * atk_scale - defense) as f64).max((final_atk * atk_scale * 0.05) as f64);
-        dps = (hitdmg+extrahit)/(self.unit.attack_interval as f64) * self.unit.attack_speed/ 100.0 * (((self.unit.targets as f64)) as f64).min((2) as f64);
+            atk_scale = self.unit.skill_parameters[0];
+            hitdmg = ((final_atk * atk_scale - defense) as f64)
+                .max((final_atk * atk_scale * 0.05) as f64);
+            dps = (hitdmg + extrahit) / (self.unit.attack_interval as f64) * self.unit.attack_speed
+                / 100.0
+                * ((self.unit.targets as f64) as f64).min((2) as f64);
         }
         return dps;
     }

@@ -2,8 +2,8 @@
 //!
 //! Auto-generated from ArknightsDpsCompare damage_formulas.py
 
-use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
 use super::super::super::operator_data::OperatorData;
+use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
 
 /// Muelsyse operator implementation
 pub struct Muelsyse {
@@ -34,18 +34,18 @@ impl Muelsyse {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    /// 
+    ///
     /// atk_scale = 1.5 if self.trait_dmg else 1
     /// if self.trait_dmg and self.module == 2: atk_scale = 1.65
     /// copy_factor = 1 if self.module == 1 and self.module_lvl == 3 else 0.5 + 0.2 * self.elite
-    /// 
+    ///
     /// atkbuff = self.skill_params[2] if self.skill == 1 else self.skill_params[1] * min(self.skill,1)
     /// aspd = self.skill_params[3] if self.skill == 1 else 0
-    /// 
+    ///
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk * atk_scale - defense, final_atk * atk_scale * 0.05)
     /// dps = hitdmg/self.atk_interval * (self.attack_speed + aspd)/100
-    /// 
+    ///
     /// main = 1 if self.talent_dmg else 0
     /// clone_atk = self.cloned_op.atk * copy_factor * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
     /// if not self.cloned_op.ranged and self.talent2_dmg: clone_atk += 250
@@ -57,7 +57,7 @@ impl Muelsyse {
     /// extra_summons_skill =  min(4,2.5/(self.cloned_op.atk_interval/((self.attack_speed + aspd)/100)) * 2) if self.skill == 2 else min(4,2.5/(self.cloned_op.atk_interval/((self.attack_speed + aspd)/100)))
     /// if self.skill == 0: extra_summons_skill = extra_summons
     /// extra_summons = (50 * extra_summons + 15 * extra_summons_skill) / 65
-    /// 
+    ///
     /// if self.skill == 3 and self.cloned_op.ranged:
     /// extra_summons = 4 if self.skill_dmg else 2
     /// dps += (main+extra_summons) * summondamage/(self.cloned_op.atk_interval/((self.attack_speed + aspd)/100))
@@ -66,7 +66,24 @@ impl Muelsyse {
     /// elif self.skill != 3 or (self.skill == 3 and not self.cloned_op.ranged):
     /// dps += (main+extra_summons) * summondamage/(self.cloned_op.atk_interval/((self.attack_speed + aspd)/100))
     /// return dps
-    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op)]
+    #[allow(
+        unused_variables,
+        unused_mut,
+        unused_assignments,
+        unused_parens,
+        clippy::excessive_precision,
+        clippy::unnecessary_cast,
+        clippy::collapsible_if,
+        clippy::double_parens,
+        clippy::if_same_then_else,
+        clippy::nonminimal_bool,
+        clippy::overly_complex_bool_expr,
+        clippy::needless_return,
+        clippy::collapsible_else_if,
+        clippy::neg_multiply,
+        clippy::assign_op_pattern,
+        clippy::eq_op
+    )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let defense = enemy.defense;
         let res = enemy.res;
@@ -81,33 +98,77 @@ impl Muelsyse {
         let mut final_atk: f64 = 0.0;
 
         atk_scale = if self.unit.trait_damage { 1.5 } else { 1.0 };
-        if self.unit.trait_damage && (self.unit.module_index as f64) == 2.0 { atk_scale = 1.65; }
-        let mut copy_factor = if ((self.unit.module_index as f64) as f64) == 1.0 && ((self.unit.module_level as f64) as f64) == 3.0 { 1.0 } else { 0.5 + 0.2 * ((self.unit.elite as f64) as f64) };
-        atkbuff = if ((self.unit.skill_index as f64) as f64) == 1.0 { self.unit.skill_parameters[2] } else { self.unit.skill_parameters[1] * ((((self.unit.skill_index as f64) as f64)) as f64).min((1) as f64) };
-        aspd = if ((self.unit.skill_index as f64) as f64) == 1.0 { self.unit.skill_parameters[3] } else { 0.0 };
+        if self.unit.trait_damage && (self.unit.module_index as f64) == 2.0 {
+            atk_scale = 1.65;
+        }
+        let mut copy_factor = if ((self.unit.module_index as f64) as f64) == 1.0
+            && ((self.unit.module_level as f64) as f64) == 3.0
+        {
+            1.0
+        } else {
+            0.5 + 0.2 * ((self.unit.elite as f64) as f64)
+        };
+        atkbuff = if ((self.unit.skill_index as f64) as f64) == 1.0 {
+            self.unit.skill_parameters[2]
+        } else {
+            self.unit.skill_parameters[1]
+                * (((self.unit.skill_index as f64) as f64) as f64).min((1) as f64)
+        };
+        aspd = if ((self.unit.skill_index as f64) as f64) == 1.0 {
+            self.unit.skill_parameters[3]
+        } else {
+            0.0
+        };
         final_atk = self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
-        hitdmg = ((final_atk * atk_scale - defense) as f64).max((final_atk * atk_scale * 0.05) as f64);
-        dps = hitdmg/(self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd)/ 100.0;
+        hitdmg =
+            ((final_atk * atk_scale - defense) as f64).max((final_atk * atk_scale * 0.05) as f64);
+        dps = hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd) / 100.0;
         let mut main = if self.unit.talent_damage { 1.0 } else { 0.0 };
-        let mut clone_atk = 0.0 /* cloned_op.atk */  * copy_factor * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
+        let mut clone_atk = 0.0 /* cloned_op.atk */  * copy_factor * (1.0 + atkbuff + self.unit.buff_atk)
+            + self.unit.buff_atk_flat;
         // UNTRANSLATED: if not self.cloned_op.ranged and self.talent2_dmg: clone_atk += 250
-        let mut summondamage = if !false /* cloned_op.physical */  { ((clone_atk * (1.0 -res/ 100.0)) as f64).max((clone_atk * 0.05) as f64) } else { ((clone_atk - defense) as f64).max((clone_atk * 0.05) as f64) };
+        let mut summondamage = if !false
+        /* cloned_op.physical */
+        {
+            ((clone_atk * (1.0 - res / 100.0)) as f64).max((clone_atk * 0.05) as f64)
+        } else {
+            ((clone_atk - defense) as f64).max((clone_atk * 0.05) as f64)
+        };
         extra_summons = 0.0;
         let mut extra_summons_skill = 0.0;
         if false /* cloned_op.ranged */  && self.unit.talent_damage {
-        extra_summons += ((4) as f64).min((2.5/(0.0 /* cloned_op.atk_interval */ /((self.unit.attack_speed + aspd)/ 100.0))) as f64);
-        extra_summons_skill = if ((self.unit.skill_index as f64) as f64) == 2.0 { ((4) as f64).min((2.5/(0.0 /* cloned_op.atk_interval */ /((self.unit.attack_speed + aspd)/ 100.0)) * 2.0) as f64) } else { ((4) as f64).min((2.5/(0.0 /* cloned_op.atk_interval */ /((self.unit.attack_speed + aspd)/ 100.0))) as f64) };
-        if (self.unit.skill_index as f64) == 0.0 { extra_summons_skill = extra_summons; }
-        extra_summons = (50.0 * extra_summons + 15.0 * extra_summons_skill) / 65.0;
+            extra_summons += ((4) as f64).min(
+                (2.5 / (0.0 /* cloned_op.atk_interval */ /((self.unit.attack_speed + aspd)/ 100.0)))
+                    as f64,
+            );
+            extra_summons_skill = if ((self.unit.skill_index as f64) as f64) == 2.0 {
+                ((4) as f64).min((2.5/(0.0 /* cloned_op.atk_interval */ /((self.unit.attack_speed + aspd)/ 100.0)) * 2.0) as f64)
+            } else {
+                ((4) as f64).min((2.5/(0.0 /* cloned_op.atk_interval */ /((self.unit.attack_speed + aspd)/ 100.0))) as f64)
+            };
+            if (self.unit.skill_index as f64) == 0.0 {
+                extra_summons_skill = extra_summons;
+            }
+            extra_summons = (50.0 * extra_summons + 15.0 * extra_summons_skill) / 65.0;
         }
-        if (self.unit.skill_index as f64) == 3.0 && false /* cloned_op.ranged */  {
-        extra_summons = if self.unit.skill_damage { 4.0 } else { 2.0 };
-        dps += (main+extra_summons) * summondamage/(0.0 /* cloned_op.atk_interval */ /((self.unit.attack_speed + aspd)/ 100.0));
+        if (self.unit.skill_index as f64) == 3.0 && false
+        /* cloned_op.ranged */
+        {
+            extra_summons = if self.unit.skill_damage { 4.0 } else { 2.0 };
+            dps += (main + extra_summons) * summondamage
+                / (0.0 /* cloned_op.atk_interval */ /((self.unit.attack_speed + aspd)/ 100.0));
         }
-        if (self.unit.skill_index as f64) == 2.0 && false /* cloned_op.ranged */  {
-        dps += (main+extra_summons) * summondamage/(0.0 /* cloned_op.atk_interval */ /((self.unit.attack_speed + aspd)/ 100.0)) * 2.0;
-        } else if (self.unit.skill_index as f64) != 3.0 || ((self.unit.skill_index as f64) == 3.0 && !false /* cloned_op.ranged */ ) {
-        dps += (main+extra_summons) * summondamage/(0.0 /* cloned_op.atk_interval */ /((self.unit.attack_speed + aspd)/ 100.0));
+        if (self.unit.skill_index as f64) == 2.0 && false
+        /* cloned_op.ranged */
+        {
+            dps += (main + extra_summons) * summondamage
+                / (0.0 /* cloned_op.atk_interval */ /((self.unit.attack_speed + aspd)/ 100.0))
+                * 2.0;
+        } else if (self.unit.skill_index as f64) != 3.0
+            || ((self.unit.skill_index as f64) == 3.0 && !false/* cloned_op.ranged */)
+        {
+            dps += (main + extra_summons) * summondamage
+                / (0.0 /* cloned_op.atk_interval */ /((self.unit.attack_speed + aspd)/ 100.0));
         }
         return dps;
     }
