@@ -82,15 +82,20 @@ impl Aak {
             };
         }
         let mut final_atk = if ((self.unit.skill_index as f64) as f64) == 3.0 {
-            self.unit.atk * (1.0 + self.unit.buff_atk + self.unit.skill_parameters[0])
+            self.unit.atk
+                * (1.0
+                    + self.unit.buff_atk
+                    + self.unit.skill_parameters.first().copied().unwrap_or(0.0))
                 + self.unit.buff_atk_flat
         } else {
             self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat
         };
         let mut aspd = if ((self.unit.skill_index as f64) as f64) == 1.0 {
-            self.unit.skill_parameters[0]
+            self.unit.skill_parameters.first().copied().unwrap_or(0.0)
         } else {
-            self.unit.skill_parameters[1] * ((self.unit.skill_index as f64) as f64) / 3.0
+            self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
+                * ((self.unit.skill_index as f64) as f64)
+                / 3.0
         };
         let mut hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
         let mut critdmg =

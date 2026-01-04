@@ -64,7 +64,7 @@ impl Stormeye {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut critchance = self.unit.talent1_parameters[1];
+        let mut critchance = self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0);
         let mut final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
         let mut hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
         let mut critdmg = ((2.0 * final_atk - defense) as f64).max((2.0 * final_atk * 0.05) as f64);

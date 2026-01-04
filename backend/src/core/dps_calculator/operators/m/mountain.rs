@@ -90,26 +90,26 @@ impl Mountain {
         let defense = enemy.defense;
         let res = enemy.res;
 
+        let mut crithitdmg: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
         let mut cdmg: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut avgdmg: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
         let mut normalhitdmg: f64 = 0.0;
-        let mut avgdmg: f64 = 0.0;
-        let mut crithitdmg: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
 
-        let mut crit_rate = self.unit.talent1_parameters[1];
-        cdmg = self.unit.talent1_parameters[0];
+        let mut crit_rate = self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0);
+        cdmg = self.unit.talent1_parameters.first().copied().unwrap_or(0.0);
         aspd = if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage {
             10.0
         } else {
             0.0
         };
         if (self.unit.skill_index as f64) == 1.0 {
-            atk_scale = self.unit.skill_parameters[0];
+            atk_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             let mut hits = (self.unit.skill_cost as f64);
             final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
             normalhitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
@@ -130,7 +130,9 @@ impl Mountain {
             final_atk = self.unit.atk
                 * (1.0
                     + self.unit.buff_atk
-                    + self.unit.skill_parameters[0] * (self.unit.skill_index as f64) / 2.0)
+                    + self.unit.skill_parameters.first().copied().unwrap_or(0.0)
+                        * (self.unit.skill_index as f64)
+                        / 2.0)
                 + self.unit.buff_atk_flat;
             normalhitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
             crithitdmg =
@@ -143,13 +145,16 @@ impl Mountain {
         }
         if (self.unit.skill_index as f64) == 3.0 {
             atk_interval = (self.unit.attack_interval as f64) * 1.7;
-            final_atk = self.unit.atk * (1.0 + self.unit.buff_atk + self.unit.skill_parameters[1])
+            final_atk = self.unit.atk
+                * (1.0
+                    + self.unit.buff_atk
+                    + self.unit.skill_parameters.get(1).copied().unwrap_or(0.0))
                 + self.unit.buff_atk_flat;
             normalhitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
             crithitdmg =
                 ((final_atk * cdmg - defense) as f64).max((final_atk * cdmg * 0.05) as f64);
-            crit_rate = self.unit.skill_parameters[2];
-            let mut targets = self.unit.skill_parameters[4];
+            crit_rate = self.unit.skill_parameters.get(2).copied().unwrap_or(0.0);
+            let mut targets = self.unit.skill_parameters.get(4).copied().unwrap_or(0.0);
             avgdmg = normalhitdmg * (1.0 - crit_rate) + crithitdmg * crit_rate;
             dps = 2.0 * avgdmg / (atk_interval / ((self.unit.attack_speed + aspd) / 100.0))
                 * ((self.unit.targets as f64) as f64).min((targets) as f64);

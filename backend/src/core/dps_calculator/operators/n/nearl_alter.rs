@@ -78,14 +78,14 @@ impl NearlAlter {
             0.0
         };
         let mut def_shred = if ((self.unit.elite as f64) as f64) == 2.0 {
-            self.unit.talent2_parameters[0]
+            self.unit.talent2_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
         let mut final_atk = self.unit.atk
             * (1.0
                 + self.unit.buff_atk
-                + self.unit.skill_parameters[0]
+                + self.unit.skill_parameters.first().copied().unwrap_or(0.0)
                     * ((self.unit.skill_index as f64) as f64).min((1) as f64))
             + self.unit.buff_atk_flat;
         // UNTRANSLATED: if self.skill == 1: aspd += self.skill_params[1]

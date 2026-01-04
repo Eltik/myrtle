@@ -72,13 +72,13 @@ impl Flamebringer {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut dps: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut aspd: f64 = 0.0;
         let mut avgphys: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
 
         aspd = if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage {
             30.0
@@ -86,7 +86,7 @@ impl Flamebringer {
             0.0
         };
         if (self.unit.skill_index as f64) < 2.0 {
-            skill_scale = self.unit.skill_parameters[0];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
             let mut skillhitdmg = ((final_atk * skill_scale - defense) as f64)
@@ -100,9 +100,12 @@ impl Flamebringer {
                 / 100.0;
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            final_atk = self.unit.atk * (1.0 + self.unit.buff_atk + self.unit.skill_parameters[0])
+            final_atk = self.unit.atk
+                * (1.0
+                    + self.unit.buff_atk
+                    + self.unit.skill_parameters.first().copied().unwrap_or(0.0))
                 + self.unit.buff_atk_flat;
-            aspd += self.unit.skill_parameters[1];
+            aspd += self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
             hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
             dps = hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd)
                 / 100.0;

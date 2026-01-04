@@ -79,16 +79,16 @@ impl Ayerscarpe {
         let defense = enemy.defense;
         let res = enemy.res;
 
+        let mut dps: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut bonusdmg: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut skilldmg: f64 = 0.0;
         let mut avgdmg: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
         let mut aspd: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut bonusdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
 
         atk_scale = if !self.unit.trait_damage && ((self.unit.skill_index as f64) as f64) == 1.0 {
             0.8
@@ -101,15 +101,15 @@ impl Ayerscarpe {
             0.0
         };
         aspd = if ((self.unit.elite as f64) as f64) > 0.0 {
-            self.unit.talent1_parameters[0]
+            self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
         final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
         if (self.unit.skill_index as f64) < 2.0 {
-            skill_scale = self.unit.skill_parameters[0];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             let mut targets = if ((self.unit.skill_index as f64) as f64) == 1.0 {
-                self.unit.skill_parameters[2]
+                self.unit.skill_parameters.get(2).copied().unwrap_or(0.0)
             } else {
                 1.0
             };
@@ -130,7 +130,7 @@ impl Ayerscarpe {
                 / 100.0;
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            skill_scale = self.unit.skill_parameters[1];
+            skill_scale = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
             hitdmg = ((final_atk * atk_scale * (1.0 - res / 100.0)) as f64)
                 .max((final_atk * atk_scale * 0.05) as f64);
             bonusdmg = ((final_atk * bonus * (1.0 - res / 100.0)) as f64)

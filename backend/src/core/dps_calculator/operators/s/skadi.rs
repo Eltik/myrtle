@@ -65,13 +65,13 @@ impl Skadi {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut atkbuff = self.unit.talent1_parameters[0]
-            + self.unit.skill_parameters[0]
+        let mut atkbuff = self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
+            + self.unit.skill_parameters.first().copied().unwrap_or(0.0)
                 * ((self.unit.skill_index as f64) as f64).min((1) as f64);
         let mut aspd = if ((self.unit.skill_index as f64) as f64) != 1.0 {
             0.0
         } else {
-            self.unit.skill_parameters[1]
+            self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
         };
         let mut atk_scale =
             if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {

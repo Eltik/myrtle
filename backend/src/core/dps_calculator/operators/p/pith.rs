@@ -64,9 +64,12 @@ impl Pith {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut newres = ((0) as f64).max((res - self.unit.talent1_parameters[0]) as f64);
-        let mut atkbuff = self.unit.skill_parameters[0] * (self.unit.skill_index as f64);
-        let mut aspd = self.unit.skill_parameters[1] * (self.unit.skill_index as f64);
+        let mut newres = ((0) as f64)
+            .max((res - self.unit.talent1_parameters.first().copied().unwrap_or(0.0)) as f64);
+        let mut atkbuff = self.unit.skill_parameters.first().copied().unwrap_or(0.0)
+            * (self.unit.skill_index as f64);
+        let mut aspd = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
+            * (self.unit.skill_index as f64);
         let mut final_atk =
             self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
         let mut hitdmg =

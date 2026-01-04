@@ -84,25 +84,26 @@ impl Ulpianus {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut skilldmg: f64 = 0.0;
         let mut avghit: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
         let mut sp_cost: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
 
         let mut bonus_base = if self.unit.talent2_damage && ((self.unit.elite as f64) as f64) == 2.0
         {
-            self.unit.talent2_parameters[0] * self.unit.talent2_parameters[2]
+            self.unit.talent2_parameters.first().copied().unwrap_or(0.0)
+                * self.unit.talent2_parameters.get(2).copied().unwrap_or(0.0)
         } else {
             0.0
         };
         if (self.unit.skill_index as f64) < 2.0 {
             skill_scale = if ((self.unit.skill_index as f64) as f64) == 1.0 {
-                self.unit.skill_parameters[0]
+                self.unit.skill_parameters.first().copied().unwrap_or(0.0)
             } else {
                 1.0
             };
@@ -125,7 +126,7 @@ impl Ulpianus {
                 * ((2) as f64).min((self.unit.targets as f64) as f64);
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            atkbuff = self.unit.skill_parameters[1];
+            atkbuff = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
             final_atk = (self.unit.atk + bonus_base) * (1.0 + atkbuff + self.unit.buff_atk)
                 + self.unit.buff_atk_flat;
             hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
@@ -133,7 +134,7 @@ impl Ulpianus {
                 * ((3) as f64).min((self.unit.targets as f64) as f64);
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            atkbuff = self.unit.skill_parameters[1];
+            atkbuff = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
             final_atk = (self.unit.atk + bonus_base) * (1.0 + atkbuff + self.unit.buff_atk)
                 + self.unit.buff_atk_flat;
             hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);

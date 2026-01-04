@@ -67,20 +67,20 @@ impl Vendela {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut atkbuff: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut aspd: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut dps: f64 = 0.0;
 
         atkbuff = if ((self.unit.skill_index as f64) as f64) == 2.0 {
-            self.unit.skill_parameters[2]
+            self.unit.skill_parameters.get(2).copied().unwrap_or(0.0)
         } else {
             0.0
         };
         aspd = if ((self.unit.skill_index as f64) as f64) == 1.0 {
-            self.unit.skill_parameters[0]
+            self.unit.skill_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
@@ -90,7 +90,7 @@ impl Vendela {
         if 1.0 /* self.hits - needs manual implementation */ > 0.0
             && (self.unit.skill_index as f64) == 2.0
         {
-            let mut arts_scale = self.unit.skill_parameters[0];
+            let mut arts_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             let mut artsdmg = ((final_atk * arts_scale * (1.0 - res / 100.0)) as f64)
                 .max((final_atk * arts_scale * 0.05) as f64);
             dps += artsdmg * 1.0 /* self.hits - needs manual implementation */;

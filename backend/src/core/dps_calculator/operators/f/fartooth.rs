@@ -86,14 +86,14 @@ impl Fartooth {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut aspd: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut dmgscale: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
+        let mut dmgscale: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
 
         atkbuff = 0.0;
         aspd = 0.0;
@@ -103,13 +103,13 @@ impl Fartooth {
             1.0
         };
         // talent/module buffs
-        atkbuff += self.unit.talent1_parameters[0];
+        atkbuff += self.unit.talent1_parameters.first().copied().unwrap_or(0.0);
         // UNTRANSLATED: try:
-        aspd += self.unit.talent1_parameters[2];
+        aspd += self.unit.talent1_parameters.get(2).copied().unwrap_or(0.0);
         // UNTRANSLATED: pass
         if (self.unit.skill_index as f64) == 1.0 {
-            atkbuff += self.unit.skill_parameters[0];
-            aspd += self.unit.skill_parameters[1];
+            atkbuff += self.unit.skill_parameters.first().copied().unwrap_or(0.0);
+            aspd += self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * atk_scale - defense) as f64)
@@ -118,7 +118,9 @@ impl Fartooth {
                 / ((self.unit.attack_interval as f64) / ((self.unit.attack_speed + aspd) / 100.0));
         }
         if [0.0, 2.0].contains(&((self.unit.skill_index as f64) as f64)) {
-            aspd += self.unit.skill_parameters[0] * (self.unit.skill_index as f64) / 2.0;
+            aspd += self.unit.skill_parameters.first().copied().unwrap_or(0.0)
+                * (self.unit.skill_index as f64)
+                / 2.0;
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * atk_scale - defense) as f64)
@@ -127,10 +129,10 @@ impl Fartooth {
                 / ((self.unit.attack_interval as f64) / ((self.unit.attack_speed + aspd) / 100.0));
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            atkbuff += self.unit.skill_parameters[0];
+            atkbuff += self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             dmgscale = 1.0;
             if self.unit.skill_damage {
-                dmgscale = self.unit.skill_parameters[1];
+                dmgscale = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
             }
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;

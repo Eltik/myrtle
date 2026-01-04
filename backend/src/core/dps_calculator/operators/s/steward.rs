@@ -64,12 +64,18 @@ impl Steward {
         let res = enemy.res;
 
         let mut final_atk = self.unit.atk
-            * (1.0 + self.unit.talent1_parameters[0] + self.unit.buff_atk)
+            * (1.0
+                + self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
+                + self.unit.buff_atk)
             + self.unit.buff_atk_flat;
         let mut hitdmg = ((final_atk * (1.0 - res / 100.0)) as f64).max((final_atk * 0.05) as f64);
-        let mut hitdmg_skill = ((final_atk * self.unit.skill_parameters[0] * (1.0 - res / 100.0))
-            as f64)
-            .max((final_atk * self.unit.skill_parameters[0] * 0.05) as f64);
+        let mut hitdmg_skill = ((final_atk
+            * self.unit.skill_parameters.first().copied().unwrap_or(0.0)
+            * (1.0 - res / 100.0)) as f64)
+            .max(
+                (final_atk * self.unit.skill_parameters.first().copied().unwrap_or(0.0) * 0.05)
+                    as f64,
+            );
         let mut avghit = (hitdmg * (self.unit.skill_cost as f64) + hitdmg_skill)
             / ((self.unit.skill_cost as f64) + 1.0);
         let mut dps = avghit / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;

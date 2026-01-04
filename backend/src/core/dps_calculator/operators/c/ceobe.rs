@@ -97,18 +97,18 @@ impl Ceobe {
         let defense = enemy.defense;
         let res = enemy.res;
 
+        let mut atks_per_skillactivation: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
         let mut aspd: f64 = 0.0;
         let mut sp_cost: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut atks_per_skillactivation: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
         let mut newres: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
         let mut defbonusdmg: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
 
         newres = if ((self.unit.module_index as f64) as f64) == 1.0 {
@@ -117,7 +117,7 @@ impl Ceobe {
             res
         };
         let mut bonus_arts_scaling = if ((self.unit.elite as f64) as f64) > 0.0 {
-            self.unit.talent1_parameters[0]
+            self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
@@ -125,21 +125,21 @@ impl Ceobe {
             && (self.unit.module_level as f64) > 1.0
             && self.unit.talent_damage
         {
-            bonus_arts_scaling = self.unit.talent1_parameters[2];
+            bonus_arts_scaling = self.unit.talent1_parameters.get(2).copied().unwrap_or(0.0);
         }
         atkbuff = if ((self.unit.elite as f64) as f64) == 2.0 && self.unit.talent2_damage {
-            self.unit.talent2_parameters[0]
+            self.unit.talent2_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
         aspd = if ((self.unit.elite as f64) as f64) == 2.0 && self.unit.talent2_damage {
-            self.unit.talent2_parameters[1]
+            self.unit.talent2_parameters.get(1).copied().unwrap_or(0.0)
         } else {
             0.0
         };
         if (self.unit.skill_index as f64) < 2.0 {
             sp_cost = (self.unit.skill_cost as f64);
-            skill_scale = self.unit.skill_parameters[0];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
             hitdmgarts =
@@ -174,7 +174,8 @@ impl Ceobe {
                 / ((self.unit.attack_interval as f64) / (1.0 + aspd / 100.0));
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            atk_interval = (self.unit.attack_interval as f64) * self.unit.skill_parameters[0];
+            atk_interval = (self.unit.attack_interval as f64)
+                * self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
             hitdmgarts =
@@ -185,7 +186,7 @@ impl Ceobe {
                 (hitdmgarts + defbonusdmg) / atk_interval * (self.unit.attack_speed + aspd) / 100.0;
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            atkbuff += self.unit.skill_parameters[0];
+            atkbuff += self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);

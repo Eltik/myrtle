@@ -92,22 +92,23 @@ impl ExecutorAlter {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut critdefignore: f64 = 0.0;
         let mut critdef: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut critdefignore: f64 = 0.0;
         let mut modatkbuff: f64 = 0.0;
         let mut critdmg: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut avgdmg: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
 
         let mut crit_rate = if ((self.unit.elite as f64) as f64) > 0.0
             && ((self.unit.skill_index as f64) as f64) != 0.0
         {
-            self.unit.talent1_parameters[0] + self.unit.talent1_parameters[1] * 1.0 /* 1.0 /* self.ammo - needs manual implementation */ - needs manual implementation */
+            self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
+                + self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0) * 1.0 /* 1.0 /* self.ammo - needs manual implementation */ - needs manual implementation */
         } else {
             0.0
         };
@@ -126,13 +127,13 @@ impl ExecutorAlter {
             0.0
         };
         atkbuff = if ((self.unit.skill_index as f64) as f64) > 0.0 {
-            self.unit.skill_parameters[0]
+            self.unit.skill_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
         if (self.unit.skill_index as f64) < 2.0 {
             let mut defignore = if ((self.unit.skill_index as f64) as f64) == 1.0 {
-                self.unit.skill_parameters[1]
+                self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
             } else {
                 0.0
             };
@@ -165,8 +166,7 @@ impl ExecutorAlter {
                 * (self.unit.targets as f64);
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            atkbuff +=
-                1.0 /* self.ammo - needs manual implementation */ * self.unit.skill_parameters[1];
+            atkbuff += 1.0 /* self.ammo - needs manual implementation */ * self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
             critdef = ((0) as f64).max((defense - critdefignore) as f64);
             final_atk = self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk + modatkbuff)
                 + self.unit.buff_atk_flat;

@@ -63,7 +63,7 @@ impl Rangers {
         let res = enemy.res;
 
         let mut atk_scale = if self.unit.talent_damage {
-            self.unit.talent1_parameters[0]
+            self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
         } else {
             1.0
         };

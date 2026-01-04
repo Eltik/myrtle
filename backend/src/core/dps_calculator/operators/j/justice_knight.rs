@@ -64,7 +64,7 @@ impl JusticeKnight {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut fragile = self.unit.talent1_parameters[1] - 1.0;
+        let mut fragile = self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0) - 1.0;
         if !self.unit.talent2_damage {
             fragile = 0.0;
         }

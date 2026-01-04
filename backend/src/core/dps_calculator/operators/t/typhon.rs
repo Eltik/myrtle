@@ -89,15 +89,15 @@ impl Typhon {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut critdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut totaldmg: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut aspd: f64 = 0.0;
+        let mut critdmg: f64 = 0.0;
+        let mut totaldmg: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
 
         atk_scale = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {
             1.15
@@ -109,18 +109,20 @@ impl Typhon {
         }
         let mut crit_scale = if self.unit.talent2_damage && ((self.unit.elite as f64) as f64) == 2.0
         {
-            self.unit.talent2_parameters[0]
+            self.unit.talent2_parameters.first().copied().unwrap_or(0.0)
         } else {
             1.0
         };
         let mut def_ignore = if ((self.unit.elite as f64) as f64) == 0.0 {
             0.0
         } else {
-            5.0 * self.unit.talent1_parameters[1]
+            5.0 * self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0)
         };
         if (self.unit.skill_index as f64) < 2.0 {
-            atkbuff = self.unit.skill_parameters[0] * (self.unit.skill_index as f64);
-            aspd = self.unit.skill_parameters[1] * (self.unit.skill_index as f64);
+            atkbuff = self.unit.skill_parameters.first().copied().unwrap_or(0.0)
+                * (self.unit.skill_index as f64);
+            aspd = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
+                * (self.unit.skill_index as f64);
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * atk_scale * crit_scale - defense * (1.0 - def_ignore)) as f64)
@@ -129,7 +131,7 @@ impl Typhon {
                 / 100.0;
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            atkbuff = self.unit.skill_parameters[0];
+            atkbuff = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * atk_scale - defense * (1.0 - def_ignore)) as f64)
@@ -147,8 +149,8 @@ impl Typhon {
         }
         if (self.unit.skill_index as f64) == 3.0 {
             // UNTRANSLATED: self.atk_interval = 5.5
-            let mut hits = self.unit.skill_parameters[4];
-            atk_scale *= self.unit.skill_parameters[2];
+            let mut hits = self.unit.skill_parameters.get(4).copied().unwrap_or(0.0);
+            atk_scale *= self.unit.skill_parameters.get(2).copied().unwrap_or(0.0);
             final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * atk_scale - defense * (1.0 - def_ignore)) as f64)
                 .max((final_atk * atk_scale * 0.05) as f64);
@@ -201,7 +203,7 @@ impl Typhon {
         let res = enemy.res;
 
         if (self.unit.skill_index as f64) == 3.0 {
-            let mut ammo = self.unit.skill_parameters[3];
+            let mut ammo = self.unit.skill_parameters.get(3).copied().unwrap_or(0.0);
             // UNTRANSLATED: return(self.skill_dps(defense,res) * ammo * (5.5/(self.attack_speed/100))) - method calls need manual implementation
             0.0 // placeholder
         } else {

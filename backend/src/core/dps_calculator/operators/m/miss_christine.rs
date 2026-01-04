@@ -83,15 +83,15 @@ impl MissChristine {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut ele_gauge: f64 = 0.0;
-        let mut ele_scale: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut time_to_fallout: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
         let mut eledmg: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut ele_scale: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut ele_gauge: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut time_to_fallout: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
 
         atk_scale = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.trait_damage {
@@ -112,7 +112,10 @@ impl MissChristine {
             dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
         }
         if (self.unit.skill_index as f64) == 1.0 {
-            final_atk = self.unit.atk * (1.0 + self.unit.skill_parameters[0] + self.unit.buff_atk)
+            final_atk = self.unit.atk
+                * (1.0
+                    + self.unit.skill_parameters.first().copied().unwrap_or(0.0)
+                    + self.unit.buff_atk)
                 + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * atk_scale * (1.0 - res / 100.0)) as f64)
                 .max((final_atk * atk_scale * 0.05) as f64);
@@ -129,9 +132,9 @@ impl MissChristine {
             dps *= ((2) as f64).min((self.unit.targets as f64) as f64);
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            skill_scale = self.unit.skill_parameters[5];
+            skill_scale = self.unit.skill_parameters.get(5).copied().unwrap_or(0.0);
             ele_scale = if self.unit.skill_damage && self.unit.trait_damage {
-                self.unit.skill_parameters[2]
+                self.unit.skill_parameters.get(2).copied().unwrap_or(0.0)
             } else {
                 0.0
             };

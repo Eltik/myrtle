@@ -99,25 +99,25 @@ impl Irene {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut levduration: f64 = 0.0;
-        let mut flyinghits: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
+        let mut hitdmg1: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut hitdmg2: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut avgdmg: f64 = 0.0;
+        let mut defshred: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
-        let mut hitdmg1: f64 = 0.0;
-        let mut defshred: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut flyinghits: f64 = 0.0;
+        let mut hitdmg2: f64 = 0.0;
+        let mut levduration: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut avgdmg: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
 
-        aspd = self.unit.talent2_parameters[0];
+        aspd = self.unit.talent2_parameters.first().copied().unwrap_or(0.0);
         atkbuff = if ((self.unit.module_index as f64) as f64) == 2.0
             && ((self.unit.module_level as f64) as f64) > 1.0
         {
-            self.unit.talent2_parameters[1]
+            self.unit.talent2_parameters.get(1).copied().unwrap_or(0.0)
         } else {
             0.0
         };
@@ -137,11 +137,11 @@ impl Irene {
         };
         defshred = 0.0;
         if (self.unit.elite as f64) > 0.0 {
-            defshred = self.unit.talent1_parameters[0];
+            defshred = self.unit.talent1_parameters.first().copied().unwrap_or(0.0);
         }
         let mut newdef2 = newdef1 * (1.0 - defshred);
         if (self.unit.skill_index as f64) < 2.0 {
-            skill_scale = self.unit.skill_parameters[0];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg1 = ((final_atk - newdef1) as f64).max((final_atk * 0.05) as f64);
@@ -158,9 +158,9 @@ impl Irene {
                 / 100.0;
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            let mut skill_scale1 = self.unit.skill_parameters[0];
-            let mut hits = self.unit.skill_parameters[3];
-            skill_scale = self.unit.skill_parameters[2];
+            let mut skill_scale1 = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
+            let mut hits = self.unit.skill_parameters.get(3).copied().unwrap_or(0.0);
+            skill_scale = self.unit.skill_parameters.get(2).copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
             let mut initialhit1 = ((final_atk * skill_scale1 - newdef1) as f64)
@@ -176,7 +176,7 @@ impl Irene {
                 .max((final_atk * skill_scale * 0.05) as f64)
                 * skill_dmg;
             dps = 0.5 * initialhit1 + 0.5 * initialhit2;
-            levduration = self.unit.skill_parameters[1];
+            levduration = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
             // UNTRANSLATED: if not self.talent_dmg: return (dps + hits * (0.5*hitdmg1+0.5*hitdmg2))
             // UNTRANSLATED ELSE (no matching if): else:
             if !self.unit.skill_damage {

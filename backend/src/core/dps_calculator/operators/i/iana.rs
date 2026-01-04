@@ -70,10 +70,10 @@ impl Iana {
         } else {
             0.0
         };
-        let mut fragile = self.unit.talent1_parameters[2] - 1.0;
+        let mut fragile = self.unit.talent1_parameters.get(2).copied().unwrap_or(0.0) - 1.0;
         fragile = ((fragile) as f64).max((self.unit.buff_fragile) as f64);
         let mut aspd = if ((self.unit.skill_index as f64) as f64) == 2.0 {
-            self.unit.skill_parameters[0]
+            self.unit.skill_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };

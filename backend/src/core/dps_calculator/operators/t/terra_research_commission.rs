@@ -68,7 +68,7 @@ impl TerraResearchCommission {
 
         let mut final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
         let mut cdmg = if self.unit.talent_damage {
-            self.unit.talent1_parameters[4]
+            self.unit.talent1_parameters.get(4).copied().unwrap_or(0.0)
         } else {
             1.0
         };

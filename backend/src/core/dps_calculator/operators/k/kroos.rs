@@ -73,11 +73,11 @@ impl Kroos {
         let mut crit_rate = if ((self.unit.elite as f64) as f64) == 0.0 {
             0.0
         } else {
-            self.unit.talent1_parameters[0]
+            self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
         };
-        let mut cdmg = self.unit.talent1_parameters[1];
+        let mut cdmg = self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0);
         let mut final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
-        let mut skill_scale = self.unit.skill_parameters[0];
+        let mut skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
         let mut hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
         let mut hitcrit =
             ((final_atk * cdmg - defense) as f64).max((final_atk * cdmg * 0.05) as f64);

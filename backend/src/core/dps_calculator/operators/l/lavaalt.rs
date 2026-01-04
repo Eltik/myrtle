@@ -71,17 +71,18 @@ impl Lavaalt {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut atk_interval: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
 
         if (self.unit.skill_index as f64) < 2.0 {
             final_atk = self.unit.atk
                 * (1.0
                     + self.unit.buff_atk
-                    + self.unit.skill_parameters[0] * (self.unit.skill_index as f64))
+                    + self.unit.skill_parameters.first().copied().unwrap_or(0.0)
+                        * (self.unit.skill_index as f64))
                 + self.unit.buff_atk_flat;
             hitdmgarts = ((final_atk * (1.0 - res / 100.0)) as f64).max((final_atk * 0.05) as f64);
             dps = hitdmgarts / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0
@@ -94,7 +95,7 @@ impl Lavaalt {
             }
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            atk_scale = self.unit.skill_parameters[0];
+            atk_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmgarts = ((final_atk * atk_scale * (1.0 - res / 100.0)) as f64)
                 .max((final_atk * atk_scale * 0.05) as f64);

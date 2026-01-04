@@ -119,19 +119,19 @@ impl Walter {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut hitdmg_main: f64 = 0.0;
-        let mut explosiondmg: f64 = 0.0;
         let mut bonushitdmg_main: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
-        let mut dps: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
+        let mut explosiondmg: f64 = 0.0;
+        let mut hitdmg_main: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut bonushitdmg: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
 
         let mut bonushits = if ((self.unit.module_index as f64) as f64) == 1.0 {
             2.0
@@ -141,12 +141,12 @@ impl Walter {
         let mut maintargetscale = if ((self.unit.elite as f64) as f64) == 0.0 {
             1.0
         } else {
-            self.unit.talent1_parameters[0]
+            self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
         };
         let mut explosionscale = if ((self.unit.elite as f64) as f64) == 0.0 {
             0.0
         } else {
-            self.unit.talent1_parameters[2]
+            self.unit.talent1_parameters.get(2).copied().unwrap_or(0.0)
         };
         let mut prob = 1.0 - (0.85 as f64).powf(bonushits as f64);
         if (self.unit.skill_index as f64) == 0.0 {
@@ -162,7 +162,7 @@ impl Walter {
         }
         if (self.unit.skill_index as f64) == 1.0 {
             let mut prob2 = 1.0 - (0.85 as f64).powf((bonushits + 2.0) as f64);
-            skill_scale = self.unit.skill_parameters[0];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg_main = ((final_atk * maintargetscale - defense) as f64)
                 .max((final_atk * maintargetscale * 0.05) as f64);
@@ -199,12 +199,13 @@ impl Walter {
             }
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            atk_interval = (self.unit.attack_interval as f64) + self.unit.skill_parameters[0];
-            atkbuff = self.unit.skill_parameters[1];
+            atk_interval = (self.unit.attack_interval as f64)
+                + self.unit.skill_parameters.first().copied().unwrap_or(0.0);
+            atkbuff = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
             atk_scale = if self.unit.skill_damage {
-                self.unit.skill_parameters[2]
+                self.unit.skill_parameters.get(2).copied().unwrap_or(0.0)
             } else {
                 1.0
             };
@@ -223,8 +224,8 @@ impl Walter {
             // UNTRANSLATED: elif self.targets > 1: dps *= min(3, self.targets)
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            atkbuff = self.unit.skill_parameters[0];
-            skill_scale = self.unit.skill_parameters[3];
+            atkbuff = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
+            skill_scale = self.unit.skill_parameters.get(3).copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
             hitdmg_main = ((final_atk * maintargetscale * skill_scale - defense) as f64)

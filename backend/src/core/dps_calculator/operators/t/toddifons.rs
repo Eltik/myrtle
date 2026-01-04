@@ -75,15 +75,15 @@ impl Toddifons {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut dps: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
 
         atk_scale = if self.unit.talent_damage && ((self.unit.elite as f64) as f64) > 0.0 {
-            self.unit.talent1_parameters[0]
+            self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
         } else {
             1.0
         };
@@ -95,15 +95,16 @@ impl Toddifons {
             dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
         }
         if (self.unit.skill_index as f64) == 1.0 {
-            skill_scale = self.unit.skill_parameters[0];
-            let mut newdef = defense * (1.0 + self.unit.skill_parameters[1]);
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
+            let mut newdef =
+                defense * (1.0 + self.unit.skill_parameters.get(1).copied().unwrap_or(0.0));
             hitdmg = ((final_atk * skill_scale * atk_scale - newdef) as f64)
                 .max((final_atk * skill_scale * atk_scale * 0.05) as f64);
             dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            skill_scale = self.unit.skill_parameters[1];
-            let mut skill_scale2 = self.unit.skill_parameters[2];
+            skill_scale = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
+            let mut skill_scale2 = self.unit.skill_parameters.get(2).copied().unwrap_or(0.0);
             hitdmg = ((final_atk * skill_scale * atk_scale - defense) as f64)
                 .max((final_atk * skill_scale * atk_scale * 0.05) as f64);
             let mut hitdmg2 = ((final_atk * skill_scale2 * atk_scale - defense) as f64)

@@ -79,7 +79,8 @@ impl Rockrock {
             };
         }
         let mut atkbuff = if self.unit.talent_damage && ((self.unit.elite as f64) as f64) > 0.0 {
-            self.unit.talent1_parameters[0] * self.unit.talent1_parameters[1]
+            self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
+                * self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0)
         } else {
             0.0
         };
@@ -92,9 +93,10 @@ impl Rockrock {
             0.0
         };
         aspd += if ((self.unit.skill_index as f64) as f64) == 2.0 {
-            self.unit.skill_parameters[1]
+            self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
         } else {
-            self.unit.skill_parameters[0] * ((self.unit.skill_index as f64) as f64)
+            self.unit.skill_parameters.first().copied().unwrap_or(0.0)
+                * ((self.unit.skill_index as f64) as f64)
         };
         // UNTRANSLATED: if self.skill_dmg and self.skill == 2: atkbuff += self.skill_params[0]
         // UNTRANSLATED: if self.skill == 2 and self.skill_dmg and self.trait_dmg: drone_dmg *= self.skill_params[3]

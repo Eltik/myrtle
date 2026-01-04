@@ -69,7 +69,7 @@ impl Eunectes {
         let res = enemy.res;
 
         let mut atk_scale = if self.unit.talent_damage && ((self.unit.elite as f64) as f64) > 0.0 {
-            self.unit.talent1_parameters[2]
+            self.unit.talent1_parameters.get(2).copied().unwrap_or(0.0)
         } else {
             1.0
         };
@@ -83,7 +83,7 @@ impl Eunectes {
             * (1.0
                 + self.unit.buff_atk
                 + atkbuff
-                + self.unit.skill_parameters[0]
+                + self.unit.skill_parameters.first().copied().unwrap_or(0.0)
                     * ((self.unit.skill_index as f64) as f64).min((1) as f64))
             + self.unit.buff_atk_flat;
         let mut atk_interval = if ((self.unit.skill_index as f64) as f64) == 2.0 {

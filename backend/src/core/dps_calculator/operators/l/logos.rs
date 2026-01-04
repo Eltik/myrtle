@@ -112,24 +112,24 @@ impl Logos {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut bonusdmg: f64 = 0.0;
         let mut eledps: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut res: f64 = 0.0;
-        let mut ele_gauge: f64 = 0.0;
         let mut fallouttime: f64 = 0.0;
+        let mut bonusdmg: f64 = 0.0;
+        let mut res: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut newres: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut ele_gauge: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
 
         let mut bonuschance = if ((self.unit.elite as f64) as f64) > 0.0 {
-            self.unit.talent1_parameters[0]
+            self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
         // UNTRANSLATED: if self.module == 3: bonuschance += 0.1 * (self.module_lvl - 1)
-        bonusdmg = self.unit.talent1_parameters[1];
+        bonusdmg = self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0);
         let mut bonus_hitcount = if ((self.unit.module_index as f64) as f64) == 2.0
             && ((self.unit.module_level as f64) as f64) > 1.0
         {
@@ -151,15 +151,15 @@ impl Logos {
         };
         if (self.unit.elite as f64) == 2.0 {
             if self.unit.shreds[2] < 1.0 && self.unit.shreds[2] > 0.0 {
-                res = res / self.unit.shreds[2];
+                res = res / self.unit.shreds.get(2).copied().unwrap_or(0.0);
             }
             newres = ((0) as f64).max((res - 10.0) as f64);
             if self.unit.shreds[2] < 1.0 && self.unit.shreds[2] > 0.0 {
-                newres *= self.unit.shreds[2];
+                newres *= self.unit.shreds.get(2).copied().unwrap_or(0.0);
             }
         }
         let mut shreddmg = if ((self.unit.elite as f64) as f64) == 2.0 {
-            self.unit.talent2_parameters[2]
+            self.unit.talent2_parameters.get(2).copied().unwrap_or(0.0)
         } else {
             0.0
         };
@@ -167,7 +167,8 @@ impl Logos {
             final_atk = self.unit.atk
                 * (1.0
                     + self.unit.buff_atk
-                    + self.unit.skill_parameters[0] * (self.unit.skill_index as f64))
+                    + self.unit.skill_parameters.first().copied().unwrap_or(0.0)
+                        * (self.unit.skill_index as f64))
                 + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * (1.0 - newres / 100.0)) as f64).max((final_atk * 0.05) as f64)
                 + ((shreddmg * (1.0 - newres / 100.0)) as f64).max((shreddmg * 0.05) as f64);
@@ -198,7 +199,7 @@ impl Logos {
             }
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            let mut scaling = self.unit.skill_parameters[2];
+            let mut scaling = self.unit.skill_parameters.get(2).copied().unwrap_or(0.0);
             // UNTRANSLATED: if self.skill_dmg: scaling *= 3
             final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * scaling * (1.0 - newres / 100.0)) as f64)
@@ -225,7 +226,10 @@ impl Logos {
             }
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            final_atk = self.unit.atk * (1.0 + self.unit.buff_atk + self.unit.skill_parameters[0])
+            final_atk = self.unit.atk
+                * (1.0
+                    + self.unit.buff_atk
+                    + self.unit.skill_parameters.first().copied().unwrap_or(0.0))
                 + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * (1.0 - newres / 100.0)) as f64).max((final_atk * 0.05) as f64)
                 + ((shreddmg * (1.0 - newres / 100.0)) as f64).max((shreddmg * 0.05) as f64);
@@ -236,7 +240,8 @@ impl Logos {
                 * bonus_hitcount;
             dps = (hitdmg + bonusdmg) / (self.unit.attack_interval as f64) * self.unit.attack_speed
                 / 100.0
-                * ((self.unit.targets as f64) as f64).min((self.unit.skill_parameters[1]) as f64);
+                * ((self.unit.targets as f64) as f64)
+                    .min((self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)) as f64);
             if (self.unit.module_index as f64) == 3.0 && self.unit.talent_damage {
                 ele_gauge = if self.unit.module_damage {
                     1000.0
@@ -245,18 +250,19 @@ impl Logos {
                 };
                 eledps = dps * 0.08
                     / ((self.unit.targets as f64) as f64)
-                        .min((self.unit.skill_parameters[1]) as f64);
+                        .min((self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)) as f64);
                 fallouttime = ele_gauge / eledps;
                 dps += 12000.0 / (fallouttime + 15.0)
                     * ((self.unit.targets as f64) as f64)
-                        .min((self.unit.skill_parameters[1]) as f64)
+                        .min((self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)) as f64)
                     / (1.0 + self.unit.buff_fragile);
                 if (self.unit.module_level as f64) > 1.0 {
                     dps += final_atk * falloutdmg / (self.unit.attack_interval as f64)
                         * self.unit.attack_speed
                         / 100.0
-                        * ((self.unit.targets as f64) as f64)
-                            .min((self.unit.skill_parameters[1]) as f64)
+                        * ((self.unit.targets as f64) as f64).min(
+                            (self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)) as f64,
+                        )
                         * bonuschance
                         * 15.0
                         / (fallouttime + 15.0);

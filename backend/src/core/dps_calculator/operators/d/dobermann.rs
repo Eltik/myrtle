@@ -75,15 +75,15 @@ impl Dobermann {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut dps: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
         let mut aspd: f64 = 0.0;
         let mut avgphys: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut sp_cost: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
 
         aspd = 0.0;
         if (self.unit.module_index as f64) == 2.0
@@ -94,7 +94,7 @@ impl Dobermann {
         }
         atk_scale = if self.unit.trait_damage { 1.2 } else { 1.0 };
         if (self.unit.skill_index as f64) < 2.0 {
-            skill_scale = self.unit.skill_parameters[0];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * atk_scale - defense) as f64)
                 .max((final_atk * atk_scale * 0.05) as f64);
@@ -109,7 +109,10 @@ impl Dobermann {
                 / 100.0;
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            final_atk = self.unit.atk * (1.0 + self.unit.buff_atk + self.unit.skill_parameters[0])
+            final_atk = self.unit.atk
+                * (1.0
+                    + self.unit.buff_atk
+                    + self.unit.skill_parameters.first().copied().unwrap_or(0.0))
                 + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * atk_scale - defense) as f64)
                 .max((final_atk * atk_scale * 0.05) as f64);

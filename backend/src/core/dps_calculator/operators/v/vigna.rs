@@ -73,14 +73,14 @@ impl Vigna {
         let mut crit_rate = if ((self.unit.elite as f64) as f64) == 0.0 {
             0.0
         } else {
-            self.unit.talent1_parameters[2]
+            self.unit.talent1_parameters.get(2).copied().unwrap_or(0.0)
         };
         if (self.unit.skill_index as f64) == 0.0 && (self.unit.elite as f64) > 0.0 {
-            crit_rate = self.unit.talent1_parameters[1];
+            crit_rate = self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0);
         }
-        let mut cdmg = self.unit.talent1_parameters[0];
-        let mut atkbuff =
-            self.unit.skill_parameters[0] * ((self.unit.skill_index as f64) as f64).min((1) as f64);
+        let mut cdmg = self.unit.talent1_parameters.first().copied().unwrap_or(0.0);
+        let mut atkbuff = self.unit.skill_parameters.first().copied().unwrap_or(0.0)
+            * ((self.unit.skill_index as f64) as f64).min((1) as f64);
         let mut atk_interval = if ((self.unit.skill_index as f64) as f64) == 2.0 {
             1.5
         } else {

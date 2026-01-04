@@ -81,18 +81,19 @@ impl Dorothy {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut atk_interval: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut defshred: f64 = 0.0;
-        let mut cdmg: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
+        let mut cdmg: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
         let mut hitdmgmine: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut defshred: f64 = 0.0;
+        let mut dps: f64 = 0.0;
 
         atkbuff = if self.unit.talent2_damage {
-            self.unit.talent2_parameters[0] * self.unit.talent2_parameters[1]
+            self.unit.talent2_parameters.first().copied().unwrap_or(0.0)
+                * self.unit.talent2_parameters.get(1).copied().unwrap_or(0.0)
         } else {
             0.0
         };
@@ -112,19 +113,20 @@ impl Dorothy {
         final_atk = self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
         let mut mine_scale =
             if self.unit.trait_damage && ((self.unit.skill_index as f64) as f64) > 0.0 {
-                self.unit.skill_parameters[1]
+                self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
             } else {
                 0.0
             };
         if (self.unit.skill_index as f64) == 1.0 {
-            defshred = 1.0 + self.unit.skill_parameters[2];
+            defshred = 1.0 + self.unit.skill_parameters.get(2).copied().unwrap_or(0.0);
             hitdmgmine = ((final_atk * mine_scale - defense * defshred) as f64)
                 .max((final_atk * mine_scale * 0.05) as f64)
                 * cdmg;
             if !self.unit.trait_damage || !self.unit.skill_damage {
                 defshred = 1.0;
             } else if !self.unit.talent_damage {
-                defshred = 1.0 + 5.0 / sp_cost * self.unit.skill_parameters[2];
+                defshred =
+                    1.0 + 5.0 / sp_cost * self.unit.skill_parameters.get(2).copied().unwrap_or(0.0);
             }
             hitdmg = ((final_atk - defense * defshred) as f64).max((final_atk * 0.05) as f64);
         }

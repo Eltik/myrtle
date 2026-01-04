@@ -82,17 +82,17 @@ impl ExusiaiAlter {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut dps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut aspd: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut explosionhit: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
+        let mut explosionhit: f64 = 0.0;
 
         atkbuff = if ((self.unit.elite as f64) as f64) > 1.0 {
-            2.0 * self.unit.talent2_parameters[0]
+            2.0 * self.unit.talent2_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
@@ -108,7 +108,7 @@ impl ExusiaiAlter {
             .fold(f64::NEG_INFINITY, f64::max);
         if (self.unit.skill_index as f64) < 2.0 {
             skill_scale = if ((self.unit.skill_index as f64) as f64) == 1.0 {
-                self.unit.skill_parameters[0]
+                self.unit.skill_parameters.first().copied().unwrap_or(0.0)
             } else {
                 1.0
             };
@@ -125,7 +125,7 @@ impl ExusiaiAlter {
                 / 100.0;
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            skill_scale = self.unit.skill_parameters[0];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             aspd = if self.unit.skill_damage { 70.0 } else { 0.0 };
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
@@ -138,8 +138,8 @@ impl ExusiaiAlter {
                 / 100.0;
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            atkbuff += self.unit.skill_parameters[5];
-            skill_scale = self.unit.skill_parameters[3];
+            atkbuff += self.unit.skill_parameters.get(5).copied().unwrap_or(0.0);
+            skill_scale = self.unit.skill_parameters.get(3).copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * skill_scale - defense) as f64)

@@ -119,28 +119,28 @@ impl Virtuosa {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut skilldmg: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut necro_skill_dps: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
-        let mut time_to_fallout_1: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut necro_skill_dps: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut time_to_fallout: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
         let mut necro_dps: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut time_to_fallout_1: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut time_to_fallout: f64 = 0.0;
 
         let mut ele_gauge = if self.unit.trait_damage {
             1000.0
         } else {
             2000.0
         };
-        let mut necro_scale = self.unit.talent1_parameters[0];
+        let mut necro_scale = self.unit.talent1_parameters.first().copied().unwrap_or(0.0);
         let mut necro_fragile = if ((self.unit.elite as f64) as f64) == 2.0 {
             self.unit
                 .talent2_parameters
@@ -153,7 +153,7 @@ impl Virtuosa {
         let mut ele_fragile = if ((self.unit.module_index as f64) as f64) == 1.0
             && ((self.unit.module_level as f64) as f64) > 1.0
         {
-            self.unit.talent2_parameters[0]
+            self.unit.talent2_parameters.first().copied().unwrap_or(0.0)
         } else {
             1.0
         };
@@ -166,8 +166,8 @@ impl Virtuosa {
         }
         // ###the actual skills
         if (self.unit.skill_index as f64) == 1.0 {
-            skill_scale = self.unit.skill_parameters[0];
-            let mut necro_skill_scale = self.unit.skill_parameters[1];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
+            let mut necro_skill_scale = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
             sp_cost = (self.unit.skill_cost as f64) / (1.0 + (self.unit.sp_boost as f64)) + 1.2;
             final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * (1.0 - res / 100.0)) as f64).max((final_atk * 0.05) as f64);
@@ -206,9 +206,10 @@ impl Virtuosa {
             }
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            aspd = self.unit.skill_parameters[0];
+            aspd = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
-            let mut extra_ele = final_atk * self.unit.skill_parameters[1];
+            let mut extra_ele =
+                final_atk * self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
             ele_gauge = ele_gauge / necro_fragile;
             let mut ele_application_target = final_atk * necro_scale
                 + extra_ele
@@ -231,11 +232,13 @@ impl Virtuosa {
         }
         if [0.0, 3.0].contains(&((self.unit.skill_index as f64) as f64)) {
             if (self.unit.skill_index as f64) == 3.0 {
-                necro_fragile = self.unit.skill_parameters[1] * (necro_fragile - 1.0) + 1.0;
+                necro_fragile = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
+                    * (necro_fragile - 1.0)
+                    + 1.0;
             }
-            atkbuff = self.unit.skill_parameters[0];
+            atkbuff = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             atkbuff += if self.unit.skill_damage {
-                self.unit.skill_parameters[3]
+                self.unit.skill_parameters.get(3).copied().unwrap_or(0.0)
             } else {
                 0.0
             };

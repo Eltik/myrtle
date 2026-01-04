@@ -72,13 +72,13 @@ impl Tecno {
         let res = enemy.res;
 
         let mut atkbuff = if ((self.unit.skill_index as f64) as f64) == 1.0 {
-            self.unit.skill_parameters[0]
+            self.unit.skill_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
         // UNTRANSLATED: if self.trait_dmg and self.module == 2 and self.module_lvl == 3: atkbuff += 0.15
         let mut aspd = if ((self.unit.skill_index as f64) as f64) == 2.0 {
-            self.unit.skill_parameters[0]
+            self.unit.skill_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
@@ -101,7 +101,7 @@ impl Tecno {
             / 100.0;
         if self.unit.trait_damage {
             let mut drones = if self.unit.talent_damage {
-                self.unit.talent1_parameters[0]
+                self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
             } else {
                 1.0
             };

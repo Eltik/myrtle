@@ -78,12 +78,12 @@ impl HoshigumaAlter {
         let defense = enemy.defense;
         let res = enemy.res;
 
+        let mut skill_scale: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
-        let mut dps: f64 = 0.0;
 
         let mut extra_scale = if ((self.unit.module_index as f64) as f64) == 1.0 {
             0.1
@@ -94,7 +94,7 @@ impl HoshigumaAlter {
             && self.unit.talent_damage
             && ((self.unit.elite as f64) as f64) == 2.0
         {
-            self.unit.talent2_parameters[2]
+            self.unit.talent2_parameters.get(2).copied().unwrap_or(0.0)
         } else {
             0.0
         };
@@ -104,26 +104,33 @@ impl HoshigumaAlter {
         dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
         if (self.unit.skill_index as f64) == 1.0 {
             final_atk = self.unit.atk
-                * (1.0 + atkbuff + self.unit.buff_atk + self.unit.skill_parameters[0])
+                * (1.0
+                    + atkbuff
+                    + self.unit.buff_atk
+                    + self.unit.skill_parameters.first().copied().unwrap_or(0.0))
                 + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * (1.0 + extra_scale) * (1.0 - res / 100.0)) as f64)
                 .max((final_atk * (1.0 + extra_scale) * 0.05) as f64);
             dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
-            skill_scale = self.unit.skill_parameters[2] + extra_scale;
+            skill_scale = self.unit.skill_parameters.get(2).copied().unwrap_or(0.0) + extra_scale;
             let mut reflectdmg = ((final_atk * skill_scale * (1.0 - res / 100.0)) as f64)
                 .max((final_atk * skill_scale * 0.05) as f64);
             dps += reflectdmg * 1.0 /* self.hits - needs manual implementation */;
         }
         if (self.unit.skill_index as f64) == 3.0 {
             final_atk = self.unit.atk
-                * (1.0 + atkbuff + self.unit.buff_atk + self.unit.skill_parameters[1])
+                * (1.0
+                    + atkbuff
+                    + self.unit.buff_atk
+                    + self.unit.skill_parameters.get(1).copied().unwrap_or(0.0))
                 + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * (1.0 + extra_scale) * (1.0 - res / 100.0)) as f64)
                 .max((final_atk * (1.0 + extra_scale) * 0.05) as f64);
             let mut hits = if self.unit.skill_damage { 4.0 } else { 3.0 };
             dps = hits * hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed
                 / 100.0
-                * ((self.unit.skill_parameters[2]) as f64).min((self.unit.targets as f64) as f64);
+                * ((self.unit.skill_parameters.get(2).copied().unwrap_or(0.0)) as f64)
+                    .min((self.unit.targets as f64) as f64);
         }
         return dps;
     }

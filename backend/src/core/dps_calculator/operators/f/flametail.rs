@@ -84,14 +84,14 @@ impl Flametail {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut cdmg: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
         let mut avghit: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut critdmg: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut cdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
 
         atkbuff = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {
             0.08
@@ -113,12 +113,14 @@ impl Flametail {
             (self.unit.attack_interval as f64)
         };
         let mut dodge = if ((self.unit.elite as f64) as f64) == 2.0 {
-            self.unit.talent2_parameters[0]
+            self.unit.talent2_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
         if (self.unit.skill_index as f64) == 3.0 {
-            dodge = 1.0 - ((1.0 - dodge) * (1.0 - self.unit.skill_parameters[2]));
+            dodge = 1.0
+                - ((1.0 - dodge)
+                    * (1.0 - self.unit.skill_parameters.get(2).copied().unwrap_or(0.0)));
         }
         if 1.0 /* self.hits - needs manual implementation */ > 0.0 {
             let mut dodgerate = dodge * 1.0 /* self.hits - needs manual implementation */;
@@ -136,7 +138,7 @@ impl Flametail {
             dps = avghit / atk_interval * self.unit.attack_speed / 100.0;
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            atkbuff += self.unit.skill_parameters[0];
+            atkbuff += self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);

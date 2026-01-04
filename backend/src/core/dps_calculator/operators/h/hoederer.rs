@@ -95,20 +95,20 @@ impl Hoederer {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut skill_scale: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut chance_to_attack_stunned: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut atk_cycle: f64 = 0.0;
+        let mut avgphys: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut counting_hits: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut stun_duration: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
-        let mut avgphys: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut counting_hits: f64 = 0.0;
-        let mut atk_cycle: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut hitdmg2: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
 
         atk_scale = 1.0;
         if (self.unit.elite as f64) > 0.0 {
@@ -137,7 +137,7 @@ impl Hoederer {
         }
         if (self.unit.skill_index as f64) < 2.0 {
             skill_scale = if ((self.unit.skill_index as f64) as f64) == 1.0 {
-                self.unit.skill_parameters[0]
+                self.unit.skill_parameters.first().copied().unwrap_or(0.0)
             } else {
                 1.0
             };
@@ -155,7 +155,7 @@ impl Hoederer {
         if (self.unit.skill_index as f64) == 2.0 {
             let mut maxtargets = if self.unit.skill_damage { 3.0 } else { 2.0 };
             // UNTRANSLATED: if self.skill_dmg: self.atk_interval = 3
-            atkbuff = self.unit.skill_parameters[0];
+            atkbuff = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * atk_scale - defense) as f64)
@@ -165,13 +165,13 @@ impl Hoederer {
                 * dmg_bonus;
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            atkbuff = self.unit.skill_parameters[1];
+            atkbuff = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * atk_scale - defense) as f64)
                 .max((final_atk * atk_scale * 0.05) as f64);
             if !self.unit.talent_damage && self.unit.skill_damage {
-                stun_duration = self.unit.skill_parameters[4];
+                stun_duration = self.unit.skill_parameters.get(4).copied().unwrap_or(0.0);
                 atk_cycle = (self.unit.attack_interval as f64) / self.unit.attack_speed * 100.0;
                 counting_hits = ((stun_duration / atk_cycle) as f64).trunc() + 1.0;
                 chance_to_attack_stunned = 1.0 - (0.75 as f64).powf(counting_hits as f64);

@@ -104,32 +104,32 @@ impl Mizuki {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut avgarts: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut bonusdmg: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut bonusdmg: f64 = 0.0;
         let mut hitdmgarts: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut avgarts: f64 = 0.0;
 
         bonusdmg = if ((self.unit.elite as f64) as f64) > 0.0 {
-            self.unit.talent1_parameters[0]
+            self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
         let mut bonustargets = if ((self.unit.elite as f64) as f64) > 0.0 {
-            self.unit.talent1_parameters[1]
+            self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0)
         } else {
             0.0
         };
         atkbuff = if self.unit.talent2_damage {
-            self.unit.talent2_parameters[1]
+            self.unit.talent2_parameters.get(1).copied().unwrap_or(0.0)
         } else {
             0.0
         };
@@ -142,12 +142,12 @@ impl Mizuki {
         // UNTRANSLATED: if self.module == 3 and self.module_dmg and self.module_lvl == 3 and self.skill > 0: bonustargets += 1
         if (self.unit.skill_index as f64) < 2.0 {
             skill_scale = if ((self.unit.skill_index as f64) as f64) == 1.0 {
-                self.unit.skill_parameters[0]
+                self.unit.skill_parameters.first().copied().unwrap_or(0.0)
             } else {
                 1.0
             };
             let mut talent_scale = if ((self.unit.skill_index as f64) as f64) == 1.0 {
-                self.unit.skill_parameters[1]
+                self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
             } else {
                 1.0
             };
@@ -188,8 +188,9 @@ impl Mizuki {
                     * ((self.unit.targets as f64) as f64).min((bonustargets) as f64);
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            atkbuff += self.unit.skill_parameters[1];
-            atk_interval = (self.unit.attack_interval as f64) + self.unit.skill_parameters[0];
+            atkbuff += self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
+            atk_interval = (self.unit.attack_interval as f64)
+                + self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             bonustargets += 1.0;
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
@@ -202,7 +203,7 @@ impl Mizuki {
                     * ((self.unit.targets as f64) as f64).min((bonustargets) as f64);
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            atkbuff += self.unit.skill_parameters[0];
+            atkbuff += self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             bonustargets += 2.0;
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;

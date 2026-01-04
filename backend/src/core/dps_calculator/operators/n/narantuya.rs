@@ -84,16 +84,16 @@ impl Narantuya {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut atk_interval: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
-        let mut interval: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut interval: f64 = 0.0;
 
         let mut stealbuff = if ((self.unit.elite as f64) as f64) > 0.0 && self.unit.talent_damage {
-            self.unit.talent1_parameters[1]
+            self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0)
         } else {
             0.0
         };
@@ -105,7 +105,7 @@ impl Narantuya {
             1.0
         };
         if (self.unit.skill_index as f64) == 1.0 {
-            skill_scale = self.unit.skill_parameters[1];
+            skill_scale = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
             hitdmg = ((final_atk * skill_scale * atk_scale - defense) as f64)
                 .max((final_atk * skill_scale * atk_scale * 0.05) as f64);
             interval = if self.unit.trait_damage {
@@ -117,8 +117,8 @@ impl Narantuya {
             // UNTRANSLATED: if self.targets > 1: dps *= 3
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            skill_scale = self.unit.skill_parameters[2];
-            let mut return_scale = self.unit.skill_parameters[3];
+            skill_scale = self.unit.skill_parameters.get(2).copied().unwrap_or(0.0);
+            let mut return_scale = self.unit.skill_parameters.get(3).copied().unwrap_or(0.0);
             hitdmg = ((final_atk * skill_scale * atk_scale - defense) as f64)
                 .max((final_atk * skill_scale * atk_scale * 0.05) as f64);
             let mut returndmg = ((final_atk * return_scale * atk_scale - defense) as f64)
@@ -129,12 +129,12 @@ impl Narantuya {
         }
         if [0.0, 3.0].contains(&((self.unit.skill_index as f64) as f64)) {
             skill_scale = if ((self.unit.skill_index as f64) as f64) == 3.0 {
-                self.unit.skill_parameters[0]
+                self.unit.skill_parameters.first().copied().unwrap_or(0.0)
             } else {
                 1.0
             };
             let mut aoe_scale = if ((self.unit.skill_index as f64) as f64) == 3.0 {
-                self.unit.skill_parameters[1]
+                self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
             } else {
                 0.0
             };

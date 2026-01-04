@@ -63,10 +63,12 @@ impl Sharp {
         let res = enemy.res;
 
         let mut final_atk = self.unit.atk
-            * (1.0 + self.unit.buff_atk + self.unit.talent1_parameters[0])
+            * (1.0
+                + self.unit.buff_atk
+                + self.unit.talent1_parameters.first().copied().unwrap_or(0.0))
             + self.unit.buff_atk_flat;
         let mut skill_scale = if ((self.unit.skill_index as f64) as f64) == 1.0 {
-            self.unit.skill_parameters[1]
+            self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
         } else {
             1.0
         };

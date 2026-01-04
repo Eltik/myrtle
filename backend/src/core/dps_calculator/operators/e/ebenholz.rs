@@ -105,20 +105,20 @@ impl Ebenholz {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
-        let mut eledps: f64 = 0.0;
-        let mut bonusdmg: f64 = 0.0;
-        let mut extradmg: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
+        let mut bonusdmg: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut eledps: f64 = 0.0;
+        let mut extradmg: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut eledmg: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
-        let mut ele_gauge: f64 = 0.0;
-        let mut fallouttime: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut fallouttime: f64 = 0.0;
+        let mut ele_gauge: f64 = 0.0;
         let mut aspd: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
 
         aspd = if self.unit.module_damage && ((self.unit.module_index as f64) as f64) == 2.0 {
             30.0
@@ -126,14 +126,14 @@ impl Ebenholz {
             0.0
         };
         atk_scale = if self.unit.talent_damage && ((self.unit.elite as f64) as f64) > 0.0 {
-            self.unit.talent1_parameters[0]
+            self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
         } else {
             1.0
         };
         eledmg = 0.0;
         let mut bonus_scale =
             if (self.unit.targets as f64) == 1.0 && ((self.unit.elite as f64) as f64) == 2.0 {
-                self.unit.talent2_parameters[0]
+                self.unit.talent2_parameters.first().copied().unwrap_or(0.0)
             } else {
                 0.0
             };
@@ -148,18 +148,19 @@ impl Ebenholz {
         let mut extra_scale = if ((self.unit.module_index as f64) as f64) == 2.0
             && ((self.unit.module_level as f64) as f64) > 1.0
         {
-            self.unit.talent2_parameters[3]
+            self.unit.talent2_parameters.get(3).copied().unwrap_or(0.0)
         } else {
             0.0
         };
         if (self.unit.skill_index as f64) < 2.0 {
             skill_scale = if ((self.unit.skill_index as f64) as f64) == 1.0 {
-                self.unit.skill_parameters[1]
+                self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
             } else {
                 1.0
             };
             atk_interval = if ((self.unit.skill_index as f64) as f64) == 1.0 {
-                (self.unit.attack_interval as f64) * self.unit.skill_parameters[0]
+                (self.unit.attack_interval as f64)
+                    * self.unit.skill_parameters.first().copied().unwrap_or(0.0)
             } else {
                 (self.unit.attack_interval as f64)
             };
@@ -195,11 +196,11 @@ impl Ebenholz {
             }
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            atkbuff = self.unit.skill_parameters[1];
+            atkbuff = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
             if self.unit.talent_damage {
-                atk_scale *= self.unit.skill_parameters[2];
+                atk_scale *= self.unit.skill_parameters.get(2).copied().unwrap_or(0.0);
             }
-            aspd += self.unit.skill_parameters[0];
+            aspd += self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * atk_scale * (1.0 - res / 100.0)) as f64)

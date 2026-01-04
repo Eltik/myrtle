@@ -101,20 +101,20 @@ impl Qiubai {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut aspd: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
         let mut extrascale: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut dmg: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
         let mut skilldmg: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
         let mut bonusdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut dmg: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
 
         let mut bonus = if ((self.unit.module_index as f64) as f64) == 1.0 {
             0.1
@@ -122,7 +122,7 @@ impl Qiubai {
             0.0
         };
         extrascale = if ((self.unit.elite as f64) as f64) > 0.0 {
-            self.unit.talent1_parameters[0]
+            self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
@@ -133,7 +133,7 @@ impl Qiubai {
         };
         atk_scale = if self.unit.trait_damage { 1.0 } else { 0.8 };
         if (self.unit.skill_index as f64) < 2.0 {
-            skill_scale = self.unit.skill_parameters[0];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             if !self.unit.talent_damage {
                 extrascale = 0.0;
                 dmg = 1.0;
@@ -163,9 +163,10 @@ impl Qiubai {
             // ###the actual skills
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            atkbuff = self.unit.skill_parameters[0];
+            atkbuff = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             aspd = if self.unit.skill_damage {
-                self.unit.skill_parameters[1] * self.unit.skill_parameters[2]
+                self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
+                    * self.unit.skill_parameters.get(2).copied().unwrap_or(0.0)
             } else {
                 0.0
             };
@@ -174,7 +175,7 @@ impl Qiubai {
             // UNTRANSLATED: try: extrascale *= self.skill_params[3]
             let mut atk_cycle =
                 (self.unit.attack_interval as f64) / (self.unit.attack_speed + aspd) * 100.0;
-            let mut bind_chance = self.unit.talent2_parameters[0];
+            let mut bind_chance = self.unit.talent2_parameters.first().copied().unwrap_or(0.0);
             let mut counting_hits = ((1.5 / atk_cycle) as f64).trunc() + 1.0;
             let mut chance_to_attack_bind =
                 1.0 - ((1.0 - bind_chance) as f64).powf(counting_hits as f64);

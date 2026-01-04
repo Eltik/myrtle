@@ -71,17 +71,17 @@ impl Kirara {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut hitdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut avghit: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut sp_cost: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
 
         final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
         if (self.unit.skill_index as f64) < 2.0 {
-            skill_scale = self.unit.skill_parameters[0];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
             let mut skillhitdmg = ((final_atk * skill_scale * (1.0 - res / 100.0)) as f64)
                 .max((final_atk * skill_scale * 0.05) as f64);
@@ -94,7 +94,7 @@ impl Kirara {
             dps = avghit / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            skill_scale = self.unit.skill_parameters[1];
+            skill_scale = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
             hitdmg = ((final_atk * skill_scale * (1.0 - res / 100.0)) as f64)
                 .max((final_atk * skill_scale * 0.05) as f64);
             dps = hitdmg * (self.unit.targets as f64);

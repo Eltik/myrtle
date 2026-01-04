@@ -82,15 +82,15 @@ impl Odda {
         let res = enemy.res;
 
         let mut final_atk: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut splashhitdmg: f64 = 0.0;
+        let mut avgphys: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
         let mut sp_cost: f64 = 0.0;
-        let mut avgphys: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut splashhitdmg: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
 
         atk_scale = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {
             1.15
@@ -98,13 +98,13 @@ impl Odda {
             1.0
         };
         atkbuff = if self.unit.talent_damage && ((self.unit.elite as f64) as f64) > 0.0 {
-            self.unit.talent1_parameters[1]
+            self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0)
         } else {
             0.0
         };
         if (self.unit.skill_index as f64) < 2.0 {
             skill_scale = if ((self.unit.skill_index as f64) as f64) == 1.0 {
-                self.unit.skill_parameters[0]
+                self.unit.skill_parameters.first().copied().unwrap_or(0.0)
             } else {
                 1.0
             };
@@ -130,7 +130,7 @@ impl Odda {
             }
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            atkbuff += self.unit.skill_parameters[0];
+            atkbuff += self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * atk_scale - defense) as f64)

@@ -81,28 +81,28 @@ impl YatoAlter {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
 
-        let mut extra_arts = self.unit.talent1_parameters[0];
+        let mut extra_arts = self.unit.talent1_parameters.first().copied().unwrap_or(0.0);
         atkbuff = if ((self.unit.elite as f64) as f64) == 2.0
             && (((self.unit.skill_index as f64) as f64) != 0.0 || self.unit.talent2_damage)
         {
-            self.unit.talent2_parameters[0]
+            self.unit.talent2_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
         // UNTRANSLATED: try: atkbuff += self.talent2_params[2]
         final_atk = self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
         if (self.unit.skill_index as f64) < 2.0 {
-            aspd = self.unit.skill_parameters[0];
+            aspd = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
             hitdmgarts = ((final_atk * extra_arts * (1.0 - res / 100.0)) as f64)
                 .max((final_atk * extra_arts * 0.05) as f64);
@@ -112,8 +112,8 @@ impl YatoAlter {
             // UNTRANSLATED: if self.skill == 1: dps *= 10 / 3
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            extra_arts *= self.unit.skill_parameters[3];
-            atk_scale = self.unit.skill_parameters[1];
+            extra_arts *= self.unit.skill_parameters.get(3).copied().unwrap_or(0.0);
+            atk_scale = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
             hitdmg = ((final_atk * atk_scale - defense) as f64)
                 .max((final_atk * atk_scale * 0.05) as f64);
             hitdmgarts = ((final_atk * atk_scale * extra_arts * (1.0 - res / 100.0)) as f64)
@@ -121,7 +121,7 @@ impl YatoAlter {
             dps = (hitdmg + hitdmgarts) * (self.unit.targets as f64) * 16.0;
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            skill_scale = self.unit.skill_parameters[0];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             hitdmg = ((final_atk * skill_scale - defense) as f64)
                 .max((final_atk * skill_scale * 0.05) as f64);
             hitdmgarts = ((final_atk * skill_scale * extra_arts * (1.0 - res / 100.0)) as f64)

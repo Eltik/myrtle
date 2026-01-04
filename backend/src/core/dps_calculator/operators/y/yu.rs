@@ -82,18 +82,18 @@ impl Yu {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
         let mut hitdmg2: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut newres: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut ele_scale: f64 = 0.0;
+        let mut newres: f64 = 0.0;
 
         newres = ((0) as f64).max((res - 20.0) as f64);
         atkbuff = if ((self.unit.skill_index as f64) as f64) == 2.0 {
-            self.unit.skill_parameters[1]
+            self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
         } else {
             0.0
         };
@@ -101,8 +101,8 @@ impl Yu {
         dps = 0.0;
         let mut time_to_fallout = -1.0;
         if self.unit.talent_damage && (self.unit.elite as f64) > 0.0 {
-            let mut arts_scale = self.unit.talent1_parameters[1];
-            ele_scale = self.unit.talent1_parameters[2];
+            let mut arts_scale = self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0);
+            ele_scale = self.unit.talent1_parameters.get(2).copied().unwrap_or(0.0);
             let mut block = if ((self.unit.skill_index as f64) as f64) == 2.0 {
                 5.0
             } else {

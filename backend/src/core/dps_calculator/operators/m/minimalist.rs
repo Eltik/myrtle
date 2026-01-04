@@ -84,17 +84,17 @@ impl Minimalist {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut dmgperinterval: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut cdmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
         let mut avghit: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut dmgperinterval: f64 = 0.0;
+        let mut cdmg: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
 
         let mut drone_dmg = if ((self.unit.module_index as f64) as f64) == 2.0 {
             1.2
@@ -105,16 +105,17 @@ impl Minimalist {
             drone_dmg = 0.2;
         }
         let mut crit_rate = if ((self.unit.elite as f64) as f64) > 0.0 {
-            self.unit.talent1_parameters[0]
+            self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
-        cdmg = self.unit.talent1_parameters[1];
+        cdmg = self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0);
         if (self.unit.skill_index as f64) < 2.0 {
             final_atk = self.unit.atk
                 * (1.0
                     + self.unit.buff_atk
-                    + self.unit.skill_parameters[0] * (self.unit.skill_index as f64))
+                    + self.unit.skill_parameters.first().copied().unwrap_or(0.0)
+                        * (self.unit.skill_index as f64))
                 + self.unit.buff_atk_flat;
             dmgperinterval = final_atk + drone_dmg * final_atk;
             hitdmgarts = ((dmgperinterval * (1.0 - res / 100.0)) as f64)
@@ -122,12 +123,13 @@ impl Minimalist {
                 * (1.0 + crit_rate * (cdmg - 1.0));
             dps = hitdmgarts / (self.unit.attack_interval as f64)
                 * (self.unit.attack_speed
-                    + self.unit.skill_parameters[1] * (self.unit.skill_index as f64))
+                    + self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
+                        * (self.unit.skill_index as f64))
                 / 100.0;
         }
         if (self.unit.skill_index as f64) == 2.0 {
             final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
-            skill_scale = self.unit.skill_parameters[0];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             sp_cost = (self.unit.skill_cost as f64) / (1.0 + (self.unit.sp_boost as f64)) + 1.2;
             dmgperinterval = final_atk + drone_dmg * final_atk;
             hitdmg = ((dmgperinterval * (1.0 - res / 100.0)) as f64)

@@ -89,14 +89,14 @@ impl Diamante {
         let defense = enemy.defense;
         let res = enemy.res;
 
+        let mut final_atk: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
         let mut eledmg: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
+        let mut burst_scale: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut burst_scale: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
 
         burst_scale = if ((self.unit.module_index as f64) as f64) == 1.0 {
             1.1
@@ -108,7 +108,7 @@ impl Diamante {
                 && self.unit.skill_damage
                 && ((self.unit.skill_index as f64) as f64) == 2.0
             {
-                self.unit.talent1_parameters[0]
+                self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
             } else {
                 0.0
             };
@@ -118,7 +118,7 @@ impl Diamante {
                 && self.unit.skill_damage
                 && ((self.unit.skill_index as f64) as f64) == 2.0
             {
-                self.unit.skill_parameters[1]
+                self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
             } else {
                 0.0
             };
@@ -128,17 +128,18 @@ impl Diamante {
                 / (1.0 + self.unit.buff_fragile)
                 * burst_scale;
             dps = (hitdmg + eledmg) / (self.unit.attack_interval as f64)
-                * (self.unit.attack_speed + self.unit.skill_parameters[0])
+                * (self.unit.attack_speed
+                    + self.unit.skill_parameters.first().copied().unwrap_or(0.0))
                 / 100.0
                 * ((self.unit.targets as f64) as f64).min((2) as f64);
         }
         if (self.unit.skill_index as f64) == 1.0 {
-            atkbuff = self.unit.skill_parameters[0];
-            let mut ele_application = self.unit.skill_parameters[1];
-            skill_scale = self.unit.skill_parameters[2];
+            atkbuff = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
+            let mut ele_application = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
+            skill_scale = self.unit.skill_parameters.get(2).copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
-            atkbuff += self.unit.talent1_parameters[0];
+            atkbuff += self.unit.talent1_parameters.first().copied().unwrap_or(0.0);
             let mut final_atk_necro =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
             let mut elemental_health = if !self.unit.talent_damage && !self.unit.skill_damage {

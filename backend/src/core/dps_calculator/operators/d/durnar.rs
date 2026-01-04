@@ -70,10 +70,10 @@ impl Durnar {
         };
         let mut final_atk = self.unit.atk
             * (1.0
-                + self.unit.skill_parameters[0]
+                + self.unit.skill_parameters.first().copied().unwrap_or(0.0)
                     * ((self.unit.skill_index as f64) as f64).min((1) as f64)
                 + self.unit.buff_atk
-                + self.unit.talent1_parameters[0])
+                + self.unit.talent1_parameters.first().copied().unwrap_or(0.0))
             + self.unit.buff_atk_flat;
         let mut hitdmg = if ((self.unit.skill_index as f64) as f64) > 0.0 {
             ((final_atk * (1.0 + extra_scale) * (1.0 - res / 100.0)) as f64)

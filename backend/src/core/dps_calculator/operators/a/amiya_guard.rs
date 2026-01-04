@@ -70,14 +70,14 @@ impl AmiyaGuard {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut atkbuff: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
         let mut hitdmgarts: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut dps: f64 = 0.0;
 
-        atkbuff = self.unit.talent1_parameters[0]
+        atkbuff = self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
             * (1.0 + ((1) as f64).min((self.unit.skill_index as f64) as f64));
         aspd = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {
             8.0
@@ -85,7 +85,8 @@ impl AmiyaGuard {
             0.0
         };
         if (self.unit.skill_index as f64) < 2.0 {
-            atkbuff += self.unit.skill_parameters[0] * (self.unit.skill_index as f64);
+            atkbuff += self.unit.skill_parameters.first().copied().unwrap_or(0.0)
+                * (self.unit.skill_index as f64);
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmgarts = ((final_atk * (1.0 - res / 100.0)) as f64).max((final_atk * 0.05) as f64);
@@ -96,7 +97,7 @@ impl AmiyaGuard {
         }
         if (self.unit.skill_index as f64) == 2.0 {
             if self.unit.skill_damage {
-                atkbuff += 3.0 * self.unit.skill_parameters[3];
+                atkbuff += 3.0 * self.unit.skill_parameters.get(3).copied().unwrap_or(0.0);
             }
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;

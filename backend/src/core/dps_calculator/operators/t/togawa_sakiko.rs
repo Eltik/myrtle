@@ -99,26 +99,26 @@ impl TogawaSakiko {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut atk_interval: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut defshred: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut newres: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
-        let mut newres: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut defshred: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
 
         atk_scale = 1.0;
         atkbuff = if ((self.unit.skill_index as f64) as f64) == 2.0 && !self.unit.skill_damage {
-            self.unit.skill_parameters[1]
+            self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
         } else {
             0.0
         };
         final_atk = self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
-        aspd = self.unit.talent2_parameters[1];
+        aspd = self.unit.talent2_parameters.get(1).copied().unwrap_or(0.0);
         aspd += if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage {
             12.0
         } else {
@@ -130,31 +130,35 @@ impl TogawaSakiko {
             resshred = if ((self.unit.module_index as f64) as f64) == 2.0
                 && ((self.unit.module_level as f64) as f64) > 1.0
             {
-                self.unit.talent1_parameters[4] * self.unit.talent1_parameters[1]
+                self.unit.talent1_parameters.get(4).copied().unwrap_or(0.0)
+                    * self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0)
             } else {
-                self.unit.talent1_parameters[4] * self.unit.talent1_parameters[2]
+                self.unit.talent1_parameters.get(4).copied().unwrap_or(0.0)
+                    * self.unit.talent1_parameters.get(2).copied().unwrap_or(0.0)
             };
             defshred = if ((self.unit.module_index as f64) as f64) == 2.0
                 && ((self.unit.module_level as f64) as f64) > 1.0
             {
-                self.unit.talent1_parameters[4] * self.unit.talent1_parameters[0]
+                self.unit.talent1_parameters.get(4).copied().unwrap_or(0.0)
+                    * self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
             } else {
-                self.unit.talent1_parameters[4] * self.unit.talent1_parameters[1]
+                self.unit.talent1_parameters.get(4).copied().unwrap_or(0.0)
+                    * self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0)
             };
         }
         if self.unit.shreds[2] < 1.0 && self.unit.shreds[2] > 0.0 {
-            let mut res = res / self.unit.shreds[0];
+            let mut res = res / self.unit.shreds.first().copied().unwrap_or(0.0);
         }
         newres = res * (1.0 - resshred);
         if self.unit.shreds[0] < 1.0 && self.unit.shreds[0] > 0.0 {
-            let mut defense = defense / self.unit.shreds[0];
+            let mut defense = defense / self.unit.shreds.first().copied().unwrap_or(0.0);
         }
         let mut newdef = defense * (1.0 - defshred);
         if (self.unit.skill_index as f64) == 1.0 {
             skill_scale = if self.unit.skill_damage {
-                self.unit.skill_parameters[0]
+                self.unit.skill_parameters.first().copied().unwrap_or(0.0)
             } else {
-                self.unit.skill_parameters[7]
+                self.unit.skill_parameters.get(7).copied().unwrap_or(0.0)
             };
             hitdmg = ((final_atk * atk_scale - newdef) as f64)
                 .max((final_atk * atk_scale * 0.05) as f64);
@@ -182,7 +186,9 @@ impl TogawaSakiko {
                 * hits;
             if self.unit.skill_damage {
                 dps = hitdmgarts / (self.unit.attack_interval as f64)
-                    * (self.unit.attack_speed + aspd + self.unit.skill_parameters[0])
+                    * (self.unit.attack_speed
+                        + aspd
+                        + self.unit.skill_parameters.first().copied().unwrap_or(0.0))
                     / 100.0;
             } else {
                 dps = hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd)
@@ -191,7 +197,7 @@ impl TogawaSakiko {
             }
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            skill_scale = self.unit.skill_parameters[1];
+            skill_scale = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
             hitdmg = ((final_atk * atk_scale * skill_scale - newdef) as f64)
                 .max((final_atk * atk_scale * skill_scale * 0.05) as f64);
             hitdmgarts = ((final_atk * atk_scale * skill_scale * (1.0 - newres / 100.0)) as f64)

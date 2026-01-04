@@ -105,22 +105,22 @@ impl LeiziAlter {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut hitdmgarts: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
         let mut lightdmg: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
 
         atk_scale = if ((self.unit.skill_index as f64) as f64) > 0.0 {
-            self.unit.talent1_parameters[2]
+            self.unit.talent1_parameters.get(2).copied().unwrap_or(0.0)
         } else {
             1.0
         };
-        let mut lightning = self.unit.talent1_parameters[1];
+        let mut lightning = self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0);
         // initial hit of 100% atk as arts when activating skill
         atkbuff = 2.0;
         if !self.unit.trait_damage {
@@ -143,7 +143,7 @@ impl LeiziAlter {
             dps = lightdmg * (self.unit.targets as f64);
         }
         if (self.unit.skill_index as f64) == 1.0 {
-            skill_scale = self.unit.skill_parameters[0];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
             let mut artsdmg = ((final_atk * atk_scale * (1.0 - res / 100.0)) as f64)
@@ -159,8 +159,8 @@ impl LeiziAlter {
             dps *= (self.unit.targets as f64);
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            skill_scale = self.unit.skill_parameters[0];
-            let mut targets = self.unit.skill_parameters[1];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
+            let mut targets = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
             if self.unit.skill_damage {
                 atkbuff += 2.5;
             }
@@ -176,8 +176,8 @@ impl LeiziAlter {
                 + lightdmg * (self.unit.targets as f64);
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            skill_scale = self.unit.skill_parameters[0];
-            let mut arts_scale = self.unit.skill_parameters[3];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
+            let mut arts_scale = self.unit.skill_parameters.get(3).copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * skill_scale * atk_scale - defense) as f64)

@@ -65,24 +65,28 @@ impl MrNothing {
         let res = enemy.res;
 
         let mut atkbuff = if ((self.unit.skill_index as f64) as f64) == 2.0 {
-            self.unit.skill_parameters[0]
+            self.unit.skill_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
         let mut aspd = if ((self.unit.skill_index as f64) as f64) == 2.0 && self.unit.skill_damage {
-            self.unit.skill_parameters[3]
+            self.unit.skill_parameters.get(3).copied().unwrap_or(0.0)
         } else {
             0.0
         };
         let mut final_atk =
             self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
         let mut hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
-        let mut hitdmg2 = ((final_atk * self.unit.talent1_parameters[1] - defense) as f64)
-            .max((final_atk * self.unit.talent1_parameters[1] * 0.05) as f64);
+        let mut hitdmg2 = ((final_atk * self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0)
+            - defense) as f64)
+            .max(
+                (final_atk * self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0) * 0.05)
+                    as f64,
+            );
         let mut dps = if self.unit.talent_damage {
             hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd) / 100.0
         } else {
-            hitdmg2 / self.unit.talent1_parameters[0]
+            hitdmg2 / self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
         };
         return dps;
     }

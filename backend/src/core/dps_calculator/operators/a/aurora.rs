@@ -73,11 +73,11 @@ impl Aurora {
             (self.unit.attack_interval as f64)
         };
         let mut atkbuff = if ((self.unit.skill_index as f64) as f64) == 2.0 {
-            self.unit.skill_parameters[0]
+            self.unit.skill_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
-        let mut skill_scale = self.unit.skill_parameters[3];
+        let mut skill_scale = self.unit.skill_parameters.get(3).copied().unwrap_or(0.0);
         let mut final_atk =
             self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
         let mut hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);

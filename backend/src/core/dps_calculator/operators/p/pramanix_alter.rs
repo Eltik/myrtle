@@ -80,13 +80,13 @@ impl PramanixAlter {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut newres: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut newres: f64 = 0.0;
 
         atk_scale = if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage {
             1.15
@@ -96,15 +96,15 @@ impl PramanixAlter {
         // UNTRANSLATED: if self.skill == 0: return (defense * 0)
         if (self.unit.skill_index as f64) == 1.0 {
             final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
-            skill_scale = self.unit.skill_parameters[0];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             hitdmg = ((final_atk * atk_scale * skill_scale * (1.0 - res / 100.0)) as f64)
                 .max((final_atk * atk_scale * skill_scale * 0.05) as f64);
             dps = hitdmg * (self.unit.targets as f64) / ((self.unit.skill_cost as f64) + 1.0)
                 * (1.0 + (self.unit.sp_boost as f64));
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            skill_scale = self.unit.skill_parameters[0];
-            let mut ice_scale = self.unit.skill_parameters[1];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
+            let mut ice_scale = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
             final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * atk_scale * skill_scale * (1.0 - res / 100.0)) as f64)
                 .max((final_atk * skill_scale * atk_scale * 0.05) as f64);
@@ -118,9 +118,12 @@ impl PramanixAlter {
             }
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            final_atk = self.unit.atk * (1.0 + self.unit.buff_atk + self.unit.skill_parameters[0])
+            final_atk = self.unit.atk
+                * (1.0
+                    + self.unit.buff_atk
+                    + self.unit.skill_parameters.first().copied().unwrap_or(0.0))
                 + self.unit.buff_atk_flat;
-            skill_scale = self.unit.skill_parameters[5];
+            skill_scale = self.unit.skill_parameters.get(5).copied().unwrap_or(0.0);
             newres = ((0) as f64).max((res - 10.0) as f64);
             hitdmg = ((final_atk * atk_scale * skill_scale * (1.0 - newres / 100.0)) as f64)
                 .max((final_atk * skill_scale * atk_scale * 0.05) as f64);

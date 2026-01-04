@@ -81,12 +81,12 @@ impl Carnelian {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
 
         atk_scale = if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage {
             1.15
@@ -95,7 +95,10 @@ impl Carnelian {
         };
         // UNTRANSLATED: if self.skill == 0: return (defense * 0)
         if (self.unit.skill_index as f64) == 1.0 {
-            final_atk = self.unit.atk * (1.0 + self.unit.buff_atk + self.unit.skill_parameters[0])
+            final_atk = self.unit.atk
+                * (1.0
+                    + self.unit.buff_atk
+                    + self.unit.skill_parameters.first().copied().unwrap_or(0.0))
                 + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * atk_scale * (1.0 - res / 100.0)) as f64)
                 .max((final_atk * atk_scale * 0.05) as f64);
@@ -103,9 +106,10 @@ impl Carnelian {
                 * (self.unit.targets as f64);
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            atk_interval = (self.unit.attack_interval as f64) + self.unit.skill_parameters[0];
+            atk_interval = (self.unit.attack_interval as f64)
+                + self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             atkbuff = if self.unit.skill_damage {
-                self.unit.skill_parameters[2]
+                self.unit.skill_parameters.get(2).copied().unwrap_or(0.0)
             } else {
                 0.0
             };
@@ -117,7 +121,7 @@ impl Carnelian {
                 hitdmg / atk_interval * self.unit.attack_speed / 100.0 * (self.unit.targets as f64);
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            let mut maxatkbuff = self.unit.skill_parameters[0];
+            let mut maxatkbuff = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             let mut duration = 21.0;
             let mut totalatks = 1.0
                 + (duration

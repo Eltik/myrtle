@@ -74,7 +74,7 @@ impl Specter {
         let mut final_atk = self.unit.atk
             * (1.0
                 + self.unit.buff_atk
-                + self.unit.skill_parameters[0]
+                + self.unit.skill_parameters.first().copied().unwrap_or(0.0)
                     * ((self.unit.skill_index as f64) as f64).min((1) as f64))
             + self.unit.buff_atk_flat;
         let mut dmgbuff = if ((self.unit.module_level as f64) as f64) < 2.0 {

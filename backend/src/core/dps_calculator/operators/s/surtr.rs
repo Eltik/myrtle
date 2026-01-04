@@ -88,18 +88,18 @@ impl Surtr {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut newres: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut avghit: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut newres: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
         let mut aspd: f64 = 0.0;
 
         atkbuff = 0.0;
-        let mut resignore = self.unit.talent1_parameters[0];
+        let mut resignore = self.unit.talent1_parameters.first().copied().unwrap_or(0.0);
         newres = ((0) as f64).max((res - resignore) as f64);
         aspd = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {
             8.0
@@ -107,7 +107,7 @@ impl Surtr {
             0.0
         };
         if (self.unit.skill_index as f64) == 1.0 {
-            atk_scale = self.unit.skill_parameters[0];
+            atk_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             let mut hits = (self.unit.skill_cost as f64);
             final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmgarts =
@@ -122,10 +122,10 @@ impl Surtr {
                 / ((self.unit.attack_interval as f64) / ((self.unit.attack_speed + aspd) / 100.0));
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            atkbuff += self.unit.skill_parameters[0];
+            atkbuff += self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
-            atk_scale = self.unit.skill_parameters[3];
+            atk_scale = self.unit.skill_parameters.get(3).copied().unwrap_or(0.0);
             let mut one_target_dmg = ((final_atk * atk_scale * (1.0 - newres / 100.0)) as f64)
                 .max((final_atk * atk_scale * 0.05) as f64);
             let mut two_target_dmg =
@@ -139,9 +139,11 @@ impl Surtr {
             }
         }
         if [0.0, 3.0].contains(&((self.unit.skill_index as f64) as f64)) {
-            atkbuff += self.unit.skill_parameters[0] * (self.unit.skill_index as f64) / 3.0;
+            atkbuff += self.unit.skill_parameters.first().copied().unwrap_or(0.0)
+                * (self.unit.skill_index as f64)
+                / 3.0;
             let mut maxtargets = if ((self.unit.skill_index as f64) as f64) == 3.0 {
-                self.unit.skill_parameters[6]
+                self.unit.skill_parameters.get(6).copied().unwrap_or(0.0)
             } else {
                 1.0
             };

@@ -68,22 +68,22 @@ impl Underflow {
         let res = enemy.res;
 
         let mut atkbuff = if ((self.unit.skill_index as f64) as f64) > 0.0 {
-            self.unit.skill_parameters[0]
+            self.unit.skill_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
         let mut aspd = if ((self.unit.skill_index as f64) as f64) == 2.0 {
-            self.unit.skill_parameters[3]
+            self.unit.skill_parameters.get(3).copied().unwrap_or(0.0)
         } else {
             0.0
         };
         let mut targets = if ((self.unit.skill_index as f64) as f64) == 2.0 {
-            self.unit.skill_parameters[4]
+            self.unit.skill_parameters.get(4).copied().unwrap_or(0.0)
         } else {
             1.0
         };
         let mut arts_dmg = if ((self.unit.elite as f64) as f64) > 0.0 {
-            self.unit.talent1_parameters[2]
+            self.unit.talent1_parameters.get(2).copied().unwrap_or(0.0)
         } else {
             0.0
         };

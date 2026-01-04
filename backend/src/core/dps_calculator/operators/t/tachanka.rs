@@ -75,14 +75,14 @@ impl Tachanka {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
         let mut critdmg: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
         let mut avghit: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
 
         let mut dmg_scale =
             if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {
@@ -97,9 +97,11 @@ impl Tachanka {
                 2.0 * hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
         }
         if (self.unit.skill_index as f64) == 1.0 {
-            skill_scale = self.unit.skill_parameters[1];
+            skill_scale = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
             let mut newdef = if self.unit.skill_damage {
-                ((0) as f64).max((defense - self.unit.skill_parameters[2]) as f64)
+                ((0) as f64).max(
+                    (defense - self.unit.skill_parameters.get(2).copied().unwrap_or(0.0)) as f64,
+                )
             } else {
                 defense
             };
@@ -114,10 +116,14 @@ impl Tachanka {
         if (self.unit.skill_index as f64) == 2.0 {
             atk_interval = (self.unit.attack_interval as f64) * 0.15;
             hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
-            critdmg = ((final_atk * self.unit.skill_parameters[2] - defense) as f64)
-                .max((final_atk * self.unit.skill_parameters[2] * 0.05) as f64);
-            avghit = critdmg * self.unit.skill_parameters[1]
-                + hitdmg * (1.0 - self.unit.skill_parameters[1]);
+            critdmg = ((final_atk * self.unit.skill_parameters.get(2).copied().unwrap_or(0.0)
+                - defense) as f64)
+                .max(
+                    (final_atk * self.unit.skill_parameters.get(2).copied().unwrap_or(0.0) * 0.05)
+                        as f64,
+                );
+            avghit = critdmg * self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
+                + hitdmg * (1.0 - self.unit.skill_parameters.get(1).copied().unwrap_or(0.0));
             dps = 2.0 * avghit / atk_interval * self.unit.attack_speed / 100.0 * dmg_scale;
         }
         return dps;

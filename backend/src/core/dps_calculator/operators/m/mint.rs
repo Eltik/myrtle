@@ -64,7 +64,7 @@ impl Mint {
         let res = enemy.res;
 
         // UNTRANSLATED: if self.skill == 0: return res * 0
-        let mut skill_scale = self.unit.skill_parameters[0];
+        let mut skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
         let mut final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
         let mut hitdmg = ((final_atk * skill_scale * (1.0 - res / 100.0)) as f64)
             .max((final_atk * skill_scale * 0.05) as f64);

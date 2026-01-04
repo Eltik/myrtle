@@ -88,12 +88,12 @@ impl LapplandAlter {
             };
         }
         if self.unit.talent_damage && (self.unit.elite as f64) > 0.0 {
-            drone_dmg *= self.unit.talent1_parameters[1];
+            drone_dmg *= self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0);
             drones += 1.0;
         }
         let mut aspd = 0.0; // try-except fallback
-        let mut atkbuff =
-            self.unit.skill_parameters[0] * ((self.unit.skill_index as f64) as f64).min((1) as f64);
+        let mut atkbuff = self.unit.skill_parameters.first().copied().unwrap_or(0.0)
+            * ((self.unit.skill_index as f64) as f64).min((1) as f64);
         // UNTRANSLATED: if self.skill == 1: drones += 1
         // UNTRANSLATED: if self.skill == 2: drones += 3
         // UNTRANSLATED: if self.skill == 3: drones += 2
@@ -109,7 +109,7 @@ impl LapplandAlter {
         if (self.unit.skill_index as f64) == 3.0 {
             dps += (self.unit.targets as f64)
                 * final_atk
-                * self.unit.skill_parameters[4]
+                * self.unit.skill_parameters.get(4).copied().unwrap_or(0.0)
                 * ((1.0 - res / 100.0) as f64).max((0.05) as f64);
         }
         return dps;

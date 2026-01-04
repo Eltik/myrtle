@@ -84,16 +84,16 @@ impl Chen {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut sp_cost: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
         let mut skilldmg: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
         let mut hitdmgarts: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
 
         let mut dmg = if ((self.unit.module_index as f64) as f64) == 1.0 {
             1.1
@@ -101,7 +101,7 @@ impl Chen {
             1.0
         };
         atkbuff = if ((self.unit.elite as f64) as f64) == 2.0 {
-            self.unit.talent2_parameters[0]
+            self.unit.talent2_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
@@ -111,12 +111,13 @@ impl Chen {
             defense
         };
         let mut sp_gain = if ((self.unit.elite as f64) as f64) > 0.0 {
-            self.unit.talent1_parameters[1] / self.unit.talent1_parameters[0]
+            self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0)
+                / self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
         // UNTRANSLATED: if self.module == 1 and self.module_lvl == 3: sp_gain *= 2
-        skill_scale = self.unit.skill_parameters[0];
+        skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
         final_atk = self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
         hitdmg = ((final_atk - newdef) as f64).max((final_atk * 0.05) as f64) * 2.0;
         if (self.unit.skill_index as f64) == 0.0 {
@@ -158,7 +159,7 @@ impl Chen {
             dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0
                 + skilldmg / sp_cost
                     * ((self.unit.targets as f64) as f64)
-                        .min((self.unit.skill_parameters[1]) as f64);
+                        .min((self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)) as f64);
         }
         if (self.unit.skill_index as f64) == 3.0 {
             hitdmg = ((final_atk * skill_scale - newdef) as f64)
