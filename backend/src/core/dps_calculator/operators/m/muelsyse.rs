@@ -89,13 +89,13 @@ impl Muelsyse {
         let res = enemy.res;
 
         let mut atk_interval: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut extra_summons: f64 = 0.0;
         let mut aspd: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
 
         atk_scale = if self.unit.trait_damage { 1.5 } else { 1.0 };
         if self.unit.trait_damage && (self.unit.module_index as f64) == 2.0 {
@@ -126,7 +126,9 @@ impl Muelsyse {
         let mut main = if self.unit.talent_damage { 1.0 } else { 0.0 };
         let mut clone_atk = 0.0 /* cloned_op.atk */  * copy_factor * (1.0 + atkbuff + self.unit.buff_atk)
             + self.unit.buff_atk_flat;
-        // UNTRANSLATED: if not self.cloned_op.ranged and self.talent2_dmg: clone_atk += 250
+        if !false /* cloned_op.ranged */  && self.unit.talent2_damage {
+            clone_atk += 250.0;
+        }
         let mut summondamage = if !false
         /* cloned_op.physical */
         {

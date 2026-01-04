@@ -92,17 +92,17 @@ impl Dusk {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut hitdmg: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
         let mut freedps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
 
         freedps = 0.0;
         if self.unit.talent2_damage {

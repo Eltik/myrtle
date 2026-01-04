@@ -69,14 +69,16 @@ impl Utage {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
         let mut aspd: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
 
-        // UNTRANSLATED: if self.skill == 1: return 0 * res
+        if (self.unit.skill_index as f64) == 1.0 {
+            return 0.0 * res;
+        }
         aspd = if self.unit.talent_damage {
             self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
         } else {

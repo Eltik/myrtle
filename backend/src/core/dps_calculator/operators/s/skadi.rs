@@ -79,7 +79,9 @@ impl Skadi {
             } else {
                 1.0
             };
-        // UNTRANSLATED: if self.module == 2 and self.module_dmg: aspd += 30
+        if (self.unit.module_index as f64) == 2.0 && self.unit.module_damage {
+            aspd += 30.0;
+        }
         let mut final_atk =
             self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
         let mut hitdmg =

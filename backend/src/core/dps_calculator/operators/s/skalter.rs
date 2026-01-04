@@ -65,14 +65,18 @@ impl Skalter {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        // UNTRANSLATED: if self.skill != 3: return res * 0
+        if (self.unit.skill_index as f64) != 3.0 {
+            return res * 0.0;
+        }
         let mut atkbuff =
             if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {
                 0.08
             } else {
                 0.0
             };
-        // UNTRANSLATED: if self.talent2_dmg: atkbuff += self.talent2_params[0]
+        if self.unit.talent2_damage {
+            atkbuff += self.unit.talent2_parameters.first().copied().unwrap_or(0.0);
+        }
         let mut skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
         let mut final_atk =
             self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
@@ -80,7 +84,9 @@ impl Skalter {
             * skill_scale
             * ((1) as f64).max((-defense) as f64)
             * (self.unit.targets as f64);
-        // UNTRANSLATED: if self.talent_dmg: dps *= 2
+        if self.unit.talent_damage {
+            dps *= 2.0;
+        }
         return dps;
     }
 }

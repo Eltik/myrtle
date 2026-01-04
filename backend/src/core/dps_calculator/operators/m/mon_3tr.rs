@@ -64,9 +64,9 @@ impl Mon3tr {
         let defense = enemy.defense;
         let res = enemy.res;
 
+        let mut aspd: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
 
         aspd = if ((self.unit.elite as f64) as f64) > 1.0 {
@@ -74,7 +74,9 @@ impl Mon3tr {
         } else {
             0.0
         };
-        // UNTRANSLATED: if self.skill < 3: return res * 0
+        if (self.unit.skill_index as f64) < 3.0 {
+            return res * 0.0;
+        }
         if (self.unit.skill_index as f64) == 3.0 {
             atk_interval = (self.unit.attack_interval as f64)
                 + self.unit.skill_parameters.get(4).copied().unwrap_or(0.0);

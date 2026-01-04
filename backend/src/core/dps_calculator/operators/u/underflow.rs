@@ -87,7 +87,9 @@ impl Underflow {
         } else {
             0.0
         };
-        // UNTRANSLATED: if self.talent_dmg: arts_dmg *= 2
+        if self.unit.talent_damage {
+            arts_dmg *= 2.0;
+        }
         let mut final_atk =
             self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
         let mut hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);

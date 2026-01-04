@@ -75,12 +75,12 @@ impl TinMan {
         let res = enemy.res;
 
         let mut atk_interval: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
         let mut sp_cost: f64 = 0.0;
         let mut skilldmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
 
         let mut dmg_bonus = if ((self.unit.elite as f64) as f64) == 2.0 {
             self.unit.talent2_parameters.first().copied().unwrap_or(0.0)
@@ -95,7 +95,9 @@ impl TinMan {
             * dmg_bonus
             * (self.unit.targets as f64);
         hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
-        // UNTRANSLATED: if self.skill == 0: return hitdmg/self.atk_interval * self.attack_speed/100
+        if (self.unit.skill_index as f64) == 0.0 {
+            return hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
+        }
         if (self.unit.skill_index as f64) == 1.0 {
             sp_cost = (self.unit.skill_cost as f64);
             dps = sp_cost / (sp_cost + 1.0) * hitdmg / (self.unit.attack_interval as f64)

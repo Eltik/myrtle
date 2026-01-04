@@ -78,12 +78,12 @@ impl HoshigumaAlter {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut skill_scale: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
 
         let mut extra_scale = if ((self.unit.module_index as f64) as f64) == 1.0 {
             0.1
@@ -98,7 +98,13 @@ impl HoshigumaAlter {
         } else {
             0.0
         };
-        // UNTRANSLATED: if self.module == 1 and self.module_lvl > 1 and self.talent2_dmg and self.talent_dmg: atkbuff += 0.05 * self.module_lvl
+        if (self.unit.module_index as f64) == 1.0
+            && (self.unit.module_level as f64) > 1.0
+            && self.unit.talent2_damage
+            && self.unit.talent_damage
+        {
+            atkbuff += 0.05 * (self.unit.module_level as f64);
+        }
         final_atk = self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
         hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
         dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;

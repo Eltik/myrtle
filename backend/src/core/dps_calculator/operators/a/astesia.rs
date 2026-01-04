@@ -88,7 +88,9 @@ impl Astesia {
         let mut dps = hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd)
             / 100.0
             * dmg;
-        // UNTRANSLATED: if self.skill == 2: dps *= min(self.targets, 2)
+        if (self.unit.skill_index as f64) == 2.0 {
+            dps *= ((self.unit.targets as f64) as f64).min((2) as f64);
+        }
         return dps;
     }
 }

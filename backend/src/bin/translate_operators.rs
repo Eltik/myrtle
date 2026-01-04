@@ -535,6 +535,7 @@ impl PythonToRustTranslator {
                     let condition = &trimmed[3..colon_pos];
                     let statement = &trimmed[colon_pos + 2..];
 
+                    // Try simple assignment first
                     if let Some((var, expr)) = self.parse_assignment(statement) {
                         let rust_condition = self.translate_condition(condition);
                         let rust_expr = self.translate_expression(expr);
@@ -557,6 +558,41 @@ impl PythonToRustTranslator {
                         ));
                         continue;
                     }
+
+                    // Try compound assignment (e.g., var *= expr)
+                    if let Some((var, op, expr)) = self.parse_compound_assignment(statement) {
+                        let rust_condition = self.translate_condition(condition);
+                        let rust_expr = self.translate_expression(expr);
+
+                        rust_lines.push(format!(
+                            "{}if {} {{ {} {} {}; }}",
+                            self.indent(self.indent_level),
+                            rust_condition,
+                            var,
+                            op,
+                            rust_expr
+                        ));
+                        continue;
+                    }
+
+                    // Try return statement
+                    if let Some(return_expr) = statement.strip_prefix("return ") {
+                        // Skip if it contains method calls
+                        if !return_expr.contains("self.skill_dps")
+                            && !return_expr.contains("super()")
+                            && !return_expr.contains("self.total_dmg")
+                        {
+                            let rust_condition = self.translate_condition(condition);
+                            let rust_expr = self.translate_expression(return_expr);
+                            rust_lines.push(format!(
+                                "{}if {} {{ return {}; }}",
+                                self.indent(self.indent_level),
+                                rust_condition,
+                                rust_expr
+                            ));
+                            continue;
+                        }
+                    }
                 }
             }
 
@@ -566,6 +602,7 @@ impl PythonToRustTranslator {
                     let condition = &trimmed[5..colon_pos];
                     let statement = &trimmed[colon_pos + 2..];
 
+                    // Try simple assignment
                     if let Some((var, expr)) = self.parse_assignment(statement) {
                         let rust_condition = self.translate_condition(condition);
                         let rust_expr = self.translate_expression(expr);
@@ -579,11 +616,46 @@ impl PythonToRustTranslator {
                         ));
                         continue;
                     }
+
+                    // Try compound assignment
+                    if let Some((var, op, expr)) = self.parse_compound_assignment(statement) {
+                        let rust_condition = self.translate_condition(condition);
+                        let rust_expr = self.translate_expression(expr);
+
+                        rust_lines.push(format!(
+                            "{}else if {} {{ {} {} {}; }}",
+                            self.indent(self.indent_level),
+                            rust_condition,
+                            var,
+                            op,
+                            rust_expr
+                        ));
+                        continue;
+                    }
+
+                    // Try return statement
+                    if let Some(return_expr) = statement.strip_prefix("return ") {
+                        if !return_expr.contains("self.skill_dps")
+                            && !return_expr.contains("super()")
+                            && !return_expr.contains("self.total_dmg")
+                        {
+                            let rust_condition = self.translate_condition(condition);
+                            let rust_expr = self.translate_expression(return_expr);
+                            rust_lines.push(format!(
+                                "{}else if {} {{ return {}; }}",
+                                self.indent(self.indent_level),
+                                rust_condition,
+                                rust_expr
+                            ));
+                            continue;
+                        }
+                    }
                 }
             }
 
             // Handle single-line else statements
             if let Some(statement) = trimmed.strip_prefix("else: ") {
+                // Try simple assignment first
                 if let Some((var, expr)) = self.parse_assignment(statement) {
                     let rust_expr = self.translate_expression(expr);
 
@@ -591,6 +663,31 @@ impl PythonToRustTranslator {
                         "{}else {{ {} = {}; }}",
                         self.indent(self.indent_level),
                         var,
+                        rust_expr
+                    ));
+                    continue;
+                }
+
+                // Try compound assignment
+                if let Some((var, op, expr)) = self.parse_compound_assignment(statement) {
+                    let rust_expr = self.translate_expression(expr);
+
+                    rust_lines.push(format!(
+                        "{}else {{ {} {} {}; }}",
+                        self.indent(self.indent_level),
+                        var,
+                        op,
+                        rust_expr
+                    ));
+                    continue;
+                }
+
+                // Try return statement
+                if let Some(return_expr) = statement.strip_prefix("return ") {
+                    let rust_expr = self.translate_expression(return_expr);
+                    rust_lines.push(format!(
+                        "{}else {{ return {}; }}",
+                        self.indent(self.indent_level),
                         rust_expr
                     ));
                     continue;

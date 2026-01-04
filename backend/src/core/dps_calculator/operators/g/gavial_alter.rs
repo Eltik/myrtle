@@ -90,7 +90,10 @@ impl GavialAlter {
             1.0
         };
         let mut atkbuff = self.unit.talent1_parameters.first().copied().unwrap_or(0.0);
-        // UNTRANSLATED: if self.talent_dmg and self.elite > 0: atkbuff += self.talent1_params[2] * min(self.targets,block)
+        if self.unit.talent_damage && (self.unit.elite as f64) > 0.0 {
+            atkbuff += self.unit.talent1_parameters.get(2).copied().unwrap_or(0.0)
+                * ((self.unit.targets as f64) as f64).min((block) as f64);
+        }
         atkbuff += self.unit.skill_parameters.first().copied().unwrap_or(0.0)
             * ((self.unit.skill_index as f64) as f64).min((1) as f64);
         let mut final_atk =

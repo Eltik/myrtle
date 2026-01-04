@@ -69,7 +69,9 @@ impl Suzuran {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        // UNTRANSLATED: if self.skill == 3: return res * 0
+        if (self.unit.skill_index as f64) == 3.0 {
+            return res * 0.0;
+        }
         let mut atkbuff = if ((self.unit.skill_index as f64) as f64) > 0.0 {
             self.unit.skill_parameters.first().copied().unwrap_or(0.0)
         } else {
@@ -88,7 +90,10 @@ impl Suzuran {
         let mut hitdmg = ((final_atk * (1.0 - res / 100.0)) as f64).max((final_atk * 0.05) as f64);
         let mut dps =
             hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd) / 100.0;
-        // UNTRANSLATED: if self.skill == 2 and self.targets > 1: dps *= min(self.targets, self.skill_params[1])
+        if (self.unit.skill_index as f64) == 2.0 && (self.unit.targets as f64) > 1.0 {
+            dps *= ((self.unit.targets as f64) as f64)
+                .min((self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)) as f64);
+        }
         return dps * (1.0 + fragile) / (1.0 + self.unit.buff_fragile);
     }
 }

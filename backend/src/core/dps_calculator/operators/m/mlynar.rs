@@ -88,12 +88,12 @@ impl Mlynar {
         let defense = enemy.defense;
         let res = enemy.res;
 
+        let mut final_atk: f64 = 0.0;
+        let mut finaldmg: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
-        let mut finaldmg: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
 
         atkbuff = 0.0;
         atk_scale = 1.0;
@@ -105,7 +105,9 @@ impl Mlynar {
             };
         }
         let mut stacks = 40.0;
-        // UNTRANSLATED: if not self.trait_dmg: stacks -= 10
+        if !self.unit.trait_damage {
+            stacks -= 10.0;
+        }
         atkbuff += stacks * 0.05;
         if (self.unit.skill_index as f64) == 0.0 {
             dps = res * 0.0;

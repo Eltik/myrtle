@@ -88,7 +88,9 @@ impl NearlAlter {
                 + self.unit.skill_parameters.first().copied().unwrap_or(0.0)
                     * ((self.unit.skill_index as f64) as f64).min((1) as f64))
             + self.unit.buff_atk_flat;
-        // UNTRANSLATED: if self.skill == 1: aspd += self.skill_params[1]
+        if (self.unit.skill_index as f64) == 1.0 {
+            aspd += self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
+        }
         let mut hitdmg = ((final_atk * atk_scale - defense * (1.0 - def_shred)) as f64)
             .max((final_atk * atk_scale * 0.05) as f64);
         let mut dps =

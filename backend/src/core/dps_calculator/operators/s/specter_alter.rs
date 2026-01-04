@@ -81,11 +81,11 @@ impl SpecterAlter {
         let defense = enemy.defense;
         let res = enemy.res;
 
+        let mut atkbuff: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
 
         atkbuff = if self.unit.trait_damage {
             self.unit.skill_parameters.first().copied().unwrap_or(0.0)
@@ -93,7 +93,9 @@ impl SpecterAlter {
         } else {
             0.0
         };
-        // UNTRANSLATED: if not self.trait_dmg and self.module == 1: atkbuff += 0.15
+        if !self.unit.trait_damage && (self.unit.module_index as f64) == 1.0 {
+            atkbuff += 0.15;
+        }
         if !self.unit.trait_damage {
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;

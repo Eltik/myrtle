@@ -68,12 +68,12 @@ impl Hoshiguma {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut skill_scale: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
 
         atkbuff = if ((self.unit.module_index as f64) as f64) == 2.0
             && ((self.unit.module_level as f64) as f64) > 1.0
@@ -88,7 +88,9 @@ impl Hoshiguma {
         } else {
             1.0
         };
-        // UNTRANSLATED: if self.skill == 3: atkbuff += self.skill_params[0]
+        if (self.unit.skill_index as f64) == 3.0 {
+            atkbuff += self.unit.skill_parameters.first().copied().unwrap_or(0.0);
+        }
         final_atk = self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
         hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
         dps =

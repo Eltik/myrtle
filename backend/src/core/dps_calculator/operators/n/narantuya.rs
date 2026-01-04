@@ -84,13 +84,13 @@ impl Narantuya {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut dps: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
         let mut interval: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
 
         let mut stealbuff = if ((self.unit.elite as f64) as f64) > 0.0 && self.unit.talent_damage {
             self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0)
@@ -114,7 +114,9 @@ impl Narantuya {
                 2.1
             };
             dps = hitdmg / interval;
-            // UNTRANSLATED: if self.targets > 1: dps *= 3
+            if (self.unit.targets as f64) > 1.0 {
+                dps *= 3.0;
+            }
         }
         if (self.unit.skill_index as f64) == 2.0 {
             skill_scale = self.unit.skill_parameters.get(2).copied().unwrap_or(0.0);

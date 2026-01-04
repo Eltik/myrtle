@@ -119,21 +119,21 @@ impl Virtuosa {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut sp_cost: f64 = 0.0;
-        let mut necro_skill_dps: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut necro_dps: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut time_to_fallout_1: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
         let mut time_to_fallout: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut necro_skill_dps: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut time_to_fallout_1: f64 = 0.0;
+        let mut necro_dps: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
 
         let mut ele_gauge = if self.unit.trait_damage {
             1000.0

@@ -86,12 +86,16 @@ impl Leto {
                     * ((self.unit.skill_index as f64) as f64).min((1) as f64)
                 + self.unit.buff_atk)
             + self.unit.buff_atk_flat;
-        // UNTRANSLATED: if self.skill == 1: aspd += self.skill_params[1]
+        if (self.unit.skill_index as f64) == 1.0 {
+            aspd += self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
+        }
         let mut hitdmg =
             ((final_atk * atk_scale - defense) as f64).max((final_atk * atk_scale * 0.05) as f64);
         let mut dps =
             hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd) / 100.0;
-        // UNTRANSLATED: if self.skill == 2 and self.targets > 1: dps *= 2
+        if (self.unit.skill_index as f64) == 2.0 && (self.unit.targets as f64) > 1.0 {
+            dps *= 2.0;
+        }
         return dps;
     }
 }

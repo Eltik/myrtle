@@ -72,7 +72,9 @@ impl Lunacub {
         } else {
             0.0
         };
-        // UNTRANSLATED: if self.module == 2: atk_shorter += 0.05 * (self.module_lvl - 1)
+        if (self.unit.module_index as f64) == 2.0 {
+            atk_shorter += 0.05 * ((self.unit.module_level as f64) - 1.0);
+        }
         if (self.unit.skill_index as f64) == 0.0 {
             atk_shorter = 0.0;
         }

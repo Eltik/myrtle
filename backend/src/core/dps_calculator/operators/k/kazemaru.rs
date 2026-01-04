@@ -73,13 +73,13 @@ impl Kazemaru {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut avgphys: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut avgphys: f64 = 0.0;
 
         if (self.unit.skill_index as f64) < 2.0 {
             skill_scale = if ((self.unit.skill_index as f64) as f64) == 1.0 {
@@ -109,7 +109,10 @@ impl Kazemaru {
             hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
             let mut hitdmg2 = ((final_atk2 - defense) as f64).max((final_atk * 0.05) as f64);
             dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
-            // UNTRANSLATED: if self.skill_dmg: dps += hitdmg2/self.drone_atk_interval * self.attack_speed/100
+            if self.unit.skill_damage {
+                dps += hitdmg2 / (self.unit.drone_atk_interval as f64) * self.unit.attack_speed
+                    / 100.0;
+            }
         }
         return dps;
     }

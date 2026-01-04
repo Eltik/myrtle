@@ -69,13 +69,13 @@ impl April {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut skilldmg: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
         let mut avgdmg: f64 = 0.0;
         let mut aspd: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
 
         aspd = if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage {
             8.0

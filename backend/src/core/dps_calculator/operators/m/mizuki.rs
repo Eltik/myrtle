@@ -104,19 +104,19 @@ impl Mizuki {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut dps: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut bonusdmg: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut avghit: f64 = 0.0;
         let mut avgarts: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut bonusdmg: f64 = 0.0;
 
         bonusdmg = if ((self.unit.elite as f64) as f64) > 0.0 {
             self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
@@ -138,8 +138,19 @@ impl Mizuki {
         } else {
             0.0
         };
-        // UNTRANSLATED: if self.module == 3 and self.module_dmg and self.module_lvl > 1: bonustargets += 1
-        // UNTRANSLATED: if self.module == 3 and self.module_dmg and self.module_lvl == 3 and self.skill > 0: bonustargets += 1
+        if (self.unit.module_index as f64) == 3.0
+            && self.unit.module_damage
+            && (self.unit.module_level as f64) > 1.0
+        {
+            bonustargets += 1.0;
+        }
+        if (self.unit.module_index as f64) == 3.0
+            && self.unit.module_damage
+            && (self.unit.module_level as f64) == 3.0
+            && (self.unit.skill_index as f64) > 0.0
+        {
+            bonustargets += 1.0;
+        }
         if (self.unit.skill_index as f64) < 2.0 {
             skill_scale = if ((self.unit.skill_index as f64) as f64) == 1.0 {
                 self.unit.skill_parameters.first().copied().unwrap_or(0.0)

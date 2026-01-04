@@ -105,14 +105,14 @@ impl LeiziAlter {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut dps: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
         let mut lightdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
 
         atk_scale = if ((self.unit.skill_index as f64) as f64) > 0.0 {
@@ -150,7 +150,9 @@ impl LeiziAlter {
                 .max((final_atk * atk_scale * 0.05) as f64);
             hitdmg = ((final_atk * skill_scale * atk_scale - defense) as f64)
                 .max((final_atk * skill_scale * atk_scale * 0.05) as f64);
-            // UNTRANSLATED: if self.skill_dmg: hitdmg *= 3
+            if self.unit.skill_damage {
+                hitdmg *= 3.0;
+            }
             dps = if ((self.unit.elite as f64) as f64) == 2.0 {
                 hitdmg + artsdmg
             } else {
@@ -188,8 +190,12 @@ impl LeiziAlter {
             hitdmgarts = ((final_atk * arts_scale * atk_scale * (1.0 - res / 100.0)) as f64)
                 .max((final_atk * arts_scale * atk_scale * 0.05) as f64);
             let mut balls = if self.unit.skill_damage { 1.0 } else { 0.0 };
-            // UNTRANSLATED: if self.module_dmg: balls += 1
-            // UNTRANSLATED: if self.talent2_dmg: balls += 1
+            if self.unit.module_damage {
+                balls += 1.0;
+            }
+            if self.unit.talent2_damage {
+                balls += 1.0;
+            }
             let mut arts_dmg = hitdmgarts * 3.0 + balls * 4.0 * hitdmgarts;
             dps = (hitdmg + arts_dmg * (self.unit.targets as f64)) / 2.9 * (self.unit.attack_speed)
                 / 100.0;

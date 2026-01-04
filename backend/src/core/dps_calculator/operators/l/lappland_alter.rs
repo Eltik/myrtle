@@ -94,9 +94,15 @@ impl LapplandAlter {
         let mut aspd = 0.0; // try-except fallback
         let mut atkbuff = self.unit.skill_parameters.first().copied().unwrap_or(0.0)
             * ((self.unit.skill_index as f64) as f64).min((1) as f64);
-        // UNTRANSLATED: if self.skill == 1: drones += 1
-        // UNTRANSLATED: if self.skill == 2: drones += 3
-        // UNTRANSLATED: if self.skill == 3: drones += 2
+        if (self.unit.skill_index as f64) == 1.0 {
+            drones += 1.0;
+        }
+        if (self.unit.skill_index as f64) == 2.0 {
+            drones += 3.0;
+        }
+        if (self.unit.skill_index as f64) == 3.0 {
+            drones += 2.0;
+        }
         let mut final_atk =
             self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
         let mut drone_atk = drone_dmg * final_atk;

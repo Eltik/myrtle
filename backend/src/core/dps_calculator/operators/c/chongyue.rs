@@ -82,15 +82,15 @@ impl Chongyue {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut skill_scale: f64 = 0.0;
-        let mut crit_chance: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut skilldmg: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
         let mut relevant_hits: f64 = 0.0;
+        let mut crit_chance: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
         let mut aspd: f64 = 0.0;
 
         aspd = if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage {
@@ -119,7 +119,9 @@ impl Chongyue {
         skilldmg = ((final_atk * skill_scale - defense) as f64)
             .max((final_atk * skill_scale * 0.05) as f64);
         if (self.unit.skill_index as f64) < 2.0 {
-            // UNTRANSLATED: if self.talent_dmg and self.elite > 0: skilldmg *= dmg
+            if self.unit.talent_damage && (self.unit.elite as f64) > 0.0 {
+                skilldmg *= dmg;
+            }
             relevant_hits = (duration
                 / ((self.unit.attack_interval as f64) / (self.unit.attack_speed + aspd) as f64)
                     .trunc()

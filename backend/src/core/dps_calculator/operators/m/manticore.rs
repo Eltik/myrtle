@@ -77,7 +77,9 @@ impl Manticore {
         } else {
             0.0
         };
-        // UNTRANSLATED: if self.module == 1 and self.module_lvl > 1: atkbuff_talent += 0.05 * (self.module_lvl -1)
+        if (self.unit.module_index as f64) == 1.0 && (self.unit.module_level as f64) > 1.0 {
+            atkbuff_talent += 0.05 * ((self.unit.module_level as f64) - 1.0);
+        }
         if (self.unit.elite as f64) > 0.0 {
             if atk_interval / self.unit.attack_speed * 100.0 < self.unit.talent1_parameters[0] {
                 atkbuff_talent = 0.0;

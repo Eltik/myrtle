@@ -239,13 +239,16 @@ impl OperatorUnit {
         if elite == 2 && level >= max_level_e2 - 30 {
             let available_modules = &operator_data.available_modules;
 
-            // Get default module if valid (1-indexed, convert to 0-indexed for array access)
-            if default_module_index >= 1
-                && ((default_module_index - 1) as usize) < available_modules.len()
-            {
-                operator_module =
-                    Some(available_modules[(default_module_index - 1) as usize].clone());
-                module_index = default_module_index;
+            // Get default module by order number (char_equip_order)
+            if default_module_index >= 1 {
+                let found_default = available_modules
+                    .iter()
+                    .enumerate()
+                    .find(|(_, m)| m.module.char_equip_order == default_module_index);
+                if let Some((idx, _)) = found_default {
+                    operator_module = Some(available_modules[idx].clone());
+                    module_index = default_module_index;
+                }
             }
 
             if !available_modules.is_empty() {
@@ -254,28 +257,35 @@ impl OperatorUnit {
                 if param_module_index == 0 {
                     operator_module = None;
                     module_index = 0;
-                } else if param_module_index >= 1
-                    && ((param_module_index - 1) as usize) < available_modules.len()
-                {
-                    operator_module =
-                        Some(available_modules[(param_module_index - 1) as usize].clone());
-                    module_index = param_module_index;
+                } else if param_module_index >= 1 {
+                    // Find module by order number (char_equip_order), not by array index
+                    // module_index=1 means module X (order 1), module_index=2 means module Y (order 2)
+                    let found_module = available_modules
+                        .iter()
+                        .enumerate()
+                        .find(|(_, m)| m.module.char_equip_order == param_module_index);
 
-                    let param_module_level = params.module_level.unwrap_or(-1);
-                    operator_module_level = if param_module_level <= 3 && param_module_level > 1 {
-                        param_module_level
-                    } else {
-                        3
-                    };
+                    if let Some((idx, _)) = found_module {
+                        operator_module = Some(available_modules[idx].clone());
+                        module_index = param_module_index;
 
-                    if trust < 50 {
-                        operator_module_level = 1;
+                        let param_module_level = params.module_level.unwrap_or(-1);
+                        operator_module_level = if param_module_level <= 3 && param_module_level > 1
+                        {
+                            param_module_level
+                        } else {
+                            3
+                        };
+
+                        if trust < 50 {
+                            operator_module_level = 1;
+                        }
+                        if trust < 100 {
+                            operator_module_level = operator_module_level.min(2);
+                        }
+
+                        module_level = operator_module_level;
                     }
-                    if trust < 100 {
-                        operator_module_level = operator_module_level.min(2);
-                    }
-
-                    module_level = operator_module_level;
                 }
             }
         }

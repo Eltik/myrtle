@@ -70,13 +70,13 @@ impl Quartz {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
 
         atkbuff = self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0);
         if (self.unit.skill_index as f64) < 2.0 {

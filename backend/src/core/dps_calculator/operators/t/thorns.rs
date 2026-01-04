@@ -114,14 +114,14 @@ impl Thorns {
         let res = enemy.res;
 
         let mut atk_scale: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
         let mut bonusdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut fallout_dps: f64 = 0.0;
-        let mut cooldown: f64 = 0.0;
-        let mut time_to_fallout: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut time_to_fallout: f64 = 0.0;
+        let mut cooldown: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut fallout_dps: f64 = 0.0;
+        let mut dps: f64 = 0.0;
 
         let mut bonus = if ((self.unit.module_index as f64) as f64) == 1.0 {
             0.1
@@ -137,7 +137,9 @@ impl Thorns {
                 .cloned()
                 .fold(f64::NEG_INFINITY, f64::max)
         };
-        // UNTRANSLATED: if not self.talent_dmg: arts_dot *= 0.5
+        if !self.unit.talent_damage {
+            arts_dot *= 0.5;
+        }
         let mut stacks = if ((self.unit.module_index as f64) as f64) == 1.0
             && ((self.unit.module_level as f64) as f64) > 1.0
         {
@@ -168,7 +170,9 @@ impl Thorns {
                 } else {
                     2000.0 / (dps * 0.1)
                 };
-                // UNTRANSLATED: if self.module_lvl == 1: dps += 6000/(time_to_fallout+10)
+                if (self.unit.module_level as f64) == 1.0 {
+                    dps += 6000.0 / (time_to_fallout + 10.0);
+                }
                 // UNTRANSLATED ELSE (no matching if): else:
                 fallout_dps = dps - arts_dot_dps + arts_dot;
                 dps = (fallout_dps * 10.0 + dps * time_to_fallout + 6000.0)
@@ -198,7 +202,9 @@ impl Thorns {
                 } else {
                     2000.0 / (dps * 0.1) / ((self.unit.targets as f64) as f64).min((4) as f64)
                 };
-                // UNTRANSLATED: if self.module_lvl == 1: dps += 6000/(time_to_fallout+10)
+                if (self.unit.module_level as f64) == 1.0 {
+                    dps += 6000.0 / (time_to_fallout + 10.0);
+                }
                 // UNTRANSLATED ELSE (no matching if): else:
                 fallout_dps = dps
                     - (arts_dot_dps + arts_dot)
@@ -216,7 +222,9 @@ impl Thorns {
                 } else {
                     2000.0 / (dps * 0.1) / ((self.unit.targets as f64) as f64).min((4) as f64)
                 };
-                // UNTRANSLATED: if self.module_lvl == 1: dps += 6000/(time_to_fallout+10)
+                if (self.unit.module_level as f64) == 1.0 {
+                    dps += 6000.0 / (time_to_fallout + 10.0);
+                }
                 // UNTRANSLATED ELSE (no matching if): else:
                 fallout_dps = dps
                     - (arts_dot_dps + arts_dot)
@@ -248,7 +256,9 @@ impl Thorns {
                 } else {
                     2000.0 / (dps * 0.1)
                 };
-                // UNTRANSLATED: if self.module_lvl == 1: dps += 6000/(time_to_fallout+10)
+                if (self.unit.module_level as f64) == 1.0 {
+                    dps += 6000.0 / (time_to_fallout + 10.0);
+                }
                 // UNTRANSLATED ELSE (no matching if): else:
                 fallout_dps = dps - arts_dot_dps + arts_dot;
                 dps = (fallout_dps * 10.0 + dps * time_to_fallout + 6000.0)

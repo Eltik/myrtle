@@ -70,10 +70,10 @@ impl Blitz {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut dps: f64 = 0.0;
 
         atk_scale = if ((self.unit.skill_index as f64) as f64) < 2.0 && !self.unit.talent_damage {

@@ -95,20 +95,20 @@ impl Hoederer {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut dps: f64 = 0.0;
-        let mut chance_to_attack_stunned: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut atk_cycle: f64 = 0.0;
-        let mut avgphys: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut counting_hits: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut stun_duration: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut hitdmg2: f64 = 0.0;
+        let mut chance_to_attack_stunned: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut atk_cycle: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut counting_hits: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut avgphys: f64 = 0.0;
+        let mut stun_duration: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
 
         atk_scale = 1.0;
         if (self.unit.elite as f64) > 0.0 {

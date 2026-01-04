@@ -86,14 +86,14 @@ impl Fartooth {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut atk_scale: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut dps: f64 = 0.0;
         let mut aspd: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut dmgscale: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
 
         atkbuff = 0.0;
         aspd = 0.0;

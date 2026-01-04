@@ -69,8 +69,8 @@ impl Hibiscus {
         let res = enemy.res;
 
         let mut dps: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
 
         let mut dmg = if ((self.unit.elite as f64) as f64) > 0.0 {

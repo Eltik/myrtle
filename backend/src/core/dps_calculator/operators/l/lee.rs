@@ -71,15 +71,21 @@ impl Lee {
         } else {
             0.0
         };
-        // UNTRANSLATED: if self.targets == 1 and self.talent_dmg: aspd *= 2
+        if (self.unit.targets as f64) == 1.0 && self.unit.talent_damage {
+            aspd *= 2.0;
+        }
         let mut atkbuff =
             if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage {
                 0.2
             } else {
                 0.0
             };
-        // UNTRANSLATED: if self.skill == 2: aspd += self.skill_params[5]
-        // UNTRANSLATED: else: atkbuff += self.skill_params[0] * min(self.skill,1)
+        if (self.unit.skill_index as f64) == 2.0 {
+            aspd += self.unit.skill_parameters.get(5).copied().unwrap_or(0.0);
+        } else {
+            atkbuff += self.unit.skill_parameters.first().copied().unwrap_or(0.0)
+                * ((self.unit.skill_index as f64) as f64).min((1) as f64);
+        }
         let mut final_atk =
             self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
         let mut hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);

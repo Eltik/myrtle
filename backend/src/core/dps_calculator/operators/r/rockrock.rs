@@ -98,8 +98,13 @@ impl Rockrock {
             self.unit.skill_parameters.first().copied().unwrap_or(0.0)
                 * ((self.unit.skill_index as f64) as f64)
         };
-        // UNTRANSLATED: if self.skill_dmg and self.skill == 2: atkbuff += self.skill_params[0]
-        // UNTRANSLATED: if self.skill == 2 and self.skill_dmg and self.trait_dmg: drone_dmg *= self.skill_params[3]
+        if self.unit.skill_damage && (self.unit.skill_index as f64) == 2.0 {
+            atkbuff += self.unit.skill_parameters.first().copied().unwrap_or(0.0);
+        }
+        if (self.unit.skill_index as f64) == 2.0 && self.unit.skill_damage && self.unit.trait_damage
+        {
+            drone_dmg *= self.unit.skill_parameters.get(3).copied().unwrap_or(0.0);
+        }
         let mut final_atk =
             self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
         let mut dmgperinterval = final_atk + drone_dmg * final_atk;
