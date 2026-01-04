@@ -96,17 +96,17 @@ impl Rosmontis {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut bonushitdmg: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut defense: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
         let mut avghit: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut defense: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut bonushitdmg: f64 = 0.0;
         let mut defshred: f64 = 0.0;
-        let mut newdef: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut newdef: f64 = 0.0;
 
         let mut bonushits = if ((self.unit.module_index as f64) as f64) == 1.0 {
             2.0
@@ -119,15 +119,17 @@ impl Rosmontis {
             0.0
         };
         defshred = if ((self.unit.elite as f64) as f64) > 0.0 {
-            self.unit.talent1_parameters[0]
+            self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
         newdef = ((0) as f64).max((defense - defshred) as f64);
         if (self.unit.skill_index as f64) < 2.0 {
-            skill_scale = self.unit.skill_parameters[0];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk = self.unit.atk
-                * (1.0 + self.unit.buff_atk + self.unit.talent2_parameters[0])
+                * (1.0
+                    + self.unit.buff_atk
+                    + self.unit.talent2_parameters.first().copied().unwrap_or(0.0))
                 + self.unit.buff_atk_flat;
             hitdmg = ((final_atk - newdef) as f64).max((final_atk * 0.05) as f64);
             bonushitdmg = ((final_atk * 0.5 - newdef) as f64).max((final_atk * 0.5 * 0.05) as f64)
@@ -150,8 +152,8 @@ impl Rosmontis {
             final_atk = self.unit.atk
                 * (1.0
                     + self.unit.buff_atk
-                    + self.unit.skill_parameters[1]
-                    + self.unit.talent2_parameters[0])
+                    + self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
+                    + self.unit.talent2_parameters.first().copied().unwrap_or(0.0))
                 + self.unit.buff_atk_flat;
             hitdmg = ((final_atk - newdef) as f64).max((final_atk * 0.05) as f64);
             bonushitdmg = ((final_atk * 0.5 - newdef) as f64).max((final_atk * 0.5 * 0.05) as f64)
@@ -165,11 +167,11 @@ impl Rosmontis {
         if (self.unit.skill_index as f64) == 3.0 {
             if self.unit.skill_damage {
                 if self.unit.shreds[0] < 1.0 && self.unit.shreds[0] > 0.0 {
-                    defense = defense / self.unit.shreds[0];
+                    defense = defense / self.unit.shreds.first().copied().unwrap_or(0.0);
                 }
                 newdef = ((0) as f64).max((defense - 160.0) as f64);
                 if self.unit.shreds[0] < 1.0 && self.unit.shreds[0] > 0.0 {
-                    newdef *= self.unit.shreds[0];
+                    newdef *= self.unit.shreds.first().copied().unwrap_or(0.0);
                 }
                 newdef = ((0) as f64).max((newdef - defshred) as f64);
             } else {
@@ -178,8 +180,8 @@ impl Rosmontis {
             final_atk = self.unit.atk
                 * (1.0
                     + self.unit.buff_atk
-                    + self.unit.skill_parameters[1]
-                    + self.unit.talent2_parameters[0])
+                    + self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
+                    + self.unit.talent2_parameters.first().copied().unwrap_or(0.0))
                 + self.unit.buff_atk_flat;
             hitdmg = ((final_atk - newdef) as f64).max((final_atk * 0.05) as f64);
             bonushitdmg = ((final_atk * 0.5 - newdef) as f64).max((final_atk * 0.5 * 0.05) as f64)

@@ -67,18 +67,18 @@ impl Cantabile {
         let res = enemy.res;
 
         let mut atkbuff = if self.unit.talent_damage {
-            self.unit.talent1_parameters[1]
+            self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0)
         } else {
             0.0
         };
         let mut aspd = if !self.unit.talent_damage {
-            self.unit.talent1_parameters[0]
+            self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
         if (self.unit.skill_index as f64) > 0.0 {
-            atkbuff += self.unit.skill_parameters[0];
-            aspd += self.unit.skill_parameters[1];
+            atkbuff += self.unit.skill_parameters.first().copied().unwrap_or(0.0);
+            aspd += self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
         }
         let mut final_atk =
             self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;

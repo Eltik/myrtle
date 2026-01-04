@@ -81,14 +81,14 @@ impl YahataUmiri {
         let defense = enemy.defense;
         let res = enemy.res;
 
+        let mut hitdmg: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
         let mut dps: f64 = 0.0;
 
         let mut dmg = if self.unit.talent_damage {
-            self.unit.talent2_parameters[0]
+            self.unit.talent2_parameters.first().copied().unwrap_or(0.0)
         } else {
             1.0
         };
@@ -99,7 +99,7 @@ impl YahataUmiri {
                 * (self.unit.targets as f64);
         }
         if (self.unit.skill_index as f64) == 1.0 {
-            skill_scale = self.unit.skill_parameters[0];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
             let mut skillhit = ((final_atk * skill_scale * (1.0 - res / 100.0)) as f64)
                 .max((final_atk * skill_scale * 0.05) as f64)
@@ -121,7 +121,7 @@ impl YahataUmiri {
             }
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            skill_scale = self.unit.skill_parameters[0];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             dps = ((final_atk * skill_scale * (1.0 - res / 100.0)) as f64)
                 .max((final_atk * skill_scale * 0.05) as f64)
                 * (self.unit.targets as f64);

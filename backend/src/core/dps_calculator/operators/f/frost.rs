@@ -70,12 +70,12 @@ impl Frost {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut critdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut hitrate: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
 
         final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
         let mut newdef = if ((self.unit.module_index as f64) as f64) == 2.0
@@ -94,16 +94,22 @@ impl Frost {
                 1.0
             };
             let mut mine_scale = if ((self.unit.skill_index as f64) as f64) == 1.0 {
-                self.unit.skill_parameters[1]
+                self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
             } else {
-                self.unit.skill_parameters[4]
+                self.unit.skill_parameters.get(4).copied().unwrap_or(0.0)
             };
             let mut hitdmg_mine = ((final_atk * mine_scale - newdef) as f64)
                 .max((final_atk * mine_scale * 0.05) as f64)
                 * critdmg;
             if (self.unit.skill_index as f64) == 2.0 && self.unit.skill_damage {
-                hitdmg_mine += ((final_atk * self.unit.skill_parameters[1] - newdef) as f64)
-                    .max((final_atk * self.unit.skill_parameters[1] * 0.05) as f64)
+                hitdmg_mine += ((final_atk
+                    * self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
+                    - newdef) as f64)
+                    .max(
+                        (final_atk
+                            * self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
+                            * 0.05) as f64,
+                    )
                     * 3.0;
             }
             hitrate = if self.unit.talent_damage {

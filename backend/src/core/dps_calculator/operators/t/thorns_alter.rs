@@ -84,14 +84,14 @@ impl ThornsAlter {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut dps: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
         let mut hitdmgarts: f64 = 0.0;
         let mut newres: f64 = 0.0;
         let mut aspd: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
 
         atkbuff = self
@@ -107,7 +107,7 @@ impl ThornsAlter {
             .cloned()
             .fold(f64::NEG_INFINITY, f64::max);
         aspd = if ((self.unit.elite as f64) as f64) > 2.0 {
-            self.unit.talent2_parameters[0]
+            self.unit.talent2_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
@@ -116,17 +116,18 @@ impl ThornsAlter {
         dps = hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd) / 100.0;
         // UNTRANSLATED: if self.skill != 0 and not self.trait_dmg: dps *= 0
         if (self.unit.skill_index as f64) == 2.0 {
-            skill_scale = self.unit.skill_parameters[4];
+            skill_scale = self.unit.skill_parameters.get(4).copied().unwrap_or(0.0);
             hitdmgarts = ((final_atk * skill_scale * (1.0 - res / 100.0)) as f64)
                 .max((final_atk * skill_scale * 0.05) as f64);
             dps += hitdmgarts * (self.unit.targets as f64);
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            let mut duration = self.unit.skill_parameters[2] + extra_duration;
-            let mut shred_base = self.unit.skill_parameters[10];
-            let mut shred_step = self.unit.skill_parameters[12];
-            let mut skill_scale_base = self.unit.skill_parameters[4];
-            let mut skill_scale_step = self.unit.skill_parameters[6];
+            let mut duration =
+                self.unit.skill_parameters.get(2).copied().unwrap_or(0.0) + extra_duration;
+            let mut shred_base = self.unit.skill_parameters.get(10).copied().unwrap_or(0.0);
+            let mut shred_step = self.unit.skill_parameters.get(12).copied().unwrap_or(0.0);
+            let mut skill_scale_base = self.unit.skill_parameters.get(4).copied().unwrap_or(0.0);
+            let mut skill_scale_step = self.unit.skill_parameters.get(6).copied().unwrap_or(0.0);
             dps = res * 0.0;
             // UNTRANSLATED FOR LOOP: for i in range(int(duration)):
             // TODO: Implement loop logic manually

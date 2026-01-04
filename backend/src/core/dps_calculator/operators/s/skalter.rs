@@ -73,7 +73,7 @@ impl Skalter {
                 0.0
             };
         // UNTRANSLATED: if self.talent2_dmg: atkbuff += self.talent2_params[0]
-        let mut skill_scale = self.unit.skill_parameters[0];
+        let mut skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
         let mut final_atk =
             self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
         let mut dps = final_atk

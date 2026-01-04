@@ -65,9 +65,11 @@ impl Doc {
         let res = enemy.res;
 
         let mut atk_scale = if self.unit.trait_damage { 1.2 } else { 1.0 };
-        let mut newdef = ((0) as f64).max((defense - self.unit.talent1_parameters[1]) as f64);
+        let mut newdef = ((0) as f64)
+            .max((defense - self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0)) as f64);
         let mut atk_interval = if ((self.unit.skill_index as f64) as f64) == 1.0 {
-            (self.unit.attack_interval as f64) + self.unit.skill_parameters[3]
+            (self.unit.attack_interval as f64)
+                + self.unit.skill_parameters.get(3).copied().unwrap_or(0.0)
         } else {
             (self.unit.attack_interval as f64)
         };

@@ -70,26 +70,27 @@ impl Midnight {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut atk_scale: f64 = 0.0;
         let mut avghit: f64 = 0.0;
         let mut cdmg: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut critdmg: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
 
         atk_scale = if self.unit.trait_damage { 1.0 } else { 0.8 };
         let mut crit_rate = if ((self.unit.elite as f64) as f64) > 0.0 {
-            self.unit.talent1_parameters[0]
+            self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
-        cdmg = self.unit.talent1_parameters[1];
+        cdmg = self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0);
         final_atk = self.unit.atk
             * (1.0
                 + self.unit.buff_atk
-                + self.unit.skill_parameters[0] * (self.unit.skill_index as f64))
+                + self.unit.skill_parameters.first().copied().unwrap_or(0.0)
+                    * (self.unit.skill_index as f64))
             + self.unit.buff_atk_flat;
         if (self.unit.skill_index as f64) == 1.0 {
             hitdmg = ((final_atk * atk_scale * (1.0 - res / 100.0)) as f64)

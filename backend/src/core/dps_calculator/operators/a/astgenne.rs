@@ -88,18 +88,19 @@ impl Astgenne {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut hitdmg: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut skilldmg: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
 
         aspd = if self.unit.talent_damage && ((self.unit.elite as f64) as f64) > 0.0 {
-            self.unit.talent1_parameters[0] * self.unit.talent1_parameters[2]
+            self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
+                * self.unit.talent1_parameters.get(2).copied().unwrap_or(0.0)
         } else {
             0.0
         };
@@ -126,7 +127,7 @@ impl Astgenne {
         let mut targets = ((4) as f64).min((self.unit.targets as f64) as f64);
         // ###the actual skills
         if (self.unit.skill_index as f64) < 2.0 {
-            skill_scale = self.unit.skill_parameters[0];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             sp_cost = (self.unit.skill_cost as f64);
             final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * (1.0 - res / 100.0)) as f64).max((final_atk * 0.05) as f64)
@@ -166,7 +167,10 @@ impl Astgenne {
                 / 100.0;
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            final_atk = self.unit.atk * (1.0 + self.unit.buff_atk + self.unit.skill_parameters[0])
+            final_atk = self.unit.atk
+                * (1.0
+                    + self.unit.buff_atk
+                    + self.unit.skill_parameters.first().copied().unwrap_or(0.0))
                 + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * (1.0 - res / 100.0)) as f64).max((final_atk * 0.05) as f64);
             dps = hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd)

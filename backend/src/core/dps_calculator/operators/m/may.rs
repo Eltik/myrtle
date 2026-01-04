@@ -73,15 +73,15 @@ impl May {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut atk_scale: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
 
         atkbuff = self
             .unit
@@ -102,7 +102,7 @@ impl May {
         };
         if (self.unit.skill_index as f64) < 2.0 {
             skill_scale = if ((self.unit.skill_index as f64) as f64) == 1.0 {
-                self.unit.skill_parameters[0]
+                self.unit.skill_parameters.first().copied().unwrap_or(0.0)
             } else {
                 1.0
             };
@@ -120,7 +120,10 @@ impl May {
         if (self.unit.skill_index as f64) == 2.0 {
             // UNTRANSLATED: self.atk_interval = 1.5
             final_atk = self.unit.atk
-                * (1.0 + self.unit.buff_atk + atkbuff + self.unit.skill_parameters[1])
+                * (1.0
+                    + self.unit.buff_atk
+                    + atkbuff
+                    + self.unit.skill_parameters.get(1).copied().unwrap_or(0.0))
                 + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * atk_scale - defense) as f64)
                 .max((final_atk * atk_scale * 0.05) as f64);

@@ -88,18 +88,18 @@ impl Shalem {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut atk_interval: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
         let mut newres: f64 = 0.0;
-        let mut dps: f64 = 0.0;
+        let mut avgdmg: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
         let mut aspd: f64 = 0.0;
+        let mut nocrit: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut countinghits: f64 = 0.0;
         let mut shreddmg: f64 = 0.0;
-        let mut avgdmg: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut nocrit: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
 
         let mut extra_scale = if ((self.unit.module_index as f64) as f64) == 1.0 {
             0.1
@@ -107,22 +107,22 @@ impl Shalem {
             0.0
         };
         aspd = if self.unit.talent_damage {
-            self.unit.talent1_parameters[0]
+            self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
         atkbuff = if self.unit.talent_damage {
-            self.unit.talent1_parameters[1]
+            self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0)
         } else {
             0.0
         };
         let mut crit_rate = if ((self.unit.elite as f64) as f64) == 2.0 {
-            self.unit.talent2_parameters[0]
+            self.unit.talent2_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
         newres = if ((self.unit.elite as f64) as f64) == 2.0 {
-            res * (1.0 + self.unit.talent2_parameters[1])
+            res * (1.0 + self.unit.talent2_parameters.get(1).copied().unwrap_or(0.0))
         } else {
             res
         };
@@ -134,11 +134,11 @@ impl Shalem {
             dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
         }
         if (self.unit.skill_index as f64) == 1.0 {
-            atk_interval =
-                (self.unit.attack_interval as f64) * (1.0 + self.unit.skill_parameters[0]);
+            atk_interval = (self.unit.attack_interval as f64)
+                * (1.0 + self.unit.skill_parameters.first().copied().unwrap_or(0.0));
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
-            countinghits = (self.unit.talent2_parameters[2]
+            countinghits = (self.unit.talent2_parameters.get(2).copied().unwrap_or(0.0)
                 / (atk_interval / ((self.unit.attack_speed + aspd) as f64).trunc() / 100.0))
                 + 1.0;
             nocrit = ((1.0 - crit_rate) as f64).powf(countinghits as f64);
@@ -151,12 +151,12 @@ impl Shalem {
                 * ((self.unit.targets as f64) as f64).min((3) as f64);
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            let mut hits = self.unit.skill_parameters[1];
-            atk_scale = self.unit.skill_parameters[0];
+            let mut hits = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
+            atk_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
             countinghits = (hits
-                * (self.unit.talent2_parameters[2]
+                * (self.unit.talent2_parameters.get(2).copied().unwrap_or(0.0)
                     / ((self.unit.attack_interval as f64)
                         / ((self.unit.attack_speed + aspd) as f64).trunc()
                         / 100.0))

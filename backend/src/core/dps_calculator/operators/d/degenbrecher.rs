@@ -86,17 +86,17 @@ impl Degenbrecher {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut hitdmg: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
         let mut avghit: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
 
         let mut newdef = if ((self.unit.elite as f64) as f64) == 2.0 {
-            defense * (1.0 - self.unit.talent2_parameters[0])
+            defense * (1.0 - self.unit.talent2_parameters.first().copied().unwrap_or(0.0))
         } else {
             defense
         };
@@ -106,13 +106,13 @@ impl Degenbrecher {
             1.0
         };
         atk_scale = if ((self.unit.elite as f64) as f64) > 0.0 {
-            self.unit.talent1_parameters[1]
+            self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0)
         } else {
             1.0
         };
         final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
         if (self.unit.skill_index as f64) < 2.0 {
-            skill_scale = self.unit.skill_parameters[0];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64) * 2.0;
             let mut hitdmg_crit = ((final_atk * atk_scale - newdef) as f64)
                 .max((final_atk * atk_scale * 0.05) as f64)
@@ -134,7 +134,7 @@ impl Degenbrecher {
             let mut crit_rate = if ((self.unit.elite as f64) as f64) == 0.0 {
                 0.0
             } else {
-                self.unit.talent1_parameters[0]
+                self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
             };
             let mut relevant_attack_count = ((5.0
                 / ((self.unit.attack_interval as f64) / self.unit.attack_speed * 100.0) as f64)
@@ -151,7 +151,7 @@ impl Degenbrecher {
                     * (1.0 - crit_rate)
                     * (1.0 - chance_that_no_crit_occured)
                     * ((self.unit.targets as f64) as f64)
-                        .min((self.unit.skill_parameters[1]) as f64);
+                        .min((self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)) as f64);
             if (self.unit.skill_index as f64) == 0.0 {
                 avgskill = avghit;
             }
@@ -160,8 +160,8 @@ impl Degenbrecher {
             dps = average / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            skill_scale = self.unit.skill_parameters[2];
-            let mut last_scale = self.unit.skill_parameters[6];
+            skill_scale = self.unit.skill_parameters.get(2).copied().unwrap_or(0.0);
+            let mut last_scale = self.unit.skill_parameters.get(6).copied().unwrap_or(0.0);
             let mut hitdmg1 = ((final_atk * atk_scale * skill_scale - newdef) as f64)
                 .max((final_atk * atk_scale * skill_scale * 0.05) as f64)
                 * dmg;
@@ -169,7 +169,8 @@ impl Degenbrecher {
                 .max((final_atk * atk_scale * last_scale * 0.05) as f64)
                 * dmg;
             dps = (10.0 * hitdmg1 + hitdmg2)
-                * ((self.unit.targets as f64) as f64).min((self.unit.skill_parameters[1]) as f64);
+                * ((self.unit.targets as f64) as f64)
+                    .min((self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)) as f64);
         }
         return dps;
     }

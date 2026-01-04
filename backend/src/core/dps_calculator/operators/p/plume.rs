@@ -62,17 +62,19 @@ impl Plume {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut atkbuff = self.unit.talent1_parameters[0];
+        let mut atkbuff = self.unit.talent1_parameters.first().copied().unwrap_or(0.0);
         let mut final_atk = self.unit.atk
             * (1.0
                 + atkbuff
                 + self.unit.buff_atk
-                + self.unit.skill_parameters[0] * (self.unit.skill_index as f64))
+                + self.unit.skill_parameters.first().copied().unwrap_or(0.0)
+                    * (self.unit.skill_index as f64))
             + self.unit.buff_atk_flat;
         let mut hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
         let mut dps = hitdmg / (self.unit.attack_interval as f64)
             * (self.unit.attack_speed
-                + self.unit.skill_parameters[1] * (self.unit.skill_index as f64))
+                + self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
+                    * (self.unit.skill_index as f64))
             / 100.0;
         return dps;
     }

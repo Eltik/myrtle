@@ -71,16 +71,16 @@ impl Lin {
         let defense = enemy.defense;
         let res = enemy.res;
 
+        let mut atk_interval: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
         let mut dps: f64 = 0.0;
         let mut hitdmgarts: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
 
         // UNTRANSLATED: if self.skill == 0: return res * 0
         if (self.unit.skill_index as f64) == 2.0 {
-            aspd = self.unit.skill_parameters[0];
+            aspd = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmgarts = ((final_atk * (1.0 - res / 100.0)) as f64).max((final_atk * 0.05) as f64);
             dps = hitdmgarts / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd)
@@ -88,7 +88,7 @@ impl Lin {
                 * (self.unit.targets as f64);
         } else {
             // UNTRANSLATED: if self.skill == 1: self.atk_interval = 3
-            atkbuff = self.unit.skill_parameters[0];
+            atkbuff = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmgarts = ((final_atk * (1.0 - res / 100.0)) as f64).max((final_atk * 0.05) as f64);

@@ -83,24 +83,25 @@ impl Entelechia {
         let res = enemy.res;
 
         let mut skill_scale: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
         let mut dps: f64 = 0.0;
         let mut aspd: f64 = 0.0;
-        let mut avgphys: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut avgphys: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut sp_cost: f64 = 0.0;
 
         let mut arts_dps = if ((self.unit.elite as f64) as f64) > 0.0 {
-            ((self.unit.talent1_parameters[3] * (1.0 - res / 100.0)) as f64)
-                .max((self.unit.talent1_parameters[3] * 0.05) as f64)
+            ((self.unit.talent1_parameters.get(3).copied().unwrap_or(0.0) * (1.0 - res / 100.0))
+                as f64)
+                .max((self.unit.talent1_parameters.get(3).copied().unwrap_or(0.0) * 0.05) as f64)
                 * (self.unit.targets as f64)
         } else {
             0.0
         };
         if (self.unit.skill_index as f64) < 2.0 {
-            skill_scale = self.unit.skill_parameters[0];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
             let mut skillhitdmg = ((final_atk * skill_scale - defense) as f64)
@@ -115,7 +116,7 @@ impl Entelechia {
                 * (self.unit.targets as f64);
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            skill_scale = self.unit.skill_parameters[0];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * skill_scale - defense) as f64)
                 .max((final_atk * skill_scale * 0.05) as f64);
@@ -123,8 +124,8 @@ impl Entelechia {
             // UNTRANSLATED: if self.skill_dmg: dps *= 2
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            atkbuff = self.unit.skill_parameters[0];
-            aspd = self.unit.skill_parameters[1];
+            atkbuff = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
+            aspd = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64)

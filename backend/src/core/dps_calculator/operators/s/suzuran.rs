@@ -71,17 +71,17 @@ impl Suzuran {
 
         // UNTRANSLATED: if self.skill == 3: return res * 0
         let mut atkbuff = if ((self.unit.skill_index as f64) as f64) > 0.0 {
-            self.unit.skill_parameters[0]
+            self.unit.skill_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
         // UNTRANSLATED: try: atkbuff += self.talent1_params[1]
         let mut aspd = if ((self.unit.skill_index as f64) as f64) == 1.0 {
-            self.unit.skill_parameters[1]
+            self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
         } else {
             0.0
         };
-        let mut fragile = self.unit.talent2_parameters[0] - 1.0;
+        let mut fragile = self.unit.talent2_parameters.first().copied().unwrap_or(0.0) - 1.0;
         fragile = ((fragile) as f64).max((self.unit.buff_fragile) as f64);
         let mut final_atk =
             self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;

@@ -80,13 +80,13 @@ impl Magallan {
         let defense = enemy.defense;
         let res = enemy.res;
 
+        let mut aspd: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut hitdmgdrone: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
         let mut final_drone: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut hitdmgdrone: f64 = 0.0;
 
         let mut drones = if self.unit.talent_damage { 2.0 } else { 1.0 };
         if !self.unit.trait_damage {
@@ -105,7 +105,7 @@ impl Magallan {
             dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            aspd = self.unit.skill_parameters[0];
+            aspd = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
             final_drone =
                 self.unit.drone_atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
@@ -124,12 +124,16 @@ impl Magallan {
             final_atk = self.unit.atk
                 * (1.0
                     + self.unit.buff_atk
-                    + self.unit.skill_parameters[0] * (self.unit.skill_index as f64) / 3.0)
+                    + self.unit.skill_parameters.first().copied().unwrap_or(0.0)
+                        * (self.unit.skill_index as f64)
+                        / 3.0)
                 + self.unit.buff_atk_flat;
             final_drone = self.unit.drone_atk
                 * (1.0
                     + self.unit.buff_atk
-                    + self.unit.skill_parameters[0] * (self.unit.skill_index as f64) / 3.0)
+                    + self.unit.skill_parameters.first().copied().unwrap_or(0.0)
+                        * (self.unit.skill_index as f64)
+                        / 3.0)
                 + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * (1.0 - res / 100.0)) as f64).max((final_atk * 0.05) as f64);
             hitdmgdrone = ((final_drone - defense) as f64).max((final_drone * 0.05) as f64);

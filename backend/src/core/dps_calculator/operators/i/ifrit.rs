@@ -141,39 +141,39 @@ impl Ifrit {
         let res = enemy.res;
 
         let mut avghit: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
         let mut sp_cost: f64 = 0.0;
-        let mut time_to_proc: f64 = 0.0;
-        let mut ele_hit: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut newres: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
-        let mut res: f64 = 0.0;
-        let mut fallout_dps: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut burndmg: f64 = 0.0;
         let mut newres2: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut time_to_proc: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut res: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut burndmg: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut skilldmgarts: f64 = 0.0;
+        let mut ele_hit: f64 = 0.0;
+        let mut fallout_dps: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut newres: f64 = 0.0;
 
         atk_scale = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {
             1.1
         } else {
             1.0
         };
-        let mut resshred = self.unit.talent1_parameters[0];
+        let mut resshred = self.unit.talent1_parameters.first().copied().unwrap_or(0.0);
         let mut ele_gauge = if self.unit.module_damage {
             1000.0
         } else {
             2000.0
         };
         let mut burnres = ((0) as f64).max((res - 20.0) as f64);
-        let mut recovery_interval = self.unit.talent2_parameters[1];
+        let mut recovery_interval = self.unit.talent2_parameters.get(1).copied().unwrap_or(0.0);
         let mut sp_recovered = if ((self.unit.elite as f64) as f64) == 2.0 {
-            self.unit.talent2_parameters[0]
+            self.unit.talent2_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
@@ -188,12 +188,12 @@ impl Ifrit {
         }
         if (self.unit.skill_index as f64) < 2.0 {
             atkbuff = if ((self.unit.skill_index as f64) as f64) == 1.0 {
-                self.unit.skill_parameters[1]
+                self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
             } else {
                 0.0
             };
             aspd = if ((self.unit.skill_index as f64) as f64) == 1.0 {
-                self.unit.skill_parameters[0]
+                self.unit.skill_parameters.first().copied().unwrap_or(0.0)
             } else {
                 0.0
             };
@@ -231,7 +231,7 @@ impl Ifrit {
         }
         if (self.unit.skill_index as f64) == 2.0 {
             sp_cost = (self.unit.skill_cost as f64);
-            skill_scale = self.unit.skill_parameters[0];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             let mut burn_scale = 0.99;
             newres = res * (1.0 + resshred);
             final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
@@ -291,16 +291,16 @@ impl Ifrit {
             }
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            atk_scale *= self.unit.skill_parameters[0];
+            atk_scale *= self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
-            let mut flatshred = -self.unit.skill_parameters[2];
+            let mut flatshred = -self.unit.skill_parameters.get(2).copied().unwrap_or(0.0);
             if self.unit.shreds[2] < 1.0 && self.unit.shreds[2] > 0.0 {
-                res = res / self.unit.shreds[0];
+                res = res / self.unit.shreds.first().copied().unwrap_or(0.0);
             }
             newres = ((0) as f64).max((res - flatshred) as f64);
             newres = newres * (1.0 + resshred);
             if self.unit.shreds[2] < 1.0 && self.unit.shreds[2] > 0.0 {
-                newres *= self.unit.shreds[2];
+                newres *= self.unit.shreds.get(2).copied().unwrap_or(0.0);
             }
             hitdmgarts = ((final_atk * atk_scale * (1.0 - newres / 100.0)) as f64)
                 .max((final_atk * atk_scale * 0.05) as f64);
@@ -311,12 +311,12 @@ impl Ifrit {
             {
                 time_to_proc = ele_gauge * (self.unit.targets as f64) / (dps * 0.08);
                 if self.unit.shreds[2] < 1.0 && self.unit.shreds[2] > 0.0 {
-                    res = res / self.unit.shreds[0];
+                    res = res / self.unit.shreds.first().copied().unwrap_or(0.0);
                 }
                 newres2 = ((0) as f64).max((res - flatshred - 20.0) as f64);
                 newres2 = newres2 * (1.0 + resshred);
                 if self.unit.shreds[2] < 1.0 && self.unit.shreds[2] > 0.0 {
-                    newres2 *= self.unit.shreds[2];
+                    newres2 *= self.unit.shreds.get(2).copied().unwrap_or(0.0);
                 }
                 hitdmgarts = ((final_atk * atk_scale * (1.0 - newres2 / 100.0)) as f64)
                     .max((final_atk * atk_scale * 0.05) as f64);

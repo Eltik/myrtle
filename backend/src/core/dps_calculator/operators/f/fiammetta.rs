@@ -84,14 +84,14 @@ impl Fiammetta {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut dps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut aspd: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut dps: f64 = 0.0;
 
         atkbuff = 0.0;
         aspd = 0.0;
@@ -118,7 +118,8 @@ impl Fiammetta {
                 [(self.unit.talent1_parameters.len() as isize - 4.0 as isize) as usize];
         }
         if (self.unit.skill_index as f64) < 2.0 {
-            atkbuff += self.unit.skill_parameters[0] * (self.unit.skill_index as f64);
+            atkbuff += self.unit.skill_parameters.first().copied().unwrap_or(0.0)
+                * (self.unit.skill_index as f64);
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * atk_scale - newdef) as f64)
@@ -128,9 +129,9 @@ impl Fiammetta {
                 * (self.unit.targets as f64);
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            skill_scale = self.unit.skill_parameters[3];
+            skill_scale = self.unit.skill_parameters.get(3).copied().unwrap_or(0.0);
             if self.unit.skill_damage {
-                skill_scale = self.unit.skill_parameters[0];
+                skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             }
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;

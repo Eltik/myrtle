@@ -64,12 +64,12 @@ impl Wildmane {
         let res = enemy.res;
 
         let mut aspd = if ((self.unit.skill_index as f64) as f64) == 1.0 {
-            self.unit.skill_parameters[0]
+            self.unit.skill_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
         let mut atkbuff = if ((self.unit.skill_index as f64) as f64) == 2.0 {
-            self.unit.skill_parameters[0]
+            self.unit.skill_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };

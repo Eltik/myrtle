@@ -82,16 +82,16 @@ impl Chongyue {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut crit_chance: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut crit_chance: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
         let mut relevant_hits: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
 
         aspd = if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage {
             10.0
@@ -99,21 +99,21 @@ impl Chongyue {
             0.0
         };
         let mut crit_rate = if ((self.unit.elite as f64) as f64) > 0.0 {
-            self.unit.talent1_parameters[0]
+            self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
         let mut dmg = if ((self.unit.elite as f64) as f64) > 0.0 {
-            self.unit.talent1_parameters[1]
+            self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0)
         } else {
             1.0
         };
         let mut duration = if ((self.unit.elite as f64) as f64) > 0.0 {
-            self.unit.talent1_parameters[2]
+            self.unit.talent1_parameters.get(2).copied().unwrap_or(0.0)
         } else {
             0.0
         };
-        skill_scale = self.unit.skill_parameters[0];
+        skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
         final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
         hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
         skilldmg = ((final_atk * skill_scale - defense) as f64)

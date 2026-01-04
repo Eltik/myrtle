@@ -74,16 +74,16 @@ impl Arene {
         let res = enemy.res;
 
         let mut hitdmgarts: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut aspd: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
 
         atk_scale = if self.unit.talent_damage {
-            self.unit.talent1_parameters[0]
+            self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
         } else {
             1.0
         };
@@ -95,7 +95,7 @@ impl Arene {
             0.0
         };
         // UNTRANSLATED: if not self.trait_dmg and self.skill != 2: atk_scale *= 0.8
-        skill_scale = self.unit.skill_parameters[0];
+        skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
         final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
         if (self.unit.skill_index as f64) == 0.0 {
             hitdmg = ((final_atk * atk_scale - defense) as f64)

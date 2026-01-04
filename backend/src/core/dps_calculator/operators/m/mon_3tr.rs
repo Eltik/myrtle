@@ -64,20 +64,24 @@ impl Mon3tr {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut aspd: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
 
         aspd = if ((self.unit.elite as f64) as f64) > 1.0 {
-            self.unit.talent2_parameters[1]
+            self.unit.talent2_parameters.get(1).copied().unwrap_or(0.0)
         } else {
             0.0
         };
         // UNTRANSLATED: if self.skill < 3: return res * 0
         if (self.unit.skill_index as f64) == 3.0 {
-            atk_interval = (self.unit.attack_interval as f64) + self.unit.skill_parameters[4];
-            final_atk = self.unit.atk * (1.0 + self.unit.buff_atk + self.unit.skill_parameters[0])
+            atk_interval = (self.unit.attack_interval as f64)
+                + self.unit.skill_parameters.get(4).copied().unwrap_or(0.0);
+            final_atk = self.unit.atk
+                * (1.0
+                    + self.unit.buff_atk
+                    + self.unit.skill_parameters.first().copied().unwrap_or(0.0))
                 + self.unit.buff_atk_flat;
             dps = final_atk / (atk_interval / (self.unit.attack_speed + aspd) * 100.0)
                 * ((-defense) as f64).max((1) as f64)

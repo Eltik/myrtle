@@ -78,18 +78,19 @@ impl Bibeak {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut dps: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut skillartsdmg: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut skillartsdmg: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
 
         aspd = if self.unit.talent_damage {
-            self.unit.talent1_parameters[0] * self.unit.talent1_parameters[1]
+            self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
+                * self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0)
         } else {
             0.0
         };
@@ -98,7 +99,7 @@ impl Bibeak {
             && ((self.unit.module_level as f64) as f64) > 1.0
         {
             0.01 * (((self.unit.module_level as f64) as f64) - 1.0)
-                * self.unit.talent1_parameters[1]
+                * self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0)
         } else {
             0.0
         };
@@ -110,7 +111,7 @@ impl Bibeak {
         final_atk = self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
         hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
         if (self.unit.skill_index as f64) < 2.0 {
-            skill_scale = self.unit.skill_parameters[0];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             let mut skillhitdmg = ((final_atk * skill_scale - defense) as f64)
                 .max((final_atk * skill_scale * 0.05) as f64)
                 * dmg_multiplier;
@@ -132,14 +133,14 @@ impl Bibeak {
                 / 100.0;
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            skill_scale = self.unit.skill_parameters[2];
+            skill_scale = self.unit.skill_parameters.get(2).copied().unwrap_or(0.0);
             skillartsdmg = ((final_atk * skill_scale * (1.0 - res / 100.0)) as f64)
                 .max((final_atk * skill_scale * 0.05) as f64)
                 * dmg_multiplier;
             let mut avg_hit = (2.0 * hitdmg * (self.unit.skill_cost as f64)
                 + skillartsdmg
                     * ((self.unit.targets as f64) as f64)
-                        .min((self.unit.skill_parameters[0]) as f64))
+                        .min((self.unit.skill_parameters.first().copied().unwrap_or(0.0)) as f64))
                 / (self.unit.skill_cost as f64);
             dps = avg_hit / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd)
                 / 100.0;

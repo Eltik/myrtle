@@ -72,9 +72,9 @@ impl KroosAlter {
         let mut crit_rate = if ((self.unit.elite as f64) as f64) == 0.0 {
             0.0
         } else {
-            self.unit.talent1_parameters[0]
+            self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
         };
-        let mut cdmg = self.unit.talent1_parameters[1];
+        let mut cdmg = self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0);
         let mut atk_scale =
             if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {
                 1.1
@@ -82,12 +82,13 @@ impl KroosAlter {
                 1.0
             };
         let mut atkbuff = if ((self.unit.skill_index as f64) as f64) == 1.0 {
-            self.unit.skill_parameters[0]
+            self.unit.skill_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
         let mut atk_interval = if ((self.unit.skill_index as f64) as f64) == 2.0 {
-            (self.unit.attack_interval as f64) * (1.0 + self.unit.skill_parameters[0])
+            (self.unit.attack_interval as f64)
+                * (1.0 + self.unit.skill_parameters.first().copied().unwrap_or(0.0))
         } else {
             (self.unit.attack_interval as f64)
         };

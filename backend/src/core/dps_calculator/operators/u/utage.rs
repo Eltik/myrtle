@@ -70,15 +70,15 @@ impl Utage {
         let res = enemy.res;
 
         let mut final_atk: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
 
         // UNTRANSLATED: if self.skill == 1: return 0 * res
         aspd = if self.unit.talent_damage {
-            self.unit.talent1_parameters[0]
+            self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
@@ -99,7 +99,10 @@ impl Utage {
         }
         if (self.unit.skill_index as f64) == 2.0 {
             final_atk = self.unit.atk
-                * (1.0 + atkbuff + self.unit.buff_atk + self.unit.skill_parameters[0])
+                * (1.0
+                    + atkbuff
+                    + self.unit.buff_atk
+                    + self.unit.skill_parameters.first().copied().unwrap_or(0.0))
                 + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * (1.0 - res / 100.0)) as f64).max((final_atk * 0.05) as f64);
             dps = hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd)

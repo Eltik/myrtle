@@ -163,18 +163,21 @@ impl OperatorUnit {
         };
 
         // Calculate skill index
-        let mut skill_index = -1;
+        // Note: skill_index is 1-indexed (1=S1, 2=S2, 3=S3) to match Python semantics
+        // Python uses skill=0 for "no skill" (basic attack), skill=1,2,3 for S1,S2,S3
+        let mut skill_index = 0;
         if rarity > 2 {
-            let param_skill_index = params.skill_index.unwrap_or(-1);
+            let param_skill_index = params.skill_index.unwrap_or(0);
             let skills_len = operator_data.data.skills.len() as i32;
 
             skill_index = param_skill_index;
 
-            if !(skills_len > skill_index || skill_index == -1) {
-                skill_index = if skills_len > default_skill_index {
+            // Validate skill_index is within range (1-indexed, so skills_len >= skill_index)
+            if !(skills_len >= skill_index || skill_index == 0) {
+                skill_index = if skills_len >= default_skill_index {
                     default_skill_index
                 } else {
-                    skills_len - 1
+                    skills_len // Last skill in 1-indexed
                 };
             }
 
@@ -186,18 +189,20 @@ impl OperatorUnit {
                 .map(|id| id == "char_002_amiya")
                 .unwrap_or(false);
 
-            if !is_amiya && (elite == 1 || (rarity < 6 && skill_index == 2)) {
+            // For E1 or < 6-star with S3 selected, limit to S2 max (1-indexed: 3 -> 2)
+            if !is_amiya && (elite == 1 || (rarity < 6 && skill_index == 3)) {
                 skill_index = if skills_len >= 2 {
-                    1
+                    2 // S2 in 1-indexed
                 } else if skills_len >= 1 {
-                    0
+                    1 // S1 in 1-indexed
                 } else {
-                    -1
+                    0
                 };
             }
 
-            if elite == 0 && skill_index >= 0 {
-                skill_index = if skills_len >= 1 { 0 } else { -1 };
+            // For E0, only S1 available (1-indexed: 1)
+            if elite == 0 && skill_index >= 1 {
+                skill_index = if skills_len >= 1 { 1 } else { 0 };
             }
         }
 
@@ -223,35 +228,38 @@ impl OperatorUnit {
         };
 
         // Calculate module
+        // Note: module_index is 1-indexed (1=X, 2=Y, 3=Δ) like Python
+        // For array access, we use (module_index - 1)
         let mut operator_module: Option<OperatorModule> = None;
         let mut operator_module_level = 0;
-        let mut module_index: i32 = -1;
+        let mut module_index: i32 = 0;
         let mut module_level: i32 = 0;
 
         let max_level_e2 = MAX_LEVELS[2][(rarity - 1) as usize];
         if elite == 2 && level >= max_level_e2 - 30 {
             let available_modules = &operator_data.available_modules;
 
-            // Get default module if valid index
-            if default_module_index >= 0
-                && (default_module_index as usize) < available_modules.len()
+            // Get default module if valid (1-indexed, convert to 0-indexed for array access)
+            if default_module_index >= 1
+                && ((default_module_index - 1) as usize) < available_modules.len()
             {
-                operator_module = Some(available_modules[default_module_index as usize].clone());
+                operator_module =
+                    Some(available_modules[(default_module_index - 1) as usize].clone());
                 module_index = default_module_index;
             }
 
             if !available_modules.is_empty() {
-                let param_module_index = params.module_index.unwrap_or(-1);
+                let param_module_index = params.module_index.unwrap_or(0);
 
-                if param_module_index == -1 {
+                if param_module_index == 0 {
                     operator_module = None;
-                    module_index = -1;
-                } else {
-                    if (param_module_index as usize) < available_modules.len() {
-                        operator_module =
-                            Some(available_modules[param_module_index as usize].clone());
-                        module_index = param_module_index;
-                    }
+                    module_index = 0;
+                } else if param_module_index >= 1
+                    && ((param_module_index - 1) as usize) < available_modules.len()
+                {
+                    operator_module =
+                        Some(available_modules[(param_module_index - 1) as usize].clone());
+                    module_index = param_module_index;
 
                     let param_module_level = params.module_level.unwrap_or(-1);
                     operator_module_level = if param_module_level <= 3 && param_module_level > 1 {
@@ -337,12 +345,15 @@ impl OperatorUnit {
         }
 
         // Set skill parameters
+        // Note: skill_index is 1-indexed (1=S1, 2=S2, 3=S3) like Python
+        // For array access, we use (skill_index - 1) since Python does skill_parameters[skill-1]
         let mut skill_parameters: Vec<f64> = Vec::new();
         let mut skill_cost = -1;
         let mut skill_duration: f64 = -1.0;
 
-        if rarity > 2 && skill_index >= 0 {
-            let skill_idx = skill_index as usize;
+        if rarity > 2 && skill_index >= 1 {
+            // Python uses skill_parameters[skill-1] where skill is 1-indexed
+            let skill_idx = (skill_index - 1) as usize;
             let skill_lvl = (skill_level - 1) as usize;
 
             skill_parameters = operator_data
@@ -522,7 +533,8 @@ impl OperatorUnit {
         let mut drone_atk_interval: f32 = 0.0;
 
         if operator_data.drone_atk.e0.max != 0 && operator_data.drone_atk.e0.min != 0 {
-            let slot = skill_index.max(0) as usize;
+            // skill_index is 1-indexed, convert to 0-indexed for array access
+            let slot = (skill_index.max(1) - 1) as usize;
 
             drone_atk_interval = operator_data
                 .drone_atk_interval

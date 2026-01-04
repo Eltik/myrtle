@@ -72,12 +72,12 @@ impl Lappland {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
-        let mut bonusdmg: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut bonusdmg: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
 
         atk_scale = if !self.unit.trait_damage && ((self.unit.skill_index as f64) as f64) == 1.0 {
             0.8
@@ -100,7 +100,7 @@ impl Lappland {
         final_atk = self.unit.atk
             * (1.0
                 + self.unit.buff_atk
-                + self.unit.skill_parameters[0]
+                + self.unit.skill_parameters.first().copied().unwrap_or(0.0)
                     * ((self.unit.skill_index as f64) as f64).min((1) as f64))
             + self.unit.buff_atk_flat;
         // ###the actual skills

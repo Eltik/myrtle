@@ -84,16 +84,16 @@ impl Lemuen {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut hitdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
 
         atkbuff = if self.unit.talent2_damage && ((self.unit.elite as f64) as f64) > 1.0 {
-            self.unit.talent2_parameters[1]
+            self.unit.talent2_parameters.get(1).copied().unwrap_or(0.0)
         } else {
             0.0
         };
@@ -108,7 +108,7 @@ impl Lemuen {
         };
         if (self.unit.skill_index as f64) < 2.0 {
             atk_scale = if ((self.unit.skill_index as f64) as f64) == 1.0 {
-                self.unit.skill_parameters[0]
+                self.unit.skill_parameters.first().copied().unwrap_or(0.0)
             } else {
                 1.0
             };
@@ -122,9 +122,9 @@ impl Lemuen {
             dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            aspd = self.unit.skill_parameters[0];
-            atkbuff += self.unit.skill_parameters[1];
-            atk_scale = self.unit.skill_parameters[8];
+            aspd = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
+            atkbuff += self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
+            atk_scale = self.unit.skill_parameters.get(8).copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
@@ -136,22 +136,32 @@ impl Lemuen {
             dps = hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd)
                 / 100.0;
             if self.unit.talent_damage {
-                dps = hitdmg / self.unit.skill_parameters[3];
+                dps = hitdmg / self.unit.skill_parameters.get(3).copied().unwrap_or(0.0);
             }
         }
         if (self.unit.skill_index as f64) == 3.0 {
             final_atk =
                 self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
             let mut ammo = if self.unit.talent2_damage {
-                5.0 + self.unit.talent2_parameters[2]
+                5.0 + self.unit.talent2_parameters.get(2).copied().unwrap_or(0.0)
             } else {
                 5.0
             };
-            let mut centralhit_dmg = ((final_atk * self.unit.skill_parameters[4] - defense) as f64)
-                .max((final_atk * self.unit.skill_parameters[4] * 0.05) as f64)
+            let mut centralhit_dmg = ((final_atk
+                * self.unit.skill_parameters.get(4).copied().unwrap_or(0.0)
+                - defense) as f64)
+                .max(
+                    (final_atk * self.unit.skill_parameters.get(4).copied().unwrap_or(0.0) * 0.05)
+                        as f64,
+                )
                 * dmg;
-            let mut outerhit_dmg = ((final_atk * self.unit.skill_parameters[6] - defense) as f64)
-                .max((final_atk * self.unit.skill_parameters[6] * 0.05) as f64)
+            let mut outerhit_dmg = ((final_atk
+                * self.unit.skill_parameters.get(6).copied().unwrap_or(0.0)
+                - defense) as f64)
+                .max(
+                    (final_atk * self.unit.skill_parameters.get(6).copied().unwrap_or(0.0) * 0.05)
+                        as f64,
+                )
                 * dmg;
             dps = ammo * centralhit_dmg * (self.unit.targets as f64);
         }
@@ -193,7 +203,7 @@ impl Lemuen {
 
         let mut extra_ammo = if ((self.unit.elite as f64) as f64) > 1.0 && self.unit.talent2_damage
         {
-            self.unit.talent2_parameters[2]
+            self.unit.talent2_parameters.get(2).copied().unwrap_or(0.0)
         } else {
             0.0
         };

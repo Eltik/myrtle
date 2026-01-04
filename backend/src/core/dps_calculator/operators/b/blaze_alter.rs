@@ -107,23 +107,23 @@ impl BlazeAlter {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut atkbuff: f64 = 0.0;
-        let mut elegauge: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut dps_norm: f64 = 0.0;
         let mut newres: f64 = 0.0;
-        let mut ele_scale: f64 = 0.0;
-        let mut hitdmg2: f64 = 0.0;
+        let mut elegauge: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut dps_norm: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut burst_scale: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut skilldmg2: f64 = 0.0;
+        let mut dps_fallout: f64 = 0.0;
+        let mut hitdmg2: f64 = 0.0;
+        let mut time_to_fallout: f64 = 0.0;
+        let mut ele_scale: f64 = 0.0;
         let mut skilldmg1: f64 = 0.0;
         let mut hitdmg1: f64 = 0.0;
-        let mut skilldmg2: f64 = 0.0;
-        let mut time_to_fallout: f64 = 0.0;
-        let mut burst_scale: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut dps_fallout: f64 = 0.0;
 
         burst_scale = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.skill_damage {
             1.1
@@ -132,7 +132,7 @@ impl BlazeAlter {
         };
         let mut falloutdmg = 7000.0;
         atkbuff = if ((self.unit.skill_index as f64) as f64) == 2.0 {
-            self.unit.skill_parameters[0]
+            self.unit.skill_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
@@ -153,7 +153,7 @@ impl BlazeAlter {
             dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
         }
         if (self.unit.skill_index as f64) == 1.0 {
-            skill_scale = self.unit.skill_parameters[0];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + self.unit.buff_atk + module_atk) + self.unit.buff_atk_flat;
             newres = ((0) as f64).max((res - 20.0) as f64);
@@ -174,7 +174,8 @@ impl BlazeAlter {
             dps_fallout = hitdmg2 / (self.unit.attack_interval as f64) * (self.unit.attack_speed)
                 / 100.0
                 + skilldmg2 * (self.unit.targets as f64);
-            time_to_fallout = elegauge / (skilldmg1 * self.unit.skill_parameters[1]);
+            time_to_fallout =
+                elegauge / (skilldmg1 * self.unit.skill_parameters.get(1).copied().unwrap_or(0.0));
             dps = (dps_norm * time_to_fallout + dps_fallout * burst_scale * 10.0 + falloutdmg)
                 / (time_to_fallout + 10.0);
             if !self.unit.trait_damage {
@@ -182,8 +183,8 @@ impl BlazeAlter {
             }
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            atkbuff = self.unit.skill_parameters[0];
-            skill_scale = self.unit.skill_parameters[2];
+            atkbuff = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
+            skill_scale = self.unit.skill_parameters.get(2).copied().unwrap_or(0.0);
             final_atk = self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff + module_atk)
                 + self.unit.buff_atk_flat;
             newres = ((0) as f64).max((res - 20.0) as f64);
@@ -204,7 +205,8 @@ impl BlazeAlter {
                 + skilldmg1 * (self.unit.targets as f64);
             dps_fallout = hitdmg2 / 2.5 * (self.unit.attack_speed) / 100.0
                 + skilldmg2 * (self.unit.targets as f64);
-            time_to_fallout = elegauge / (skilldmg1 * self.unit.skill_parameters[1]);
+            time_to_fallout =
+                elegauge / (skilldmg1 * self.unit.skill_parameters.get(1).copied().unwrap_or(0.0));
             dps = (dps_norm * time_to_fallout + dps_fallout * burst_scale * 10.0 + falloutdmg)
                 / (time_to_fallout + 10.0);
             if !self.unit.trait_damage {
@@ -212,7 +214,7 @@ impl BlazeAlter {
             }
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            atkbuff = self.unit.skill_parameters[0];
+            atkbuff = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk = self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk + module_atk)
                 + self.unit.buff_atk_flat;
             newres = if self.unit.skill_damage {
@@ -221,7 +223,7 @@ impl BlazeAlter {
                 res
             };
             ele_scale = if self.unit.skill_damage {
-                self.unit.skill_parameters[3]
+                self.unit.skill_parameters.get(3).copied().unwrap_or(0.0)
             } else {
                 0.0
             };

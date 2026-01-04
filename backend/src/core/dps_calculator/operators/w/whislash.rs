@@ -76,17 +76,17 @@ impl Whislash {
                 1.2
             };
         }
-        let mut talent_buff = self.unit.talent1_parameters[0];
+        let mut talent_buff = self.unit.talent1_parameters.first().copied().unwrap_or(0.0);
         let mut atkbuff = if ((self.unit.skill_index as f64) as f64) == 2.0 {
-            self.unit.skill_parameters[1]
+            self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
         } else {
             0.0
         };
         let mut aspd = if ((self.unit.skill_index as f64) as f64) == 2.0 {
-            talent_buff * self.unit.skill_parameters[0]
+            talent_buff * self.unit.skill_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.5 * talent_buff
-                * self.unit.skill_parameters[0]
+                * self.unit.skill_parameters.first().copied().unwrap_or(0.0)
                 * ((self.unit.skill_index as f64) as f64)
         };
         let mut final_atk =

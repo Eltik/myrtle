@@ -67,11 +67,12 @@ impl MisumiUika {
 
         let mut final_atk: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
 
         if (self.unit.skill_index as f64) == 2.0 {
-            skill_scale = self.unit.skill_parameters[2] + self.unit.talent2_parameters[1];
+            skill_scale = self.unit.skill_parameters.get(2).copied().unwrap_or(0.0)
+                + self.unit.talent2_parameters.get(1).copied().unwrap_or(0.0);
             final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * skill_scale * (1.0 - res / 100.0)) as f64)
                 .max((final_atk * skill_scale * 0.05) as f64);

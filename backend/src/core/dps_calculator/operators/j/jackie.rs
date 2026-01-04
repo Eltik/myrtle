@@ -65,14 +65,18 @@ impl Jackie {
         let res = enemy.res;
 
         let mut aspd = if self.unit.talent_damage {
-            self.unit.talent1_parameters[1]
+            self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0)
         } else {
             0.0
         };
         let mut final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
         let mut hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
-        let mut skilldmg = ((final_atk * self.unit.skill_parameters[0] - defense) as f64)
-            .max((final_atk * self.unit.skill_parameters[0] * 0.05) as f64);
+        let mut skilldmg = ((final_atk * self.unit.skill_parameters.first().copied().unwrap_or(0.0)
+            - defense) as f64)
+            .max(
+                (final_atk * self.unit.skill_parameters.first().copied().unwrap_or(0.0) * 0.05)
+                    as f64,
+            );
         let mut avgdmg = if ((self.unit.skill_index as f64) as f64) == 1.0 {
             (hitdmg * (self.unit.skill_cost as f64) + skilldmg)
                 / ((self.unit.skill_cost as f64) + 1.0)

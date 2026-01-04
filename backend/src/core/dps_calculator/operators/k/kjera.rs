@@ -76,10 +76,10 @@ impl Kjera {
         let res = enemy.res;
 
         let mut atkbuff: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
 
         let mut drone_dmg = if ((self.unit.module_index as f64) as f64) == 2.0 {
             1.2
@@ -95,7 +95,7 @@ impl Kjera {
             * (1.0
                 + atkbuff
                 + self.unit.buff_atk
-                + self.unit.skill_parameters[0]
+                + self.unit.skill_parameters.first().copied().unwrap_or(0.0)
                     * ((self.unit.skill_index as f64) as f64).min((1) as f64))
             + self.unit.buff_atk_flat;
         let mut drone_atk = drone_dmg * final_atk;

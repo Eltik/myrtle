@@ -74,18 +74,18 @@ impl Mousse {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut atk_interval: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut avgdmg: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut aspd: f64 = 0.0;
-        let mut avgdmg: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
 
-        let mut crit_rate = self.unit.talent1_parameters[0];
-        atkbuff =
-            self.unit.skill_parameters[0] * ((self.unit.skill_index as f64) as f64).min((1) as f64);
+        let mut crit_rate = self.unit.talent1_parameters.first().copied().unwrap_or(0.0);
+        atkbuff = self.unit.skill_parameters.first().copied().unwrap_or(0.0)
+            * ((self.unit.skill_index as f64) as f64).min((1) as f64);
         aspd = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {
             8.0
         } else {

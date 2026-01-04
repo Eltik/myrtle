@@ -113,15 +113,15 @@ impl Thorns {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut atk_interval: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut bonusdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut fallout_dps: f64 = 0.0;
+        let mut cooldown: f64 = 0.0;
+        let mut time_to_fallout: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut time_to_fallout: f64 = 0.0;
-        let mut bonusdmg: f64 = 0.0;
-        let mut cooldown: f64 = 0.0;
 
         let mut bonus = if ((self.unit.module_index as f64) as f64) == 1.0 {
             0.1
@@ -141,7 +141,7 @@ impl Thorns {
         let mut stacks = if ((self.unit.module_index as f64) as f64) == 1.0
             && ((self.unit.module_level as f64) as f64) > 1.0
         {
-            self.unit.talent1_parameters[3]
+            self.unit.talent1_parameters.get(3).copied().unwrap_or(0.0)
         } else {
             1.0
         };
@@ -152,7 +152,8 @@ impl Thorns {
             final_atk = self.unit.atk
                 * (1.0
                     + self.unit.buff_atk
-                    + self.unit.skill_parameters[0] * (self.unit.skill_index as f64))
+                    + self.unit.skill_parameters.first().copied().unwrap_or(0.0)
+                        * (self.unit.skill_index as f64))
                 + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * atk_scale - defense) as f64)
                 .max((final_atk * atk_scale * 0.05) as f64);
@@ -178,8 +179,11 @@ impl Thorns {
             && 1.0 /* self.hits - needs manual implementation */ > 0.0
         {
             atk_scale = 0.8;
-            cooldown = self.unit.skill_parameters[2];
-            final_atk = self.unit.atk * (1.0 + self.unit.buff_atk + self.unit.skill_parameters[0])
+            cooldown = self.unit.skill_parameters.get(2).copied().unwrap_or(0.0);
+            final_atk = self.unit.atk
+                * (1.0
+                    + self.unit.buff_atk
+                    + self.unit.skill_parameters.first().copied().unwrap_or(0.0))
                 + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * atk_scale - defense) as f64)
                 .max((final_atk * atk_scale * 0.05) as f64);
@@ -226,13 +230,16 @@ impl Thorns {
         if (self.unit.skill_index as f64) == 3.0 {
             let mut bufffactor = if self.unit.skill_damage { 2.0 } else { 1.0 };
             final_atk = self.unit.atk
-                * (1.0 + self.unit.buff_atk + bufffactor * self.unit.skill_parameters[0])
+                * (1.0
+                    + self.unit.buff_atk
+                    + bufffactor * self.unit.skill_parameters.first().copied().unwrap_or(0.0))
                 + self.unit.buff_atk_flat;
             hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
             bonusdmg = ((final_atk * bonus * (1.0 - res / 100.0)) as f64)
                 .max((final_atk * bonus * 0.05) as f64);
             dps = (hitdmg + bonusdmg) / (self.unit.attack_interval as f64)
-                * (self.unit.attack_speed + bufffactor * self.unit.skill_parameters[1])
+                * (self.unit.attack_speed
+                    + bufffactor * self.unit.skill_parameters.get(1).copied().unwrap_or(0.0))
                 / 100.0
                 + arts_dot_dps;
             if (self.unit.module_index as f64) == 3.0 {

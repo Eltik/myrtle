@@ -72,12 +72,13 @@ impl Astesia {
             1.0
         };
         let mut aspd = if self.unit.talent_damage {
-            self.unit.talent1_parameters[0] * self.unit.talent1_parameters[2]
+            self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
+                * self.unit.talent1_parameters.get(2).copied().unwrap_or(0.0)
         } else {
             0.0
         };
         let mut atkbuff = if ((self.unit.skill_index as f64) as f64) > 0.0 {
-            self.unit.skill_parameters[0]
+            self.unit.skill_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };

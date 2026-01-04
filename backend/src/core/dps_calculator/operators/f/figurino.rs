@@ -69,33 +69,35 @@ impl Figurino {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut skill_scale: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut dps: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
 
         let mut dmg_scale = if ((self.unit.elite as f64) as f64) > 0.0 && self.unit.talent_damage {
-            self.unit.talent1_parameters[0]
+            self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
         } else {
             1.0
         };
         if (self.unit.skill_index as f64) < 1.0 {
-            atkbuff = self.unit.skill_parameters[0] * (self.unit.skill_index as f64);
+            atkbuff = self.unit.skill_parameters.first().copied().unwrap_or(0.0)
+                * (self.unit.skill_index as f64);
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64) * dmg_scale;
             dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            skill_scale = self.unit.skill_parameters[0];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * skill_scale - defense) as f64)
                 .max((final_atk * skill_scale * 0.05) as f64)
                 * dmg_scale;
             dps = hitdmg
-                * ((self.unit.targets as f64) as f64).min((self.unit.skill_parameters[1]) as f64);
+                * ((self.unit.targets as f64) as f64)
+                    .min((self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)) as f64);
         }
         return dps;
     }

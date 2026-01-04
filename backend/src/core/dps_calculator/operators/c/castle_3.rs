@@ -63,7 +63,7 @@ impl Castle3 {
         let res = enemy.res;
 
         let mut atkbuff = if self.unit.talent_damage {
-            self.unit.talent1_parameters[1]
+            self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0)
         } else {
             0.0
         };

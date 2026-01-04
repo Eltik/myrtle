@@ -93,16 +93,16 @@ impl Tragodia {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut atk_interval: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut ele_dps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut dps: f64 = 0.0;
         let mut skilldmg: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
 
-        let mut nerv_factor = self.unit.talent1_parameters[0];
-        let mut nerv_aoe = self.unit.talent1_parameters[1];
+        let mut nerv_factor = self.unit.talent1_parameters.first().copied().unwrap_or(0.0);
+        let mut nerv_aoe = self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0);
         let mut mod_factor = if ((self.unit.module_index as f64) as f64) == 1.0
             && (!self.unit.trait_damage || self.unit.module_damage)
         {
@@ -116,7 +116,7 @@ impl Tragodia {
             2000.0
         };
         atkbuff = if ((self.unit.skill_index as f64) as f64) == 3.0 {
-            self.unit.skill_parameters[0]
+            self.unit.skill_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
@@ -134,12 +134,21 @@ impl Tragodia {
                 + ele_dps;
         }
         if (self.unit.skill_index as f64) == 1.0 {
-            skilldmg = ((final_atk * self.unit.skill_parameters[0] * (1.0 - res / 100.0)) as f64)
-                .max((final_atk * self.unit.skill_parameters[0] * 0.05) as f64)
+            skilldmg = ((final_atk
+                * self.unit.skill_parameters.first().copied().unwrap_or(0.0)
+                * (1.0 - res / 100.0)) as f64)
+                .max(
+                    (final_atk * self.unit.skill_parameters.first().copied().unwrap_or(0.0) * 0.05)
+                        as f64,
+                )
                 * 2.0;
             let mut nerv_dps =
                 (final_atk * nerv_factor * mod_factor * (self.unit.skill_cost as f64)
-                    + 2.0 * final_atk * nerv_factor * mod_factor * self.unit.skill_parameters[1])
+                    + 2.0
+                        * final_atk
+                        * nerv_factor
+                        * mod_factor
+                        * self.unit.skill_parameters.get(1).copied().unwrap_or(0.0))
                     / ((self.unit.skill_cost as f64) + 1.0)
                     / (self.unit.attack_interval as f64)
                     * self.unit.attack_speed
@@ -153,7 +162,7 @@ impl Tragodia {
                 + ele_dps;
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            let mut skill_factor = self.unit.skill_parameters[0];
+            let mut skill_factor = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             let mut artsdmg = ((final_atk * skill_factor * (1.0 - res / 100.0)) as f64)
                 .max((final_atk * skill_factor * 0.05) as f64);
             dps = 12.0 * artsdmg / 25.0;
@@ -163,10 +172,12 @@ impl Tragodia {
                         + (ele_gauge
                             / (final_atk * nerv_factor * mod_factor
                                 / (self.unit.attack_interval as f64)
-                                * (self.unit.attack_speed + self.unit.skill_parameters[7])
+                                * (self.unit.attack_speed
+                                    + self.unit.skill_parameters.get(7).copied().unwrap_or(0.0))
                                 / 100.0)));
                 dps += hitdmg / (self.unit.attack_interval as f64)
-                    * (self.unit.attack_speed + self.unit.skill_parameters[7])
+                    * (self.unit.attack_speed
+                        + self.unit.skill_parameters.get(7).copied().unwrap_or(0.0))
                     / 100.0
                     + ele_dps;
             } else {

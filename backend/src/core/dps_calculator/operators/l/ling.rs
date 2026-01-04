@@ -95,20 +95,21 @@ impl Ling {
         let defense = enemy.defense;
         let res = enemy.res;
 
+        let mut final_atk: f64 = 0.0;
         let mut final_dragon: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut skilldmg: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut hitdmgdrag: f64 = 0.0;
         let mut aspd: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut hitdmgdrag: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
 
         let mut talentbuff = if self.unit.talent2_damage {
-            self.unit.talent2_parameters[0] * self.unit.talent2_parameters[2]
+            self.unit.talent2_parameters.first().copied().unwrap_or(0.0)
+                * self.unit.talent2_parameters.get(2).copied().unwrap_or(0.0)
         } else {
             0.0
         };
@@ -117,8 +118,8 @@ impl Ling {
             dragons = 0.0;
         }
         if (self.unit.skill_index as f64) == 1.0 {
-            atkbuff = self.unit.skill_parameters[0];
-            aspd = self.unit.skill_parameters[1];
+            atkbuff = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
+            aspd = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
             final_atk = self.unit.atk * (1.0 + atkbuff + talentbuff + self.unit.buff_atk)
                 + self.unit.buff_atk_flat;
             final_dragon = self.unit.drone_atk * (1.0 + atkbuff + self.unit.buff_atk)
@@ -134,7 +135,7 @@ impl Ling {
                     * dragons;
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            skill_scale = self.unit.skill_parameters[0];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + talentbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
             final_dragon =
@@ -157,7 +158,9 @@ impl Ling {
                 + dpsskill;
         }
         if [0.0, 3.0].contains(&((self.unit.skill_index as f64) as f64)) {
-            atkbuff = self.unit.skill_parameters[0] * (self.unit.skill_index as f64) / 3.0;
+            atkbuff = self.unit.skill_parameters.first().copied().unwrap_or(0.0)
+                * (self.unit.skill_index as f64)
+                / 3.0;
             final_atk = self.unit.atk * (1.0 + atkbuff + talentbuff + self.unit.buff_atk)
                 + self.unit.buff_atk_flat;
             let mut chonkerbuff = if self.unit.skill_damage { 0.8 } else { 0.0 };

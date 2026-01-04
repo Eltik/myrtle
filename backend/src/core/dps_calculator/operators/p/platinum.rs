@@ -69,12 +69,12 @@ impl Platinum {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut hitdmg: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
 
         aspd = if ((self.unit.skill_index as f64) as f64) == 2.0 {
             -20.0
@@ -98,7 +98,7 @@ impl Platinum {
                 + self.unit.buff_atk)
             + self.unit.buff_atk_flat;
         if (self.unit.elite as f64) > 0.0 {
-            let mut extra_scale = self.unit.talent1_parameters[3] - 1.0;
+            let mut extra_scale = self.unit.talent1_parameters.get(3).copied().unwrap_or(0.0) - 1.0;
             let mut atk_cycle =
                 (self.unit.attack_interval as f64) / (self.unit.attack_speed + aspd) * 100.0;
             let mut charge_time = ((atk_cycle - 1.0) as f64).max((0) as f64);

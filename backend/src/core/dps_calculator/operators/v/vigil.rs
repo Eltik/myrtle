@@ -108,18 +108,18 @@ impl Vigil {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut defignore: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut avghit: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut hitdmgwolf: f64 = 0.0;
         let mut dps: f64 = 0.0;
         let mut artdps: f64 = 0.0;
+        let mut hitdmgwolf: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut defignore: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
 
         atk_scale = 1.0;
         defignore = 0.0;
@@ -133,7 +133,7 @@ impl Vigil {
                     1.5
                 };
                 defignore = if ((self.unit.elite as f64) as f64) == 2.0 {
-                    self.unit.talent2_parameters[0]
+                    self.unit.talent2_parameters.first().copied().unwrap_or(0.0)
                 } else {
                     0.0
                 };
@@ -141,7 +141,9 @@ impl Vigil {
         }
         let mut newdef = ((0) as f64).max((defense - defignore) as f64);
         let mut wolfdef = if ((self.unit.elite as f64) as f64) == 2.0 {
-            ((0) as f64).max((defense - self.unit.talent2_parameters[0]) as f64)
+            ((0) as f64).max(
+                (defense - self.unit.talent2_parameters.first().copied().unwrap_or(0.0)) as f64,
+            )
         } else {
             defense
         };
@@ -157,7 +159,7 @@ impl Vigil {
             // UNTRANSLATED: if self.talent_dmg: dps += hitdmgwolf/self.drone_atk_interval * self.attack_speed/100 * wolves
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            skill_scale = self.unit.skill_parameters[1];
+            skill_scale = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
             sp_cost = (self.unit.skill_cost as f64) / (1.0 + (self.unit.sp_boost as f64)) + 1.2;
             hitdmg = ((final_atk * atk_scale - newdef) as f64)
                 .max((final_atk * atk_scale * 0.05) as f64);
@@ -176,7 +178,7 @@ impl Vigil {
             // UNTRANSLATED: if self.talent_dmg: dps += avghit/self.drone_atk_interval * self.attack_speed/100 * wolves
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            skill_scale = self.unit.skill_parameters[0];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
             final_wolf = self.unit.drone_atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * atk_scale - newdef) as f64)

@@ -65,7 +65,8 @@ impl Lava3star {
         let mut hitdmg = ((final_atk * (1.0 - res / 100.0)) as f64).max((final_atk * 0.05) as f64);
         let mut dps = hitdmg / (self.unit.attack_interval as f64)
             * (self.unit.attack_speed
-                + self.unit.skill_parameters[0] * (self.unit.skill_index as f64))
+                + self.unit.skill_parameters.first().copied().unwrap_or(0.0)
+                    * (self.unit.skill_index as f64))
             / 100.0
             * (self.unit.targets as f64);
         return dps;

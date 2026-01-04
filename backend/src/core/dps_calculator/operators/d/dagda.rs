@@ -78,15 +78,15 @@ impl Dagda {
         };
         let mut crit_rate = 0.3;
         let mut cdmg = if self.unit.talent_damage {
-            self.unit.talent1_parameters[2]
+            self.unit.talent1_parameters.get(2).copied().unwrap_or(0.0)
         } else {
-            self.unit.talent1_parameters[1]
+            self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0)
         };
         if (self.unit.elite as f64) == 0.0 {
             cdmg = 1.0;
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            crit_rate = self.unit.skill_parameters[1];
+            crit_rate = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
         }
         let mut hits = if ((self.unit.skill_index as f64) as f64) == 2.0 {
             2.0
@@ -94,7 +94,7 @@ impl Dagda {
             1.0
         };
         let mut atkbuff = if ((self.unit.skill_index as f64) as f64) == 2.0 {
-            self.unit.skill_parameters[0]
+            self.unit.skill_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };

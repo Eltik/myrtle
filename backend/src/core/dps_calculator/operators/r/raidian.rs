@@ -73,7 +73,7 @@ impl Raidian {
             drones = 0.0;
         }
         let mut dmg = if ((self.unit.skill_index as f64) as f64) == 3.0 && drones > 0.0 {
-            self.unit.skill_parameters[6]
+            self.unit.skill_parameters.get(6).copied().unwrap_or(0.0)
         } else {
             1.0
         };
@@ -84,7 +84,7 @@ impl Raidian {
         };
         let mut skill_attack =
             if [2.0, 3.0].contains(&(((self.unit.skill_index as f64) as f64) as f64)) {
-                self.unit.skill_parameters[0]
+                self.unit.skill_parameters.first().copied().unwrap_or(0.0)
             } else {
                 0.0
             };
@@ -95,7 +95,7 @@ impl Raidian {
         let mut final_drone = self.unit.drone_atk * (1.0 + self.unit.buff_atk + skill_attack)
             + self.unit.buff_atk_flat
             + (((self.unit.elite as f64) - 1.0) as f64).max((0) as f64)
-                * self.unit.talent2_parameters[0]
+                * self.unit.talent2_parameters.first().copied().unwrap_or(0.0)
                 * final_atk;
         let mut hitdmgdrone =
             if [1.0, 2.0].contains(&(((self.unit.skill_index as f64) as f64) as f64)) {

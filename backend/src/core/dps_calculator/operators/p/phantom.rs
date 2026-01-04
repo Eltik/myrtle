@@ -85,14 +85,14 @@ impl Phantom {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut final_clone: f64 = 0.0;
-        let mut mainbuff: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut hitdmg_clone: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut hitdmg_clone: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut final_clone: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut mainbuff: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
 
         if (self.unit.skill_index as f64) == 2.0 {
             let mut selfhit = 0.0;
@@ -111,8 +111,9 @@ impl Phantom {
             } else {
                 0.0
             };
-            let mut rate = self.unit.skill_parameters[1];
-            let mut count = ((self.unit.skill_parameters[0]) as f64).trunc();
+            let mut rate = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
+            let mut count =
+                ((self.unit.skill_parameters.first().copied().unwrap_or(0.0)) as f64).trunc();
             // UNTRANSLATED FOR LOOP: for i in range(count):
             // TODO: Implement loop logic manually
             dps = selfhit / (self.unit.attack_interval as f64) * self.unit.attack_speed

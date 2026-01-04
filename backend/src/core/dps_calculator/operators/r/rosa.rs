@@ -90,15 +90,15 @@ impl Rosa {
         let res = enemy.res;
 
         let mut dps: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
         let mut extradmg: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
         let mut defshred: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
 
-        atkbuff = self.unit.talent2_parameters[0];
+        atkbuff = self.unit.talent2_parameters.first().copied().unwrap_or(0.0);
         atk_scale = 1.0;
         let mut additional_scale = 0.0;
         defshred = 0.0;
@@ -119,7 +119,8 @@ impl Rosa {
         }
         let mut newdef = defense * (1.0 - defshred);
         if (self.unit.skill_index as f64) < 2.0 {
-            atkbuff += self.unit.skill_parameters[0] * (self.unit.skill_index as f64);
+            atkbuff += self.unit.skill_parameters.first().copied().unwrap_or(0.0)
+                * (self.unit.skill_index as f64);
             final_atk =
                 self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * atk_scale - newdef) as f64)
@@ -130,7 +131,7 @@ impl Rosa {
                 / 100.0;
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            atkbuff += self.unit.skill_parameters[0];
+            atkbuff += self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * atk_scale - newdef) as f64)
@@ -142,8 +143,8 @@ impl Rosa {
                 * ((self.unit.targets as f64) as f64).min((2) as f64);
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            atkbuff += self.unit.skill_parameters[2];
-            let mut maxtargets = self.unit.skill_parameters[0];
+            atkbuff += self.unit.skill_parameters.get(2).copied().unwrap_or(0.0);
+            let mut maxtargets = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * atk_scale - newdef) as f64)

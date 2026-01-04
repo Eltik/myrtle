@@ -71,17 +71,17 @@ impl Harmonie {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut dps: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
 
         atk_scale = if ((self.unit.elite as f64) as f64) > 0.0 && self.unit.talent_damage
             || ((self.unit.skill_index as f64) as f64) == 2.0
         {
-            self.unit.talent1_parameters[0]
+            self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
         } else {
             1.0
         };
@@ -92,7 +92,7 @@ impl Harmonie {
                 (self.unit.attack_interval as f64)
             };
             skill_scale = if ((self.unit.skill_index as f64) as f64) == 1.0 {
-                self.unit.skill_parameters[0]
+                self.unit.skill_parameters.first().copied().unwrap_or(0.0)
             } else {
                 1.0
             };
@@ -102,12 +102,14 @@ impl Harmonie {
             dps = hitdmg / atk_interval * self.unit.attack_speed / 100.0;
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            atk_interval = (self.unit.attack_interval as f64) * self.unit.skill_parameters[1];
+            atk_interval = (self.unit.attack_interval as f64)
+                * self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
             final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * atk_scale * (1.0 - res / 100.0)) as f64)
                 .max((final_atk * atk_scale * 0.05) as f64);
-            let mut extra_dps = ((self.unit.skill_parameters[0] * (1.0 - res / 100.0)) as f64)
-                .max((self.unit.skill_parameters[0] * 0.05) as f64)
+            let mut extra_dps = ((self.unit.skill_parameters.first().copied().unwrap_or(0.0)
+                * (1.0 - res / 100.0)) as f64)
+                .max((self.unit.skill_parameters.first().copied().unwrap_or(0.0) * 0.05) as f64)
                 * (self.unit.targets as f64);
             dps = hitdmg / atk_interval * self.unit.attack_speed / 100.0 + extra_dps;
         }

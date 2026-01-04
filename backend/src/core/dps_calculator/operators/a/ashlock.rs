@@ -66,9 +66,9 @@ impl Ashlock {
         let res = enemy.res;
 
         let mut atkbuff = if self.unit.talent_damage {
-            self.unit.talent1_parameters[1]
+            self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0)
         } else {
-            self.unit.talent1_parameters[0]
+            self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
         };
         let mut atk_scale =
             if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {
@@ -77,7 +77,7 @@ impl Ashlock {
                 1.0
             };
         atkbuff = if ((self.unit.skill_index as f64) as f64) > 0.0 {
-            self.unit.skill_parameters[0]
+            self.unit.skill_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
@@ -88,7 +88,8 @@ impl Ashlock {
         let mut atk_interval = if ((self.unit.skill_index as f64) as f64) != 2.0 {
             (self.unit.attack_interval as f64)
         } else {
-            (self.unit.attack_interval as f64) * (1.0 + self.unit.skill_parameters[1])
+            (self.unit.attack_interval as f64)
+                * (1.0 + self.unit.skill_parameters.get(1).copied().unwrap_or(0.0))
         };
         let mut dps =
             hitdmg / atk_interval * self.unit.attack_speed / 100.0 * (self.unit.targets as f64);

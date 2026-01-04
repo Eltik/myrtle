@@ -65,7 +65,7 @@ impl Absinthe {
         let res = enemy.res;
 
         let mut dmg_scale = if self.unit.talent_damage && ((self.unit.elite as f64) as f64) > 0.0 {
-            self.unit.talent1_parameters[1]
+            self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0)
         } else {
             1.0
         };
@@ -75,13 +75,16 @@ impl Absinthe {
             res
         };
         let mut final_atk = if ((self.unit.skill_index as f64) as f64) == 1.0 {
-            self.unit.atk * (1.0 + self.unit.skill_parameters[0] + self.unit.buff_atk)
+            self.unit.atk
+                * (1.0
+                    + self.unit.skill_parameters.first().copied().unwrap_or(0.0)
+                    + self.unit.buff_atk)
                 + self.unit.buff_atk_flat
         } else {
             self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat
         };
         let mut atk_scale = if ((self.unit.skill_index as f64) as f64) == 2.0 {
-            4.0 * self.unit.skill_parameters[1]
+            4.0 * self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
         } else {
             1.0
         };

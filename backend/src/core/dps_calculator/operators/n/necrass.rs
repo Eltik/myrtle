@@ -103,24 +103,24 @@ impl Necrass {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut final_atk_summon: f64 = 0.0;
-        let mut main_summon_atk: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut main_atk_buff: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut summondmg: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut mainskilldps: f64 = 0.0;
-        let mut mainhit: f64 = 0.0;
         let mut maindps: f64 = 0.0;
+        let mut summondmg: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut final_atk_summon: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut main_summon_atk: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut mainhit: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut mainskilldps: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
 
         let mut dmg_scale = if ((self.unit.elite as f64) as f64) > 1.0 && self.unit.talent2_damage {
-            self.unit.talent2_parameters[1]
+            self.unit.talent2_parameters.get(1).copied().unwrap_or(0.0)
         } else {
             1.0
         };
@@ -140,13 +140,13 @@ impl Necrass {
         };
         final_atk = self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
         let mut summon_atk = if self.unit.talent_damage {
-            self.unit.talent1_parameters[2]
+            self.unit.talent1_parameters.get(2).copied().unwrap_or(0.0)
         } else {
             0.0
         };
         if (self.unit.skill_index as f64) == 0.0 {
             let mut drones = if self.unit.trait_damage {
-                self.unit.talent1_parameters[0]
+                self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
             } else {
                 0.0
             };
@@ -164,7 +164,7 @@ impl Necrass {
                 / 100.0;
         }
         if (self.unit.skill_index as f64) == 1.0 {
-            skill_scale = self.unit.skill_parameters[0];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             hitdmg = ((final_atk * (1.0 - res / 100.0)) as f64).max((final_atk * 0.05) as f64)
                 * dmg_scale
                 * atk_scale;
@@ -173,7 +173,7 @@ impl Necrass {
                 * dmg_scale;
             dps = hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed) / 100.0;
             let mut hits = if self.unit.trait_damage {
-                self.unit.talent1_parameters[0]
+                self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
             } else {
                 1.0
             };
@@ -189,7 +189,7 @@ impl Necrass {
                 / 100.0;
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            skill_scale = self.unit.skill_parameters[0];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             hitdmg = ((final_atk * skill_scale * (1.0 - res / 100.0)) as f64)
                 .max((final_atk * skill_scale * 0.05) as f64)
                 * dmg_scale
@@ -201,8 +201,8 @@ impl Necrass {
                 * dmg_scale
                 * atk_scale;
             dps = hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed) / 100.0;
-            skill_scale = self.unit.skill_parameters[1];
-            let mut skill_hits = self.unit.skill_parameters[4];
+            skill_scale = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
+            let mut skill_hits = self.unit.skill_parameters.get(4).copied().unwrap_or(0.0);
             skilldmg = ((final_atk * skill_scale * (1.0 - res / 100.0)) as f64)
                 .max((final_atk * skill_scale * 0.05) as f64)
                 * dmg_scale

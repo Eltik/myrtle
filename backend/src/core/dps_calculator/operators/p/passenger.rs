@@ -93,16 +93,16 @@ impl Passenger {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut skilldmg: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
         let mut dps: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
 
         let mut targetscaling = if ((self.unit.module_index as f64) as f64) == 2.0 {
             [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
@@ -137,13 +137,13 @@ impl Passenger {
         };
         // UNTRANSLATED: if self.elite < 2 and self.skill == 3: targetscaling[4] = targetscaling[3]
         let mut dmg_scale = if ((self.unit.elite as f64) as f64) > 0.0 && self.unit.talent_damage {
-            self.unit.talent1_parameters[1]
+            self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0)
         } else {
             1.0
         };
         let mut sp_boost = 0.0;
         atkbuff = if self.unit.talent2_damage && ((self.unit.elite as f64) as f64) == 2.0 {
-            self.unit.talent2_parameters[0]
+            self.unit.talent2_parameters.first().copied().unwrap_or(0.0)
         } else {
             0.0
         };
@@ -157,7 +157,7 @@ impl Passenger {
             sp_cost = (self.unit.skill_cost as f64)
                 / (1.0 + sp_boost + (self.unit.sp_boost as f64))
                 + 1.2;
-            atk_scale = self.unit.skill_parameters[0];
+            atk_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * (1.0 - res / 100.0)) as f64).max((final_atk * 0.05) as f64);
@@ -172,12 +172,15 @@ impl Passenger {
         }
         if [0.0, 2.0].contains(&((self.unit.skill_index as f64) as f64)) {
             atkbuff += if ((self.unit.skill_index as f64) as f64) == 2.0 {
-                self.unit.skill_parameters[2]
+                self.unit.skill_parameters.get(2).copied().unwrap_or(0.0)
             } else {
                 0.0
             };
             atk_interval = (self.unit.attack_interval as f64)
-                * (1.0 + self.unit.skill_parameters[0] * (self.unit.skill_index as f64) / 2.0);
+                * (1.0
+                    + self.unit.skill_parameters.first().copied().unwrap_or(0.0)
+                        * (self.unit.skill_index as f64)
+                        / 2.0);
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * (1.0 - res / 100.0)) as f64).max((final_atk * 0.05) as f64);
@@ -185,7 +188,7 @@ impl Passenger {
                 * targetscaling[(targets) as usize];
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            skill_scale = self.unit.skill_parameters[0];
+            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             sp_cost = (self.unit.skill_cost as f64)
                 / (1.0 + sp_boost + (self.unit.sp_boost as f64))
                 + 1.2;

@@ -1,5 +1,5 @@
 use crate::core::local::types::{
-    module::ModuleTarget,
+    module::{ModuleTarget, ModuleType},
     operator::{
         Operator, OperatorModule, OperatorPhase, OperatorPosition, OperatorProfession,
         OperatorRarity, Phase,
@@ -279,6 +279,12 @@ impl OperatorData {
         let mut aspd_module: Vec<ModuleValues> = Vec::new();
 
         for op_module in &operator.modules {
+            // Only include ADVANCED type modules (skip INITIAL which is just base equipment)
+            // This matches Python's behavior where available_modules only contains real modules
+            if op_module.module.module_type != ModuleType::Advanced {
+                continue;
+            }
+
             available_modules.push(op_module.clone());
 
             for mod_level in &op_module.data.phases {
