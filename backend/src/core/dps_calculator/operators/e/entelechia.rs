@@ -82,14 +82,14 @@ impl Entelechia {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut skill_scale: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
         let mut avgphys: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
         let mut sp_cost: f64 = 0.0;
 
         let mut arts_dps = if ((self.unit.elite as f64) as f64) > 0.0 {
@@ -121,7 +121,9 @@ impl Entelechia {
             hitdmg = ((final_atk * skill_scale - defense) as f64)
                 .max((final_atk * skill_scale * 0.05) as f64);
             dps = 2.0 * hitdmg;
-            // UNTRANSLATED: if self.skill_dmg: dps *= 2
+            if self.unit.skill_damage {
+                dps *= 2.0;
+            }
         }
         if (self.unit.skill_index as f64) == 3.0 {
             atkbuff = self.unit.skill_parameters.first().copied().unwrap_or(0.0);

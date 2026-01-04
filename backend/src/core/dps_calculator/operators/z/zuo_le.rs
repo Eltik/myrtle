@@ -108,17 +108,17 @@ impl ZuoLe {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut avghit: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut hitdmg2: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
+        let mut hitdmg2: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
 
         let mut sp_recovery = 1.0;
         aspd = if self.unit.talent_damage && self.unit.talent2_damage {
@@ -130,7 +130,9 @@ impl ZuoLe {
         } else {
             0.0
         };
-        // UNTRANSLATED: if self.talent_dmg and self.talent2_dmg: sp_recovery += self.talent1_params[2]
+        if self.unit.talent_damage && self.unit.talent2_damage {
+            sp_recovery += self.unit.talent1_parameters.get(2).copied().unwrap_or(0.0);
+        }
         if (self.unit.elite as f64) == 2.0 {
             sp_recovery += if self.unit.talent_damage && self.unit.talent2_damage {
                 self.unit.talent2_parameters.get(2).copied().unwrap_or(0.0)

@@ -93,15 +93,15 @@ impl SilverAsh {
         let defense = enemy.defense;
         let res = enemy.res;
 
+        let mut final_atk: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut sp_cost: f64 = 0.0;
         let mut bonusdmg: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
         let mut avgphys: f64 = 0.0;
 
         atk_scale = 1.0;
@@ -111,10 +111,14 @@ impl SilverAsh {
         atkbuff = self.unit.talent1_parameters.first().copied().unwrap_or(0.0);
         if (self.unit.module_index as f64) == 1.0 {
             if (self.unit.module_level as f64) == 2.0 {
-                // UNTRANSLATED: if self.talent_dmg and self.module_dmg: atk_scale *= 1.1
+                if self.unit.talent_damage && self.unit.module_damage {
+                    atk_scale *= 1.1;
+                }
             }
             if (self.unit.module_level as f64) == 3.0 {
-                // UNTRANSLATED: if self.talent_dmg and self.module_dmg: atk_scale *= 1.15
+                if self.unit.talent_damage && self.unit.module_damage {
+                    atk_scale *= 1.15;
+                }
             }
         }
         let mut bonus = if ((self.unit.module_index as f64) as f64) == 1.0 {

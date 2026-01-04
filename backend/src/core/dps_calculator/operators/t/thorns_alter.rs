@@ -84,15 +84,15 @@ impl ThornsAlter {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
-        let mut newres: f64 = 0.0;
         let mut aspd: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
+        let mut newres: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
 
         atkbuff = self
             .unit
@@ -114,7 +114,9 @@ impl ThornsAlter {
         final_atk = self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
         hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
         dps = hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd) / 100.0;
-        // UNTRANSLATED: if self.skill != 0 and not self.trait_dmg: dps *= 0
+        if (self.unit.skill_index as f64) != 0.0 && !self.unit.trait_damage {
+            dps *= 0.0;
+        }
         if (self.unit.skill_index as f64) == 2.0 {
             skill_scale = self.unit.skill_parameters.get(4).copied().unwrap_or(0.0);
             hitdmgarts = ((final_atk * skill_scale * (1.0 - res / 100.0)) as f64)

@@ -84,17 +84,17 @@ impl Minimalist {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut avghit: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut dmgperinterval: f64 = 0.0;
-        let mut cdmg: f64 = 0.0;
         let mut skilldmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
         let mut sp_cost: f64 = 0.0;
+        let mut dmgperinterval: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut cdmg: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
 
         let mut drone_dmg = if ((self.unit.module_index as f64) as f64) == 2.0 {
             1.2
@@ -136,7 +136,9 @@ impl Minimalist {
                 .max((dmgperinterval * 0.05) as f64)
                 * (1.0 + crit_rate * (cdmg - 1.0));
             skilldmg = hitdmg * skill_scale * 2.0;
-            // UNTRANSLATED: if not self.trait_dmg: skilldmg *= 2.55/2.4
+            if !self.unit.trait_damage {
+                skilldmg *= 2.55 / 2.4;
+            }
             let mut atkcycle =
                 (self.unit.attack_interval as f64) / ((self.unit.attack_speed) / 100.0);
             let mut atks_per_skillactivation = sp_cost / atkcycle;

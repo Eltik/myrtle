@@ -65,10 +65,10 @@ impl Folinic {
         let res = enemy.res;
 
         let mut hitdmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
 
         if (self.unit.skill_index as f64) == 2.0 {
             skill_scale = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
@@ -77,8 +77,9 @@ impl Folinic {
                 .max((final_atk * skill_scale * 0.05) as f64);
             dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0
                 * (self.unit.targets as f64);
+        } else {
+            return 0.0 * defense;
         }
-        // UNTRANSLATED: else: return 0 * defense
         return dps;
     }
 }

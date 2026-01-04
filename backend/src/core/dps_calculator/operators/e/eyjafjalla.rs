@@ -100,18 +100,18 @@ impl Eyjafjalla {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut atkbuff: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut newres: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut skilldmg: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut newres: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
         let mut hitdmgarts: f64 = 0.0;
         let mut sp_cost: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
 
         atkbuff = if ((self.unit.elite as f64) as f64) > 0.0 {
             self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
@@ -138,7 +138,9 @@ impl Eyjafjalla {
             } else {
                 0.0
             };
-            // UNTRANSLATED: if self.skill_dmg and self.skill == 1: atkbuff += self.skill_params[2]
+            if self.unit.skill_damage && (self.unit.skill_index as f64) == 1.0 {
+                atkbuff += self.unit.skill_parameters.get(2).copied().unwrap_or(0.0);
+            }
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmgarts =

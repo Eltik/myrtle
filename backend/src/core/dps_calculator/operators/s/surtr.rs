@@ -88,15 +88,15 @@ impl Surtr {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut avghit: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut newres: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
         let mut aspd: f64 = 0.0;
+        let mut newres: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
 
         atkbuff = 0.0;
         let mut resignore = self.unit.talent1_parameters.first().copied().unwrap_or(0.0);

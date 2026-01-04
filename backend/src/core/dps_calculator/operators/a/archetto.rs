@@ -99,15 +99,15 @@ impl Archetto {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut skill_scale: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut skilldmg: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut sp_cost: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
 
         aspd = if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage {
             8.0
@@ -197,7 +197,9 @@ impl Archetto {
                 * (1.0 + (self.unit.skill_index as f64) * 2.0 / 3.0);
             dps = hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd)
                 / 100.0;
-            // UNTRANSLATED: if self.skill == 3: dps *= min(self.targets, 2)
+            if (self.unit.skill_index as f64) == 3.0 {
+                dps *= ((self.unit.targets as f64) as f64).min((2) as f64);
+            }
         }
         return dps;
     }

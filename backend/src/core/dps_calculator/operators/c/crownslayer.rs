@@ -70,13 +70,13 @@ impl Crownslayer {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
 
         atkbuff = if self.unit.module_damage && ((self.unit.module_index as f64) as f64) == 2.0 {
             0.1
@@ -107,7 +107,9 @@ impl Crownslayer {
             hitdmg = ((final_atk * skill_scale * atk_scale - defense) as f64)
                 .max((final_atk * skill_scale * atk_scale * 0.05) as f64);
             dps = hitdmg;
-            // UNTRANSLATED: if not self.skill_dmg: dps *= 1/3
+            if !self.unit.skill_damage {
+                dps *= 1.0 / 3.0;
+            }
         }
         return dps;
     }

@@ -69,11 +69,11 @@ impl Hadiya {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
 
         atkbuff = if ((self.unit.elite as f64) as f64) > 0.0 && self.unit.talent_damage {
             self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
@@ -82,7 +82,9 @@ impl Hadiya {
             0.0
         };
         if (self.unit.skill_index as f64) < 2.0 {
-            // UNTRANSLATED: if self.skill == 1 and self.skill_dmg: atkbuff += self.skill_params[1]
+            if (self.unit.skill_index as f64) == 1.0 && self.unit.skill_damage {
+                atkbuff += self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
+            }
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);

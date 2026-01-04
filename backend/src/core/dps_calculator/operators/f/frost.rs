@@ -70,12 +70,12 @@ impl Frost {
         let defense = enemy.defense;
         let res = enemy.res;
 
+        let mut hitrate: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
         let mut critdmg: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut hitrate: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
 
         final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
         let mut newdef = if ((self.unit.module_index as f64) as f64) == 2.0

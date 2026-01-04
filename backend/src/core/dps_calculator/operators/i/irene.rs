@@ -99,18 +99,18 @@ impl Irene {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut hitdmg1: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut defshred: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut sp_cost: f64 = 0.0;
-        let mut flyinghits: f64 = 0.0;
-        let mut hitdmg2: f64 = 0.0;
-        let mut levduration: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
         let mut avgdmg: f64 = 0.0;
+        let mut levduration: f64 = 0.0;
+        let mut flyinghits: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut hitdmg2: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut defshred: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut hitdmg1: f64 = 0.0;
         let mut aspd: f64 = 0.0;
 
         aspd = self.unit.talent2_parameters.first().copied().unwrap_or(0.0);
@@ -177,7 +177,9 @@ impl Irene {
                 * skill_dmg;
             dps = 0.5 * initialhit1 + 0.5 * initialhit2;
             levduration = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
-            // UNTRANSLATED: if not self.talent_dmg: return (dps + hits * (0.5*hitdmg1+0.5*hitdmg2))
+            if !self.unit.talent_damage {
+                return (dps + hits * (0.5 * hitdmg1 + 0.5 * hitdmg2));
+            }
             // UNTRANSLATED ELSE (no matching if): else:
             if !self.unit.skill_damage {
                 levduration = levduration / 2.0;

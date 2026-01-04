@@ -120,26 +120,26 @@ impl Viviana {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
-        let mut hitdmgarts2: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
         let mut time_to_trigger: f64 = 0.0;
-        let mut cdmg: f64 = 0.0;
-        let mut skilldmg2: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut avghit2: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut fallout_dps: f64 = 0.0;
-        let mut ele_scale: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut atkcycle: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
         let mut atks_per_skillactivation: f64 = 0.0;
+        let mut ele_scale: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
         let mut aspd: f64 = 0.0;
+        let mut avghit2: f64 = 0.0;
         let mut avgdmg: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut atkcycle: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut cdmg: f64 = 0.0;
+        let mut hitdmgarts2: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut skilldmg2: f64 = 0.0;
 
         let mut dmg_scale = if self.unit.talent_damage {
             1.0 + self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0) * 2.0
@@ -159,7 +159,9 @@ impl Viviana {
         } else {
             0.0
         };
-        // UNTRANSLATED: if self.talent_dmg: ele_appli *= 2
+        if self.unit.talent_damage {
+            ele_appli *= 2.0;
+        }
         let mut ele_gauge = 1000.0;
         if !self.unit.talent2_damage {
             ele_gauge = 2000.0;

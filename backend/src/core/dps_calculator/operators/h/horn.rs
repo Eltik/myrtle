@@ -98,19 +98,19 @@ impl Horn {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut skilldmg: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut artsdmg: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut avghit: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut artsdmg: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
         let mut aspd: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
         let mut arts_scale: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
 
         atk_scale = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {
             1.1
@@ -123,10 +123,16 @@ impl Horn {
         } else {
             0.0
         };
-        // UNTRANSLATED: if self.module == 2 and self.module_dmg: aspd += 10
+        if (self.unit.module_index as f64) == 2.0 && self.unit.module_damage {
+            aspd += 10.0;
+        }
         if (self.unit.module_index as f64) == 2.0 && (self.unit.module_level as f64) > 1.0 {
-            // UNTRANSLATED: if self.module_lvl == 2: aspd += 5
-            // UNTRANSLATED: if self.module_lvl == 3: aspd += 8
+            if (self.unit.module_level as f64) == 2.0 {
+                aspd += 5.0;
+            }
+            if (self.unit.module_level as f64) == 3.0 {
+                aspd += 8.0;
+            }
         }
         if (self.unit.skill_index as f64) < 2.0 {
             skill_scale = if ((self.unit.skill_index as f64) as f64) == 1.0 {
@@ -180,7 +186,9 @@ impl Horn {
             atk_interval = (self.unit.attack_interval as f64)
                 + self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
             atkbuff += self.unit.skill_parameters.first().copied().unwrap_or(0.0);
-            // UNTRANSLATED: if self.skill_dmg: atkbuff += self.skill_params[0]
+            if self.unit.skill_damage {
+                atkbuff += self.unit.skill_parameters.first().copied().unwrap_or(0.0);
+            }
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * atk_scale - defense) as f64)

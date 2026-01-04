@@ -79,12 +79,12 @@ impl LuoXiaohei {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
         let mut aspd: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
 
         let mut dmg_scale = if false
         /* false /* self.below50 - needs manual implementation */ - needs manual implementation */

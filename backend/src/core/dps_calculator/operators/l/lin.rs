@@ -71,14 +71,16 @@ impl Lin {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut atk_interval: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut dps: f64 = 0.0;
         let mut hitdmgarts: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
         let mut aspd: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
 
-        // UNTRANSLATED: if self.skill == 0: return res * 0
+        if (self.unit.skill_index as f64) == 0.0 {
+            return res * 0.0;
+        }
         if (self.unit.skill_index as f64) == 2.0 {
             aspd = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
@@ -95,7 +97,9 @@ impl Lin {
             dps = hitdmgarts / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0
                 * (self.unit.targets as f64);
         }
-        // UNTRANSLATED: if self.module == 2 and self.module_dmg: dps *= 1.15
+        if (self.unit.module_index as f64) == 2.0 && self.unit.module_damage {
+            dps *= 1.15;
+        }
         return dps;
     }
 }

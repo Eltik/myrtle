@@ -83,16 +83,16 @@ impl Siege {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut skill_scale: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
         let mut avghit: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
 
         atkbuff = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {
             0.08
@@ -100,7 +100,9 @@ impl Siege {
             0.0
         };
         atkbuff += self.unit.talent1_parameters.first().copied().unwrap_or(0.0);
-        // UNTRANSLATED: if self.module == 1 and self.module_lvl > 1: atkbuff += 0.02 + 0.02 * self.module_lvl
+        if (self.unit.module_index as f64) == 1.0 && (self.unit.module_level as f64) > 1.0 {
+            atkbuff += 0.02 + 0.02 * (self.unit.module_level as f64);
+        }
         final_atk = self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
         if (self.unit.skill_index as f64) < 2.0 {
             hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);

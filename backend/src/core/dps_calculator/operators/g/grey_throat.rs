@@ -91,26 +91,28 @@ impl GreyThroat {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut avghit: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut avgnorm: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
         let mut sp_cost: f64 = 0.0;
-        let mut critdmg: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
         let mut cdmg: f64 = 0.0;
+        let mut atk_interval: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut critdmg: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut avgnorm: f64 = 0.0;
 
         aspd = if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage {
             8.0
         } else {
             0.0
         };
-        // UNTRANSLATED: if self.elite > 0: aspd += 6
+        if (self.unit.elite as f64) > 0.0 {
+            aspd += 6.0;
+        }
         let mut crit_rate = if ((self.unit.elite as f64) as f64) > 0.0 {
             self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0)
         } else {

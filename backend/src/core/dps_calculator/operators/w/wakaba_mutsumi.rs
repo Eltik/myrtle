@@ -66,8 +66,8 @@ impl WakabaMutsumi {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut dps: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;

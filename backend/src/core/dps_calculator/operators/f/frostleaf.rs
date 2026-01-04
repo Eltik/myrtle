@@ -78,16 +78,16 @@ impl Frostleaf {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut skilldmg: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
         let mut dps: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
 
         atk_scale = if !self.unit.trait_damage { 0.8 } else { 1.0 };

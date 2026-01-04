@@ -81,14 +81,14 @@ impl YatoAlter {
         let defense = enemy.defense;
         let res = enemy.res;
 
-        let mut atk_scale: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
         let mut atk_interval: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
         let mut hitdmgarts: f64 = 0.0;
 
         let mut extra_arts = self.unit.talent1_parameters.first().copied().unwrap_or(0.0);
@@ -109,7 +109,9 @@ impl YatoAlter {
             dps = (hitdmg + hitdmgarts) / (self.unit.attack_interval as f64)
                 * (self.unit.attack_speed + aspd * (self.unit.skill_index as f64))
                 / 100.0;
-            // UNTRANSLATED: if self.skill == 1: dps *= 10 / 3
+            if (self.unit.skill_index as f64) == 1.0 {
+                dps *= 10.0 / 3.0;
+            }
         }
         if (self.unit.skill_index as f64) == 2.0 {
             extra_arts *= self.unit.skill_parameters.get(3).copied().unwrap_or(0.0);

@@ -76,7 +76,12 @@ impl Tecno {
         } else {
             0.0
         };
-        // UNTRANSLATED: if self.trait_dmg and self.module == 2 and self.module_lvl == 3: atkbuff += 0.15
+        if self.unit.trait_damage
+            && (self.unit.module_index as f64) == 2.0
+            && (self.unit.module_level as f64) == 3.0
+        {
+            atkbuff += 0.15;
+        }
         let mut aspd = if ((self.unit.skill_index as f64) as f64) == 2.0 {
             self.unit.skill_parameters.first().copied().unwrap_or(0.0)
         } else {
