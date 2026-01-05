@@ -17,7 +17,7 @@ export const navItems: NavItem[] = [
         dropdown: [
             { label: "Recruitment Calculator", href: "/tools/recruitment", description: "Calculate recruitment probabilities" },
             { label: "DPS Charts", href: "/tools/dps", description: "Display DPS to compare multiple operators" },
-            { label: "Squad Randomizer", href: "/tools/squad", description: "Randomize a 12-operator squad" },
+            { label: "Randomizer", href: "/tools/randomizer", description: "Randomize squads and stages" },
         ],
     },
     {
