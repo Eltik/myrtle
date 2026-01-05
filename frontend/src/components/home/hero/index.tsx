@@ -13,15 +13,15 @@ export function HeroSection() {
     return (
         <section className="hero-full-width hero-light-bg -mt-8 relative flex min-h-[80vh] flex-col items-center justify-center overflow-hidden pt-8 pb-20 md:mt-0 md:py-20">
             {/* Parallax Background Images */}
-            <div className="absolute inset-0 z-1 flex flex-col justify-center">
+            <div className="hero-images-container absolute inset-0 z-1 flex flex-col justify-center">
                 <Marquee className="mb-4" duration={120}>
                     {HERO_IMAGES_PRIMARY.map((src, index) => (
-                        <Image alt="" className="hero-image rounded-lg object-cover" height={300} key={src} loading="eager" priority={index < 3} src={src} width={400} />
+                        <Image alt="Arknights artwork" className="hero-image rounded-lg object-cover" height={300} key={src} loading={index < 2 ? "eager" : "lazy"} priority={index < 2} quality={75} sizes="400px" src={src} width={400} />
                     ))}
                 </Marquee>
                 <Marquee className="mt-4" duration={140} reverse>
                     {HERO_IMAGES_SECONDARY.map((src) => (
-                        <Image alt="" className="hero-image-secondary rounded-lg object-cover" height={300} key={src} loading="eager" src={src} width={400} />
+                        <Image alt="Arknights artwork" className="hero-image-secondary rounded-lg object-cover" height={300} key={src} loading="lazy" priority={false} quality={75} sizes="400px" src={src} width={400} />
                     ))}
                 </Marquee>
             </div>
@@ -29,14 +29,14 @@ export function HeroSection() {
             {/* Radial vignette - spotlight effect on content, images visible at edges */}
             <div className="hero-vignette absolute inset-0 z-2" />
             <div className="relative z-10 mx-auto max-w-4xl px-4 text-center">
-                <InView transition={ANIMATION_TRANSITIONS.headline} variants={ANIMATION_VARIANTS.headline}>
+                <InView once transition={ANIMATION_TRANSITIONS.headline} variants={ANIMATION_VARIANTS.headline}>
                     <h1 className="mb-6 font-bold text-5xl leading-tight md:text-7xl">
                         <span className="block">Sync, discover, and optimize your</span>
                         <span className="relative inline-block">
                             <span aria-hidden="true" className="invisible select-none">
                                 recruitment
                             </span>
-                            <TextLoop className="hero-accent-glow absolute inset-0 text-primary" interval={2.5}>
+                            <TextLoop className="hero-accent-glow absolute inset-0 text-primary" interval={3.5}>
                                 {HERO_KEYWORDS.map((keyword) => (
                                     <span key={keyword}>{keyword}</span>
                                 ))}
@@ -45,11 +45,11 @@ export function HeroSection() {
                     </h1>
                 </InView>
 
-                <InView transition={ANIMATION_TRANSITIONS.subtitle} variants={ANIMATION_VARIANTS.subtitle}>
+                <InView once transition={ANIMATION_TRANSITIONS.subtitle} variants={ANIMATION_VARIANTS.subtitle}>
                     <p className="mx-auto mb-8 max-w-2xl text-balance text-muted-foreground text-xl md:text-2xl">The ultimate toolkit for Arknights Doctors.</p>
                 </InView>
 
-                <InView transition={ANIMATION_TRANSITIONS.buttons} variants={ANIMATION_VARIANTS.buttons}>
+                <InView once transition={ANIMATION_TRANSITIONS.buttons} variants={ANIMATION_VARIANTS.buttons}>
                     <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
                         <Button asChild className="group h-12 px-8 text-lg" size="lg">
                             <Link href="/operators">

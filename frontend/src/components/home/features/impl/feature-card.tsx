@@ -26,7 +26,7 @@ export function FeatureCard({ feature, index }: FeatureCardProps) {
     );
 
     return (
-        <InView transition={{ duration: 0.5, delay }} variants={ANIMATION_VARIANTS.card}>
+        <InView once transition={{ duration: 0.5, delay }} variants={ANIMATION_VARIANTS.card}>
             {feature.href ? <Link href={feature.href}>{cardContent}</Link> : cardContent}
         </InView>
     );

@@ -13,7 +13,7 @@ const ANIMATION_VARIANTS = {
 export function CTASection() {
     return (
         <section className="px-4 py-20">
-            <InView transition={{ duration: 0.6 }} variants={ANIMATION_VARIANTS}>
+            <InView once transition={{ duration: 0.6 }} variants={ANIMATION_VARIANTS}>
                 <Card className="mx-auto max-w-4xl border-2 border-primary/30 bg-linear-to-br from-primary/5 to-background">
                     <CardContent className="p-12 text-center">
                         <h2 className="mb-4 font-bold text-3xl md:text-4xl">Ready to Elevate Your Game?</h2>
