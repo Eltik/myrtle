@@ -35,17 +35,17 @@ export function generatePrimaryColors(hue: number) {
     const secondaryHue = (hue + 15) % 360;
 
     return {
-        // Light mode colors
+        // Light mode colors - higher chroma (0.22) for better contrast in light environments
         light: {
-            primary: `oklch(0.65 0.18 ${hue})`,
+            primary: `oklch(0.58 0.22 ${hue})`,
             primaryForeground: "oklch(0.985 0.002 285)",
-            ring: `oklch(0.65 0.18 ${hue})`,
-            chart1: `oklch(0.65 0.18 ${hue})`,
-            sidebarPrimary: `oklch(0.65 0.18 ${hue})`,
+            ring: `oklch(0.58 0.22 ${hue})`,
+            chart1: `oklch(0.58 0.22 ${hue})`,
+            sidebarPrimary: `oklch(0.58 0.22 ${hue})`,
             sidebarPrimaryForeground: "oklch(0.985 0.002 285)",
-            sidebarRing: `oklch(0.65 0.18 ${hue})`,
-            glowPrimary: `oklch(0.65 0.18 ${hue} / 0.3)`,
-            glowPrimaryIntense: `oklch(0.65 0.18 ${hue} / 0.5)`,
+            sidebarRing: `oklch(0.58 0.22 ${hue})`,
+            glowPrimary: `oklch(0.58 0.22 ${hue} / 0.35)`,
+            glowPrimaryIntense: `oklch(0.58 0.22 ${hue} / 0.55)`,
         },
         // Dark mode colors
         dark: {
@@ -61,8 +61,8 @@ export function generatePrimaryColors(hue: number) {
         },
         // Nav pill hover (needs both light and dark)
         navPillHover: {
-            light: `oklch(0.65 0.18 ${hue} / 0.15)`,
-            lightEnd: `oklch(0.65 0.18 ${hue} / 0.1)`,
+            light: `oklch(0.58 0.22 ${hue} / 0.15)`,
+            lightEnd: `oklch(0.58 0.22 ${hue} / 0.1)`,
             dark: `oklch(0.24 0.025 ${hue} / 0.5)`,
             darkEnd: `oklch(0.2 0.02 ${hue} / 0.35)`,
         },
