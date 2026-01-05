@@ -118,9 +118,6 @@ struct CompiledPatterns {
     paren_int_div: Regex,
 
     // Expression translation
-    int_func: Regex,
-    abs_func: Regex,
-    round_func: Regex,
     targets_idx: Regex,
     targets_sub1: Regex,
     neg_idx: Regex,
@@ -294,9 +291,6 @@ impl CompiledPatterns {
             paren_int_mul: Regex::new(r"\((\d+)\s*\*").unwrap(),
             paren_int_div: Regex::new(r"\((\d+)\s*/").unwrap(),
 
-            int_func: Regex::new(r"\bint\(([^)]+)\)").unwrap(),
-            abs_func: Regex::new(r"\babs\(([^)]+)\)").unwrap(),
-            round_func: Regex::new(r"\bround\(([^)]+)\)").unwrap(),
             targets_idx: Regex::new(r"\[targets\]").unwrap(),
             targets_sub1: Regex::new(r"\[targets\s*-\s*1\.0\]").unwrap(),
             neg_idx: Regex::new(r"\[-([\d.]+)\]").unwrap(),
@@ -1231,6 +1225,7 @@ impl PythonToRustTranslator {
             ("abs", ".abs()"),
             ("round", ".round()"),
         ] {
+            #[allow(clippy::while_let_loop)]
             loop {
                 // Find the function call
                 if let Some(start) = result.find(&format!("{func_name}(")) {
@@ -2612,11 +2607,6 @@ fn translate_init_condition(condition: &str) -> String {
     // Replace Python operators
     result = result.replace(" and ", " && ");
     result = result.replace(" or ", " || ");
-    result = result.replace(" == ", " == ");
-    result = result.replace(" > ", " > ");
-    result = result.replace(" < ", " < ");
-    result = result.replace(" >= ", " >= ");
-    result = result.replace(" <= ", " <= ");
 
     // Handle "in [x, y, z]" patterns
     let in_list_pattern = Regex::new(r"(\w+(?:\.\w+)*)\s+in\s+\[([^\]]+)\]").unwrap();
