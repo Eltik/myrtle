@@ -228,3 +228,97 @@
 .dark .icon-theme-aware {
     filter: none;
 }
+
+/* Full-width hero that breaks out of the max-width container */
+.hero-full-width {
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+}
+
+/* Hero images - primary row (faster, more visible) */
+.hero-image {
+    opacity: 0.55;
+    filter: blur(2px);
+}
+
+.dark .hero-image {
+    opacity: 0.3;
+    filter: blur(2px);
+}
+
+/* Hero images - secondary row (slower, more subtle) */
+.hero-image-secondary {
+    opacity: 0.4;
+    filter: blur(2px);
+}
+
+.dark .hero-image-secondary {
+    opacity: 0.2;
+    filter: blur(2px);
+}
+
+/* =============================================================================
+   MARQUEE - High-performance CSS-only infinite scroll
+   Uses compositor thread for smooth 60fps with minimal CPU usage
+   ============================================================================= */
+
+.marquee-container {
+    display: flex;
+    overflow: hidden;
+    /* Isolate paint operations to this container */
+    contain: layout paint;
+    /* Hint to browser about upcoming animations */
+    will-change: contents;
+}
+
+.marquee-content {
+    display: flex;
+    gap: 1.5rem;
+    flex-shrink: 0;
+    /* Force GPU layer for smooth animations */
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    /* Prevent sub-pixel rendering issues */
+    -webkit-font-smoothing: antialiased;
+}
+
+.marquee-forward {
+    animation: marquee-scroll var(--marquee-duration, 40s) linear infinite;
+}
+
+.marquee-reverse {
+    animation: marquee-scroll-reverse var(--marquee-duration, 40s) linear infinite;
+}
+
+.marquee-pause-hover:hover .marquee-content {
+    animation-play-state: paused;
+}
+
+@keyframes marquee-scroll {
+    from {
+        transform: translateX(0) translateZ(0);
+    }
+    to {
+        transform: translateX(-100%) translateZ(0);
+    }
+}
+
+@keyframes marquee-scroll-reverse {
+    from {
+        transform: translateX(-100%) translateZ(0);
+    }
+    to {
+        transform: translateX(0) translateZ(0);
+    }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    .marquee-content {
+        animation: none;
+    }
+}
