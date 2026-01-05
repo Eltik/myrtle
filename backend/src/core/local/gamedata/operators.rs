@@ -81,8 +81,9 @@ fn enrich_operator(
     let enriched_all_skill_level_up =
         enrich_all_skill_level_up(&raw.all_skill_lvlup, materials, asset_mappings);
 
-    // Resolve drones from display_token_dict
-    let operator_drones = raw
+    // Resolve drones from display_token_dict, skills' overrideTokenKey, or by ID pattern
+    // First, collect from display_token_dict (e.g., Magallan, Ling in CN data)
+    let mut operator_drones: Vec<Drone> = raw
         .display_token_dict
         .as_ref()
         .map(|dict| {
@@ -91,6 +92,54 @@ fn enrich_operator(
                 .collect()
         })
         .unwrap_or_default();
+
+    // Also collect from skills' overrideTokenKey (e.g., Kazemaru's shadow doll)
+    // These are skill-specific summons not in displayTokenDict
+    for skill in &raw.skills {
+        if let Some(ref token_key) = skill.override_token_key {
+            if let Some(drone) = drones.get(token_key) {
+                // Only add if not already in the list
+                if !operator_drones.iter().any(|d| d.id == drone.id) {
+                    operator_drones.push(drone.clone());
+                }
+            }
+        }
+    }
+
+    // Fallback: find drones by ID pattern matching (EN data doesn't have displayTokenDict)
+    // Pattern: char_248_mgllan -> token_*_mgllan_*
+    if operator_drones.is_empty() {
+        // Extract the name part from operator ID (e.g., "mgllan" from "char_248_mgllan")
+        let parts: Vec<&str> = id.split('_').collect();
+        if parts.len() >= 3 && parts[0] == "char" {
+            let name_part = parts[2]; // e.g., "mgllan", "kazema", "ling"
+            let pattern = format!("_{name_part}_");
+
+            // Find all tokens matching this operator's name
+            let mut matched_drones: Vec<Drone> = drones
+                .iter()
+                .filter(|(key, _)| key.starts_with("token_") && key.contains(&pattern))
+                .map(|(_, drone)| drone.clone())
+                .collect();
+
+            // Sort by key to ensure consistent ordering (drone1, drone2, drone3)
+            matched_drones.sort_by(|a, b| {
+                let a_id = a.id.as_deref().unwrap_or("");
+                let b_id = b.id.as_deref().unwrap_or("");
+                a_id.cmp(b_id)
+            });
+
+            operator_drones = matched_drones;
+        }
+    }
+
+    // Sort drones by ID to ensure consistent ordering (drone1, drone2, drone3)
+    // This is important because skill->drone mapping depends on the order
+    operator_drones.sort_by(|a, b| {
+        let a_id = a.id.as_deref().unwrap_or("");
+        let b_id = b.id.as_deref().unwrap_or("");
+        a_id.cmp(b_id)
+    });
 
     Operator {
         id: Some(id.to_string()),

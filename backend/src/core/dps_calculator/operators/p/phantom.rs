@@ -19,7 +19,7 @@ impl Phantom {
 
     /// Creates a new Phantom operator
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
-        let unit = OperatorUnit::new(
+        let mut unit = OperatorUnit::new(
             operator_data,
             params,
             2, // default_skill_index
@@ -27,6 +27,11 @@ impl Phantom {
             2, // default_module_index
             Self::AVAILABLE_SKILLS.to_vec(),
         );
+
+        // Apply init-time modifications from Python __init__
+        if unit.module_index == 2 && unit.module_level == 3 {
+            unit.drone_atk += 60.0;
+        }
 
         Self { unit }
     }
@@ -85,13 +90,13 @@ impl Phantom {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
+        let mut atkbuff: f64 = 0.0;
+        let mut final_clone: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut dps: f64 = 0.0;
         let mut hitdmg_clone: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut final_clone: f64 = 0.0;
         let mut mainbuff: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut hitdmg: f64 = 0.0;
 
         if (self.unit.skill_index as f64) == 2.0 {

@@ -107,9 +107,7 @@ fn get_game_data() -> Option<&'static GameData> {
 }
 
 fn make_test_key(operator: &str, skill: i32, module: i32, defense: f64, res: f64) -> String {
-    format!(
-        "{operator}_s{skill}_m{module}_{defense:.0}_{res:.0}"
-    )
+    format!("{operator}_s{skill}_m{module}_{defense:.0}_{res:.0}")
 }
 
 fn compare_dps(rust_dps: f64, python_dps: f64, test_name: &str) -> Result<(), String> {
@@ -1264,10 +1262,7 @@ mod tests {
 
         for (key, &dps) in expected.iter() {
             // DPS should be non-negative
-            assert!(
-                dps >= 0.0,
-                "DPS for {key} should be non-negative: {dps}"
-            );
+            assert!(dps >= 0.0, "DPS for {key} should be non-negative: {dps}");
 
             // DPS should be reasonable (not infinity or NaN)
             assert!(dps.is_finite(), "DPS for {key} should be finite: {dps}");
@@ -1318,9 +1313,7 @@ mod tests {
                 dps_0 > dps_1000,
                 "Higher defense should reduce physical DPS"
             );
-            println!(
-                "SilverAsh S3: {dps_0:.2} DPS at 0 DEF -> {dps_1000:.2} DPS at 1000 DEF"
-            );
+            println!("SilverAsh S3: {dps_0:.2} DPS at 0 DEF -> {dps_1000:.2} DPS at 1000 DEF");
         }
     }
 
@@ -1335,9 +1328,7 @@ mod tests {
 
         if let (Some(&dps_0), Some(&dps_50)) = (eyja_0res, eyja_50res) {
             assert!(dps_0 > dps_50, "Higher resistance should reduce arts DPS");
-            println!(
-                "Eyjafjalla S3: {dps_0:.2} DPS at 0 RES -> {dps_50:.2} DPS at 50 RES"
-            );
+            println!("Eyjafjalla S3: {dps_0:.2} DPS at 0 RES -> {dps_50:.2} DPS at 50 RES");
         }
     }
 
@@ -1427,9 +1418,7 @@ mod tests {
 
         println!();
         println!("=== DPS Comparison Results ===");
-        println!(
-            "Tests: {tested} tested, {passed} passed, {failed} failed, {skipped} skipped"
-        );
+        println!("Tests: {tested} tested, {passed} passed, {failed} failed, {skipped} skipped");
         println!(
             "Pass rate: {:.1}%",
             if tested > 0 {

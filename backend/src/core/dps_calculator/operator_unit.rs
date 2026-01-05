@@ -83,6 +83,9 @@ pub struct OperatorUnit {
 
     // Operator-specific fields for advanced calculations
     pub shreds: Vec<f64>, // Defense shred values [def_shred_mult, def_shred_flat, res_shred_mult, res_shred_flat]
+
+    /// Ammo count for operators like ExecutorAlter (set in __init__)
+    pub ammo: f64,
 }
 
 impl OperatorUnit {
@@ -524,41 +527,71 @@ impl OperatorUnit {
         }
 
         // Calculate drone/summon parameters
+        // Select drone based on skill_index (skill 1 -> drone 0, skill 2 -> drone 1, etc.)
         let mut drone_atk: f64 = 0.0;
         // Default to 1.0 to avoid division by zero (matches Python's default)
         let mut drone_atk_interval: f32 = 1.0;
 
-        if operator_data.drone_atk.e0.max != 0 && operator_data.drone_atk.e0.min != 0 {
-            // skill_index is 1-indexed, convert to 0-indexed for array access
-            // But cap at the actual number of drones (some operators like Kaltsit have only 1 drone)
-            let slot = (skill_index.max(1) - 1) as usize;
-            let max_slot = operator_data.drone_atk_interval.len().saturating_sub(1);
-            let capped_slot = slot.min(max_slot);
+        if !operator_data.drone_atk.is_empty() {
+            // Python logic: slot = self.skill - 1 if self.skill > 0 else 2
+            // If skill == 0, default to drone 3 (slot 2)
+            // If fewer than 2 drones exist, always use slot 0
+            let slot = if skill_index > 0 {
+                (skill_index - 1) as usize
+            } else {
+                2 // Default to third drone for skill 0
+            };
 
+            // Cap at the actual number of drones
+            let capped_slot = if operator_data.drone_atk.len() < 2 {
+                0 // If fewer than 2 drones, always use first
+            } else {
+                slot.min(operator_data.drone_atk.len().saturating_sub(1))
+            };
+
+            // Get attack interval for selected drone
             drone_atk_interval = operator_data
                 .drone_atk_interval
                 .get(capped_slot)
                 .copied()
                 .unwrap_or(1.0); // Default to 1.0 to avoid division by zero
 
-            drone_atk = match elite {
-                0 => {
-                    let min = operator_data.drone_atk.e0.min as f64;
-                    let max = operator_data.drone_atk.e0.max as f64;
-                    min + ((max - min) * (level as f64 - 1.0)) / (max_level_for_elite_f64 - 1.0)
-                }
-                1 => {
-                    let min = operator_data.drone_atk.e1.min as f64;
-                    let max = operator_data.drone_atk.e1.max as f64;
-                    min + ((max - min) * (level as f64 - 1.0)) / (max_level_for_elite_f64 - 1.0)
-                }
-                2 => {
-                    let min = operator_data.drone_atk.e2.min as f64;
-                    let max = operator_data.drone_atk.e2.max as f64;
-                    min + ((max - min) * (level as f64 - 1.0)) / (max_level_for_elite_f64 - 1.0)
-                }
-                _ => 0.0,
-            };
+            // Get ATK for selected drone
+            if let Some(selected_drone) = operator_data.drone_atk.get(capped_slot) {
+                drone_atk = match elite {
+                    0 => {
+                        let min = selected_drone.e0.min as f64;
+                        let max = selected_drone.e0.max as f64;
+                        if max_level_for_elite_f64 > 1.0 {
+                            min + ((max - min) * (level as f64 - 1.0))
+                                / (max_level_for_elite_f64 - 1.0)
+                        } else {
+                            max
+                        }
+                    }
+                    1 => {
+                        let min = selected_drone.e1.min as f64;
+                        let max = selected_drone.e1.max as f64;
+                        if max_level_for_elite_f64 > 1.0 {
+                            min + ((max - min) * (level as f64 - 1.0))
+                                / (max_level_for_elite_f64 - 1.0)
+                        } else {
+                            max
+                        }
+                    }
+                    2 => {
+                        let min = selected_drone.e2.min as f64;
+                        let max = selected_drone.e2.max as f64;
+                        if max_level_for_elite_f64 > 1.0 {
+                            min + ((max - min) * (level as f64 - 1.0))
+                                / (max_level_for_elite_f64 - 1.0)
+                        } else {
+                            max
+                        }
+                    }
+                    _ => 0.0,
+                };
+            }
         }
 
         // Apply base buffs
@@ -699,6 +732,9 @@ impl OperatorUnit {
 
             // Default shreds: [1, 0, 1, 0] means no shred applied
             shreds: vec![1.0, 0.0, 1.0, 0.0],
+
+            // Default ammo (overridden by operator __init__ if needed)
+            ammo: 1.0,
         }
     }
 

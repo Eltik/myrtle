@@ -19,7 +19,7 @@ impl Nian {
 
     /// Creates a new Nian operator
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
-        let unit = OperatorUnit::new(
+        let mut unit = OperatorUnit::new(
             operator_data,
             params,
             3, // default_skill_index
@@ -27,6 +27,14 @@ impl Nian {
             1, // default_module_index
             Self::AVAILABLE_SKILLS.to_vec(),
         );
+
+        // Apply init-time modifications from Python __init__
+        if unit.module_index == 1 && unit.module_level > 1 {
+            unit.atk += 35.0;
+        }
+        if unit.module_index == 1 && unit.module_level > 2 {
+            unit.atk += 15.0;
+        }
 
         Self { unit }
     }
@@ -78,11 +86,11 @@ impl Nian {
         let mut res = enemy.res;
 
         let mut final_atk: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut atkbuff: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut dps: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
 
         atkbuff = 0.0;
         if (self.unit.module_index as f64) == 1.0

@@ -19,7 +19,7 @@ impl Dusk {
 
     /// Creates a new Dusk operator
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
-        let unit = OperatorUnit::new(
+        let mut unit = OperatorUnit::new(
             operator_data,
             params,
             3, // default_skill_index
@@ -27,6 +27,14 @@ impl Dusk {
             1, // default_module_index
             Self::AVAILABLE_SKILLS.to_vec(),
         );
+
+        // Apply init-time modifications from Python __init__
+        if unit.module_index == 2 && unit.module_level == 2 {
+            unit.drone_atk += 15.0;
+        }
+        if unit.module_index == 2 && unit.module_level == 3 {
+            unit.drone_atk += 25.0;
+        }
 
         Self { unit }
     }
@@ -92,17 +100,17 @@ impl Dusk {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut skill_scale: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
         let mut freedps: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut hitdmg: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut avghit: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
         let mut skilldmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
 
         freedps = 0.0;
         if self.unit.talent2_damage {

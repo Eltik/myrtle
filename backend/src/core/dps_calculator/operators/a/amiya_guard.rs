@@ -71,11 +71,11 @@ impl AmiyaGuard {
         let mut res = enemy.res;
 
         let mut final_atk: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut dps: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
 
         atkbuff = self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
             * (1.0 + ((1) as f64).min((self.unit.skill_index as f64) as f64));

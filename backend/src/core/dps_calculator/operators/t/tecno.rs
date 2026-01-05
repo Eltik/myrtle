@@ -19,7 +19,7 @@ impl Tecno {
 
     /// Creates a new Tecno operator
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
-        let unit = OperatorUnit::new(
+        let mut unit = OperatorUnit::new(
             operator_data,
             params,
             2, // default_skill_index
@@ -27,6 +27,11 @@ impl Tecno {
             2, // default_module_index
             Self::AVAILABLE_SKILLS.to_vec(),
         );
+
+        // Apply init-time modifications from Python __init__
+        if unit.module_index == 2 && unit.module_level > 1 {
+            unit.drone_atk += 100.0;
+        }
 
         Self { unit }
     }
