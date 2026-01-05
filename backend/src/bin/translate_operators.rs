@@ -542,43 +542,42 @@ impl PythonToRustTranslator {
 
                             if let Some((except_var, default_expr)) =
                                 self.parse_assignment(except_stmt)
+                                && except_var == var
                             {
-                                if except_var == var {
-                                    let rust_default = self.translate_expression(default_expr);
+                                let rust_default = self.translate_expression(default_expr);
 
-                                    // Check if try_expr is an array access like self.talent1_params[2]
-                                    // If so, generate unwrap_or pattern instead of just using default
-                                    let rust_expr = if let Some(array_access) =
-                                        self.extract_array_access(try_expr)
-                                    {
-                                        let (array_name, idx) = array_access;
-                                        format!(
-                                            "self.unit.{array_name}.get({idx}).copied().unwrap_or({rust_default})"
-                                        )
-                                    } else {
-                                        rust_default
-                                    };
+                                // Check if try_expr is an array access like self.talent1_params[2]
+                                // If so, generate unwrap_or pattern instead of just using default
+                                let rust_expr = if let Some(array_access) =
+                                    self.extract_array_access(try_expr)
+                                {
+                                    let (array_name, idx) = array_access;
+                                    format!(
+                                        "self.unit.{array_name}.get({idx}).copied().unwrap_or({rust_default})"
+                                    )
+                                } else {
+                                    rust_default
+                                };
 
-                                    if !declared_vars.contains(&var) {
-                                        rust_lines.push(format!(
-                                            "{}let mut {} = {}; // try-except fallback",
-                                            self.indent(self.indent_level),
-                                            var,
-                                            rust_expr
-                                        ));
-                                        declared_vars.insert(var.clone());
-                                    } else {
-                                        rust_lines.push(format!(
-                                            "{}{} = {}; // try-except fallback",
-                                            self.indent(self.indent_level),
-                                            var,
-                                            rust_expr
-                                        ));
-                                    }
-                                    found_except = true;
-                                    lines_to_skip.insert(i + j + 1);
-                                    break;
+                                if !declared_vars.contains(&var) {
+                                    rust_lines.push(format!(
+                                        "{}let mut {} = {}; // try-except fallback",
+                                        self.indent(self.indent_level),
+                                        var,
+                                        rust_expr
+                                    ));
+                                    declared_vars.insert(var.clone());
+                                } else {
+                                    rust_lines.push(format!(
+                                        "{}{} = {}; // try-except fallback",
+                                        self.indent(self.indent_level),
+                                        var,
+                                        rust_expr
+                                    ));
                                 }
+                                found_except = true;
+                                lines_to_skip.insert(i + j + 1);
+                                break;
                             }
                         }
                         if !next_trimmed.is_empty() && !next_trimmed.starts_with('#') {
@@ -637,126 +636,123 @@ impl PythonToRustTranslator {
             }
 
             // Handle single-line if statements
-            if trimmed.starts_with("if ") && trimmed.contains(": ") && !trimmed.ends_with(':') {
-                if let Some(colon_pos) = trimmed.find(": ") {
-                    let condition = &trimmed[3..colon_pos];
-                    let statement = &trimmed[colon_pos + 2..];
+            if trimmed.starts_with("if ") && trimmed.contains(": ") && !trimmed.ends_with(':')
+                && let Some(colon_pos) = trimmed.find(": ")
+            {
+                let condition = &trimmed[3..colon_pos];
+                let statement = &trimmed[colon_pos + 2..];
 
-                    // Try simple assignment first
-                    if let Some((var, expr)) = self.parse_assignment(statement) {
-                        let rust_condition = self.translate_condition(condition);
-                        let rust_expr = self.translate_expression(expr);
+                // Try simple assignment first
+                if let Some((var, expr)) = self.parse_assignment(statement) {
+                    let rust_condition = self.translate_condition(condition);
+                    let rust_expr = self.translate_expression(expr);
 
-                        if !declared_vars.contains(&var) {
-                            rust_lines.push(format!(
-                                "{}let mut {}: f64 = 0.0;",
-                                self.indent(self.indent_level),
-                                var
-                            ));
-                            declared_vars.insert(var.clone());
-                        }
-
+                    if !declared_vars.contains(&var) {
                         rust_lines.push(format!(
-                            "{}if {} {{ {} = {}; }}",
+                            "{}let mut {}: f64 = 0.0;",
                             self.indent(self.indent_level),
-                            rust_condition,
-                            var,
-                            rust_expr
+                            var
                         ));
-                        continue;
+                        declared_vars.insert(var.clone());
                     }
 
-                    // Try compound assignment (e.g., var *= expr)
-                    if let Some((var, op, expr)) = self.parse_compound_assignment(statement) {
-                        let rust_condition = self.translate_condition(condition);
-                        let rust_expr = self.translate_expression(expr);
+                    rust_lines.push(format!(
+                        "{}if {} {{ {} = {}; }}",
+                        self.indent(self.indent_level),
+                        rust_condition,
+                        var,
+                        rust_expr
+                    ));
+                    continue;
+                }
 
-                        rust_lines.push(format!(
-                            "{}if {} {{ {} {} {}; }}",
-                            self.indent(self.indent_level),
-                            rust_condition,
-                            var,
-                            op,
-                            rust_expr
-                        ));
-                        continue;
-                    }
+                // Try compound assignment (e.g., var *= expr)
+                if let Some((var, op, expr)) = self.parse_compound_assignment(statement) {
+                    let rust_condition = self.translate_condition(condition);
+                    let rust_expr = self.translate_expression(expr);
 
-                    // Try return statement
-                    if let Some(return_expr) = statement.strip_prefix("return ") {
-                        // Skip if it contains method calls
-                        if !return_expr.contains("self.skill_dps")
-                            && !return_expr.contains("super()")
-                            && !return_expr.contains("self.total_dmg")
-                        {
-                            let rust_condition = self.translate_condition(condition);
-                            let rust_expr = self.translate_expression(return_expr);
-                            rust_lines.push(format!(
-                                "{}if {} {{ return {}; }}",
-                                self.indent(self.indent_level),
-                                rust_condition,
-                                rust_expr
-                            ));
-                            continue;
-                        }
-                    }
+                    rust_lines.push(format!(
+                        "{}if {} {{ {} {} {}; }}",
+                        self.indent(self.indent_level),
+                        rust_condition,
+                        var,
+                        op,
+                        rust_expr
+                    ));
+                    continue;
+                }
+
+                // Try return statement
+                if let Some(return_expr) = statement.strip_prefix("return ")
+                    && !return_expr.contains("self.skill_dps")
+                    && !return_expr.contains("super()")
+                    && !return_expr.contains("self.total_dmg")
+                {
+                    let rust_condition = self.translate_condition(condition);
+                    let rust_expr = self.translate_expression(return_expr);
+                    rust_lines.push(format!(
+                        "{}if {} {{ return {}; }}",
+                        self.indent(self.indent_level),
+                        rust_condition,
+                        rust_expr
+                    ));
+                    continue;
                 }
             }
 
             // Handle single-line elif statements
-            if trimmed.starts_with("elif ") && trimmed.contains(": ") && !trimmed.ends_with(':') {
-                if let Some(colon_pos) = trimmed.find(": ") {
-                    let condition = &trimmed[5..colon_pos];
-                    let statement = &trimmed[colon_pos + 2..];
+            if trimmed.starts_with("elif ") && trimmed.contains(": ") && !trimmed.ends_with(':')
+                && let Some(colon_pos) = trimmed.find(": ")
+            {
+                let condition = &trimmed[5..colon_pos];
+                let statement = &trimmed[colon_pos + 2..];
 
-                    // Try simple assignment
-                    if let Some((var, expr)) = self.parse_assignment(statement) {
-                        let rust_condition = self.translate_condition(condition);
-                        let rust_expr = self.translate_expression(expr);
+                // Try simple assignment
+                if let Some((var, expr)) = self.parse_assignment(statement) {
+                    let rust_condition = self.translate_condition(condition);
+                    let rust_expr = self.translate_expression(expr);
 
-                        rust_lines.push(format!(
-                            "{}else if {} {{ {} = {}; }}",
-                            self.indent(self.indent_level),
-                            rust_condition,
-                            var,
-                            rust_expr
-                        ));
-                        continue;
-                    }
+                    rust_lines.push(format!(
+                        "{}else if {} {{ {} = {}; }}",
+                        self.indent(self.indent_level),
+                        rust_condition,
+                        var,
+                        rust_expr
+                    ));
+                    continue;
+                }
 
-                    // Try compound assignment
-                    if let Some((var, op, expr)) = self.parse_compound_assignment(statement) {
-                        let rust_condition = self.translate_condition(condition);
-                        let rust_expr = self.translate_expression(expr);
+                // Try compound assignment
+                if let Some((var, op, expr)) = self.parse_compound_assignment(statement) {
+                    let rust_condition = self.translate_condition(condition);
+                    let rust_expr = self.translate_expression(expr);
 
-                        rust_lines.push(format!(
-                            "{}else if {} {{ {} {} {}; }}",
-                            self.indent(self.indent_level),
-                            rust_condition,
-                            var,
-                            op,
-                            rust_expr
-                        ));
-                        continue;
-                    }
+                    rust_lines.push(format!(
+                        "{}else if {} {{ {} {} {}; }}",
+                        self.indent(self.indent_level),
+                        rust_condition,
+                        var,
+                        op,
+                        rust_expr
+                    ));
+                    continue;
+                }
 
-                    // Try return statement
-                    if let Some(return_expr) = statement.strip_prefix("return ") {
-                        if !return_expr.contains("self.skill_dps")
-                            && !return_expr.contains("super()")
-                            && !return_expr.contains("self.total_dmg")
-                        {
-                            let rust_condition = self.translate_condition(condition);
-                            let rust_expr = self.translate_expression(return_expr);
-                            rust_lines.push(format!(
-                                "{}else if {} {{ return {}; }}",
-                                self.indent(self.indent_level),
-                                rust_condition,
-                                rust_expr
-                            ));
-                            continue;
-                        }
-                    }
+                // Try return statement
+                if let Some(return_expr) = statement.strip_prefix("return ")
+                    && !return_expr.contains("self.skill_dps")
+                    && !return_expr.contains("super()")
+                    && !return_expr.contains("self.total_dmg")
+                {
+                    let rust_condition = self.translate_condition(condition);
+                    let rust_expr = self.translate_expression(return_expr);
+                    rust_lines.push(format!(
+                        "{}else if {} {{ return {}; }}",
+                        self.indent(self.indent_level),
+                        rust_condition,
+                        rust_expr
+                    ));
+                    continue;
                 }
             }
 
@@ -1040,18 +1036,18 @@ impl PythonToRustTranslator {
                 }
             }
 
-            if if_depth > 0 && line_indent > base_indent {
-                if let Some((var, _)) = self.parse_assignment(trimmed) {
-                    let entry = vars_in_branch.entry(var.clone()).or_insert(0);
-                    if *entry != current_branch {
-                        if *entry != 0 {
-                            shared_vars.insert(var.clone());
-                        }
-                        *entry = current_branch;
+            if if_depth > 0 && line_indent > base_indent
+                && let Some((var, _)) = self.parse_assignment(trimmed)
+            {
+                let entry = vars_in_branch.entry(var.clone()).or_insert(0);
+                if *entry != current_branch {
+                    if *entry != 0 {
+                        shared_vars.insert(var.clone());
                     }
-                    if if_depth > 1 {
-                        shared_vars.insert(var);
-                    }
+                    *entry = current_branch;
+                }
+                if if_depth > 1 {
+                    shared_vars.insert(var);
                 }
             }
         }
@@ -1093,10 +1089,11 @@ impl PythonToRustTranslator {
         let code_text = lines.join("\n");
         for var in common_vars {
             let var_pattern = format!(r"\b{var}\b");
-            if let Ok(re) = Regex::new(&var_pattern) {
-                if re.is_match(&code_text) && vars_in_branch.len() > 1 {
-                    shared_vars.insert(var.to_string());
-                }
+            if let Ok(re) = Regex::new(&var_pattern)
+                && re.is_match(&code_text)
+                && vars_in_branch.len() > 1
+            {
+                shared_vars.insert(var.to_string());
             }
         }
 
@@ -2733,22 +2730,22 @@ fn translate_skill_dps_init_expr(expr: &str) -> String {
     let mut result = expr.to_string();
 
     // Handle Python ternary: `X if cond else Y` -> Rust `if cond { X } else { Y }`
-    if result.contains(" if ") && result.contains(" else ") {
-        if let Some(else_pos) = result.rfind(" else ") {
-            let before_else = &result[..else_pos];
-            let after_else = &result[else_pos + 6..];
+    if result.contains(" if ") && result.contains(" else ")
+        && let Some(else_pos) = result.rfind(" else ")
+    {
+        let before_else = &result[..else_pos];
+        let after_else = &result[else_pos + 6..];
 
-            if let Some(if_pos) = before_else.rfind(" if ") {
-                let true_val = before_else[..if_pos].trim();
-                let condition = before_else[if_pos + 4..].trim();
-                let false_val = after_else.trim();
+        if let Some(if_pos) = before_else.rfind(" if ") {
+            let true_val = before_else[..if_pos].trim();
+            let condition = before_else[if_pos + 4..].trim();
+            let false_val = after_else.trim();
 
-                let rust_cond = translate_skill_dps_init_cond(condition);
-                let rust_true = translate_skill_dps_init_value(true_val);
-                let rust_false = translate_skill_dps_init_value(false_val);
+            let rust_cond = translate_skill_dps_init_cond(condition);
+            let rust_true = translate_skill_dps_init_value(true_val);
+            let rust_false = translate_skill_dps_init_value(false_val);
 
-                return format!("if {rust_cond} {{ {rust_true} }} else {{ {rust_false} }}");
-            }
+            return format!("if {rust_cond} {{ {rust_true} }} else {{ {rust_false} }}");
         }
     }
 
@@ -3434,10 +3431,10 @@ fn main() {
         by_letter.entry(letter).or_default().push(op);
     }
 
-    if output_dir.exists() {
-        if let Err(e) = fs::remove_dir_all(output_dir) {
-            eprintln!("Warning: Failed to clean output directory: {e}");
-        }
+    if output_dir.exists()
+        && let Err(e) = fs::remove_dir_all(output_dir)
+    {
+        eprintln!("Warning: Failed to clean output directory: {e}");
     }
 
     if let Err(e) = fs::create_dir_all(output_dir) {
