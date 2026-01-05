@@ -93,20 +93,20 @@ impl Pozemka {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
-        let mut dps: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut hitdmg_tw: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut defshred: f64 = 0.0;
-        let mut hitdmg_tw: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut hitdmg2: f64 = 0.0;
         let mut final_atk2: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut dps: f64 = 0.0;
+        let mut defshred: f64 = 0.0;
+        let mut hitdmg2: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
 
         defshred = 0.0;
         if self.unit.talent_damage {
@@ -155,7 +155,7 @@ impl Pozemka {
             hitdmg2 = ((final_atk * atk_scale * skill_scale - newdef) as f64)
                 .max((final_atk * atk_scale * skill_scale * 0.05) as f64);
             avghit = rate * hitdmg2 + (1.0 - rate) * hitdmg;
-            dps = avghit / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
+            dps = avghit / atk_interval * self.unit.attack_speed / 100.0;
             if self.unit.talent_damage && (self.unit.elite as f64) > 0.0 {
                 final_atk2 = self.unit.drone_atk
                     * (1.0
@@ -170,7 +170,7 @@ impl Pozemka {
             }
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            // UNTRANSLATED: self.atk_interval = 1
+            atk_interval = 1.0;
             skill_scale = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
             let mut skill_scale2 = self.unit.skill_parameters.get(2).copied().unwrap_or(0.0);
             final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
@@ -185,8 +185,7 @@ impl Pozemka {
                 hitdmg_tw = ((self.unit.drone_atk * skill_scale2 - newdef) as f64)
                     .max((self.unit.drone_atk * skill_scale2 * 0.05) as f64);
             }
-            dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0
-                + hitdmg_tw;
+            dps = hitdmg / atk_interval * self.unit.attack_speed / 100.0 + hitdmg_tw;
         }
         return dps;
     }

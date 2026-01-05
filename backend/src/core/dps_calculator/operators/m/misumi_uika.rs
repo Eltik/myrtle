@@ -62,12 +62,13 @@ impl MisumiUika {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
-        let mut dps: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut hitdmg: f64 = 0.0;
 
         if (self.unit.skill_index as f64) == 2.0 {

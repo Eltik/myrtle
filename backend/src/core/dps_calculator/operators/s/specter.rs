@@ -62,8 +62,10 @@ impl Specter {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
+
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         let mut atk_scale =
             if self.unit.module_damage && ((self.unit.module_index as f64) as f64) == 1.0 {

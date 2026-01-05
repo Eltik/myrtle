@@ -68,15 +68,15 @@ impl Lin {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
         let mut dps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut hitdmgarts: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
         let mut aspd: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         if (self.unit.skill_index as f64) == 0.0 {
             return res * 0.0;
@@ -85,16 +85,17 @@ impl Lin {
             aspd = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmgarts = ((final_atk * (1.0 - res / 100.0)) as f64).max((final_atk * 0.05) as f64);
-            dps = hitdmgarts / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd)
-                / 100.0
+            dps = hitdmgarts / atk_interval * (self.unit.attack_speed + aspd) / 100.0
                 * (self.unit.targets as f64);
         } else {
-            // UNTRANSLATED: if self.skill == 1: self.atk_interval = 3
+            if (self.unit.skill_index as f64) == 1.0 {
+                atk_interval = 3.0;
+            }
             atkbuff = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmgarts = ((final_atk * (1.0 - res / 100.0)) as f64).max((final_atk * 0.05) as f64);
-            dps = hitdmgarts / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0
+            dps = hitdmgarts / atk_interval * self.unit.attack_speed / 100.0
                 * (self.unit.targets as f64);
         }
         if (self.unit.module_index as f64) == 2.0 && self.unit.module_damage {

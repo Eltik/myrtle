@@ -258,15 +258,28 @@ impl OperatorUnit {
                     operator_module = None;
                     module_index = 0;
                 } else if param_module_index >= 1 {
-                    // Find module by order number (char_equip_order), not by array index
-                    // module_index=1 means module X (order 1), module_index=2 means module Y (order 2)
+                    // Python uses module_index as 1-indexed selection of available modules
+                    // module_index=1 means X module (char_equip_order=1 if exists, else first with order>0)
+                    // module_index=2 means Y module (char_equip_order=2 if exists, else second with order>0)
+                    // First try to find by exact char_equip_order match
                     let found_module = available_modules
                         .iter()
-                        .enumerate()
-                        .find(|(_, m)| m.module.char_equip_order == param_module_index);
+                        .find(|m| m.module.char_equip_order == param_module_index);
 
-                    if let Some((idx, _)) = found_module {
-                        operator_module = Some(available_modules[idx].clone());
+                    // If not found by exact match, try to find nth module with order > 0
+                    let found_module = found_module.or_else(|| {
+                        let mut real_modules: Vec<_> = available_modules
+                            .iter()
+                            .filter(|m| m.module.char_equip_order > 0)
+                            .collect();
+                        // Sort by char_equip_order for consistent ordering
+                        real_modules.sort_by_key(|m| m.module.char_equip_order);
+                        let array_idx = (param_module_index - 1) as usize;
+                        real_modules.get(array_idx).copied()
+                    });
+
+                    if let Some(module) = found_module {
+                        operator_module = Some(module.clone());
                         module_index = param_module_index;
 
                         let param_module_level = params.module_level.unwrap_or(-1);
@@ -419,29 +432,15 @@ impl OperatorUnit {
                             current_req_module_lvl = talent_data.required_module_level;
                         }
                     } else {
-                        let required_module_id = if !talent_data.required_module_id.is_empty() {
-                            talent_data.required_module_id.clone()
-                        } else {
-                            let module_index = operator_data
-                                .available_modules
-                                .iter()
-                                .position(|m| m.module.id.as_deref() == Some(op_module_id));
+                        // Operator has a module equipped
+                        // Accept entry if:
+                        // 1. Entry requires no specific module (required_module_id is empty), OR
+                        // 2. Entry requires a specific module that matches the equipped one
+                        let module_requirement_satisfied =
+                            talent_data.required_module_id.is_empty()
+                                || op_module_id == talent_data.required_module_id;
 
-                            match module_index {
-                                Some(1) => operator_data
-                                    .available_modules
-                                    .get(1)
-                                    .and_then(|m| m.module.id.clone())
-                                    .unwrap_or_default(),
-                                _ => operator_data
-                                    .available_modules
-                                    .get(2)
-                                    .and_then(|m| m.module.id.clone())
-                                    .unwrap_or_default(),
-                            }
-                        };
-
-                        if (op_module_id == required_module_id || required_module_id.is_empty())
+                        if module_requirement_satisfied
                             && operator_module_level >= talent_data.required_module_level
                             && operator_module_level >= current_req_module_lvl
                             && potential > talent_data.required_potential
@@ -494,29 +493,15 @@ impl OperatorUnit {
                             current_req_module_lvl = talent_data.required_module_level;
                         }
                     } else {
-                        let required_module_id = if !talent_data.required_module_id.is_empty() {
-                            talent_data.required_module_id.clone()
-                        } else {
-                            let module_index = operator_data
-                                .available_modules
-                                .iter()
-                                .position(|m| m.module.id.as_deref() == Some(op_module_id));
+                        // Operator has a module equipped
+                        // Accept entry if:
+                        // 1. Entry requires no specific module (required_module_id is empty), OR
+                        // 2. Entry requires a specific module that matches the equipped one
+                        let module_requirement_satisfied =
+                            talent_data.required_module_id.is_empty()
+                                || op_module_id == talent_data.required_module_id;
 
-                            match module_index {
-                                Some(1) => operator_data
-                                    .available_modules
-                                    .get(1)
-                                    .and_then(|m| m.module.id.clone())
-                                    .unwrap_or_default(),
-                                _ => operator_data
-                                    .available_modules
-                                    .get(2)
-                                    .and_then(|m| m.module.id.clone())
-                                    .unwrap_or_default(),
-                            }
-                        };
-
-                        if (op_module_id == required_module_id || required_module_id.is_empty())
+                        if module_requirement_satisfied
                             && operator_module_level >= talent_data.required_module_level
                             && operator_module_level >= current_req_module_lvl
                             && potential > talent_data.required_potential
@@ -540,17 +525,21 @@ impl OperatorUnit {
 
         // Calculate drone/summon parameters
         let mut drone_atk: f64 = 0.0;
-        let mut drone_atk_interval: f32 = 0.0;
+        // Default to 1.0 to avoid division by zero (matches Python's default)
+        let mut drone_atk_interval: f32 = 1.0;
 
         if operator_data.drone_atk.e0.max != 0 && operator_data.drone_atk.e0.min != 0 {
             // skill_index is 1-indexed, convert to 0-indexed for array access
+            // But cap at the actual number of drones (some operators like Kaltsit have only 1 drone)
             let slot = (skill_index.max(1) - 1) as usize;
+            let max_slot = operator_data.drone_atk_interval.len().saturating_sub(1);
+            let capped_slot = slot.min(max_slot);
 
             drone_atk_interval = operator_data
                 .drone_atk_interval
-                .get(slot)
+                .get(capped_slot)
                 .copied()
-                .unwrap_or(0.0);
+                .unwrap_or(1.0); // Default to 1.0 to avoid division by zero
 
             drone_atk = match elite {
                 0 => {

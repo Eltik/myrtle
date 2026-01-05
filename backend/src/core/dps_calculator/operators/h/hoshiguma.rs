@@ -65,15 +65,15 @@ impl Hoshiguma {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
-        let mut atkbuff: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut skill_scale: f64 = 0.0;
 
         atkbuff = if ((self.unit.module_index as f64) as f64) == 2.0
             && ((self.unit.module_level as f64) as f64) > 1.0
@@ -95,13 +95,11 @@ impl Hoshiguma {
         hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
         dps =
             hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0 * targets;
-        if (self.unit.skill_index as f64) == 2.0
-            && 1.0 /* self.hits - needs manual implementation */ > 0.0
-        {
+        if (self.unit.skill_index as f64) == 2.0 && 0.0 /* self.hits - defaults to 0 */ > 0.0 {
             skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             let mut reflectdmg = ((final_atk * skill_scale - defense) as f64)
                 .max((final_atk * skill_scale * 0.05) as f64);
-            dps += reflectdmg * 1.0 /* self.hits - needs manual implementation */;
+            dps += reflectdmg * 0.0 /* self.hits - defaults to 0 */;
         }
         return dps;
     }

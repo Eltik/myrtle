@@ -75,16 +75,16 @@ impl Marcille {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
         let mut skill_scale: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut dps: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
 
         dps = 0.0;
         atkbuff = if self.unit.talent_damage {
@@ -160,10 +160,15 @@ impl Marcille {
         clippy::eq_op
     )]
     pub fn total_dmg(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
-        // UNTRANSLATED: if self.skill == 3: self.skill_duration = 10
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+
+        let mut skill_duration: f64 = 0.0;
+        if (self.unit.skill_index as f64) == 3.0 {
+            skill_duration = 10.0;
+        }
         // UNTRANSLATED: return super().total_dmg(defense, res) - method calls need manual implementation
         0.0 // placeholder
     }

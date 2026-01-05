@@ -62,8 +62,10 @@ impl Broca {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
+
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         let mut atkbuff = if self.unit.talent_damage {
             self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
@@ -83,7 +85,7 @@ impl Broca {
         };
         let mut final_atk =
             self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
-        let mut atk_interval = if ((self.unit.skill_index as f64) as f64) == 2.0 {
+        atk_interval = if ((self.unit.skill_index as f64) as f64) == 2.0 {
             1.98
         } else {
             (self.unit.attack_interval as f64)

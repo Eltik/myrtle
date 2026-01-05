@@ -78,15 +78,15 @@ impl Carnelian {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
         let mut final_atk: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut dps: f64 = 0.0;
 
         atk_scale = if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage {
             1.15
@@ -126,16 +126,29 @@ impl Carnelian {
             let mut maxatkbuff = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             let mut duration = 21.0;
             let mut totalatks = 1.0
-                + (duration
-                    / ((self.unit.attack_interval as f64)
-                        / (self.unit.attack_speed / 100.0) as f64)
-                        .trunc());
+                + ((duration
+                    / ((self.unit.attack_interval as f64) / (self.unit.attack_speed / 100.0)))
+                    as f64)
+                    .trunc();
             let mut totalduration =
                 totalatks * ((self.unit.attack_interval as f64) / (self.unit.attack_speed / 100.0));
             let mut damage = 0.0;
             let mut bonusscaling = if self.unit.skill_damage { 5.0 } else { 0.0 };
-            // UNTRANSLATED FOR LOOP: for i in range(totalatks):
-            // TODO: Implement loop logic manually
+            // Implement for loop: for i in range(totalatks):
+            for _i in 0..(totalatks as i32) {
+                let i = _i as f64;
+                final_atk = self.unit.atk
+                    * (1.0
+                        + self.unit.buff_atk
+                        + i * ((self.unit.attack_interval as f64)
+                            / (self.unit.attack_speed / 100.0))
+                            / 21.0
+                            * maxatkbuff)
+                    + self.unit.buff_atk_flat;
+                damage += ((final_atk * atk_scale * (1.0 - res / 100.0)) as f64)
+                    .max((final_atk * atk_scale * 0.05) as f64)
+                    * (1.0 + ((bonusscaling) as f64).min((i) as f64) * 0.2);
+            }
             dps = damage / totalduration * (self.unit.targets as f64);
         }
         return dps;

@@ -67,8 +67,10 @@ impl Vigna {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
+
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         let mut crit_rate = if ((self.unit.elite as f64) as f64) == 0.0 {
             0.0
@@ -81,7 +83,7 @@ impl Vigna {
         let mut cdmg = self.unit.talent1_parameters.first().copied().unwrap_or(0.0);
         let mut atkbuff = self.unit.skill_parameters.first().copied().unwrap_or(0.0)
             * ((self.unit.skill_index as f64) as f64).min((1) as f64);
-        let mut atk_interval = if ((self.unit.skill_index as f64) as f64) == 2.0 {
+        atk_interval = if ((self.unit.skill_index as f64) as f64) == 2.0 {
             1.5
         } else {
             (self.unit.attack_interval as f64)

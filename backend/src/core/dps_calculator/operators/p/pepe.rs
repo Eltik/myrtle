@@ -93,21 +93,21 @@ impl Pepe {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
-        let mut atk_interval: f64 = 0.0;
-        let mut hitdmgaoe: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
+        let mut hitdmgaoe: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut atkbuff: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
 
         atkbuff = self.unit.talent2_parameters.first().copied().unwrap_or(0.0);
         atk_scale = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {
@@ -134,8 +134,7 @@ impl Pepe {
                 + ((0.5 * skill_scale * final_atk * atk_scale - defense) as f64)
                     .max((0.5 * skill_scale * final_atk * atk_scale * 0.05) as f64)
                     * ((self.unit.targets as f64) - 1.0);
-            let mut atkcycle =
-                (self.unit.attack_interval as f64) / (self.unit.attack_speed / 100.0);
+            let mut atkcycle = atk_interval / (self.unit.attack_speed / 100.0);
             let mut atks_per_skillactivation = sp_cost / atkcycle;
             avghit = skilldmg;
             if atks_per_skillactivation > 1.0 {
@@ -148,7 +147,7 @@ impl Pepe {
                         / (((atks_per_skillactivation) as f64).trunc() + 1.0);
                 }
             }
-            dps = avghit / ((self.unit.attack_interval as f64) / (self.unit.attack_speed / 100.0));
+            dps = avghit / (atk_interval / (self.unit.attack_speed / 100.0));
         }
         if (self.unit.skill_index as f64) == 2.0 {
             atkbuff += self.unit.skill_parameters.first().copied().unwrap_or(0.0);
@@ -162,15 +161,12 @@ impl Pepe {
                 .max((final_atk * atk_scale * 0.05) as f64);
             hitdmgaoe = ((0.5 * final_atk * atk_scale - defense) as f64)
                 .max((0.5 * final_atk * atk_scale * 0.05) as f64);
-            dps = hitdmg
-                / ((self.unit.attack_interval as f64) / ((self.unit.attack_speed + aspd) / 100.0))
-                + hitdmgaoe
-                    / ((self.unit.attack_interval as f64)
-                        / ((self.unit.attack_speed + aspd) / 100.0))
+            dps = hitdmg / (atk_interval / ((self.unit.attack_speed + aspd) / 100.0))
+                + hitdmgaoe / (atk_interval / ((self.unit.attack_speed + aspd) / 100.0))
                     * ((self.unit.targets as f64) - 1.0);
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            // UNTRANSLATED: self.atk_interval = 2
+            atk_interval = 2.0;
             atkbuff += self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             if self.unit.skill_damage {
                 atkbuff += 4.0 * self.unit.skill_parameters.get(2).copied().unwrap_or(0.0);
@@ -181,9 +177,8 @@ impl Pepe {
                 .max((final_atk * atk_scale * 0.05) as f64);
             hitdmgaoe = ((0.5 * final_atk * atk_scale - defense) as f64)
                 .max((0.5 * final_atk * atk_scale * 0.05) as f64);
-            dps = hitdmg / ((self.unit.attack_interval as f64) / (self.unit.attack_speed / 100.0))
-                + hitdmgaoe
-                    / ((self.unit.attack_interval as f64) / (self.unit.attack_speed / 100.0))
+            dps = hitdmg / (atk_interval / (self.unit.attack_speed / 100.0))
+                + hitdmgaoe / (atk_interval / (self.unit.attack_speed / 100.0))
                     * ((self.unit.targets as f64) - 1.0);
         }
         return dps;

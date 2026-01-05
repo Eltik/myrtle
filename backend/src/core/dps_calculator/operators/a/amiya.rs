@@ -69,15 +69,22 @@ impl Amiya {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
+        // Amiya S3 ATK buff based on skill level (maps to Python mastery index)
+        // skill_level 1-7 -> indices 1-7, skill_level 8-10 -> indices 8-10
+        let params: f64 = [0.0, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.8, 2.0, 2.3]
+            .get(self.unit.skill_level as usize)
+            .copied()
+            .unwrap_or(2.3);
+
+        let mut aspd: f64 = 0.0;
         let mut hitdmgarts: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         if (self.unit.skill_index as f64) < 2.0 {
             aspd = self.unit.skill_parameters.first().copied().unwrap_or(0.0)
@@ -97,9 +104,8 @@ impl Amiya {
                 / ((self.unit.attack_interval as f64) / (self.unit.attack_speed / 100.0));
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            final_atk = self.unit.atk
-                * (1.0 + self.unit.buff_atk + 1.0/* self.params - needs manual implementation */)
-                + self.unit.buff_atk_flat;
+            final_atk =
+                self.unit.atk * (1.0 + self.unit.buff_atk + params) + self.unit.buff_atk_flat;
             dps = final_atk
                 / ((self.unit.attack_interval as f64) / (self.unit.attack_speed / 100.0))
                 * ((1) as f64).max((-defense) as f64);

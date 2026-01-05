@@ -70,18 +70,18 @@ impl May {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut aspd: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut atkbuff: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
 
         atkbuff = self
             .unit
@@ -114,11 +114,10 @@ impl May {
                 .max((final_atk * atk_scale * skill_scale * 0.05) as f64);
             avghit = (hitdmg * (self.unit.skill_cost as f64) + hitdmg_skill)
                 / ((self.unit.skill_cost as f64) + 1.0);
-            dps = avghit / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd)
-                / 100.0;
+            dps = avghit / atk_interval * (self.unit.attack_speed + aspd) / 100.0;
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            // UNTRANSLATED: self.atk_interval = 1.5
+            atk_interval = 1.5;
             final_atk = self.unit.atk
                 * (1.0
                     + self.unit.buff_atk
@@ -127,8 +126,7 @@ impl May {
                 + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * atk_scale - defense) as f64)
                 .max((final_atk * atk_scale * 0.05) as f64);
-            dps = hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd)
-                / 100.0;
+            dps = hitdmg / atk_interval * (self.unit.attack_speed + aspd) / 100.0;
         }
         return dps;
     }

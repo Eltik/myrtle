@@ -106,8 +106,10 @@ fn get_game_data() -> Option<&'static GameData> {
         .as_ref()
 }
 
-fn make_test_key(operator: &str, skill: i32, defense: f64, res: f64) -> String {
-    format!("{operator}_s{skill}_{defense:.0}_{res:.0}")
+fn make_test_key(operator: &str, skill: i32, module: i32, defense: f64, res: f64) -> String {
+    format!(
+        "{operator}_s{skill}_m{module}_{defense:.0}_{res:.0}"
+    )
 }
 
 fn compare_dps(rust_dps: f64, python_dps: f64, test_name: &str) -> Result<(), String> {
@@ -135,6 +137,8 @@ fn compare_dps(rust_dps: f64, python_dps: f64, test_name: &str) -> Result<(), St
 /// Creates default operator params for testing
 /// Uses -1 for values that should use operator defaults, matching Python behavior
 fn create_test_params(skill_index: i32, module_index: i32) -> OperatorParams {
+    use backend::core::dps_calculator::operator_unit::OperatorConditionals;
+
     OperatorParams {
         skill_index: Some(skill_index),
         module_index: Some(module_index),
@@ -145,6 +149,15 @@ fn create_test_params(skill_index: i32, module_index: i32) -> OperatorParams {
         trust: Some(100),
         mastery_level: Some(-1), // Use max mastery like Python
         targets: Some(1),
+        // Explicitly enable all conditionals to match Python's default behavior
+        conditionals: Some(OperatorConditionals {
+            trait_damage: Some(true),
+            talent_damage: Some(true),
+            talent2_damage: Some(true),
+            skill_damage: Some(true),
+            module_damage: Some(true),
+        }),
+        all_cond: Some(true),
         ..Default::default()
     }
 }
@@ -1222,7 +1235,7 @@ mod tests {
 
         let mut missing = 0;
         for tc in cases.iter() {
-            let key = make_test_key(&tc.operator, tc.skill, tc.defense, tc.res);
+            let key = make_test_key(&tc.operator, tc.skill, tc.module, tc.defense, tc.res);
             if !expected.contains_key(&key) {
                 missing += 1;
                 if missing <= 10 {
@@ -1251,7 +1264,10 @@ mod tests {
 
         for (key, &dps) in expected.iter() {
             // DPS should be non-negative
-            assert!(dps >= 0.0, "DPS for {key} should be non-negative: {dps}");
+            assert!(
+                dps >= 0.0,
+                "DPS for {key} should be non-negative: {dps}"
+            );
 
             // DPS should be reasonable (not infinity or NaN)
             assert!(dps.is_finite(), "DPS for {key} should be finite: {dps}");
@@ -1266,22 +1282,22 @@ mod tests {
     fn test_known_operators() {
         let expected = get_expected_dps();
 
-        // Test Aak S1 at 0 def/res - should have some DPS
-        let aak_key = make_test_key("Aak", 0, 0.0, 0.0);
+        // Test Aak S1 at 0 def/res - should have some DPS (module 0 = no module)
+        let aak_key = make_test_key("Aak", 1, 0, 0.0, 0.0);
         if let Some(&dps) = expected.get(&aak_key) {
             assert!(dps > 0.0, "Aak S1 should have positive DPS");
             println!("Aak S1 (0/0): {dps:.2} DPS");
         }
 
-        // Test SilverAsh S3 at 0 def/res
-        let sa_key = make_test_key("SilverAsh", 2, 0.0, 0.0);
+        // Test SilverAsh S3 at 0 def/res (module 0 = no module)
+        let sa_key = make_test_key("SilverAsh", 3, 0, 0.0, 0.0);
         if let Some(&dps) = expected.get(&sa_key) {
             assert!(dps > 0.0, "SilverAsh S3 should have positive DPS");
             println!("SilverAsh S3 (0/0): {dps:.2} DPS");
         }
 
-        // Test Surtr S3 at 0 def/res - should be high
-        let surtr_key = make_test_key("Surtr", 2, 0.0, 0.0);
+        // Test Surtr S3 at 0 def/res - should be high (module 0 = no module)
+        let surtr_key = make_test_key("Surtr", 3, 0, 0.0, 0.0);
         if let Some(&dps) = expected.get(&surtr_key) {
             assert!(dps > 1000.0, "Surtr S3 should have high DPS");
             println!("Surtr S3 (0/0): {dps:.2} DPS");
@@ -1293,16 +1309,18 @@ mod tests {
     fn test_defense_reduces_dps() {
         let expected = get_expected_dps();
 
-        // Physical operator: SilverAsh
-        let sa_0def = expected.get(&make_test_key("SilverAsh", 2, 0.0, 0.0));
-        let sa_1000def = expected.get(&make_test_key("SilverAsh", 2, 1000.0, 50.0));
+        // Physical operator: SilverAsh (module 0 = no module)
+        let sa_0def = expected.get(&make_test_key("SilverAsh", 3, 0, 0.0, 0.0));
+        let sa_1000def = expected.get(&make_test_key("SilverAsh", 3, 0, 1000.0, 50.0));
 
         if let (Some(&dps_0), Some(&dps_1000)) = (sa_0def, sa_1000def) {
             assert!(
                 dps_0 > dps_1000,
                 "Higher defense should reduce physical DPS"
             );
-            println!("SilverAsh S3: {dps_0:.2} DPS at 0 DEF -> {dps_1000:.2} DPS at 1000 DEF");
+            println!(
+                "SilverAsh S3: {dps_0:.2} DPS at 0 DEF -> {dps_1000:.2} DPS at 1000 DEF"
+            );
         }
     }
 
@@ -1311,19 +1329,23 @@ mod tests {
     fn test_resistance_reduces_arts_dps() {
         let expected = get_expected_dps();
 
-        // Arts operator: Eyjafjalla
-        let eyja_0res = expected.get(&make_test_key("Eyjafjalla", 2, 0.0, 0.0));
-        let eyja_50res = expected.get(&make_test_key("Eyjafjalla", 2, 1000.0, 50.0));
+        // Arts operator: Eyjafjalla (module 0 = no module)
+        let eyja_0res = expected.get(&make_test_key("Eyjafjalla", 3, 0, 0.0, 0.0));
+        let eyja_50res = expected.get(&make_test_key("Eyjafjalla", 3, 0, 1000.0, 50.0));
 
         if let (Some(&dps_0), Some(&dps_50)) = (eyja_0res, eyja_50res) {
             assert!(dps_0 > dps_50, "Higher resistance should reduce arts DPS");
-            println!("Eyjafjalla S3: {dps_0:.2} DPS at 0 RES -> {dps_50:.2} DPS at 50 RES");
+            println!(
+                "Eyjafjalla S3: {dps_0:.2} DPS at 0 RES -> {dps_50:.2} DPS at 50 RES"
+            );
         }
     }
 
     /// Integration test with game data - compares Rust DPS against Python
     #[test]
     fn test_rust_vs_python_with_game_data() {
+        use std::collections::HashSet;
+
         let expected = get_expected_dps();
         let cases = get_test_cases();
 
@@ -1339,18 +1361,43 @@ mod tests {
         let mut skipped = 0;
         let mut errors: Vec<String> = Vec::new();
 
+        // Track unique operators skipped by reason
+        let mut skipped_no_expected: HashSet<String> = HashSet::new();
+        let mut skipped_no_gamedata: HashSet<String> = HashSet::new();
+        let mut skipped_no_module: HashSet<String> = HashSet::new();
+        let mut skipped_calc_error: HashSet<String> = HashSet::new();
+        let mut failed_operators: HashSet<String> = HashSet::new();
+        // Track operators that had some tests run (to identify partially vs fully skipped)
+        let mut tested_operators: HashSet<String> = HashSet::new();
+
         for tc in cases.iter() {
-            let key = make_test_key(&tc.operator, tc.skill, tc.defense, tc.res);
+            let key = make_test_key(&tc.operator, tc.skill, tc.module, tc.defense, tc.res);
 
             let Some(&python_dps) = expected.get(&key) else {
                 skipped += 1;
+                skipped_no_expected.insert(tc.operator.clone());
                 continue;
             };
 
             let Some(operator) = game_data.operators.get(&tc.operator_id) else {
                 skipped += 1;
+                skipped_no_gamedata.insert(tc.operator.clone());
                 continue;
             };
+
+            // Skip if test requires a module but operator doesn't have module data
+            // This can happen for CN-only operators not yet in EN game data
+            if tc.module >= 1 {
+                let has_advanced_modules = operator.modules.iter().any(|m| {
+                    m.module.module_type
+                        == backend::core::local::types::module::ModuleType::Advanced
+                });
+                if !has_advanced_modules {
+                    skipped += 1;
+                    skipped_no_module.insert(tc.operator.clone());
+                    continue;
+                }
+            }
 
             let operator_data = OperatorData::new(operator.clone());
             // tc.skill is 1-indexed (1=S1, 2=S2, 3=S3), matching Python semantics
@@ -1361,25 +1408,28 @@ mod tests {
                 calculate_operator_dps(&tc.rust_module, operator_data, params, enemy)
             else {
                 skipped += 1;
+                skipped_calc_error.insert(tc.operator.clone());
                 continue;
             };
 
             tested += 1;
+            tested_operators.insert(tc.operator.clone());
 
             match compare_dps(rust_dps, python_dps, &key) {
                 Ok(_) => passed += 1,
                 Err(e) => {
                     failed += 1;
-                    if errors.len() < 20 {
-                        errors.push(e);
-                    }
+                    failed_operators.insert(tc.operator.clone());
+                    errors.push(e);
                 }
             }
         }
 
         println!();
         println!("=== DPS Comparison Results ===");
-        println!("Tested: {tested}, Passed: {passed}, Failed: {failed}, Skipped: {skipped}");
+        println!(
+            "Tests: {tested} tested, {passed} passed, {failed} failed, {skipped} skipped"
+        );
         println!(
             "Pass rate: {:.1}%",
             if tested > 0 {
@@ -1388,12 +1438,78 @@ mod tests {
                 0.0
             }
         );
+        println!();
+        println!("=== Operator Statistics ===");
+
+        // Separate fully skipped from partially skipped operators
+        let fully_skipped_no_expected: HashSet<_> = skipped_no_expected
+            .difference(&tested_operators)
+            .cloned()
+            .collect();
+        let fully_skipped_no_gamedata: HashSet<_> = skipped_no_gamedata
+            .difference(&tested_operators)
+            .cloned()
+            .collect();
+        let fully_skipped_no_module: HashSet<_> = skipped_no_module
+            .difference(&tested_operators)
+            .cloned()
+            .collect();
+        let fully_skipped_calc_error: HashSet<_> = skipped_calc_error
+            .difference(&tested_operators)
+            .cloned()
+            .collect();
+
+        let partial_module: HashSet<_> = skipped_no_module
+            .intersection(&tested_operators)
+            .cloned()
+            .collect();
+
+        println!(
+            "Operators fully skipped (no expected DPS): {} - {:?}",
+            fully_skipped_no_expected.len(),
+            fully_skipped_no_expected
+        );
+        println!(
+            "Operators fully skipped (no game data): {} - {:?}",
+            fully_skipped_no_gamedata.len(),
+            fully_skipped_no_gamedata
+        );
+        println!(
+            "Operators partially skipped (module tests only): {} - {:?}",
+            partial_module.len(),
+            partial_module
+        );
+        println!(
+            "Operators fully skipped (no module data): {} - {:?}",
+            fully_skipped_no_module.len(),
+            fully_skipped_no_module
+        );
+        println!(
+            "Operators skipped (calc error): {} - {:?}",
+            fully_skipped_calc_error.len(),
+            fully_skipped_calc_error
+        );
+        println!(
+            "Operators with failures: {} - {:?}",
+            failed_operators.len(),
+            failed_operators
+        );
 
         if !errors.is_empty() {
             println!();
-            println!("First {} failures:", errors.len());
+            println!("All {} failures (first 3 per operator):", errors.len());
+            // Group errors by operator and show first 3 per operator
+            let mut op_errors: std::collections::HashMap<String, Vec<String>> =
+                std::collections::HashMap::new();
             for e in &errors {
-                eprintln!("  {e}");
+                let op = e.split('_').next().unwrap_or("unknown").to_string();
+                op_errors.entry(op).or_default().push(e.clone());
+            }
+            for (op, errs) in op_errors.iter() {
+                eprintln!("  {} ({} failures):", op, errs.len());
+                for e in errs.iter().take(3) {
+                    eprintln!("    {e}");
+                }
             }
         }
 

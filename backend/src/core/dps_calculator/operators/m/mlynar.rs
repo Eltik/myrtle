@@ -85,15 +85,15 @@ impl Mlynar {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
-        let mut finaldmg: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut finaldmg: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         atkbuff = 0.0;
         atk_scale = 1.0;
@@ -118,17 +118,17 @@ impl Mlynar {
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
             finaldmg = ((final_atk * atk_scale - defense) as f64)
                 .max((final_atk * atk_scale * 0.05) as f64);
-            dps = finaldmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
+            dps = finaldmg / atk_interval * self.unit.attack_speed / 100.0;
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            // UNTRANSLATED: self.atk_interval = 1.5
+            atk_interval = 1.5;
             atk_scale *= self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
             finaldmg = ((final_atk * atk_scale - defense) as f64)
                 .max((final_atk * atk_scale * 0.05) as f64)
                 * 2.0;
-            dps = finaldmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
+            dps = finaldmg / atk_interval * self.unit.attack_speed / 100.0;
         }
         if (self.unit.skill_index as f64) == 3.0 {
             atkbuff += stacks * 0.05;
@@ -140,16 +140,12 @@ impl Mlynar {
                 * ((1) as f64).max((-defense) as f64);
             finaldmg = ((final_atk * atk_scale - defense) as f64)
                 .max((final_atk * atk_scale * 0.05) as f64);
-            dps = (finaldmg + truedmg) / (self.unit.attack_interval as f64)
-                * self.unit.attack_speed
-                / 100.0;
+            dps = (finaldmg + truedmg) / atk_interval * self.unit.attack_speed / 100.0;
             dps = dps * ((self.unit.targets as f64) as f64).min((5) as f64);
         }
-        if 1.0 /* self.hits - needs manual implementation */ > 0.0
-            && (self.unit.elite as f64) == 2.0
-        {
+        if 0.0 /* self.hits - defaults to 0 */ > 0.0 && (self.unit.elite as f64) == 2.0 {
             let mut truescaling = self.unit.talent2_parameters.get(1).copied().unwrap_or(0.0);
-            dps += final_atk * truescaling * 1.0 /* self.hits - needs manual implementation */ * ((1) as f64).max((-defense) as f64);
+            dps += final_atk * truescaling * 0.0 /* self.hits - defaults to 0 */ * ((1) as f64).max((-defense) as f64);
         }
         return dps;
     }

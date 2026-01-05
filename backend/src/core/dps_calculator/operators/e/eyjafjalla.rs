@@ -97,21 +97,21 @@ impl Eyjafjalla {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
-        let mut hitdmg: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
         let mut aspd: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut dps: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
         let mut newres: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
         let mut hitdmgarts: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
 
         atkbuff = if ((self.unit.elite as f64) as f64) > 0.0 {
             self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
@@ -145,8 +145,7 @@ impl Eyjafjalla {
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmgarts =
                 ((final_atk * (1.0 - newres / 100.0)) as f64).max((final_atk * 0.05) as f64);
-            dps = hitdmgarts / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd)
-                / 100.0;
+            dps = hitdmgarts / atk_interval * (self.unit.attack_speed + aspd) / 100.0;
         }
         if (self.unit.skill_index as f64) == 2.0 {
             atk_scale = self.unit.skill_parameters.get(2).copied().unwrap_or(0.0);
@@ -165,18 +164,16 @@ impl Eyjafjalla {
                 .max((final_atk * atk_scale * 0.05) as f64);
             let mut aoeskilldmg = ((0.5 * final_atk * atk_scale * (1.0 - newres / 100.0)) as f64)
                 .max((0.5 * final_atk * atk_scale * 0.05) as f64);
-            let mut extra_boost = if ((self.unit.module_index as f64) as f64) == 2.0
-                && self.unit.module_damage
-            {
-                1.0 / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd) / 100.0
-            } else {
-                0.0
-            };
+            let mut extra_boost =
+                if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage {
+                    1.0 / (atk_interval) * (self.unit.attack_speed + aspd) / 100.0
+                } else {
+                    0.0
+                };
             sp_cost = (self.unit.skill_cost as f64)
                 / (1.0 + (self.unit.sp_boost as f64) + extra_boost)
                 + 1.2;
-            let mut atkcycle =
-                (self.unit.attack_interval as f64) / ((self.unit.attack_speed + aspd) / 100.0);
+            let mut atkcycle = atk_interval / ((self.unit.attack_speed + aspd) / 100.0);
             let mut atks_per_skillactivation = sp_cost / atkcycle;
             avghit = skilldmg + ((self.unit.targets as f64) - 1.0) * aoeskilldmg;
             if atks_per_skillactivation > 1.0 {
@@ -192,19 +189,17 @@ impl Eyjafjalla {
                         / (((atks_per_skillactivation) as f64).trunc() + 1.0);
                 }
             }
-            dps = avghit / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd)
-                / 100.0;
+            dps = avghit / atk_interval * (self.unit.attack_speed + aspd) / 100.0;
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            // UNTRANSLATED: self.atk_interval = 0.5
+            atk_interval = 0.5;
             atkbuff += self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmgarts =
                 ((final_atk * (1.0 - newres / 100.0)) as f64).max((final_atk * 0.05) as f64);
             let mut maxtargets = self.unit.skill_parameters.get(2).copied().unwrap_or(0.0);
-            dps = hitdmgarts / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd)
-                / 100.0
+            dps = hitdmgarts / atk_interval * (self.unit.attack_speed + aspd) / 100.0
                 * ((self.unit.targets as f64) as f64).min((maxtargets) as f64);
         }
         return dps;

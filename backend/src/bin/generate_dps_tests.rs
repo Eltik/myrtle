@@ -133,15 +133,25 @@ fn generate_test_cases(operators: &[OperatorInfo]) -> Vec<TestCase> {
         // skill=0 in Python means "no skill" (basic attack)
         for skill in &op.skills {
             for (defense, res) in &scenarios {
-                test_cases.push(TestCase {
-                    operator_class: op.class_name.clone(),
-                    operator_id: op.char_id.clone(),
-                    rust_module: op.rust_module.clone(),
-                    skill_index: *skill,
-                    module_index: op.default_module,
-                    defense: *defense,
-                    res: *res,
-                });
+                // Generate tests for both with-module and without-module
+                // This ensures we test operators regardless of module data availability
+                let module_indices = if op.default_module > 0 {
+                    vec![0, op.default_module] // Test both without module and with default module
+                } else {
+                    vec![0] // Only test without module
+                };
+
+                for module_idx in module_indices {
+                    test_cases.push(TestCase {
+                        operator_class: op.class_name.clone(),
+                        operator_id: op.char_id.clone(),
+                        rust_module: op.rust_module.clone(),
+                        skill_index: *skill,
+                        module_index: module_idx,
+                        defense: *defense,
+                        res: *res,
+                    });
+                }
             }
         }
     }

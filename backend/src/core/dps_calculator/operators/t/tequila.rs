@@ -71,27 +71,25 @@ impl Tequila {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
         let mut atkbuff: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut dps: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
 
         atkbuff = if self.unit.trait_damage { 2.0 } else { 1.0 };
         final_atk = self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
         if (self.unit.skill_index as f64) == 0.0 {
-            if 1.0 /* self.hits - needs manual implementation */ == 0.0
-                || (self.unit.elite as f64) == 0.0
-            {
+            if 0.0 /* self.hits - defaults to 0 */ == 0.0 || (self.unit.elite as f64) == 0.0 {
                 return res * 0.0;
             }
             // UNTRANSLATED ELSE (no matching if): else:
-            dps = 1.0 /* self.hits - needs manual implementation */ * ((final_atk * self.unit.talent1_parameters.first().copied().unwrap_or(0.0) *(1.0 -res/ 100.0)) as f64).max((final_atk * self.unit.talent1_parameters.first().copied().unwrap_or(0.0) * 0.05) as f64);
+            dps = 0.0 /* self.hits - defaults to 0 */ * ((final_atk * self.unit.talent1_parameters.first().copied().unwrap_or(0.0) *(1.0 -res/ 100.0)) as f64).max((final_atk * self.unit.talent1_parameters.first().copied().unwrap_or(0.0) * 0.05) as f64);
         }
         if (self.unit.skill_index as f64) == 1.0 {
             atk_scale = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);

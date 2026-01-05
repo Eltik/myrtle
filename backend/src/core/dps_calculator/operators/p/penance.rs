@@ -89,19 +89,19 @@ impl Penance {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
-        let mut skilldmg: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut avghit: f64 = 0.0;
 
         atkbuff = if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage {
             0.08
@@ -145,11 +145,11 @@ impl Penance {
             hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
             dps = hitdmg / (atk_interval / (self.unit.attack_speed / 100.0));
         }
-        if 1.0 /* self.hits - needs manual implementation */ > 0.0 {
+        if 0.0 /* self.hits - defaults to 0 */ > 0.0 {
             let mut arts_scale = self.unit.talent2_parameters.first().copied().unwrap_or(0.0);
             let mut artsdmg = ((final_atk * arts_scale * (1.0 - res / 100.0)) as f64)
                 .max((final_atk * arts_scale * 0.05) as f64);
-            dps += artsdmg * 1.0 /* self.hits - needs manual implementation */;
+            dps += artsdmg * 0.0 /* self.hits - defaults to 0 */;
         }
         return dps;
     }

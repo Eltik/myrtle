@@ -79,19 +79,19 @@ impl Chongyue {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut aspd: f64 = 0.0;
         let mut skilldmg: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut relevant_hits: f64 = 0.0;
-        let mut crit_chance: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut relevant_hits: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
+        let mut crit_chance: f64 = 0.0;
 
         aspd = if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage {
             10.0
@@ -122,10 +122,10 @@ impl Chongyue {
             if self.unit.talent_damage && (self.unit.elite as f64) > 0.0 {
                 skilldmg *= dmg;
             }
-            relevant_hits = (duration
-                / ((self.unit.attack_interval as f64) / (self.unit.attack_speed + aspd) as f64)
-                    .trunc()
-                * 100.0)
+            relevant_hits = ((duration
+                / ((self.unit.attack_interval as f64) / (self.unit.attack_speed + aspd) * 100.0))
+                as f64)
+                .trunc()
                 + 1.0;
             crit_chance = 1.0 - ((1.0 - crit_rate) as f64).powf(relevant_hits as f64);
             hitdmg *= (1.0 - crit_chance) + dmg * crit_chance;
@@ -138,10 +138,10 @@ impl Chongyue {
         if (self.unit.skill_index as f64) == 3.0 {
             let mut hits =
                 (self.unit.skill_cost as f64) / 2.0 + (self.unit.skill_cost as f64) % 2.0;
-            relevant_hits = (duration
-                / ((self.unit.attack_interval as f64) / (self.unit.attack_speed + aspd) as f64)
-                    .trunc()
-                * 100.0)
+            relevant_hits = ((duration
+                / ((self.unit.attack_interval as f64) / (self.unit.attack_speed + aspd) * 100.0))
+                as f64)
+                .trunc()
                 * 2.0
                 + 2.0;
             relevant_hits *= hits / (hits + 1.0);

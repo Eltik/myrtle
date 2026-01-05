@@ -68,13 +68,13 @@ impl JessicaAlter {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut final_atk: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
 
         if (self.unit.skill_index as f64) < 2.0 {
             final_atk = self.unit.atk
@@ -84,17 +84,17 @@ impl JessicaAlter {
                         * (self.unit.skill_index as f64))
                 + self.unit.buff_atk_flat;
             hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
-            dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
+            dps = hitdmg / atk_interval * self.unit.attack_speed / 100.0;
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            // UNTRANSLATED: self.atk_interval = 0.3
+            atk_interval = 0.3;
             final_atk = self.unit.atk
                 * (1.0
                     + self.unit.buff_atk
                     + self.unit.skill_parameters.first().copied().unwrap_or(0.0))
                 + self.unit.buff_atk_flat;
             hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
-            dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
+            dps = hitdmg / atk_interval * self.unit.attack_speed / 100.0;
         }
         if (self.unit.skill_index as f64) == 3.0 {
             final_atk = self.unit.atk
