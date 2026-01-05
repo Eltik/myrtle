@@ -93,7 +93,7 @@ impl LapplandAlter {
             drone_dmg *= self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0);
             drones += 1.0;
         }
-        let mut aspd = 0.0; // try-except fallback
+        let mut aspd = self.unit.talent2_parameters.get(1).copied().unwrap_or(0.0); // try-except fallback
         let mut atkbuff = self.unit.skill_parameters.first().copied().unwrap_or(0.0)
             * ((self.unit.skill_index as f64) as f64).min((1) as f64);
         if (self.unit.skill_index as f64) == 1.0 {

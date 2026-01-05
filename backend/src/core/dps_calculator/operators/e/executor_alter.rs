@@ -19,7 +19,7 @@ impl ExecutorAlter {
 
     /// Creates a new ExecutorAlter operator
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
-        let unit = OperatorUnit::new(
+        let mut unit = OperatorUnit::new(
             operator_data,
             params,
             3, // default_skill_index
@@ -27,6 +27,15 @@ impl ExecutorAlter {
             1, // default_module_index
             Self::AVAILABLE_SKILLS.to_vec(),
         );
+
+        // Apply init-time modifications from Python __init__
+        unit.ammo = 4.0 + 4.0 * (unit.skill_index as f64);
+        if unit.elite > 0 && unit.skill_index != 1 && unit.talent2_damage && unit.elite == 2 {
+            unit.ammo += 4.0;
+        }
+        if unit.elite > 0 && unit.skill_index != 1 && !unit.talent_damage {
+            unit.ammo = 1.0;
+        }
 
         Self { unit }
     }
@@ -92,27 +101,41 @@ impl ExecutorAlter {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
-        let mut modatkbuff: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut critdmg: f64 = 0.0;
-        let mut avgdmg: f64 = 0.0;
-        let mut critdef: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut aspd: f64 = 0.0;
+        // Calculate ammo from __init__ logic
+        let mut ammo: f64 = 1.0;
+        ammo = 4.0 + 4.0 * (self.unit.skill_index as f64);
+        if self.unit.elite > 0
+            && self.unit.skill_index != 1
+            && self.unit.talent2_damage
+            && self.unit.elite == 2
+        {
+            ammo += 4.0;
+        }
+        if self.unit.elite > 0 && self.unit.skill_index != 1 && !self.unit.talent_damage {
+            ammo = 1.0;
+        }
+
         let mut critdefignore: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut critdef: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut avgdmg: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut modatkbuff: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
+        let mut critdmg: f64 = 0.0;
 
         let mut crit_rate = if ((self.unit.elite as f64) as f64) > 0.0
             && ((self.unit.skill_index as f64) as f64) != 0.0
         {
             self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
-                + self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0) * 1.0 /* 1.0 /* self.ammo - needs manual implementation */ - needs manual implementation */
+                + self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0) * ammo
         } else {
             0.0
         };
-        critdefignore = 0.0; // try-except fallback
+        critdefignore = self.unit.talent1_parameters.get(2).copied().unwrap_or(0.0); // try-except fallback
         crit_rate = ((crit_rate) as f64).min((1) as f64);
         aspd = if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage {
             12.0
@@ -166,7 +189,7 @@ impl ExecutorAlter {
                 * (self.unit.targets as f64);
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            atkbuff += 1.0 /* self.ammo - needs manual implementation */ * self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
+            atkbuff += ammo * self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
             critdef = ((0) as f64).max((defense - critdefignore) as f64);
             final_atk = self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk + modatkbuff)
                 + self.unit.buff_atk_flat;

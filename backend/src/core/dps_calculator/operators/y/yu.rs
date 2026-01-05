@@ -82,14 +82,14 @@ impl Yu {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut dps: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut hitdmg: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut newres: f64 = 0.0;
         let mut ele_scale: f64 = 0.0;
         let mut hitdmg2: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut newres: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
+        let mut dps: f64 = 0.0;
 
         newres = ((0) as f64).max((res - 20.0) as f64);
         atkbuff = if ((self.unit.skill_index as f64) as f64) == 2.0 {

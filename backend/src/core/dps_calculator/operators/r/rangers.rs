@@ -19,7 +19,7 @@ impl Rangers {
 
     /// Creates a new Rangers operator
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
-        let unit = OperatorUnit::new(
+        let mut unit = OperatorUnit::new(
             operator_data,
             params,
             0, // default_skill_index
@@ -27,6 +27,11 @@ impl Rangers {
             0, // default_module_index
             Self::AVAILABLE_SKILLS.to_vec(),
         );
+
+        // Apply init-time modifications from Python __init__
+        if unit.potential > 2 {
+            unit.attack_speed += 6.0;
+        }
 
         Self { unit }
     }

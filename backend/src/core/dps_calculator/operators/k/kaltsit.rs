@@ -19,7 +19,7 @@ impl Kaltsit {
 
     /// Creates a new Kaltsit operator
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
-        let unit = OperatorUnit::new(
+        let mut unit = OperatorUnit::new(
             operator_data,
             params,
             3, // default_skill_index
@@ -27,6 +27,11 @@ impl Kaltsit {
             2, // default_module_index
             Self::AVAILABLE_SKILLS.to_vec(),
         );
+
+        // Apply init-time modifications from Python __init__
+        if unit.module_index == 2 || unit.module_index == 3 {
+            unit.attack_speed -= 4.0 + (unit.module_level as f64);
+        }
 
         Self { unit }
     }
@@ -75,12 +80,12 @@ impl Kaltsit {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut hitdmg: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
         let mut aspd: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut atkbuff: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
 
         aspd = 0.0;
         if (self.unit.module_index as f64) == 2.0 && self.unit.talent_damage {

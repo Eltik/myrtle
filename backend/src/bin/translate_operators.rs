@@ -41,6 +41,21 @@ struct OperatorClass {
     has_total_dmg_override: bool,
     /// The total_dmg method body (if overridden)
     total_dmg_body: String,
+    /// Init-time field modifications (e.g., self.ammo = 4 + 4 * self.skill)
+    init_modifications: Vec<InitModification>,
+}
+
+/// Represents an init-time field modification
+#[derive(Debug, Clone)]
+struct InitModification {
+    /// The field being modified (e.g., "ammo", "drone_atk")
+    field: String,
+    /// The operation: "=" for assignment, "+=" for add-assign, etc.
+    operation: String,
+    /// The expression to apply
+    expression: String,
+    /// Optional condition for the modification
+    condition: Option<String>,
 }
 
 /// Pre-compiled regex patterns for performance
@@ -127,6 +142,12 @@ struct CompiledPatterns {
     sp_boost: Regex,
     drone_atk_interval: Regex,
     crate_kw: Regex,
+    // Specific cloned_op patterns for Ela defaults (must run before generic patterns)
+    cloned_op_atk: Regex,
+    cloned_op_atk_interval: Regex,
+    cloned_op_ranged: Regex,
+    cloned_op_physical: Regex,
+    // Generic cloned_op patterns (fallback)
     cloned_op_bool: Regex,
     cloned_op_num: Regex,
     self_hits: Regex,
@@ -296,7 +317,17 @@ impl CompiledPatterns {
             sp_boost: Regex::new(r"\bself\.sp_boost\b").unwrap(),
             drone_atk_interval: Regex::new(r"\bself\.drone_atk_interval\b").unwrap(),
             crate_kw: Regex::new(r"\bcrate\b").unwrap(),
-            cloned_op_bool: Regex::new(r"self\.cloned_op\.(ranged|melee|physical|trait_damage|talent_damage|skill_damage|module_damage)").unwrap(),
+            // Specific cloned_op patterns for Ela defaults (Muelsyse's default clone)
+            // Ela E2 90 stats: base ATK=588, trust=+80, pot3=+27 = 695 total
+            cloned_op_atk: Regex::new(r"\bself\.cloned_op\.atk\b").unwrap(),
+            cloned_op_atk_interval: Regex::new(r"\bself\.cloned_op\.atk_interval\b").unwrap(),
+            cloned_op_ranged: Regex::new(r"\bself\.cloned_op\.ranged\b").unwrap(),
+            cloned_op_physical: Regex::new(r"\bself\.cloned_op\.physical\b").unwrap(),
+            // Generic cloned_op patterns (fallback for other properties)
+            cloned_op_bool: Regex::new(
+                r"self\.cloned_op\.(melee|trait_damage|talent_damage|skill_damage|module_damage)",
+            )
+            .unwrap(),
             cloned_op_num: Regex::new(r"self\.cloned_op\.(\w+)").unwrap(),
             self_hits: Regex::new(r"\bself\.hits\b").unwrap(),
             self_pot: Regex::new(r"\bself\.pot\b").unwrap(),
@@ -503,7 +534,7 @@ impl PythonToRustTranslator {
             // Handle try-except patterns
             if let Some(try_stmt) = trimmed.strip_prefix("try: ") {
                 // First, check for assignment pattern
-                if let Some((var, _try_expr)) = self.parse_assignment(try_stmt) {
+                if let Some((var, try_expr)) = self.parse_assignment(try_stmt) {
                     let mut found_except = false;
                     for (j, next_line) in lines[i + 1..].iter().enumerate() {
                         let next_trimmed = next_line.trim();
@@ -520,12 +551,26 @@ impl PythonToRustTranslator {
                             {
                                 if except_var == var {
                                     let rust_default = self.translate_expression(default_expr);
+
+                                    // Check if try_expr is an array access like self.talent1_params[2]
+                                    // If so, generate unwrap_or pattern instead of just using default
+                                    let rust_expr = if let Some(array_access) =
+                                        self.extract_array_access(try_expr)
+                                    {
+                                        let (array_name, idx) = array_access;
+                                        format!(
+                                            "self.unit.{array_name}.get({idx}).copied().unwrap_or({rust_default})"
+                                        )
+                                    } else {
+                                        rust_default
+                                    };
+
                                     if !declared_vars.contains(&var) {
                                         rust_lines.push(format!(
                                             "{}let mut {} = {}; // try-except fallback",
                                             self.indent(self.indent_level),
                                             var,
-                                            rust_default
+                                            rust_expr
                                         ));
                                         declared_vars.insert(var.clone());
                                     } else {
@@ -533,7 +578,7 @@ impl PythonToRustTranslator {
                                             "{}{} = {}; // try-except fallback",
                                             self.indent(self.indent_level),
                                             var,
-                                            rust_default
+                                            rust_expr
                                         ));
                                     }
                                     found_except = true;
@@ -1855,6 +1900,25 @@ impl PythonToRustTranslator {
             .to_string();
         result = p.crate_kw.replace_all(&result, "crit_rate").to_string();
 
+        // Specific cloned_op replacements for Ela defaults (must run before generic patterns)
+        // Ela E2 90 with trust 100 and pot 3+: ATK=588+80+27=695, interval=0.85, ranged, physical
+        result = p
+            .cloned_op_atk
+            .replace_all(&result, "cloned_op_atk")
+            .to_string();
+        result = p
+            .cloned_op_atk_interval
+            .replace_all(&result, "cloned_op_atk_interval")
+            .to_string();
+        result = p
+            .cloned_op_ranged
+            .replace_all(&result, "cloned_op_ranged")
+            .to_string();
+        result = p
+            .cloned_op_physical
+            .replace_all(&result, "cloned_op_physical")
+            .to_string();
+        // Generic cloned_op fallbacks
         result = p
             .cloned_op_bool
             .replace_all(&result, "false /* cloned_op.$1 */ ")
@@ -2190,6 +2254,7 @@ fn parse_python_file(path: &Path) -> Result<Vec<OperatorClass>, String> {
         let skill_dps_body = extract_method_body(class_body, "skill_dps");
         let total_dmg_body = extract_method_body(class_body, "total_dmg");
         let has_total_dmg_override = !total_dmg_body.is_empty();
+        let init_modifications = parse_init_modifications(&init_body);
 
         operators.push(OperatorClass {
             class_name: class_name.to_string(),
@@ -2203,6 +2268,7 @@ fn parse_python_file(path: &Path) -> Result<Vec<OperatorClass>, String> {
             skill_dps_body,
             has_total_dmg_override,
             total_dmg_body,
+            init_modifications,
         });
     }
 
@@ -2259,6 +2325,578 @@ fn parse_int_list(s: &str) -> Vec<i32> {
     s.split(',').filter_map(|x| x.trim().parse().ok()).collect()
 }
 
+/// Parse init_body to extract field modifications like:
+/// - self.ammo = 4 + 4 * self.skill
+/// - self.drone_atk += 100
+/// - if condition: self.field = value
+fn parse_init_modifications(init_body: &str) -> Vec<InitModification> {
+    let mut modifications = Vec::new();
+
+    // Fields we care about modifying
+    let tracked_fields = [
+        "ammo",
+        "drone_atk",
+        "drone_atk_interval",
+        "atk",
+        "attack_speed",
+        "below50",
+        "shadows",
+    ];
+
+    // Pattern for simple assignment: self.field = expr
+    let assign_pattern = Regex::new(r"self\.(\w+)\s*=\s*(.+)$").unwrap();
+    // Pattern for compound assignment: self.field += expr
+    let compound_pattern = Regex::new(r"self\.(\w+)\s*(\+=|-=|\*=)\s*(.+)$").unwrap();
+    // Pattern for inline if: if condition: statement
+    let inline_if_pattern = Regex::new(r"^if\s+(.+?):\s+(.+)$").unwrap();
+
+    // Stack of (condition, indent) for nested conditions
+    let mut condition_stack: Vec<(String, usize)> = Vec::new();
+
+    /// Helper function to get combined condition from stack
+    fn get_combined_condition(stack: &[(String, usize)]) -> Option<String> {
+        if stack.is_empty() {
+            None
+        } else {
+            Some(
+                stack
+                    .iter()
+                    .map(|(c, _)| c.as_str())
+                    .collect::<Vec<_>>()
+                    .join(" and "),
+            )
+        }
+    }
+
+    /// Helper to process an assignment statement and add to modifications
+    fn process_statement(
+        statement: &str,
+        condition: Option<String>,
+        tracked_fields: &[&str],
+        assign_pattern: &Regex,
+        compound_pattern: &Regex,
+        modifications: &mut Vec<InitModification>,
+    ) {
+        let statement = statement.trim();
+
+        // Check for compound assignment (+=, -=, *=)
+        if let Some(caps) = compound_pattern.captures(statement) {
+            let field = caps.get(1).map(|m| m.as_str()).unwrap_or("");
+            let op = caps.get(2).map(|m| m.as_str()).unwrap_or("+=");
+            let expr = caps.get(3).map(|m| m.as_str()).unwrap_or("");
+
+            if tracked_fields.contains(&field) && !expr.is_empty() {
+                modifications.push(InitModification {
+                    field: field.to_string(),
+                    operation: op.to_string(),
+                    expression: expr.to_string(),
+                    condition,
+                });
+            }
+            return;
+        }
+
+        // Check for simple assignment (=)
+        if let Some(caps) = assign_pattern.captures(statement) {
+            let field = caps.get(1).map(|m| m.as_str()).unwrap_or("");
+            let expr = caps.get(2).map(|m| m.as_str()).unwrap_or("");
+
+            if tracked_fields.contains(&field) && !expr.is_empty() {
+                modifications.push(InitModification {
+                    field: field.to_string(),
+                    operation: "=".to_string(),
+                    expression: expr.to_string(),
+                    condition,
+                });
+            }
+        }
+    }
+
+    for line in init_body.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() || trimmed.starts_with('#') {
+            continue;
+        }
+
+        // Skip lines that are part of name construction or other logic
+        if trimmed.contains("self.name")
+            || trimmed.starts_with("super()")
+            || trimmed.starts_with("else:")
+        {
+            continue;
+        }
+
+        let line_indent = line.len() - line.trim_start().len();
+
+        // Pop conditions from stack if we've outdented
+        while let Some((_, cond_indent)) = condition_stack.last() {
+            if line_indent <= *cond_indent {
+                condition_stack.pop();
+            } else {
+                break;
+            }
+        }
+
+        // Check for inline if: if condition: statement
+        if let Some(caps) = inline_if_pattern.captures(trimmed) {
+            let inline_cond = caps.get(1).map(|m| m.as_str()).unwrap_or("");
+            let statement = caps.get(2).map(|m| m.as_str()).unwrap_or("");
+
+            // If "statement" is just a comment, treat this as a multi-line if with trailing comment
+            if statement.trim().starts_with('#') {
+                condition_stack.push((inline_cond.to_string(), line_indent));
+                continue;
+            }
+
+            // Combine with parent conditions
+            let full_condition = if condition_stack.is_empty() {
+                Some(inline_cond.to_string())
+            } else {
+                let parent = get_combined_condition(&condition_stack).unwrap();
+                Some(format!("{parent} and {inline_cond}"))
+            };
+
+            process_statement(
+                statement,
+                full_condition,
+                &tracked_fields,
+                &assign_pattern,
+                &compound_pattern,
+                &mut modifications,
+            );
+            continue;
+        }
+
+        // Check for multi-line if: if condition:
+        if trimmed.starts_with("if ") && trimmed.ends_with(':') {
+            // Extract condition (remove "if " prefix and ":" suffix)
+            let cond = trimmed
+                .strip_prefix("if ")
+                .and_then(|s| s.strip_suffix(':'))
+                .unwrap_or("")
+                .to_string();
+
+            condition_stack.push((cond, line_indent));
+            continue;
+        }
+
+        // Regular statement (not an if)
+        let current_condition = get_combined_condition(&condition_stack);
+
+        process_statement(
+            trimmed,
+            current_condition,
+            &tracked_fields,
+            &assign_pattern,
+            &compound_pattern,
+            &mut modifications,
+        );
+    }
+
+    modifications
+}
+
+/// Generate Rust code for init modifications
+fn generate_init_modifications_code(modifications: &[InitModification]) -> String {
+    if modifications.is_empty() {
+        return String::new();
+    }
+
+    let mut lines = Vec::new();
+    lines.push("        // Apply init-time modifications from Python __init__".to_string());
+
+    for modification in modifications {
+        let rust_field = match modification.field.as_str() {
+            "ammo" => "ammo",
+            "drone_atk" => "drone_atk",
+            "drone_atk_interval" => "drone_atk_interval",
+            "atk" => "atk",
+            "attack_speed" => "attack_speed",
+            _ => continue,
+        };
+
+        // Translate the expression from Python to Rust
+        let rust_expr = translate_init_expression(&modification.expression);
+
+        let code = match modification.operation.as_str() {
+            "=" => format!("unit.{rust_field} = {rust_expr};"),
+            "+=" => format!("unit.{rust_field} += {rust_expr};"),
+            "-=" => format!("unit.{rust_field} -= {rust_expr};"),
+            "*=" => format!("unit.{rust_field} *= {rust_expr};"),
+            _ => continue,
+        };
+
+        if let Some(condition) = &modification.condition {
+            let rust_cond = translate_init_condition(condition);
+            lines.push(format!("        if {rust_cond} {{ {code} }}"));
+        } else {
+            lines.push(format!("        {code}"));
+        }
+    }
+
+    lines.join("\n")
+}
+
+/// Translate a Python expression from __init__ to Rust
+fn translate_init_expression(expr: &str) -> String {
+    // Strip Python comments
+    let expr = if let Some(hash_pos) = expr.find('#') {
+        expr[..hash_pos].trim()
+    } else {
+        expr.trim()
+    };
+
+    let mut result = expr.to_string();
+
+    // Replace Python self.field references with unit.field
+    result = result.replace("self.skill", "(unit.skill_index as f64)");
+    result = result.replace("self.module_lvl", "(unit.module_level as f64)");
+    result = result.replace("self.module", "(unit.module_index as f64)");
+    result = result.replace("self.elite", "(unit.elite as f64)");
+
+    // Handle integer literals for float fields
+    let int_pattern = Regex::new(r"\b(\d+)\b").unwrap();
+    result = int_pattern.replace_all(&result, "${1}.0").to_string();
+
+    // Fix cases like "1.0.0" from double replacement
+    result = result.replace(".0.0", ".0");
+
+    result
+}
+
+/// Translate a Python condition from __init__ to Rust
+fn translate_init_condition(condition: &str) -> String {
+    let mut result = condition.to_string();
+
+    // Handle "not " prefix (Python negation)
+    result = result.replace("not ", "!");
+
+    // Replace Python self.field references for conditionals
+    // Order matters - replace longer patterns first
+    result = result.replace("self.talent2_dmg", "unit.talent2_damage");
+    result = result.replace("self.talent_dmg", "unit.talent_damage");
+    result = result.replace("self.trait_dmg", "unit.trait_damage");
+    result = result.replace("self.skill_dmg", "unit.skill_damage");
+    result = result.replace("self.module_dmg", "unit.module_damage");
+
+    // Replace other self.field references
+    result = result.replace("self.skill", "unit.skill_index");
+    result = result.replace("self.module_lvl", "unit.module_level");
+    result = result.replace("self.module", "unit.module_index");
+    result = result.replace("self.elite", "unit.elite");
+
+    // Replace pp.pot (parameter potential) with unit.potential
+    result = result.replace("pp.pot", "unit.potential");
+
+    // Replace Python operators
+    result = result.replace(" and ", " && ");
+    result = result.replace(" or ", " || ");
+    result = result.replace(" == ", " == ");
+    result = result.replace(" > ", " > ");
+    result = result.replace(" < ", " < ");
+    result = result.replace(" >= ", " >= ");
+    result = result.replace(" <= ", " <= ");
+
+    // Handle "in [x, y, z]" patterns
+    let in_list_pattern = Regex::new(r"(\w+(?:\.\w+)*)\s+in\s+\[([^\]]+)\]").unwrap();
+    result = in_list_pattern
+        .replace_all(&result, |caps: &regex::Captures| {
+            let var = &caps[1];
+            let items: Vec<&str> = caps[2].split(',').map(|s| s.trim()).collect();
+            let conditions: Vec<String> = items.iter().map(|i| format!("{var} == {i}")).collect();
+            format!("({})", conditions.join(" || "))
+        })
+        .to_string();
+
+    result
+}
+
+/// Generate Rust code to compute `below50` from __init__ modifications
+fn generate_below50_code(modifications: &[InitModification]) -> String {
+    let below50_mods: Vec<_> = modifications
+        .iter()
+        .filter(|m| m.field == "below50")
+        .collect();
+
+    if below50_mods.is_empty() {
+        return String::new();
+    }
+
+    let mut lines = Vec::new();
+    lines.push("        // Calculate below50 from __init__ logic".to_string());
+    lines.push("        let mut below50 = false;".to_string());
+
+    for modification in below50_mods {
+        let rust_expr = translate_skill_dps_init_expr(&modification.expression);
+        let code = format!("below50 = {rust_expr};");
+
+        if let Some(condition) = &modification.condition {
+            let rust_cond = translate_skill_dps_init_cond(condition);
+            lines.push(format!("        if {rust_cond} {{ {code} }}"));
+        } else {
+            lines.push(format!("        {code}"));
+        }
+    }
+    lines.push(String::new());
+
+    lines.join("\n")
+}
+
+/// Generate Rust code to compute `shadows` from __init__ modifications
+fn generate_shadows_code(modifications: &[InitModification]) -> String {
+    let shadows_mods: Vec<_> = modifications
+        .iter()
+        .filter(|m| m.field == "shadows")
+        .collect();
+
+    if shadows_mods.is_empty() {
+        return String::new();
+    }
+
+    let mut lines = Vec::new();
+    lines.push("        // Calculate shadows from __init__ logic".to_string());
+    lines.push("        let mut shadows: f64 = 1.0;".to_string());
+
+    for modification in shadows_mods {
+        let rust_expr = translate_skill_dps_init_expr(&modification.expression);
+        let code = match modification.operation.as_str() {
+            "=" => format!("shadows = {rust_expr};"),
+            "+=" => format!("shadows += {rust_expr};"),
+            "-=" => format!("shadows -= {rust_expr};"),
+            _ => continue,
+        };
+
+        if let Some(condition) = &modification.condition {
+            let rust_cond = translate_skill_dps_init_cond(condition);
+            lines.push(format!("        if {rust_cond} {{ {code} }}"));
+        } else {
+            lines.push(format!("        {code}"));
+        }
+    }
+    lines.push(String::new());
+
+    lines.join("\n")
+}
+
+/// Generate Rust code to compute `ammo` from __init__ modifications
+fn generate_ammo_code(modifications: &[InitModification]) -> String {
+    let ammo_mods: Vec<_> = modifications.iter().filter(|m| m.field == "ammo").collect();
+
+    if ammo_mods.is_empty() {
+        return String::new();
+    }
+
+    let mut lines = Vec::new();
+    lines.push("        // Calculate ammo from __init__ logic".to_string());
+    lines.push("        let mut ammo: f64 = 1.0;".to_string());
+
+    for modification in ammo_mods {
+        let rust_expr = translate_skill_dps_init_expr(&modification.expression);
+        let code = match modification.operation.as_str() {
+            "=" => format!("ammo = {rust_expr};"),
+            "+=" => format!("ammo += {rust_expr};"),
+            "-=" => format!("ammo -= {rust_expr};"),
+            _ => continue,
+        };
+
+        if let Some(condition) = &modification.condition {
+            let rust_cond = translate_skill_dps_init_cond(condition);
+            lines.push(format!("        if {rust_cond} {{ {code} }}"));
+        } else {
+            lines.push(format!("        {code}"));
+        }
+    }
+    lines.push(String::new());
+
+    lines.join("\n")
+}
+
+/// Translate Python expression from __init__ for use in skill_dps (uses self.unit instead of unit)
+fn translate_skill_dps_init_expr(expr: &str) -> String {
+    let expr = if let Some(hash_pos) = expr.find('#') {
+        expr[..hash_pos].trim()
+    } else {
+        expr.trim()
+    };
+
+    let mut result = expr.to_string();
+
+    // Handle Python ternary: `X if cond else Y` -> Rust `if cond { X } else { Y }`
+    if result.contains(" if ") && result.contains(" else ") {
+        if let Some(else_pos) = result.rfind(" else ") {
+            let before_else = &result[..else_pos];
+            let after_else = &result[else_pos + 6..];
+
+            if let Some(if_pos) = before_else.rfind(" if ") {
+                let true_val = before_else[..if_pos].trim();
+                let condition = before_else[if_pos + 4..].trim();
+                let false_val = after_else.trim();
+
+                let rust_cond = translate_skill_dps_init_cond(condition);
+                let rust_true = translate_skill_dps_init_value(true_val);
+                let rust_false = translate_skill_dps_init_value(false_val);
+
+                return format!("if {rust_cond} {{ {rust_true} }} else {{ {rust_false} }}");
+            }
+        }
+    }
+
+    // Handle min(a, b) -> ((a) as f64).min((b) as f64)
+    // Note: Wrap each argument in parens to handle expressions like `skill+1` correctly
+    let min_re = regex::Regex::new(r"min\(([^,]+),\s*([^)]+)\)").unwrap();
+    let had_min = min_re.is_match(&result);
+    result = min_re
+        .replace_all(&result, |caps: &regex::Captures| {
+            let arg1 = translate_skill_dps_init_value_no_float_convert(&caps[1]);
+            let arg2 = translate_skill_dps_init_value_no_float_convert(&caps[2]);
+            format!("(({arg1}) as f64).min(({arg2}) as f64)")
+        })
+        .to_string();
+
+    // Apply value translation for remaining cases (only if min wasn't present to avoid double-processing)
+    if !had_min {
+        result = translate_skill_dps_init_value(&result);
+    }
+
+    result
+}
+
+/// Translate a single value (field reference, literal, etc.) for skill_dps context
+fn translate_skill_dps_init_value(val: &str) -> String {
+    let mut result = translate_skill_dps_init_value_no_float_convert(val);
+
+    // Convert standalone integer literals to floats for f64 context
+    // Only for whole numbers that aren't already floats (not preceded or followed by .)
+    // Also skip if it looks like a type annotation (as fNN or as iNN)
+    if !result.contains("get(") && !result.contains('[') {
+        // Match integers not preceded by . or f/i (to avoid matching digits in floats or types)
+        // and not followed by . (to avoid converting the integer part of floats)
+        let int_re = regex::Regex::new(r"(^|[^.\dfiu])(\d+)([^.\d]|$)").unwrap();
+        result = int_re
+            .replace_all(&result, |caps: &regex::Captures| {
+                format!("{}{}.0{}", &caps[1], &caps[2], &caps[3])
+            })
+            .to_string();
+    }
+
+    result
+}
+
+/// Translate a single value without integer-to-float conversion (for use inside min/max where cast handles it)
+fn translate_skill_dps_init_value_no_float_convert(val: &str) -> String {
+    let val = val.trim();
+    let mut result = val.to_string();
+
+    // Replace Python self.field references with self.unit.field (order matters - more specific first)
+    result = result.replace("self.skill_dmg", "self.unit.skill_damage");
+    result = result.replace("self.talent2_dmg", "self.unit.talent2_damage");
+    result = result.replace("self.talent_dmg", "self.unit.talent_damage");
+    result = result.replace("self.trait_dmg", "self.unit.trait_damage");
+    result = result.replace("self.module_dmg", "self.unit.module_damage");
+    result = result.replace("self.module_lvl", "(self.unit.module_level as f64)");
+    result = result.replace("self.module", "self.unit.module_index");
+    result = result.replace("self.elite", "(self.unit.elite as f64)");
+
+    // Handle self.skill_params[i] -> self.unit.skill_parameters.get(i).copied().unwrap_or(0.0)
+    let skill_params_re = regex::Regex::new(r"self\.skill_params\[(\d+)\]").unwrap();
+    result = skill_params_re
+        .replace_all(&result, |caps: &regex::Captures| {
+            format!(
+                "self.unit.skill_parameters.get({}).copied().unwrap_or(0.0)",
+                &caps[1]
+            )
+        })
+        .to_string();
+
+    // Handle self.skill separately (after skill_params to avoid conflicts) - cast to f64 for arithmetic
+    result = result.replace("self.skill", "(self.unit.skill_index as f64)");
+
+    // Replace Python boolean literals
+    result = result.replace("True", "true");
+    result = result.replace("False", "false");
+
+    // Convert integer literals in arithmetic expressions to floats
+    // Match integers after arithmetic operators: +N, -N, *N, /N
+    // Also capture any following character to check if it's already a float
+    let arith_int_re = regex::Regex::new(r"([+\-*/])\s*(\d+)(\.|$|[^.\d])").unwrap();
+    result = arith_int_re
+        .replace_all(&result, |caps: &regex::Captures| {
+            let suffix = &caps[3];
+            if suffix == "." {
+                // Already a float, keep original
+                format!("{}{}{}", &caps[1], &caps[2], suffix)
+            } else {
+                // Not a float, convert to float
+                format!("{}{}.0{}", &caps[1], &caps[2], suffix)
+            }
+        })
+        .to_string();
+
+    result
+}
+
+/// Translate Python condition from __init__ for use in skill_dps
+fn translate_skill_dps_init_cond(condition: &str) -> String {
+    let mut result = condition.to_string();
+
+    // Handle "in [x, y, z]" patterns FIRST (before other replacements)
+    // Convert: self.skill in [0,3] -> (self.skill == 0 || self.skill == 3)
+    let in_list_pattern = regex::Regex::new(r"(\S+)\s+in\s+\[([^\]]+)\]").unwrap();
+    result = in_list_pattern
+        .replace_all(&result, |caps: &regex::Captures| {
+            let var = &caps[1];
+            let items: Vec<&str> = caps[2].split(',').map(|s| s.trim()).collect();
+            let conditions: Vec<String> = items.iter().map(|i| format!("{var} == {i}")).collect();
+            format!("({})", conditions.join(" || "))
+        })
+        .to_string();
+
+    // Replace Python self.field references with self.unit.field (order matters - more specific first)
+    result = result.replace("self.skill_dmg", "self.unit.skill_damage");
+    result = result.replace("self.talent2_dmg", "self.unit.talent2_damage");
+    result = result.replace("self.talent_dmg", "self.unit.talent_damage");
+    result = result.replace("self.trait_dmg", "self.unit.trait_damage");
+    result = result.replace("self.module_dmg", "self.unit.module_damage");
+    result = result.replace("self.module_lvl", "self.unit.module_level");
+    result = result.replace("self.module", "self.unit.module_index");
+    result = result.replace("self.elite", "self.unit.elite");
+
+    // Handle self.skill_params[i] -> self.unit.skill_parameters.get(i).copied().unwrap_or(0.0)
+    let skill_params_re = regex::Regex::new(r"self\.skill_params\[(\d+)\]").unwrap();
+    result = skill_params_re
+        .replace_all(&result, |caps: &regex::Captures| {
+            format!(
+                "self.unit.skill_parameters.get({}).copied().unwrap_or(0.0)",
+                &caps[1]
+            )
+        })
+        .to_string();
+
+    // Handle self.skill separately (after skill_params to avoid conflicts)
+    result = result.replace("self.skill", "self.unit.skill_index");
+
+    // Handle "not " prefix for negation
+    result = result.replace("not ", "!");
+
+    // Replace Python operators
+    result = result.replace(" and ", " && ");
+    result = result.replace(" or ", " || ");
+
+    // Convert integer literals in comparisons to floats when comparing with f64
+    // Pattern: `expr == N` or `expr != N` where expr contains skill_parameters (f64)
+    // This handles cases like `skill_parameters.get(1)...unwrap_or(0.0) == 1`
+    let cmp_re =
+        regex::Regex::new(r"(skill_parameters[^=!<>]+(?:==|!=|<=|>=|<|>)\s*)(\d+)(\s|$|&&|\|\|)")
+            .unwrap();
+    result = cmp_re
+        .replace_all(&result, |caps: &regex::Captures| {
+            format!("{}{}.0{}", &caps[1], &caps[2], &caps[3])
+        })
+        .to_string();
+
+    result
+}
+
 fn generate_rust_file(op: &OperatorClass) -> String {
     let mut output = String::new();
     let struct_name = to_upper_camel_case(&op.class_name);
@@ -2284,6 +2922,63 @@ fn generate_rust_file(op: &OperatorClass) -> String {
         // Inject extra vars at the start
         if !extra_vars.is_empty() {
             translated = format!("{extra_vars}\n{translated}");
+        }
+        // Inject cloned_op defaults (Ela) if needed
+        // Ela E2 90 with trust 100, pot 3+: ATK=588+80+27=695, interval=0.85
+        if translated.contains("cloned_op_atk") || translated.contains("cloned_op_ranged") {
+            let cloned_op_vars = r#"        // Cloned operator defaults to Ela (Trapmaster)
+        // Ela E2 90 stats with trust 100, pot 3+: ATK=588+80+27=695
+        let cloned_op_atk: f64 = 695.0;
+        let cloned_op_atk_interval: f64 = 0.85;
+        let cloned_op_ranged: bool = true;
+        let cloned_op_physical: bool = true;
+"#;
+            translated = format!("{cloned_op_vars}\n{translated}");
+        }
+        // Inject below50 computation if needed (from __init__ logic)
+        // Check for both patterns since the translation may vary based on processing order
+        if translated.contains("/* self.below50") || translated.contains("/* below50") {
+            let below50_code = generate_below50_code(&op.init_modifications);
+            if !below50_code.is_empty() {
+                // Replace both possible patterns
+                translated = translated.replace(
+                    "false /* self.below50 - needs manual implementation */",
+                    "below50",
+                );
+                translated = translated.replace(
+                    "false /* below50 - needs manual implementation */",
+                    "below50",
+                );
+                translated = format!("{below50_code}\n{translated}");
+            }
+        }
+        // Inject shadows computation if needed (from __init__ logic)
+        // Check for both patterns since the translation may vary based on processing order
+        if translated.contains("/* self.shadows") || translated.contains("/* shadows") {
+            let shadows_code = generate_shadows_code(&op.init_modifications);
+            if !shadows_code.is_empty() {
+                // Replace both possible patterns
+                translated = translated.replace(
+                    "1.0 /* self.shadows - needs manual implementation */",
+                    "shadows",
+                );
+                translated = translated
+                    .replace("1.0 /* shadows - needs manual implementation */", "shadows");
+                translated = format!("{shadows_code}\n{translated}");
+            }
+        }
+        // Inject ammo computation if needed (from __init__ logic)
+        // Check for both patterns since the translation may vary based on processing order
+        if translated.contains("/* self.ammo") || translated.contains("/* ammo") {
+            let ammo_code = generate_ammo_code(&op.init_modifications);
+            if !ammo_code.is_empty() {
+                // Replace both possible patterns
+                translated =
+                    translated.replace("1.0 /* self.ammo - needs manual implementation */", "ammo");
+                translated =
+                    translated.replace("1.0 /* ammo - needs manual implementation */", "ammo");
+                translated = format!("{ammo_code}\n{translated}");
+            }
         }
         translated
     } else {
@@ -2319,7 +3014,7 @@ impl {} {{
 
     /// Creates a new {} operator
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {{
-        let unit = OperatorUnit::new(
+        let mut unit = OperatorUnit::new(
             operator_data,
             params,
             {}, // default_skill_index
@@ -2327,6 +3022,8 @@ impl {} {{
             {}, // default_module_index
             Self::AVAILABLE_SKILLS.to_vec(),
         );
+
+{}
 
         Self {{ unit }}
     }}
@@ -2361,6 +3058,7 @@ impl {} {{
         op.default_skill,
         op.default_pot,
         op.default_mod,
+        generate_init_modifications_code(&op.init_modifications),
         skill_dps_comment,
         translated_skill_dps,
     ));

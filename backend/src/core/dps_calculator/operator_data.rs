@@ -59,8 +59,8 @@ pub struct OperatorData {
     pub talent1_module_extra: Vec<OperatorModuleExtra>,
     pub talent2_module_extra: Vec<OperatorModuleExtra>,
 
-    // Summon-specific
-    pub drone_atk: OperatorAtk,
+    // Summon-specific - stores data for all drones (index 0 = drone 1, etc.)
+    pub drone_atk: Vec<OperatorAtk>,
     pub drone_atk_interval: Vec<f32>,
 }
 
@@ -333,36 +333,36 @@ impl OperatorData {
             }
         }
 
-        let mut drone_atk = OperatorAtk {
-            e0: MinMax::default(),
-            e1: MinMax::default(),
-            e2: MinMax::default(),
-        };
+        // Store all drones' data for skill-dependent selection
+        // Each skill may use a different drone (e.g., Magallan S1/S2/S3 use drone1/drone2/drone3)
+        let mut drone_atk: Vec<OperatorAtk> = Vec::new();
         let mut drone_atk_interval: Vec<f32> = Vec::new();
 
         for drone_data in &operator.drones {
-            // Get attack interval
-            if let Some(base_attack_time) = drone_data
+            let e2 = if rarity > 3 {
+                Self::get_phase_atk(drone_data.phases.get(2))
+            } else {
+                MinMax::default()
+            };
+
+            let e1 = if rarity > 2 {
+                Self::get_phase_atk(drone_data.phases.get(1))
+            } else {
+                MinMax::default()
+            };
+
+            let e0 = Self::get_phase_atk(drone_data.phases.first());
+
+            drone_atk.push(OperatorAtk { e0, e1, e2 });
+
+            // Get attack interval for this drone
+            let base_attack_time = drone_data
                 .phases
                 .first()
                 .and_then(|p| p.attributes_key_frames.first())
                 .map(|kf| kf.data.base_attack_time as f32)
-            {
-                drone_atk_interval.push(base_attack_time);
-            }
-
-            // E0 ATK values
-            drone_atk.e0 = Self::get_phase_atk(drone_data.phases.first());
-
-            // E1 ATK values (rarity > 2)
-            if rarity > 2 {
-                drone_atk.e1 = Self::get_phase_atk(drone_data.phases.get(1));
-            }
-
-            // E2 ATK values (rarity > 3)
-            if rarity > 3 {
-                drone_atk.e2 = Self::get_phase_atk(drone_data.phases.get(2));
-            }
+                .unwrap_or(1.0);
+            drone_atk_interval.push(base_attack_time);
         }
 
         Self {

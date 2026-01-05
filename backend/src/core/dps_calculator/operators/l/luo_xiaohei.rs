@@ -28,6 +28,8 @@ impl LuoXiaohei {
             Self::AVAILABLE_SKILLS.to_vec(),
         );
 
+        // Apply init-time modifications from Python __init__
+
         Self { unit }
     }
 
@@ -79,16 +81,24 @@ impl LuoXiaohei {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut atk_scale: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut dps: f64 = 0.0;
+        // Calculate below50 from __init__ logic
+        let mut below50 = false;
+        below50 = false;
+        if self.unit.skill_index == 2 && self.unit.skill_damage {
+            below50 = true;
+        }
+        if self.unit.module_index == 2 && self.unit.module_level > 1 && self.unit.talent_damage {
+            below50 = true;
+        }
 
-        let mut dmg_scale = if false
-        /* false /* self.below50 - needs manual implementation */ - needs manual implementation */
-        {
+        let mut final_atk: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut aspd: f64 = 0.0;
+
+        let mut dmg_scale = if below50 {
             1.0 + 0.04 * ((self.unit.module_level as f64) as f64)
         } else {
             1.0
@@ -129,9 +139,7 @@ impl LuoXiaohei {
                 .max((0) as f64);
             let mut hitdmg2 =
                 ((final_atk - newdef) as f64).max((final_atk * 0.05) as f64) * dmg_scale;
-            if false
-            /* self.below50 - needs manual implementation */
-            {
+            if below50 {
                 hitdmg += hitdmg2;
             }
             dps = hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd)
