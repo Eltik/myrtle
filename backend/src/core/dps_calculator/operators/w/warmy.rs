@@ -3,7 +3,7 @@
 //! Auto-generated from ArknightsDpsCompare damage_formulas.py
 
 use super::super::super::operator_data::OperatorData;
-use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
+use super::super::super::operator_unit::{DpsCalculator, EnemyStats, OperatorParams, OperatorUnit};
 
 /// Warmy operator implementation
 pub struct Warmy {
@@ -85,15 +85,15 @@ impl Warmy {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut atkbuff: f64 = 0.0;
         let mut newres: f64 = 0.0;
-        let mut burst_scale: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut burst_scale: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut final_atk: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
 
         let mut falloutdmg = 7000.0;
         burst_scale = if ((((self.unit.skill_index as f64) as f64) == 2.0
@@ -168,6 +168,20 @@ impl std::ops::Deref for Warmy {
 
 impl std::ops::DerefMut for Warmy {
     fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.unit
+    }
+}
+
+impl DpsCalculator for Warmy {
+    fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
+        Self::skill_dps(self, enemy)
+    }
+
+    fn unit(&self) -> &OperatorUnit {
+        &self.unit
+    }
+
+    fn unit_mut(&mut self) -> &mut OperatorUnit {
         &mut self.unit
     }
 }

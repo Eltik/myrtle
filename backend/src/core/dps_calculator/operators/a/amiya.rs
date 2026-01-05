@@ -3,7 +3,7 @@
 //! Auto-generated from ArknightsDpsCompare damage_formulas.py
 
 use super::super::super::operator_data::OperatorData;
-use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
+use super::super::super::operator_unit::{DpsCalculator, EnemyStats, OperatorParams, OperatorUnit};
 
 /// Amiya operator implementation
 pub struct Amiya {
@@ -79,12 +79,12 @@ impl Amiya {
             .copied()
             .unwrap_or(2.3);
 
-        let mut hitdmgarts: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut hitdmgarts: f64 = 0.0;
         let mut dps: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
 
         if (self.unit.skill_index as f64) < 2.0 {
             aspd = self.unit.skill_parameters.first().copied().unwrap_or(0.0)
@@ -124,6 +124,20 @@ impl std::ops::Deref for Amiya {
 
 impl std::ops::DerefMut for Amiya {
     fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.unit
+    }
+}
+
+impl DpsCalculator for Amiya {
+    fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
+        Self::skill_dps(self, enemy)
+    }
+
+    fn unit(&self) -> &OperatorUnit {
+        &self.unit
+    }
+
+    fn unit_mut(&mut self) -> &mut OperatorUnit {
         &mut self.unit
     }
 }

@@ -3,7 +3,7 @@
 //! Auto-generated from ArknightsDpsCompare damage_formulas.py
 
 use super::super::super::operator_data::OperatorData;
-use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
+use super::super::super::operator_unit::{DpsCalculator, EnemyStats, OperatorParams, OperatorUnit};
 
 /// Windscoot operator implementation
 pub struct Windscoot {
@@ -72,13 +72,13 @@ impl Windscoot {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut aspd: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut dps: f64 = 0.0;
 
         atkbuff = if self.unit.trait_damage { 2.0 } else { 1.0 };
         final_atk = self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
@@ -124,6 +124,20 @@ impl std::ops::Deref for Windscoot {
 
 impl std::ops::DerefMut for Windscoot {
     fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.unit
+    }
+}
+
+impl DpsCalculator for Windscoot {
+    fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
+        Self::skill_dps(self, enemy)
+    }
+
+    fn unit(&self) -> &OperatorUnit {
+        &self.unit
+    }
+
+    fn unit_mut(&mut self) -> &mut OperatorUnit {
         &mut self.unit
     }
 }

@@ -3,7 +3,7 @@
 //! Auto-generated from ArknightsDpsCompare damage_formulas.py
 
 use super::super::super::operator_data::OperatorData;
-use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
+use super::super::super::operator_unit::{DpsCalculator, EnemyStats, OperatorParams, OperatorUnit};
 
 /// SanktaMiksaparato operator implementation
 pub struct SanktaMiksaparato {
@@ -74,12 +74,12 @@ impl SanktaMiksaparato {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
+        let mut avgphys: f64 = 0.0;
         let mut dps: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut final_atk: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut avgphys: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
 
         aspd = if ((self.unit.elite as f64) as f64) > 0.0 && self.unit.talent_damage {
             self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0) * 3.0
@@ -144,6 +144,20 @@ impl std::ops::Deref for SanktaMiksaparato {
 
 impl std::ops::DerefMut for SanktaMiksaparato {
     fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.unit
+    }
+}
+
+impl DpsCalculator for SanktaMiksaparato {
+    fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
+        Self::skill_dps(self, enemy)
+    }
+
+    fn unit(&self) -> &OperatorUnit {
+        &self.unit
+    }
+
+    fn unit_mut(&mut self) -> &mut OperatorUnit {
         &mut self.unit
     }
 }

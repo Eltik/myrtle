@@ -188,24 +188,54 @@ fn generate_rust_integration_test(
     operators: &[OperatorInfo],
     _test_cases: &[TestCase],
 ) {
-    // Generate a compact test file that loads test cases from JSON
-    // This avoids generating 100K+ lines that overwhelm IDE memory
+    // Generate operator imports and match arms for direct dispatch
+    // This avoids needing the DpsCalculator trait which can cause issues when regenerating operators
 
-    // Generate the dispatch match arms
-    let match_arms: Vec<String> = operators
-        .iter()
-        .filter(|op| !SKIP_OPERATORS.contains(&op.class_name.as_str()))
-        .map(|op| {
-            format!(
-                "            \"{}\" => {{\n                let op = operators::{}::new(operator_data, params);\n                Some(op.skill_dps(&enemy))\n            }}",
-                op.rust_module, op.class_name
-            )
-        })
-        .collect();
+    let mut imports = Vec::new();
+    let mut match_arms = Vec::new();
+
+    for op in operators {
+        // Skip fake operators
+        if SKIP_OPERATORS.contains(&op.class_name.as_str()) {
+            continue;
+        }
+
+        let rust_module = &op.rust_module;
+        let class_name = &op.class_name;
+
+        imports.push(format!(
+            "use backend::core::dps_calculator::operators::{class_name};"
+        ));
+        match_arms.push(format!(
+            "        \"{rust_module}\" => {{\n            \
+                let op = {class_name}::new(operator_data, params);\n            \
+                Some(op.skill_dps(&enemy))\n        \
+            }}"
+        ));
+    }
+
+    let imports_str = imports.join("\n");
+    let match_arms_str = match_arms.join("\n");
 
     let dispatch_function = format!(
-        "/// Calculates DPS for an operator by rust_module name\n/// Returns None if the operator is not found or if skill_dps panics\nfn calculate_operator_dps(\n    rust_module: &str,\n    operator_data: OperatorData,\n    params: OperatorParams,\n    enemy: EnemyStats,\n) -> Option<f64> {{\n    // Use catch_unwind to handle panics from array index out of bounds in translated operator code\n    std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {{\n        match rust_module {{\n{}\n            _ => return None,\n        }}\n    }})).ok().flatten()\n}}",
-        match_arms.join(",\n")
+        r#"/// Calculates DPS for an operator by rust_module name
+/// Returns None if the operator is not found or if skill_dps panics
+fn calculate_operator_dps(
+    rust_module: &str,
+    operator_data: OperatorData,
+    params: OperatorParams,
+    enemy: EnemyStats,
+) -> Option<f64> {{
+    // Use catch_unwind to handle panics from array index out of bounds in translated operator code
+    std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {{
+        match rust_module {{
+{match_arms_str}
+        _ => None,
+        }}
+    }}))
+    .ok()
+    .flatten()
+}}"#
     );
 
     // Build the test file by concatenating parts
@@ -225,10 +255,12 @@ use std::sync::OnceLock;
 
 use backend::core::dps_calculator::operator_data::OperatorData;
 use backend::core::dps_calculator::operator_unit::{{EnemyStats, OperatorParams}};
-use backend::core::dps_calculator::operators;
 use backend::core::local::handler::init_game_data;
 use backend::core::local::types::GameData;
 use backend::events::EventEmitter;
+
+// Operator imports for direct dispatch
+{imports_str}
 
 /// Tolerance for DPS comparison (percentage difference allowed)
 const TOLERANCE_PERCENT: f64 = 0.15; // 15% (account for game data version differences)
@@ -322,8 +354,8 @@ fn get_game_data() -> Option<&'static GameData> {{
         .as_ref()
 }}
 
-fn make_test_key(operator: &str, skill: i32, defense: f64, res: f64) -> String {{
-    format!("{{}}_s{{}}_{{:.0}}_{{:.0}}", operator, skill, defense, res)
+fn make_test_key(operator: &str, skill: i32, module: i32, defense: f64, res: f64) -> String {{
+    format!("{{}}_s{{}}_m{{}}_{{:.0}}_{{:.0}}", operator, skill, module, defense, res)
 }}
 
 fn compare_dps(rust_dps: f64, python_dps: f64, test_name: &str) -> Result<(), String> {{
@@ -394,7 +426,7 @@ mod tests {{
 
         let mut missing = 0;
         for tc in cases.iter() {{
-            let key = make_test_key(&tc.operator, tc.skill, tc.defense, tc.res);
+            let key = make_test_key(&tc.operator, tc.skill, tc.module, tc.defense, tc.res);
             if !expected.contains_key(&key) {{
                 missing += 1;
                 if missing <= 10 {{
@@ -435,22 +467,22 @@ mod tests {{
     fn test_known_operators() {{
         let expected = get_expected_dps();
 
-        // Test Aak S1 at 0 def/res - should have some DPS
-        let aak_key = make_test_key("Aak", 0, 0.0, 0.0);
+        // Test Aak S1 at 0 def/res - should have some DPS (module 0 = no module)
+        let aak_key = make_test_key("Aak", 1, 0, 0.0, 0.0);
         if let Some(&dps) = expected.get(&aak_key) {{
             assert!(dps > 0.0, "Aak S1 should have positive DPS");
             println!("Aak S1 (0/0): {{:.2}} DPS", dps);
         }}
 
-        // Test SilverAsh S3 at 0 def/res
-        let sa_key = make_test_key("SilverAsh", 2, 0.0, 0.0);
+        // Test SilverAsh S3 at 0 def/res (module 0 = no module)
+        let sa_key = make_test_key("SilverAsh", 3, 0, 0.0, 0.0);
         if let Some(&dps) = expected.get(&sa_key) {{
             assert!(dps > 0.0, "SilverAsh S3 should have positive DPS");
             println!("SilverAsh S3 (0/0): {{:.2}} DPS", dps);
         }}
 
-        // Test Surtr S3 at 0 def/res - should be high
-        let surtr_key = make_test_key("Surtr", 2, 0.0, 0.0);
+        // Test Surtr S3 at 0 def/res - should be high (module 0 = no module)
+        let surtr_key = make_test_key("Surtr", 3, 0, 0.0, 0.0);
         if let Some(&dps) = expected.get(&surtr_key) {{
             assert!(dps > 1000.0, "Surtr S3 should have high DPS");
             println!("Surtr S3 (0/0): {{:.2}} DPS", dps);
@@ -462,9 +494,9 @@ mod tests {{
     fn test_defense_reduces_dps() {{
         let expected = get_expected_dps();
 
-        // Physical operator: SilverAsh
-        let sa_0def = expected.get(&make_test_key("SilverAsh", 2, 0.0, 0.0));
-        let sa_1000def = expected.get(&make_test_key("SilverAsh", 2, 1000.0, 50.0));
+        // Physical operator: SilverAsh (module 0 = no module)
+        let sa_0def = expected.get(&make_test_key("SilverAsh", 3, 0, 0.0, 0.0));
+        let sa_1000def = expected.get(&make_test_key("SilverAsh", 3, 0, 1000.0, 50.0));
 
         if let (Some(&dps_0), Some(&dps_1000)) = (sa_0def, sa_1000def) {{
             assert!(dps_0 > dps_1000, "Higher defense should reduce physical DPS");
@@ -477,9 +509,9 @@ mod tests {{
     fn test_resistance_reduces_arts_dps() {{
         let expected = get_expected_dps();
 
-        // Arts operator: Eyjafjalla
-        let eyja_0res = expected.get(&make_test_key("Eyjafjalla", 2, 0.0, 0.0));
-        let eyja_50res = expected.get(&make_test_key("Eyjafjalla", 2, 1000.0, 50.0));
+        // Arts operator: Eyjafjalla (module 0 = no module)
+        let eyja_0res = expected.get(&make_test_key("Eyjafjalla", 3, 0, 0.0, 0.0));
+        let eyja_50res = expected.get(&make_test_key("Eyjafjalla", 3, 0, 1000.0, 50.0));
 
         if let (Some(&dps_0), Some(&dps_50)) = (eyja_0res, eyja_50res) {{
             assert!(dps_0 > dps_50, "Higher resistance should reduce arts DPS");
@@ -506,7 +538,7 @@ mod tests {{
         let mut errors: Vec<String> = Vec::new();
 
         for tc in cases.iter() {{
-            let key = make_test_key(&tc.operator, tc.skill, tc.defense, tc.res);
+            let key = make_test_key(&tc.operator, tc.skill, tc.module, tc.defense, tc.res);
 
             let Some(&python_dps) = expected.get(&key) else {{
                 skipped += 1;
@@ -519,6 +551,14 @@ mod tests {{
             }};
 
             let operator_data = OperatorData::new(operator.clone());
+
+            // Skip module > 0 tests if operator has no module data
+            // (Python pickle may have module data we don't have in our JSON files)
+            if tc.module > 0 && operator_data.available_modules.is_empty() {{
+                skipped += 1;
+                continue;
+            }}
+
             // tc.skill is 1-indexed (1=S1, 2=S2, 3=S3), matching Python semantics
             let params = create_test_params(tc.skill, tc.module);
             let enemy = create_enemy_stats(tc.defense, tc.res);
@@ -609,9 +649,9 @@ def load_test_cases():
         return json.load(f)
 
 
-def make_test_key(operator: str, skill: int, defense: float, res: float) -> str:
+def make_test_key(operator: str, skill: int, module: int, defense: float, res: float) -> str:
     """Create a unique key for a test case."""
-    return f"{operator}_s{skill}_{int(defense)}_{int(res)}"
+    return f"{operator}_s{skill}_m{module}_{int(defense)}_{int(res)}"
 
 
 def run_all_tests(output_file=None, generate_expected=False):
@@ -638,7 +678,7 @@ def run_all_tests(output_file=None, generate_expected=False):
         else:
             results.append(result)
             dps = result['dps']
-            key = make_test_key(tc['operator'], tc['skill'], tc['defense'], tc['res'])
+            key = make_test_key(tc['operator'], tc['skill'], tc['module'], tc['defense'], tc['res'])
             expected_dps[key] = dps
             print(f"  [{i+1}/{len(test_cases)}] {tc['operator']} S{tc['skill']+1} def={tc['defense']:.0f} res={tc['res']:.0f} -> DPS: {dps:.2f}")
 

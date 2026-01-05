@@ -3,7 +3,7 @@
 //! Auto-generated from ArknightsDpsCompare damage_formulas.py
 
 use super::super::super::operator_data::OperatorData;
-use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
+use super::super::super::operator_unit::{DpsCalculator, EnemyStats, OperatorParams, OperatorUnit};
 
 /// Beeswax operator implementation
 pub struct Beeswax {
@@ -91,6 +91,20 @@ impl std::ops::Deref for Beeswax {
 
 impl std::ops::DerefMut for Beeswax {
     fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.unit
+    }
+}
+
+impl DpsCalculator for Beeswax {
+    fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
+        Self::skill_dps(self, enemy)
+    }
+
+    fn unit(&self) -> &OperatorUnit {
+        &self.unit
+    }
+
+    fn unit_mut(&mut self) -> &mut OperatorUnit {
         &mut self.unit
     }
 }

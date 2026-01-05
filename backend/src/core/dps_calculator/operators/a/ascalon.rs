@@ -3,7 +3,7 @@
 //! Auto-generated from ArknightsDpsCompare damage_formulas.py
 
 use super::super::super::operator_data::OperatorData;
-use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
+use super::super::super::operator_unit::{DpsCalculator, EnemyStats, OperatorParams, OperatorUnit};
 
 /// Ascalon operator implementation
 pub struct Ascalon {
@@ -86,15 +86,15 @@ impl Ascalon {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut avghit: f64 = 0.0;
         let mut skilldmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut avghit: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut final_atk: f64 = 0.0;
 
         let mut talentstacks = if self.unit.talent_damage { 3.0 } else { 1.0 };
         let mut talentscale = self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0);
@@ -166,6 +166,20 @@ impl std::ops::Deref for Ascalon {
 
 impl std::ops::DerefMut for Ascalon {
     fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.unit
+    }
+}
+
+impl DpsCalculator for Ascalon {
+    fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
+        Self::skill_dps(self, enemy)
+    }
+
+    fn unit(&self) -> &OperatorUnit {
+        &self.unit
+    }
+
+    fn unit_mut(&mut self) -> &mut OperatorUnit {
         &mut self.unit
     }
 }

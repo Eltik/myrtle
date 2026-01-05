@@ -3,7 +3,7 @@
 //! Auto-generated from ArknightsDpsCompare damage_formulas.py
 
 use super::super::super::operator_data::OperatorData;
-use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
+use super::super::super::operator_unit::{DpsCalculator, EnemyStats, OperatorParams, OperatorUnit};
 
 /// Figurino operator implementation
 pub struct Figurino {
@@ -70,11 +70,11 @@ impl Figurino {
         let mut res = enemy.res;
 
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut skill_scale: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
         let mut dps: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
 
         let mut dmg_scale = if ((self.unit.elite as f64) as f64) > 0.0 && self.unit.talent_damage {
             self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
@@ -113,6 +113,20 @@ impl std::ops::Deref for Figurino {
 
 impl std::ops::DerefMut for Figurino {
     fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.unit
+    }
+}
+
+impl DpsCalculator for Figurino {
+    fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
+        Self::skill_dps(self, enemy)
+    }
+
+    fn unit(&self) -> &OperatorUnit {
+        &self.unit
+    }
+
+    fn unit_mut(&mut self) -> &mut OperatorUnit {
         &mut self.unit
     }
 }

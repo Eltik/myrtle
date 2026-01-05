@@ -3,7 +3,7 @@
 //! Auto-generated from ArknightsDpsCompare damage_formulas.py
 
 use super::super::super::operator_data::OperatorData;
-use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
+use super::super::super::operator_unit::{DpsCalculator, EnemyStats, OperatorParams, OperatorUnit};
 
 /// Midnight operator implementation
 pub struct Midnight {
@@ -70,14 +70,14 @@ impl Midnight {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut cdmg: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut final_atk: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
         let mut critdmg: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut final_atk: f64 = 0.0;
+        let mut cdmg: f64 = 0.0;
 
         atk_scale = if self.unit.trait_damage { 1.0 } else { 0.8 };
         let mut crit_rate = if ((self.unit.elite as f64) as f64) > 0.0 {
@@ -119,6 +119,20 @@ impl std::ops::Deref for Midnight {
 
 impl std::ops::DerefMut for Midnight {
     fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.unit
+    }
+}
+
+impl DpsCalculator for Midnight {
+    fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
+        Self::skill_dps(self, enemy)
+    }
+
+    fn unit(&self) -> &OperatorUnit {
+        &self.unit
+    }
+
+    fn unit_mut(&mut self) -> &mut OperatorUnit {
         &mut self.unit
     }
 }

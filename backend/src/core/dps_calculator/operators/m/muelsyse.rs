@@ -3,7 +3,7 @@
 //! Auto-generated from ArknightsDpsCompare damage_formulas.py
 
 use super::super::super::operator_data::OperatorData;
-use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
+use super::super::super::operator_unit::{DpsCalculator, EnemyStats, OperatorParams, OperatorUnit};
 
 /// Muelsyse operator implementation
 pub struct Muelsyse {
@@ -89,19 +89,37 @@ impl Muelsyse {
         let mut res = enemy.res;
 
         // Cloned operator defaults to Ela (Trapmaster)
-        // Ela E2 90 stats with trust 100, pot 3+: ATK=588+80+27=695
-        let cloned_op_atk: f64 = 695.0;
+        // Ela's ATK depends on Muelsyse's module status (Python behavior)
+        let cloned_op_atk: f64 = if self.unit.module_index > 0 {
+            728.0
+        } else {
+            668.0
+        };
         let cloned_op_atk_interval: f64 = 0.85;
         let cloned_op_ranged: bool = true;
         let cloned_op_physical: bool = true;
 
+        // Muelsyse: Get effective module level for copy_factor calculation
+        // When module_index > 0 but module_level is 0 (matching failed), default to 3
+        let effective_module_level: i32 = if self.unit.module_index > 0 {
+            if self.unit.operator_module_level > 0 {
+                self.unit.operator_module_level
+            } else if self.unit.module_level > 0 {
+                self.unit.module_level
+            } else {
+                3 // Default to max level when module is selected
+            }
+        } else {
+            0
+        };
+
+        let mut atk_scale: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut extra_summons: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
-        let mut extra_summons: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut atk_scale: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut aspd: f64 = 0.0;
 
         atk_scale = if self.unit.trait_damage { 1.5 } else { 1.0 };
@@ -109,7 +127,7 @@ impl Muelsyse {
             atk_scale = 1.65;
         }
         let mut copy_factor = if ((self.unit.module_index as f64) as f64) == 1.0
-            && ((self.unit.module_level as f64) as f64) == 3.0
+            && ((effective_module_level as f64) as f64) == 3.0
         {
             1.0
         } else {
@@ -192,6 +210,20 @@ impl std::ops::Deref for Muelsyse {
 
 impl std::ops::DerefMut for Muelsyse {
     fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.unit
+    }
+}
+
+impl DpsCalculator for Muelsyse {
+    fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
+        Self::skill_dps(self, enemy)
+    }
+
+    fn unit(&self) -> &OperatorUnit {
+        &self.unit
+    }
+
+    fn unit_mut(&mut self) -> &mut OperatorUnit {
         &mut self.unit
     }
 }

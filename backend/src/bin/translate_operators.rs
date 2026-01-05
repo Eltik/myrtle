@@ -2496,8 +2496,22 @@ fn parse_init_modifications(init_body: &str) -> Vec<InitModification> {
     modifications
 }
 
+/// Returns true if an operator should skip init ATK modifications
+/// because OperatorUnit already handles module ATK from data
+fn should_skip_init_atk_modification(class_name: &str) -> bool {
+    matches!(
+        class_name,
+        // Nian: Python comment says "module lvl 1 does not come with an atk increase,
+        // breaking the automatic system" but our data has correct values
+        "Nian"
+    )
+}
+
 /// Generate Rust code for init modifications
-fn generate_init_modifications_code(modifications: &[InitModification]) -> String {
+fn generate_init_modifications_code(
+    class_name: &str,
+    modifications: &[InitModification],
+) -> String {
     if modifications.is_empty() {
         return String::new();
     }
@@ -2505,12 +2519,19 @@ fn generate_init_modifications_code(modifications: &[InitModification]) -> Strin
     let mut lines = Vec::new();
     lines.push("        // Apply init-time modifications from Python __init__".to_string());
 
+    let skip_atk = should_skip_init_atk_modification(class_name);
+
     for modification in modifications {
         let rust_field = match modification.field.as_str() {
             "ammo" => "ammo",
             "drone_atk" => "drone_atk",
             "drone_atk_interval" => "drone_atk_interval",
-            "atk" => "atk",
+            "atk" => {
+                if skip_atk {
+                    continue; // Skip ATK modifications for this operator
+                }
+                "atk"
+            }
             "attack_speed" => "attack_speed",
             _ => continue,
         };
@@ -2924,15 +2945,29 @@ fn generate_rust_file(op: &OperatorClass) -> String {
             translated = format!("{extra_vars}\n{translated}");
         }
         // Inject cloned_op defaults (Ela) if needed
-        // Ela E2 90 with trust 100, pot 3+: ATK=588+80+27=695, interval=0.85
+        // For Muelsyse, the cloned_op stats depend on module status
         if translated.contains("cloned_op_atk") || translated.contains("cloned_op_ranged") {
-            let cloned_op_vars = r#"        // Cloned operator defaults to Ela (Trapmaster)
-        // Ela E2 90 stats with trust 100, pot 3+: ATK=588+80+27=695
-        let cloned_op_atk: f64 = 695.0;
+            let cloned_op_vars = if op.class_name == "Muelsyse" {
+                // Muelsyse: cloned_op (Ela) ATK depends on module status
+                // - No module: Ela base ATK = 668 (E2 90 with trust 100, pot 3+)
+                // - With module: Ela ATK = 728 (adds module ATK)
+                r#"        // Cloned operator defaults to Ela (Trapmaster)
+        // Ela's ATK depends on Muelsyse's module status (Python behavior)
+        let cloned_op_atk: f64 = if self.unit.module_index > 0 { 728.0 } else { 668.0 };
         let cloned_op_atk_interval: f64 = 0.85;
         let cloned_op_ranged: bool = true;
         let cloned_op_physical: bool = true;
-"#;
+"#
+            } else {
+                // Generic operators: use base Ela stats without module
+                r#"        // Cloned operator defaults to Ela (Trapmaster)
+        // Ela E2 90 stats with trust 100, pot 3+: ATK=668 (no module)
+        let cloned_op_atk: f64 = 668.0;
+        let cloned_op_atk_interval: f64 = 0.85;
+        let cloned_op_ranged: bool = true;
+        let cloned_op_physical: bool = true;
+"#
+            };
             translated = format!("{cloned_op_vars}\n{translated}");
         }
         // Inject below50 computation if needed (from __init__ logic)
@@ -2955,7 +2990,9 @@ fn generate_rust_file(op: &OperatorClass) -> String {
         // Inject shadows computation if needed (from __init__ logic)
         // Check for both patterns since the translation may vary based on processing order
         if translated.contains("/* self.shadows") || translated.contains("/* shadows") {
-            let shadows_code = generate_shadows_code(&op.init_modifications);
+            // Check for operator-specific shadows code first (for complex if/elif/else cases)
+            let shadows_code = get_operator_shadows_code(&op.class_name)
+                .unwrap_or_else(|| generate_shadows_code(&op.init_modifications));
             if !shadows_code.is_empty() {
                 // Replace both possible patterns
                 translated = translated.replace(
@@ -2997,8 +3034,8 @@ fn generate_rust_file(op: &OperatorClass) -> String {
 //!
 //! Auto-generated from ArknightsDpsCompare damage_formulas.py
 
-use super::super::super::operator_unit::{{EnemyStats, OperatorParams, OperatorUnit}};
 use super::super::super::operator_data::OperatorData;
+use super::super::super::operator_unit::{{DpsCalculator, EnemyStats, OperatorParams, OperatorUnit}};
 
 /// {} operator implementation
 pub struct {} {{
@@ -3058,7 +3095,7 @@ impl {} {{
         op.default_skill,
         op.default_pot,
         op.default_mod,
-        generate_init_modifications_code(&op.init_modifications),
+        generate_init_modifications_code(&op.class_name, &op.init_modifications),
         skill_dps_comment,
         translated_skill_dps,
     ));
@@ -3106,6 +3143,20 @@ impl std::ops::DerefMut for {struct_name} {{
         &mut self.unit
     }}
 }}
+
+impl DpsCalculator for {struct_name} {{
+    fn skill_dps(&self, enemy: &EnemyStats) -> f64 {{
+        Self::skill_dps(self, enemy)
+    }}
+
+    fn unit(&self) -> &OperatorUnit {{
+        &self.unit
+    }}
+
+    fn unit_mut(&mut self) -> &mut OperatorUnit {{
+        &mut self.unit
+    }}
+}}
 "#
     ));
 
@@ -3142,6 +3193,26 @@ fn get_operator_extra_vars(class_name: &str) -> Option<String> {
 "#
             .to_string(),
         ),
+        // Muelsyse: copy_factor depends on module_level, but module matching may fail
+        // causing both module_level and operator_module_level to be 0.
+        // Use effective_module_level that defaults to 3 when a module is selected.
+        "Muelsyse" => Some(
+            r#"        // Muelsyse: Get effective module level for copy_factor calculation
+        // When module_index > 0 but module_level is 0 (matching failed), default to 3
+        let effective_module_level: i32 = if self.unit.module_index > 0 {
+            if self.unit.operator_module_level > 0 {
+                self.unit.operator_module_level
+            } else if self.unit.module_level > 0 {
+                self.unit.module_level
+            } else {
+                3 // Default to max level when module is selected
+            }
+        } else {
+            0
+        };
+"#
+            .to_string(),
+        ),
         _ => None,
     }
 }
@@ -3152,7 +3223,59 @@ fn get_operator_replacements(class_name: &str) -> Vec<(&'static str, &'static st
     match class_name {
         // Arene uses a local trait_damage variable instead of self.unit.trait_damage
         "Arene" => vec![("self.unit.trait_damage", "trait_damage")],
+        // Muelsyse: Use effective_module_level variable (defined in extra_vars)
+        // This handles cases where module data matching fails but we still want full module benefits
+        "Muelsyse" => vec![
+            (
+                "(self.unit.module_level as f64)",
+                "(effective_module_level as f64)",
+            ),
+            ("self.unit.module_level", "effective_module_level"),
+        ],
         _ => vec![],
+    }
+}
+
+/// Returns operator-specific shadows code for operators with complex if/elif/else logic
+/// that can't be correctly translated by the generic generate_shadows_code()
+fn get_operator_shadows_code(class_name: &str) -> Option<String> {
+    match class_name {
+        // Walter has nested if/elif/else that the generic parser flattens incorrectly
+        // Original Python:
+        // self.shadows = 0
+        // if self.elite == 2:
+        //     if self.skill in [0,3]:
+        //         if self.talent2_dmg:
+        //             self.shadows = 3
+        //         else:
+        //             self.shadows = min(self.skill +1,2)
+        //         if self.skill_params[1] == 1 and self.skill == 3:
+        //             self.shadows -= 1
+        //     else:
+        //         self.shadows = 1 if self.talent2_dmg else 0
+        "Walter" => Some(
+            r#"        // Calculate shadows from __init__ logic (Walter-specific)
+        let mut shadows: f64 = 0.0;
+        if self.unit.elite == 2 {
+            if self.unit.skill_index == 0 || self.unit.skill_index == 3 {
+                if self.unit.talent2_damage {
+                    shadows = 3.0;
+                } else {
+                    shadows = ((self.unit.skill_index as f64) + 1.0).min(2.0);
+                }
+                if self.unit.skill_parameters.get(1).copied().unwrap_or(0.0) == 1.0
+                    && self.unit.skill_index == 3
+                {
+                    shadows -= 1.0;
+                }
+            } else {
+                shadows = if self.unit.talent2_damage { 1.0 } else { 0.0 };
+            }
+        }
+"#
+            .to_string(),
+        ),
+        _ => None,
     }
 }
 
@@ -3179,7 +3302,7 @@ fn generate_mod_file(operators: &[&OperatorClass]) -> String {
     output
 }
 
-fn generate_main_mod_file(letter_folders: &HashSet<char>) -> String {
+fn generate_main_mod_file(letter_folders: &HashSet<char>, operators: &[OperatorClass]) -> String {
     let mut output = String::new();
     let mut letters: Vec<char> = letter_folders.iter().copied().collect();
     letters.sort();
@@ -3187,6 +3310,9 @@ fn generate_main_mod_file(letter_folders: &HashSet<char>) -> String {
     output.push_str("//! Auto-generated operator implementations\n");
     output.push_str("//!\n");
     output.push_str("//! Each operator is organized into alphabetical subfolders.\n\n");
+
+    output.push_str("use super::operator_data::OperatorData;\n");
+    output.push_str("use super::operator_unit::{DpsCalculator, OperatorParams};\n\n");
 
     for letter in &letters {
         output.push_str(&format!("pub mod {letter};\n"));
@@ -3197,6 +3323,42 @@ fn generate_main_mod_file(letter_folders: &HashSet<char>) -> String {
     for letter in &letters {
         output.push_str(&format!("pub use {letter}::*;\n"));
     }
+
+    output.push('\n');
+
+    // Generate registry function
+    output.push_str(
+        "/// Creates an operator by name, returning a boxed DpsCalculator trait object\n",
+    );
+    output.push_str("/// \n");
+    output.push_str("/// # Arguments\n");
+    output.push_str("/// * `name` - The operator name (e.g., \"Blaze\", \"ExusiaiAlter\")\n");
+    output.push_str("/// * `operator_data` - The operator's base data from JSON\n");
+    output.push_str("/// * `params` - The operator configuration parameters\n");
+    output.push_str("/// \n");
+    output.push_str("/// # Returns\n");
+    output.push_str("/// Some(Box<dyn DpsCalculator>) if the operator is found, None otherwise\n");
+    output.push_str("pub fn create_operator(\n");
+    output.push_str("    name: &str,\n");
+    output.push_str("    operator_data: OperatorData,\n");
+    output.push_str("    params: OperatorParams,\n");
+    output.push_str(") -> Option<Box<dyn DpsCalculator + Send + Sync>> {\n");
+    output.push_str("    match name {\n");
+
+    // Sort operators alphabetically for consistent output
+    let mut sorted_ops: Vec<_> = operators.iter().collect();
+    sorted_ops.sort_by_key(|op| &op.class_name);
+
+    for op in &sorted_ops {
+        let struct_name = to_upper_camel_case(&op.class_name);
+        output.push_str(&format!(
+            "        \"{struct_name}\" => Some(Box::new({struct_name}::new(operator_data, params))),\n"
+        ));
+    }
+
+    output.push_str("        _ => None,\n");
+    output.push_str("    }\n");
+    output.push_str("}\n");
 
     output
 }
@@ -3327,7 +3489,7 @@ fn main() {
     }
 
     let main_mod_path = output_dir.join("mod.rs");
-    let main_mod_content = generate_main_mod_file(&letter_folders);
+    let main_mod_content = generate_main_mod_file(&letter_folders, &operators);
     if let Err(e) = fs::write(&main_mod_path, main_mod_content) {
         eprintln!("Failed to write {}: {}", main_mod_path.display(), e);
     }
