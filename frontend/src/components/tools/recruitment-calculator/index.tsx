@@ -1,6 +1,7 @@
 "use client";
 
 import { Calculator, RotateCcw } from "lucide-react";
+import { useRouter } from "next/router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "~/components/ui/shadcn/button";
 import { calculateResults } from "./impl/client-calculator";
@@ -16,12 +17,52 @@ const STORAGE_KEY_SORT_MODE = "recruitment-operator-sort-mode";
 interface RecruitmentCalculatorProps {
     tags: GachaTag[];
     recruitableOperators: RecruitableOperatorWithTags[];
+    initialSelectedTagNames?: string[];
 }
 
-export function RecruitmentCalculator({ tags, recruitableOperators }: RecruitmentCalculatorProps) {
-    const [selectedTags, setSelectedTags] = useState<number[]>([]);
+export function RecruitmentCalculator({ tags, recruitableOperators, initialSelectedTagNames = [] }: RecruitmentCalculatorProps) {
+    const router = useRouter();
+
+    // Transform tags first so we can use them for initial state
+    const transformedTags = useMemo(() => transformTags(tags), [tags]);
+
+    // Convert initial tag names to IDs
+    const initialTagIds = useMemo(() => {
+        if (initialSelectedTagNames.length === 0) return [];
+
+        const tagNameToId = new Map(transformedTags.map((t) => [t.name.toLowerCase(), t.id]));
+        return initialSelectedTagNames
+            .map((name) => tagNameToId.get(name.toLowerCase()))
+            .filter((id): id is number => id !== undefined)
+            .slice(0, MAX_SELECTED_TAGS);
+    }, [initialSelectedTagNames, transformedTags]);
+
+    const [selectedTags, setSelectedTags] = useState<number[]>(initialTagIds);
     const [includeRobots, setIncludeRobots] = useState(true);
     const [operatorSortMode, setOperatorSortMode] = useState<OperatorSortMode>("rarity-desc");
+
+    // Create a map from tag ID to tag name for URL updates
+    const tagIdToName = useMemo(() => new Map(transformedTags.map((t) => [t.id, t.name])), [transformedTags]);
+
+    // Update URL when selected tags change
+    useEffect(() => {
+        const tagNames = selectedTags.map((id) => tagIdToName.get(id)).filter(Boolean);
+        const newQuery = { ...router.query };
+
+        if (tagNames.length > 0) {
+            newQuery.tags = tagNames.join(",");
+        } else {
+            delete newQuery.tags;
+        }
+
+        // Only update if the URL would actually change
+        const currentTags = router.query.tags;
+        const newTags = tagNames.length > 0 ? tagNames.join(",") : undefined;
+
+        if (currentTags !== newTags) {
+            void router.replace({ pathname: router.pathname, query: newQuery }, undefined, { shallow: true });
+        }
+    }, [selectedTags, tagIdToName, router]);
 
     // Load saved sort mode from localStorage
     useEffect(() => {
@@ -37,8 +78,7 @@ export function RecruitmentCalculator({ tags, recruitableOperators }: Recruitmen
         localStorage.setItem(STORAGE_KEY_SORT_MODE, mode);
     }, []);
 
-    // Transform and group tags
-    const transformedTags = useMemo(() => transformTags(tags), [tags]);
+    // Group tags by type for display
     const groupedTags = useMemo(() => groupTagsByType(transformedTags), [transformedTags]);
 
     const handleTagToggle = useCallback((tagId: number) => {

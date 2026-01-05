@@ -141,8 +141,9 @@ impl Vigil {
         }
         let mut newdef = ((0) as f64).max((defense - defignore) as f64);
         let mut wolfdef = if ((self.unit.elite as f64) as f64) == 2.0 {
-            ((0) as f64)
-                .max((defense - self.unit.talent2_parameters.first().copied().unwrap_or(0.0)) as f64)
+            ((0) as f64).max(
+                (defense - self.unit.talent2_parameters.first().copied().unwrap_or(0.0)) as f64,
+            )
         } else {
             defense
         };
