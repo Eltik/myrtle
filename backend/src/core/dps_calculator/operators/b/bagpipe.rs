@@ -98,22 +98,22 @@ impl Bagpipe {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
+        let mut dps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
         let mut avghit: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
         let mut critdmg: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut avgdmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
         let mut cdmg: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
         let mut aspd: f64 = 0.0;
-        let mut dps: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut skill_scale: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut avgdmg: f64 = 0.0;
 
         atk_scale = if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage {
             1.15
@@ -143,8 +143,7 @@ impl Bagpipe {
                 .max((final_atk * atk_scale * cdmg * 0.05) as f64);
             avgdmg = crit_rate * critdmg * ((2) as f64).min((self.unit.targets as f64) as f64)
                 + (1.0 - crit_rate) * hitdmg;
-            dps = avgdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd)
-                / 100.0;
+            dps = avgdmg / atk_interval * (self.unit.attack_speed + aspd) / 100.0;
         }
         if (self.unit.skill_index as f64) == 2.0 {
             skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
@@ -164,8 +163,7 @@ impl Bagpipe {
                     + (1.0 - crit_rate) * skillhit;
             avgskill *= 2.0;
             sp_cost = (self.unit.skill_cost as f64) / (1.0 + (self.unit.sp_boost as f64)) + 1.2;
-            let mut atkcycle =
-                (self.unit.attack_interval as f64) / (self.unit.attack_speed / 100.0);
+            let mut atkcycle = atk_interval / (self.unit.attack_speed / 100.0);
             let mut atks_per_skillactivation = sp_cost / atkcycle;
             avghit = avgskill;
             if atks_per_skillactivation > 1.0 {
@@ -177,11 +175,11 @@ impl Bagpipe {
                         / (((atks_per_skillactivation) as f64).trunc() + 1.0);
                 }
             }
-            dps = avghit / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
+            dps = avghit / atk_interval * self.unit.attack_speed / 100.0;
         }
         if (self.unit.skill_index as f64) == 3.0 {
             atkbuff = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
-            // UNTRANSLATED: self.atk_interval = 1.7
+            atk_interval = 1.7;
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * atk_scale - defense) as f64)
@@ -190,8 +188,7 @@ impl Bagpipe {
                 .max((final_atk * atk_scale * cdmg * 0.05) as f64);
             avgdmg = crit_rate * critdmg * ((2) as f64).min((self.unit.targets as f64) as f64)
                 + (1.0 - crit_rate) * hitdmg;
-            dps =
-                3.0 * avgdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
+            dps = 3.0 * avgdmg / atk_interval * self.unit.attack_speed / 100.0;
         }
         return dps;
     }

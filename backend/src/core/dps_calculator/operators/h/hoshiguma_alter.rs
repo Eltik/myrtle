@@ -75,15 +75,15 @@ impl HoshigumaAlter {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
-        let mut hitdmg: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut dps: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
 
         let mut extra_scale = if ((self.unit.module_index as f64) as f64) == 1.0 {
             0.1
@@ -121,7 +121,7 @@ impl HoshigumaAlter {
             skill_scale = self.unit.skill_parameters.get(2).copied().unwrap_or(0.0) + extra_scale;
             let mut reflectdmg = ((final_atk * skill_scale * (1.0 - res / 100.0)) as f64)
                 .max((final_atk * skill_scale * 0.05) as f64);
-            dps += reflectdmg * 1.0 /* self.hits - needs manual implementation */;
+            dps += reflectdmg * 0.0 /* self.hits - defaults to 0 */;
         }
         if (self.unit.skill_index as f64) == 3.0 {
             final_atk = self.unit.atk
@@ -166,10 +166,15 @@ impl HoshigumaAlter {
         clippy::eq_op
     )]
     pub fn total_dmg(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
-        // UNTRANSLATED: if self.skill == 3 and self.skill_dmg: self.skill_duration = 11
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+
+        let mut skill_duration: f64 = 0.0;
+        if (self.unit.skill_index as f64) == 3.0 && self.unit.skill_damage {
+            skill_duration = 11.0;
+        }
         // UNTRANSLATED: return super().total_dmg(defense, res) - method calls need manual implementation
         0.0 // placeholder
     }

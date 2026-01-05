@@ -62,8 +62,10 @@ impl Ashlock {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
+
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         let mut atkbuff = if self.unit.talent_damage {
             self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0)
@@ -85,7 +87,7 @@ impl Ashlock {
             + self.unit.buff_atk_flat;
         let mut hitdmg =
             ((final_atk * atk_scale - defense) as f64).max((final_atk * atk_scale * 0.05) as f64);
-        let mut atk_interval = if ((self.unit.skill_index as f64) as f64) != 2.0 {
+        atk_interval = if ((self.unit.skill_index as f64) as f64) != 2.0 {
             (self.unit.attack_interval as f64)
         } else {
             (self.unit.attack_interval as f64)

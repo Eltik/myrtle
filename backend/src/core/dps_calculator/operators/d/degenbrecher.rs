@@ -83,16 +83,16 @@ impl Degenbrecher {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
-        let mut avghit: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut atk_scale: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
 
         let mut newdef = if ((self.unit.elite as f64) as f64) == 2.0 {
@@ -137,8 +137,9 @@ impl Degenbrecher {
                 self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
             };
             let mut relevant_attack_count = ((5.0
-                / ((self.unit.attack_interval as f64) / self.unit.attack_speed * 100.0) as f64)
-                .trunc())
+                / ((self.unit.attack_interval as f64) / self.unit.attack_speed * 100.0))
+                as f64)
+                .trunc()
                 * 2.0;
             let mut chance_that_no_crit_occured =
                 ((1.0 - crit_rate) as f64).powf(relevant_attack_count as f64);

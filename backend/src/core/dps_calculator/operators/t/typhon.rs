@@ -86,17 +86,17 @@ impl Typhon {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
-        let mut totaldmg: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
         let mut aspd: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut hitdmg: f64 = 0.0;
+        let mut totaldmg: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut critdmg: f64 = 0.0;
 
         atk_scale = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {
@@ -127,8 +127,7 @@ impl Typhon {
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * atk_scale * crit_scale - defense * (1.0 - def_ignore)) as f64)
                 .max((final_atk * atk_scale * crit_scale * 0.05) as f64);
-            dps = hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd)
-                / 100.0;
+            dps = hitdmg / atk_interval * (self.unit.attack_speed + aspd) / 100.0;
         }
         if (self.unit.skill_index as f64) == 2.0 {
             atkbuff = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
@@ -139,16 +138,13 @@ impl Typhon {
             critdmg = ((final_atk * atk_scale * crit_scale - defense * (1.0 - def_ignore)) as f64)
                 .max((final_atk * atk_scale * crit_scale * 0.05) as f64);
             if (self.unit.targets as f64) == 1.0 && (self.unit.module_index as f64) != 2.0 {
-                dps = (hitdmg + critdmg) / (self.unit.attack_interval as f64)
-                    * self.unit.attack_speed
-                    / 100.0;
+                dps = (hitdmg + critdmg) / atk_interval * self.unit.attack_speed / 100.0;
             } else {
-                dps = 2.0 * critdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed
-                    / 100.0;
+                dps = 2.0 * critdmg / atk_interval * self.unit.attack_speed / 100.0;
             }
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            // UNTRANSLATED: self.atk_interval = 5.5
+            atk_interval = 5.5;
             let mut hits = self.unit.skill_parameters.get(4).copied().unwrap_or(0.0);
             atk_scale *= self.unit.skill_parameters.get(2).copied().unwrap_or(0.0);
             final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
@@ -166,7 +162,7 @@ impl Typhon {
             {
                 totaldmg = (hits - 2.0) * hitdmg + 2.0 * critdmg;
             }
-            dps = totaldmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
+            dps = totaldmg / atk_interval * self.unit.attack_speed / 100.0;
         }
         return dps;
     }
@@ -199,8 +195,10 @@ impl Typhon {
         clippy::eq_op
     )]
     pub fn total_dmg(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
+
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         if (self.unit.skill_index as f64) == 3.0 {
             let mut ammo = self.unit.skill_parameters.get(3).copied().unwrap_or(0.0);

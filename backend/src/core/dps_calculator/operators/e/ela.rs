@@ -94,18 +94,18 @@ impl Ela {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut defshred: f64 = 0.0;
-        let mut critdmg: f64 = 0.0;
-        let mut cdmg: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut crit_rate: f64 = 0.0;
+        let mut critdmg: f64 = 0.0;
         let mut avgdmg: f64 = 0.0;
+        let mut defshred: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut cdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
 
         if (self.unit.elite as f64) > 1.0 {
             if self.unit.talent2_parameters[0] > 1.0 {
@@ -186,8 +186,10 @@ impl Ela {
         clippy::eq_op
     )]
     pub fn total_dmg(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
+
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         if (self.unit.skill_index as f64) == 3.0 {
             // UNTRANSLATED: return(self.skill_dps(defense,res) * 40 * (0.5/(self.attack_speed/100))) - method calls need manual implementation

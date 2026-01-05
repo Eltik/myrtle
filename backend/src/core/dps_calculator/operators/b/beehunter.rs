@@ -61,8 +61,10 @@ impl Beehunter {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
+
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         let mut atkbuff = if self.unit.talent_damage {
             self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
@@ -76,7 +78,7 @@ impl Beehunter {
         } else {
             0.0
         };
-        let mut atk_interval = if ((self.unit.skill_index as f64) as f64) == 2.0 {
+        atk_interval = if ((self.unit.skill_index as f64) as f64) == 2.0 {
             (self.unit.attack_interval as f64)
                 * (1.0 + self.unit.skill_parameters.first().copied().unwrap_or(0.0))
         } else {

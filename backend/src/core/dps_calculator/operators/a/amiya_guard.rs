@@ -67,15 +67,15 @@ impl AmiyaGuard {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
-        let mut atk_interval: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
         let mut aspd: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         atkbuff = self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
             * (1.0 + ((1) as f64).min((self.unit.skill_index as f64) as f64));

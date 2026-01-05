@@ -37,9 +37,9 @@ def load_test_cases():
         return json.load(f)
 
 
-def make_test_key(operator: str, skill: int, defense: float, res: float) -> str:
+def make_test_key(operator: str, skill: int, module: int, defense: float, res: float) -> str:
     """Create a unique key for a test case."""
-    return f"{operator}_s{skill}_{int(defense)}_{int(res)}"
+    return f"{operator}_s{skill}_m{module}_{int(defense)}_{int(res)}"
 
 
 def run_all_tests(output_file=None, generate_expected=False):
@@ -66,7 +66,7 @@ def run_all_tests(output_file=None, generate_expected=False):
         else:
             results.append(result)
             dps = result['dps']
-            key = make_test_key(tc['operator'], tc['skill'], tc['defense'], tc['res'])
+            key = make_test_key(tc['operator'], tc['skill'], tc['module'], tc['defense'], tc['res'])
             expected_dps[key] = dps
             print(f"  [{i+1}/{len(test_cases)}] {tc['operator']} S{tc['skill']+1} def={tc['defense']:.0f} res={tc['res']:.0f} -> DPS: {dps:.2f}")
 

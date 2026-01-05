@@ -342,27 +342,53 @@ fn patterns() -> &'static CompiledPatterns {
 /// Python to Rust translator for skill_dps methods
 struct PythonToRustTranslator {
     indent_level: usize,
+    /// True if the code modifies self.atk_interval (e.g., self.atk_interval = 0.5)
+    modifies_self_atk_interval: bool,
 }
 
 impl PythonToRustTranslator {
     fn new() -> Self {
-        Self { indent_level: 2 }
+        Self {
+            indent_level: 2,
+            modifies_self_atk_interval: false,
+        }
     }
 
     /// Translate a Python skill_dps method body to Rust
-    fn translate(&self, python_code: &str) -> String {
+    fn translate(&mut self, python_code: &str) -> String {
         let mut rust_lines = Vec::new();
         let lines: Vec<&str> = python_code.lines().collect();
 
+        // Check if the code modifies self.atk_interval (e.g., "self.atk_interval = 0.5")
+        // This determines whether self.atk_interval reads should use the local variable
+        self.modifies_self_atk_interval = python_code.contains("self.atk_interval =")
+            || python_code.contains("self.atk_interval=");
+
         // Scan for variables that are used across if/else branches
-        let shared_vars = self.find_shared_variables(&lines);
+        let mut shared_vars = self.find_shared_variables(&lines);
+
+        // Always declare atk_interval as a local variable since it's commonly used
+        // and may be modified by skills
+        shared_vars.insert("atk_interval".to_string());
+
+        // IMPORTANT: Remove function parameters from shared_vars to avoid shadowing
+        // The function already has `defense` and `res` as parameters from enemy stats
+        shared_vars.remove("defense");
+        shared_vars.remove("res");
 
         // Pre-declare shared variables at function start
         for var in &shared_vars {
+            // Special initialization for variables that shadow struct fields
+            let init_value = match var.as_str() {
+                "atk_interval" => "self.unit.attack_interval as f64".to_string(),
+                "skill_duration" => "self.unit.skill_duration".to_string(),
+                _ => "0.0".to_string(),
+            };
             rust_lines.push(format!(
-                "{}let mut {}: f64 = 0.0;",
+                "{}let mut {}: f64 = {};",
                 self.indent(self.indent_level),
-                var
+                var,
+                init_value
             ));
         }
         if !shared_vars.is_empty() {
@@ -476,6 +502,7 @@ impl PythonToRustTranslator {
 
             // Handle try-except patterns
             if let Some(try_stmt) = trimmed.strip_prefix("try: ") {
+                // First, check for assignment pattern
                 if let Some((var, _try_expr)) = self.parse_assignment(try_stmt) {
                     let mut found_except = false;
                     for (j, next_line) in lines[i + 1..].iter().enumerate() {
@@ -522,6 +549,47 @@ impl PythonToRustTranslator {
                     if found_except {
                         continue;
                     }
+                }
+
+                // Handle compound assignment with except: pass (e.g., try: extrascale *= self.skill_params[3])
+                if let Some((var, op, expr)) = self.parse_compound_assignment(try_stmt) {
+                    // Check if next line is except: pass
+                    for (j, next_line) in lines[i + 1..].iter().enumerate() {
+                        let next_trimmed = next_line.trim();
+                        if next_trimmed == "except: pass" || next_trimmed == "except:pass" {
+                            // Generate if-let pattern for safe array access
+                            // try: var *= self.skill_params[3] -> if let Some(val) = self.unit.skill_parameters.get(3) { var *= val; }
+                            if let Some(array_access) = self.extract_array_access(expr) {
+                                let (array_name, idx) = array_access;
+                                rust_lines.push(format!(
+                                    "{}// Python: try: {} {} {} except: pass",
+                                    self.indent(self.indent_level),
+                                    var,
+                                    op,
+                                    expr
+                                ));
+                                rust_lines.push(format!(
+                                    "{}if let Some(val) = self.unit.{}.get({}) {{",
+                                    self.indent(self.indent_level),
+                                    array_name,
+                                    idx
+                                ));
+                                rust_lines.push(format!(
+                                    "{}    {} {} val;",
+                                    self.indent(self.indent_level),
+                                    var,
+                                    op
+                                ));
+                                rust_lines.push(format!("{}}}", self.indent(self.indent_level)));
+                                lines_to_skip.insert(i + j + 1);
+                                break;
+                            }
+                        }
+                        if !next_trimmed.is_empty() && !next_trimmed.starts_with('#') {
+                            break;
+                        }
+                    }
+                    continue;
                 }
             }
 
@@ -771,8 +839,42 @@ impl PythonToRustTranslator {
                 continue;
             }
 
-            // Handle for loops - mark as UNTRANSLATED
-            if trimmed.starts_with("for ") && trimmed.contains(" in ") && trimmed.ends_with(':') {
+            // Handle for loops - translate for i in range(...):
+            if trimmed.starts_with("for ")
+                && trimmed.contains(" in range(")
+                && trimmed.ends_with(':')
+            {
+                // Parse: for i in range(count): or for i in range(int(duration)):
+                if let Some(for_match) = self.parse_for_range(trimmed) {
+                    let (loop_var, range_expr) = for_match;
+                    let rust_range = self.translate_expression(&range_expr);
+
+                    rust_lines.push(format!(
+                        "{}// Implement for loop: {}",
+                        self.indent(self.indent_level),
+                        trimmed
+                    ));
+                    // Use _loop_var for the integer iterator, and loop_var for the f64 version
+                    // This way the Python code using the loop variable will use the f64 version
+                    rust_lines.push(format!(
+                        "{}for _{} in 0..({} as i32) {{",
+                        self.indent(self.indent_level),
+                        loop_var,
+                        rust_range
+                    ));
+
+                    // Define the loop variable as f64 for use in calculations
+                    rust_lines.push(format!(
+                        "{}    let {} = _{} as f64;",
+                        self.indent(self.indent_level),
+                        loop_var,
+                        loop_var
+                    ));
+
+                    indent_stack.push((line_indent, false));
+                    continue;
+                }
+                // Fallback for unrecognized for loop patterns
                 rust_lines.push(format!(
                     "{}// UNTRANSLATED FOR LOOP: {}",
                     self.indent(self.indent_level),
@@ -998,6 +1100,16 @@ impl PythonToRustTranslator {
                         let var_name = self.rename_reserved_keyword(var_part);
                         return Some((var_name, expr_part));
                     }
+
+                    // Handle self.atk_interval = X as atk_interval = X
+                    if var_part == "self.atk_interval" {
+                        return Some(("atk_interval".to_string(), expr_part));
+                    }
+
+                    // Handle self.skill_duration = X as skill_duration = X
+                    if var_part == "self.skill_duration" {
+                        return Some(("skill_duration".to_string(), expr_part));
+                    }
                 }
             }
             i += 1;
@@ -1025,6 +1137,114 @@ impl PythonToRustTranslator {
             return Some((var, op, expr));
         }
         None
+    }
+
+    /// Parse a for loop like "for i in range(count):" or "for i in range(int(duration)):"
+    fn parse_for_range(&self, line: &str) -> Option<(String, String)> {
+        // Match: for VAR in range(EXPR):
+        let re = Regex::new(r"^for\s+(\w+)\s+in\s+range\((.+)\):$").ok()?;
+        let caps = re.captures(line)?;
+
+        let loop_var = caps.get(1)?.as_str().to_string();
+        let range_expr = caps.get(2)?.as_str().to_string();
+
+        Some((loop_var, range_expr))
+    }
+
+    /// Extract array access from an expression like "self.skill_params[3]"
+    /// Returns (rust_array_name, index) like ("skill_parameters", "3")
+    fn extract_array_access(&self, expr: &str) -> Option<(String, String)> {
+        // Map Python names to Rust names
+        let mappings = [
+            ("self.skill_params", "skill_parameters"),
+            ("self.talent1_params", "talent1_parameters"),
+            ("self.talent2_params", "talent2_parameters"),
+            ("self.shreds", "shreds"),
+        ];
+
+        for (py_name, rust_name) in &mappings {
+            if expr.starts_with(py_name) {
+                // Extract the index from [N]
+                let re = Regex::new(&format!(r"^{}\[(\d+)\]$", regex::escape(py_name))).ok()?;
+                if let Some(caps) = re.captures(expr) {
+                    let idx = caps.get(1)?.as_str().to_string();
+                    return Some((rust_name.to_string(), idx));
+                }
+            }
+        }
+        None
+    }
+
+    /// Translate Python function calls like `int(expr)`, `abs(expr)`, `round(expr)` to Rust
+    /// Handles nested parentheses correctly
+    fn translate_balanced_function_calls(&self, input: &str) -> String {
+        let mut result = input.to_string();
+
+        // Handle int(), abs(), round() with balanced parentheses
+        for (func_name, rust_suffix) in [
+            ("int", ".trunc()"),
+            ("abs", ".abs()"),
+            ("round", ".round()"),
+        ] {
+            loop {
+                // Find the function call
+                if let Some(start) = result.find(&format!("{func_name}(")) {
+                    // Ensure it's not part of a larger word (e.g., "print" shouldn't match "int")
+                    if start > 0 {
+                        let prev_char = result.chars().nth(start - 1).unwrap_or(' ');
+                        if prev_char.is_alphanumeric() || prev_char == '_' {
+                            // Skip this occurrence - part of a larger word
+                            // Need to prevent infinite loop - replace with placeholder temporarily
+                            let remaining = &result[start + func_name.len()..];
+                            result =
+                                format!("{}__SKIP__{}{}", &result[..start], func_name, remaining);
+                            continue;
+                        }
+                    }
+
+                    let open_paren = start + func_name.len();
+
+                    // Find matching close paren with balanced counting
+                    let mut depth = 0;
+                    let mut close_paren = None;
+                    for (i, c) in result[open_paren..].char_indices() {
+                        match c {
+                            '(' => depth += 1,
+                            ')' => {
+                                depth -= 1;
+                                if depth == 0 {
+                                    close_paren = Some(open_paren + i);
+                                    break;
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+
+                    if let Some(close) = close_paren {
+                        // Extract the inner expression (without the opening/closing parens)
+                        let inner = &result[open_paren + 1..close];
+                        // Replace: func(inner) -> ((inner) as f64).suffix()
+                        let replacement = format!("(({inner}) as f64){rust_suffix}");
+                        result = format!(
+                            "{}{}{}",
+                            &result[..start],
+                            replacement,
+                            &result[close + 1..]
+                        );
+                    } else {
+                        // No matching paren found, break to avoid infinite loop
+                        break;
+                    }
+                } else {
+                    break;
+                }
+            }
+            // Restore any skipped occurrences
+            result = result.replace(&format!("__SKIP__{func_name}"), func_name);
+        }
+
+        result
     }
 
     fn translate_condition(&self, condition: &str) -> String {
@@ -1103,18 +1323,8 @@ impl PythonToRustTranslator {
         result = self.translate_np_fmin(&result);
         result = self.translate_min_max(&result);
 
-        result = p
-            .int_func
-            .replace_all(&result, "(($1) as f64).trunc()")
-            .to_string();
-        result = p
-            .abs_func
-            .replace_all(&result, "(($1) as f64).abs()")
-            .to_string();
-        result = p
-            .round_func
-            .replace_all(&result, "(($1) as f64).round()")
-            .to_string();
+        // Use balanced parentheses handling for int(), abs(), round()
+        result = self.translate_balanced_function_calls(&result);
 
         result = self.translate_self_references(&result);
 
@@ -1613,10 +1823,20 @@ impl PythonToRustTranslator {
             .module_level
             .replace_all(&result, "(self.unit.module_level as f64)")
             .to_string();
-        result = p
-            .atk_interval
-            .replace_all(&result, "(self.unit.attack_interval as f64)")
-            .to_string();
+        // Translate self.atk_interval based on whether the code modifies it
+        // If modified (e.g., self.atk_interval = 0.5), use local variable for subsequent reads
+        // If not modified, use the struct field directly
+        if self.modifies_self_atk_interval {
+            result = p
+                .atk_interval
+                .replace_all(&result, "atk_interval")
+                .to_string();
+        } else {
+            result = p
+                .atk_interval
+                .replace_all(&result, "(self.unit.attack_interval as f64)")
+                .to_string();
+        }
         result = p
             .skill_cost
             .replace_all(&result, "(self.unit.skill_cost as f64)")
@@ -1643,9 +1863,10 @@ impl PythonToRustTranslator {
             .cloned_op_num
             .replace_all(&result, "0.0 /* cloned_op.$1 */ ")
             .to_string();
+        // hits defaults to 0 in Python (no additional hits unless specified)
         result = p
             .self_hits
-            .replace_all(&result, "1.0 /* self.hits - needs manual implementation */")
+            .replace_all(&result, "0.0 /* self.hits - defaults to 0 */")
             .to_string();
         result = p
             .self_pot
@@ -2041,10 +2262,30 @@ fn parse_int_list(s: &str) -> Vec<i32> {
 fn generate_rust_file(op: &OperatorClass) -> String {
     let mut output = String::new();
     let struct_name = to_upper_camel_case(&op.class_name);
-    let translator = PythonToRustTranslator::new();
+    let mut translator = PythonToRustTranslator::new();
+
+    // Get operator-specific variable declarations and replacements
+    let extra_vars = get_operator_extra_vars(&op.class_name).unwrap_or_default();
+    let replacements = get_operator_replacements(&op.class_name);
 
     let translated_skill_dps = if !op.skill_dps_body.is_empty() {
-        translator.translate(&op.skill_dps_body)
+        let mut translated = translator.translate(&op.skill_dps_body);
+        // For operators with extra vars, replace placeholder comments with actual variable usage
+        if !extra_vars.is_empty() {
+            translated = translated.replace(
+                "1.0 /* self.params - needs manual implementation */",
+                "params",
+            );
+        }
+        // Apply operator-specific replacements
+        for (from, to) in &replacements {
+            translated = translated.replace(from, to);
+        }
+        // Inject extra vars at the start
+        if !extra_vars.is_empty() {
+            translated = format!("{extra_vars}\n{translated}");
+        }
+        translated
     } else {
         "        // No skill_dps implementation found\n        self.unit.normal_attack(enemy, None, None, None)".to_string()
     };
@@ -2096,8 +2337,8 @@ impl {} {{
 {}
     #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op)]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {{
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
 {}
     }}
@@ -2141,8 +2382,8 @@ impl {} {{
 {total_dmg_comment}
     #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op)]
     pub fn total_dmg(&self, enemy: &EnemyStats) -> f64 {{
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
 {translated_total_dmg}
     }}
@@ -2171,6 +2412,50 @@ impl std::ops::DerefMut for {struct_name} {{
     ));
 
     output
+}
+
+/// Returns operator-specific variable declarations that should be added to skill_dps
+/// These handle special parameters like Amiya's self.params that are set in __init__
+fn get_operator_extra_vars(class_name: &str) -> Option<String> {
+    match class_name {
+        // Amiya S3 uses a mastery-based ATK buff: self.params = [0,1,1.1,1.2,1.3,1.4,1.5,1.6,1.8,2,2.3][pp.mastery]
+        // skill_level in Rust: 1-7 = SL1-7, 8 = M1, 9 = M2, 10 = M3
+        // Python mastery: 0 = unset, 1-7 = SL1-7, 8 = M1, 9 = M2, 10 = M3
+        // We map skill_level to the Python array index
+        "Amiya" => Some(
+            r#"        // Amiya S3 ATK buff based on skill level (maps to Python mastery index)
+        // skill_level 1-7 -> indices 1-7, skill_level 8-10 -> indices 8-10
+        let params: f64 = [0.0, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.8, 2.0, 2.3]
+            .get(self.unit.skill_level as usize)
+            .copied()
+            .unwrap_or(2.3);
+"#
+            .to_string(),
+        ),
+        // Arene: if skill == 1 and talent_dmg, then trait_dmg = false
+        // This affects the atk_scale *= 0.8 condition
+        "Arene" => Some(
+            r#"        // Arene: trait_dmg is false when skill == 1 and talent_dmg (Python __init__ logic)
+        let trait_damage = if self.unit.skill_index == 1 && self.unit.talent_damage {
+            false
+        } else {
+            self.unit.trait_damage
+        };
+"#
+            .to_string(),
+        ),
+        _ => None,
+    }
+}
+
+/// Returns operator-specific translation replacements
+/// These handle cases where trait_damage or similar flags need operator-specific logic
+fn get_operator_replacements(class_name: &str) -> Vec<(&'static str, &'static str)> {
+    match class_name {
+        // Arene uses a local trait_damage variable instead of self.unit.trait_damage
+        "Arene" => vec![("self.unit.trait_damage", "trait_damage")],
+        _ => vec![],
+    }
 }
 
 fn generate_mod_file(operators: &[&OperatorClass]) -> String {

@@ -63,8 +63,10 @@ impl Aciddrop {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
+
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         let mut mindmg: f64 = 0.0;
         if (self.unit.elite as f64) == 0.0 {

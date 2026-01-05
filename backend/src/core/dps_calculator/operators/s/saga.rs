@@ -73,17 +73,17 @@ impl Saga {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
-        let mut dps: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut sp_cost: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
 
         atkbuff = if self.unit.module_damage && ((self.unit.module_index as f64) as f64) == 1.0 {
             0.08
@@ -101,7 +101,7 @@ impl Saga {
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
-            dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
+            dps = hitdmg / atk_interval * self.unit.attack_speed / 100.0;
         }
         if (self.unit.skill_index as f64) == 2.0 {
             skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
@@ -112,11 +112,10 @@ impl Saga {
                 .max((final_atk * skill_scale * 0.05) as f64)
                 * ((self.unit.targets as f64) as f64).min((6) as f64);
             sp_cost = (self.unit.skill_cost as f64) / (1.0 + (self.unit.sp_boost as f64)) + 1.2;
-            dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0
-                + skilldmg / sp_cost;
+            dps = hitdmg / atk_interval * self.unit.attack_speed / 100.0 + skilldmg / sp_cost;
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            // UNTRANSLATED: self.atk_interval = 1.55
+            atk_interval = 1.55;
             final_atk = self.unit.atk
                 * (1.0
                     + atkbuff
@@ -124,7 +123,7 @@ impl Saga {
                     + self.unit.skill_parameters.first().copied().unwrap_or(0.0))
                 + self.unit.buff_atk_flat;
             hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
-            dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0
+            dps = hitdmg / atk_interval * self.unit.attack_speed / 100.0
                 * ((self.unit.targets as f64) as f64).min((2) as f64);
         }
         return dps * (1.0 + dmg);

@@ -70,17 +70,24 @@ impl Arene {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
-        let mut atk_scale: f64 = 0.0;
+        // Arene: trait_dmg is false when skill == 1 and talent_dmg (Python __init__ logic)
+        let trait_damage = if self.unit.skill_index == 1 && self.unit.talent_damage {
+            false
+        } else {
+            self.unit.trait_damage
+        };
+
+        let mut hitdmg: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut dps: f64 = 0.0;
         let mut hitdmgarts: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
 
         atk_scale = if self.unit.talent_damage {
             self.unit.talent1_parameters.first().copied().unwrap_or(0.0)
@@ -94,7 +101,7 @@ impl Arene {
         } else {
             0.0
         };
-        if !self.unit.trait_damage && (self.unit.skill_index as f64) != 2.0 {
+        if !trait_damage && (self.unit.skill_index as f64) != 2.0 {
             atk_scale *= 0.8;
         }
         skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);

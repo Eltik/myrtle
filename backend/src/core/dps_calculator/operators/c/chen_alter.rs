@@ -81,18 +81,17 @@ impl ChenAlter {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
-        let mut hitdmg: f64 = 0.0;
         let mut aspd: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut newdefense: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut defense: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut dps: f64 = 0.0;
+        let mut newdefense: f64 = 0.0;
 
         dps = 0.0;
         atkbuff = if ((self.unit.skill_index as f64) as f64) > 0.0 {
@@ -133,7 +132,7 @@ impl ChenAlter {
         if (self.unit.skill_index as f64) == 3.0 {
             let mut def_shred = self.unit.skill_parameters.get(2).copied().unwrap_or(0.0) * (-1.0);
             if self.unit.shreds[0] < 1.0 && self.unit.shreds[0] > 0.0 {
-                defense = defense / self.unit.shreds.first().copied().unwrap_or(0.0);
+                let mut defense = defense / self.unit.shreds.first().copied().unwrap_or(0.0);
             }
             newdefense = ((0) as f64).max((defense - def_shred) as f64);
             if self.unit.shreds[0] < 1.0 && self.unit.shreds[0] > 0.0 {
@@ -179,10 +178,10 @@ impl ChenAlter {
         clippy::eq_op
     )]
     pub fn total_dmg(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
-        let mut atk_interval: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         if (self.unit.skill_index as f64) == 3.0 {
             let mut ammo = 16.0;

@@ -92,23 +92,23 @@ impl Hoederer {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
-        let mut hitdmg2: f64 = 0.0;
-        let mut chance_to_attack_stunned: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut atk_cycle: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
         let mut counting_hits: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
-        let mut avgphys: f64 = 0.0;
-        let mut stun_duration: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
+        let mut atk_cycle: f64 = 0.0;
+        let mut stun_duration: f64 = 0.0;
+        let mut hitdmg2: f64 = 0.0;
+        let mut chance_to_attack_stunned: f64 = 0.0;
+        let mut avgphys: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         atk_scale = 1.0;
         if (self.unit.elite as f64) > 0.0 {
@@ -148,19 +148,21 @@ impl Hoederer {
                 .max((final_atk * atk_scale * skill_scale * 0.05) as f64);
             sp_cost = (self.unit.skill_cost as f64);
             avgphys = (sp_cost * hitdmg + skillhitdmg) / (sp_cost + 1.0);
-            dps = avgphys / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0
+            dps = avgphys / atk_interval * self.unit.attack_speed / 100.0
                 * ((self.unit.targets as f64) as f64).min((2) as f64)
                 * dmg_bonus;
         }
         if (self.unit.skill_index as f64) == 2.0 {
             let mut maxtargets = if self.unit.skill_damage { 3.0 } else { 2.0 };
-            // UNTRANSLATED: if self.skill_dmg: self.atk_interval = 3
+            if self.unit.skill_damage {
+                atk_interval = 3.0;
+            }
             atkbuff = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
             final_atk =
                 self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
             hitdmg = ((final_atk * atk_scale - defense) as f64)
                 .max((final_atk * atk_scale * 0.05) as f64);
-            dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0
+            dps = hitdmg / atk_interval * self.unit.attack_speed / 100.0
                 * ((self.unit.targets as f64) as f64).min((maxtargets) as f64)
                 * dmg_bonus;
         }
@@ -172,7 +174,7 @@ impl Hoederer {
                 .max((final_atk * atk_scale * 0.05) as f64);
             if !self.unit.talent_damage && self.unit.skill_damage {
                 stun_duration = self.unit.skill_parameters.get(4).copied().unwrap_or(0.0);
-                atk_cycle = (self.unit.attack_interval as f64) / self.unit.attack_speed * 100.0;
+                atk_cycle = atk_interval / self.unit.attack_speed * 100.0;
                 counting_hits = ((stun_duration / atk_cycle) as f64).trunc() + 1.0;
                 chance_to_attack_stunned = 1.0 - (0.75 as f64).powf(counting_hits as f64);
                 atk_scale = self
@@ -186,9 +188,7 @@ impl Hoederer {
                 hitdmg =
                     chance_to_attack_stunned * hitdmg2 + (1.0 - chance_to_attack_stunned) * hitdmg;
             }
-            dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0
-                * dmg_bonus
-                + 200.0;
+            dps = hitdmg / atk_interval * self.unit.attack_speed / 100.0 * dmg_bonus + 200.0;
             dps = dps * ((2) as f64).min((self.unit.targets as f64) as f64);
         }
         return dps;

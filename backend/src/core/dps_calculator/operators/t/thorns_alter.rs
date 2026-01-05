@@ -81,18 +81,18 @@ impl ThornsAlter {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
-        let mut aspd: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut newres: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut newres: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         atkbuff = self
             .unit
@@ -131,8 +131,23 @@ impl ThornsAlter {
             let mut skill_scale_base = self.unit.skill_parameters.get(4).copied().unwrap_or(0.0);
             let mut skill_scale_step = self.unit.skill_parameters.get(6).copied().unwrap_or(0.0);
             dps = res * 0.0;
-            // UNTRANSLATED FOR LOOP: for i in range(int(duration)):
-            // TODO: Implement loop logic manually
+            // Implement for loop: for i in range(int(duration)):
+            for _i in 0..(((duration) as f64).trunc() as i32) {
+                let i = _i as f64;
+                let mut newdef =
+                    defense * (1.0 + shred_base + ((i) as f64).min((15) as f64) * shred_step);
+                newres = res * (1.0 + shred_base + ((i) as f64).min((15) as f64) * shred_step);
+                skill_scale = skill_scale_base + skill_scale_step * ((i) as f64).min((15) as f64);
+                dps += ((final_atk * skill_scale * (1.0 - newres / 100.0)) as f64)
+                    .max((final_atk * skill_scale * 0.05) as f64)
+                    * (self.unit.targets as f64);
+                if self.unit.trait_damage {
+                    dps += ((final_atk - newdef) as f64).max((final_atk * 0.05) as f64)
+                        / (self.unit.attack_interval as f64)
+                        * (self.unit.attack_speed + aspd)
+                        / 100.0;
+                }
+            }
             dps = dps / duration;
         }
         return dps;

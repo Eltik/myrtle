@@ -75,14 +75,14 @@ impl Stainless {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
-        let mut dps: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut skill_scale: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
 
         if (self.unit.skill_index as f64) == 1.0 {
             skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
@@ -126,7 +126,7 @@ impl Stainless {
             let mut turretaoedmg = ((final_atk * turret_aoe - defense) as f64)
                 .max((final_atk * turret_aoe * 0.05) as f64);
             let mut totalturret = turrethitdmg + turretaoedmg * ((self.unit.targets as f64) - 1.0);
-            dps += totalturret * 1.0 /* self.hits - needs manual implementation */ / 5.0;
+            dps += totalturret * 0.0 /* self.hits - defaults to 0 */ / 5.0;
         }
         return dps;
     }

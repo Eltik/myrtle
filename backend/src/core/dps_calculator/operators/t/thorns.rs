@@ -110,18 +110,18 @@ impl Thorns {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
 
-        let mut atk_scale: f64 = 0.0;
         let mut bonusdmg: f64 = 0.0;
-        let mut atk_interval: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut time_to_fallout: f64 = 0.0;
-        let mut cooldown: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut fallout_dps: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut fallout_dps: f64 = 0.0;
+        let mut cooldown: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut time_to_fallout: f64 = 0.0;
 
         let mut bonus = if ((self.unit.module_index as f64) as f64) == 1.0 {
             0.1
@@ -179,9 +179,7 @@ impl Thorns {
                     / (10.0 + time_to_fallout);
             }
         }
-        if (self.unit.skill_index as f64) == 2.0
-            && 1.0 /* self.hits - needs manual implementation */ > 0.0
-        {
+        if (self.unit.skill_index as f64) == 2.0 && 0.0 /* self.hits - defaults to 0 */ > 0.0 {
             atk_scale = 0.8;
             cooldown = self.unit.skill_parameters.get(2).copied().unwrap_or(0.0);
             final_atk = self.unit.atk
@@ -213,7 +211,7 @@ impl Thorns {
                     / (10.0 + time_to_fallout);
             }
             // UNTRANSLATED ELSE (no matching if): else:
-            cooldown = 1.0 /1.0 /* self.hits - needs manual implementation */;
+            cooldown = 1.0 /0.0 /* self.hits - defaults to 0 */;
             dps = (hitdmg / cooldown + arts_dot_dps)
                 * ((self.unit.targets as f64) as f64).min((4) as f64);
             if (self.unit.module_index as f64) == 3.0 {

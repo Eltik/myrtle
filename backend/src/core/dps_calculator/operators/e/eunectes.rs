@@ -65,8 +65,10 @@ impl Eunectes {
         clippy::eq_op
     )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
-        let defense = enemy.defense;
-        let res = enemy.res;
+        let mut defense = enemy.defense;
+        let mut res = enemy.res;
+
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         let mut atk_scale = if self.unit.talent_damage && ((self.unit.elite as f64) as f64) > 0.0 {
             self.unit.talent1_parameters.get(2).copied().unwrap_or(0.0)
@@ -86,7 +88,7 @@ impl Eunectes {
                 + self.unit.skill_parameters.first().copied().unwrap_or(0.0)
                     * ((self.unit.skill_index as f64) as f64).min((1) as f64))
             + self.unit.buff_atk_flat;
-        let mut atk_interval = if ((self.unit.skill_index as f64) as f64) == 2.0 {
+        atk_interval = if ((self.unit.skill_index as f64) as f64) == 2.0 {
             2.0
         } else {
             (self.unit.attack_interval as f64)
