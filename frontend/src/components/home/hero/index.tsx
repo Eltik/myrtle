@@ -1,7 +1,6 @@
 "use client";
 
 import { ArrowRight, BookOpen } from "lucide-react";
-import { motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
 import { Marquee } from "~/components/ui/marquee";
@@ -17,12 +16,12 @@ export function HeroSection() {
             <div className="hero-images-container absolute inset-0 z-1 flex flex-col justify-center">
                 <Marquee className="mb-4" duration={120}>
                     {HERO_IMAGES_PRIMARY.map((src, index) => (
-                        <Image alt="Arknights artwork" className="hero-image rounded-lg object-cover" height={300} key={src} loading={index < 2 ? "eager" : "lazy"} priority={index < 2} src={src} width={400} sizes="400px" quality={75} />
+                        <Image alt="Arknights artwork" className="hero-image rounded-lg object-cover" height={300} key={src} loading={index < 2 ? "eager" : "lazy"} priority={index < 2} quality={75} sizes="400px" src={src} width={400} />
                     ))}
                 </Marquee>
                 <Marquee className="mt-4" duration={140} reverse>
                     {HERO_IMAGES_SECONDARY.map((src) => (
-                        <Image alt="Arknights artwork" className="hero-image-secondary rounded-lg object-cover" height={300} key={src} loading="lazy" priority={false} src={src} width={400} sizes="400px" quality={75} />
+                        <Image alt="Arknights artwork" className="hero-image-secondary rounded-lg object-cover" height={300} key={src} loading="lazy" priority={false} quality={75} sizes="400px" src={src} width={400} />
                     ))}
                 </Marquee>
             </div>
