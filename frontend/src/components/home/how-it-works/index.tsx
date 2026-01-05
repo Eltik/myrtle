@@ -1,8 +1,16 @@
 "use client";
+import { ArrowRight } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+import { LoginContent } from "~/components/layout/login/impl/login-content";
 import { InView } from "~/components/ui/motion-primitives/in-view";
+import { Button } from "~/components/ui/shadcn/button";
+import { Dialog, DialogContent } from "~/components/ui/shadcn/dialog";
 import { STEPS } from "./impl/constants";
 
 export function HowItWorksSection() {
+    const [loginOpen, setLoginOpen] = useState(false);
+
     return (
         <section className="relative py-20 md:py-32">
             {/* Background decoration */}
@@ -42,14 +50,36 @@ export function HowItWorksSection() {
                                     visible: { opacity: 1, x: 0 },
                                 }}
                             >
-                                <div className="group relative">
+                                <div className="group relative min-h-40 rounded-2xl border border-transparent p-4 transition-all duration-300 ease-out hover:border-border hover:bg-card">
                                     <div className="flex gap-6">
                                         <div className="shrink-0">
                                             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 font-bold text-2xl text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-primary-foreground group-hover:shadow-lg group-hover:shadow-primary/20">{step.number}</div>
                                         </div>
-                                        <div className="flex-1 pt-1">
-                                            <h3 className="mb-3 font-semibold text-xl">{step.title}</h3>
-                                            <p className="text-muted-foreground leading-relaxed">{step.description}</p>
+                                        <div className="flex flex-1 flex-col pt-1">
+                                            <h3 className="mb-2 font-semibold text-lg transition-all duration-300 ease-out group-hover:mb-1">{step.title}</h3>
+                                            <p className="text-muted-foreground text-sm leading-relaxed">{step.description}</p>
+                                            <div className="pt-2">
+                                                {index === 0 ? (
+                                                    <>
+                                                        <Button className="translate-y-3 cursor-pointer gap-1.5 opacity-0 transition-all duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100" onClick={() => setLoginOpen(true)} size="sm">
+                                                            {step.action.label}
+                                                            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                                                        </Button>
+                                                        <Dialog onOpenChange={setLoginOpen} open={loginOpen}>
+                                                            <DialogContent className="border-none bg-transparent p-0 shadow-none" showCloseButton={false}>
+                                                                <LoginContent onSuccess={() => setLoginOpen(false)} />
+                                                            </DialogContent>
+                                                        </Dialog>
+                                                    </>
+                                                ) : (
+                                                    <Button asChild className="translate-y-3 gap-1.5 opacity-0 transition-all duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100" size="sm">
+                                                        <Link href={(step.action as { href: string }).href}>
+                                                            {step.action.label}
+                                                            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                                                        </Link>
+                                                    </Button>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
