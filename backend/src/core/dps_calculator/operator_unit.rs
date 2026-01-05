@@ -347,27 +347,28 @@ impl OperatorUnit {
         attack_speed += (operator_data.aspd_trust * trust as f64) / 100.0;
 
         // Apply module bonuses
-        if elite == 2 && level >= max_level_e2 - 30 {
-            if let Some(ref op_module) = operator_module {
-                let module_id = op_module.module.id.as_deref().unwrap_or("");
+        if elite == 2
+            && level >= max_level_e2 - 30
+            && let Some(ref op_module) = operator_module
+        {
+            let module_id = op_module.module.id.as_deref().unwrap_or("");
 
-                let module_atk = operator_data
-                    .atk_module
-                    .iter()
-                    .find(|m| m.module_id == module_id && m.level as i32 == operator_module_level)
-                    .map(|m| m.value)
-                    .unwrap_or(0);
+            let module_atk = operator_data
+                .atk_module
+                .iter()
+                .find(|m| m.module_id == module_id && m.level as i32 == operator_module_level)
+                .map(|m| m.value)
+                .unwrap_or(0);
 
-                let module_aspd = operator_data
-                    .aspd_module
-                    .iter()
-                    .find(|m| m.module_id == module_id && m.level as i32 == operator_module_level)
-                    .map(|m| m.value)
-                    .unwrap_or(0);
+            let module_aspd = operator_data
+                .aspd_module
+                .iter()
+                .find(|m| m.module_id == module_id && m.level as i32 == operator_module_level)
+                .map(|m| m.value)
+                .unwrap_or(0);
 
-                atk += module_atk as f64;
-                attack_speed += module_aspd as f64;
-            }
+            atk += module_atk as f64;
+            attack_speed += module_aspd as f64;
         }
 
         // Set skill parameters

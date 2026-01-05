@@ -96,12 +96,12 @@ fn enrich_operator(
     // Also collect from skills' overrideTokenKey (e.g., Kazemaru's shadow doll)
     // These are skill-specific summons not in displayTokenDict
     for skill in &raw.skills {
-        if let Some(ref token_key) = skill.override_token_key {
-            if let Some(drone) = drones.get(token_key) {
-                // Only add if not already in the list
-                if !operator_drones.iter().any(|d| d.id == drone.id) {
-                    operator_drones.push(drone.clone());
-                }
+        if let Some(ref token_key) = skill.override_token_key
+            && let Some(drone) = drones.get(token_key)
+        {
+            // Only add if not already in the list
+            if !operator_drones.iter().any(|d| d.id == drone.id) {
+                operator_drones.push(drone.clone());
             }
         }
     }
