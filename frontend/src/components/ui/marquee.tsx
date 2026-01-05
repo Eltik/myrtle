@@ -1,5 +1,6 @@
 "use client";
 
+import { useReducedMotion } from "motion/react";
 import { cn } from "~/lib/utils";
 
 interface MarqueeProps {
@@ -16,6 +17,16 @@ interface MarqueeProps {
  * No JavaScript animation loop = minimal CPU usage.
  */
 export function Marquee({ children, className, reverse = false, pauseOnHover = false, duration = 40 }: MarqueeProps) {
+    const prefersReducedMotion = useReducedMotion();
+
+    if (prefersReducedMotion) {
+        return (
+            <div className={cn("marquee-container marquee-static", className)}>
+                <div className="marquee-content">{children}</div>
+            </div>
+        );
+    }
+
     return (
         <div className={cn("marquee-container", pauseOnHover && "marquee-pause-hover", className)} style={{ "--marquee-duration": `${duration}s` } as React.CSSProperties}>
             <div className={cn("marquee-content", reverse ? "marquee-reverse" : "marquee-forward")}>{children}</div>

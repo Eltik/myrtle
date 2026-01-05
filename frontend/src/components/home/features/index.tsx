@@ -7,7 +7,7 @@ import { FeatureCard } from "./impl/feature-card";
 export function FeaturesSection() {
     return (
         <section className="px-4 py-20">
-            <InView transition={{ duration: 0.6 }} variants={ANIMATION_VARIANTS.header}>
+            <InView once transition={{ duration: 0.6 }} variants={ANIMATION_VARIANTS.header}>
                 <div className="mb-12 text-center">
                     <h2 className="mb-4 font-bold text-3xl md:text-4xl">Try It Now, No Account Required</h2>
                     <p className="mx-auto max-w-2xl text-lg text-muted-foreground">Jump right in and explore our powerful tools designed for every Doctor</p>

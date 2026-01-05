@@ -13,7 +13,7 @@ export const FEATURES: Feature[] = [
         icon: Database,
         title: "Operator Database",
         description: "Browse detailed stats, skills, and builds for every operator in Arknights.",
-        href: "/operators",
+        href: "/operators/list",
     },
     {
         icon: Calculator,

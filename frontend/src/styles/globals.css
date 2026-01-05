@@ -259,45 +259,46 @@
     background: radial-gradient(ellipse 55% 50% at 50% 50%, oklch(0.13 0.005 285 / 0.8) 0%, oklch(0.13 0.005 285 / 0.6) 35%, oklch(0.13 0.005 285 / 0.3) 55%, oklch(0.13 0.005 285 / 0.1) 75%, transparent 100%);
 }
 
+/* Hero images container - isolate for better compositing */
+.hero-images-container {
+    contain: layout style paint;
+    will-change: auto;
+}
+
 /* Hero images - hidden in light mode, visible in dark mode */
 .hero-image {
     opacity: 0;
-    transition:
-        opacity 0.3s ease,
-        filter 0.3s ease;
+
+    transform: translateZ(0);
+    backface-visibility: hidden;
 }
 
 .dark .hero-image {
-    opacity: 0.3;
-    filter: blur(2px);
+    opacity: 0.25;
+    filter: blur(1px);
 }
 
 /* Hero images - secondary row */
 .hero-image-secondary {
     opacity: 0;
-    transition:
-        opacity 0.3s ease,
-        filter 0.3s ease;
+    transform: translateZ(0);
+    backface-visibility: hidden;
 }
 
 .dark .hero-image-secondary {
-    opacity: 0.2;
-    filter: blur(2px);
+    opacity: 0.15;
+    filter: blur(1px);
 }
 
-/* Hero accent text glow - light mode gets a warm subtle glow */
+/* Hero accent text glow
 .hero-accent-glow {
-    text-shadow:
-        0 0 30px oklch(0.58 0.22 25 / 0.35),
-        0 0 60px oklch(0.58 0.22 25 / 0.2),
-        0 1px 2px oklch(0 0 0 / 0.1);
+
+    text-shadow: 0 0 20px oklch(0.58 0.22 25 / 0.4);
 }
 
 .dark .hero-accent-glow {
-    text-shadow:
-        0 0 20px var(--glow-text-strong),
-        0 0 40px var(--glow-text-medium),
-        0 0 60px var(--glow-text-soft);
+
+    text-shadow: 0 0 25px var(--glow-primary-intense);
 }
 
 /* =============================================================================
@@ -355,9 +356,21 @@
     }
 }
 
-/* Reduce motion for users who prefer it */
+.marquee-static {
+    justify-content: center;
+}
+
+.marquee-static .marquee-content {
+    animation: none;
+    flex-shrink: 1;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .marquee-content {
         animation: none;
+    }
+
+    .hero-accent-glow {
+        text-shadow: none;
     }
 }
