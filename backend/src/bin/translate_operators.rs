@@ -636,7 +636,9 @@ impl PythonToRustTranslator {
             }
 
             // Handle single-line if statements
-            if trimmed.starts_with("if ") && trimmed.contains(": ") && !trimmed.ends_with(':')
+            if trimmed.starts_with("if ")
+                && trimmed.contains(": ")
+                && !trimmed.ends_with(':')
                 && let Some(colon_pos) = trimmed.find(": ")
             {
                 let condition = &trimmed[3..colon_pos];
@@ -701,7 +703,9 @@ impl PythonToRustTranslator {
             }
 
             // Handle single-line elif statements
-            if trimmed.starts_with("elif ") && trimmed.contains(": ") && !trimmed.ends_with(':')
+            if trimmed.starts_with("elif ")
+                && trimmed.contains(": ")
+                && !trimmed.ends_with(':')
                 && let Some(colon_pos) = trimmed.find(": ")
             {
                 let condition = &trimmed[5..colon_pos];
@@ -1036,7 +1040,8 @@ impl PythonToRustTranslator {
                 }
             }
 
-            if if_depth > 0 && line_indent > base_indent
+            if if_depth > 0
+                && line_indent > base_indent
                 && let Some((var, _)) = self.parse_assignment(trimmed)
             {
                 let entry = vars_in_branch.entry(var.clone()).or_insert(0);
@@ -2730,7 +2735,8 @@ fn translate_skill_dps_init_expr(expr: &str) -> String {
     let mut result = expr.to_string();
 
     // Handle Python ternary: `X if cond else Y` -> Rust `if cond { X } else { Y }`
-    if result.contains(" if ") && result.contains(" else ")
+    if result.contains(" if ")
+        && result.contains(" else ")
         && let Some(else_pos) = result.rfind(" else ")
     {
         let before_else = &result[..else_pos];

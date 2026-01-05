@@ -11,7 +11,7 @@ import { ANIMATION_TRANSITIONS, ANIMATION_VARIANTS, HERO_IMAGES_PRIMARY, HERO_IM
 
 export function HeroSection() {
     return (
-        <section className="hero-full-width -mt-8 relative flex min-h-[80vh] flex-col items-center justify-center overflow-hidden pt-8 pb-20 md:mt-0 md:py-20">
+        <section className="hero-full-width hero-light-bg -mt-8 relative flex min-h-[80vh] flex-col items-center justify-center overflow-hidden pt-8 pb-20 md:mt-0 md:py-20">
             {/* Parallax Background Images */}
             <div className="absolute inset-0 z-1 flex flex-col justify-center">
                 <Marquee className="mb-4" duration={120}>
@@ -26,7 +26,8 @@ export function HeroSection() {
                 </Marquee>
             </div>
 
-            {/* Hero Content */}
+            {/* Radial vignette - spotlight effect on content, images visible at edges */}
+            <div className="hero-vignette absolute inset-0 z-2" />
             <div className="relative z-10 mx-auto max-w-4xl px-4 text-center">
                 <InView transition={ANIMATION_TRANSITIONS.headline} variants={ANIMATION_VARIANTS.headline}>
                     <h1 className="mb-6 font-bold text-5xl leading-tight md:text-7xl">
@@ -35,13 +36,7 @@ export function HeroSection() {
                             <span aria-hidden="true" className="invisible select-none">
                                 recruitment
                             </span>
-                            <TextLoop
-                                className="absolute inset-0 text-primary"
-                                interval={2.5}
-                                style={{
-                                    textShadow: "0 0 20px var(--glow-text-strong), 0 0 40px var(--glow-text-medium), 0 0 60px var(--glow-text-soft)",
-                                }}
-                            >
+                            <TextLoop className="hero-accent-glow absolute inset-0 text-primary" interval={2.5}>
                                 {HERO_KEYWORDS.map((keyword) => (
                                     <span key={keyword}>{keyword}</span>
                                 ))}
