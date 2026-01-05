@@ -2,7 +2,7 @@ export const HERO_KEYWORDS = ["operators", "roster", "recruitment", "profile", "
 
 export const HERO_IMAGES_PRIMARY = ["/images/cg1.png", "/images/cg2.png", "/images/cg3.png", "/images/cg4.png", "/images/cg5.png", "/images/cg6.png", "/images/cg7.png", "/images/cg8.png", "/images/cg9.png"] as const;
 
-export const HERO_IMAGES_SECONDARY = ["/images/cg10.png", "/images/cg11.png", "/images/cg12.png", "/images/cg13.png", "/images/cg14.png", "/images/cg15.png", "/images/cg16.png", "/images/cg17.png"] as const;
+export const HERO_IMAGES_SECONDARY = ["/images/cg10.png", "/images/cg11.png", "/images/cg12.png", "/images/cg13.png", "/images/cg14.png", "/images/cg15.png", "/images/cg16.png", "/images/cg17.png", "/images/cg18.jpg"] as const;
 
 export const ANIMATION_VARIANTS = {
     headline: {
