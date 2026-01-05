@@ -803,6 +803,23 @@ pub struct EnemyStats {
     pub res: f64,
 }
 
+/// Trait for all DPS calculator operators
+/// This enables dynamic dispatch and registry-based operator lookup
+pub trait DpsCalculator {
+    /// Calculate DPS against the given enemy stats
+    fn skill_dps(&self, enemy: &EnemyStats) -> f64;
+
+    /// Get a reference to the underlying OperatorUnit
+    fn unit(&self) -> &OperatorUnit;
+
+    /// Get a mutable reference to the underlying OperatorUnit
+    fn unit_mut(&mut self) -> &mut OperatorUnit;
+}
+
+/// Type alias for operator constructor functions
+pub type OperatorConstructor =
+    fn(OperatorData, OperatorParams) -> Box<dyn DpsCalculator + Send + Sync>;
+
 #[derive(Default)]
 pub struct ExtraBuffs {
     pub atk: f64,

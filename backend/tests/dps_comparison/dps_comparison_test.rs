@@ -13,10 +13,266 @@ use std::sync::OnceLock;
 
 use backend::core::dps_calculator::operator_data::OperatorData;
 use backend::core::dps_calculator::operator_unit::{EnemyStats, OperatorParams};
-use backend::core::dps_calculator::operators;
 use backend::core::local::handler::init_game_data;
 use backend::core::local::types::GameData;
 use backend::events::EventEmitter;
+
+// Operator imports for direct dispatch
+use backend::core::dps_calculator::operators::Aak;
+use backend::core::dps_calculator::operators::Absinthe;
+use backend::core::dps_calculator::operators::Aciddrop;
+use backend::core::dps_calculator::operators::Adnachiel;
+use backend::core::dps_calculator::operators::Amiya;
+use backend::core::dps_calculator::operators::AmiyaGuard;
+use backend::core::dps_calculator::operators::AmiyaMedic;
+use backend::core::dps_calculator::operators::Andreana;
+use backend::core::dps_calculator::operators::Angelina;
+use backend::core::dps_calculator::operators::Aosta;
+use backend::core::dps_calculator::operators::April;
+use backend::core::dps_calculator::operators::Archetto;
+use backend::core::dps_calculator::operators::Arene;
+use backend::core::dps_calculator::operators::Asbestos;
+use backend::core::dps_calculator::operators::Ascalon;
+use backend::core::dps_calculator::operators::Ash;
+use backend::core::dps_calculator::operators::Ashlock;
+use backend::core::dps_calculator::operators::Astesia;
+use backend::core::dps_calculator::operators::Astgenne;
+use backend::core::dps_calculator::operators::Aurora;
+use backend::core::dps_calculator::operators::Ayerscarpe;
+use backend::core::dps_calculator::operators::Bagpipe;
+use backend::core::dps_calculator::operators::Beehunter;
+use backend::core::dps_calculator::operators::Beeswax;
+use backend::core::dps_calculator::operators::Bibeak;
+use backend::core::dps_calculator::operators::Blaze;
+use backend::core::dps_calculator::operators::BlazeAlter;
+use backend::core::dps_calculator::operators::Blemishine;
+use backend::core::dps_calculator::operators::Blitz;
+use backend::core::dps_calculator::operators::BluePoison;
+use backend::core::dps_calculator::operators::Broca;
+use backend::core::dps_calculator::operators::Bryophyta;
+use backend::core::dps_calculator::operators::Cantabile;
+use backend::core::dps_calculator::operators::Caper;
+use backend::core::dps_calculator::operators::Carnelian;
+use backend::core::dps_calculator::operators::Castle3;
+use backend::core::dps_calculator::operators::Catapult;
+use backend::core::dps_calculator::operators::Ceobe;
+use backend::core::dps_calculator::operators::Chen;
+use backend::core::dps_calculator::operators::ChenAlter;
+use backend::core::dps_calculator::operators::Chongyue;
+use backend::core::dps_calculator::operators::CivilightEterna;
+use backend::core::dps_calculator::operators::Click;
+use backend::core::dps_calculator::operators::Coldshot;
+use backend::core::dps_calculator::operators::Contrail;
+use backend::core::dps_calculator::operators::Conviction;
+use backend::core::dps_calculator::operators::Crownslayer;
+use backend::core::dps_calculator::operators::Dagda;
+use backend::core::dps_calculator::operators::Degenbrecher;
+use backend::core::dps_calculator::operators::Diamante;
+use backend::core::dps_calculator::operators::Dobermann;
+use backend::core::dps_calculator::operators::Doc;
+use backend::core::dps_calculator::operators::Dorothy;
+use backend::core::dps_calculator::operators::Durin;
+use backend::core::dps_calculator::operators::Durnar;
+use backend::core::dps_calculator::operators::Dusk;
+use backend::core::dps_calculator::operators::Ebenholz;
+use backend::core::dps_calculator::operators::Ela;
+use backend::core::dps_calculator::operators::Entelechia;
+use backend::core::dps_calculator::operators::Erato;
+use backend::core::dps_calculator::operators::Estelle;
+use backend::core::dps_calculator::operators::Ethan;
+use backend::core::dps_calculator::operators::Eunectes;
+use backend::core::dps_calculator::operators::ExecutorAlter;
+use backend::core::dps_calculator::operators::Exusiai;
+use backend::core::dps_calculator::operators::ExusiaiAlter;
+use backend::core::dps_calculator::operators::Eyjafjalla;
+use backend::core::dps_calculator::operators::FangAlter;
+use backend::core::dps_calculator::operators::Fartooth;
+use backend::core::dps_calculator::operators::Fiammetta;
+use backend::core::dps_calculator::operators::Figurino;
+use backend::core::dps_calculator::operators::Firewhistle;
+use backend::core::dps_calculator::operators::Flamebringer;
+use backend::core::dps_calculator::operators::Flametail;
+use backend::core::dps_calculator::operators::Flint;
+use backend::core::dps_calculator::operators::Folinic;
+use backend::core::dps_calculator::operators::Franka;
+use backend::core::dps_calculator::operators::Frost;
+use backend::core::dps_calculator::operators::Frostleaf;
+use backend::core::dps_calculator::operators::Fuze;
+use backend::core::dps_calculator::operators::GavialAlter;
+use backend::core::dps_calculator::operators::Gladiia;
+use backend::core::dps_calculator::operators::Gnosis;
+use backend::core::dps_calculator::operators::Goldenglow;
+use backend::core::dps_calculator::operators::Gracebearer;
+use backend::core::dps_calculator::operators::Grani;
+use backend::core::dps_calculator::operators::GreyThroat;
+use backend::core::dps_calculator::operators::GreyyAlter;
+use backend::core::dps_calculator::operators::Hadiya;
+use backend::core::dps_calculator::operators::Harmonie;
+use backend::core::dps_calculator::operators::Haze;
+use backend::core::dps_calculator::operators::Hellagur;
+use backend::core::dps_calculator::operators::Hibiscus;
+use backend::core::dps_calculator::operators::Highmore;
+use backend::core::dps_calculator::operators::Hoederer;
+use backend::core::dps_calculator::operators::Hoolheyak;
+use backend::core::dps_calculator::operators::Horn;
+use backend::core::dps_calculator::operators::Hoshiguma;
+use backend::core::dps_calculator::operators::HoshigumaAlter;
+use backend::core::dps_calculator::operators::Humus;
+use backend::core::dps_calculator::operators::Iana;
+use backend::core::dps_calculator::operators::Ifrit;
+use backend::core::dps_calculator::operators::Indra;
+use backend::core::dps_calculator::operators::Ines;
+use backend::core::dps_calculator::operators::Insider;
+use backend::core::dps_calculator::operators::Irene;
+use backend::core::dps_calculator::operators::Jaye;
+use backend::core::dps_calculator::operators::Jessica;
+use backend::core::dps_calculator::operators::JessicaAlter;
+use backend::core::dps_calculator::operators::JusticeKnight;
+use backend::core::dps_calculator::operators::Kafka;
+use backend::core::dps_calculator::operators::Kaltsit;
+use backend::core::dps_calculator::operators::Kazemaru;
+use backend::core::dps_calculator::operators::Kirara;
+use backend::core::dps_calculator::operators::Kjera;
+use backend::core::dps_calculator::operators::Kroos;
+use backend::core::dps_calculator::operators::KroosAlter;
+use backend::core::dps_calculator::operators::LaPluma;
+use backend::core::dps_calculator::operators::Laios;
+use backend::core::dps_calculator::operators::Lappland;
+use backend::core::dps_calculator::operators::LapplandAlter;
+use backend::core::dps_calculator::operators::Lava3star;
+use backend::core::dps_calculator::operators::Lavaalt;
+use backend::core::dps_calculator::operators::Lee;
+use backend::core::dps_calculator::operators::LeiziAlter;
+use backend::core::dps_calculator::operators::Lemuen;
+use backend::core::dps_calculator::operators::Lessing;
+use backend::core::dps_calculator::operators::Leto;
+use backend::core::dps_calculator::operators::Lin;
+use backend::core::dps_calculator::operators::Ling;
+use backend::core::dps_calculator::operators::Logos;
+use backend::core::dps_calculator::operators::Lucilla;
+use backend::core::dps_calculator::operators::Lunacub;
+use backend::core::dps_calculator::operators::LuoXiaohei;
+use backend::core::dps_calculator::operators::Lutonada;
+use backend::core::dps_calculator::operators::Magallan;
+use backend::core::dps_calculator::operators::Manticore;
+use backend::core::dps_calculator::operators::Marcille;
+use backend::core::dps_calculator::operators::Matoimaru;
+use backend::core::dps_calculator::operators::May;
+use backend::core::dps_calculator::operators::Melantha;
+use backend::core::dps_calculator::operators::Meteor;
+use backend::core::dps_calculator::operators::Meteorite;
+use backend::core::dps_calculator::operators::Midnight;
+use backend::core::dps_calculator::operators::Minimalist;
+use backend::core::dps_calculator::operators::Mint;
+use backend::core::dps_calculator::operators::MissChristine;
+use backend::core::dps_calculator::operators::MisumiUika;
+use backend::core::dps_calculator::operators::Mizuki;
+use backend::core::dps_calculator::operators::Mlynar;
+use backend::core::dps_calculator::operators::Mon3tr;
+use backend::core::dps_calculator::operators::Morgan;
+use backend::core::dps_calculator::operators::Mostima;
+use backend::core::dps_calculator::operators::Mountain;
+use backend::core::dps_calculator::operators::Mousse;
+use backend::core::dps_calculator::operators::MrNothing;
+use backend::core::dps_calculator::operators::Mudrock;
+use backend::core::dps_calculator::operators::Muelsyse;
+use backend::core::dps_calculator::operators::Narantuya;
+use backend::core::dps_calculator::operators::NearlAlter;
+use backend::core::dps_calculator::operators::Necrass;
+use backend::core::dps_calculator::operators::Nian;
+use backend::core::dps_calculator::operators::Nymph;
+use backend::core::dps_calculator::operators::Odda;
+use backend::core::dps_calculator::operators::Pallas;
+use backend::core::dps_calculator::operators::Passenger;
+use backend::core::dps_calculator::operators::Penance;
+use backend::core::dps_calculator::operators::Pepe;
+use backend::core::dps_calculator::operators::Phantom;
+use backend::core::dps_calculator::operators::Pinecone;
+use backend::core::dps_calculator::operators::Pith;
+use backend::core::dps_calculator::operators::Platinum;
+use backend::core::dps_calculator::operators::Plume;
+use backend::core::dps_calculator::operators::Popukar;
+use backend::core::dps_calculator::operators::Pozemka;
+use backend::core::dps_calculator::operators::PramanixAlter;
+use backend::core::dps_calculator::operators::ProjektRed;
+use backend::core::dps_calculator::operators::Provence;
+use backend::core::dps_calculator::operators::Pudding;
+use backend::core::dps_calculator::operators::Qiubai;
+use backend::core::dps_calculator::operators::Quartz;
+use backend::core::dps_calculator::operators::Raidian;
+use backend::core::dps_calculator::operators::Rangers;
+use backend::core::dps_calculator::operators::Ray;
+use backend::core::dps_calculator::operators::ReedAlter;
+use backend::core::dps_calculator::operators::Rockrock;
+use backend::core::dps_calculator::operators::Rosa;
+use backend::core::dps_calculator::operators::Rosmontis;
+use backend::core::dps_calculator::operators::Saga;
+use backend::core::dps_calculator::operators::SandReckoner;
+use backend::core::dps_calculator::operators::SanktaMiksaparato;
+use backend::core::dps_calculator::operators::Savage;
+use backend::core::dps_calculator::operators::Scavenger;
+use backend::core::dps_calculator::operators::Scene;
+use backend::core::dps_calculator::operators::Schwarz;
+use backend::core::dps_calculator::operators::Shalem;
+use backend::core::dps_calculator::operators::Sharp;
+use backend::core::dps_calculator::operators::Sideroca;
+use backend::core::dps_calculator::operators::Siege;
+use backend::core::dps_calculator::operators::SilverAsh;
+use backend::core::dps_calculator::operators::Skadi;
+use backend::core::dps_calculator::operators::Skalter;
+use backend::core::dps_calculator::operators::Snegurochka;
+use backend::core::dps_calculator::operators::Specter;
+use backend::core::dps_calculator::operators::SpecterAlter;
+use backend::core::dps_calculator::operators::Stainless;
+use backend::core::dps_calculator::operators::Steward;
+use backend::core::dps_calculator::operators::Stormeye;
+use backend::core::dps_calculator::operators::Surfer;
+use backend::core::dps_calculator::operators::Surtr;
+use backend::core::dps_calculator::operators::Suzuran;
+use backend::core::dps_calculator::operators::SwireAlt;
+use backend::core::dps_calculator::operators::Tachanka;
+use backend::core::dps_calculator::operators::Tecno;
+use backend::core::dps_calculator::operators::Tequila;
+use backend::core::dps_calculator::operators::TerraResearchCommission;
+use backend::core::dps_calculator::operators::TexasAlter;
+use backend::core::dps_calculator::operators::Thorns;
+use backend::core::dps_calculator::operators::ThornsAlter;
+use backend::core::dps_calculator::operators::TinMan;
+use backend::core::dps_calculator::operators::Tippi;
+use backend::core::dps_calculator::operators::Toddifons;
+use backend::core::dps_calculator::operators::TogawaSakiko;
+use backend::core::dps_calculator::operators::Tomimi;
+use backend::core::dps_calculator::operators::Totter;
+use backend::core::dps_calculator::operators::Tragodia;
+use backend::core::dps_calculator::operators::TwelveF;
+use backend::core::dps_calculator::operators::Typhon;
+use backend::core::dps_calculator::operators::Ulpianus;
+use backend::core::dps_calculator::operators::Underflow;
+use backend::core::dps_calculator::operators::Utage;
+use backend::core::dps_calculator::operators::Vanilla;
+use backend::core::dps_calculator::operators::Vendela;
+use backend::core::dps_calculator::operators::Vermeil;
+use backend::core::dps_calculator::operators::Vetochki;
+use backend::core::dps_calculator::operators::Vigil;
+use backend::core::dps_calculator::operators::Vigna;
+use backend::core::dps_calculator::operators::Vina;
+use backend::core::dps_calculator::operators::Virtuosa;
+use backend::core::dps_calculator::operators::Viviana;
+use backend::core::dps_calculator::operators::Vulcan;
+use backend::core::dps_calculator::operators::Vulpisfoglia;
+use backend::core::dps_calculator::operators::W;
+use backend::core::dps_calculator::operators::WakabaMutsumi;
+use backend::core::dps_calculator::operators::Walter;
+use backend::core::dps_calculator::operators::Warmy;
+use backend::core::dps_calculator::operators::Weedy;
+use backend::core::dps_calculator::operators::Whislash;
+use backend::core::dps_calculator::operators::Wildmane;
+use backend::core::dps_calculator::operators::Windscoot;
+use backend::core::dps_calculator::operators::YahataUmiri;
+use backend::core::dps_calculator::operators::YatoAlter;
+use backend::core::dps_calculator::operators::Yu;
+use backend::core::dps_calculator::operators::YutenjiNyamu;
+use backend::core::dps_calculator::operators::ZuoLe;
 
 /// Tolerance for DPS comparison (percentage difference allowed)
 const TOLERANCE_PERCENT: f64 = 0.15; // 15% (account for game data version differences)
@@ -107,7 +363,9 @@ fn get_game_data() -> Option<&'static GameData> {
 }
 
 fn make_test_key(operator: &str, skill: i32, module: i32, defense: f64, res: f64) -> String {
-    format!("{operator}_s{skill}_m{module}_{defense:.0}_{res:.0}")
+    format!(
+        "{operator}_s{skill}_m{module}_{defense:.0}_{res:.0}"
+    )
 }
 
 fn compare_dps(rust_dps: f64, python_dps: f64, test_name: &str) -> Result<(), String> {
@@ -135,8 +393,6 @@ fn compare_dps(rust_dps: f64, python_dps: f64, test_name: &str) -> Result<(), St
 /// Creates default operator params for testing
 /// Uses -1 for values that should use operator defaults, matching Python behavior
 fn create_test_params(skill_index: i32, module_index: i32) -> OperatorParams {
-    use backend::core::dps_calculator::operator_unit::OperatorConditionals;
-
     OperatorParams {
         skill_index: Some(skill_index),
         module_index: Some(module_index),
@@ -147,15 +403,6 @@ fn create_test_params(skill_index: i32, module_index: i32) -> OperatorParams {
         trust: Some(100),
         mastery_level: Some(-1), // Use max mastery like Python
         targets: Some(1),
-        // Explicitly enable all conditionals to match Python's default behavior
-        conditionals: Some(OperatorConditionals {
-            trait_damage: Some(true),
-            talent_damage: Some(true),
-            talent2_damage: Some(true),
-            skill_damage: Some(true),
-            module_damage: Some(true),
-        }),
-        all_cond: Some(true),
         ..Default::default()
     }
 }
@@ -176,1023 +423,1023 @@ fn calculate_operator_dps(
     // Use catch_unwind to handle panics from array index out of bounds in translated operator code
     std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| match rust_module {
         "aak" => {
-            let op = operators::Aak::new(operator_data, params);
+            let op = Aak::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "absinthe" => {
-            let op = operators::Absinthe::new(operator_data, params);
+            let op = Absinthe::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "aciddrop" => {
-            let op = operators::Aciddrop::new(operator_data, params);
+            let op = Aciddrop::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "adnachiel" => {
-            let op = operators::Adnachiel::new(operator_data, params);
+            let op = Adnachiel::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "amiya" => {
-            let op = operators::Amiya::new(operator_data, params);
+            let op = Amiya::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "amiya_guard" => {
-            let op = operators::AmiyaGuard::new(operator_data, params);
+            let op = AmiyaGuard::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "amiya_medic" => {
-            let op = operators::AmiyaMedic::new(operator_data, params);
+            let op = AmiyaMedic::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "andreana" => {
-            let op = operators::Andreana::new(operator_data, params);
+            let op = Andreana::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "angelina" => {
-            let op = operators::Angelina::new(operator_data, params);
+            let op = Angelina::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "aosta" => {
-            let op = operators::Aosta::new(operator_data, params);
+            let op = Aosta::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "april" => {
-            let op = operators::April::new(operator_data, params);
+            let op = April::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "archetto" => {
-            let op = operators::Archetto::new(operator_data, params);
+            let op = Archetto::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "arene" => {
-            let op = operators::Arene::new(operator_data, params);
+            let op = Arene::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "asbestos" => {
-            let op = operators::Asbestos::new(operator_data, params);
+            let op = Asbestos::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "ascalon" => {
-            let op = operators::Ascalon::new(operator_data, params);
+            let op = Ascalon::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "ash" => {
-            let op = operators::Ash::new(operator_data, params);
+            let op = Ash::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "ashlock" => {
-            let op = operators::Ashlock::new(operator_data, params);
+            let op = Ashlock::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "astesia" => {
-            let op = operators::Astesia::new(operator_data, params);
+            let op = Astesia::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "astgenne" => {
-            let op = operators::Astgenne::new(operator_data, params);
+            let op = Astgenne::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "aurora" => {
-            let op = operators::Aurora::new(operator_data, params);
+            let op = Aurora::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "ayerscarpe" => {
-            let op = operators::Ayerscarpe::new(operator_data, params);
+            let op = Ayerscarpe::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "bagpipe" => {
-            let op = operators::Bagpipe::new(operator_data, params);
+            let op = Bagpipe::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "beehunter" => {
-            let op = operators::Beehunter::new(operator_data, params);
+            let op = Beehunter::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "beeswax" => {
-            let op = operators::Beeswax::new(operator_data, params);
+            let op = Beeswax::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "bibeak" => {
-            let op = operators::Bibeak::new(operator_data, params);
+            let op = Bibeak::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "blaze" => {
-            let op = operators::Blaze::new(operator_data, params);
+            let op = Blaze::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "blaze_alter" => {
-            let op = operators::BlazeAlter::new(operator_data, params);
+            let op = BlazeAlter::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "blemishine" => {
-            let op = operators::Blemishine::new(operator_data, params);
+            let op = Blemishine::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "blitz" => {
-            let op = operators::Blitz::new(operator_data, params);
+            let op = Blitz::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "blue_poison" => {
-            let op = operators::BluePoison::new(operator_data, params);
+            let op = BluePoison::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "broca" => {
-            let op = operators::Broca::new(operator_data, params);
+            let op = Broca::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "bryophyta" => {
-            let op = operators::Bryophyta::new(operator_data, params);
+            let op = Bryophyta::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "cantabile" => {
-            let op = operators::Cantabile::new(operator_data, params);
+            let op = Cantabile::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "caper" => {
-            let op = operators::Caper::new(operator_data, params);
+            let op = Caper::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "carnelian" => {
-            let op = operators::Carnelian::new(operator_data, params);
+            let op = Carnelian::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "castle_3" => {
-            let op = operators::Castle3::new(operator_data, params);
+            let op = Castle3::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "catapult" => {
-            let op = operators::Catapult::new(operator_data, params);
+            let op = Catapult::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "ceobe" => {
-            let op = operators::Ceobe::new(operator_data, params);
+            let op = Ceobe::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "chen" => {
-            let op = operators::Chen::new(operator_data, params);
+            let op = Chen::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "chen_alter" => {
-            let op = operators::ChenAlter::new(operator_data, params);
+            let op = ChenAlter::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "chongyue" => {
-            let op = operators::Chongyue::new(operator_data, params);
+            let op = Chongyue::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "civilight_eterna" => {
-            let op = operators::CivilightEterna::new(operator_data, params);
+            let op = CivilightEterna::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "click" => {
-            let op = operators::Click::new(operator_data, params);
+            let op = Click::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "coldshot" => {
-            let op = operators::Coldshot::new(operator_data, params);
+            let op = Coldshot::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "contrail" => {
-            let op = operators::Contrail::new(operator_data, params);
+            let op = Contrail::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "conviction" => {
-            let op = operators::Conviction::new(operator_data, params);
+            let op = Conviction::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "crownslayer" => {
-            let op = operators::Crownslayer::new(operator_data, params);
+            let op = Crownslayer::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "dagda" => {
-            let op = operators::Dagda::new(operator_data, params);
+            let op = Dagda::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "degenbrecher" => {
-            let op = operators::Degenbrecher::new(operator_data, params);
+            let op = Degenbrecher::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "diamante" => {
-            let op = operators::Diamante::new(operator_data, params);
+            let op = Diamante::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "dobermann" => {
-            let op = operators::Dobermann::new(operator_data, params);
+            let op = Dobermann::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "doc" => {
-            let op = operators::Doc::new(operator_data, params);
+            let op = Doc::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "dorothy" => {
-            let op = operators::Dorothy::new(operator_data, params);
+            let op = Dorothy::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "durin" => {
-            let op = operators::Durin::new(operator_data, params);
+            let op = Durin::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "durnar" => {
-            let op = operators::Durnar::new(operator_data, params);
+            let op = Durnar::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "dusk" => {
-            let op = operators::Dusk::new(operator_data, params);
+            let op = Dusk::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "ebenholz" => {
-            let op = operators::Ebenholz::new(operator_data, params);
+            let op = Ebenholz::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "ela" => {
-            let op = operators::Ela::new(operator_data, params);
+            let op = Ela::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "entelechia" => {
-            let op = operators::Entelechia::new(operator_data, params);
+            let op = Entelechia::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "erato" => {
-            let op = operators::Erato::new(operator_data, params);
+            let op = Erato::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "estelle" => {
-            let op = operators::Estelle::new(operator_data, params);
+            let op = Estelle::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "ethan" => {
-            let op = operators::Ethan::new(operator_data, params);
+            let op = Ethan::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "eunectes" => {
-            let op = operators::Eunectes::new(operator_data, params);
+            let op = Eunectes::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "executor_alter" => {
-            let op = operators::ExecutorAlter::new(operator_data, params);
+            let op = ExecutorAlter::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "exusiai" => {
-            let op = operators::Exusiai::new(operator_data, params);
+            let op = Exusiai::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "exusiai_alter" => {
-            let op = operators::ExusiaiAlter::new(operator_data, params);
+            let op = ExusiaiAlter::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "eyjafjalla" => {
-            let op = operators::Eyjafjalla::new(operator_data, params);
+            let op = Eyjafjalla::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "fang_alter" => {
-            let op = operators::FangAlter::new(operator_data, params);
+            let op = FangAlter::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "fartooth" => {
-            let op = operators::Fartooth::new(operator_data, params);
+            let op = Fartooth::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "fiammetta" => {
-            let op = operators::Fiammetta::new(operator_data, params);
+            let op = Fiammetta::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "figurino" => {
-            let op = operators::Figurino::new(operator_data, params);
+            let op = Figurino::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "firewhistle" => {
-            let op = operators::Firewhistle::new(operator_data, params);
+            let op = Firewhistle::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "flamebringer" => {
-            let op = operators::Flamebringer::new(operator_data, params);
+            let op = Flamebringer::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "flametail" => {
-            let op = operators::Flametail::new(operator_data, params);
+            let op = Flametail::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "flint" => {
-            let op = operators::Flint::new(operator_data, params);
+            let op = Flint::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "folinic" => {
-            let op = operators::Folinic::new(operator_data, params);
+            let op = Folinic::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "franka" => {
-            let op = operators::Franka::new(operator_data, params);
+            let op = Franka::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "frost" => {
-            let op = operators::Frost::new(operator_data, params);
+            let op = Frost::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "frostleaf" => {
-            let op = operators::Frostleaf::new(operator_data, params);
+            let op = Frostleaf::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "fuze" => {
-            let op = operators::Fuze::new(operator_data, params);
+            let op = Fuze::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "gavial_alter" => {
-            let op = operators::GavialAlter::new(operator_data, params);
+            let op = GavialAlter::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "gladiia" => {
-            let op = operators::Gladiia::new(operator_data, params);
+            let op = Gladiia::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "gnosis" => {
-            let op = operators::Gnosis::new(operator_data, params);
+            let op = Gnosis::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "goldenglow" => {
-            let op = operators::Goldenglow::new(operator_data, params);
+            let op = Goldenglow::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "gracebearer" => {
-            let op = operators::Gracebearer::new(operator_data, params);
+            let op = Gracebearer::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "grani" => {
-            let op = operators::Grani::new(operator_data, params);
+            let op = Grani::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "grey_throat" => {
-            let op = operators::GreyThroat::new(operator_data, params);
+            let op = GreyThroat::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "greyy_alter" => {
-            let op = operators::GreyyAlter::new(operator_data, params);
+            let op = GreyyAlter::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "hadiya" => {
-            let op = operators::Hadiya::new(operator_data, params);
+            let op = Hadiya::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "harmonie" => {
-            let op = operators::Harmonie::new(operator_data, params);
+            let op = Harmonie::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "haze" => {
-            let op = operators::Haze::new(operator_data, params);
+            let op = Haze::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "hellagur" => {
-            let op = operators::Hellagur::new(operator_data, params);
+            let op = Hellagur::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "hibiscus" => {
-            let op = operators::Hibiscus::new(operator_data, params);
+            let op = Hibiscus::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "highmore" => {
-            let op = operators::Highmore::new(operator_data, params);
+            let op = Highmore::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "hoederer" => {
-            let op = operators::Hoederer::new(operator_data, params);
+            let op = Hoederer::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "hoolheyak" => {
-            let op = operators::Hoolheyak::new(operator_data, params);
+            let op = Hoolheyak::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "horn" => {
-            let op = operators::Horn::new(operator_data, params);
+            let op = Horn::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "hoshiguma" => {
-            let op = operators::Hoshiguma::new(operator_data, params);
+            let op = Hoshiguma::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "hoshiguma_alter" => {
-            let op = operators::HoshigumaAlter::new(operator_data, params);
+            let op = HoshigumaAlter::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "humus" => {
-            let op = operators::Humus::new(operator_data, params);
+            let op = Humus::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "iana" => {
-            let op = operators::Iana::new(operator_data, params);
+            let op = Iana::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "ifrit" => {
-            let op = operators::Ifrit::new(operator_data, params);
+            let op = Ifrit::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "indra" => {
-            let op = operators::Indra::new(operator_data, params);
+            let op = Indra::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "ines" => {
-            let op = operators::Ines::new(operator_data, params);
+            let op = Ines::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "insider" => {
-            let op = operators::Insider::new(operator_data, params);
+            let op = Insider::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "irene" => {
-            let op = operators::Irene::new(operator_data, params);
+            let op = Irene::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "jaye" => {
-            let op = operators::Jaye::new(operator_data, params);
+            let op = Jaye::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "jessica" => {
-            let op = operators::Jessica::new(operator_data, params);
+            let op = Jessica::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "jessica_alter" => {
-            let op = operators::JessicaAlter::new(operator_data, params);
+            let op = JessicaAlter::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "justice_knight" => {
-            let op = operators::JusticeKnight::new(operator_data, params);
+            let op = JusticeKnight::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "kafka" => {
-            let op = operators::Kafka::new(operator_data, params);
+            let op = Kafka::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "kaltsit" => {
-            let op = operators::Kaltsit::new(operator_data, params);
+            let op = Kaltsit::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "kazemaru" => {
-            let op = operators::Kazemaru::new(operator_data, params);
+            let op = Kazemaru::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "kirara" => {
-            let op = operators::Kirara::new(operator_data, params);
+            let op = Kirara::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "kjera" => {
-            let op = operators::Kjera::new(operator_data, params);
+            let op = Kjera::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "kroos" => {
-            let op = operators::Kroos::new(operator_data, params);
+            let op = Kroos::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "kroos_alter" => {
-            let op = operators::KroosAlter::new(operator_data, params);
+            let op = KroosAlter::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "la_pluma" => {
-            let op = operators::LaPluma::new(operator_data, params);
+            let op = LaPluma::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "laios" => {
-            let op = operators::Laios::new(operator_data, params);
+            let op = Laios::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "lappland" => {
-            let op = operators::Lappland::new(operator_data, params);
+            let op = Lappland::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "lappland_alter" => {
-            let op = operators::LapplandAlter::new(operator_data, params);
+            let op = LapplandAlter::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "lava_3star" => {
-            let op = operators::Lava3star::new(operator_data, params);
+            let op = Lava3star::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "lavaalt" => {
-            let op = operators::Lavaalt::new(operator_data, params);
+            let op = Lavaalt::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "lee" => {
-            let op = operators::Lee::new(operator_data, params);
+            let op = Lee::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "leizi_alter" => {
-            let op = operators::LeiziAlter::new(operator_data, params);
+            let op = LeiziAlter::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "lemuen" => {
-            let op = operators::Lemuen::new(operator_data, params);
+            let op = Lemuen::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "lessing" => {
-            let op = operators::Lessing::new(operator_data, params);
+            let op = Lessing::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "leto" => {
-            let op = operators::Leto::new(operator_data, params);
+            let op = Leto::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "lin" => {
-            let op = operators::Lin::new(operator_data, params);
+            let op = Lin::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "ling" => {
-            let op = operators::Ling::new(operator_data, params);
+            let op = Ling::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "logos" => {
-            let op = operators::Logos::new(operator_data, params);
+            let op = Logos::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "lucilla" => {
-            let op = operators::Lucilla::new(operator_data, params);
+            let op = Lucilla::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "lunacub" => {
-            let op = operators::Lunacub::new(operator_data, params);
+            let op = Lunacub::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "luo_xiaohei" => {
-            let op = operators::LuoXiaohei::new(operator_data, params);
+            let op = LuoXiaohei::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "lutonada" => {
-            let op = operators::Lutonada::new(operator_data, params);
+            let op = Lutonada::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "magallan" => {
-            let op = operators::Magallan::new(operator_data, params);
+            let op = Magallan::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "manticore" => {
-            let op = operators::Manticore::new(operator_data, params);
+            let op = Manticore::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "marcille" => {
-            let op = operators::Marcille::new(operator_data, params);
+            let op = Marcille::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "matoimaru" => {
-            let op = operators::Matoimaru::new(operator_data, params);
+            let op = Matoimaru::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "may" => {
-            let op = operators::May::new(operator_data, params);
+            let op = May::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "melantha" => {
-            let op = operators::Melantha::new(operator_data, params);
+            let op = Melantha::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "meteor" => {
-            let op = operators::Meteor::new(operator_data, params);
+            let op = Meteor::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "meteorite" => {
-            let op = operators::Meteorite::new(operator_data, params);
+            let op = Meteorite::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "midnight" => {
-            let op = operators::Midnight::new(operator_data, params);
+            let op = Midnight::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "minimalist" => {
-            let op = operators::Minimalist::new(operator_data, params);
+            let op = Minimalist::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "mint" => {
-            let op = operators::Mint::new(operator_data, params);
+            let op = Mint::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "miss_christine" => {
-            let op = operators::MissChristine::new(operator_data, params);
+            let op = MissChristine::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "misumi_uika" => {
-            let op = operators::MisumiUika::new(operator_data, params);
+            let op = MisumiUika::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "mizuki" => {
-            let op = operators::Mizuki::new(operator_data, params);
+            let op = Mizuki::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "mlynar" => {
-            let op = operators::Mlynar::new(operator_data, params);
+            let op = Mlynar::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "mon_3tr" => {
-            let op = operators::Mon3tr::new(operator_data, params);
+            let op = Mon3tr::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "morgan" => {
-            let op = operators::Morgan::new(operator_data, params);
+            let op = Morgan::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "mostima" => {
-            let op = operators::Mostima::new(operator_data, params);
+            let op = Mostima::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "mountain" => {
-            let op = operators::Mountain::new(operator_data, params);
+            let op = Mountain::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "mousse" => {
-            let op = operators::Mousse::new(operator_data, params);
+            let op = Mousse::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "mr_nothing" => {
-            let op = operators::MrNothing::new(operator_data, params);
+            let op = MrNothing::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "mudrock" => {
-            let op = operators::Mudrock::new(operator_data, params);
+            let op = Mudrock::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "muelsyse" => {
-            let op = operators::Muelsyse::new(operator_data, params);
+            let op = Muelsyse::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "narantuya" => {
-            let op = operators::Narantuya::new(operator_data, params);
+            let op = Narantuya::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "nearl_alter" => {
-            let op = operators::NearlAlter::new(operator_data, params);
+            let op = NearlAlter::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "necrass" => {
-            let op = operators::Necrass::new(operator_data, params);
+            let op = Necrass::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "nian" => {
-            let op = operators::Nian::new(operator_data, params);
+            let op = Nian::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "nymph" => {
-            let op = operators::Nymph::new(operator_data, params);
+            let op = Nymph::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "odda" => {
-            let op = operators::Odda::new(operator_data, params);
+            let op = Odda::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "pallas" => {
-            let op = operators::Pallas::new(operator_data, params);
+            let op = Pallas::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "passenger" => {
-            let op = operators::Passenger::new(operator_data, params);
+            let op = Passenger::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "penance" => {
-            let op = operators::Penance::new(operator_data, params);
+            let op = Penance::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "pepe" => {
-            let op = operators::Pepe::new(operator_data, params);
+            let op = Pepe::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "phantom" => {
-            let op = operators::Phantom::new(operator_data, params);
+            let op = Phantom::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "pinecone" => {
-            let op = operators::Pinecone::new(operator_data, params);
+            let op = Pinecone::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "pith" => {
-            let op = operators::Pith::new(operator_data, params);
+            let op = Pith::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "platinum" => {
-            let op = operators::Platinum::new(operator_data, params);
+            let op = Platinum::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "plume" => {
-            let op = operators::Plume::new(operator_data, params);
+            let op = Plume::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "popukar" => {
-            let op = operators::Popukar::new(operator_data, params);
+            let op = Popukar::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "pozemka" => {
-            let op = operators::Pozemka::new(operator_data, params);
+            let op = Pozemka::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "pramanix_alter" => {
-            let op = operators::PramanixAlter::new(operator_data, params);
+            let op = PramanixAlter::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "projekt_red" => {
-            let op = operators::ProjektRed::new(operator_data, params);
+            let op = ProjektRed::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "provence" => {
-            let op = operators::Provence::new(operator_data, params);
+            let op = Provence::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "pudding" => {
-            let op = operators::Pudding::new(operator_data, params);
+            let op = Pudding::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "qiubai" => {
-            let op = operators::Qiubai::new(operator_data, params);
+            let op = Qiubai::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "quartz" => {
-            let op = operators::Quartz::new(operator_data, params);
+            let op = Quartz::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "raidian" => {
-            let op = operators::Raidian::new(operator_data, params);
+            let op = Raidian::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "rangers" => {
-            let op = operators::Rangers::new(operator_data, params);
+            let op = Rangers::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "ray" => {
-            let op = operators::Ray::new(operator_data, params);
+            let op = Ray::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "reed_alter" => {
-            let op = operators::ReedAlter::new(operator_data, params);
+            let op = ReedAlter::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "rockrock" => {
-            let op = operators::Rockrock::new(operator_data, params);
+            let op = Rockrock::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "rosa" => {
-            let op = operators::Rosa::new(operator_data, params);
+            let op = Rosa::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "rosmontis" => {
-            let op = operators::Rosmontis::new(operator_data, params);
+            let op = Rosmontis::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "saga" => {
-            let op = operators::Saga::new(operator_data, params);
+            let op = Saga::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "sand_reckoner" => {
-            let op = operators::SandReckoner::new(operator_data, params);
+            let op = SandReckoner::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "sankta_miksaparato" => {
-            let op = operators::SanktaMiksaparato::new(operator_data, params);
+            let op = SanktaMiksaparato::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "savage" => {
-            let op = operators::Savage::new(operator_data, params);
+            let op = Savage::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "scavenger" => {
-            let op = operators::Scavenger::new(operator_data, params);
+            let op = Scavenger::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "scene" => {
-            let op = operators::Scene::new(operator_data, params);
+            let op = Scene::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "schwarz" => {
-            let op = operators::Schwarz::new(operator_data, params);
+            let op = Schwarz::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "shalem" => {
-            let op = operators::Shalem::new(operator_data, params);
+            let op = Shalem::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "sharp" => {
-            let op = operators::Sharp::new(operator_data, params);
+            let op = Sharp::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "sideroca" => {
-            let op = operators::Sideroca::new(operator_data, params);
+            let op = Sideroca::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "siege" => {
-            let op = operators::Siege::new(operator_data, params);
+            let op = Siege::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "silver_ash" => {
-            let op = operators::SilverAsh::new(operator_data, params);
+            let op = SilverAsh::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "skadi" => {
-            let op = operators::Skadi::new(operator_data, params);
+            let op = Skadi::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "skalter" => {
-            let op = operators::Skalter::new(operator_data, params);
+            let op = Skalter::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "snegurochka" => {
-            let op = operators::Snegurochka::new(operator_data, params);
+            let op = Snegurochka::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "specter" => {
-            let op = operators::Specter::new(operator_data, params);
+            let op = Specter::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "specter_alter" => {
-            let op = operators::SpecterAlter::new(operator_data, params);
+            let op = SpecterAlter::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "stainless" => {
-            let op = operators::Stainless::new(operator_data, params);
+            let op = Stainless::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "steward" => {
-            let op = operators::Steward::new(operator_data, params);
+            let op = Steward::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "stormeye" => {
-            let op = operators::Stormeye::new(operator_data, params);
+            let op = Stormeye::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "surfer" => {
-            let op = operators::Surfer::new(operator_data, params);
+            let op = Surfer::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "surtr" => {
-            let op = operators::Surtr::new(operator_data, params);
+            let op = Surtr::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "suzuran" => {
-            let op = operators::Suzuran::new(operator_data, params);
+            let op = Suzuran::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "swire_alt" => {
-            let op = operators::SwireAlt::new(operator_data, params);
+            let op = SwireAlt::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "tachanka" => {
-            let op = operators::Tachanka::new(operator_data, params);
+            let op = Tachanka::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "tecno" => {
-            let op = operators::Tecno::new(operator_data, params);
+            let op = Tecno::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "tequila" => {
-            let op = operators::Tequila::new(operator_data, params);
+            let op = Tequila::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "terra_research_commission" => {
-            let op = operators::TerraResearchCommission::new(operator_data, params);
+            let op = TerraResearchCommission::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "texas_alter" => {
-            let op = operators::TexasAlter::new(operator_data, params);
+            let op = TexasAlter::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "thorns" => {
-            let op = operators::Thorns::new(operator_data, params);
+            let op = Thorns::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "thorns_alter" => {
-            let op = operators::ThornsAlter::new(operator_data, params);
+            let op = ThornsAlter::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "tin_man" => {
-            let op = operators::TinMan::new(operator_data, params);
+            let op = TinMan::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "tippi" => {
-            let op = operators::Tippi::new(operator_data, params);
+            let op = Tippi::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "toddifons" => {
-            let op = operators::Toddifons::new(operator_data, params);
+            let op = Toddifons::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "togawa_sakiko" => {
-            let op = operators::TogawaSakiko::new(operator_data, params);
+            let op = TogawaSakiko::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "tomimi" => {
-            let op = operators::Tomimi::new(operator_data, params);
+            let op = Tomimi::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "totter" => {
-            let op = operators::Totter::new(operator_data, params);
+            let op = Totter::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "tragodia" => {
-            let op = operators::Tragodia::new(operator_data, params);
+            let op = Tragodia::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "typhon" => {
-            let op = operators::Typhon::new(operator_data, params);
+            let op = Typhon::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "ulpianus" => {
-            let op = operators::Ulpianus::new(operator_data, params);
+            let op = Ulpianus::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "underflow" => {
-            let op = operators::Underflow::new(operator_data, params);
+            let op = Underflow::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "utage" => {
-            let op = operators::Utage::new(operator_data, params);
+            let op = Utage::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "vanilla" => {
-            let op = operators::Vanilla::new(operator_data, params);
+            let op = Vanilla::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "vendela" => {
-            let op = operators::Vendela::new(operator_data, params);
+            let op = Vendela::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "vermeil" => {
-            let op = operators::Vermeil::new(operator_data, params);
+            let op = Vermeil::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "vetochki" => {
-            let op = operators::Vetochki::new(operator_data, params);
+            let op = Vetochki::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "vigil" => {
-            let op = operators::Vigil::new(operator_data, params);
+            let op = Vigil::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "vigna" => {
-            let op = operators::Vigna::new(operator_data, params);
+            let op = Vigna::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "vina" => {
-            let op = operators::Vina::new(operator_data, params);
+            let op = Vina::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "virtuosa" => {
-            let op = operators::Virtuosa::new(operator_data, params);
+            let op = Virtuosa::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "viviana" => {
-            let op = operators::Viviana::new(operator_data, params);
+            let op = Viviana::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "vulcan" => {
-            let op = operators::Vulcan::new(operator_data, params);
+            let op = Vulcan::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "vulpisfoglia" => {
-            let op = operators::Vulpisfoglia::new(operator_data, params);
+            let op = Vulpisfoglia::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "w" => {
-            let op = operators::W::new(operator_data, params);
+            let op = W::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "wakaba_mutsumi" => {
-            let op = operators::WakabaMutsumi::new(operator_data, params);
+            let op = WakabaMutsumi::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "walter" => {
-            let op = operators::Walter::new(operator_data, params);
+            let op = Walter::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "warmy" => {
-            let op = operators::Warmy::new(operator_data, params);
+            let op = Warmy::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "weedy" => {
-            let op = operators::Weedy::new(operator_data, params);
+            let op = Weedy::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "whislash" => {
-            let op = operators::Whislash::new(operator_data, params);
+            let op = Whislash::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "wildmane" => {
-            let op = operators::Wildmane::new(operator_data, params);
+            let op = Wildmane::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "windscoot" => {
-            let op = operators::Windscoot::new(operator_data, params);
+            let op = Windscoot::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "yahata_umiri" => {
-            let op = operators::YahataUmiri::new(operator_data, params);
+            let op = YahataUmiri::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "yato_alter" => {
-            let op = operators::YatoAlter::new(operator_data, params);
+            let op = YatoAlter::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "yu" => {
-            let op = operators::Yu::new(operator_data, params);
+            let op = Yu::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "yutenji_nyamu" => {
-            let op = operators::YutenjiNyamu::new(operator_data, params);
+            let op = YutenjiNyamu::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "zuo_le" => {
-            let op = operators::ZuoLe::new(operator_data, params);
+            let op = ZuoLe::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         "twelve_f" => {
-            let op = operators::TwelveF::new(operator_data, params);
+            let op = TwelveF::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
         _ => None,
@@ -1262,7 +1509,10 @@ mod tests {
 
         for (key, &dps) in expected.iter() {
             // DPS should be non-negative
-            assert!(dps >= 0.0, "DPS for {key} should be non-negative: {dps}");
+            assert!(
+                dps >= 0.0,
+                "DPS for {key} should be non-negative: {dps}"
+            );
 
             // DPS should be reasonable (not infinity or NaN)
             assert!(dps.is_finite(), "DPS for {key} should be finite: {dps}");
@@ -1313,7 +1563,9 @@ mod tests {
                 dps_0 > dps_1000,
                 "Higher defense should reduce physical DPS"
             );
-            println!("SilverAsh S3: {dps_0:.2} DPS at 0 DEF -> {dps_1000:.2} DPS at 1000 DEF");
+            println!(
+                "SilverAsh S3: {dps_0:.2} DPS at 0 DEF -> {dps_1000:.2} DPS at 1000 DEF"
+            );
         }
     }
 
@@ -1328,15 +1580,15 @@ mod tests {
 
         if let (Some(&dps_0), Some(&dps_50)) = (eyja_0res, eyja_50res) {
             assert!(dps_0 > dps_50, "Higher resistance should reduce arts DPS");
-            println!("Eyjafjalla S3: {dps_0:.2} DPS at 0 RES -> {dps_50:.2} DPS at 50 RES");
+            println!(
+                "Eyjafjalla S3: {dps_0:.2} DPS at 0 RES -> {dps_50:.2} DPS at 50 RES"
+            );
         }
     }
 
     /// Integration test with game data - compares Rust DPS against Python
     #[test]
     fn test_rust_vs_python_with_game_data() {
-        use std::collections::HashSet;
-
         let expected = get_expected_dps();
         let cases = get_test_cases();
 
@@ -1352,45 +1604,28 @@ mod tests {
         let mut skipped = 0;
         let mut errors: Vec<String> = Vec::new();
 
-        // Track unique operators skipped by reason
-        let mut skipped_no_expected: HashSet<String> = HashSet::new();
-        let mut skipped_no_gamedata: HashSet<String> = HashSet::new();
-        let mut skipped_no_module: HashSet<String> = HashSet::new();
-        let mut skipped_calc_error: HashSet<String> = HashSet::new();
-        let mut failed_operators: HashSet<String> = HashSet::new();
-        // Track operators that had some tests run (to identify partially vs fully skipped)
-        let mut tested_operators: HashSet<String> = HashSet::new();
-
         for tc in cases.iter() {
             let key = make_test_key(&tc.operator, tc.skill, tc.module, tc.defense, tc.res);
 
             let Some(&python_dps) = expected.get(&key) else {
                 skipped += 1;
-                skipped_no_expected.insert(tc.operator.clone());
                 continue;
             };
 
             let Some(operator) = game_data.operators.get(&tc.operator_id) else {
                 skipped += 1;
-                skipped_no_gamedata.insert(tc.operator.clone());
                 continue;
             };
 
-            // Skip if test requires a module but operator doesn't have module data
-            // This can happen for CN-only operators not yet in EN game data
-            if tc.module >= 1 {
-                let has_advanced_modules = operator.modules.iter().any(|m| {
-                    m.module.module_type
-                        == backend::core::local::types::module::ModuleType::Advanced
-                });
-                if !has_advanced_modules {
-                    skipped += 1;
-                    skipped_no_module.insert(tc.operator.clone());
-                    continue;
-                }
+            let operator_data = OperatorData::new(operator.clone());
+
+            // Skip module > 0 tests if operator has no module data
+            // (Python pickle may have module data we don't have in our JSON files)
+            if tc.module > 0 && operator_data.available_modules.is_empty() {
+                skipped += 1;
+                continue;
             }
 
-            let operator_data = OperatorData::new(operator.clone());
             // tc.skill is 1-indexed (1=S1, 2=S2, 3=S3), matching Python semantics
             let params = create_test_params(tc.skill, tc.module);
             let enemy = create_enemy_stats(tc.defense, tc.res);
@@ -1399,26 +1634,27 @@ mod tests {
                 calculate_operator_dps(&tc.rust_module, operator_data, params, enemy)
             else {
                 skipped += 1;
-                skipped_calc_error.insert(tc.operator.clone());
                 continue;
             };
 
             tested += 1;
-            tested_operators.insert(tc.operator.clone());
 
             match compare_dps(rust_dps, python_dps, &key) {
                 Ok(_) => passed += 1,
                 Err(e) => {
                     failed += 1;
-                    failed_operators.insert(tc.operator.clone());
-                    errors.push(e);
+                    if errors.len() < 20 {
+                        errors.push(e);
+                    }
                 }
             }
         }
 
         println!();
         println!("=== DPS Comparison Results ===");
-        println!("Tests: {tested} tested, {passed} passed, {failed} failed, {skipped} skipped");
+        println!(
+            "Tested: {tested}, Passed: {passed}, Failed: {failed}, Skipped: {skipped}"
+        );
         println!(
             "Pass rate: {:.1}%",
             if tested > 0 {
@@ -1427,78 +1663,12 @@ mod tests {
                 0.0
             }
         );
-        println!();
-        println!("=== Operator Statistics ===");
-
-        // Separate fully skipped from partially skipped operators
-        let fully_skipped_no_expected: HashSet<_> = skipped_no_expected
-            .difference(&tested_operators)
-            .cloned()
-            .collect();
-        let fully_skipped_no_gamedata: HashSet<_> = skipped_no_gamedata
-            .difference(&tested_operators)
-            .cloned()
-            .collect();
-        let fully_skipped_no_module: HashSet<_> = skipped_no_module
-            .difference(&tested_operators)
-            .cloned()
-            .collect();
-        let fully_skipped_calc_error: HashSet<_> = skipped_calc_error
-            .difference(&tested_operators)
-            .cloned()
-            .collect();
-
-        let partial_module: HashSet<_> = skipped_no_module
-            .intersection(&tested_operators)
-            .cloned()
-            .collect();
-
-        println!(
-            "Operators fully skipped (no expected DPS): {} - {:?}",
-            fully_skipped_no_expected.len(),
-            fully_skipped_no_expected
-        );
-        println!(
-            "Operators fully skipped (no game data): {} - {:?}",
-            fully_skipped_no_gamedata.len(),
-            fully_skipped_no_gamedata
-        );
-        println!(
-            "Operators partially skipped (module tests only): {} - {:?}",
-            partial_module.len(),
-            partial_module
-        );
-        println!(
-            "Operators fully skipped (no module data): {} - {:?}",
-            fully_skipped_no_module.len(),
-            fully_skipped_no_module
-        );
-        println!(
-            "Operators skipped (calc error): {} - {:?}",
-            fully_skipped_calc_error.len(),
-            fully_skipped_calc_error
-        );
-        println!(
-            "Operators with failures: {} - {:?}",
-            failed_operators.len(),
-            failed_operators
-        );
 
         if !errors.is_empty() {
             println!();
-            println!("All {} failures (first 3 per operator):", errors.len());
-            // Group errors by operator and show first 3 per operator
-            let mut op_errors: std::collections::HashMap<String, Vec<String>> =
-                std::collections::HashMap::new();
+            println!("First {} failures:", errors.len());
             for e in &errors {
-                let op = e.split('_').next().unwrap_or("unknown").to_string();
-                op_errors.entry(op).or_default().push(e.clone());
-            }
-            for (op, errs) in op_errors.iter() {
-                eprintln!("  {} ({} failures):", op, errs.len());
-                for e in errs.iter().take(3) {
-                    eprintln!("    {e}");
-                }
+                eprintln!("  {e}");
             }
         }
 

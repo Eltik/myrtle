@@ -3,7 +3,7 @@
 //! Auto-generated from ArknightsDpsCompare damage_formulas.py
 
 use super::super::super::operator_data::OperatorData;
-use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
+use super::super::super::operator_unit::{DpsCalculator, EnemyStats, OperatorParams, OperatorUnit};
 
 /// Virtuosa operator implementation
 pub struct Virtuosa {
@@ -119,21 +119,21 @@ impl Virtuosa {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut necro_skill_dps: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
         let mut hitdmgarts: f64 = 0.0;
         let mut time_to_fallout_1: f64 = 0.0;
-        let mut time_to_fallout: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
+        let mut necro_skill_dps: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut avghit: f64 = 0.0;
+        let mut time_to_fallout: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut necro_dps: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut dps: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
         let mut skilldmg: f64 = 0.0;
-        let mut necro_dps: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
 
         let mut ele_gauge = if self.unit.trait_damage {
             1000.0
@@ -273,6 +273,20 @@ impl std::ops::Deref for Virtuosa {
 
 impl std::ops::DerefMut for Virtuosa {
     fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.unit
+    }
+}
+
+impl DpsCalculator for Virtuosa {
+    fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
+        Self::skill_dps(self, enemy)
+    }
+
+    fn unit(&self) -> &OperatorUnit {
+        &self.unit
+    }
+
+    fn unit_mut(&mut self) -> &mut OperatorUnit {
         &mut self.unit
     }
 }

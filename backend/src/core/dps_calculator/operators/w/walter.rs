@@ -3,7 +3,7 @@
 //! Auto-generated from ArknightsDpsCompare damage_formulas.py
 
 use super::super::super::operator_data::OperatorData;
-use super::super::super::operator_unit::{EnemyStats, OperatorParams, OperatorUnit};
+use super::super::super::operator_unit::{DpsCalculator, EnemyStats, OperatorParams, OperatorUnit};
 
 /// Walter operator implementation
 pub struct Walter {
@@ -121,45 +121,38 @@ impl Walter {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        // Calculate shadows from __init__ logic
-        let mut shadows: f64 = 1.0;
-        shadows = 0.0;
-        if self.unit.elite == 2
-            && (self.unit.skill_index == 0 || self.unit.skill_index == 3)
-            && self.unit.talent2_damage
-        {
-            shadows = 3.0;
-        }
-        if self.unit.elite == 2
-            && (self.unit.skill_index == 0 || self.unit.skill_index == 3)
-            && self.unit.talent2_damage
-        {
-            shadows = (((self.unit.skill_index as f64) + 1.0) as f64).min((2) as f64);
-        }
-        if self.unit.elite == 2
-            && (self.unit.skill_index == 0 || self.unit.skill_index == 3)
-            && self.unit.skill_parameters.get(1).copied().unwrap_or(0.0) == 1.0
-            && self.unit.skill_index == 3
-        {
-            shadows -= 1.0;
-        }
-        if self.unit.elite == 2 && (self.unit.skill_index == 0 || self.unit.skill_index == 3) {
-            shadows = if self.unit.talent2_damage { 1.0 } else { 0.0 };
+        // Calculate shadows from __init__ logic (Walter-specific)
+        let mut shadows: f64 = 0.0;
+        if self.unit.elite == 2 {
+            if self.unit.skill_index == 0 || self.unit.skill_index == 3 {
+                if self.unit.talent2_damage {
+                    shadows = 3.0;
+                } else {
+                    shadows = ((self.unit.skill_index as f64) + 1.0).min(2.0);
+                }
+                if self.unit.skill_parameters.get(1).copied().unwrap_or(0.0) == 1.0
+                    && self.unit.skill_index == 3
+                {
+                    shadows -= 1.0;
+                }
+            } else {
+                shadows = if self.unit.talent2_damage { 1.0 } else { 0.0 };
+            }
         }
 
-        let mut sp_cost: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
         let mut hitdmg_main: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut bonushitdmg: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
         let mut avghit: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut explosiondmg: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
         let mut dps: f64 = 0.0;
         let mut bonushitdmg_main: f64 = 0.0;
+        let mut explosiondmg: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut skill_scale: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut bonushitdmg: f64 = 0.0;
 
         let mut bonushits = if ((self.unit.module_index as f64) as f64) == 1.0 {
             2.0
@@ -338,6 +331,20 @@ impl std::ops::Deref for Walter {
 
 impl std::ops::DerefMut for Walter {
     fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.unit
+    }
+}
+
+impl DpsCalculator for Walter {
+    fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
+        Self::skill_dps(self, enemy)
+    }
+
+    fn unit(&self) -> &OperatorUnit {
+        &self.unit
+    }
+
+    fn unit_mut(&mut self) -> &mut OperatorUnit {
         &mut self.unit
     }
 }
