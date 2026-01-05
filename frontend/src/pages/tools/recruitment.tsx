@@ -7,22 +7,33 @@ import { env } from "~/env";
 interface Props {
     tags: GachaTag[];
     recruitableOperators: RecruitableOperatorWithTags[];
+    initialSelectedTagNames: string[];
 }
 
-const RecruitmentPage: NextPage<Props> = ({ tags, recruitableOperators }) => {
+const RecruitmentPage: NextPage<Props> = ({ tags, recruitableOperators, initialSelectedTagNames }) => {
     return (
         <>
             <Head>
                 <title>Recruitment Calculator | myrtle.moe</title>
                 <meta content="Calculate Arknights recruitment probabilities and find the best tag combinations for desired operators." name="description" />
             </Head>
-            <RecruitmentCalculator recruitableOperators={recruitableOperators} tags={tags} />
+            <RecruitmentCalculator initialSelectedTagNames={initialSelectedTagNames} recruitableOperators={recruitableOperators} tags={tags} />
         </>
     );
 };
 
-export const getServerSideProps: GetServerSideProps<Props> = async () => {
+export const getServerSideProps: GetServerSideProps<Props> = async (context) => {
     const backendURL = env.BACKEND_URL;
+
+    // Parse ?tags query parameter (comma-separated tag names)
+    const tagsQuery = context.query.tags;
+    const initialSelectedTagNames: string[] =
+        typeof tagsQuery === "string" && tagsQuery.trim()
+            ? tagsQuery
+                  .split(",")
+                  .map((t) => decodeURIComponent(t.trim()))
+                  .filter(Boolean)
+            : [];
 
     try {
         // Fetch both tags and recruitable operators in parallel
@@ -78,6 +89,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async () => {
             props: {
                 tags: recruitmentData.recruitment.tags,
                 recruitableOperators: recruitableData.operators,
+                initialSelectedTagNames,
             },
         };
     } catch (error) {
