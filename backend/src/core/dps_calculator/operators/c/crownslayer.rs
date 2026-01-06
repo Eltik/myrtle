@@ -4,6 +4,7 @@
 
 use super::super::super::operator_data::OperatorData;
 use super::super::super::operator_unit::{DpsCalculator, EnemyStats, OperatorParams, OperatorUnit};
+use super::super::ConditionalTuple;
 
 /// Crownslayer operator implementation
 pub struct Crownslayer {
@@ -19,21 +20,10 @@ impl Crownslayer {
 
     /// Conditionals for this operator
     /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
-    pub const CONDITIONALS: &'static [(
-        &'static str,
-        &'static str,
-        bool,
-        &'static [i32],
-        &'static [i32],
-        i32,
-        i32,
-    )] = &[
-        ("talent2", "dmgTaken", true, &[], &[], 2, 0),
-        ("skill", "singleTargetOnly", true, &[3], &[], 0, 0),
-        ("module", "alone", false, &[], &[2], 0, 0),
-    ];
+    pub const CONDITIONALS: &'static [ConditionalTuple] = &[("talent2", "dmgTaken", true, &[], &[], 2, 0), ("skill", "singleTargetOnly", true, &[3], &[], 0, 0), ("module", "alone", false, &[], &[2], 0, 0)];
 
     /// Creates a new Crownslayer operator
+    #[allow(unused_parens)]
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
         let unit = OperatorUnit::new(
             operator_data,
@@ -44,13 +34,15 @@ impl Crownslayer {
             Self::AVAILABLE_SKILLS.to_vec(),
         );
 
+
+
         Self { unit }
     }
 
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
+    /// 
     /// atkbuff = 0.1 if self.module_dmg and self.module == 2 else 0
     /// atk_scale = self.talent2_params[0] if self.talent2_dmg and self.elite == 2 else 1
     /// if self.skill < 2:
@@ -64,68 +56,32 @@ impl Crownslayer {
     /// dps = hitdmg
     /// if not self.skill_dmg: dps *= 1/3
     /// return dps
-    #[allow(
-        unused_variables,
-        unused_mut,
-        unused_assignments,
-        unused_parens,
-        clippy::excessive_precision,
-        clippy::unnecessary_cast,
-        clippy::collapsible_if,
-        clippy::double_parens,
-        clippy::if_same_then_else,
-        clippy::nonminimal_bool,
-        clippy::overly_complex_bool_expr,
-        clippy::needless_return,
-        clippy::collapsible_else_if,
-        clippy::neg_multiply,
-        clippy::assign_op_pattern,
-        clippy::eq_op
-    )]
+    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op, clippy::get_first)]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
+        let mut dps: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut skill_scale: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
 
-        atkbuff = if self.unit.module_damage && ((self.unit.module_index as f64) as f64) == 2.0 {
-            0.1
-        } else {
-            0.0
-        };
-        atk_scale = if self.unit.talent2_damage && ((self.unit.elite as f64) as f64) == 2.0 {
-            self.unit.talent2_parameters.first().copied().unwrap_or(0.0)
-        } else {
-            1.0
-        };
+        atkbuff = if self.unit.module_damage && ((self.unit.module_index as f64) as f64) == 2.0 { 0.1 } else { 0.0 };
+        atk_scale = if self.unit.talent2_damage && ((self.unit.elite as f64) as f64) == 2.0 { self.unit.talent2_parameters.get(0).copied().unwrap_or(0.0) } else { 1.0 };
         if (self.unit.skill_index as f64) < 2.0 {
-            final_atk = self.unit.atk
-                * (1.0
-                    + self.unit.skill_parameters.first().copied().unwrap_or(0.0)
-                        * (self.unit.skill_index as f64)
-                    + self.unit.buff_atk
-                    + atkbuff)
-                + self.unit.buff_atk_flat;
-            hitdmg = ((final_atk * atk_scale - defense) as f64)
-                .max((final_atk * atk_scale * 0.05) as f64);
-            dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
+        final_atk = self.unit.atk * (1.0 + self.unit.skill_parameters.get(0).copied().unwrap_or(0.0)*(self.unit.skill_index as f64) + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
+        hitdmg = ((final_atk * atk_scale - defense) as f64).max((final_atk * atk_scale * 0.05) as f64);
+        dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            skill_scale = self.unit.skill_parameters.get(3).copied().unwrap_or(0.0);
-            final_atk =
-                self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
-            hitdmg = ((final_atk * skill_scale * atk_scale - defense) as f64)
-                .max((final_atk * skill_scale * atk_scale * 0.05) as f64);
-            dps = hitdmg;
-            if !self.unit.skill_damage {
-                dps *= 1.0 / 3.0;
-            }
+        skill_scale = self.unit.skill_parameters.get(3).copied().unwrap_or(0.0);
+        final_atk = self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
+        hitdmg = ((final_atk * skill_scale * atk_scale - defense) as f64).max((final_atk * skill_scale * atk_scale * 0.05) as f64);
+        dps = hitdmg;
+        if !self.unit.skill_damage { dps *= 1.0 / 3.0; }
         }
         return dps;
     }

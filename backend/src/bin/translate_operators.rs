@@ -2781,7 +2781,6 @@ fn generate_init_modifications_code(
     }
 
     let mut lines = Vec::new();
-    lines.push("        // Apply init-time modifications from Python __init__".to_string());
 
     let skip_atk = should_skip_init_atk_modification(class_name);
 
@@ -2819,7 +2818,15 @@ fn generate_init_modifications_code(
         }
     }
 
-    lines.join("\n")
+    // Only add the comment header if there are actual modifications
+    if lines.is_empty() {
+        return String::new();
+    }
+
+    let mut result = Vec::new();
+    result.push("        // Apply init-time modifications from Python __init__".to_string());
+    result.extend(lines);
+    result.join("\n")
 }
 
 /// Translate a Python expression from __init__ to Rust
@@ -3289,6 +3296,11 @@ fn generate_rust_file(op: &OperatorClass) -> String {
         .collect::<Vec<_>>()
         .join("\n");
 
+    // Generate init modifications code first to determine if mut is needed
+    let init_modifications_code =
+        generate_init_modifications_code(&op.class_name, &op.init_modifications);
+    let needs_mut = !init_modifications_code.is_empty();
+
     output.push_str(&format!(
         r#"//! DPS calculations for {}
 //!
@@ -3296,6 +3308,7 @@ fn generate_rust_file(op: &OperatorClass) -> String {
 
 use super::super::super::operator_data::OperatorData;
 use super::super::super::operator_unit::{{DpsCalculator, EnemyStats, OperatorParams, OperatorUnit}};
+use super::super::ConditionalTuple;
 
 /// {} operator implementation
 pub struct {} {{
@@ -3311,11 +3324,12 @@ impl {} {{
 
     /// Conditionals for this operator
     /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
-    pub const CONDITIONALS: &'static [(&'static str, &'static str, bool, &'static [i32], &'static [i32], i32, i32)] = &[{}];
+    pub const CONDITIONALS: &'static [ConditionalTuple] = &[{}];
 
     /// Creates a new {} operator
+    #[allow(unused_parens)]
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {{
-        let mut unit = OperatorUnit::new(
+        let {}unit = OperatorUnit::new(
             operator_data,
             params,
             {}, // default_skill_index
@@ -3333,7 +3347,7 @@ impl {} {{
     ///
     /// Original Python implementation:
 {}
-    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op)]
+    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op, clippy::get_first)]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {{
         let mut defense = enemy.defense;
         let mut res = enemy.res;
@@ -3357,10 +3371,11 @@ impl {} {{
             .join(", "),
         generate_conditionals_const(&op.conditionals),
         struct_name,
+        if needs_mut { "mut " } else { "" },
         op.default_skill,
         op.default_pot,
         op.default_mod,
-        generate_init_modifications_code(&op.class_name, &op.init_modifications),
+        init_modifications_code,
         skill_dps_comment,
         translated_skill_dps,
     ));
@@ -3380,7 +3395,7 @@ impl {} {{
     ///
     /// Original Python implementation:
 {total_dmg_comment}
-    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op)]
+    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op, clippy::get_first)]
     pub fn total_dmg(&self, enemy: &EnemyStats) -> f64 {{
         let mut defense = enemy.defense;
         let mut res = enemy.res;
@@ -3659,13 +3674,16 @@ fn generate_main_mod_file(letter_folders: &HashSet<char>, operators: &[OperatorC
     output.push_str("    pub min_module_level: i32,\n");
     output.push_str("}\n\n");
 
+    // Generate type alias for CONDITIONALS to avoid type_complexity warning
+    output.push_str("/// Type alias for conditional tuple used in CONDITIONALS constants\n");
+    output.push_str("/// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)\n");
+    output.push_str("pub type ConditionalTuple = (&'static str, &'static str, bool, &'static [i32], &'static [i32], i32, i32);\n\n");
+
     // Generate parse_conditionals helper function
     output.push_str(
         "/// Parse the CONDITIONALS constant from an operator into a Vec<ConditionalInfo>\n",
     );
-    output.push_str("pub fn parse_conditionals(\n");
-    output.push_str("    conditionals: &[(&str, &str, bool, &[i32], &[i32], i32, i32)],\n");
-    output.push_str(") -> Vec<ConditionalInfo> {\n");
+    output.push_str("pub fn parse_conditionals(conditionals: &[ConditionalTuple]) -> Vec<ConditionalInfo> {\n");
     output.push_str("    conditionals\n");
     output.push_str("        .iter()\n");
     output.push_str("        .map(\n");

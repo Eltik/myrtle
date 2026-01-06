@@ -4,6 +4,7 @@
 
 use super::super::super::operator_data::OperatorData;
 use super::super::super::operator_unit::{DpsCalculator, EnemyStats, OperatorParams, OperatorUnit};
+use super::super::ConditionalTuple;
 
 /// ExusiaiAlter operator implementation
 pub struct ExusiaiAlter {
@@ -19,17 +20,10 @@ impl ExusiaiAlter {
 
     /// Conditionals for this operator
     /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
-    pub const CONDITIONALS: &'static [(
-        &'static str,
-        &'static str,
-        bool,
-        &'static [i32],
-        &'static [i32],
-        i32,
-        i32,
-    )] = &[("skill", "+StolenAspd", false, &[2], &[], 0, 0)];
+    pub const CONDITIONALS: &'static [ConditionalTuple] = &[("skill", "+StolenAspd", false, &[2], &[], 0, 0)];
 
     /// Creates a new ExusiaiAlter operator
+    #[allow(unused_parens)]
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
         let unit = OperatorUnit::new(
             operator_data,
@@ -40,17 +34,19 @@ impl ExusiaiAlter {
             Self::AVAILABLE_SKILLS.to_vec(),
         );
 
+
+
         Self { unit }
     }
 
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
+    /// 
     /// atkbuff = 2 * self.talent2_params[0] if self.elite > 1 else 0
     /// explosion_prob = min(self.talent1_params[1:])
     /// explosion_scale = max(self.talent1_params)
-    ///
+    /// 
     /// if self.skill < 2:
     /// skill_scale = self.skill_params[0] if self.skill == 1 else 1
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
@@ -72,96 +68,45 @@ impl ExusiaiAlter {
     /// explosionhit = np.fmax(final_atk * explosion_scale - defense, final_atk * explosion_scale * 0.05)
     /// dps =  5 * (hitdmg + explosionhit * explosion_prob * self.targets) / self.atk_interval * (self.attack_speed) / 100
     /// return dps
-    #[allow(
-        unused_variables,
-        unused_mut,
-        unused_assignments,
-        unused_parens,
-        clippy::excessive_precision,
-        clippy::unnecessary_cast,
-        clippy::collapsible_if,
-        clippy::double_parens,
-        clippy::if_same_then_else,
-        clippy::nonminimal_bool,
-        clippy::overly_complex_bool_expr,
-        clippy::needless_return,
-        clippy::collapsible_else_if,
-        clippy::neg_multiply,
-        clippy::assign_op_pattern,
-        clippy::eq_op
-    )]
+    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op, clippy::get_first)]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
         let mut hitdmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut explosionhit: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut final_atk: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut explosionhit: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
 
-        atkbuff = if ((self.unit.elite as f64) as f64) > 1.0 {
-            2.0 * self.unit.talent2_parameters.first().copied().unwrap_or(0.0)
-        } else {
-            0.0
-        };
-        let mut explosion_prob = self.unit.talent1_parameters[1..]
-            .iter()
-            .cloned()
-            .fold(f64::INFINITY, f64::min);
-        let mut explosion_scale = self
-            .unit
-            .talent1_parameters
-            .iter()
-            .cloned()
-            .fold(f64::NEG_INFINITY, f64::max);
+        atkbuff = if ((self.unit.elite as f64) as f64) > 1.0 { 2.0 * self.unit.talent2_parameters.get(0).copied().unwrap_or(0.0) } else { 0.0 };
+        let mut explosion_prob = self.unit.talent1_parameters[1..].iter().cloned().fold(f64::INFINITY, f64::min);
+        let mut explosion_scale = self.unit.talent1_parameters.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
         if (self.unit.skill_index as f64) < 2.0 {
-            skill_scale = if ((self.unit.skill_index as f64) as f64) == 1.0 {
-                self.unit.skill_parameters.first().copied().unwrap_or(0.0)
-            } else {
-                1.0
-            };
-            final_atk =
-                self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
-            hitdmg = ((final_atk * skill_scale - defense) as f64)
-                .max((final_atk * skill_scale * 0.05) as f64);
-            explosionhit = ((final_atk * explosion_scale - defense) as f64)
-                .max((final_atk * explosion_scale * 0.05) as f64)
-                * (self.unit.skill_index as f64);
-            dps = (hitdmg + explosionhit * explosion_prob * (self.unit.targets as f64))
-                / (self.unit.attack_interval as f64)
-                * (self.unit.attack_speed)
-                / 100.0;
+        skill_scale = if ((self.unit.skill_index as f64) as f64) == 1.0 { self.unit.skill_parameters.get(0).copied().unwrap_or(0.0) } else { 1.0 };
+        final_atk = self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
+        hitdmg = ((final_atk * skill_scale - defense) as f64).max((final_atk * skill_scale * 0.05) as f64);
+        explosionhit = ((final_atk * explosion_scale - defense) as f64).max((final_atk * explosion_scale * 0.05) as f64) * (self.unit.skill_index as f64);
+        dps = (hitdmg + explosionhit * explosion_prob * (self.unit.targets as f64)) / (self.unit.attack_interval as f64) * (self.unit.attack_speed) / 100.0;
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            skill_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
-            aspd = if self.unit.skill_damage { 70.0 } else { 0.0 };
-            final_atk =
-                self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
-            hitdmg = ((final_atk * skill_scale - defense) as f64)
-                .max((final_atk * skill_scale * 0.05) as f64);
-            explosionhit = ((final_atk * explosion_scale - defense) as f64)
-                .max((final_atk * explosion_scale * 0.05) as f64);
-            dps = (hitdmg + explosionhit * explosion_prob * (self.unit.targets as f64)) / 0.6
-                * (self.unit.attack_speed + aspd)
-                / 100.0;
+        skill_scale = self.unit.skill_parameters.get(0).copied().unwrap_or(0.0);
+        aspd = if self.unit.skill_damage { 70.0 } else { 0.0 };
+        final_atk = self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
+        hitdmg = ((final_atk * skill_scale - defense) as f64).max((final_atk * skill_scale * 0.05) as f64);
+        explosionhit = ((final_atk * explosion_scale - defense) as f64).max((final_atk * explosion_scale * 0.05) as f64);
+        dps = (hitdmg + explosionhit * explosion_prob * (self.unit.targets as f64)) / 0.6 * (self.unit.attack_speed + aspd) / 100.0;
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            atkbuff += self.unit.skill_parameters.get(5).copied().unwrap_or(0.0);
-            skill_scale = self.unit.skill_parameters.get(3).copied().unwrap_or(0.0);
-            final_atk =
-                self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
-            hitdmg = ((final_atk * skill_scale - defense) as f64)
-                .max((final_atk * skill_scale * 0.05) as f64);
-            explosionhit = ((final_atk * explosion_scale - defense) as f64)
-                .max((final_atk * explosion_scale * 0.05) as f64);
-            dps = 5.0 * (hitdmg + explosionhit * explosion_prob * (self.unit.targets as f64))
-                / (self.unit.attack_interval as f64)
-                * (self.unit.attack_speed)
-                / 100.0;
+        atkbuff += self.unit.skill_parameters.get(5).copied().unwrap_or(0.0);
+        skill_scale = self.unit.skill_parameters.get(3).copied().unwrap_or(0.0);
+        final_atk = self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
+        hitdmg = ((final_atk * skill_scale - defense) as f64).max((final_atk * skill_scale * 0.05) as f64);
+        explosionhit = ((final_atk * explosion_scale - defense) as f64).max((final_atk * explosion_scale * 0.05) as f64);
+        dps = 5.0 * (hitdmg + explosionhit * explosion_prob * (self.unit.targets as f64)) / (self.unit.attack_interval as f64) * (self.unit.attack_speed) / 100.0;
         }
         return dps;
     }
@@ -169,7 +114,7 @@ impl ExusiaiAlter {
     /// Calculates total damage (overridden from base)
     ///
     /// Original Python implementation:
-    ///
+    /// 
     /// if self.skill == 1:
     /// return(self.skill_dps(defense,res) * 8 * (self.atk_interval/(self.attack_speed/100)))
     /// elif self.skill == 2:
@@ -180,24 +125,7 @@ impl ExusiaiAlter {
     /// return(self.skill_dps(defense,res) * 10 * (self.atk_interval/(self.attack_speed/100)))
     /// else:
     /// return(super().total_dmg(defense,res))
-    #[allow(
-        unused_variables,
-        unused_mut,
-        unused_assignments,
-        unused_parens,
-        clippy::excessive_precision,
-        clippy::unnecessary_cast,
-        clippy::collapsible_if,
-        clippy::double_parens,
-        clippy::if_same_then_else,
-        clippy::nonminimal_bool,
-        clippy::overly_complex_bool_expr,
-        clippy::needless_return,
-        clippy::collapsible_else_if,
-        clippy::neg_multiply,
-        clippy::assign_op_pattern,
-        clippy::eq_op
-    )]
+    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op, clippy::get_first)]
     pub fn total_dmg(&self, enemy: &EnemyStats) -> f64 {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
@@ -206,19 +134,19 @@ impl ExusiaiAlter {
         let mut aspd: f64 = 0.0;
 
         if (self.unit.skill_index as f64) == 1.0 {
-            // UNTRANSLATED: return(self.skill_dps(defense,res) * 8 * (self.atk_interval/(self.attack_speed/100))) - method calls need manual implementation
-            0.0 // placeholder
+        // UNTRANSLATED: return(self.skill_dps(defense,res) * 8 * (self.atk_interval/(self.attack_speed/100))) - method calls need manual implementation
+        0.0 // placeholder
         } else if (self.unit.skill_index as f64) == 2.0 {
-            aspd = if self.unit.skill_damage { 70.0 } else { 0.0 };
-            let mut ammo = if self.unit.skill_damage { 40.0 } else { 35.0 };
-            // UNTRANSLATED: return(self.skill_dps(defense,res) * ammo * (0.6/((self.attack_speed+aspd)/100))) - method calls need manual implementation
-            0.0 // placeholder
+        aspd = if self.unit.skill_damage { 70.0 } else { 0.0 };
+        let mut ammo = if self.unit.skill_damage { 40.0 } else { 35.0 };
+        // UNTRANSLATED: return(self.skill_dps(defense,res) * ammo * (0.6/((self.attack_speed+aspd)/100))) - method calls need manual implementation
+        0.0 // placeholder
         } else if (self.unit.skill_index as f64) == 3.0 {
-            // UNTRANSLATED: return(self.skill_dps(defense,res) * 10 * (self.atk_interval/(self.attack_speed/100))) - method calls need manual implementation
-            0.0 // placeholder
+        // UNTRANSLATED: return(self.skill_dps(defense,res) * 10 * (self.atk_interval/(self.attack_speed/100))) - method calls need manual implementation
+        0.0 // placeholder
         } else {
-            // UNTRANSLATED: return(super().total_dmg(defense,res)) - method calls need manual implementation
-            0.0 // placeholder
+        // UNTRANSLATED: return(super().total_dmg(defense,res)) - method calls need manual implementation
+        0.0 // placeholder
         }
     }
 }

@@ -4,6 +4,7 @@
 
 use super::super::super::operator_data::OperatorData;
 use super::super::super::operator_unit::{DpsCalculator, EnemyStats, OperatorParams, OperatorUnit};
+use super::super::ConditionalTuple;
 
 /// Amiya operator implementation
 pub struct Amiya {
@@ -19,17 +20,10 @@ impl Amiya {
 
     /// Conditionals for this operator
     /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
-    pub const CONDITIONALS: &'static [(
-        &'static str,
-        &'static str,
-        bool,
-        &'static [i32],
-        &'static [i32],
-        i32,
-        i32,
-    )] = &[];
+    pub const CONDITIONALS: &'static [ConditionalTuple] = &[];
 
     /// Creates a new Amiya operator
+    #[allow(unused_parens)]
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
         let unit = OperatorUnit::new(
             operator_data,
@@ -40,13 +34,15 @@ impl Amiya {
             Self::AVAILABLE_SKILLS.to_vec(),
         );
 
+
+
         Self { unit }
     }
 
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
+    /// 
     /// if self.skill < 2:
     /// aspd = self.skill_params[0] * self.skill
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
@@ -62,24 +58,7 @@ impl Amiya {
     /// final_atk = self.atk * (1 + self.buff_atk + self.params) + self.buff_atk_flat
     /// dps = final_atk/(self.atk_interval/(self.attack_speed/100)) * np.fmax(1,-defense) #this defense part has to be included, because np array
     /// return dps
-    #[allow(
-        unused_variables,
-        unused_mut,
-        unused_assignments,
-        unused_parens,
-        clippy::excessive_precision,
-        clippy::unnecessary_cast,
-        clippy::collapsible_if,
-        clippy::double_parens,
-        clippy::if_same_then_else,
-        clippy::nonminimal_bool,
-        clippy::overly_complex_bool_expr,
-        clippy::needless_return,
-        clippy::collapsible_else_if,
-        clippy::neg_multiply,
-        clippy::assign_op_pattern,
-        clippy::eq_op
-    )]
+    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op, clippy::get_first)]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
@@ -91,36 +70,29 @@ impl Amiya {
             .copied()
             .unwrap_or(2.3);
 
-        let mut atk_scale: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut hitdmgarts: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         if (self.unit.skill_index as f64) < 2.0 {
-            aspd = self.unit.skill_parameters.first().copied().unwrap_or(0.0)
-                * (self.unit.skill_index as f64);
-            final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
-            hitdmgarts = ((final_atk * (1.0 - res / 100.0)) as f64).max((final_atk * 0.05) as f64);
-            dps = hitdmgarts
-                / ((self.unit.attack_interval as f64) / ((self.unit.attack_speed + aspd) / 100.0));
+        aspd = self.unit.skill_parameters.get(0).copied().unwrap_or(0.0) * (self.unit.skill_index as f64);
+        final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
+        hitdmgarts = ((final_atk * (1.0 -res/ 100.0)) as f64).max((final_atk * 0.05) as f64);
+        dps = hitdmgarts/((self.unit.attack_interval as f64)/((self.unit.attack_speed +aspd)/ 100.0));
         }
         if (self.unit.skill_index as f64) == 2.0 {
-            atk_scale = self.unit.skill_parameters.first().copied().unwrap_or(0.0);
-            let mut hits = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
-            final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
-            hitdmgarts = ((final_atk * atk_scale * (1.0 - res / 100.0)) as f64)
-                .max((final_atk * atk_scale * 0.05) as f64);
-            dps = hits * hitdmgarts
-                / ((self.unit.attack_interval as f64) / (self.unit.attack_speed / 100.0));
+        atk_scale = self.unit.skill_parameters.get(0).copied().unwrap_or(0.0);
+        let mut hits = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
+        final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
+        hitdmgarts = ((final_atk * atk_scale * (1.0 -res/ 100.0)) as f64).max((final_atk * atk_scale * 0.05) as f64);
+        dps = hits * hitdmgarts/((self.unit.attack_interval as f64)/(self.unit.attack_speed/ 100.0));
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            final_atk =
-                self.unit.atk * (1.0 + self.unit.buff_atk + params) + self.unit.buff_atk_flat;
-            dps = final_atk
-                / ((self.unit.attack_interval as f64) / (self.unit.attack_speed / 100.0))
-                * ((1) as f64).max((-defense) as f64);
+        final_atk = self.unit.atk * (1.0 + self.unit.buff_atk + params) + self.unit.buff_atk_flat;
+        dps = final_atk/((self.unit.attack_interval as f64)/(self.unit.attack_speed/ 100.0)) * ((1) as f64).max((-defense) as f64);
         }
         return dps;
     }

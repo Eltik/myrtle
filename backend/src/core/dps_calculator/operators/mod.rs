@@ -82,10 +82,12 @@ pub struct ConditionalAvailability {
     pub min_module_level: i32,
 }
 
+/// Type alias for conditional tuple used in CONDITIONALS constants
+/// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
+pub type ConditionalTuple = (&'static str, &'static str, bool, &'static [i32], &'static [i32], i32, i32);
+
 /// Parse the CONDITIONALS constant from an operator into a Vec<ConditionalInfo>
-pub fn parse_conditionals(
-    conditionals: &[(&str, &str, bool, &[i32], &[i32], i32, i32)],
-) -> Vec<ConditionalInfo> {
+pub fn parse_conditionals(conditionals: &[ConditionalTuple]) -> Vec<ConditionalInfo> {
     conditionals
         .iter()
         .map(
@@ -167,12 +169,12 @@ pub use y::*;
 pub use z::*;
 
 /// Creates an operator by name, returning a boxed DpsCalculator trait object
-///
+/// 
 /// # Arguments
 /// * `name` - The operator name (e.g., "Blaze", "ExusiaiAlter")
 /// * `operator_data` - The operator's base data from JSON
 /// * `params` - The operator configuration parameters
-///
+/// 
 /// # Returns
 /// Some(Box<dyn DpsCalculator>) if the operator is found, None otherwise
 pub fn create_operator(
@@ -397,10 +399,7 @@ pub fn create_operator(
         "Tachanka" => Some(Box::new(Tachanka::new(operator_data, params))),
         "Tecno" => Some(Box::new(Tecno::new(operator_data, params))),
         "Tequila" => Some(Box::new(Tequila::new(operator_data, params))),
-        "TerraResearchCommission" => Some(Box::new(TerraResearchCommission::new(
-            operator_data,
-            params,
-        ))),
+        "TerraResearchCommission" => Some(Box::new(TerraResearchCommission::new(operator_data, params))),
         "TexasAlter" => Some(Box::new(TexasAlter::new(operator_data, params))),
         "Thorns" => Some(Box::new(Thorns::new(operator_data, params))),
         "ThornsAlter" => Some(Box::new(ThornsAlter::new(operator_data, params))),
@@ -445,7 +444,7 @@ pub fn create_operator(
 }
 
 /// Returns a list of all operator names that have DPS calculator implementations
-///
+/// 
 /// # Returns
 /// A static slice of operator names that can be passed to `create_operator()`
 pub fn get_supported_operator_names() -> &'static [&'static str] {
@@ -710,10 +709,10 @@ pub fn get_supported_operator_names() -> &'static [&'static str] {
 }
 
 /// Returns metadata about an operator's available configuration options
-///
+/// 
 /// # Arguments
 /// * `name` - The operator name (e.g., "Blaze", "ExusiaiAlter")
-///
+/// 
 /// # Returns
 /// Some(OperatorMetadata) if the operator is found, None otherwise
 pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {

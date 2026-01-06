@@ -4,6 +4,7 @@
 
 use super::super::super::operator_data::OperatorData;
 use super::super::super::operator_unit::{DpsCalculator, EnemyStats, OperatorParams, OperatorUnit};
+use super::super::ConditionalTuple;
 
 /// Ethan operator implementation
 pub struct Ethan {
@@ -19,17 +20,10 @@ impl Ethan {
 
     /// Conditionals for this operator
     /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
-    pub const CONDITIONALS: &'static [(
-        &'static str,
-        &'static str,
-        bool,
-        &'static [i32],
-        &'static [i32],
-        i32,
-        i32,
-    )] = &[];
+    pub const CONDITIONALS: &'static [ConditionalTuple] = &[];
 
     /// Creates a new Ethan operator
+    #[allow(unused_parens)]
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
         let unit = OperatorUnit::new(
             operator_data,
@@ -40,13 +34,15 @@ impl Ethan {
             Self::AVAILABLE_SKILLS.to_vec(),
         );
 
+
+
         Self { unit }
     }
 
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
+    /// 
     /// if self.skill == 1:
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)
@@ -58,60 +54,28 @@ impl Ethan {
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)
     /// dps = hitdmg / self.atk_interval * (self.attack_speed) / 100 * self.targets
     /// return dps
-    #[allow(
-        unused_variables,
-        unused_mut,
-        unused_assignments,
-        unused_parens,
-        clippy::excessive_precision,
-        clippy::unnecessary_cast,
-        clippy::collapsible_if,
-        clippy::double_parens,
-        clippy::if_same_then_else,
-        clippy::nonminimal_bool,
-        clippy::overly_complex_bool_expr,
-        clippy::needless_return,
-        clippy::collapsible_else_if,
-        clippy::neg_multiply,
-        clippy::assign_op_pattern,
-        clippy::eq_op
-    )]
+    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op, clippy::get_first)]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut dps: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut final_atk: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
 
         if (self.unit.skill_index as f64) == 1.0 {
-            final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
-            hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
-            hitdmgarts = ((self.unit.skill_parameters.first().copied().unwrap_or(0.0)
-                * (1.0 - res / 100.0)) as f64)
-                .max((self.unit.skill_parameters.first().copied().unwrap_or(0.0) * 0.05) as f64);
-            let mut active_ratio = ((1) as f64).min(
-                (self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
-                    / ((self.unit.attack_interval as f64) / self.unit.attack_speed * 100.0))
-                    as f64,
-            );
-            dps = hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed) / 100.0
-                * (self.unit.targets as f64)
-                + hitdmgarts * active_ratio * (self.unit.targets as f64);
+        final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
+        hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
+        hitdmgarts = ((self.unit.skill_parameters.get(0).copied().unwrap_or(0.0) * (1.0 -res/ 100.0)) as f64).max((self.unit.skill_parameters.get(0).copied().unwrap_or(0.0) * 0.05) as f64);
+        let mut active_ratio = ((1) as f64).min((self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)/ ((self.unit.attack_interval as f64) / self.unit.attack_speed * 100.0)) as f64);
+        dps = hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed) / 100.0 * (self.unit.targets as f64) + hitdmgarts * active_ratio * (self.unit.targets as f64);
         }
-        if [0.0, 2.0].contains(&((self.unit.skill_index as f64) as f64)) {
-            final_atk = self.unit.atk
-                * (1.0
-                    + self.unit.skill_parameters.first().copied().unwrap_or(0.0)
-                        * (self.unit.skill_index as f64)
-                        / 2.0
-                    + self.unit.buff_atk)
-                + self.unit.buff_atk_flat;
-            hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
-            dps = hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed) / 100.0
-                * (self.unit.targets as f64);
+        if [0.0, 2.0].contains(&(((self.unit.skill_index as f64)) as f64)) {
+        final_atk = self.unit.atk * (1.0 + self.unit.skill_parameters.get(0).copied().unwrap_or(0.0) * (self.unit.skill_index as f64)/ 2.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
+        hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
+        dps = hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed) / 100.0 * (self.unit.targets as f64);
         }
         return dps;
     }

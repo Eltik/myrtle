@@ -4,6 +4,7 @@
 
 use super::super::super::operator_data::OperatorData;
 use super::super::super::operator_unit::{DpsCalculator, EnemyStats, OperatorParams, OperatorUnit};
+use super::super::ConditionalTuple;
 
 /// Durin operator implementation
 pub struct Durin {
@@ -19,17 +20,10 @@ impl Durin {
 
     /// Conditionals for this operator
     /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
-    pub const CONDITIONALS: &'static [(
-        &'static str,
-        &'static str,
-        bool,
-        &'static [i32],
-        &'static [i32],
-        i32,
-        i32,
-    )] = &[];
+    pub const CONDITIONALS: &'static [ConditionalTuple] = &[];
 
     /// Creates a new Durin operator
+    #[allow(unused_parens)]
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
         let unit = OperatorUnit::new(
             operator_data,
@@ -40,35 +34,20 @@ impl Durin {
             Self::AVAILABLE_SKILLS.to_vec(),
         );
 
+
+
         Self { unit }
     }
 
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
+    /// 
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk * (1-res/100), final_atk * 0.05)
     /// dps = hitdmg/self.atk_interval * self.attack_speed/100
     /// return dps
-    #[allow(
-        unused_variables,
-        unused_mut,
-        unused_assignments,
-        unused_parens,
-        clippy::excessive_precision,
-        clippy::unnecessary_cast,
-        clippy::collapsible_if,
-        clippy::double_parens,
-        clippy::if_same_then_else,
-        clippy::nonminimal_bool,
-        clippy::overly_complex_bool_expr,
-        clippy::needless_return,
-        clippy::collapsible_else_if,
-        clippy::neg_multiply,
-        clippy::assign_op_pattern,
-        clippy::eq_op
-    )]
+    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op, clippy::get_first)]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
@@ -76,8 +55,8 @@ impl Durin {
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         let mut final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
-        let mut hitdmg = ((final_atk * (1.0 - res / 100.0)) as f64).max((final_atk * 0.05) as f64);
-        let mut dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
+        let mut hitdmg = ((final_atk * (1.0 -res/ 100.0)) as f64).max((final_atk * 0.05) as f64);
+        let mut dps = hitdmg/(self.unit.attack_interval as f64) * self.unit.attack_speed/ 100.0;
         return dps;
     }
 }
