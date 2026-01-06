@@ -42,6 +42,16 @@ pub struct SupportedOperator {
     pub default_module_index: i32,
     /// Maximum promotion/elite level (0, 1, or 2) based on rarity
     pub max_promotion: i32,
+    /// Potential rank descriptions (for UI tooltips)
+    pub potential_ranks: Vec<PotentialRankInfo>,
+}
+
+/// Lightweight potential rank info for API response
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct PotentialRankInfo {
+    /// Description of what this potential does (e.g., "Deploy Cost -1")
+    pub description: String,
 }
 
 /// GET /dps-calculator/operators
@@ -78,6 +88,15 @@ pub async fn list_operators(State(state): State<AppState>) -> Json<ListOperators
                 None => (vec![], vec![], 0, 1, 0),
             };
 
+            // Convert potential ranks to lightweight format
+            let potential_ranks: Vec<PotentialRankInfo> = operator
+                .potential_ranks
+                .iter()
+                .map(|rank| PotentialRankInfo {
+                    description: rank.description.clone(),
+                })
+                .collect();
+
             operators.push(SupportedOperator {
                 id: id.clone(),
                 name: operator.name.clone(),
@@ -90,6 +109,7 @@ pub async fn list_operators(State(state): State<AppState>) -> Json<ListOperators
                 default_potential,
                 default_module_index,
                 max_promotion,
+                potential_ranks,
             });
         }
     }

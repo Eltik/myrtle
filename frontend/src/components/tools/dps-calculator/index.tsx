@@ -29,6 +29,23 @@ const CHART_COLORS = [
     "#f97316", // orange
 ];
 
+// Helper to get default max level based on rarity and promotion
+function getDefaultMaxLevel(rarity: number, promotion: number, phaseLevels?: number[]): number {
+    if (phaseLevels?.[promotion]) {
+        return phaseLevels[promotion];
+    }
+    // Fallback based on rarity (standard max levels)
+    const levels: Record<number, number[]> = {
+        6: [50, 80, 90],
+        5: [50, 70, 80],
+        4: [45, 60, 70],
+        3: [40, 55],
+        2: [30],
+        1: [30],
+    };
+    return levels[rarity]?.[promotion] ?? 1;
+}
+
 export function DpsCalculator({ operators }: DpsCalculatorProps) {
     const [selectedOperators, setSelectedOperators] = useState<OperatorConfiguration[]>([]);
     const [chartMode, setChartMode] = useState<"defense" | "resistance">("defense");
@@ -42,6 +59,8 @@ export function DpsCalculator({ operators }: DpsCalculatorProps) {
             const defaultSkill = operator.defaultSkillIndex || (operator.availableSkills[0] ?? 1);
             const defaultModule = operator.defaultModuleIndex || 0;
             const defaultPotential = operator.defaultPotential || 1;
+            const defaultPromotion = operator.maxPromotion;
+            const defaultLevel = getDefaultMaxLevel(operator.rarity, defaultPromotion, operator.phaseLevels);
 
             const newOperator: OperatorConfiguration = {
                 id: `${operator.id}-${Date.now()}`,
@@ -54,12 +73,19 @@ export function DpsCalculator({ operators }: DpsCalculatorProps) {
                     masteryLevel: 3,
                     potential: defaultPotential,
                     trust: 100,
-                    promotion: operator.maxPromotion,
+                    promotion: defaultPromotion,
+                    level: defaultLevel,
                     moduleIndex: defaultModule,
+                    moduleLevel: 3,
                 },
                 availableSkills: operator.availableSkills,
                 availableModules: operator.availableModules,
                 maxPromotion: operator.maxPromotion,
+                // Pass enriched data if available
+                skillData: operator.skillData,
+                moduleData: operator.moduleData,
+                phaseLevels: operator.phaseLevels,
+                potentialRanks: operator.potentialRanks,
             };
 
             setSelectedOperators((prev) => [...prev, newOperator]);

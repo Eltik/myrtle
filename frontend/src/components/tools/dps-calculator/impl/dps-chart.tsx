@@ -73,8 +73,8 @@ export function DpsChart({ operators, mode }: DpsChartProps) {
                         if (!dataMap.has(point.value)) {
                             dataMap.set(point.value, { value: point.value });
                         }
-                        const dataPoint = dataMap.get(point.value);
-                        Object.assign(dataPoint?.[result.operator.id] ?? {}, point.dps);
+                        const dataPoint = dataMap.get(point.value)!;
+                        dataPoint[result.operator.id] = point.dps;
                     }
                 }
 
