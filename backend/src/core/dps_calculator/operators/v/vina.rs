@@ -20,7 +20,11 @@ impl Vina {
 
     /// Conditionals for this operator
     /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
-    pub const CONDITIONALS: &'static [ConditionalTuple] = &[("module", "NotBlocking", false, &[], &[1], 0, 0), ("talent2", "vsFrighten", false, &[], &[2], 0, 2), ("module", "blocking", false, &[], &[2], 0, 0)];
+    pub const CONDITIONALS: &'static [ConditionalTuple] = &[
+        ("module", "NotBlocking", false, &[], &[1], 0, 0),
+        ("talent2", "vsFrighten", false, &[], &[2], 0, 2),
+        ("module", "blocking", false, &[], &[2], 0, 0),
+    ];
 
     /// Creates a new Vina operator
     #[allow(unused_parens)]
@@ -34,15 +38,13 @@ impl Vina {
             Self::AVAILABLE_SKILLS.to_vec(),
         );
 
-
-
         Self { unit }
     }
 
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    /// 
+    ///
     /// value = 0.1 if self.module == 2 and self.module_dmg else 0
     /// fragile = max(value, self.buff_fragile)
     /// dmg_scale = 1 + 0.05 * self.module_lvl if self.module == 2 and self.module_lvl > 1 and self.talent2_dmg else 1
@@ -62,7 +64,7 @@ impl Vina {
     /// if atks_per_skillactivation > 1:
     /// avghit = (skilldmgarts + int(atks_per_skillactivation) * hitdmgarts) / (int(atks_per_skillactivation)+1)
     /// dps = avghit/(self.atk_interval/((self.attack_speed+aspd)/100))
-    /// 
+    ///
     /// if self.skill == 2:
     /// atkbuff += self.skill_params[1]
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
@@ -77,59 +79,110 @@ impl Vina {
     /// hitdmg_lion = np.fmax(self.drone_atk *(1-res/100), self.drone_atk * 1)
     /// dps = hitdmgarts/(atk_interval/((self.attack_speed+aspd)/100)) * min(self.targets,maxtargets) + hitdmg_lion/self.drone_atk_interval * min(self.targets, self.count)
     /// return dps * dmg_scale * (1+fragile)/(1+self.buff_fragile)
-    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op, clippy::get_first)]
+    #[allow(
+        unused_variables,
+        unused_mut,
+        unused_assignments,
+        unused_parens,
+        clippy::excessive_precision,
+        clippy::unnecessary_cast,
+        clippy::collapsible_if,
+        clippy::double_parens,
+        clippy::if_same_then_else,
+        clippy::nonminimal_bool,
+        clippy::overly_complex_bool_expr,
+        clippy::needless_return,
+        clippy::collapsible_else_if,
+        clippy::neg_multiply,
+        clippy::assign_op_pattern,
+        clippy::eq_op,
+        clippy::get_first
+    )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut skill_scale: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut avghit: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
         let mut sp_cost: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
 
-        let mut value = if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage { 0.1 } else { 0.0 };
+        let mut value =
+            if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage {
+                0.1
+            } else {
+                0.0
+            };
         let mut fragile = ((value) as f64).max((self.unit.buff_fragile) as f64);
-        let mut dmg_scale = if ((self.unit.module_index as f64) as f64) == 2.0 && ((self.unit.module_level as f64) as f64) > 1.0 && self.unit.talent2_damage { 1.0 + 0.05 * ((self.unit.module_level as f64) as f64) } else { 1.0 };
+        let mut dmg_scale = if ((self.unit.module_index as f64) as f64) == 2.0
+            && ((self.unit.module_level as f64) as f64) > 1.0
+            && self.unit.talent2_damage
+        {
+            1.0 + 0.05 * ((self.unit.module_level as f64) as f64)
+        } else {
+            1.0
+        };
         atkbuff = self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0) * 1.0 /* self.count - needs manual implementation */;
-        aspd = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage { 8.0 } else { 0.0 };
+        aspd = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {
+            8.0
+        } else {
+            0.0
+        };
         if (self.unit.skill_index as f64) < 2.0 {
-        skill_scale = self.unit.skill_parameters.get(0).copied().unwrap_or(0.0);
-        let mut hits = (self.unit.skill_cost as f64);
-        final_atk = self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
-        hitdmgarts = ((final_atk *(1.0 -res/ 100.0)) as f64).max((final_atk * 0.05) as f64);
-        let mut skilldmgarts = ((final_atk * skill_scale *(1.0 -res/ 100.0)) as f64).max((final_atk * skill_scale * 1.0) as f64);
-        if (self.unit.skill_index as f64) == 0.0 { skilldmgarts = hitdmgarts; }
-        sp_cost = (self.unit.skill_cost as f64)/(1.0 +(self.unit.sp_boost as f64)) + 1.2;
-        let mut atkcycle = (self.unit.attack_interval as f64)/((self.unit.attack_speed)/ 100.0);
-        let mut atks_per_skillactivation = sp_cost / atkcycle;
-        avghit = skilldmgarts;
-        if atks_per_skillactivation > 1.0 {
-        avghit = (skilldmgarts + ((atks_per_skillactivation) as f64).trunc() * hitdmgarts) / (((atks_per_skillactivation) as f64).trunc()+1.0);
-        }
-        dps = avghit/((self.unit.attack_interval as f64)/((self.unit.attack_speed+aspd)/ 100.0));
+            skill_scale = self.unit.skill_parameters.get(0).copied().unwrap_or(0.0);
+            let mut hits = (self.unit.skill_cost as f64);
+            final_atk =
+                self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
+            hitdmgarts = ((final_atk * (1.0 - res / 100.0)) as f64).max((final_atk * 0.05) as f64);
+            let mut skilldmgarts = ((final_atk * skill_scale * (1.0 - res / 100.0)) as f64)
+                .max((final_atk * skill_scale * 1.0) as f64);
+            if (self.unit.skill_index as f64) == 0.0 {
+                skilldmgarts = hitdmgarts;
+            }
+            sp_cost = (self.unit.skill_cost as f64) / (1.0 + (self.unit.sp_boost as f64)) + 1.2;
+            let mut atkcycle =
+                (self.unit.attack_interval as f64) / ((self.unit.attack_speed) / 100.0);
+            let mut atks_per_skillactivation = sp_cost / atkcycle;
+            avghit = skilldmgarts;
+            if atks_per_skillactivation > 1.0 {
+                avghit = (skilldmgarts + ((atks_per_skillactivation) as f64).trunc() * hitdmgarts)
+                    / (((atks_per_skillactivation) as f64).trunc() + 1.0);
+            }
+            dps = avghit
+                / ((self.unit.attack_interval as f64) / ((self.unit.attack_speed + aspd) / 100.0));
         }
         if (self.unit.skill_index as f64) == 2.0 {
-        atkbuff += self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
-        final_atk = self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
-        hitdmg = ((final_atk * (1.0 -res/ 100.0)) as f64).max((final_atk * 0.05) as f64);
-        dps = hitdmg/((self.unit.attack_interval as f64)/((self.unit.attack_speed+aspd)/ 100.0)) * (((self.unit.targets as f64)) as f64).min((2) as f64);
+            atkbuff += self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
+            final_atk =
+                self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
+            hitdmg = ((final_atk * (1.0 - res / 100.0)) as f64).max((final_atk * 0.05) as f64);
+            dps = hitdmg
+                / ((self.unit.attack_interval as f64) / ((self.unit.attack_speed + aspd) / 100.0))
+                * ((self.unit.targets as f64) as f64).min((2) as f64);
         }
         if (self.unit.skill_index as f64) == 3.0 {
-        atk_interval = (self.unit.attack_interval as f64) + self.unit.skill_parameters.get(0).copied().unwrap_or(0.0);
-        atkbuff += self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
-        let mut maxtargets = self.unit.skill_parameters.get(2).copied().unwrap_or(0.0);
-        final_atk = self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
-        hitdmgarts = ((final_atk *(1.0 -res/ 100.0)) as f64).max((final_atk * 1.0) as f64);
-        let mut hitdmg_lion = ((self.unit.drone_atk *(1.0 -res/ 100.0)) as f64).max((self.unit.drone_atk * 1.0) as f64);
-        dps = hitdmgarts/(atk_interval/((self.unit.attack_speed+aspd)/ 100.0)) * (((self.unit.targets as f64)) as f64).min((maxtargets) as f64) + hitdmg_lion/(self.unit.drone_atk_interval as f64) * (((self.unit.targets as f64)) as f64).min((1.0 /* self.count - needs manual implementation */) as f64);
+            atk_interval = (self.unit.attack_interval as f64)
+                + self.unit.skill_parameters.get(0).copied().unwrap_or(0.0);
+            atkbuff += self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
+            let mut maxtargets = self.unit.skill_parameters.get(2).copied().unwrap_or(0.0);
+            final_atk =
+                self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
+            hitdmgarts = ((final_atk * (1.0 - res / 100.0)) as f64).max((final_atk * 1.0) as f64);
+            let mut hitdmg_lion = ((self.unit.drone_atk * (1.0 - res / 100.0)) as f64)
+                .max((self.unit.drone_atk * 1.0) as f64);
+            dps = hitdmgarts / (atk_interval / ((self.unit.attack_speed + aspd) / 100.0))
+                * ((self.unit.targets as f64) as f64).min((maxtargets) as f64)
+                + hitdmg_lion / (self.unit.drone_atk_interval as f64)
+                    * ((self.unit.targets as f64) as f64)
+                        .min((1.0/* self.count - needs manual implementation */) as f64);
         }
-        return dps * dmg_scale * (1.0 +fragile)/(1.0 +self.unit.buff_fragile);
+        return dps * dmg_scale * (1.0 + fragile) / (1.0 + self.unit.buff_fragile);
     }
 }
 

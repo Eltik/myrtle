@@ -3676,14 +3676,18 @@ fn generate_main_mod_file(letter_folders: &HashSet<char>, operators: &[OperatorC
 
     // Generate type alias for CONDITIONALS to avoid type_complexity warning
     output.push_str("/// Type alias for conditional tuple used in CONDITIONALS constants\n");
-    output.push_str("/// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)\n");
+    output.push_str(
+        "/// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)\n",
+    );
     output.push_str("pub type ConditionalTuple = (&'static str, &'static str, bool, &'static [i32], &'static [i32], i32, i32);\n\n");
 
     // Generate parse_conditionals helper function
     output.push_str(
         "/// Parse the CONDITIONALS constant from an operator into a Vec<ConditionalInfo>\n",
     );
-    output.push_str("pub fn parse_conditionals(conditionals: &[ConditionalTuple]) -> Vec<ConditionalInfo> {\n");
+    output.push_str(
+        "pub fn parse_conditionals(conditionals: &[ConditionalTuple]) -> Vec<ConditionalInfo> {\n",
+    );
     output.push_str("    conditionals\n");
     output.push_str("        .iter()\n");
     output.push_str("        .map(\n");

@@ -20,7 +20,10 @@ impl Lavaalt {
 
     /// Conditionals for this operator
     /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
-    pub const CONDITIONALS: &'static [ConditionalTuple] = &[("skill", "overlap", false, &[2], &[], 0, 0), ("skill", "overlap", false, &[1], &[], 0, 0)];
+    pub const CONDITIONALS: &'static [ConditionalTuple] = &[
+        ("skill", "overlap", false, &[2], &[], 0, 0),
+        ("skill", "overlap", false, &[1], &[], 0, 0),
+    ];
 
     /// Creates a new Lavaalt operator
     #[allow(unused_parens)]
@@ -34,15 +37,13 @@ impl Lavaalt {
             Self::AVAILABLE_SKILLS.to_vec(),
         );
 
-
-
         Self { unit }
     }
 
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    /// 
+    ///
     /// if self.skill < 2:
     /// final_atk = self.atk * (1 + self.buff_atk + self.skill_params[0] * self.skill) + self.buff_atk_flat
     /// hitdmgarts = np.fmax(final_atk * (1-res/100), final_atk * 0.05)
@@ -57,33 +58,61 @@ impl Lavaalt {
     /// if self.skill_dmg:
     /// dps *= 2
     /// return dps
-    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op, clippy::get_first)]
+    #[allow(
+        unused_variables,
+        unused_mut,
+        unused_assignments,
+        unused_parens,
+        clippy::excessive_precision,
+        clippy::unnecessary_cast,
+        clippy::collapsible_if,
+        clippy::double_parens,
+        clippy::if_same_then_else,
+        clippy::nonminimal_bool,
+        clippy::overly_complex_bool_expr,
+        clippy::needless_return,
+        clippy::collapsible_else_if,
+        clippy::neg_multiply,
+        clippy::assign_op_pattern,
+        clippy::eq_op,
+        clippy::get_first
+    )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut atk_scale: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut dps: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
         let mut hitdmgarts: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut dps: f64 = 0.0;
 
         if (self.unit.skill_index as f64) < 2.0 {
-        final_atk = self.unit.atk * (1.0 + self.unit.buff_atk + self.unit.skill_parameters.get(0).copied().unwrap_or(0.0) * (self.unit.skill_index as f64)) + self.unit.buff_atk_flat;
-        hitdmgarts = ((final_atk * (1.0 -res/ 100.0)) as f64).max((final_atk * 0.05) as f64);
-        dps = hitdmgarts/(self.unit.attack_interval as f64) * self.unit.attack_speed/ 100.0 * (self.unit.targets as f64);
-        if self.unit.skill_damage && (self.unit.targets as f64) > 1.0 && (self.unit.skill_index as f64) == 1.0 {
-        dps *= 2.0;
-        }
+            final_atk = self.unit.atk
+                * (1.0
+                    + self.unit.buff_atk
+                    + self.unit.skill_parameters.get(0).copied().unwrap_or(0.0)
+                        * (self.unit.skill_index as f64))
+                + self.unit.buff_atk_flat;
+            hitdmgarts = ((final_atk * (1.0 - res / 100.0)) as f64).max((final_atk * 0.05) as f64);
+            dps = hitdmgarts / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0
+                * (self.unit.targets as f64);
+            if self.unit.skill_damage
+                && (self.unit.targets as f64) > 1.0
+                && (self.unit.skill_index as f64) == 1.0
+            {
+                dps *= 2.0;
+            }
         }
         if (self.unit.skill_index as f64) == 2.0 {
-        atk_scale = self.unit.skill_parameters.get(0).copied().unwrap_or(0.0);
-        final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
-        hitdmgarts = ((final_atk * atk_scale * (1.0 -res/ 100.0)) as f64).max((final_atk * atk_scale * 0.05) as f64);
-        dps = hitdmgarts * (self.unit.targets as f64);
-        if self.unit.skill_damage {
-        dps *= 2.0;
-        }
+            atk_scale = self.unit.skill_parameters.get(0).copied().unwrap_or(0.0);
+            final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
+            hitdmgarts = ((final_atk * atk_scale * (1.0 - res / 100.0)) as f64)
+                .max((final_atk * atk_scale * 0.05) as f64);
+            dps = hitdmgarts * (self.unit.targets as f64);
+            if self.unit.skill_damage {
+                dps *= 2.0;
+            }
         }
         return dps;
     }

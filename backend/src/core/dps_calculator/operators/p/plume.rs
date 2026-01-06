@@ -34,21 +34,37 @@ impl Plume {
             Self::AVAILABLE_SKILLS.to_vec(),
         );
 
-
-
         Self { unit }
     }
 
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    /// 
+    ///
     /// atkbuff = self.talent1_params[0]
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk + self.skill_params[0] * self.skill) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)
     /// dps = hitdmg / self.atk_interval * (self.attack_speed + self.skill_params[1] * self.skill) / 100
     /// return dps
-    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op, clippy::get_first)]
+    #[allow(
+        unused_variables,
+        unused_mut,
+        unused_assignments,
+        unused_parens,
+        clippy::excessive_precision,
+        clippy::unnecessary_cast,
+        clippy::collapsible_if,
+        clippy::double_parens,
+        clippy::if_same_then_else,
+        clippy::nonminimal_bool,
+        clippy::overly_complex_bool_expr,
+        clippy::needless_return,
+        clippy::collapsible_else_if,
+        clippy::neg_multiply,
+        clippy::assign_op_pattern,
+        clippy::eq_op,
+        clippy::get_first
+    )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
@@ -56,9 +72,19 @@ impl Plume {
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         let mut atkbuff = self.unit.talent1_parameters.get(0).copied().unwrap_or(0.0);
-        let mut final_atk = self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk + self.unit.skill_parameters.get(0).copied().unwrap_or(0.0) * (self.unit.skill_index as f64)) + self.unit.buff_atk_flat;
+        let mut final_atk = self.unit.atk
+            * (1.0
+                + atkbuff
+                + self.unit.buff_atk
+                + self.unit.skill_parameters.get(0).copied().unwrap_or(0.0)
+                    * (self.unit.skill_index as f64))
+            + self.unit.buff_atk_flat;
         let mut hitdmg = ((final_atk - defense) as f64).max((final_atk * 0.05) as f64);
-        let mut dps = hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed + self.unit.skill_parameters.get(1).copied().unwrap_or(0.0) * (self.unit.skill_index as f64)) / 100.0;
+        let mut dps = hitdmg / (self.unit.attack_interval as f64)
+            * (self.unit.attack_speed
+                + self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
+                    * (self.unit.skill_index as f64))
+            / 100.0;
         return dps;
     }
 }
