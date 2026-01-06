@@ -1,6 +1,7 @@
 pub mod admin;
 pub mod auth;
 pub mod avatar;
+pub mod dps_calculator;
 pub mod get_user;
 pub mod portrait;
 pub mod static_data;
