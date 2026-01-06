@@ -1,4 +1,4 @@
-import type { DpsOperatorParams } from "~/types/api/impl/dps-calculator";
+import type { DpsModuleData, DpsOperatorParams, DpsPotentialRank, DpsSkillData } from "~/types/api/impl/dps-calculator";
 
 /**
  * Operator configuration for the DPS calculator
@@ -22,6 +22,14 @@ export interface OperatorConfiguration {
     availableModules: number[];
     /** Maximum promotion/elite level (0, 1, or 2) based on rarity */
     maxPromotion: number;
+    /** Skill metadata for display (icons, names) */
+    skillData?: DpsSkillData[];
+    /** Module metadata for display (icons, names, types) */
+    moduleData?: DpsModuleData[];
+    /** Max level for each phase [E0, E1, E2] */
+    phaseLevels?: number[];
+    /** Potential rank descriptions (for tooltip display) */
+    potentialRanks?: DpsPotentialRank[];
 }
 
 /**

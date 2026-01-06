@@ -222,6 +222,50 @@ export interface DpsCalculateResponse {
 }
 
 /**
+ * Potential rank data for DPS calculator
+ */
+export interface DpsPotentialRank {
+    /** Description of what this potential does */
+    Description: string;
+}
+
+/**
+ * Skill display data for DPS calculator
+ */
+export interface DpsSkillData {
+    /** Skill index (1, 2, or 3) */
+    index: number;
+    /** Skill ID for API lookups */
+    skillId: string;
+    /** Display name */
+    name: string;
+    /** Icon ID for fallback image path */
+    iconId: string | null;
+    /** Direct image path if available */
+    image: string | null;
+}
+
+/**
+ * Module display data for DPS calculator
+ */
+export interface DpsModuleData {
+    /** Module index (1, 2, or 3) */
+    index: number;
+    /** Module unique ID */
+    uniEquipId: string;
+    /** Display name */
+    uniEquipName: string;
+    /** Module type (X, Y, or D for Delta) */
+    typeName1: string;
+    /** Direct image path if available */
+    image: string | null;
+    /** Icon ID for fallback path */
+    uniEquipIcon: string;
+    /** Maximum module level (1-3) */
+    maxLevel: number;
+}
+
+/**
  * Operator entry in the list response
  */
 export interface DpsOperatorListEntry {
@@ -247,6 +291,14 @@ export interface DpsOperatorListEntry {
     defaultModuleIndex: number;
     /** Maximum promotion/elite level (0, 1, or 2) based on rarity */
     maxPromotion: number;
+    /** Skill metadata for display (optional, backend may not provide) */
+    skillData?: DpsSkillData[];
+    /** Module metadata for display (optional, backend may not provide) */
+    moduleData?: DpsModuleData[];
+    /** Max level for each phase [E0, E1, E2] (optional) */
+    phaseLevels?: number[];
+    /** Potential rank descriptions (optional, for tooltip display) */
+    potentialRanks?: DpsPotentialRank[];
 }
 
 /**
