@@ -28,7 +28,7 @@ export function OperatorTabs({ operator, activeTab, onTabChange }: OperatorTabsP
             {/* Tab Navigation - Sidebar on desktop, horizontal scroll on mobile */}
             <nav className="min-w-0 shrink-0 lg:w-48">
                 {/* Mobile: Horizontal scroll */}
-                <div className="-mx-3 sm:-mx-4 flex gap-2 overflow-x-auto px-3 pb-4 sm:px-4 lg:hidden">
+                <div className="-mx-3 flex gap-2 overflow-x-auto px-3 pb-4 sm:-mx-4 sm:px-4 lg:hidden">
                     {TABS.map((tab) => {
                         const Icon = tab.icon;
                         const isActive = activeTab === tab.type;

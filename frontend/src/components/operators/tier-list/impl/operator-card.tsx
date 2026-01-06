@@ -30,7 +30,7 @@ export const TierOperatorCard = memo(function TierOperatorCard({ operator, isHov
 
             {/* Rarity indicator */}
             <div className={cn("absolute bottom-0 h-1 w-full grayscale-transition", shouldGrayscale && "grayscale", isHovered && "grayscale-0")} style={{ backgroundColor: rarityColor }} />
-            <div className={cn("-bottom-0.5 absolute h-1 w-full blur-sm grayscale-transition", shouldGrayscale && "grayscale", isHovered && "grayscale-0")} style={{ backgroundColor: rarityBlurColor }} />
+            <div className={cn("absolute -bottom-0.5 h-1 w-full blur-sm grayscale-transition", shouldGrayscale && "grayscale", isHovered && "grayscale-0")} style={{ backgroundColor: rarityBlurColor }} />
 
             {/* Hover overlay with name */}
             <div className="absolute inset-0 flex items-end bg-linear-to-t from-background/50 to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100">

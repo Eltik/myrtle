@@ -182,7 +182,7 @@ export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
 
                         {/* Maxed Badge */}
                         {isMaxed && (
-                            <div className="-bottom-1 absolute left-0 rounded-t px-1 font-medium text-xs sm:text-sm" style={{ backgroundColor: rarityColor, color: "#121212" }}>
+                            <div className="absolute -bottom-1 left-0 rounded-t px-1 font-medium text-xs sm:text-sm" style={{ backgroundColor: rarityColor, color: "#121212" }}>
                                 Maxed
                             </div>
                         )}
@@ -190,7 +190,7 @@ export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
 
                     {/* Left Side Badges */}
                     {!isMaxed && (
-                        <div className="-bottom-2 -left-3 absolute z-10 flex flex-col gap-0.5">
+                        <div className="absolute -bottom-2 -left-3 z-10 flex flex-col gap-0.5">
                             {/* Potential Badge */}
                             {data.potentialRank > 0 && (
                                 <div className="relative mb-0.5 ml-1 h-4 w-3 sm:mb-2 sm:h-6 sm:w-5">
@@ -224,7 +224,7 @@ export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
 
                     {/* Right Side - Skills */}
                     {!isMaxed && data.mainSkillLvl > 1 && (
-                        <div className="sm:-right-3 absolute top-8 right-0 z-10 flex flex-col gap-0.5">
+                        <div className="absolute top-8 right-0 z-10 flex flex-col gap-0.5 sm:-right-3">
                             {data.skills.map((skill, idx) => {
                                 // Only show skill if elite phase allows it
                                 if (data.evolvePhase < idx) return null;
@@ -245,7 +245,7 @@ export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
 
                     {/* Bottom Right - Modules */}
                     {!isMaxed && unlockedModules.length > 0 && (
-                        <div className="-right-2 -bottom-3 absolute z-10 flex flex-row-reverse gap-1">
+                        <div className="absolute -right-2 -bottom-3 z-10 flex flex-row-reverse gap-1">
                             {unlockedModules.map((module) => {
                                 const moduleLevel = data.equip[module.uniEquipId]?.level ?? 0;
                                 const typeLetter = module.typeName1?.slice(-1) ?? "X";

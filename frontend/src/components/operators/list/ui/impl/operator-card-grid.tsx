@@ -29,7 +29,7 @@ export const OperatorCardGrid = memo(function OperatorCardGrid({ operator, isHov
     const cardContent = (
         <Link aria-label={`View details for ${operator.name}`} className="group card-hover-transition relative flex aspect-2/3 overflow-clip rounded-md border border-muted/50 bg-card contain-content hover:rounded-lg" href={`/operators?id=${operatorId}`}>
             {/* Faction background */}
-            <div className="-translate-x-8 -translate-y-4 absolute">
+            <div className="absolute -translate-x-8 -translate-y-4">
                 <FactionLogo className="opacity-5 opacity-transition group-hover:opacity-10" nationId={operator.nationId} size={360} teamId={operator.teamId} />
             </div>
 
@@ -51,7 +51,7 @@ export const OperatorCardGrid = memo(function OperatorCardGrid({ operator, isHov
                     </div>
                     {/* Rarity color bar */}
                     <div className={cn("absolute bottom-0 h-0.5 w-full grayscale-transition", shouldGrayscale && "grayscale", isHovered && "grayscale-0")} style={{ backgroundColor: rarityColor }} />
-                    <div className={cn("-bottom-0.5 absolute h-1 w-full blur-sm grayscale-transition", shouldGrayscale && "grayscale", isHovered && "grayscale-0")} style={{ backgroundColor: rarityBlurColor }} />
+                    <div className={cn("absolute -bottom-0.5 h-1 w-full blur-sm grayscale-transition", shouldGrayscale && "grayscale", isHovered && "grayscale-0")} style={{ backgroundColor: rarityBlurColor }} />
                 </div>
             </div>
         </Link>

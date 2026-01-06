@@ -119,7 +119,7 @@ export function TierListsTable({ tierLists, loading = false, onRefresh, onEdit, 
                     <div className="hidden items-center gap-2 sm:flex">
                         {/* Search */}
                         <div className="relative">
-                            <Search className="-translate-y-1/2 absolute top-1/2 left-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                            <Search className="absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                             <Input className="h-8 w-[200px] border-border/50 bg-muted/50 pl-8 text-sm" onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search tier lists..." value={searchQuery} />
                         </div>
 
@@ -182,7 +182,7 @@ export function TierListsTable({ tierLists, loading = false, onRefresh, onEdit, 
             {/* Mobile Controls */}
             <div className="flex flex-wrap items-center gap-2 border-b px-4 py-3 sm:hidden">
                 <div className="relative flex-1">
-                    <Search className="-translate-y-1/2 absolute top-1/2 left-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                    <Search className="absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                     <Input className="h-8 w-full border-border/50 bg-muted/50 pl-8 text-sm" onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search..." value={searchQuery} />
                 </div>
                 <DropdownMenu>

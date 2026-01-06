@@ -150,7 +150,7 @@ export function LoginContent({ onSuccess }: LoginContentProps) {
                             <AccordionTrigger className="w-full text-left text-zinc-50">
                                 <div className="flex items-center justify-between">
                                     <div>How it Works</div>
-                                    <ChevronDown className="group-data-expanded:-rotate-180 h-4 w-4 text-zinc-50 transition-transform duration-200" />
+                                    <ChevronDown className="h-4 w-4 text-zinc-50 transition-transform duration-200 group-data-expanded:-rotate-180" />
                                 </div>
                             </AccordionTrigger>
                             <AccordionContent className="pt-4 text-muted-foreground text-sm leading-relaxed">

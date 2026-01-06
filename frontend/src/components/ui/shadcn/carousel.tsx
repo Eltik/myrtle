@@ -133,7 +133,7 @@ function CarouselPrevious({ className, variant = "outline", size = "icon", ...pr
     const { orientation, scrollPrev, canScrollPrev } = useCarousel();
 
     return (
-        <Button className={cn("absolute size-8 rounded-full", orientation === "horizontal" ? "-left-12 -translate-y-1/2 top-1/2" : "-top-12 -translate-x-1/2 left-1/2 rotate-90", className)} data-slot="carousel-previous" disabled={!canScrollPrev} onClick={scrollPrev} size={size} variant={variant} {...props}>
+        <Button className={cn("absolute size-8 rounded-full", orientation === "horizontal" ? "top-1/2 -left-12 -translate-y-1/2" : "-top-12 left-1/2 -translate-x-1/2 rotate-90", className)} data-slot="carousel-previous" disabled={!canScrollPrev} onClick={scrollPrev} size={size} variant={variant} {...props}>
             <ArrowLeft />
             <span className="sr-only">Previous slide</span>
         </Button>
@@ -144,7 +144,7 @@ function CarouselNext({ className, variant = "outline", size = "icon", ...props 
     const { orientation, scrollNext, canScrollNext } = useCarousel();
 
     return (
-        <Button className={cn("absolute size-8 rounded-full", orientation === "horizontal" ? "-right-12 -translate-y-1/2 top-1/2" : "-bottom-12 -translate-x-1/2 left-1/2 rotate-90", className)} data-slot="carousel-next" disabled={!canScrollNext} onClick={scrollNext} size={size} variant={variant} {...props}>
+        <Button className={cn("absolute size-8 rounded-full", orientation === "horizontal" ? "top-1/2 -right-12 -translate-y-1/2" : "-bottom-12 left-1/2 -translate-x-1/2 rotate-90", className)} data-slot="carousel-next" disabled={!canScrollNext} onClick={scrollNext} size={size} variant={variant} {...props}>
             <ArrowRight />
             <span className="sr-only">Next slide</span>
         </Button>

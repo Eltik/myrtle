@@ -186,7 +186,7 @@ function DialogContent({ children, className, container }: DialogContentProps) {
                     aria-describedby={ids.description}
                     aria-labelledby={ids.title}
                     aria-modal="true"
-                    className={cn("-translate-x-1/2 -translate-y-1/2 fixed top-1/2 left-1/2 transform rounded-lg border border-zinc-200 p-0 shadow-lg dark:border dark:border-zinc-700", "backdrop:bg-black/50 backdrop:backdrop-blur-xs", "open:flex open:flex-col", className)}
+                    className={cn("fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform rounded-lg border border-zinc-200 p-0 shadow-lg dark:border dark:border-zinc-700", "backdrop:bg-black/50 backdrop:backdrop-blur-xs", "open:flex open:flex-col", className)}
                     exit="exit"
                     id={ids.dialog}
                     initial="initial"

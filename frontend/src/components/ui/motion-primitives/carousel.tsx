@@ -97,7 +97,7 @@ function CarouselNavigation({ className, classNameButton, alwaysShow }: Carousel
     const { index, setIndex, itemsCount } = useCarousel();
 
     return (
-        <div className={cn("-translate-y-1/2 pointer-events-none absolute top-1/2 left-[-12.5%] flex w-[125%] justify-between px-2", className)}>
+        <div className={cn("pointer-events-none absolute top-1/2 left-[-12.5%] flex w-[125%] -translate-y-1/2 justify-between px-2", className)}>
             <button
                 aria-label="Previous slide"
                 className={cn("pointer-events-auto h-fit w-fit rounded-full bg-zinc-50 p-2 transition-opacity duration-300 dark:bg-zinc-950", alwaysShow ? "opacity-100" : "opacity-0 group-hover/hover:opacity-100", alwaysShow ? "disabled:opacity-40" : "group-hover/hover:disabled:opacity-40", classNameButton)}

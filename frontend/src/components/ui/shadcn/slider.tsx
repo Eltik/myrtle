@@ -43,10 +43,10 @@ function Slider({ className, defaultValue, value, min = 0, max = 100, tickInterv
                 ))}
             </SliderPrimitive.Root>
             {ticks.length > 0 && (
-                <div className="-translate-y-1/2 pointer-events-none absolute inset-x-0 top-1/2">
+                <div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2">
                     {ticks.map((tick) => {
                         const percent = ((tick - min) / (max - min)) * 100;
-                        return <div className="-translate-x-1/2 absolute h-2 w-px bg-muted-foreground/30" key={tick} style={{ left: `${percent}%` }} />;
+                        return <div className="absolute h-2 w-px -translate-x-1/2 bg-muted-foreground/30" key={tick} style={{ left: `${percent}%` }} />;
                     })}
                 </div>
             )}
