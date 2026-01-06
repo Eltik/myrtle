@@ -67,8 +67,8 @@ export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorC
                                         <>
                                             <span>•</span>
                                             <span>
-                                                S{operator.params.skillIndex || operator.availableSkills[0] || 1}
-                                                {operator.maxPromotion >= 2 && `M${operator.params.masteryLevel || 0}`}
+                                                S{operator.params.skillIndex ?? operator.availableSkills[0] ?? 1}
+                                                {operator.maxPromotion >= 2 && ((operator.params.masteryLevel ?? 3) === 0 ? " Lv7" : ` M${operator.params.masteryLevel ?? 3}`)}
                                             </span>
                                         </>
                                     )}
@@ -105,8 +105,6 @@ export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorC
                                                 {(() => {
                                                     const skillIdx = operator.params.skillIndex ?? operator.availableSkills[0] ?? 1;
                                                     const skillData = operator.skillData?.find((s) => s.index === skillIdx);
-                                                    const _masteryLevel = operator.params.masteryLevel ?? 0;
-
                                                     return <span className="truncate">{skillData?.name ?? `Skill ${skillIdx}`}</span>;
                                                 })()}
                                             </SelectValue>
@@ -132,7 +130,7 @@ export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorC
                                     <div className="flex items-center gap-1.5">
                                         {/* Level 7 (no mastery) */}
                                         <button
-                                            className={cn("flex h-8 w-8 items-center justify-center rounded-md border font-medium text-xs transition-all", (operator.params.masteryLevel ?? 0) === 0 ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50")}
+                                            className={cn("flex h-8 w-8 items-center justify-center rounded-md border font-medium text-xs transition-all", (operator.params.masteryLevel ?? 3) === 0 ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50")}
                                             onClick={() => updateParams("masteryLevel", 0)}
                                             type="button"
                                         >
@@ -141,7 +139,7 @@ export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorC
                                         {/* M1, M2, M3 */}
                                         {[1, 2, 3].map((level) => (
                                             <button
-                                                className={cn("flex h-8 w-8 items-center justify-center rounded-md border transition-all", operator.params.masteryLevel === level ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50")}
+                                                className={cn("flex h-8 w-8 items-center justify-center rounded-md border transition-all", (operator.params.masteryLevel ?? 3) === level ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50")}
                                                 key={`mastery-${level}`}
                                                 onClick={() => updateParams("masteryLevel", level)}
                                                 type="button"

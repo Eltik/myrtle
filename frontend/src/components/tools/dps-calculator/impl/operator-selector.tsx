@@ -7,16 +7,14 @@ import { RARITY_COLORS, RARITY_COLORS_LIGHT } from "~/components/operators/list/
 import { Button } from "~/components/ui/shadcn/button";
 import { Input } from "~/components/ui/shadcn/input";
 import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
-import { cn } from "~/lib/utils";
 import type { DpsOperatorListEntry } from "~/types/api/impl/dps-calculator";
 
 interface OperatorSelectorProps {
     operators: DpsOperatorListEntry[];
-    selectedOperatorIds: string[];
     onSelectOperator: (operator: DpsOperatorListEntry) => void;
 }
 
-export function OperatorSelector({ operators, selectedOperatorIds, onSelectOperator }: OperatorSelectorProps) {
+export function OperatorSelector({ operators, onSelectOperator }: OperatorSelectorProps) {
     const [searchQuery, setSearchQuery] = useState("");
     const { resolvedTheme } = useTheme();
 
@@ -41,11 +39,10 @@ export function OperatorSelector({ operators, selectedOperatorIds, onSelectOpera
             <ScrollArea className="h-[300px] rounded-md border border-border">
                 <div className="grid grid-cols-1 gap-2 p-3 sm:grid-cols-2 lg:grid-cols-3">
                     {filteredOperators.map((operator) => {
-                        const isSelected = selectedOperatorIds.includes(operator.id);
                         const rarityColor = rarityColors[operator.rarity] ?? "#ffffff";
 
                         return (
-                            <Button className={cn("h-auto justify-start gap-3 px-3 py-2 text-left", isSelected && "opacity-50")} disabled={isSelected} key={operator.id} onClick={() => !isSelected && onSelectOperator(operator)} variant="outline">
+                            <Button className="h-auto justify-start gap-3 px-3 py-2 text-left" key={operator.id} onClick={() => onSelectOperator(operator)} variant="outline">
                                 <div className="h-8 w-1 shrink-0 rounded-full" style={{ backgroundColor: rarityColor }} />
                                 <div className="flex-1 overflow-hidden">
                                     <div className="truncate font-semibold text-sm">{operator.name}</div>

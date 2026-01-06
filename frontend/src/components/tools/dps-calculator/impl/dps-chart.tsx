@@ -70,10 +70,11 @@ export function DpsChart({ operators, mode }: DpsChartProps) {
 
                 for (const result of validResults) {
                     for (const point of result.data) {
-                        if (!dataMap.has(point.value)) {
-                            dataMap.set(point.value, { value: point.value });
+                        let dataPoint = dataMap.get(point.value);
+                        if (!dataPoint) {
+                            dataPoint = { value: point.value };
+                            dataMap.set(point.value, dataPoint);
                         }
-                        const dataPoint = dataMap.get(point.value)!;
                         dataPoint[result.operator.id] = point.dps;
                     }
                 }
@@ -113,10 +114,15 @@ export function DpsChart({ operators, mode }: DpsChartProps) {
         return <div className="flex h-[400px] items-center justify-center text-muted-foreground text-sm">No data to display</div>;
     }
 
+    // Build chart config from operators
     const chartConfig = operators.reduce(
         (config, op) => {
+            const skillIdx = op.params.skillIndex ?? op.availableSkills[0] ?? 1;
+            const mastery = op.params.masteryLevel ?? 3;
+            // Show "Lv7" for mastery 0, "M1/M2/M3" for masteries 1-3
+            const masteryLabel = op.maxPromotion >= 2 ? (mastery === 0 ? " Lv7" : ` M${mastery}`) : "";
             config[op.id] = {
-                label: `${op.operatorName} E${op.params.promotion ?? 2} P${op.params.potential || 1} S${op.params.skillIndex || 1}M${op.params.masteryLevel || 0}`,
+                label: `${op.operatorName} S${skillIdx}${masteryLabel}`,
                 color: op.color,
             };
             return config;
