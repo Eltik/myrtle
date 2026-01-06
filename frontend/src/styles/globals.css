@@ -7,6 +7,8 @@
 @theme {
     --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+    /* Custom breakpoint for mobile responsiveness */
+    --breakpoint-xs: 475px;
 }
 
 @theme inline {

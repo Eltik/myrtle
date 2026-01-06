@@ -5,7 +5,98 @@ import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, XAxis, YAx
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "~/components/ui/shadcn/chart";
 import { Skeleton } from "~/components/ui/shadcn/skeleton";
 import { calculateDpsRange, isDpsRangeResult } from "~/lib/dps-calculator";
+import type { DpsConditionalType } from "~/types/api/impl/dps-calculator";
 import type { ChartDataPoint, OperatorConfiguration } from "./types";
+
+// Map conditional type to DpsConditionals key
+const CONDITIONAL_TYPE_TO_KEY: Record<DpsConditionalType, string> = {
+    trait: "traitDamage",
+    talent: "talentDamage",
+    talent2: "talent2Damage",
+    skill: "skillDamage",
+    module: "moduleDamage",
+};
+
+/**
+ * Build a detailed label for an operator configuration that includes
+ * skill, mastery, potential, module, active conditionals, and buffs.
+ */
+function buildOperatorLabel(op: OperatorConfiguration): string {
+    const parts: string[] = [];
+
+    // Operator name
+    parts.push(op.operatorName);
+
+    // Potential (P1-P6)
+    const potential = op.params.potential ?? 1;
+    parts.push(`P${potential}`);
+
+    // Skill and mastery
+    const skillIdx = op.params.skillIndex ?? op.availableSkills[0] ?? 1;
+    const mastery = op.params.masteryLevel ?? 3;
+    const masteryLabel = op.maxPromotion >= 2 ? (mastery === 0 ? " Lv7" : ` M${mastery}`) : "";
+    parts.push(`S${skillIdx}${masteryLabel}`);
+
+    // Module (if selected)
+    const moduleIdx = op.params.moduleIndex ?? 0;
+    if (moduleIdx > 0) {
+        const moduleData = op.moduleData?.find((m) => m.index === moduleIdx);
+        const moduleType = moduleData?.typeName1 ?? (moduleIdx === 1 ? "X" : moduleIdx === 2 ? "Y" : "D");
+        const moduleLevel = op.params.moduleLevel ?? 3;
+        parts.push(`Mod${moduleType}${moduleLevel}`);
+    }
+
+    // Active conditionals (only if allCond is true or undefined)
+    const allCond = op.params.allCond ?? true;
+    if (allCond && op.conditionalData && op.conditionalData.length > 0) {
+        const activeConditionals: string[] = [];
+        for (const cond of op.conditionalData) {
+            const paramKey = CONDITIONAL_TYPE_TO_KEY[cond.conditionalType];
+            const isEnabled = op.params.conditionals?.[paramKey as keyof typeof op.params.conditionals] ?? true;
+
+            // Check if this conditional is applicable to current config
+            const currentSkill = op.params.skillIndex ?? op.availableSkills[0] ?? 1;
+            const currentModule = op.params.moduleIndex ?? 0;
+            const currentElite = op.params.promotion ?? op.maxPromotion;
+            const currentModuleLevel = op.params.moduleLevel ?? 3;
+
+            const isApplicable = (cond.applicableSkills.length === 0 || cond.applicableSkills.includes(currentSkill)) && (cond.applicableModules.length === 0 || cond.applicableModules.includes(currentModule)) && currentElite >= cond.minElite && (currentModule === 0 || currentModuleLevel >= cond.minModuleLevel);
+
+            if (isApplicable && isEnabled && cond.name) {
+                // For inverted conditionals, the name describes what happens when disabled
+                // So we only add the name when enabled and it's NOT inverted
+                if (!cond.inverted) {
+                    activeConditionals.push(`+${cond.name}`);
+                }
+            }
+        }
+        if (activeConditionals.length > 0) {
+            parts.push(activeConditionals.join(" "));
+        }
+    }
+
+    // Buffs
+    const buffs: string[] = [];
+    const atkBuff = op.params.buffs?.atk;
+    const flatAtkBuff = op.params.buffs?.flatAtk;
+    const aspdBuff = op.params.buffs?.aspd;
+
+    if (atkBuff && atkBuff > 0) {
+        buffs.push(`atk+${Math.round(atkBuff * 100)}%`);
+    }
+    if (flatAtkBuff && flatAtkBuff > 0) {
+        buffs.push(`atk+${flatAtkBuff}`);
+    }
+    if (aspdBuff && aspdBuff > 0) {
+        buffs.push(`aspd+${aspdBuff}`);
+    }
+
+    if (buffs.length > 0) {
+        parts.push(buffs.join(" "));
+    }
+
+    return parts.join(" ");
+}
 
 interface DpsChartProps {
     operators: OperatorConfiguration[];
@@ -114,15 +205,11 @@ export function DpsChart({ operators, mode }: DpsChartProps) {
         return <div className="flex h-[400px] items-center justify-center text-muted-foreground text-sm">No data to display</div>;
     }
 
-    // Build chart config from operators
+    // Build chart config from operators with detailed labels
     const chartConfig = operators.reduce(
         (config, op) => {
-            const skillIdx = op.params.skillIndex ?? op.availableSkills[0] ?? 1;
-            const mastery = op.params.masteryLevel ?? 3;
-            // Show "Lv7" for mastery 0, "M1/M2/M3" for masteries 1-3
-            const masteryLabel = op.maxPromotion >= 2 ? (mastery === 0 ? " Lv7" : ` M${mastery}`) : "";
             config[op.id] = {
-                label: `${op.operatorName} S${skillIdx}${masteryLabel}`,
+                label: buildOperatorLabel(op),
                 color: op.color,
             };
             return config;
@@ -152,7 +239,7 @@ export function DpsChart({ operators, mode }: DpsChartProps) {
                             position: "insideLeft",
                         }}
                     />
-                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <ChartTooltip content={<ChartTooltipContent labelFormatter={(value) => `${mode === "defense" ? "Defense" : "Resistance"}: ${value}`} />} />
                     <Legend
                         formatter={(value) => {
                             const config = chartConfig[value as string];
