@@ -17,6 +17,21 @@ impl Flint {
     /// Available modules for this operator
     pub const AVAILABLE_MODULES: &'static [i32] = &[1];
 
+    /// Conditionals for this operator
+    /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
+    pub const CONDITIONALS: &'static [(
+        &'static str,
+        &'static str,
+        bool,
+        &'static [i32],
+        &'static [i32],
+        i32,
+        i32,
+    )] = &[
+        ("talent", "blocking", true, &[1], &[], 0, 0),
+        ("module", ">50%Hp", false, &[], &[1], 0, 0),
+    ];
+
     /// Creates a new Flint operator
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
         let unit = OperatorUnit::new(
@@ -74,13 +89,13 @@ impl Flint {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut hitdmg: f64 = 0.0;
         let mut aspd: f64 = 0.0;
-        let mut avgphys: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut avgphys: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
 
         let mut dmgscale =
             if ((self.unit.skill_index as f64) as f64) == 1.0 && !self.unit.talent_damage {

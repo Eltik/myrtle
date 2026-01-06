@@ -18,6 +18,100 @@ pub struct OperatorMetadata {
     pub default_potential: i32,
     /// Default module index for this operator
     pub default_module_index: i32,
+    /// Available conditionals for this operator
+    pub conditionals: Vec<ConditionalInfo>,
+}
+
+/// Information about a single conditional toggle for an operator
+#[derive(Debug, Clone)]
+pub struct ConditionalInfo {
+    /// Which conditional type this is
+    pub conditional_type: ConditionalType,
+    /// Display name for the conditional
+    pub name: String,
+    /// If true, this label applies when the conditional is DISABLED
+    pub inverted: bool,
+    /// Availability conditions
+    pub availability: ConditionalAvailability,
+}
+
+/// The type of conditional
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ConditionalType {
+    Trait,
+    Talent,
+    Talent2,
+    Skill,
+    Module,
+}
+
+impl ConditionalType {
+    /// Returns the string representation for API responses
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            ConditionalType::Trait => "trait",
+            ConditionalType::Talent => "talent",
+            ConditionalType::Talent2 => "talent2",
+            ConditionalType::Skill => "skill",
+            ConditionalType::Module => "module",
+        }
+    }
+
+    /// Returns the default generic name for this conditional type
+    pub fn default_name(&self) -> &'static str {
+        match self {
+            ConditionalType::Trait => "trait_active",
+            ConditionalType::Talent => "talent_active",
+            ConditionalType::Talent2 => "talent2_active",
+            ConditionalType::Skill => "skill_active",
+            ConditionalType::Module => "module_active",
+        }
+    }
+}
+
+/// Availability conditions for a conditional
+#[derive(Debug, Clone, Default)]
+pub struct ConditionalAvailability {
+    /// Skills this conditional applies to (empty = all skills)
+    pub skills: Vec<i32>,
+    /// Modules this conditional applies to (empty = all modules)
+    pub modules: Vec<i32>,
+    /// Minimum elite level required (0 = no requirement)
+    pub min_elite: i32,
+    /// Minimum module level required (0 = no requirement)
+    pub min_module_level: i32,
+}
+
+/// Parse the CONDITIONALS constant from an operator into a Vec<ConditionalInfo>
+pub fn parse_conditionals(
+    conditionals: &[(&str, &str, bool, &[i32], &[i32], i32, i32)],
+) -> Vec<ConditionalInfo> {
+    conditionals
+        .iter()
+        .map(
+            |(cond_type, name, inverted, skills, modules, min_elite, min_module_level)| {
+                let conditional_type = match *cond_type {
+                    "trait" => ConditionalType::Trait,
+                    "talent" => ConditionalType::Talent,
+                    "talent2" => ConditionalType::Talent2,
+                    "skill" => ConditionalType::Skill,
+                    "module" => ConditionalType::Module,
+                    _ => ConditionalType::Trait,
+                };
+                ConditionalInfo {
+                    conditional_type,
+                    name: name.to_string(),
+                    inverted: *inverted,
+                    availability: ConditionalAvailability {
+                        skills: skills.to_vec(),
+                        modules: modules.to_vec(),
+                        min_elite: *min_elite,
+                        min_module_level: *min_module_level,
+                    },
+                }
+            },
+        )
+        .collect()
 }
 
 pub mod a;
@@ -630,6 +724,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Aak::CONDITIONALS),
         }),
         "Absinthe" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -637,6 +732,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Absinthe::CONDITIONALS),
         }),
         "Aciddrop" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -644,6 +740,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Aciddrop::CONDITIONALS),
         }),
         "Adnachiel" => Some(OperatorMetadata {
             available_skills: vec![1],
@@ -651,6 +748,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 6,
             default_module_index: 0,
+            conditionals: parse_conditionals(Adnachiel::CONDITIONALS),
         }),
         "Amiya" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -658,6 +756,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 6,
             default_module_index: 2,
+            conditionals: parse_conditionals(Amiya::CONDITIONALS),
         }),
         "AmiyaGuard" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -665,6 +764,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(AmiyaGuard::CONDITIONALS),
         }),
         "AmiyaMedic" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -672,6 +772,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(AmiyaMedic::CONDITIONALS),
         }),
         "Andreana" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -679,6 +780,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Andreana::CONDITIONALS),
         }),
         "Angelina" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -686,6 +788,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Angelina::CONDITIONALS),
         }),
         "Aosta" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -693,6 +796,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Aosta::CONDITIONALS),
         }),
         "April" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -700,6 +804,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(April::CONDITIONALS),
         }),
         "Archetto" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -707,6 +812,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Archetto::CONDITIONALS),
         }),
         "Arene" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -714,6 +820,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 2,
+            conditionals: parse_conditionals(Arene::CONDITIONALS),
         }),
         "Asbestos" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -721,6 +828,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Asbestos::CONDITIONALS),
         }),
         "Ascalon" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -728,6 +836,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Ascalon::CONDITIONALS),
         }),
         "Ash" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -735,6 +844,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Ash::CONDITIONALS),
         }),
         "Ashlock" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -742,6 +852,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Ashlock::CONDITIONALS),
         }),
         "Astesia" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -749,6 +860,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(Astesia::CONDITIONALS),
         }),
         "Astgenne" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -756,6 +868,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 2,
+            conditionals: parse_conditionals(Astgenne::CONDITIONALS),
         }),
         "Aurora" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -763,6 +876,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Aurora::CONDITIONALS),
         }),
         "Ayerscarpe" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -770,6 +884,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Ayerscarpe::CONDITIONALS),
         }),
         "Bagpipe" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -777,6 +892,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Bagpipe::CONDITIONALS),
         }),
         "Beehunter" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -784,6 +900,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Beehunter::CONDITIONALS),
         }),
         "Beeswax" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -791,6 +908,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Beeswax::CONDITIONALS),
         }),
         "Bibeak" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -798,6 +916,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Bibeak::CONDITIONALS),
         }),
         "Blaze" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -805,6 +924,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Blaze::CONDITIONALS),
         }),
         "BlazeAlter" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -812,6 +932,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(BlazeAlter::CONDITIONALS),
         }),
         "Blemishine" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -819,6 +940,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Blemishine::CONDITIONALS),
         }),
         "Blitz" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -826,6 +948,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Blitz::CONDITIONALS),
         }),
         "BluePoison" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -833,6 +956,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(BluePoison::CONDITIONALS),
         }),
         "Broca" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -840,6 +964,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Broca::CONDITIONALS),
         }),
         "Bryophyta" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -847,6 +972,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Bryophyta::CONDITIONALS),
         }),
         "Cantabile" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -854,6 +980,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(Cantabile::CONDITIONALS),
         }),
         "Caper" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -861,6 +988,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Caper::CONDITIONALS),
         }),
         "Carnelian" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -868,6 +996,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Carnelian::CONDITIONALS),
         }),
         "Castle3" => Some(OperatorMetadata {
             available_skills: vec![],
@@ -875,6 +1004,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 0,
             default_potential: 6,
             default_module_index: 0,
+            conditionals: parse_conditionals(Castle3::CONDITIONALS),
         }),
         "Catapult" => Some(OperatorMetadata {
             available_skills: vec![1],
@@ -882,6 +1012,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 6,
             default_module_index: 0,
+            conditionals: parse_conditionals(Catapult::CONDITIONALS),
         }),
         "Ceobe" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -889,6 +1020,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Ceobe::CONDITIONALS),
         }),
         "Chen" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -896,6 +1028,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Chen::CONDITIONALS),
         }),
         "ChenAlter" => Some(OperatorMetadata {
             available_skills: vec![1, 3],
@@ -903,6 +1036,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(ChenAlter::CONDITIONALS),
         }),
         "Chongyue" => Some(OperatorMetadata {
             available_skills: vec![1, 3],
@@ -910,6 +1044,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(Chongyue::CONDITIONALS),
         }),
         "CivilightEterna" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -917,6 +1052,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(CivilightEterna::CONDITIONALS),
         }),
         "Click" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -924,6 +1060,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 2,
+            conditionals: parse_conditionals(Click::CONDITIONALS),
         }),
         "Coldshot" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -931,6 +1068,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Coldshot::CONDITIONALS),
         }),
         "Contrail" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -938,6 +1076,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 0,
+            conditionals: parse_conditionals(Contrail::CONDITIONALS),
         }),
         "Conviction" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -945,6 +1084,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Conviction::CONDITIONALS),
         }),
         "Crownslayer" => Some(OperatorMetadata {
             available_skills: vec![1, 3],
@@ -952,6 +1092,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Crownslayer::CONDITIONALS),
         }),
         "Dagda" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -959,6 +1100,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Dagda::CONDITIONALS),
         }),
         "Degenbrecher" => Some(OperatorMetadata {
             available_skills: vec![1, 3],
@@ -966,6 +1108,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Degenbrecher::CONDITIONALS),
         }),
         "Diamante" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -973,6 +1116,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Diamante::CONDITIONALS),
         }),
         "Dobermann" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -980,6 +1124,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 2,
+            conditionals: parse_conditionals(Dobermann::CONDITIONALS),
         }),
         "Doc" => Some(OperatorMetadata {
             available_skills: vec![1],
@@ -987,6 +1132,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(Doc::CONDITIONALS),
         }),
         "Dorothy" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -994,6 +1140,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(Dorothy::CONDITIONALS),
         }),
         "Durin" => Some(OperatorMetadata {
             available_skills: vec![],
@@ -1001,6 +1148,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 0,
             default_potential: 6,
             default_module_index: 0,
+            conditionals: parse_conditionals(Durin::CONDITIONALS),
         }),
         "Durnar" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1008,6 +1156,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Durnar::CONDITIONALS),
         }),
         "Dusk" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1015,6 +1164,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Dusk::CONDITIONALS),
         }),
         "Ebenholz" => Some(OperatorMetadata {
             available_skills: vec![1, 3],
@@ -1022,6 +1172,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 3,
+            conditionals: parse_conditionals(Ebenholz::CONDITIONALS),
         }),
         "Ela" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1029,6 +1180,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 3,
+            conditionals: parse_conditionals(Ela::CONDITIONALS),
         }),
         "Entelechia" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1036,6 +1188,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Entelechia::CONDITIONALS),
         }),
         "Erato" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1043,6 +1196,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Erato::CONDITIONALS),
         }),
         "Estelle" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1050,6 +1204,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 2,
+            conditionals: parse_conditionals(Estelle::CONDITIONALS),
         }),
         "Ethan" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1057,6 +1212,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Ethan::CONDITIONALS),
         }),
         "Eunectes" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1064,6 +1220,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Eunectes::CONDITIONALS),
         }),
         "ExecutorAlter" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1071,6 +1228,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(ExecutorAlter::CONDITIONALS),
         }),
         "Exusiai" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1078,6 +1236,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(Exusiai::CONDITIONALS),
         }),
         "ExusiaiAlter" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1085,6 +1244,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(ExusiaiAlter::CONDITIONALS),
         }),
         "Eyjafjalla" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1092,6 +1252,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Eyjafjalla::CONDITIONALS),
         }),
         "FangAlter" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1099,6 +1260,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(FangAlter::CONDITIONALS),
         }),
         "Fartooth" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1106,6 +1268,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Fartooth::CONDITIONALS),
         }),
         "Fiammetta" => Some(OperatorMetadata {
             available_skills: vec![1, 3],
@@ -1113,6 +1276,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Fiammetta::CONDITIONALS),
         }),
         "Figurino" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1120,6 +1284,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Figurino::CONDITIONALS),
         }),
         "Firewhistle" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1127,6 +1292,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Firewhistle::CONDITIONALS),
         }),
         "Flamebringer" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1134,6 +1300,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 2,
+            conditionals: parse_conditionals(Flamebringer::CONDITIONALS),
         }),
         "Flametail" => Some(OperatorMetadata {
             available_skills: vec![1, 3],
@@ -1141,6 +1308,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Flametail::CONDITIONALS),
         }),
         "Flint" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1148,6 +1316,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Flint::CONDITIONALS),
         }),
         "Folinic" => Some(OperatorMetadata {
             available_skills: vec![2],
@@ -1155,6 +1324,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 2,
+            conditionals: parse_conditionals(Folinic::CONDITIONALS),
         }),
         "Franka" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1162,6 +1332,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Franka::CONDITIONALS),
         }),
         "Frost" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1169,6 +1340,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(Frost::CONDITIONALS),
         }),
         "Frostleaf" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1176,6 +1348,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Frostleaf::CONDITIONALS),
         }),
         "Fuze" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1183,6 +1356,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 6,
             default_module_index: 2,
+            conditionals: parse_conditionals(Fuze::CONDITIONALS),
         }),
         "GavialAlter" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1190,6 +1364,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(GavialAlter::CONDITIONALS),
         }),
         "Gladiia" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1197,6 +1372,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Gladiia::CONDITIONALS),
         }),
         "Gnosis" => Some(OperatorMetadata {
             available_skills: vec![1, 3],
@@ -1204,6 +1380,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Gnosis::CONDITIONALS),
         }),
         "Goldenglow" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1211,6 +1388,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Goldenglow::CONDITIONALS),
         }),
         "Gracebearer" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1218,6 +1396,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 1,
             default_module_index: 0,
+            conditionals: parse_conditionals(Gracebearer::CONDITIONALS),
         }),
         "Grani" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1225,6 +1404,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Grani::CONDITIONALS),
         }),
         "GreyThroat" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1232,6 +1412,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(GreyThroat::CONDITIONALS),
         }),
         "GreyyAlter" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1239,6 +1420,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(GreyyAlter::CONDITIONALS),
         }),
         "Hadiya" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1246,6 +1428,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 0,
+            conditionals: parse_conditionals(Hadiya::CONDITIONALS),
         }),
         "Harmonie" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1253,6 +1436,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Harmonie::CONDITIONALS),
         }),
         "Haze" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1260,6 +1444,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Haze::CONDITIONALS),
         }),
         "Hellagur" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1267,6 +1452,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Hellagur::CONDITIONALS),
         }),
         "Hibiscus" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1274,6 +1460,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Hibiscus::CONDITIONALS),
         }),
         "Highmore" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1281,6 +1468,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Highmore::CONDITIONALS),
         }),
         "Hoederer" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1288,6 +1476,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Hoederer::CONDITIONALS),
         }),
         "Hoolheyak" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1295,6 +1484,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Hoolheyak::CONDITIONALS),
         }),
         "Horn" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1302,6 +1492,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Horn::CONDITIONALS),
         }),
         "Hoshiguma" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1309,6 +1500,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(Hoshiguma::CONDITIONALS),
         }),
         "HoshigumaAlter" => Some(OperatorMetadata {
             available_skills: vec![1, 3],
@@ -1316,6 +1508,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(HoshigumaAlter::CONDITIONALS),
         }),
         "Humus" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1323,6 +1516,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Humus::CONDITIONALS),
         }),
         "Iana" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1330,6 +1524,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Iana::CONDITIONALS),
         }),
         "Ifrit" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1337,6 +1532,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Ifrit::CONDITIONALS),
         }),
         "Indra" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1344,6 +1540,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Indra::CONDITIONALS),
         }),
         "Ines" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1351,6 +1548,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(Ines::CONDITIONALS),
         }),
         "Insider" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1358,6 +1556,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Insider::CONDITIONALS),
         }),
         "Irene" => Some(OperatorMetadata {
             available_skills: vec![1, 3],
@@ -1365,6 +1564,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(Irene::CONDITIONALS),
         }),
         "Jackie" => Some(OperatorMetadata {
             available_skills: vec![],
@@ -1372,6 +1572,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Jackie::CONDITIONALS),
         }),
         "Jaye" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1379,6 +1580,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Jaye::CONDITIONALS),
         }),
         "Jessica" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1386,6 +1588,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 6,
             default_module_index: 2,
+            conditionals: parse_conditionals(Jessica::CONDITIONALS),
         }),
         "JessicaAlter" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1393,6 +1596,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(JessicaAlter::CONDITIONALS),
         }),
         "JusticeKnight" => Some(OperatorMetadata {
             available_skills: vec![],
@@ -1400,6 +1604,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 0,
             default_potential: 6,
             default_module_index: 0,
+            conditionals: parse_conditionals(JusticeKnight::CONDITIONALS),
         }),
         "Kafka" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1407,6 +1612,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(Kafka::CONDITIONALS),
         }),
         "Kaltsit" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1414,6 +1620,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(Kaltsit::CONDITIONALS),
         }),
         "Kazemaru" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1421,6 +1628,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Kazemaru::CONDITIONALS),
         }),
         "Kirara" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1428,6 +1636,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Kirara::CONDITIONALS),
         }),
         "Kjera" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1435,6 +1644,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 2,
+            conditionals: parse_conditionals(Kjera::CONDITIONALS),
         }),
         "Kroos" => Some(OperatorMetadata {
             available_skills: vec![1],
@@ -1442,6 +1652,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 6,
             default_module_index: 0,
+            conditionals: parse_conditionals(Kroos::CONDITIONALS),
         }),
         "KroosAlter" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1449,6 +1660,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(KroosAlter::CONDITIONALS),
         }),
         "LaPluma" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1456,6 +1668,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(LaPluma::CONDITIONALS),
         }),
         "Laios" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1463,6 +1676,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(Laios::CONDITIONALS),
         }),
         "Lappland" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1470,6 +1684,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Lappland::CONDITIONALS),
         }),
         "LapplandAlter" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1477,6 +1692,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(LapplandAlter::CONDITIONALS),
         }),
         "Lava3star" => Some(OperatorMetadata {
             available_skills: vec![1],
@@ -1484,6 +1700,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 6,
             default_module_index: 0,
+            conditionals: parse_conditionals(Lava3star::CONDITIONALS),
         }),
         "Lavaalt" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1491,6 +1708,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Lavaalt::CONDITIONALS),
         }),
         "Lee" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1498,6 +1716,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Lee::CONDITIONALS),
         }),
         "LeiziAlter" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1505,6 +1724,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(LeiziAlter::CONDITIONALS),
         }),
         "Lemuen" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1512,6 +1732,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(Lemuen::CONDITIONALS),
         }),
         "Lessing" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1519,6 +1740,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Lessing::CONDITIONALS),
         }),
         "Leto" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1526,6 +1748,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(Leto::CONDITIONALS),
         }),
         "Lin" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1533,6 +1756,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Lin::CONDITIONALS),
         }),
         "Ling" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1540,6 +1764,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(Ling::CONDITIONALS),
         }),
         "Logos" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1547,6 +1772,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 3,
+            conditionals: parse_conditionals(Logos::CONDITIONALS),
         }),
         "Lucilla" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1554,6 +1780,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Lucilla::CONDITIONALS),
         }),
         "Lunacub" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1561,6 +1788,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(Lunacub::CONDITIONALS),
         }),
         "LuoXiaohei" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1568,6 +1796,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 2,
+            conditionals: parse_conditionals(LuoXiaohei::CONDITIONALS),
         }),
         "Lutonada" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1575,6 +1804,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Lutonada::CONDITIONALS),
         }),
         "Magallan" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1582,6 +1812,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(Magallan::CONDITIONALS),
         }),
         "Manticore" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1589,6 +1820,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Manticore::CONDITIONALS),
         }),
         "Marcille" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1596,6 +1828,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(Marcille::CONDITIONALS),
         }),
         "Matoimaru" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1603,6 +1836,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 2,
+            conditionals: parse_conditionals(Matoimaru::CONDITIONALS),
         }),
         "May" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1610,6 +1844,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(May::CONDITIONALS),
         }),
         "Melantha" => Some(OperatorMetadata {
             available_skills: vec![1],
@@ -1617,6 +1852,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 6,
             default_module_index: 0,
+            conditionals: parse_conditionals(Melantha::CONDITIONALS),
         }),
         "Meteor" => Some(OperatorMetadata {
             available_skills: vec![1],
@@ -1624,6 +1860,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Meteor::CONDITIONALS),
         }),
         "Meteorite" => Some(OperatorMetadata {
             available_skills: vec![1],
@@ -1631,6 +1868,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(Meteorite::CONDITIONALS),
         }),
         "Midnight" => Some(OperatorMetadata {
             available_skills: vec![1],
@@ -1638,6 +1876,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 6,
             default_module_index: 0,
+            conditionals: parse_conditionals(Midnight::CONDITIONALS),
         }),
         "Minimalist" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1645,6 +1884,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 2,
+            conditionals: parse_conditionals(Minimalist::CONDITIONALS),
         }),
         "Mint" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1652,6 +1892,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Mint::CONDITIONALS),
         }),
         "MissChristine" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1659,6 +1900,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(MissChristine::CONDITIONALS),
         }),
         "MisumiUika" => Some(OperatorMetadata {
             available_skills: vec![2],
@@ -1666,6 +1908,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(MisumiUika::CONDITIONALS),
         }),
         "Mizuki" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1673,6 +1916,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Mizuki::CONDITIONALS),
         }),
         "Mlynar" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1680,6 +1924,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Mlynar::CONDITIONALS),
         }),
         "Mon3tr" => Some(OperatorMetadata {
             available_skills: vec![3],
@@ -1687,6 +1932,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 0,
+            conditionals: parse_conditionals(Mon3tr::CONDITIONALS),
         }),
         "Morgan" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1694,6 +1940,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Morgan::CONDITIONALS),
         }),
         "Mostima" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1701,6 +1948,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(Mostima::CONDITIONALS),
         }),
         "Mountain" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1708,6 +1956,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Mountain::CONDITIONALS),
         }),
         "Mousse" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1715,6 +1964,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Mousse::CONDITIONALS),
         }),
         "MrNothing" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1722,6 +1972,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(MrNothing::CONDITIONALS),
         }),
         "Mudrock" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1729,6 +1980,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Mudrock::CONDITIONALS),
         }),
         "Muelsyse" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1736,6 +1988,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Muelsyse::CONDITIONALS),
         }),
         "Narantuya" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1743,6 +1996,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Narantuya::CONDITIONALS),
         }),
         "NearlAlter" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1750,6 +2004,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(NearlAlter::CONDITIONALS),
         }),
         "Necrass" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1757,6 +2012,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Necrass::CONDITIONALS),
         }),
         "Nian" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1764,6 +2020,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Nian::CONDITIONALS),
         }),
         "Nymph" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1771,6 +2028,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Nymph::CONDITIONALS),
         }),
         "Odda" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1778,6 +2036,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Odda::CONDITIONALS),
         }),
         "Pallas" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1785,6 +2044,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Pallas::CONDITIONALS),
         }),
         "Passenger" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1792,6 +2052,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Passenger::CONDITIONALS),
         }),
         "Penance" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1799,6 +2060,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Penance::CONDITIONALS),
         }),
         "Pepe" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1806,6 +2068,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Pepe::CONDITIONALS),
         }),
         "Phantom" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1813,6 +2076,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(Phantom::CONDITIONALS),
         }),
         "Pinecone" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1820,6 +2084,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Pinecone::CONDITIONALS),
         }),
         "Pith" => Some(OperatorMetadata {
             available_skills: vec![1],
@@ -1827,6 +2092,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 1,
             default_module_index: 0,
+            conditionals: parse_conditionals(Pith::CONDITIONALS),
         }),
         "Platinum" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1834,6 +2100,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Platinum::CONDITIONALS),
         }),
         "Plume" => Some(OperatorMetadata {
             available_skills: vec![1],
@@ -1841,6 +2108,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 6,
             default_module_index: 0,
+            conditionals: parse_conditionals(Plume::CONDITIONALS),
         }),
         "Popukar" => Some(OperatorMetadata {
             available_skills: vec![1],
@@ -1848,6 +2116,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 6,
             default_module_index: 0,
+            conditionals: parse_conditionals(Popukar::CONDITIONALS),
         }),
         "Pozemka" => Some(OperatorMetadata {
             available_skills: vec![1, 3],
@@ -1855,6 +2124,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(Pozemka::CONDITIONALS),
         }),
         "PramanixAlter" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1862,6 +2132,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(PramanixAlter::CONDITIONALS),
         }),
         "ProjektRed" => Some(OperatorMetadata {
             available_skills: vec![1],
@@ -1869,6 +2140,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(ProjektRed::CONDITIONALS),
         }),
         "Provence" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1876,6 +2148,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Provence::CONDITIONALS),
         }),
         "Pudding" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1883,6 +2156,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 2,
+            conditionals: parse_conditionals(Pudding::CONDITIONALS),
         }),
         "Qiubai" => Some(OperatorMetadata {
             available_skills: vec![1, 3],
@@ -1890,6 +2164,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Qiubai::CONDITIONALS),
         }),
         "Quartz" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1897,6 +2172,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Quartz::CONDITIONALS),
         }),
         "Raidian" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1904,6 +2180,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 6,
             default_module_index: 3,
+            conditionals: parse_conditionals(Raidian::CONDITIONALS),
         }),
         "Rangers" => Some(OperatorMetadata {
             available_skills: vec![],
@@ -1911,6 +2188,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 0,
             default_potential: 6,
             default_module_index: 0,
+            conditionals: parse_conditionals(Rangers::CONDITIONALS),
         }),
         "Ray" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1918,6 +2196,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Ray::CONDITIONALS),
         }),
         "ReedAlter" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1925,6 +2204,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(ReedAlter::CONDITIONALS),
         }),
         "Rockrock" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1932,6 +2212,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Rockrock::CONDITIONALS),
         }),
         "Rosa" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1939,6 +2220,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Rosa::CONDITIONALS),
         }),
         "Rosmontis" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1946,6 +2228,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Rosmontis::CONDITIONALS),
         }),
         "Saga" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1953,6 +2236,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Saga::CONDITIONALS),
         }),
         "SandReckoner" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1960,6 +2244,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(SandReckoner::CONDITIONALS),
         }),
         "SanktaMiksaparato" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1967,6 +2252,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(SanktaMiksaparato::CONDITIONALS),
         }),
         "Savage" => Some(OperatorMetadata {
             available_skills: vec![1],
@@ -1974,6 +2260,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 5,
             default_module_index: 1,
+            conditionals: parse_conditionals(Savage::CONDITIONALS),
         }),
         "Scavenger" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1981,6 +2268,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Scavenger::CONDITIONALS),
         }),
         "Scene" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -1988,6 +2276,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Scene::CONDITIONALS),
         }),
         "Schwarz" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -1995,6 +2284,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Schwarz::CONDITIONALS),
         }),
         "Shalem" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -2002,6 +2292,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Shalem::CONDITIONALS),
         }),
         "Sharp" => Some(OperatorMetadata {
             available_skills: vec![1],
@@ -2009,6 +2300,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 1,
             default_module_index: 0,
+            conditionals: parse_conditionals(Sharp::CONDITIONALS),
         }),
         "Sideroca" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -2016,6 +2308,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 2,
+            conditionals: parse_conditionals(Sideroca::CONDITIONALS),
         }),
         "Siege" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -2023,6 +2316,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Siege::CONDITIONALS),
         }),
         "SilverAsh" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -2030,6 +2324,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(SilverAsh::CONDITIONALS),
         }),
         "Skadi" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -2037,6 +2332,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Skadi::CONDITIONALS),
         }),
         "Skalter" => Some(OperatorMetadata {
             available_skills: vec![1, 3],
@@ -2044,6 +2340,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Skalter::CONDITIONALS),
         }),
         "Snegurochka" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -2051,6 +2348,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Snegurochka::CONDITIONALS),
         }),
         "Specter" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -2058,6 +2356,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Specter::CONDITIONALS),
         }),
         "SpecterAlter" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -2065,6 +2364,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(SpecterAlter::CONDITIONALS),
         }),
         "Stainless" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -2072,6 +2372,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Stainless::CONDITIONALS),
         }),
         "Steward" => Some(OperatorMetadata {
             available_skills: vec![1],
@@ -2079,6 +2380,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 6,
             default_module_index: 0,
+            conditionals: parse_conditionals(Steward::CONDITIONALS),
         }),
         "Stormeye" => Some(OperatorMetadata {
             available_skills: vec![1],
@@ -2086,6 +2388,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 1,
             default_module_index: 0,
+            conditionals: parse_conditionals(Stormeye::CONDITIONALS),
         }),
         "Surfer" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -2093,6 +2396,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 0,
+            conditionals: parse_conditionals(Surfer::CONDITIONALS),
         }),
         "Surtr" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -2100,6 +2404,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Surtr::CONDITIONALS),
         }),
         "Suzuran" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -2107,6 +2412,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Suzuran::CONDITIONALS),
         }),
         "SwireAlt" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -2114,6 +2420,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(SwireAlt::CONDITIONALS),
         }),
         "Tachanka" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -2121,6 +2428,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Tachanka::CONDITIONALS),
         }),
         "Tecno" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -2128,6 +2436,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(Tecno::CONDITIONALS),
         }),
         "Tequila" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -2135,6 +2444,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Tequila::CONDITIONALS),
         }),
         "TerraResearchCommission" => Some(OperatorMetadata {
             available_skills: vec![],
@@ -2142,6 +2452,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 0,
             default_potential: 6,
             default_module_index: 0,
+            conditionals: parse_conditionals(TerraResearchCommission::CONDITIONALS),
         }),
         "TexasAlter" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -2149,6 +2460,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(TexasAlter::CONDITIONALS),
         }),
         "Thorns" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -2156,6 +2468,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Thorns::CONDITIONALS),
         }),
         "ThornsAlter" => Some(OperatorMetadata {
             available_skills: vec![2, 3],
@@ -2163,6 +2476,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(ThornsAlter::CONDITIONALS),
         }),
         "TinMan" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -2170,6 +2484,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(TinMan::CONDITIONALS),
         }),
         "Tippi" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -2177,6 +2492,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 0,
+            conditionals: parse_conditionals(Tippi::CONDITIONALS),
         }),
         "Toddifons" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -2184,6 +2500,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Toddifons::CONDITIONALS),
         }),
         "TogawaSakiko" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -2191,6 +2508,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(TogawaSakiko::CONDITIONALS),
         }),
         "Tomimi" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -2198,6 +2516,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 2,
+            conditionals: parse_conditionals(Tomimi::CONDITIONALS),
         }),
         "Totter" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -2205,6 +2524,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Totter::CONDITIONALS),
         }),
         "Tragodia" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -2212,6 +2532,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Tragodia::CONDITIONALS),
         }),
         "Typhon" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -2219,6 +2540,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Typhon::CONDITIONALS),
         }),
         "Ulpianus" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -2226,6 +2548,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Ulpianus::CONDITIONALS),
         }),
         "Underflow" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -2233,6 +2556,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Underflow::CONDITIONALS),
         }),
         "Utage" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -2240,6 +2564,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Utage::CONDITIONALS),
         }),
         "Vanilla" => Some(OperatorMetadata {
             available_skills: vec![1],
@@ -2247,6 +2572,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 6,
             default_module_index: 0,
+            conditionals: parse_conditionals(Vanilla::CONDITIONALS),
         }),
         "Vendela" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -2254,6 +2580,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Vendela::CONDITIONALS),
         }),
         "Vermeil" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -2261,6 +2588,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Vermeil::CONDITIONALS),
         }),
         "Vetochki" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -2268,6 +2596,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Vetochki::CONDITIONALS),
         }),
         "Vigil" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -2275,6 +2604,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 6,
             default_module_index: 2,
+            conditionals: parse_conditionals(Vigil::CONDITIONALS),
         }),
         "Vigna" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -2282,6 +2612,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 2,
+            conditionals: parse_conditionals(Vigna::CONDITIONALS),
         }),
         "Vina" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -2289,6 +2620,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Vina::CONDITIONALS),
         }),
         "Virtuosa" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -2296,6 +2628,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Virtuosa::CONDITIONALS),
         }),
         "Viviana" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -2303,6 +2636,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 3,
+            conditionals: parse_conditionals(Viviana::CONDITIONALS),
         }),
         "Vulcan" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -2310,6 +2644,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Vulcan::CONDITIONALS),
         }),
         "Vulpisfoglia" => Some(OperatorMetadata {
             available_skills: vec![1, 3],
@@ -2317,6 +2652,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Vulpisfoglia::CONDITIONALS),
         }),
         "W" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -2324,6 +2660,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(W::CONDITIONALS),
         }),
         "WakabaMutsumi" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -2331,6 +2668,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 2,
+            conditionals: parse_conditionals(WakabaMutsumi::CONDITIONALS),
         }),
         "Walter" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -2338,6 +2676,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Walter::CONDITIONALS),
         }),
         "Warmy" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -2345,6 +2684,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Warmy::CONDITIONALS),
         }),
         "Weedy" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -2352,6 +2692,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(Weedy::CONDITIONALS),
         }),
         "Whislash" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -2359,6 +2700,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Whislash::CONDITIONALS),
         }),
         "Wildmane" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -2366,6 +2708,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Wildmane::CONDITIONALS),
         }),
         "Windscoot" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -2373,6 +2716,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(Windscoot::CONDITIONALS),
         }),
         "YahataUmiri" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -2380,6 +2724,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 6,
             default_module_index: 2,
+            conditionals: parse_conditionals(YahataUmiri::CONDITIONALS),
         }),
         "YatoAlter" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -2387,6 +2732,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 1,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(YatoAlter::CONDITIONALS),
         }),
         "Yu" => Some(OperatorMetadata {
             available_skills: vec![2],
@@ -2394,6 +2740,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 0,
+            conditionals: parse_conditionals(Yu::CONDITIONALS),
         }),
         "YutenjiNyamu" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
@@ -2401,6 +2748,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 2,
             default_potential: 6,
             default_module_index: 1,
+            conditionals: parse_conditionals(YutenjiNyamu::CONDITIONALS),
         }),
         "ZuoLe" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
@@ -2408,6 +2756,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
+            conditionals: parse_conditionals(ZuoLe::CONDITIONALS),
         }),
         "TwelveF" => Some(OperatorMetadata {
             available_skills: vec![],
@@ -2415,6 +2764,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_skill_index: 0,
             default_potential: 6,
             default_module_index: 0,
+            conditionals: parse_conditionals(TwelveF::CONDITIONALS),
         }),
         _ => None,
     }

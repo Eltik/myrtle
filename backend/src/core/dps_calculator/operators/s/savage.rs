@@ -17,6 +17,21 @@ impl Savage {
     /// Available modules for this operator
     pub const AVAILABLE_MODULES: &'static [i32] = &[1];
 
+    /// Conditionals for this operator
+    /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
+    pub const CONDITIONALS: &'static [(
+        &'static str,
+        &'static str,
+        bool,
+        &'static [i32],
+        &'static [i32],
+        i32,
+        i32,
+    )] = &[
+        ("talent", "2+RangedTiles", false, &[], &[], 1, 0),
+        ("module", "vsBlocked", false, &[], &[1], 0, 0),
+    ];
+
     /// Creates a new Savage operator
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
         let unit = OperatorUnit::new(
@@ -70,12 +85,12 @@ impl Savage {
 
         let mut hitdmg: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut final_atk: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
 
         atk_scale = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {
             1.1

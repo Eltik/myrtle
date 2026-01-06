@@ -17,6 +17,22 @@ impl Crownslayer {
     /// Available modules for this operator
     pub const AVAILABLE_MODULES: &'static [i32] = &[1, 2];
 
+    /// Conditionals for this operator
+    /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
+    pub const CONDITIONALS: &'static [(
+        &'static str,
+        &'static str,
+        bool,
+        &'static [i32],
+        &'static [i32],
+        i32,
+        i32,
+    )] = &[
+        ("talent2", "dmgTaken", true, &[], &[], 2, 0),
+        ("skill", "singleTargetOnly", true, &[3], &[], 0, 0),
+        ("module", "alone", false, &[], &[2], 0, 0),
+    ];
+
     /// Creates a new Crownslayer operator
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
         let unit = OperatorUnit::new(
@@ -70,13 +86,13 @@ impl Crownslayer {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut dps: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut skill_scale: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
 
         atkbuff = if self.unit.module_damage && ((self.unit.module_index as f64) as f64) == 2.0 {
             0.1

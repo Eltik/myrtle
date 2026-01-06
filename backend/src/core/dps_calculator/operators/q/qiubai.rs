@@ -17,6 +17,26 @@ impl Qiubai {
     /// Available modules for this operator
     pub const AVAILABLE_MODULES: &'static [i32] = &[1];
 
+    /// Conditionals for this operator
+    /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
+    pub const CONDITIONALS: &'static [(
+        &'static str,
+        &'static str,
+        bool,
+        &'static [i32],
+        &'static [i32],
+        i32,
+        i32,
+    )] = &[
+        ("trait", "rangedAtk", true, &[], &[], 0, 0),
+        ("talent", "vsBindANDslow", false, &[], &[1], 0, 2),
+        ("talent", "vsBind/Slow", false, &[], &[], 0, 0),
+        ("talent", "w/o talent1", true, &[], &[], 0, 0),
+        ("module", "vsBindAndSlow", false, &[], &[], 0, 0),
+        ("talent", "vsBindOrSlow", false, &[], &[], 0, 0),
+        ("skill", "maxStacks", false, &[], &[], 0, 0),
+    ];
+
     /// Creates a new Qiubai operator
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
         let unit = OperatorUnit::new(
@@ -101,20 +121,20 @@ impl Qiubai {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut hitdmg: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut bonusdmg: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
-        let mut dmg: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut dps: f64 = 0.0;
         let mut extrascale: f64 = 0.0;
+        let mut dmg: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut bonusdmg: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         let mut bonus = if ((self.unit.module_index as f64) as f64) == 1.0 {
             0.1

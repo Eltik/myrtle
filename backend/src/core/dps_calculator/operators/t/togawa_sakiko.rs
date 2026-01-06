@@ -17,6 +17,25 @@ impl TogawaSakiko {
     /// Available modules for this operator
     pub const AVAILABLE_MODULES: &'static [i32] = &[2];
 
+    /// Conditionals for this operator
+    /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
+    pub const CONDITIONALS: &'static [(
+        &'static str,
+        &'static str,
+        bool,
+        &'static [i32],
+        &'static [i32],
+        i32,
+        i32,
+    )] = &[
+        ("skill", "maxSkillDmg", false, &[1], &[], 0, 0),
+        ("skill", "Organ", false, &[], &[], 0, 0),
+        ("talent", "maxNotes", false, &[], &[], 1, 0),
+        ("talent", "minNotes", true, &[], &[], 1, 0),
+        ("talent2", "fever", false, &[1], &[], 0, 0),
+        ("module", "vs2+Enemy", false, &[], &[2], 0, 0),
+    ];
+
     /// Creates a new TogawaSakiko operator
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
         let unit = OperatorUnit::new(
@@ -99,17 +118,17 @@ impl TogawaSakiko {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut dps: f64 = 0.0;
-        let mut newres: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
         let mut defshred: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut dps: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut newres: f64 = 0.0;
 
         atk_scale = 1.0;
         atkbuff = if ((self.unit.skill_index as f64) as f64) == 2.0 && !self.unit.skill_damage {

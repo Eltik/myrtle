@@ -17,6 +17,18 @@ impl Mountain {
     /// Available modules for this operator
     pub const AVAILABLE_MODULES: &'static [i32] = &[2, 1];
 
+    /// Conditionals for this operator
+    /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
+    pub const CONDITIONALS: &'static [(
+        &'static str,
+        &'static str,
+        bool,
+        &'static [i32],
+        &'static [i32],
+        i32,
+        i32,
+    )] = &[("module", ">50% hp", false, &[], &[], 0, 0)];
+
     /// Creates a new Mountain operator
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
         let unit = OperatorUnit::new(
@@ -90,16 +102,16 @@ impl Mountain {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut normalhitdmg: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut crithitdmg: f64 = 0.0;
-        let mut cdmg: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
+        let mut normalhitdmg: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut avghit: f64 = 0.0;
         let mut avgdmg: f64 = 0.0;
+        let mut crithitdmg: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut cdmg: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
 
         let mut crit_rate = self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0);
         cdmg = self.unit.talent1_parameters.first().copied().unwrap_or(0.0);

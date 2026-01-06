@@ -17,6 +17,21 @@ impl Pepe {
     /// Available modules for this operator
     pub const AVAILABLE_MODULES: &'static [i32] = &[1, 3];
 
+    /// Conditionals for this operator
+    /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
+    pub const CONDITIONALS: &'static [(
+        &'static str,
+        &'static str,
+        bool,
+        &'static [i32],
+        &'static [i32],
+        i32,
+        i32,
+    )] = &[
+        ("module", "3inRange", false, &[], &[1], 0, 0),
+        ("skill", "maxStacks", false, &[1], &[], 0, 0),
+    ];
+
     /// Creates a new Pepe operator
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
         let unit = OperatorUnit::new(
@@ -96,18 +111,18 @@ impl Pepe {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut atk_scale: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut hitdmgaoe: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
         let mut skilldmg: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut hitdmgaoe: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut avghit: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
 
         atkbuff = self.unit.talent2_parameters.first().copied().unwrap_or(0.0);
         atk_scale = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {

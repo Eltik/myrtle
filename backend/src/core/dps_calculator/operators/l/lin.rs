@@ -17,6 +17,18 @@ impl Lin {
     /// Available modules for this operator
     pub const AVAILABLE_MODULES: &'static [i32] = &[1, 2];
 
+    /// Conditionals for this operator
+    /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
+    pub const CONDITIONALS: &'static [(
+        &'static str,
+        &'static str,
+        bool,
+        &'static [i32],
+        &'static [i32],
+        i32,
+        i32,
+    )] = &[("module", "manyTargets", false, &[], &[2], 0, 0)];
+
     /// Creates a new Lin operator
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
         let unit = OperatorUnit::new(
@@ -72,10 +84,10 @@ impl Lin {
         let mut res = enemy.res;
 
         let mut dps: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
         let mut aspd: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         if (self.unit.skill_index as f64) == 0.0 {

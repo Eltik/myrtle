@@ -17,6 +17,23 @@ impl Ebenholz {
     /// Available modules for this operator
     pub const AVAILABLE_MODULES: &'static [i32] = &[1, 2, 3];
 
+    /// Conditionals for this operator
+    /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
+    pub const CONDITIONALS: &'static [(
+        &'static str,
+        &'static str,
+        bool,
+        &'static [i32],
+        &'static [i32],
+        i32,
+        i32,
+    )] = &[
+        ("talent", "+Talent1Dmg", false, &[], &[], 1, 0),
+        ("talent2", "withAvgNecrosis", false, &[], &[3], 0, 0),
+        ("module", "+30aspd(mod,somehow)", false, &[], &[2], 0, 0),
+        ("module", "vsBoss", true, &[], &[3], 0, 0),
+    ];
+
     /// Creates a new Ebenholz operator
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
         let unit = OperatorUnit::new(
@@ -105,20 +122,20 @@ impl Ebenholz {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut dps: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut fallouttime: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut eledmg: f64 = 0.0;
-        let mut ele_gauge: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut eledps: f64 = 0.0;
-        let mut bonusdmg: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut extradmg: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut bonusdmg: f64 = 0.0;
+        let mut fallouttime: f64 = 0.0;
+        let mut ele_gauge: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut extradmg: f64 = 0.0;
+        let mut eledmg: f64 = 0.0;
+        let mut eledps: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         aspd = if self.unit.module_damage && ((self.unit.module_index as f64) as f64) == 2.0 {
             30.0

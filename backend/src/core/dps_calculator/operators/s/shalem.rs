@@ -17,6 +17,18 @@ impl Shalem {
     /// Available modules for this operator
     pub const AVAILABLE_MODULES: &'static [i32] = &[1];
 
+    /// Conditionals for this operator
+    /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
+    pub const CONDITIONALS: &'static [(
+        &'static str,
+        &'static str,
+        bool,
+        &'static [i32],
+        &'static [i32],
+        i32,
+        i32,
+    )] = &[("talent", "(in IS2)", false, &[], &[], 0, 0)];
+
     /// Creates a new Shalem operator
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
         let unit = OperatorUnit::new(
@@ -88,18 +100,18 @@ impl Shalem {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut hitdmg: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut atk_scale: f64 = 0.0;
-        let mut newres: f64 = 0.0;
-        let mut shreddmg: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut avgdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut countinghits: f64 = 0.0;
-        let mut nocrit: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut shreddmg: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut nocrit: f64 = 0.0;
+        let mut avgdmg: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut newres: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         let mut extra_scale = if ((self.unit.module_index as f64) as f64) == 1.0 {
             0.1

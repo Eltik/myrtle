@@ -17,6 +17,26 @@ impl Nymph {
     /// Available modules for this operator
     pub const AVAILABLE_MODULES: &'static [i32] = &[1];
 
+    /// Conditionals for this operator
+    /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
+    pub const CONDITIONALS: &'static [(
+        &'static str,
+        &'static str,
+        bool,
+        &'static [i32],
+        &'static [i32],
+        i32,
+        i32,
+    )] = &[(
+        "trait",
+        "vsFallout(not inlcuding 800FalloutDps)",
+        false,
+        &[],
+        &[],
+        0,
+        0,
+    )];
+
     /// Creates a new Nymph operator
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
         let unit = OperatorUnit::new(
@@ -100,22 +120,22 @@ impl Nymph {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut sp_cost: f64 = 0.0;
+        let mut dmg_rate: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
         let mut ele_scale: f64 = 0.0;
         let mut necrosis_scale: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
-        let mut talent1_overwrite: f64 = 0.0;
-        let mut dmg_rate: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut extra_dmg: f64 = 0.0;
-        let mut burst_scale: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut aspd: f64 = 0.0;
+        let mut burst_scale: f64 = 0.0;
         let mut eledmg: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut talent1_overwrite: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut dps: f64 = 0.0;
 
         let mut talent1_scale =
             if self.unit.talent_damage && ((self.unit.elite as f64) as f64) > 0.0 {
