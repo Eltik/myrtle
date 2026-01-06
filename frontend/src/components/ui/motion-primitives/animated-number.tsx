@@ -8,13 +8,19 @@ export type AnimatedNumberProps = {
     className?: string;
     springOptions?: SpringOptions;
     as?: React.ElementType;
+    decimals?: number;
 };
 
-export function AnimatedNumber({ value, className, springOptions, as: Component = "span" }: AnimatedNumberProps) {
+export function AnimatedNumber({ value, className, springOptions, as: Component = "span", decimals = 0 }: AnimatedNumberProps) {
     const MotionComponent = motion(Component);
 
-    const spring = useSpring(value, springOptions);
-    const display = useTransform(spring, (current) => Math.round(current).toLocaleString());
+    const spring = useSpring(0, springOptions);
+    const display = useTransform(spring, (current) => {
+        if (decimals > 0) {
+            return current.toFixed(decimals);
+        }
+        return Math.round(current).toLocaleString();
+    });
 
     useEffect(() => {
         spring.set(value);

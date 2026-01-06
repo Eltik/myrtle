@@ -51,17 +51,24 @@ export function HeroSection() {
 
                 <InView once transition={ANIMATION_TRANSITIONS.buttons} variants={ANIMATION_VARIANTS.buttons}>
                     <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-                        <Button asChild className="group h-12 px-8 text-lg" size="lg">
+                        <Button asChild className="group relative h-12 overflow-hidden rounded-lg bg-primary px-8 font-semibold text-lg text-primary-foreground shadow-[0_8px_24px_var(--glow-primary)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_12px_32px_var(--glow-primary)]" size="lg">
                             <Link href="/operators">
-                                Browse Operators
-                                <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                                <span className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-linear-to-b from-white/25 to-transparent" />
+                                <span className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-black/20 to-transparent" />
+                                <span className="relative flex items-center">
+                                    Browse Operators
+                                    <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                                </span>
                             </Link>
                         </Button>
-                        <Button asChild className="h-12 bg-transparent px-8 text-lg" size="lg" variant="outline">
-                            <Link href="/tools/recruitment">
-                                <BookOpen className="mr-2 h-5 w-5" />
-                                Get Started
-                            </Link>
+                        <Button
+                            className="h-12 cursor-pointer rounded-lg border-2 border-primary/30 bg-secondary/50 px-8 font-semibold text-foreground text-lg transition-all duration-300 hover:border-primary/60 hover:bg-secondary"
+                            onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })}
+                            size="lg"
+                            variant="outline"
+                        >
+                            <BookOpen className="mr-2 h-5 w-5" />
+                            Get Started
                         </Button>
                     </div>
                 </InView>

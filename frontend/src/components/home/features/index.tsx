@@ -6,7 +6,7 @@ import { FEATURES } from "./impl/constants";
 
 export function FeaturesSection() {
     return (
-        <section className="py-20 md:py-32">
+        <section className="py-20 md:py-32" id="features">
             <div className="container mx-auto px-4">
                 <InView
                     once
