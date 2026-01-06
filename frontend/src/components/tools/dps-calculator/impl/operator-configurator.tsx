@@ -485,6 +485,42 @@ export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorC
                             </DisclosureTrigger>
                             <DisclosureContent>
                                 <div className="mt-3 space-y-6">
+                                    {/* Enemy Settings Section - At top for prominence */}
+                                    <div className="space-y-3">
+                                        <Label className="text-muted-foreground text-xs uppercase tracking-wide">Enemy Settings</Label>
+                                        <div className="grid grid-cols-1 xs:grid-cols-2 gap-3">
+                                            <div className="space-y-1">
+                                                <TooltipProvider delayDuration={200}>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Label className="cursor-help text-xs" htmlFor={`targets-${operator.id}`}>
+                                                                Targets
+                                                            </Label>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Number of enemies hit (for AoE operators)</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                                <Input
+                                                    className="h-8 w-full font-mono text-sm"
+                                                    id={`targets-${operator.id}`}
+                                                    max={10}
+                                                    min={1}
+                                                    onChange={(e) => {
+                                                        const val = Number.parseInt(e.target.value, 10);
+                                                        if (!Number.isNaN(val)) {
+                                                            updateParams("targets", Math.max(1, Math.min(val, 10)));
+                                                        }
+                                                    }}
+                                                    placeholder="1"
+                                                    type="number"
+                                                    value={operator.params.targets ?? 1}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     {/* Conditionals Section - Only show if operator has applicable conditionals */}
                                     {applicableConditionals.length > 0 && (
                                         <div className="space-y-3">

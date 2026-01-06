@@ -46,6 +46,12 @@ function buildOperatorLabel(op: OperatorConfiguration): string {
         parts.push(`Mod${moduleType}${moduleLevel}`);
     }
 
+    // Targets (only show if more than 1)
+    const targets = op.params.targets ?? 1;
+    if (targets > 1) {
+        parts.push(`${targets}T`);
+    }
+
     // Active conditionals (only if allCond is true or undefined)
     const allCond = op.params.allCond ?? true;
     if (allCond && op.conditionalData && op.conditionalData.length > 0) {
@@ -239,7 +245,18 @@ export function DpsChart({ operators, mode }: DpsChartProps) {
                             position: "insideLeft",
                         }}
                     />
-                    <ChartTooltip content={<ChartTooltipContent labelFormatter={(value) => `${mode === "defense" ? "Defense" : "Resistance"}: ${value}`} />} />
+                    <ChartTooltip
+                        content={
+                            <ChartTooltipContent
+                                labelFormatter={(_, payload) => {
+                                    // Access the actual x-axis value from the data payload
+                                    const dataPoint = payload?.[0]?.payload as ChartDataPoint | undefined;
+                                    const xValue = dataPoint?.value;
+                                    return `${mode === "defense" ? "DEF" : "RES"}: ${xValue ?? ""}`;
+                                }}
+                            />
+                        }
+                    />
                     <Legend
                         formatter={(value) => {
                             const config = chartConfig[value as string];
