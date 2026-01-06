@@ -150,23 +150,23 @@ impl Ifrit {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut burndmg: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut newres: f64 = 0.0;
-        let mut skilldmgarts: f64 = 0.0;
         let mut newres2: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
-        let mut time_to_proc: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut fallout_dps: f64 = 0.0;
         let mut ele_hit: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
+        let mut fallout_dps: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut newres: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut skilldmgarts: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut avghit: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut burndmg: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut time_to_proc: f64 = 0.0;
 
         atk_scale = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {
             1.1
@@ -304,7 +304,7 @@ impl Ifrit {
             final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
             let mut flatshred = -self.unit.skill_parameters.get(2).copied().unwrap_or(0.0);
             if self.unit.shreds[2] < 1.0 && self.unit.shreds[2] > 0.0 {
-                let mut res = res / self.unit.shreds.get(0).copied().unwrap_or(0.0);
+                res = res / self.unit.shreds.get(0).copied().unwrap_or(0.0);
             }
             newres = ((0) as f64).max((res - flatshred) as f64);
             newres = newres * (1.0 + resshred);

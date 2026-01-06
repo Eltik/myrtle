@@ -113,17 +113,17 @@ impl TogawaSakiko {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut hitdmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut defshred: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut hitdmgarts: f64 = 0.0;
         let mut newres: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
         let mut aspd: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut defshred: f64 = 0.0;
 
         atk_scale = 1.0;
         atkbuff = if ((self.unit.skill_index as f64) as f64) == 2.0 && !self.unit.skill_damage {
@@ -161,11 +161,11 @@ impl TogawaSakiko {
             };
         }
         if self.unit.shreds[2] < 1.0 && self.unit.shreds[2] > 0.0 {
-            let mut res = res / self.unit.shreds.get(0).copied().unwrap_or(0.0);
+            res = res / self.unit.shreds.get(0).copied().unwrap_or(0.0);
         }
         newres = res * (1.0 - resshred);
         if self.unit.shreds[0] < 1.0 && self.unit.shreds[0] > 0.0 {
-            let mut defense = defense / self.unit.shreds.get(0).copied().unwrap_or(0.0);
+            defense = defense / self.unit.shreds.get(0).copied().unwrap_or(0.0);
         }
         let mut newdef = defense * (1.0 - defshred);
         if (self.unit.skill_index as f64) == 1.0 {

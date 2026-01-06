@@ -442,6 +442,9 @@ impl PythonToRustTranslator {
         }
 
         let mut declared_vars: HashSet<String> = shared_vars;
+        // defense and res are pre-declared as function parameters in the template
+        declared_vars.insert("defense".to_string());
+        declared_vars.insert("res".to_string());
         let mut indent_stack: Vec<(usize, bool)> = Vec::new();
         let mut _last_skill_check_indent: Option<usize> = None;
         let mut skip_until_indent: Option<usize> = None;

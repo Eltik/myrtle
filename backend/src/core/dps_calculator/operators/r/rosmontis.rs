@@ -105,15 +105,15 @@ impl Rosmontis {
         let mut res = enemy.res;
 
         let mut final_atk: f64 = 0.0;
-        let mut newdef: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut hitdmg: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
         let mut avghit: f64 = 0.0;
-        let mut bonushitdmg: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut sp_cost: f64 = 0.0;
+        let mut newdef: f64 = 0.0;
         let mut defshred: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut bonushitdmg: f64 = 0.0;
 
         let mut bonushits = if ((self.unit.module_index as f64) as f64) == 1.0 {
             2.0
@@ -174,7 +174,7 @@ impl Rosmontis {
         if (self.unit.skill_index as f64) == 3.0 {
             if self.unit.skill_damage {
                 if self.unit.shreds[0] < 1.0 && self.unit.shreds[0] > 0.0 {
-                    let mut defense = defense / self.unit.shreds.get(0).copied().unwrap_or(0.0);
+                    defense = defense / self.unit.shreds.get(0).copied().unwrap_or(0.0);
                 }
                 newdef = ((0) as f64).max((defense - 160.0) as f64);
                 if self.unit.shreds[0] < 1.0 && self.unit.shreds[0] > 0.0 {

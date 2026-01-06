@@ -83,15 +83,15 @@ impl GreyyAlter {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut atkbuff: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut bonusdmg: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut aspd: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut bonusdmg: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut hitdmg: f64 = 0.0;
 
         let mut bonushits = if ((self.unit.module_index as f64) as f64) == 1.0 {
             2.0

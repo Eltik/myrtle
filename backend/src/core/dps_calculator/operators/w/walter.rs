@@ -146,19 +146,19 @@ impl Walter {
             }
         }
 
+        let mut final_atk: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut explosiondmg: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut bonushitdmg_main: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut bonushitdmg: f64 = 0.0;
+        let mut hitdmg_main: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut sp_cost: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut explosiondmg: f64 = 0.0;
-        let mut bonushitdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut bonushitdmg_main: f64 = 0.0;
-        let mut hitdmg_main: f64 = 0.0;
 
         let mut bonushits = if ((self.unit.module_index as f64) as f64) == 1.0 {
             2.0
