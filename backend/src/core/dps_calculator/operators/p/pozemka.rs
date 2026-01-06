@@ -4,6 +4,7 @@
 
 use super::super::super::operator_data::OperatorData;
 use super::super::super::operator_unit::{DpsCalculator, EnemyStats, OperatorParams, OperatorUnit};
+use super::super::ConditionalTuple;
 
 /// Pozemka operator implementation
 pub struct Pozemka {
@@ -19,20 +20,10 @@ impl Pozemka {
 
     /// Conditionals for this operator
     /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
-    pub const CONDITIONALS: &'static [(
-        &'static str,
-        &'static str,
-        bool,
-        &'static [i32],
-        &'static [i32],
-        i32,
-        i32,
-    )] = &[
-        ("talent", "w/o Typewriter", true, &[], &[], 1, 0),
-        ("module", "DirectFront", false, &[], &[2], 0, 0),
-    ];
+    pub const CONDITIONALS: &'static [ConditionalTuple] = &[("talent", "w/o Typewriter", true, &[], &[], 1, 0), ("module", "DirectFront", false, &[], &[2], 0, 0)];
 
     /// Creates a new Pozemka operator
+    #[allow(unused_parens)]
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
         let mut unit = OperatorUnit::new(
             operator_data,
@@ -44,9 +35,7 @@ impl Pozemka {
         );
 
         // Apply init-time modifications from Python __init__
-        if unit.module_index == 2 && unit.module_level > 1 {
-            unit.drone_atk += 10.0 + 20.0 * (unit.module_level as f64);
-        }
+        if unit.module_index == 2 && unit.module_level > 1 { unit.drone_atk += 10.0 + 20.0 * (unit.module_level as f64); }
 
         Self { unit }
     }
@@ -54,7 +43,7 @@ impl Pozemka {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
+    /// 
     /// defshred = 0
     /// if self.talent_dmg:
     /// if self.talent2_dmg:
@@ -65,7 +54,7 @@ impl Pozemka {
     /// defshred += 0.05 * (self.module_lvl - 1)
     /// newdef = defense * (1-defshred)
     /// atk_scale = 1.05 if self.module_dmg and self.module == 2 else 1
-    ///
+    /// 
     /// if self.skill < 2:
     /// final_atk = self.atk * (1 + self.buff_atk + self.skill_params[0]*self.skill) + self.buff_atk_flat
     /// rate = self.skill_params[1] if self.skill == 1 else 0
@@ -80,7 +69,7 @@ impl Pozemka {
     /// hitdmg2 = np.fmax(final_atk2 * atk_scale * skill_scale - newdef, final_atk2 * atk_scale * skill_scale * 0.05)
     /// avghit = rate * hitdmg2 + (1 - rate) * hitdmg
     /// dps += avghit/self.drone_atk_interval
-    ///
+    /// 
     /// if self.skill == 3:
     /// self.atk_interval = 1
     /// skill_scale = self.skill_params[1]
@@ -94,118 +83,66 @@ impl Pozemka {
     /// hitdmgTW = np.fmax(self.drone_atk * skill_scale2 - newdef, self.drone_atk * skill_scale2 * 0.05)
     /// dps = hitdmg/self.atk_interval * self.attack_speed/100 + hitdmgTW
     /// return dps
-    #[allow(
-        unused_variables,
-        unused_mut,
-        unused_assignments,
-        unused_parens,
-        clippy::excessive_precision,
-        clippy::unnecessary_cast,
-        clippy::collapsible_if,
-        clippy::double_parens,
-        clippy::if_same_then_else,
-        clippy::nonminimal_bool,
-        clippy::overly_complex_bool_expr,
-        clippy::needless_return,
-        clippy::collapsible_else_if,
-        clippy::neg_multiply,
-        clippy::assign_op_pattern,
-        clippy::eq_op
-    )]
+    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op, clippy::get_first)]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut final_atk2: f64 = 0.0;
-        let mut defshred: f64 = 0.0;
-        let mut hitdmg_tw: f64 = 0.0;
-        let mut hitdmg2: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut avghit: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
+        let mut final_atk2: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut hitdmg2: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut hitdmg_tw: f64 = 0.0;
+        let mut defshred: f64 = 0.0;
 
         defshred = 0.0;
         if self.unit.talent_damage {
-            if self.unit.talent2_damage {
-                defshred = if (self.unit.potential as f64) > 4.0 {
-                    0.25
-                } else {
-                    0.23
-                };
-            } else {
-                defshred = if (self.unit.potential as f64) > 4.0 {
-                    0.2
-                } else {
-                    0.18
-                };
-            }
-            if (self.unit.module_index as f64) == 1.0 {
-                defshred += 0.05 * ((self.unit.module_level as f64) - 1.0);
-            }
-        }
-        let mut newdef = defense * (1.0 - defshred);
-        atk_scale = if self.unit.module_damage && ((self.unit.module_index as f64) as f64) == 2.0 {
-            1.05
+        if self.unit.talent2_damage {
+        defshred = if (self.unit.potential as f64) > 4.0 { 0.25 } else { 0.23 };
         } else {
-            1.0
-        };
+        defshred = if (self.unit.potential as f64) > 4.0 { 0.2 } else { 0.18 };
+        }
+        if (self.unit.module_index as f64) == 1.0 {
+        defshred += 0.05 * ((self.unit.module_level as f64) - 1.0);
+        }
+        }
+        let mut newdef = defense * (1.0 -defshred);
+        atk_scale = if self.unit.module_damage && ((self.unit.module_index as f64) as f64) == 2.0 { 1.05 } else { 1.0 };
         if (self.unit.skill_index as f64) < 2.0 {
-            final_atk = self.unit.atk
-                * (1.0
-                    + self.unit.buff_atk
-                    + self.unit.skill_parameters.first().copied().unwrap_or(0.0)
-                        * (self.unit.skill_index as f64))
-                + self.unit.buff_atk_flat;
-            let mut rate = if ((self.unit.skill_index as f64) as f64) == 1.0 {
-                self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
-            } else {
-                0.0
-            };
-            skill_scale = if ((self.unit.skill_index as f64) as f64) == 1.0 {
-                self.unit.skill_parameters.get(2).copied().unwrap_or(0.0)
-            } else {
-                0.0
-            };
-            hitdmg = ((final_atk * atk_scale - newdef) as f64)
-                .max((final_atk * atk_scale * 0.05) as f64);
-            hitdmg2 = ((final_atk * atk_scale * skill_scale - newdef) as f64)
-                .max((final_atk * atk_scale * skill_scale * 0.05) as f64);
-            avghit = rate * hitdmg2 + (1.0 - rate) * hitdmg;
-            dps = avghit / atk_interval * self.unit.attack_speed / 100.0;
-            if self.unit.talent_damage && (self.unit.elite as f64) > 0.0 {
-                final_atk2 = self.unit.drone_atk
-                    * (1.0
-                        + self.unit.skill_parameters.first().copied().unwrap_or(0.0)
-                            * (self.unit.skill_index as f64));
-                hitdmg = ((final_atk2 * atk_scale - newdef) as f64)
-                    .max((final_atk2 * atk_scale * 0.05) as f64);
-                hitdmg2 = ((final_atk2 * atk_scale * skill_scale - newdef) as f64)
-                    .max((final_atk2 * atk_scale * skill_scale * 0.05) as f64);
-                avghit = rate * hitdmg2 + (1.0 - rate) * hitdmg;
-                dps += avghit / (self.unit.drone_atk_interval as f64);
-            }
+        final_atk = self.unit.atk * (1.0 + self.unit.buff_atk + self.unit.skill_parameters.get(0).copied().unwrap_or(0.0)*(self.unit.skill_index as f64)) + self.unit.buff_atk_flat;
+        let mut rate = if ((self.unit.skill_index as f64) as f64) == 1.0 { self.unit.skill_parameters.get(1).copied().unwrap_or(0.0) } else { 0.0 };
+        skill_scale = if ((self.unit.skill_index as f64) as f64) == 1.0 { self.unit.skill_parameters.get(2).copied().unwrap_or(0.0) } else { 0.0 };
+        hitdmg = ((final_atk * atk_scale - newdef) as f64).max((final_atk * atk_scale * 0.05) as f64);
+        hitdmg2 = ((final_atk * atk_scale * skill_scale - newdef) as f64).max((final_atk * atk_scale * skill_scale * 0.05) as f64);
+        avghit = rate * hitdmg2 + (1.0 - rate) * hitdmg;
+        dps = avghit/atk_interval * self.unit.attack_speed/ 100.0;
+        if self.unit.talent_damage && (self.unit.elite as f64) > 0.0 {
+        final_atk2 = self.unit.drone_atk * (1.0 + self.unit.skill_parameters.get(0).copied().unwrap_or(0.0)*(self.unit.skill_index as f64));
+        hitdmg = ((final_atk2 * atk_scale - newdef) as f64).max((final_atk2 * atk_scale * 0.05) as f64);
+        hitdmg2 = ((final_atk2 * atk_scale * skill_scale - newdef) as f64).max((final_atk2 * atk_scale * skill_scale * 0.05) as f64);
+        avghit = rate * hitdmg2 + (1.0 - rate) * hitdmg;
+        dps += avghit/(self.unit.drone_atk_interval as f64);
+        }
         }
         if (self.unit.skill_index as f64) == 3.0 {
-            atk_interval = 1.0;
-            skill_scale = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
-            let mut skill_scale2 = self.unit.skill_parameters.get(2).copied().unwrap_or(0.0);
-            final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
-            hitdmg = ((final_atk * atk_scale * skill_scale - newdef) as f64)
-                .max((final_atk * atk_scale * skill_scale * 0.05) as f64);
-            if self.unit.module_damage || self.unit.skill_damage {
-                hitdmg = ((final_atk * atk_scale * skill_scale2 - newdef) as f64)
-                    .max((final_atk * atk_scale * skill_scale2 * 0.05) as f64);
-            }
-            hitdmg_tw = 0.0;
-            if self.unit.talent_damage {
-                hitdmg_tw = ((self.unit.drone_atk * skill_scale2 - newdef) as f64)
-                    .max((self.unit.drone_atk * skill_scale2 * 0.05) as f64);
-            }
-            dps = hitdmg / atk_interval * self.unit.attack_speed / 100.0 + hitdmg_tw;
+        atk_interval = 1.0;
+        skill_scale = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);
+        let mut skill_scale2 = self.unit.skill_parameters.get(2).copied().unwrap_or(0.0);
+        final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
+        hitdmg = ((final_atk * atk_scale * skill_scale - newdef) as f64).max((final_atk * atk_scale * skill_scale * 0.05) as f64);
+        if self.unit.module_damage || self.unit.skill_damage {
+        hitdmg = ((final_atk * atk_scale * skill_scale2 - newdef) as f64).max((final_atk * atk_scale * skill_scale2 * 0.05) as f64);
+        }
+        hitdmg_tw = 0.0;
+        if self.unit.talent_damage {
+        hitdmg_tw = ((self.unit.drone_atk * skill_scale2 - newdef) as f64).max((self.unit.drone_atk * skill_scale2 * 0.05) as f64);
+        }
+        dps = hitdmg/atk_interval * self.unit.attack_speed/ 100.0 + hitdmg_tw;
         }
         return dps;
     }
