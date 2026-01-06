@@ -20,13 +20,13 @@ export function Header() {
         <header className="fixed top-0 z-50 w-full">
             <div className="relative">
                 <div
-                    className="-bottom-px absolute inset-x-0 h-px"
+                    className="absolute inset-x-0 -bottom-px h-px"
                     style={{
                         background: "linear-gradient(90deg, transparent, var(--glow-header-border), var(--glow-header-border-secondary), var(--glow-header-border), transparent)",
                     }}
                 />
                 <div
-                    className="-bottom-1 pointer-events-none absolute inset-x-0 h-4 blur-md"
+                    className="pointer-events-none absolute inset-x-0 -bottom-1 h-4 blur-md"
                     style={{
                         background: "linear-gradient(90deg, transparent 10%, var(--glow-header), var(--glow-header-secondary), var(--glow-header), transparent 90%)",
                     }}

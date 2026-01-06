@@ -152,7 +152,7 @@ function DockLabel({ children, className, ...rest }: DockLabelProps) {
             {isVisible && (
                 <motion.div
                     animate={{ opacity: 1, y: -10 }}
-                    className={cn("-top-6 absolute left-1/2 w-fit whitespace-pre rounded-md border border-gray-200 bg-gray-100 px-2 py-0.5 text-neutral-700 text-xs dark:border-neutral-900 dark:bg-neutral-800 dark:text-white", className)}
+                    className={cn("absolute -top-6 left-1/2 w-fit whitespace-pre rounded-md border border-gray-200 bg-gray-100 px-2 py-0.5 text-neutral-700 text-xs dark:border-neutral-900 dark:bg-neutral-800 dark:text-white", className)}
                     exit={{ opacity: 0, y: 0 }}
                     initial={{ opacity: 0, y: 0 }}
                     role="tooltip"

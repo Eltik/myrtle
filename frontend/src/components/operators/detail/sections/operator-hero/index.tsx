@@ -51,7 +51,7 @@ export function OperatorHero({ operator }: OperatorHeroProps) {
                 </div>
             </motion.div>
 
-            <div className="-bottom-16 sm:-bottom-14 pointer-events-none absolute inset-x-0 h-[calc(33%+64px)] bg-linear-to-t from-background via-background/80 to-transparent sm:h-[calc(33%+56px)] lg:bottom-0 lg:h-1/3" />
+            <div className="pointer-events-none absolute inset-x-0 -bottom-16 h-[calc(33%+64px)] bg-linear-to-t from-background via-background/80 to-transparent sm:-bottom-14 sm:h-[calc(33%+56px)] lg:bottom-0 lg:h-1/3" />
 
             {/* Content */}
             <motion.div

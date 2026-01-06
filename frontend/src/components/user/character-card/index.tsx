@@ -115,7 +115,7 @@ export function CharacterCard({ data }: CharacterCardProps) {
 
                     {/* Maxed indicator */}
                     {isMaxed && (
-                        <div className="-top-3 absolute z-10 rounded-r-md px-2 py-0.5 text-center font-semibold text-xs shadow-md" style={{ color: rarityColor }}>
+                        <div className="absolute -top-3 z-10 rounded-r-md px-2 py-0.5 text-center font-semibold text-xs shadow-md" style={{ color: rarityColor }}>
                             Maxed
                         </div>
                     )}

@@ -11,7 +11,7 @@ import { ANIMATION_TRANSITIONS, ANIMATION_VARIANTS, HERO_IMAGES_PRIMARY, HERO_IM
 
 export function HeroSection() {
     return (
-        <section className="hero-full-width hero-light-bg -mt-8 relative flex min-h-[80vh] flex-col items-center justify-center overflow-hidden pt-8 pb-20 md:mt-0 md:py-20">
+        <section className="hero-full-width hero-light-bg relative -mt-8 flex min-h-[80vh] flex-col items-center justify-center overflow-hidden pt-8 pb-20 md:mt-0 md:py-20">
             {/* Parallax Background Images */}
             <div className="hero-images-container absolute inset-0 z-1 flex flex-col justify-center">
                 <Marquee className="mb-4" duration={120}>

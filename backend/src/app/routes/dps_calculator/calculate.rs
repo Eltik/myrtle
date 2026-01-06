@@ -326,6 +326,26 @@ pub async fn calculate_dps(
     // Get the unit for metadata
     let unit = calculator.unit();
 
+    // Extract shred values for applying to enemy stats
+    // shreds format: [def_mult, def_flat, res_mult, res_flat]
+    // def_mult/res_mult: 1.0 = no shred, 0.6 = 40% shred
+    let def_percent_shred = unit.shreds.first().copied().unwrap_or(1.0);
+    let def_flat_shred = unit.shreds.get(1).copied().unwrap_or(0.0);
+    let res_percent_shred = unit.shreds.get(2).copied().unwrap_or(1.0);
+    let res_flat_shred = unit.shreds.get(3).copied().unwrap_or(0.0);
+
+    // Extract fragile buff for applying to DPS output
+    let fragile_mult = 1.0 + unit.buff_fragile;
+
+    // Helper to apply all shreds to enemy stats
+    // Order: flat shred first, then percentage shred
+    let apply_shred = |defense: f64, res: f64| -> EnemyStats {
+        EnemyStats {
+            defense: ((defense - def_flat_shred).max(0.0) * def_percent_shred).max(0.0),
+            res: ((res - res_flat_shred).max(0.0) * res_percent_shred).max(0.0),
+        }
+    };
+
     // Build operator metadata
     let operator_metadata = OperatorMetadata {
         id: request.operator_id.clone(),
@@ -360,11 +380,8 @@ pub async fn calculate_dps(
         let fixed_res = request.enemy.res;
         let mut def = range.min_def;
         while def <= range.max_def {
-            let enemy = EnemyStats {
-                defense: def as f64,
-                res: fixed_res,
-            };
-            let dps_value = calculator.skill_dps(&enemy);
+            let enemy = apply_shred(def as f64, fixed_res);
+            let dps_value = calculator.skill_dps(&enemy) * fragile_mult;
             by_defense.push(DpsPoint {
                 value: def,
                 dps: dps_value,
@@ -376,11 +393,8 @@ pub async fn calculate_dps(
         let fixed_def = request.enemy.defense;
         let mut res = range.min_res;
         while res <= range.max_res {
-            let enemy = EnemyStats {
-                defense: fixed_def,
-                res: res as f64,
-            };
-            let dps_value = calculator.skill_dps(&enemy);
+            let enemy = apply_shred(fixed_def, res as f64);
+            let dps_value = calculator.skill_dps(&enemy) * fragile_mult;
             by_resistance.push(DpsPoint {
                 value: res,
                 dps: dps_value,
@@ -393,15 +407,12 @@ pub async fn calculate_dps(
             by_resistance,
         })
     } else {
-        // Single calculation
-        let enemy = EnemyStats {
-            defense: request.enemy.defense,
-            res: request.enemy.res,
-        };
+        // Single calculation - apply shred to enemy stats and fragile to DPS
+        let enemy = apply_shred(request.enemy.defense, request.enemy.res);
 
-        let skill_dps = calculator.skill_dps(&enemy);
-        let total_damage = calculator.unit().total_dmg(&enemy);
-        let average_dps = calculator.unit_mut().average_dps(&enemy);
+        let skill_dps = calculator.skill_dps(&enemy) * fragile_mult;
+        let total_damage = calculator.unit().total_dmg(&enemy) * fragile_mult;
+        let average_dps = calculator.unit_mut().average_dps(&enemy) * fragile_mult;
 
         DpsResult::Single(SingleDps {
             skill_dps,
