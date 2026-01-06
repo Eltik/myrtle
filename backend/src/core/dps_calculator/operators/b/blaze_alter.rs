@@ -118,22 +118,22 @@ impl BlazeAlter {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut dps: f64 = 0.0;
-        let mut skilldmg2: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut hitdmg2: f64 = 0.0;
-        let mut elegauge: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
         let mut dps_norm: f64 = 0.0;
-        let mut newres: f64 = 0.0;
-        let mut dps_fallout: f64 = 0.0;
+        let mut ele_scale: f64 = 0.0;
+        let mut elegauge: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
+        let mut dps_fallout: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut time_to_fallout: f64 = 0.0;
+        let mut skilldmg2: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut skilldmg1: f64 = 0.0;
         let mut hitdmg1: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut hitdmg2: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut ele_scale: f64 = 0.0;
-        let mut time_to_fallout: f64 = 0.0;
+        let mut newres: f64 = 0.0;
         let mut burst_scale: f64 = 0.0;
 
         burst_scale = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.skill_damage {

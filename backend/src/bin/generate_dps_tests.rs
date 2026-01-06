@@ -39,7 +39,22 @@ struct TestCase {
     module_index: i32,
     defense: f64,
     res: f64,
+    // Debuff fields
+    fragile: f64,
+    def_shred_mult: f64,
+    def_shred_flat: f64,
+    res_shred_mult: f64,
+    res_shred_flat: f64,
 }
+
+/// Debuff scenario: (fragile, def_mult, def_flat, res_mult, res_flat)
+/// def_mult/res_mult: 1.0 = no shred, 0.6 = 40% shred
+const DEBUFF_SCENARIOS: &[(f64, f64, f64, f64, f64)] = &[
+    (0.0, 1.0, 0.0, 1.0, 0.0),   // None (baseline)
+    (0.3, 1.0, 0.0, 1.0, 0.0),   // Fragile 30%
+    (0.0, 0.6, 100.0, 1.0, 0.0), // DEF shred 40% + 100 flat
+    (0.0, 1.0, 0.0, 0.7, 15.0),  // RES shred 30% + 15 flat
+];
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -141,16 +156,24 @@ fn generate_test_cases(operators: &[OperatorInfo]) -> Vec<TestCase> {
                     vec![0] // Only test without module
                 };
 
-                for module_idx in module_indices {
-                    test_cases.push(TestCase {
-                        operator_class: op.class_name.clone(),
-                        operator_id: op.char_id.clone(),
-                        rust_module: op.rust_module.clone(),
-                        skill_index: *skill,
-                        module_index: module_idx,
-                        defense: *defense,
-                        res: *res,
-                    });
+                for module_idx in &module_indices {
+                    // Iterate over all debuff scenarios
+                    for (fragile, def_mult, def_flat, res_mult, res_flat) in DEBUFF_SCENARIOS {
+                        test_cases.push(TestCase {
+                            operator_class: op.class_name.clone(),
+                            operator_id: op.char_id.clone(),
+                            rust_module: op.rust_module.clone(),
+                            skill_index: *skill,
+                            module_index: *module_idx,
+                            defense: *defense,
+                            res: *res,
+                            fragile: *fragile,
+                            def_shred_mult: *def_mult,
+                            def_shred_flat: *def_flat,
+                            res_shred_mult: *res_mult,
+                            res_shred_flat: *res_flat,
+                        });
+                    }
                 }
             }
         }
@@ -171,6 +194,12 @@ fn generate_test_config_json(output_dir: &Path, test_cases: &[TestCase]) {
                 "module": tc.module_index,
                 "defense": tc.defense,
                 "res": tc.res,
+                // Debuff fields
+                "fragile": tc.fragile,
+                "def_shred_mult": tc.def_shred_mult,
+                "def_shred_flat": tc.def_shred_flat,
+                "res_shred_mult": tc.res_shred_mult,
+                "res_shred_flat": tc.res_shred_flat,
             })
         })
         .collect();
@@ -254,7 +283,7 @@ use std::collections::HashMap;
 use std::sync::OnceLock;
 
 use backend::core::dps_calculator::operator_data::OperatorData;
-use backend::core::dps_calculator::operator_unit::{{EnemyStats, OperatorParams}};
+use backend::core::dps_calculator::operator_unit::{{EnemyStats, OperatorParams, OperatorShred}};
 use backend::core::local::handler::init_game_data;
 use backend::core::local::types::GameData;
 use backend::events::EventEmitter;
@@ -278,6 +307,21 @@ struct TestCase {{
     module: i32,
     defense: f64,
     res: f64,
+    // Debuff fields with defaults for backward compatibility
+    #[serde(default)]
+    fragile: f64,
+    #[serde(default = "default_shred_mult")]
+    def_shred_mult: f64,
+    #[serde(default)]
+    def_shred_flat: f64,
+    #[serde(default = "default_shred_mult")]
+    res_shred_mult: f64,
+    #[serde(default)]
+    res_shred_flat: f64,
+}}
+
+fn default_shred_mult() -> f64 {{
+    1.0
 }}
 
 /// Pre-computed expected DPS values from Python
@@ -354,8 +398,37 @@ fn get_game_data() -> Option<&'static GameData> {{
         .as_ref()
 }}
 
-fn make_test_key(operator: &str, skill: i32, module: i32, defense: f64, res: f64) -> String {{
-    format!("{{}}_s{{}}_m{{}}_{{:.0}}_{{:.0}}", operator, skill, module, defense, res)
+/// Creates test key from a TestCase with full debuff info
+fn make_test_key(tc: &TestCase) -> String {{
+    make_test_key_parts(&tc.operator, tc.skill, tc.module, tc.defense, tc.res,
+        tc.fragile, tc.def_shred_mult, tc.def_shred_flat, tc.res_shred_mult, tc.res_shred_flat)
+}}
+
+/// Creates test key for baseline scenarios (no debuffs) - used for known operator tests
+fn make_test_key_baseline(operator: &str, skill: i32, module: i32, defense: f64, res: f64) -> String {{
+    make_test_key_parts(operator, skill, module, defense, res, 0.0, 1.0, 0.0, 1.0, 0.0)
+}}
+
+/// Creates test key from individual parts
+fn make_test_key_parts(
+    operator: &str, skill: i32, module: i32, defense: f64, res: f64,
+    fragile: f64, def_shred_mult: f64, def_shred_flat: f64, res_shred_mult: f64, res_shred_flat: f64
+) -> String {{
+    let base = format!("{{}}_s{{}}_m{{}}_{{:.0}}_{{:.0}}", operator, skill, module, defense, res);
+    // Add debuff suffix for non-baseline scenarios
+    if fragile != 0.0 || def_shred_mult != 1.0 || res_shred_mult != 1.0
+        || def_shred_flat != 0.0 || res_shred_flat != 0.0 {{
+        format!("{{}}_db{{}}_{{}}_{{}}_{{}}_{{}}",
+            base,
+            (fragile * 100.0) as i32,
+            (def_shred_mult * 100.0) as i32,
+            def_shred_flat as i32,
+            (res_shred_mult * 100.0) as i32,
+            res_shred_flat as i32
+        )
+    }} else {{
+        base
+    }}
 }}
 
 fn compare_dps(rust_dps: f64, python_dps: f64, test_name: &str) -> Result<(), String> {{
@@ -378,10 +451,10 @@ fn compare_dps(rust_dps: f64, python_dps: f64, test_name: &str) -> Result<(), St
 
 /// Creates default operator params for testing
 /// Uses -1 for values that should use operator defaults, matching Python behavior
-fn create_test_params(skill_index: i32, module_index: i32) -> OperatorParams {{
+fn create_test_params(tc: &TestCase) -> OperatorParams {{
     OperatorParams {{
-        skill_index: Some(skill_index),
-        module_index: Some(module_index),
+        skill_index: Some(tc.skill),
+        module_index: Some(tc.module),
         module_level: Some(3),
         potential: Some(-1),  // Use operator's default_pot like Python
         promotion: Some(-1),  // Use max promotion like Python
@@ -389,13 +462,26 @@ fn create_test_params(skill_index: i32, module_index: i32) -> OperatorParams {{
         trust: Some(100),
         mastery_level: Some(-1),  // Use max mastery like Python
         targets: Some(1),
+        // Pass shreds to operator for internal shred operators (Chen Alter, Ifrit, etc.)
+        // Convert percentage shred (0.6 = 40% shred) to integer (40)
+        // and flat shred as integer
+        shred: Some(OperatorShred {{
+            def: Some(((1.0 - tc.def_shred_mult) * 100.0) as i32),
+            def_flat: Some(tc.def_shred_flat as i32),
+            res: Some(((1.0 - tc.res_shred_mult) * 100.0) as i32),
+            res_flat: Some(tc.res_shred_flat as i32),
+        }}),
         ..Default::default()
     }}
 }}
 
-/// Creates enemy stats for testing
-fn create_enemy_stats(defense: f64, res: f64) -> EnemyStats {{
-    EnemyStats {{ defense, res }}
+/// Creates enemy stats with shreds applied at test level
+/// This matches Python's plot_graph() approach where shreds are applied BEFORE calling skill_dps
+fn create_enemy_stats_with_shred(tc: &TestCase) -> EnemyStats {{
+    // Apply shreds: (defense - flat) * mult
+    let shredded_defense = ((tc.defense - tc.def_shred_flat).max(0.0) * tc.def_shred_mult).max(0.0);
+    let shredded_res = ((tc.res - tc.res_shred_flat).max(0.0) * tc.res_shred_mult).max(0.0);
+    EnemyStats {{ defense: shredded_defense, res: shredded_res }}
 }}
 
 {dispatch_function}
@@ -426,7 +512,7 @@ mod tests {{
 
         let mut missing = 0;
         for tc in cases.iter() {{
-            let key = make_test_key(&tc.operator, tc.skill, tc.module, tc.defense, tc.res);
+            let key = make_test_key(tc);
             if !expected.contains_key(&key) {{
                 missing += 1;
                 if missing <= 10 {{
@@ -468,21 +554,21 @@ mod tests {{
         let expected = get_expected_dps();
 
         // Test Aak S1 at 0 def/res - should have some DPS (module 0 = no module)
-        let aak_key = make_test_key("Aak", 1, 0, 0.0, 0.0);
+        let aak_key = make_test_key_baseline("Aak", 1, 0, 0.0, 0.0);
         if let Some(&dps) = expected.get(&aak_key) {{
             assert!(dps > 0.0, "Aak S1 should have positive DPS");
             println!("Aak S1 (0/0): {{:.2}} DPS", dps);
         }}
 
         // Test SilverAsh S3 at 0 def/res (module 0 = no module)
-        let sa_key = make_test_key("SilverAsh", 3, 0, 0.0, 0.0);
+        let sa_key = make_test_key_baseline("SilverAsh", 3, 0, 0.0, 0.0);
         if let Some(&dps) = expected.get(&sa_key) {{
             assert!(dps > 0.0, "SilverAsh S3 should have positive DPS");
             println!("SilverAsh S3 (0/0): {{:.2}} DPS", dps);
         }}
 
         // Test Surtr S3 at 0 def/res - should be high (module 0 = no module)
-        let surtr_key = make_test_key("Surtr", 3, 0, 0.0, 0.0);
+        let surtr_key = make_test_key_baseline("Surtr", 3, 0, 0.0, 0.0);
         if let Some(&dps) = expected.get(&surtr_key) {{
             assert!(dps > 1000.0, "Surtr S3 should have high DPS");
             println!("Surtr S3 (0/0): {{:.2}} DPS", dps);
@@ -495,8 +581,8 @@ mod tests {{
         let expected = get_expected_dps();
 
         // Physical operator: SilverAsh (module 0 = no module)
-        let sa_0def = expected.get(&make_test_key("SilverAsh", 3, 0, 0.0, 0.0));
-        let sa_1000def = expected.get(&make_test_key("SilverAsh", 3, 0, 1000.0, 50.0));
+        let sa_0def = expected.get(&make_test_key_baseline("SilverAsh", 3, 0, 0.0, 0.0));
+        let sa_1000def = expected.get(&make_test_key_baseline("SilverAsh", 3, 0, 1000.0, 50.0));
 
         if let (Some(&dps_0), Some(&dps_1000)) = (sa_0def, sa_1000def) {{
             assert!(dps_0 > dps_1000, "Higher defense should reduce physical DPS");
@@ -510,8 +596,8 @@ mod tests {{
         let expected = get_expected_dps();
 
         // Arts operator: Eyjafjalla (module 0 = no module)
-        let eyja_0res = expected.get(&make_test_key("Eyjafjalla", 3, 0, 0.0, 0.0));
-        let eyja_50res = expected.get(&make_test_key("Eyjafjalla", 3, 0, 1000.0, 50.0));
+        let eyja_0res = expected.get(&make_test_key_baseline("Eyjafjalla", 3, 0, 0.0, 0.0));
+        let eyja_50res = expected.get(&make_test_key_baseline("Eyjafjalla", 3, 0, 1000.0, 50.0));
 
         if let (Some(&dps_0), Some(&dps_50)) = (eyja_0res, eyja_50res) {{
             assert!(dps_0 > dps_50, "Higher resistance should reduce arts DPS");
@@ -538,7 +624,7 @@ mod tests {{
         let mut errors: Vec<String> = Vec::new();
 
         for tc in cases.iter() {{
-            let key = make_test_key(&tc.operator, tc.skill, tc.module, tc.defense, tc.res);
+            let key = make_test_key(tc);
 
             let Some(&python_dps) = expected.get(&key) else {{
                 skipped += 1;
@@ -560,13 +646,18 @@ mod tests {{
             }}
 
             // tc.skill is 1-indexed (1=S1, 2=S2, 3=S3), matching Python semantics
-            let params = create_test_params(tc.skill, tc.module);
-            let enemy = create_enemy_stats(tc.defense, tc.res);
+            // Pass shreds to operator for internal shred operators
+            let params = create_test_params(tc);
+            // Apply shreds at test level (matching Python's plot_graph approach)
+            let enemy = create_enemy_stats_with_shred(tc);
 
-            let Some(rust_dps) = calculate_operator_dps(&tc.rust_module, operator_data, params, enemy) else {{
+            let Some(mut rust_dps) = calculate_operator_dps(&tc.rust_module, operator_data, params, enemy) else {{
                 skipped += 1;
                 continue;
             }};
+
+            // Apply fragile AFTER getting DPS (matching Python's plot_graph approach)
+            rust_dps = rust_dps * (1.0 + tc.fragile);
 
             tested += 1;
 
@@ -649,9 +740,18 @@ def load_test_cases():
         return json.load(f)
 
 
-def make_test_key(operator: str, skill: int, module: int, defense: float, res: float) -> str:
+def make_test_key(tc: dict) -> str:
     """Create a unique key for a test case."""
-    return f"{operator}_s{skill}_m{module}_{int(defense)}_{int(res)}"
+    base = f"{tc['operator']}_s{tc['skill']}_m{tc['module']}_{int(tc['defense'])}_{int(tc['res'])}"
+    # Add debuff suffix for non-baseline scenarios
+    fragile = tc.get('fragile', 0)
+    def_shred_mult = tc.get('def_shred_mult', 1)
+    def_shred_flat = tc.get('def_shred_flat', 0)
+    res_shred_mult = tc.get('res_shred_mult', 1)
+    res_shred_flat = tc.get('res_shred_flat', 0)
+    if fragile != 0 or def_shred_mult != 1 or res_shred_mult != 1 or def_shred_flat != 0 or res_shred_flat != 0:
+        return f"{base}_db{int(fragile*100)}_{int(def_shred_mult*100)}_{int(def_shred_flat)}_{int(res_shred_mult*100)}_{int(res_shred_flat)}"
+    return base
 
 
 def run_all_tests(output_file=None, generate_expected=False):
@@ -664,12 +764,24 @@ def run_all_tests(output_file=None, generate_expected=False):
     print(f"Running {len(test_cases)} test cases from test_config.json...")
 
     for i, tc in enumerate(test_cases):
+        # Extract debuff params with defaults
+        fragile = tc.get('fragile', 0.0)
+        def_shred_mult = tc.get('def_shred_mult', 1.0)
+        def_shred_flat = tc.get('def_shred_flat', 0.0)
+        res_shred_mult = tc.get('res_shred_mult', 1.0)
+        res_shred_flat = tc.get('res_shred_flat', 0.0)
+
         result = calculate_dps(
             operator_name=tc['operator'],
             defense=tc['defense'],
             res=tc['res'],
             skill=tc['skill'],
             module=tc['module'],
+            fragile=fragile,
+            def_shred_mult=def_shred_mult,
+            def_shred_flat=def_shred_flat,
+            res_shred_mult=res_shred_mult,
+            res_shred_flat=res_shred_flat,
         )
 
         if 'error' in result:
@@ -678,9 +790,12 @@ def run_all_tests(output_file=None, generate_expected=False):
         else:
             results.append(result)
             dps = result['dps']
-            key = make_test_key(tc['operator'], tc['skill'], tc['module'], tc['defense'], tc['res'])
+            key = make_test_key(tc)
             expected_dps[key] = dps
-            print(f"  [{i+1}/{len(test_cases)}] {tc['operator']} S{tc['skill']+1} def={tc['defense']:.0f} res={tc['res']:.0f} -> DPS: {dps:.2f}")
+            debuff_str = ""
+            if fragile != 0 or def_shred_mult != 1 or res_shred_mult != 1 or def_shred_flat != 0 or res_shred_flat != 0:
+                debuff_str = f" [frag={fragile:.0%} defM={def_shred_mult:.0%} defF={def_shred_flat:.0f} resM={res_shred_mult:.0%} resF={res_shred_flat:.0f}]"
+            print(f"  [{i+1}/{len(test_cases)}] {tc['operator']} S{tc['skill']+1} def={tc['defense']:.0f} res={tc['res']:.0f}{debuff_str} -> DPS: {dps:.2f}")
 
     print()
     print(f"Completed: {len(results)} successful, {len(errors)} errors")

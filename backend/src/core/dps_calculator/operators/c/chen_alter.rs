@@ -93,13 +93,13 @@ impl ChenAlter {
         let mut res = enemy.res;
 
         let mut hitdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut aspd: f64 = 0.0;
-        let mut newdefense: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut newdefense: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         dps = 0.0;
         atkbuff = if ((self.unit.skill_index as f64) as f64) > 0.0 {
@@ -140,7 +140,7 @@ impl ChenAlter {
         if (self.unit.skill_index as f64) == 3.0 {
             let mut def_shred = self.unit.skill_parameters.get(2).copied().unwrap_or(0.0) * (-1.0);
             if self.unit.shreds[0] < 1.0 && self.unit.shreds[0] > 0.0 {
-                let mut defense = defense / self.unit.shreds.get(0).copied().unwrap_or(0.0);
+                defense = defense / self.unit.shreds.get(0).copied().unwrap_or(0.0);
             }
             newdefense = ((0) as f64).max((defense - def_shred) as f64);
             if self.unit.shreds[0] < 1.0 && self.unit.shreds[0] > 0.0 {

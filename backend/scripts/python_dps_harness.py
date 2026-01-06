@@ -75,6 +75,11 @@ def create_params(
     trust: int = 100,
     targets: int = 1,
     conditionals: dict = None,
+    fragile: float = 0.0,
+    def_shred_mult: float = 1.0,
+    def_shred_flat: float = 0.0,
+    res_shred_mult: float = 1.0,
+    res_shred_flat: float = 0.0,
 ) -> PlotParameters:
     """Create PlotParameters for the operator."""
     pp = PlotParameters()
@@ -89,8 +94,10 @@ def create_params(
     pp.targets = targets
     pp.sp_boost = 0
     pp.base_buffs = [1, 0]  # [atk_multiplier, atk_flat]
-    pp.buffs = [0, 0, 0, 0]  # [atk%, atk_flat, aspd, fragile]
-    pp.shred = [1, 0, 1, 0]  # [def%, def_flat, res%, res_flat]
+    pp.buffs = [0, 0, 0, 0]  # Don't pass fragile to operators - apply externally only
+    # shred format: [def_mult, def_flat, res_mult, res_flat]
+    # def_mult/res_mult: 1.0 = no shred, 0.6 = 40% shred
+    pp.shred = [def_shred_mult, def_shred_flat, res_shred_mult, res_shred_flat]
     pp.mul_add = [1, 0]
 
     # Set conditionals
@@ -123,8 +130,19 @@ def calculate_dps(
     trust: int = 100,
     targets: int = 1,
     conditionals: dict = None,
+    fragile: float = 0.0,
+    def_shred_mult: float = 1.0,
+    def_shred_flat: float = 0.0,
+    res_shred_mult: float = 1.0,
+    res_shred_flat: float = 0.0,
 ) -> dict:
-    """Calculate DPS for an operator configuration."""
+    """Calculate DPS for an operator configuration.
+
+    Debuff application matches Python's plot_graph() approach:
+    - Shreds are applied BEFORE calling skill_dps: (defense - flat) * mult
+    - Fragile is applied AFTER: dps * (1 + fragile)
+    - Shreds are also passed to operator via PlotParameters for internal shred operators
+    """
 
     operator_class = get_operator_class(operator_name)
     if operator_class is None:
@@ -142,20 +160,33 @@ def calculate_dps(
             trust=trust,
             targets=targets,
             conditionals=conditionals,
+            fragile=fragile,
+            def_shred_mult=def_shred_mult,
+            def_shred_flat=def_shred_flat,
+            res_shred_mult=res_shred_mult,
+            res_shred_flat=res_shred_flat,
         )
 
         # Create the operator instance
         op = operator_class(params)
 
-        # Calculate DPS
+        # Apply shreds to enemy stats BEFORE calling skill_dps (matching plot_graph approach)
+        # Order: (defense - flat_shred) * percentage_shred
+        shredded_defense = max(0, (defense - def_shred_flat)) * def_shred_mult
+        shredded_res = max(0, (res - res_shred_flat)) * res_shred_mult
+
+        # Calculate DPS with shredded stats
         # Note: In the Python code, defense and res can be numpy arrays or scalars
-        dps = op.skill_dps(defense, res)
+        dps = op.skill_dps(shredded_defense, shredded_res)
 
         # Handle numpy array result (take first element if array)
         if hasattr(dps, '__iter__') and not isinstance(dps, (str, bytes)):
             dps = float(dps.flat[0]) if hasattr(dps, 'flat') else float(dps[0])
         else:
             dps = float(dps)
+
+        # Apply fragile AFTER getting DPS (matching plot_graph approach)
+        dps = dps * (1 + fragile)
 
         return {
             "operator": operator_name,
@@ -168,6 +199,11 @@ def calculate_dps(
             "atk": float(op.atk),
             "attack_speed": float(op.attack_speed),
             "attack_interval": float(op.atk_interval),
+            "fragile": fragile,
+            "def_shred_mult": def_shred_mult,
+            "def_shred_flat": def_shred_flat,
+            "res_shred_mult": res_shred_mult,
+            "res_shred_flat": res_shred_flat,
         }
 
     except Exception as e:
@@ -202,6 +238,11 @@ def run_batch_mode():
                 trust=config.get('trust', 100),
                 targets=config.get('targets', 1),
                 conditionals=config.get('conditionals'),
+                fragile=config.get('fragile', 0.0),
+                def_shred_mult=config.get('def_shred_mult', 1.0),
+                def_shred_flat=config.get('def_shred_flat', 0.0),
+                res_shred_mult=config.get('res_shred_mult', 1.0),
+                res_shred_flat=config.get('res_shred_flat', 0.0),
             )
             print(json.dumps(result))
         except json.JSONDecodeError as e:

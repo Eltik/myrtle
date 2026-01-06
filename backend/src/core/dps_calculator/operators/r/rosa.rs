@@ -97,14 +97,14 @@ impl Rosa {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut atk_scale: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut extradmg: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut final_atk: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
         let mut defshred: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut extradmg: f64 = 0.0;
 
         atkbuff = self.unit.talent2_parameters.get(0).copied().unwrap_or(0.0);
         atk_scale = 1.0;

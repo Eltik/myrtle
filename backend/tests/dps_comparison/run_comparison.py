@@ -37,9 +37,18 @@ def load_test_cases():
         return json.load(f)
 
 
-def make_test_key(operator: str, skill: int, module: int, defense: float, res: float) -> str:
+def make_test_key(tc: dict) -> str:
     """Create a unique key for a test case."""
-    return f"{operator}_s{skill}_m{module}_{int(defense)}_{int(res)}"
+    base = f"{tc['operator']}_s{tc['skill']}_m{tc['module']}_{int(tc['defense'])}_{int(tc['res'])}"
+    # Add debuff suffix for non-baseline scenarios
+    fragile = tc.get('fragile', 0)
+    def_shred_mult = tc.get('def_shred_mult', 1)
+    def_shred_flat = tc.get('def_shred_flat', 0)
+    res_shred_mult = tc.get('res_shred_mult', 1)
+    res_shred_flat = tc.get('res_shred_flat', 0)
+    if fragile != 0 or def_shred_mult != 1 or res_shred_mult != 1 or def_shred_flat != 0 or res_shred_flat != 0:
+        return f"{base}_db{int(fragile*100)}_{int(def_shred_mult*100)}_{int(def_shred_flat)}_{int(res_shred_mult*100)}_{int(res_shred_flat)}"
+    return base
 
 
 def run_all_tests(output_file=None, generate_expected=False):
@@ -52,12 +61,24 @@ def run_all_tests(output_file=None, generate_expected=False):
     print(f"Running {len(test_cases)} test cases from test_config.json...")
 
     for i, tc in enumerate(test_cases):
+        # Extract debuff params with defaults
+        fragile = tc.get('fragile', 0.0)
+        def_shred_mult = tc.get('def_shred_mult', 1.0)
+        def_shred_flat = tc.get('def_shred_flat', 0.0)
+        res_shred_mult = tc.get('res_shred_mult', 1.0)
+        res_shred_flat = tc.get('res_shred_flat', 0.0)
+
         result = calculate_dps(
             operator_name=tc['operator'],
             defense=tc['defense'],
             res=tc['res'],
             skill=tc['skill'],
             module=tc['module'],
+            fragile=fragile,
+            def_shred_mult=def_shred_mult,
+            def_shred_flat=def_shred_flat,
+            res_shred_mult=res_shred_mult,
+            res_shred_flat=res_shred_flat,
         )
 
         if 'error' in result:
@@ -66,9 +87,12 @@ def run_all_tests(output_file=None, generate_expected=False):
         else:
             results.append(result)
             dps = result['dps']
-            key = make_test_key(tc['operator'], tc['skill'], tc['module'], tc['defense'], tc['res'])
+            key = make_test_key(tc)
             expected_dps[key] = dps
-            print(f"  [{i+1}/{len(test_cases)}] {tc['operator']} S{tc['skill']+1} def={tc['defense']:.0f} res={tc['res']:.0f} -> DPS: {dps:.2f}")
+            debuff_str = ""
+            if fragile != 0 or def_shred_mult != 1 or res_shred_mult != 1 or def_shred_flat != 0 or res_shred_flat != 0:
+                debuff_str = f" [frag={fragile:.0%} defM={def_shred_mult:.0%} defF={def_shred_flat:.0f} resM={res_shred_mult:.0%} resF={res_shred_flat:.0f}]"
+            print(f"  [{i+1}/{len(test_cases)}] {tc['operator']} S{tc['skill']+1} def={tc['defense']:.0f} res={tc['res']:.0f}{debuff_str} -> DPS: {dps:.2f}")
 
     print()
     print(f"Completed: {len(results)} successful, {len(errors)} errors")

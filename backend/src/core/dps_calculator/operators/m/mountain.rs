@@ -99,14 +99,14 @@ impl Mountain {
         let mut res = enemy.res;
 
         let mut avghit: f64 = 0.0;
-        let mut crithitdmg: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut final_atk: f64 = 0.0;
-        let mut avgdmg: f64 = 0.0;
         let mut aspd: f64 = 0.0;
         let mut cdmg: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut dps: f64 = 0.0;
         let mut normalhitdmg: f64 = 0.0;
+        let mut avgdmg: f64 = 0.0;
+        let mut crithitdmg: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
 
         let mut crit_rate = self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0);
