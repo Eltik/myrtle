@@ -1,6 +1,6 @@
 "use client";
 import { motion, type Transition, type UseInViewOptions, useInView, type Variant } from "motion/react";
-import { type ReactNode, useMemo, useRef } from "react";
+import { type ReactNode, useEffect, useMemo, useRef } from "react";
 
 export type InViewProps = {
     children: ReactNode;
@@ -12,6 +12,7 @@ export type InViewProps = {
     viewOptions?: UseInViewOptions;
     as?: React.ElementType;
     once?: boolean;
+    onInView?: () => void;
 };
 
 const defaultVariants = {
@@ -19,8 +20,9 @@ const defaultVariants = {
     visible: { opacity: 1 },
 };
 
-export function InView({ children, variants = defaultVariants, transition, viewOptions, as = "div", once }: InViewProps) {
+export function InView({ children, variants = defaultVariants, transition, viewOptions, as = "div", once, onInView }: InViewProps) {
     const ref = useRef(null);
+    const hasTriggered = useRef(false);
 
     const mergedViewOptions = useMemo(
         () => ({
@@ -30,6 +32,13 @@ export function InView({ children, variants = defaultVariants, transition, viewO
         [viewOptions, once],
     );
     const isInView = useInView(ref, mergedViewOptions);
+
+    useEffect(() => {
+        if (isInView && onInView && !hasTriggered.current) {
+            hasTriggered.current = true;
+            onInView();
+        }
+    }, [isInView, onInView]);
 
     const MotionComponent = motion[as as keyof typeof motion] as typeof as;
 

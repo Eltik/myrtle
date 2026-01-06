@@ -290,21 +290,16 @@
     filter: blur(1px);
 }
 
-/* Hero accent text glow
+/* Hero accent text glow */
 .hero-accent-glow {
-
     text-shadow: 0 0 20px oklch(0.58 0.22 25 / 0.4);
 }
 
 .dark .hero-accent-glow {
-
     text-shadow: 0 0 25px var(--glow-primary-intense);
 }
 
-/* =============================================================================
-   MARQUEE - High-performance CSS-only infinite scroll
-   Uses compositor thread for smooth 60fps with minimal CPU usage
-   ============================================================================= */
+/* Marquee */
 
 .marquee-container {
     display: flex;
