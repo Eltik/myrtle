@@ -17,6 +17,18 @@ impl Magallan {
     /// Available modules for this operator
     pub const AVAILABLE_MODULES: &'static [i32] = &[1, 2];
 
+    /// Conditionals for this operator
+    /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
+    pub const CONDITIONALS: &'static [(
+        &'static str,
+        &'static str,
+        bool,
+        &'static [i32],
+        &'static [i32],
+        i32,
+        i32,
+    )] = &[("trait", "noDrones", true, &[1], &[], 0, 0)];
+
     /// Creates a new Magallan operator
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
         let mut unit = OperatorUnit::new(
@@ -91,13 +103,13 @@ impl Magallan {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
+        let mut dps: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut aspd: f64 = 0.0;
+        let mut final_drone: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut hitdmg: f64 = 0.0;
         let mut hitdmgdrone: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut final_drone: f64 = 0.0;
 
         let mut drones = if self.unit.talent_damage { 2.0 } else { 1.0 };
         if !self.unit.trait_damage {

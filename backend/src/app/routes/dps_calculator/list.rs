@@ -44,6 +44,8 @@ pub struct SupportedOperator {
     pub max_promotion: i32,
     /// Potential rank descriptions (for UI tooltips)
     pub potential_ranks: Vec<PotentialRankInfo>,
+    /// Available conditionals for this operator
+    pub conditionals: Vec<ConditionalInfoResponse>,
 }
 
 /// Lightweight potential rank info for API response
@@ -52,6 +54,26 @@ pub struct SupportedOperator {
 pub struct PotentialRankInfo {
     /// Description of what this potential does (e.g., "Deploy Cost -1")
     pub description: String,
+}
+
+/// Conditional info for API response
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ConditionalInfoResponse {
+    /// Conditional type: "trait", "talent", "talent2", "skill", "module"
+    pub conditional_type: String,
+    /// Display name (e.g., "aerialTarget", "maxStacks")
+    pub name: String,
+    /// If true, this label applies when conditional is disabled
+    pub inverted: bool,
+    /// Which skills this applies to (empty = all)
+    pub applicable_skills: Vec<i32>,
+    /// Which modules this applies to (empty = all)
+    pub applicable_modules: Vec<i32>,
+    /// Minimum elite level required
+    pub min_elite: i32,
+    /// Minimum module level required
+    pub min_module_level: i32,
 }
 
 /// GET /dps-calculator/operators
@@ -69,7 +91,7 @@ pub async fn list_operators(State(state): State<AppState>) -> Json<ListOperators
             let rarity = rarity_to_number(&operator.rarity);
             let max_promotion = rarity_to_max_promotion(rarity);
 
-            // Get operator metadata (available skills, modules, defaults)
+            // Get operator metadata (available skills, modules, defaults, conditionals)
             let metadata = get_operator_metadata(&normalized_name);
             let (
                 available_skills,
@@ -77,15 +99,32 @@ pub async fn list_operators(State(state): State<AppState>) -> Json<ListOperators
                 default_skill_index,
                 default_potential,
                 default_module_index,
+                conditionals,
             ) = match metadata {
-                Some(m) => (
-                    m.available_skills,
-                    m.available_modules,
-                    m.default_skill_index,
-                    m.default_potential,
-                    m.default_module_index,
-                ),
-                None => (vec![], vec![], 0, 1, 0),
+                Some(m) => {
+                    let conditionals: Vec<ConditionalInfoResponse> = m
+                        .conditionals
+                        .iter()
+                        .map(|c| ConditionalInfoResponse {
+                            conditional_type: c.conditional_type.as_str().to_string(),
+                            name: c.name.clone(),
+                            inverted: c.inverted,
+                            applicable_skills: c.availability.skills.clone(),
+                            applicable_modules: c.availability.modules.clone(),
+                            min_elite: c.availability.min_elite,
+                            min_module_level: c.availability.min_module_level,
+                        })
+                        .collect();
+                    (
+                        m.available_skills,
+                        m.available_modules,
+                        m.default_skill_index,
+                        m.default_potential,
+                        m.default_module_index,
+                        conditionals,
+                    )
+                }
+                None => (vec![], vec![], 0, 1, 0, vec![]),
             };
 
             // Convert potential ranks to lightweight format
@@ -110,6 +149,7 @@ pub async fn list_operators(State(state): State<AppState>) -> Json<ListOperators
                 default_module_index,
                 max_promotion,
                 potential_ranks,
+                conditionals,
             });
         }
     }

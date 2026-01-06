@@ -17,6 +17,21 @@ impl Tequila {
     /// Available modules for this operator
     pub const AVAILABLE_MODULES: &'static [i32] = &[1];
 
+    /// Conditionals for this operator
+    /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
+    pub const CONDITIONALS: &'static [(
+        &'static str,
+        &'static str,
+        bool,
+        &'static [i32],
+        &'static [i32],
+        i32,
+        i32,
+    )] = &[
+        ("trait", "20Stacks", true, &[], &[], 0, 0),
+        ("skill", "NotCharged", true, &[2], &[], 0, 0),
+    ];
+
     /// Creates a new Tequila operator
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
         let unit = OperatorUnit::new(
@@ -75,12 +90,12 @@ impl Tequila {
         let mut res = enemy.res;
 
         let mut hitdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut atkbuff: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut aspd: f64 = 0.0;
+        let mut dps: f64 = 0.0;
 
         atkbuff = if self.unit.trait_damage { 2.0 } else { 1.0 };
         final_atk = self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;

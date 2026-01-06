@@ -17,6 +17,21 @@ impl Provence {
     /// Available modules for this operator
     pub const AVAILABLE_MODULES: &'static [i32] = &[1];
 
+    /// Conditionals for this operator
+    /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
+    pub const CONDITIONALS: &'static [(
+        &'static str,
+        &'static str,
+        bool,
+        &'static [i32],
+        &'static [i32],
+        i32,
+        i32,
+    )] = &[
+        ("talent", "directFront", false, &[], &[], 1, 0),
+        ("skill", "vs<1%Hp", false, &[], &[], 0, 0),
+    ];
+
     /// Creates a new Provence operator
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
         let unit = OperatorUnit::new(
@@ -73,14 +88,14 @@ impl Provence {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
+        let mut final_atk: f64 = 0.0;
+        let mut cdmg: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
         let mut critdmg: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut cdmg: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
 
         let mut crit_rate = 0.0;
         cdmg = self.unit.talent1_parameters.get(2).copied().unwrap_or(0.0);

@@ -17,6 +17,22 @@ impl MissChristine {
     /// Available modules for this operator
     pub const AVAILABLE_MODULES: &'static [i32] = &[1];
 
+    /// Conditionals for this operator
+    /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
+    pub const CONDITIONALS: &'static [(
+        &'static str,
+        &'static str,
+        bool,
+        &'static [i32],
+        &'static [i32],
+        i32,
+        i32,
+    )] = &[
+        ("skill", "avgNerv", false, &[1], &[], 0, 0),
+        ("skill", "vsFallout", false, &[2], &[], 0, 0),
+        ("module", "vsPara", false, &[], &[1], 0, 2),
+    ];
+
     /// Creates a new MissChristine operator
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
         let unit = OperatorUnit::new(
@@ -83,16 +99,16 @@ impl MissChristine {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut final_atk: f64 = 0.0;
+        let mut eledmg: f64 = 0.0;
         let mut ele_scale: f64 = 0.0;
         let mut time_to_fallout: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
-        let mut ele_gauge: f64 = 0.0;
-        let mut eledmg: f64 = 0.0;
         let mut dps: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut ele_gauge: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         atk_scale = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.trait_damage {
             1.1

@@ -17,6 +17,21 @@ impl Scavenger {
     /// Available modules for this operator
     pub const AVAILABLE_MODULES: &'static [i32] = &[1];
 
+    /// Conditionals for this operator
+    /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
+    pub const CONDITIONALS: &'static [(
+        &'static str,
+        &'static str,
+        bool,
+        &'static [i32],
+        &'static [i32],
+        i32,
+        i32,
+    )] = &[
+        ("talent", "adjacentAlly", true, &[], &[], 1, 0),
+        ("module", "blocking", false, &[], &[1], 0, 0),
+    ];
+
     /// Creates a new Scavenger operator
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
         let unit = OperatorUnit::new(

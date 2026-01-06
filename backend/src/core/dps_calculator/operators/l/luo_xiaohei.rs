@@ -17,6 +17,21 @@ impl LuoXiaohei {
     /// Available modules for this operator
     pub const AVAILABLE_MODULES: &'static [i32] = &[2];
 
+    /// Conditionals for this operator
+    /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
+    pub const CONDITIONALS: &'static [(
+        &'static str,
+        &'static str,
+        bool,
+        &'static [i32],
+        &'static [i32],
+        i32,
+        i32,
+    )] = &[
+        ("trait", "rangedAtk", true, &[0], &[], 0, 0),
+        ("module", "+12aspd(mod)", false, &[], &[2], 0, 0),
+    ];
+
     /// Creates a new LuoXiaohei operator
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
         let unit = OperatorUnit::new(
@@ -91,12 +106,12 @@ impl LuoXiaohei {
             below50 = true;
         }
 
-        let mut hitdmg: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut final_atk: f64 = 0.0;
-        let mut dps: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
         let mut aspd: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         let mut dmg_scale = if below50 {
             1.0 + 0.04 * ((self.unit.module_level as f64) as f64)

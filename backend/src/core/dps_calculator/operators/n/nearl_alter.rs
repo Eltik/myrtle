@@ -17,6 +17,18 @@ impl NearlAlter {
     /// Available modules for this operator
     pub const AVAILABLE_MODULES: &'static [i32] = &[1, 2];
 
+    /// Conditionals for this operator
+    /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
+    pub const CONDITIONALS: &'static [(
+        &'static str,
+        &'static str,
+        bool,
+        &'static [i32],
+        &'static [i32],
+        i32,
+        i32,
+    )] = &[];
+
     /// Creates a new NearlAlter operator
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
         let unit = OperatorUnit::new(

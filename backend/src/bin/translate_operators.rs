@@ -43,6 +43,8 @@ struct OperatorClass {
     total_dmg_body: String,
     /// Init-time field modifications (e.g., self.ammo = 4 + 4 * self.skill)
     init_modifications: Vec<InitModification>,
+    /// Conditionals parsed from init body
+    conditionals: Vec<ParsedConditional>,
 }
 
 /// Represents an init-time field modification
@@ -56,6 +58,25 @@ struct InitModification {
     expression: String,
     /// Optional condition for the modification
     condition: Option<String>,
+}
+
+/// Represents a parsed conditional from the operator's __init__ method
+#[derive(Debug, Clone)]
+struct ParsedConditional {
+    /// The conditional type: "trait", "talent", "talent2", "skill", "module"
+    conditional_type: String,
+    /// The display name for this conditional (e.g., "maxStacks", "aerialTarget")
+    name: String,
+    /// Whether this conditional is inverted (name applies when conditional is FALSE)
+    inverted: bool,
+    /// Skills this conditional applies to (empty = all)
+    skills: Vec<i32>,
+    /// Modules this conditional applies to (empty = all)
+    modules: Vec<i32>,
+    /// Minimum elite level required
+    min_elite: i32,
+    /// Minimum module level required
+    min_module_level: i32,
 }
 
 /// Pre-compiled regex patterns for performance
@@ -2252,6 +2273,7 @@ fn parse_python_file(path: &Path) -> Result<Vec<OperatorClass>, String> {
         let total_dmg_body = extract_method_body(class_body, "total_dmg");
         let has_total_dmg_override = !total_dmg_body.is_empty();
         let init_modifications = parse_init_modifications(&init_body);
+        let conditionals = parse_conditional_names(&init_body);
 
         operators.push(OperatorClass {
             class_name: class_name.to_string(),
@@ -2266,6 +2288,7 @@ fn parse_python_file(path: &Path) -> Result<Vec<OperatorClass>, String> {
             has_total_dmg_override,
             total_dmg_body,
             init_modifications,
+            conditionals,
         });
     }
 
@@ -2491,6 +2514,250 @@ fn parse_init_modifications(init_body: &str) -> Vec<InitModification> {
     }
 
     modifications
+}
+
+/// Parse conditional names from the operator's __init__ method
+///
+/// Looks for patterns like:
+/// - `if self.trait_dmg: self.name += " distant"`
+/// - `if self.talent_dmg and self.elite > 0: self.name += " vsDrones"`
+/// - `if not self.trait_dmg: self.name += " distant"` (inverted)
+fn parse_conditional_names(init_body: &str) -> Vec<ParsedConditional> {
+    let mut conditionals = Vec::new();
+
+    // Pattern to match self.name += " something"
+    let name_pattern = Regex::new(r#"self\.name\s*\+=\s*['"]\s*([^'"]+)['"]"#).unwrap();
+
+    // Pattern to extract conditional type from condition string
+    let cond_type_pattern =
+        Regex::new(r"\bself\.(trait_dmg|talent_dmg|talent2_dmg|skill_dmg|module_dmg)\b").unwrap();
+
+    // Patterns for extracting availability constraints
+    let skill_pattern = Regex::new(r"self\.skill\s*(==|!=|in)\s*\[?(\d+)").unwrap();
+    let module_pattern = Regex::new(r"self\.module\s*(==|!=)\s*(\d+)").unwrap();
+    let elite_pattern = Regex::new(r"self\.elite\s*(>|>=|==)\s*(\d+)").unwrap();
+    let module_lvl_pattern = Regex::new(r"self\.module_lvl\s*(>|>=|==)\s*(\d+)").unwrap();
+
+    // Stack of (condition, indent) for nested conditions
+    let mut condition_stack: Vec<(String, usize)> = Vec::new();
+
+    for line in init_body.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() || trimmed.starts_with('#') {
+            continue;
+        }
+
+        let line_indent = line.len() - line.trim_start().len();
+
+        // Pop conditions from stack if we've outdented
+        while let Some((_, cond_indent)) = condition_stack.last() {
+            if line_indent <= *cond_indent {
+                condition_stack.pop();
+            } else {
+                break;
+            }
+        }
+
+        // Check for multi-line if: if condition:
+        if trimmed.starts_with("if ") && trimmed.ends_with(':') && !trimmed.contains("self.name") {
+            let cond = trimmed
+                .strip_prefix("if ")
+                .and_then(|s| s.strip_suffix(':'))
+                .unwrap_or("")
+                .to_string();
+            condition_stack.push((cond, line_indent));
+            continue;
+        }
+
+        // Check for inline if with self.name: if condition: self.name += "..."
+        if trimmed.contains("self.name +=") {
+            // Extract the condition part
+            let condition = if trimmed.starts_with("if ") {
+                // Inline if
+                if let Some(colon_pos) = trimmed.find(':') {
+                    let cond_part = &trimmed[3..colon_pos];
+                    cond_part.trim().to_string()
+                } else {
+                    continue;
+                }
+            } else {
+                // Use stacked conditions
+                condition_stack
+                    .iter()
+                    .map(|(c, _)| c.as_str())
+                    .collect::<Vec<_>>()
+                    .join(" and ")
+            };
+
+            // Skip if no condition or if it's a target-related condition only
+            if condition.is_empty()
+                || (!condition.contains("trait_dmg")
+                    && !condition.contains("talent_dmg")
+                    && !condition.contains("talent2_dmg")
+                    && !condition.contains("skill_dmg")
+                    && !condition.contains("module_dmg"))
+            {
+                continue;
+            }
+
+            // Extract the name suffix
+            if let Some(caps) = name_pattern.captures(trimmed) {
+                let name = caps.get(1).map(|m| m.as_str()).unwrap_or("").trim();
+
+                // Skip target-related names like "Xtargets"
+                if name.ends_with("targets") || name.starts_with("Nuke:") {
+                    continue;
+                }
+
+                // Determine which conditional type this applies to
+                if let Some(type_caps) = cond_type_pattern.captures(&condition) {
+                    let cond_type_str = type_caps.get(1).map(|m| m.as_str()).unwrap_or("");
+                    let conditional_type = match cond_type_str {
+                        "trait_dmg" => "trait",
+                        "talent_dmg" => "talent",
+                        "talent2_dmg" => "talent2",
+                        "skill_dmg" => "skill",
+                        "module_dmg" => "module",
+                        _ => continue,
+                    };
+
+                    // Check if inverted (not self.xxx_dmg)
+                    let inverted = condition.contains(&format!("not self.{cond_type_str}"))
+                        || condition.contains(&format!("not self.{cond_type_str}"));
+
+                    // Extract skill constraints
+                    let mut skills = Vec::new();
+                    if let Some(skill_caps) = skill_pattern.captures(&condition) {
+                        let op = skill_caps.get(1).map(|m| m.as_str()).unwrap_or("==");
+                        if let Ok(skill) = skill_caps
+                            .get(2)
+                            .map(|m| m.as_str())
+                            .unwrap_or("0")
+                            .parse::<i32>()
+                        {
+                            if op == "==" || op == "in" {
+                                skills.push(skill);
+                            }
+                        }
+                    }
+
+                    // Extract module constraints
+                    let mut modules = Vec::new();
+                    if let Some(mod_caps) = module_pattern.captures(&condition) {
+                        let op = mod_caps.get(1).map(|m| m.as_str()).unwrap_or("==");
+                        if let Ok(module) = mod_caps
+                            .get(2)
+                            .map(|m| m.as_str())
+                            .unwrap_or("0")
+                            .parse::<i32>()
+                        {
+                            if op == "==" {
+                                modules.push(module);
+                            }
+                        }
+                    }
+
+                    // Extract min elite level
+                    let min_elite = if let Some(elite_caps) = elite_pattern.captures(&condition) {
+                        let op = elite_caps.get(1).map(|m| m.as_str()).unwrap_or(">");
+                        let val = elite_caps
+                            .get(2)
+                            .map(|m| m.as_str())
+                            .unwrap_or("0")
+                            .parse::<i32>()
+                            .unwrap_or(0);
+                        match op {
+                            ">" => val + 1,
+                            ">=" | "==" => val,
+                            _ => 0,
+                        }
+                    } else {
+                        0
+                    };
+
+                    // Extract min module level
+                    let min_module_level =
+                        if let Some(mod_lvl_caps) = module_lvl_pattern.captures(&condition) {
+                            let op = mod_lvl_caps.get(1).map(|m| m.as_str()).unwrap_or(">");
+                            let val = mod_lvl_caps
+                                .get(2)
+                                .map(|m| m.as_str())
+                                .unwrap_or("0")
+                                .parse::<i32>()
+                                .unwrap_or(0);
+                            match op {
+                                ">" => val + 1,
+                                ">=" | "==" => val,
+                                _ => 0,
+                            }
+                        } else {
+                            0
+                        };
+
+                    conditionals.push(ParsedConditional {
+                        conditional_type: conditional_type.to_string(),
+                        name: name.to_string(),
+                        inverted,
+                        skills,
+                        modules,
+                        min_elite,
+                        min_module_level,
+                    });
+                }
+            }
+        }
+    }
+
+    conditionals
+}
+
+/// Generate the CONDITIONALS constant content for an operator
+fn generate_conditionals_const(conditionals: &[ParsedConditional]) -> String {
+    if conditionals.is_empty() {
+        return String::new();
+    }
+
+    let items: Vec<String> = conditionals
+        .iter()
+        .map(|c| {
+            let skills_str = if c.skills.is_empty() {
+                "&[]".to_string()
+            } else {
+                format!(
+                    "&[{}]",
+                    c.skills
+                        .iter()
+                        .map(|s| s.to_string())
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                )
+            };
+            let modules_str = if c.modules.is_empty() {
+                "&[]".to_string()
+            } else {
+                format!(
+                    "&[{}]",
+                    c.modules
+                        .iter()
+                        .map(|m| m.to_string())
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                )
+            };
+            format!(
+                "(\"{}\", \"{}\", {}, {}, {}, {}, {})",
+                c.conditional_type,
+                c.name,
+                c.inverted,
+                skills_str,
+                modules_str,
+                c.min_elite,
+                c.min_module_level
+            )
+        })
+        .collect();
+
+    items.join(", ")
 }
 
 /// Returns true if an operator should skip init ATK modifications
@@ -3042,6 +3309,10 @@ impl {} {{
     /// Available modules for this operator
     pub const AVAILABLE_MODULES: &'static [i32] = &[{}];
 
+    /// Conditionals for this operator
+    /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
+    pub const CONDITIONALS: &'static [(&'static str, &'static str, bool, &'static [i32], &'static [i32], i32, i32)] = &[{}];
+
     /// Creates a new {} operator
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {{
         let mut unit = OperatorUnit::new(
@@ -3084,6 +3355,7 @@ impl {} {{
             .map(|x| x.to_string())
             .collect::<Vec<_>>()
             .join(", "),
+        generate_conditionals_const(&op.conditionals),
         struct_name,
         op.default_skill,
         op.default_pot,
@@ -3321,6 +3593,105 @@ fn generate_main_mod_file(letter_folders: &HashSet<char>, operators: &[OperatorC
     output.push_str("    pub default_potential: i32,\n");
     output.push_str("    /// Default module index for this operator\n");
     output.push_str("    pub default_module_index: i32,\n");
+    output.push_str("    /// Available conditionals for this operator\n");
+    output.push_str("    pub conditionals: Vec<ConditionalInfo>,\n");
+    output.push_str("}\n\n");
+
+    // Generate ConditionalInfo struct
+    output.push_str("/// Information about a single conditional toggle for an operator\n");
+    output.push_str("#[derive(Debug, Clone)]\n");
+    output.push_str("pub struct ConditionalInfo {\n");
+    output.push_str("    /// Which conditional type this is\n");
+    output.push_str("    pub conditional_type: ConditionalType,\n");
+    output.push_str("    /// Display name for the conditional\n");
+    output.push_str("    pub name: String,\n");
+    output.push_str("    /// If true, this label applies when the conditional is DISABLED\n");
+    output.push_str("    pub inverted: bool,\n");
+    output.push_str("    /// Availability conditions\n");
+    output.push_str("    pub availability: ConditionalAvailability,\n");
+    output.push_str("}\n\n");
+
+    // Generate ConditionalType enum
+    output.push_str("/// The type of conditional\n");
+    output.push_str("#[derive(Debug, Clone, Copy, PartialEq, Eq)]\n");
+    output.push_str("pub enum ConditionalType {\n");
+    output.push_str("    Trait,\n");
+    output.push_str("    Talent,\n");
+    output.push_str("    Talent2,\n");
+    output.push_str("    Skill,\n");
+    output.push_str("    Module,\n");
+    output.push_str("}\n\n");
+
+    output.push_str("impl ConditionalType {\n");
+    output.push_str("    /// Returns the string representation for API responses\n");
+    output.push_str("    pub fn as_str(&self) -> &'static str {\n");
+    output.push_str("        match self {\n");
+    output.push_str("            ConditionalType::Trait => \"trait\",\n");
+    output.push_str("            ConditionalType::Talent => \"talent\",\n");
+    output.push_str("            ConditionalType::Talent2 => \"talent2\",\n");
+    output.push_str("            ConditionalType::Skill => \"skill\",\n");
+    output.push_str("            ConditionalType::Module => \"module\",\n");
+    output.push_str("        }\n");
+    output.push_str("    }\n\n");
+    output.push_str("    /// Returns the default generic name for this conditional type\n");
+    output.push_str("    pub fn default_name(&self) -> &'static str {\n");
+    output.push_str("        match self {\n");
+    output.push_str("            ConditionalType::Trait => \"trait_active\",\n");
+    output.push_str("            ConditionalType::Talent => \"talent_active\",\n");
+    output.push_str("            ConditionalType::Talent2 => \"talent2_active\",\n");
+    output.push_str("            ConditionalType::Skill => \"skill_active\",\n");
+    output.push_str("            ConditionalType::Module => \"module_active\",\n");
+    output.push_str("        }\n");
+    output.push_str("    }\n");
+    output.push_str("}\n\n");
+
+    // Generate ConditionalAvailability struct
+    output.push_str("/// Availability conditions for a conditional\n");
+    output.push_str("#[derive(Debug, Clone, Default)]\n");
+    output.push_str("pub struct ConditionalAvailability {\n");
+    output.push_str("    /// Skills this conditional applies to (empty = all skills)\n");
+    output.push_str("    pub skills: Vec<i32>,\n");
+    output.push_str("    /// Modules this conditional applies to (empty = all modules)\n");
+    output.push_str("    pub modules: Vec<i32>,\n");
+    output.push_str("    /// Minimum elite level required (0 = no requirement)\n");
+    output.push_str("    pub min_elite: i32,\n");
+    output.push_str("    /// Minimum module level required (0 = no requirement)\n");
+    output.push_str("    pub min_module_level: i32,\n");
+    output.push_str("}\n\n");
+
+    // Generate parse_conditionals helper function
+    output.push_str(
+        "/// Parse the CONDITIONALS constant from an operator into a Vec<ConditionalInfo>\n",
+    );
+    output.push_str("pub fn parse_conditionals(\n");
+    output.push_str("    conditionals: &[(&str, &str, bool, &[i32], &[i32], i32, i32)],\n");
+    output.push_str(") -> Vec<ConditionalInfo> {\n");
+    output.push_str("    conditionals\n");
+    output.push_str("        .iter()\n");
+    output.push_str("        .map(\n");
+    output.push_str("            |(cond_type, name, inverted, skills, modules, min_elite, min_module_level)| {\n");
+    output.push_str("                let conditional_type = match *cond_type {\n");
+    output.push_str("                    \"trait\" => ConditionalType::Trait,\n");
+    output.push_str("                    \"talent\" => ConditionalType::Talent,\n");
+    output.push_str("                    \"talent2\" => ConditionalType::Talent2,\n");
+    output.push_str("                    \"skill\" => ConditionalType::Skill,\n");
+    output.push_str("                    \"module\" => ConditionalType::Module,\n");
+    output.push_str("                    _ => ConditionalType::Trait,\n");
+    output.push_str("                };\n");
+    output.push_str("                ConditionalInfo {\n");
+    output.push_str("                    conditional_type,\n");
+    output.push_str("                    name: name.to_string(),\n");
+    output.push_str("                    inverted: *inverted,\n");
+    output.push_str("                    availability: ConditionalAvailability {\n");
+    output.push_str("                        skills: skills.to_vec(),\n");
+    output.push_str("                        modules: modules.to_vec(),\n");
+    output.push_str("                        min_elite: *min_elite,\n");
+    output.push_str("                        min_module_level: *min_module_level,\n");
+    output.push_str("                    },\n");
+    output.push_str("                }\n");
+    output.push_str("            },\n");
+    output.push_str("        )\n");
+    output.push_str("        .collect()\n");
     output.push_str("}\n\n");
 
     for letter in &letters {
@@ -3421,7 +3792,7 @@ fn generate_main_mod_file(letter_folders: &HashSet<char>, operators: &[OperatorC
                 .join(", ")
         );
         output.push_str(&format!(
-            "        \"{struct_name}\" => Some(OperatorMetadata {{\n            available_skills: {skills_str},\n            available_modules: {modules_str},\n            default_skill_index: {},\n            default_potential: {},\n            default_module_index: {},\n        }}),\n",
+            "        \"{struct_name}\" => Some(OperatorMetadata {{\n            available_skills: {skills_str},\n            available_modules: {modules_str},\n            default_skill_index: {},\n            default_potential: {},\n            default_module_index: {},\n            conditionals: parse_conditionals({struct_name}::CONDITIONALS),\n        }}),\n",
             op.default_skill, op.default_pot, op.default_mod
         ));
     }

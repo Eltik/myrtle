@@ -17,6 +17,28 @@ impl Necrass {
     /// Available modules for this operator
     pub const AVAILABLE_MODULES: &'static [i32] = &[1];
 
+    /// Conditionals for this operator
+    /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
+    pub const CONDITIONALS: &'static [(
+        &'static str,
+        &'static str,
+        bool,
+        &'static [i32],
+        &'static [i32],
+        i32,
+        i32,
+    )] = &[
+        ("trait", "noSummon", true, &[], &[], 0, 0),
+        ("talent", "(upgraded)", false, &[], &[], 0, 0),
+        ("trait", "1Summon", true, &[], &[], 0, 0),
+        ("talent", "(upgraded)", false, &[], &[], 0, 0),
+        ("trait", "noSummon", true, &[], &[], 0, 0),
+        ("talent", "1+2summons", false, &[3], &[], 0, 0),
+        ("skill", "(Maxed)", false, &[], &[], 0, 0),
+        ("talent2", "vsLowHp", false, &[], &[], 2, 0),
+        ("module", "vsBlocked", false, &[], &[1], 0, 0),
+    ];
+
     /// Creates a new Necrass operator
     pub fn new(operator_data: OperatorData, params: OperatorParams) -> Self {
         let unit = OperatorUnit::new(
@@ -103,21 +125,21 @@ impl Necrass {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut final_atk_summon: f64 = 0.0;
-        let mut main_atk_buff: f64 = 0.0;
-        let mut summondmg: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut skilldmg: f64 = 0.0;
-        let mut mainskilldps: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut skill_scale: f64 = 0.0;
-        let mut main_summon_atk: f64 = 0.0;
         let mut mainhit: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut atkbuff: f64 = 0.0;
+        let mut summondmg: f64 = 0.0;
+        let mut main_atk_buff: f64 = 0.0;
+        let mut mainskilldps: f64 = 0.0;
         let mut dps: f64 = 0.0;
         let mut maindps: f64 = 0.0;
+        let mut final_atk_summon: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut main_summon_atk: f64 = 0.0;
 
         let mut dmg_scale = if ((self.unit.elite as f64) as f64) > 1.0 && self.unit.talent2_damage {
             self.unit.talent2_parameters.get(1).copied().unwrap_or(0.0)
