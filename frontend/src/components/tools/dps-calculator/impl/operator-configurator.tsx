@@ -196,8 +196,8 @@ export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorC
                 </DisclosureTrigger>
 
                 <DisclosureContent>
-                    <div className="border-border/50 border-t p-4">
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <div className="border-border/50 border-t p-3 sm:p-4">
+                        <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
                             {/* Skill Selection */}
                             {operator.availableSkills.length > 0 && (
                                 <div className="space-y-2">
@@ -233,7 +233,10 @@ export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorC
                                     <div className="flex items-center gap-1.5">
                                         {/* Level 7 (no mastery) */}
                                         <button
-                                            className={cn("flex h-8 w-8 items-center justify-center rounded-md border font-medium text-xs transition-all", (operator.params.masteryLevel ?? 3) === 0 ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50")}
+                                            className={cn(
+                                                "flex h-10 min-w-10 flex-1 items-center justify-center rounded-md border font-medium text-xs transition-all sm:h-8 sm:w-8 sm:flex-none",
+                                                (operator.params.masteryLevel ?? 3) === 0 ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50 active:bg-primary/5",
+                                            )}
                                             onClick={() => updateParams("masteryLevel", 0)}
                                             type="button"
                                         >
@@ -242,7 +245,10 @@ export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorC
                                         {/* M1, M2, M3 */}
                                         {[1, 2, 3].map((level) => (
                                             <button
-                                                className={cn("flex h-8 w-8 items-center justify-center rounded-md border transition-all", (operator.params.masteryLevel ?? 3) === level ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50")}
+                                                className={cn(
+                                                    "flex h-10 min-w-10 flex-1 items-center justify-center rounded-md border transition-all sm:h-8 sm:w-8 sm:flex-none",
+                                                    (operator.params.masteryLevel ?? 3) === level ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50 active:bg-primary/5",
+                                                )}
                                                 key={`mastery-${level}`}
                                                 onClick={() => updateParams("masteryLevel", level)}
                                                 type="button"
@@ -258,9 +264,9 @@ export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorC
                             {operator.availableModules.length > 0 && (
                                 <div className="space-y-2">
                                     <Label className="text-xs">Module</Label>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex xs:flex-row flex-col xs:items-center gap-2">
                                         <Select onValueChange={(value) => updateParams("moduleIndex", Number(value))} value={String(operator.params.moduleIndex ?? 0)}>
-                                            <SelectTrigger className="flex-1">
+                                            <SelectTrigger className="w-full xs:flex-1">
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -281,7 +287,7 @@ export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorC
                                         {/* Module Level Selector (only when a module is selected) */}
                                         {(operator.params.moduleIndex ?? 0) > 0 && (
                                             <Select onValueChange={(val) => updateParams("moduleLevel", Number(val))} value={String(operator.params.moduleLevel ?? 3)}>
-                                                <SelectTrigger className="w-20">
+                                                <SelectTrigger className="w-full xs:w-24">
                                                     <SelectValue />
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -416,7 +422,10 @@ export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorC
                                 <div className="flex items-center gap-2">
                                     {Array.from({ length: operator.maxPromotion + 1 }, (_, idx) => (
                                         <button
-                                            className={cn("flex h-10 w-10 items-center justify-center rounded-lg border transition-all", (operator.params.promotion ?? operator.maxPromotion) === idx ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50")}
+                                            className={cn(
+                                                "flex h-12 min-w-12 flex-1 items-center justify-center rounded-lg border transition-all sm:h-10 sm:w-10 sm:flex-none",
+                                                (operator.params.promotion ?? operator.maxPromotion) === idx ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50 active:bg-primary/5",
+                                            )}
                                             // biome-ignore lint/suspicious/noArrayIndexKey: Static array of promotion phases
                                             key={`elite-${idx}`}
                                             onClick={() => updateParams("promotion", idx)}
@@ -480,12 +489,12 @@ export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorC
                                     {applicableConditionals.length > 0 && (
                                         <div className="space-y-3">
                                             <Label className="text-muted-foreground text-xs uppercase tracking-wide">Conditionals</Label>
-                                            <div className="grid grid-cols-2 gap-x-4 gap-y-2 md:grid-cols-3">
+                                            <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 xs:gap-x-4 md:grid-cols-3">
                                                 {/* Master Toggle */}
                                                 <TooltipProvider delayDuration={200}>
                                                     <Tooltip>
                                                         <TooltipTrigger asChild>
-                                                            <div className="col-span-2 flex items-center justify-between rounded-md border border-primary/30 bg-primary/5 px-3 py-2 md:col-span-3">
+                                                            <div className="col-span-1 xs:col-span-2 flex items-center justify-between rounded-md border border-primary/30 bg-primary/5 px-3 py-2.5 md:col-span-3">
                                                                 <Label className="cursor-pointer font-medium text-sm" htmlFor={`allCond-${operator.id}`}>
                                                                     All Conditionals
                                                                 </Label>
@@ -525,7 +534,7 @@ export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorC
                                                         <TooltipProvider delayDuration={200} key={uniqueId}>
                                                             <Tooltip>
                                                                 <TooltipTrigger asChild>
-                                                                    <div className={cn("flex items-center justify-between rounded-md border px-3 py-2", conditional.inverted ? "border-amber-500/30 bg-amber-500/5" : "border-border")}>
+                                                                    <div className={cn("flex items-center justify-between gap-2 rounded-md border px-3 py-2.5", conditional.inverted ? "border-amber-500/30 bg-amber-500/5" : "border-border")}>
                                                                         <Label className="cursor-pointer text-xs" htmlFor={uniqueId}>
                                                                             <span className="text-muted-foreground">{typeLabel}:</span> {displayName}
                                                                         </Label>
@@ -551,7 +560,7 @@ export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorC
                                     {/* Operator Buffs Section */}
                                     <div className="space-y-3">
                                         <Label className="text-muted-foreground text-xs uppercase tracking-wide">Operator Buffs</Label>
-                                        <div className="grid grid-cols-3 gap-3">
+                                        <div className="grid grid-cols-1 xs:grid-cols-3 gap-3">
                                             <div className="space-y-1">
                                                 <Label className="text-xs" htmlFor="buffAtk">
                                                     ATK %
@@ -623,7 +632,7 @@ export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorC
                                     {/* Enemy Debuffs Section */}
                                     <div className="space-y-3">
                                         <Label className="text-muted-foreground text-xs uppercase tracking-wide">Enemy Debuffs</Label>
-                                        <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+                                        <div className="grid grid-cols-1 xs:grid-cols-2 gap-3 md:grid-cols-3">
                                             <div className="space-y-1">
                                                 <TooltipProvider delayDuration={200}>
                                                     <Tooltip>
