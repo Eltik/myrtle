@@ -16,6 +16,7 @@ use crate::app::routes::admin;
 use crate::app::routes::auth::update_settings::update_settings;
 use crate::app::routes::auth::verify::verify_token;
 use crate::app::routes::avatar::serve_avatar;
+use crate::app::routes::dps_calculator::calculate_dps;
 use crate::app::routes::get_user::{get_user_by_path, get_user_by_query};
 use crate::app::routes::portrait::serve_portrait;
 use crate::app::routes::static_data;
@@ -83,6 +84,8 @@ fn create_router(state: AppState) -> Router {
             post(refresh_by_server),
         )
         .nest("/static", static_router)
+        // DPS Calculator
+        .route("/dps-calculator", post(calculate_dps))
         // Tier lists
         .route("/tier-lists", get(tier_lists::list::list_tier_lists))
         .route("/tier-lists", post(tier_lists::create::create_tier_list))
