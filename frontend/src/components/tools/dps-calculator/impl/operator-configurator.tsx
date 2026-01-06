@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Heart, Trash2 } from "lucide-react";
+import { ChevronDown, Heart, Settings2, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useTheme } from "next-themes";
 import { useState } from "react";
@@ -11,8 +11,10 @@ import { Input } from "~/components/ui/shadcn/input";
 import { Label } from "~/components/ui/shadcn/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/shadcn/select";
 import { Slider } from "~/components/ui/shadcn/slider";
+import { Switch } from "~/components/ui/shadcn/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/shadcn/tooltip";
 import { cn } from "~/lib/utils";
+import type { DpsBuffs, DpsConditionals, DpsShred } from "~/types/api/impl/dps-calculator";
 import type { OperatorConfiguration } from "./types";
 
 interface OperatorConfiguratorProps {
@@ -23,6 +25,7 @@ interface OperatorConfiguratorProps {
 
 export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorConfiguratorProps) {
     const [isOpen, setIsOpen] = useState(true);
+    const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
     const { resolvedTheme } = useTheme();
 
     const rarityColors = resolvedTheme === "light" ? RARITY_COLORS_LIGHT : RARITY_COLORS;
@@ -31,6 +34,48 @@ export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorC
     const updateParams = (key: keyof typeof operator.params, value: number) => {
         onUpdate(operator.id, {
             params: { ...operator.params, [key]: value },
+        });
+    };
+
+    const updateAllCond = (value: boolean) => {
+        onUpdate(operator.id, {
+            params: { ...operator.params, allCond: value },
+        });
+    };
+
+    const updateConditional = (key: keyof DpsConditionals, value: boolean) => {
+        onUpdate(operator.id, {
+            params: {
+                ...operator.params,
+                conditionals: {
+                    ...operator.params.conditionals,
+                    [key]: value,
+                },
+            },
+        });
+    };
+
+    const updateBuff = (key: keyof DpsBuffs, value: number) => {
+        onUpdate(operator.id, {
+            params: {
+                ...operator.params,
+                buffs: {
+                    ...operator.params.buffs,
+                    [key]: value,
+                },
+            },
+        });
+    };
+
+    const updateShred = (key: keyof DpsShred, value: number) => {
+        onUpdate(operator.id, {
+            params: {
+                ...operator.params,
+                shred: {
+                    ...operator.params.shred,
+                    [key]: value,
+                },
+            },
         });
     };
 
@@ -361,6 +406,325 @@ export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorC
                                 />
                             </div>
                         </div>
+
+                        {/* Advanced Options Section */}
+                        <Disclosure onOpenChange={setIsAdvancedOpen} open={isAdvancedOpen}>
+                            <DisclosureTrigger>
+                                <div className="mt-4 flex w-full items-center gap-2 rounded-md border border-border/50 bg-muted/30 px-3 py-2 text-left text-muted-foreground text-sm hover:bg-muted/50">
+                                    <Settings2 className="h-4 w-4" />
+                                    <span className="font-medium">Advanced Options</span>
+                                    <ChevronDown className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                                </div>
+                            </DisclosureTrigger>
+                            <DisclosureContent>
+                                <div className="mt-3 space-y-6">
+                                    {/* Conditionals Section */}
+                                    <div className="space-y-3">
+                                        <Label className="text-muted-foreground text-xs uppercase tracking-wide">Conditionals</Label>
+                                        <div className="grid grid-cols-2 gap-x-4 gap-y-2 md:grid-cols-3">
+                                            {/* Master Toggle */}
+                                            <TooltipProvider delayDuration={200}>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <div className="col-span-2 flex items-center justify-between rounded-md border border-primary/30 bg-primary/5 px-3 py-2 md:col-span-3">
+                                                            <Label className="cursor-pointer font-medium text-sm" htmlFor="allCond">
+                                                                All Conditionals
+                                                            </Label>
+                                                            <Switch checked={operator.params.allCond ?? true} id="allCond" onCheckedChange={updateAllCond} />
+                                                        </div>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>Master toggle for all conditional bonuses</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+
+                                            {/* Individual Conditionals */}
+                                            <TooltipProvider delayDuration={200}>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <div className="flex items-center justify-between rounded-md border border-border px-3 py-2">
+                                                            <Label className="cursor-pointer text-xs" htmlFor="traitDamage">
+                                                                Trait
+                                                            </Label>
+                                                            <Switch checked={operator.params.conditionals?.traitDamage ?? true} disabled={!(operator.params.allCond ?? true)} id="traitDamage" onCheckedChange={(v) => updateConditional("traitDamage", v)} />
+                                                        </div>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>Trait passive damage bonuses</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+
+                                            <TooltipProvider delayDuration={200}>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <div className="flex items-center justify-between rounded-md border border-border px-3 py-2">
+                                                            <Label className="cursor-pointer text-xs" htmlFor="talentDamage">
+                                                                Talent 1
+                                                            </Label>
+                                                            <Switch checked={operator.params.conditionals?.talentDamage ?? true} disabled={!(operator.params.allCond ?? true)} id="talentDamage" onCheckedChange={(v) => updateConditional("talentDamage", v)} />
+                                                        </div>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>Primary talent bonuses</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+
+                                            <TooltipProvider delayDuration={200}>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <div className="flex items-center justify-between rounded-md border border-border px-3 py-2">
+                                                            <Label className="cursor-pointer text-xs" htmlFor="talent2Damage">
+                                                                Talent 2
+                                                            </Label>
+                                                            <Switch checked={operator.params.conditionals?.talent2Damage ?? true} disabled={!(operator.params.allCond ?? true)} id="talent2Damage" onCheckedChange={(v) => updateConditional("talent2Damage", v)} />
+                                                        </div>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>Secondary talent bonuses</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+
+                                            <TooltipProvider delayDuration={200}>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <div className="flex items-center justify-between rounded-md border border-border px-3 py-2">
+                                                            <Label className="cursor-pointer text-xs" htmlFor="skillDamage">
+                                                                Skill
+                                                            </Label>
+                                                            <Switch checked={operator.params.conditionals?.skillDamage ?? true} disabled={!(operator.params.allCond ?? true)} id="skillDamage" onCheckedChange={(v) => updateConditional("skillDamage", v)} />
+                                                        </div>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>Skill passive effects</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+
+                                            <TooltipProvider delayDuration={200}>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <div className="flex items-center justify-between rounded-md border border-border px-3 py-2">
+                                                            <Label className="cursor-pointer text-xs" htmlFor="moduleDamage">
+                                                                Module
+                                                            </Label>
+                                                            <Switch checked={operator.params.conditionals?.moduleDamage ?? true} disabled={!(operator.params.allCond ?? true)} id="moduleDamage" onCheckedChange={(v) => updateConditional("moduleDamage", v)} />
+                                                        </div>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>Module passive bonuses</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        </div>
+                                    </div>
+
+                                    {/* External Buffs Section */}
+                                    <div className="space-y-3">
+                                        <Label className="text-muted-foreground text-xs uppercase tracking-wide">External Buffs</Label>
+                                        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                                            <div className="space-y-1">
+                                                <Label className="text-xs" htmlFor="buffAtk">
+                                                    ATK %
+                                                </Label>
+                                                <div className="flex items-center gap-1">
+                                                    <Input
+                                                        className="h-8 w-full font-mono text-sm"
+                                                        id="buffAtk"
+                                                        max={500}
+                                                        min={0}
+                                                        onChange={(e) => {
+                                                            const val = Number.parseFloat(e.target.value);
+                                                            if (!Number.isNaN(val)) {
+                                                                updateBuff("atk", Math.max(0, Math.min(val / 100, 5)));
+                                                            }
+                                                        }}
+                                                        placeholder="0"
+                                                        type="number"
+                                                        value={Math.round((operator.params.buffs?.atk ?? 0) * 100) || ""}
+                                                    />
+                                                    <span className="text-muted-foreground text-xs">%</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <Label className="text-xs" htmlFor="buffFlatAtk">
+                                                    Flat ATK
+                                                </Label>
+                                                <Input
+                                                    className="h-8 w-full font-mono text-sm"
+                                                    id="buffFlatAtk"
+                                                    max={5000}
+                                                    min={0}
+                                                    onChange={(e) => {
+                                                        const val = Number.parseInt(e.target.value, 10);
+                                                        if (!Number.isNaN(val)) {
+                                                            updateBuff("flatAtk", Math.max(0, Math.min(val, 5000)));
+                                                        }
+                                                    }}
+                                                    placeholder="0"
+                                                    type="number"
+                                                    value={operator.params.buffs?.flatAtk || ""}
+                                                />
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <Label className="text-xs" htmlFor="buffAspd">
+                                                    ASPD
+                                                </Label>
+                                                <Input
+                                                    className="h-8 w-full font-mono text-sm"
+                                                    id="buffAspd"
+                                                    max={500}
+                                                    min={0}
+                                                    onChange={(e) => {
+                                                        const val = Number.parseInt(e.target.value, 10);
+                                                        if (!Number.isNaN(val)) {
+                                                            updateBuff("aspd", Math.max(0, Math.min(val, 500)));
+                                                        }
+                                                    }}
+                                                    placeholder="0"
+                                                    type="number"
+                                                    value={operator.params.buffs?.aspd || ""}
+                                                />
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <TooltipProvider delayDuration={200}>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Label className="cursor-help text-xs" htmlFor="buffFragile">
+                                                                Fragile %
+                                                            </Label>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Enemy damage taken increase (e.g., Suzuran S3)</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                                <div className="flex items-center gap-1">
+                                                    <Input
+                                                        className="h-8 w-full font-mono text-sm"
+                                                        id="buffFragile"
+                                                        max={100}
+                                                        min={0}
+                                                        onChange={(e) => {
+                                                            const val = Number.parseFloat(e.target.value);
+                                                            if (!Number.isNaN(val)) {
+                                                                updateBuff("fragile", Math.max(0, Math.min(val / 100, 1)));
+                                                            }
+                                                        }}
+                                                        placeholder="0"
+                                                        type="number"
+                                                        value={Math.round((operator.params.buffs?.fragile ?? 0) * 100) || ""}
+                                                    />
+                                                    <span className="text-muted-foreground text-xs">%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Enemy Shred Section */}
+                                    <div className="space-y-3">
+                                        <Label className="text-muted-foreground text-xs uppercase tracking-wide">Enemy Shred</Label>
+                                        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                                            <div className="space-y-1">
+                                                <Label className="text-xs" htmlFor="shredDef">
+                                                    DEF %
+                                                </Label>
+                                                <div className="flex items-center gap-1">
+                                                    <Input
+                                                        className="h-8 w-full font-mono text-sm"
+                                                        id="shredDef"
+                                                        max={100}
+                                                        min={0}
+                                                        onChange={(e) => {
+                                                            const val = Number.parseInt(e.target.value, 10);
+                                                            if (!Number.isNaN(val)) {
+                                                                updateShred("def", Math.max(0, Math.min(val, 100)));
+                                                            }
+                                                        }}
+                                                        placeholder="0"
+                                                        type="number"
+                                                        value={operator.params.shred?.def || ""}
+                                                    />
+                                                    <span className="text-muted-foreground text-xs">%</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <Label className="text-xs" htmlFor="shredDefFlat">
+                                                    DEF Flat
+                                                </Label>
+                                                <Input
+                                                    className="h-8 w-full font-mono text-sm"
+                                                    id="shredDefFlat"
+                                                    max={2000}
+                                                    min={0}
+                                                    onChange={(e) => {
+                                                        const val = Number.parseInt(e.target.value, 10);
+                                                        if (!Number.isNaN(val)) {
+                                                            updateShred("defFlat", Math.max(0, Math.min(val, 2000)));
+                                                        }
+                                                    }}
+                                                    placeholder="0"
+                                                    type="number"
+                                                    value={operator.params.shred?.defFlat || ""}
+                                                />
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <Label className="text-xs" htmlFor="shredRes">
+                                                    RES %
+                                                </Label>
+                                                <div className="flex items-center gap-1">
+                                                    <Input
+                                                        className="h-8 w-full font-mono text-sm"
+                                                        id="shredRes"
+                                                        max={100}
+                                                        min={0}
+                                                        onChange={(e) => {
+                                                            const val = Number.parseInt(e.target.value, 10);
+                                                            if (!Number.isNaN(val)) {
+                                                                updateShred("res", Math.max(0, Math.min(val, 100)));
+                                                            }
+                                                        }}
+                                                        placeholder="0"
+                                                        type="number"
+                                                        value={operator.params.shred?.res || ""}
+                                                    />
+                                                    <span className="text-muted-foreground text-xs">%</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <Label className="text-xs" htmlFor="shredResFlat">
+                                                    RES Flat
+                                                </Label>
+                                                <Input
+                                                    className="h-8 w-full font-mono text-sm"
+                                                    id="shredResFlat"
+                                                    max={100}
+                                                    min={0}
+                                                    onChange={(e) => {
+                                                        const val = Number.parseInt(e.target.value, 10);
+                                                        if (!Number.isNaN(val)) {
+                                                            updateShred("resFlat", Math.max(0, Math.min(val, 100)));
+                                                        }
+                                                    }}
+                                                    placeholder="0"
+                                                    type="number"
+                                                    value={operator.params.shred?.resFlat || ""}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </DisclosureContent>
+                        </Disclosure>
                     </div>
                 </DisclosureContent>
             </Disclosure>
