@@ -642,25 +642,39 @@ impl OperatorUnit {
             buff_name += &format!(" +{sp_boost:.0}SP/s");
         }
 
-        if let Some(ref shred) = params.shred {
-            let shred_def = shred.def.unwrap_or(1);
-            let shred_def_flat = shred.def_flat.unwrap_or(0);
-            let shred_res = shred.res.unwrap_or(1);
-            let shred_res_flat = shred.res_flat.unwrap_or(0);
+        // Calculate shred values from params
+        // shreds format: [def_mult, def_flat, res_mult, res_flat]
+        // def/res are percentages (e.g., 40 = -40% DEF/RES), so multiplier = 1 - (value/100)
+        let (shred_def_mult, shred_def_flat, shred_res_mult, shred_res_flat) =
+            if let Some(ref shred) = params.shred {
+                let def_percent = shred.def.unwrap_or(0);
+                let def_flat = shred.def_flat.unwrap_or(0);
+                let res_percent = shred.res.unwrap_or(0);
+                let res_flat = shred.res_flat.unwrap_or(0);
 
-            if shred_def != 1 {
-                buff_name += &format!(" -shredDef{:.0}%def", 100.0 * (1.0 - shred_def as f64));
-            }
-            if shred_def_flat != 0 {
-                buff_name += &format!(" -shredDef{shred_def_flat:.0}def");
-            }
-            if shred_res != 1 {
-                buff_name += &format!(" -shredRes{:.0}%res", 100.0 * (1.0 - shred_res as f64));
-            }
-            if shred_res_flat != 0 {
-                buff_name += &format!(" -shredRes{shred_res_flat:.0}res");
-            }
-        }
+                // Build buff name for display
+                if def_percent != 0 {
+                    buff_name += &format!(" -{def_percent}%def");
+                }
+                if def_flat != 0 {
+                    buff_name += &format!(" -{def_flat}def");
+                }
+                if res_percent != 0 {
+                    buff_name += &format!(" -{res_percent}%res");
+                }
+                if res_flat != 0 {
+                    buff_name += &format!(" -{res_flat}res");
+                }
+
+                // Convert percentage to multiplier: 40% shred = 0.6 multiplier
+                let def_mult = 1.0 - (def_percent as f64 / 100.0);
+                let res_mult = 1.0 - (res_percent as f64 / 100.0);
+
+                (def_mult, def_flat as f64, res_mult, res_flat as f64)
+            } else {
+                // Default: no shred applied (1.0 multiplier, 0 flat)
+                (1.0, 0.0, 1.0, 0.0)
+            };
 
         Self {
             data: operator_data,
@@ -731,8 +745,13 @@ impl OperatorUnit {
             buff_atk_flat,
             buff_fragile,
 
-            // Default shreds: [1, 0, 1, 0] means no shred applied
-            shreds: vec![1.0, 0.0, 1.0, 0.0],
+            // Shreds: [def_mult, def_flat, res_mult, res_flat]
+            shreds: vec![
+                shred_def_mult,
+                shred_def_flat,
+                shred_res_mult,
+                shred_res_flat,
+            ],
 
             // Default ammo (overridden by operator __init__ if needed)
             ammo: 1.0,

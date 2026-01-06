@@ -20,7 +20,8 @@ impl Raidian {
 
     /// Conditionals for this operator
     /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
-    pub const CONDITIONALS: &'static [ConditionalTuple] = &[("trait", "noDrones", true, &[], &[], 0, 0)];
+    pub const CONDITIONALS: &'static [ConditionalTuple] =
+        &[("trait", "noDrones", true, &[], &[], 0, 0)];
 
     /// Creates a new Raidian operator
     #[allow(unused_parens)]
@@ -34,15 +35,13 @@ impl Raidian {
             Self::AVAILABLE_SKILLS.to_vec(),
         );
 
-
-
         Self { unit }
     }
 
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    /// 
+    ///
     /// drones = 2 if self.talent_dmg else 1
     /// if not self.trait_dmg: drones = 0
     /// dmg = self.skill_params[6] if self.skill == 3 and drones > 0 else 1
@@ -54,7 +53,25 @@ impl Raidian {
     /// hitdmgdrone = np.fmax(final_drone - defense, final_drone * 0.05) * hits if self.skill in [1,2] else np.fmax(final_drone * (1-res/100), final_drone * 0.05) * dmg
     /// dps = hitdmg/self.atk_interval * self.attack_speed/100 + hitdmgdrone/self.drone_atk_interval* (self.attack_speed)/100 * drones
     /// return dps
-    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op, clippy::get_first)]
+    #[allow(
+        unused_variables,
+        unused_mut,
+        unused_assignments,
+        unused_parens,
+        clippy::excessive_precision,
+        clippy::unnecessary_cast,
+        clippy::collapsible_if,
+        clippy::double_parens,
+        clippy::if_same_then_else,
+        clippy::nonminimal_bool,
+        clippy::overly_complex_bool_expr,
+        clippy::needless_return,
+        clippy::collapsible_else_if,
+        clippy::neg_multiply,
+        clippy::assign_op_pattern,
+        clippy::eq_op,
+        clippy::get_first
+    )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
@@ -62,15 +79,44 @@ impl Raidian {
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         let mut drones = if self.unit.talent_damage { 2.0 } else { 1.0 };
-        if !self.unit.trait_damage { drones = 0.0; }
-        let mut dmg = if ((self.unit.skill_index as f64) as f64) == 3.0 && drones > 0.0 { self.unit.skill_parameters.get(6).copied().unwrap_or(0.0) } else { 1.0 };
-        let mut hits = if ((self.unit.skill_index as f64) as f64) == 2.0 { 3.0 } else { 1.0 };
-        let mut skill_attack = if [2.0, 3.0].contains(&((((self.unit.skill_index as f64) as f64)) as f64)) { self.unit.skill_parameters.get(0).copied().unwrap_or(0.0) } else { 0.0 };
-        let mut final_atk = self.unit.atk * (1.0 + self.unit.buff_atk + skill_attack) + self.unit.buff_atk_flat;
-        let mut hitdmg = ((final_atk * (1.0 -res/ 100.0)) as f64).max((final_atk * 0.05) as f64) * dmg;
-        let mut final_drone = self.unit.drone_atk * (1.0 + self.unit.buff_atk + skill_attack) + self.unit.buff_atk_flat + (((self.unit.elite as f64) - 1.0) as f64).max((0) as f64) * self.unit.talent2_parameters.get(0).copied().unwrap_or(0.0) * final_atk;
-        let mut hitdmgdrone = if [1.0, 2.0].contains(&((((self.unit.skill_index as f64) as f64)) as f64)) { ((final_drone - defense) as f64).max((final_drone * 0.05) as f64) * hits } else { ((final_drone * (1.0 -res/ 100.0)) as f64).max((final_drone * 0.05) as f64) * dmg };
-        let mut dps = hitdmg/(self.unit.attack_interval as f64) * self.unit.attack_speed/ 100.0 + hitdmgdrone/(self.unit.drone_atk_interval as f64)* (self.unit.attack_speed)/ 100.0 * drones;
+        if !self.unit.trait_damage {
+            drones = 0.0;
+        }
+        let mut dmg = if ((self.unit.skill_index as f64) as f64) == 3.0 && drones > 0.0 {
+            self.unit.skill_parameters.get(6).copied().unwrap_or(0.0)
+        } else {
+            1.0
+        };
+        let mut hits = if ((self.unit.skill_index as f64) as f64) == 2.0 {
+            3.0
+        } else {
+            1.0
+        };
+        let mut skill_attack =
+            if [2.0, 3.0].contains(&(((self.unit.skill_index as f64) as f64) as f64)) {
+                self.unit.skill_parameters.get(0).copied().unwrap_or(0.0)
+            } else {
+                0.0
+            };
+        let mut final_atk =
+            self.unit.atk * (1.0 + self.unit.buff_atk + skill_attack) + self.unit.buff_atk_flat;
+        let mut hitdmg =
+            ((final_atk * (1.0 - res / 100.0)) as f64).max((final_atk * 0.05) as f64) * dmg;
+        let mut final_drone = self.unit.drone_atk * (1.0 + self.unit.buff_atk + skill_attack)
+            + self.unit.buff_atk_flat
+            + (((self.unit.elite as f64) - 1.0) as f64).max((0) as f64)
+                * self.unit.talent2_parameters.get(0).copied().unwrap_or(0.0)
+                * final_atk;
+        let mut hitdmgdrone =
+            if [1.0, 2.0].contains(&(((self.unit.skill_index as f64) as f64) as f64)) {
+                ((final_drone - defense) as f64).max((final_drone * 0.05) as f64) * hits
+            } else {
+                ((final_drone * (1.0 - res / 100.0)) as f64).max((final_drone * 0.05) as f64) * dmg
+            };
+        let mut dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0
+            + hitdmgdrone / (self.unit.drone_atk_interval as f64) * (self.unit.attack_speed)
+                / 100.0
+                * drones;
         return dps;
     }
 }

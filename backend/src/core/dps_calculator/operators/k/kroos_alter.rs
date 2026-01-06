@@ -20,7 +20,10 @@ impl KroosAlter {
 
     /// Conditionals for this operator
     /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
-    pub const CONDITIONALS: &'static [ConditionalTuple] = &[("skill", "4hits", false, &[], &[], 0, 0), ("module", "aerial target", false, &[], &[1], 0, 0)];
+    pub const CONDITIONALS: &'static [ConditionalTuple] = &[
+        ("skill", "4hits", false, &[], &[], 0, 0),
+        ("module", "aerial target", false, &[], &[1], 0, 0),
+    ];
 
     /// Creates a new KroosAlter operator
     #[allow(unused_parens)]
@@ -34,15 +37,13 @@ impl KroosAlter {
             Self::AVAILABLE_SKILLS.to_vec(),
         );
 
-
-
         Self { unit }
     }
 
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    /// 
+    ///
     /// crate = 0 if self.elite == 0 else self.talent1_params[0]
     /// cdmg = self.talent1_params[1]
     /// atk_scale = 1.1 if self.module == 1 and self.module_dmg else 1
@@ -55,24 +56,67 @@ impl KroosAlter {
     /// avgdmg = critdmg * crate + hitdmg * (1-crate)
     /// dps = hits * avgdmg/atk_interval * self.attack_speed/100
     /// return dps
-    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op, clippy::get_first)]
+    #[allow(
+        unused_variables,
+        unused_mut,
+        unused_assignments,
+        unused_parens,
+        clippy::excessive_precision,
+        clippy::unnecessary_cast,
+        clippy::collapsible_if,
+        clippy::double_parens,
+        clippy::if_same_then_else,
+        clippy::nonminimal_bool,
+        clippy::overly_complex_bool_expr,
+        clippy::needless_return,
+        clippy::collapsible_else_if,
+        clippy::neg_multiply,
+        clippy::assign_op_pattern,
+        clippy::eq_op,
+        clippy::get_first
+    )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
-        let mut crit_rate = if ((self.unit.elite as f64) as f64) == 0.0 { 0.0 } else { self.unit.talent1_parameters.get(0).copied().unwrap_or(0.0) };
+        let mut crit_rate = if ((self.unit.elite as f64) as f64) == 0.0 {
+            0.0
+        } else {
+            self.unit.talent1_parameters.get(0).copied().unwrap_or(0.0)
+        };
         let mut cdmg = self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0);
-        let mut atk_scale = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage { 1.1 } else { 1.0 };
-        let mut atkbuff = if ((self.unit.skill_index as f64) as f64) == 1.0 { self.unit.skill_parameters.get(0).copied().unwrap_or(0.0) } else { 0.0 };
-        atk_interval = if ((self.unit.skill_index as f64) as f64) == 2.0 { (self.unit.attack_interval as f64) * (1.0 + self.unit.skill_parameters.get(0).copied().unwrap_or(0.0)) } else { (self.unit.attack_interval as f64) };
-        let mut hits = if ((self.unit.skill_index as f64) as f64) == 2.0 && self.unit.skill_damage { 4.0 } else { 1.0 + ((((self.unit.skill_index as f64) as f64)) as f64).min((1) as f64) };
-        let mut final_atk = self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
-        let mut hitdmg = ((final_atk * atk_scale -defense) as f64).max((final_atk * atk_scale * 0.05) as f64);
-        let mut critdmg = ((final_atk * atk_scale * cdmg -defense) as f64).max((final_atk * atk_scale * cdmg * 0.05) as f64);
-        let mut avgdmg = critdmg * crit_rate + hitdmg * (1.0 -crit_rate);
-        let mut dps = hits * avgdmg/atk_interval * self.unit.attack_speed/ 100.0;
+        let mut atk_scale =
+            if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {
+                1.1
+            } else {
+                1.0
+            };
+        let mut atkbuff = if ((self.unit.skill_index as f64) as f64) == 1.0 {
+            self.unit.skill_parameters.get(0).copied().unwrap_or(0.0)
+        } else {
+            0.0
+        };
+        atk_interval = if ((self.unit.skill_index as f64) as f64) == 2.0 {
+            (self.unit.attack_interval as f64)
+                * (1.0 + self.unit.skill_parameters.get(0).copied().unwrap_or(0.0))
+        } else {
+            (self.unit.attack_interval as f64)
+        };
+        let mut hits = if ((self.unit.skill_index as f64) as f64) == 2.0 && self.unit.skill_damage {
+            4.0
+        } else {
+            1.0 + (((self.unit.skill_index as f64) as f64) as f64).min((1) as f64)
+        };
+        let mut final_atk =
+            self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
+        let mut hitdmg =
+            ((final_atk * atk_scale - defense) as f64).max((final_atk * atk_scale * 0.05) as f64);
+        let mut critdmg = ((final_atk * atk_scale * cdmg - defense) as f64)
+            .max((final_atk * atk_scale * cdmg * 0.05) as f64);
+        let mut avgdmg = critdmg * crit_rate + hitdmg * (1.0 - crit_rate);
+        let mut dps = hits * avgdmg / atk_interval * self.unit.attack_speed / 100.0;
         return dps;
     }
 }

@@ -20,7 +20,8 @@ impl Rosa {
 
     /// Conditionals for this operator
     /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
-    pub const CONDITIONALS: &'static [ConditionalTuple] = &[("talent", "vsLight", true, &[], &[], 0, 0)];
+    pub const CONDITIONALS: &'static [ConditionalTuple] =
+        &[("talent", "vsLight", true, &[], &[], 0, 0)];
 
     /// Creates a new Rosa operator
     #[allow(unused_parens)]
@@ -34,15 +35,13 @@ impl Rosa {
             Self::AVAILABLE_SKILLS.to_vec(),
         );
 
-
-
         Self { unit }
     }
 
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    /// 
+    ///
     /// atkbuff = self.talent2_params[0]
     /// atk_scale = 1
     /// additional_scale = 0
@@ -54,7 +53,7 @@ impl Rosa {
     /// if self.module_lvl == 2: additional_scale = 0.4
     /// if self.module_lvl == 3: additional_scale = 0.6
     /// newdef = defense * (1-defshred)
-    /// 
+    ///
     /// if self.skill < 2:
     /// atkbuff += self.skill_params[0] * self.skill
     /// final_atk = self.atk * (1 + self.buff_atk + atkbuff) + self.buff_atk_flat
@@ -75,54 +74,93 @@ impl Rosa {
     /// extradmg = np.fmax(final_atk * atk_scale * additional_scale - newdef, final_atk * atk_scale * additional_scale * 0.05)
     /// dps = (hitdmg+extradmg) * min(self.targets,maxtargets)
     /// return dps
-    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op, clippy::get_first)]
+    #[allow(
+        unused_variables,
+        unused_mut,
+        unused_assignments,
+        unused_parens,
+        clippy::excessive_precision,
+        clippy::unnecessary_cast,
+        clippy::collapsible_if,
+        clippy::double_parens,
+        clippy::if_same_then_else,
+        clippy::nonminimal_bool,
+        clippy::overly_complex_bool_expr,
+        clippy::needless_return,
+        clippy::collapsible_else_if,
+        clippy::neg_multiply,
+        clippy::assign_op_pattern,
+        clippy::eq_op,
+        clippy::get_first
+    )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut hitdmg: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut defshred: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
         let mut dps: f64 = 0.0;
         let mut extradmg: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut final_atk: f64 = 0.0;
+        let mut defshred: f64 = 0.0;
 
         atkbuff = self.unit.talent2_parameters.get(0).copied().unwrap_or(0.0);
         atk_scale = 1.0;
         let mut additional_scale = 0.0;
         defshred = 0.0;
-        if self.unit.talent_damage { // aka: if heavy
-        if (self.unit.elite as f64) > 0.0 { defshred = 0.2 + 0.2 * (self.unit.elite as f64); }
-        if (self.unit.module_index as f64) == 1.0 {
-        atk_scale = 1.15;
-        if (self.unit.module_level as f64) == 2.0 { additional_scale = 0.4; }
-        if (self.unit.module_level as f64) == 3.0 { additional_scale = 0.6; }
+        if self.unit.talent_damage {
+            // aka: if heavy
+            if (self.unit.elite as f64) > 0.0 {
+                defshred = 0.2 + 0.2 * (self.unit.elite as f64);
+            }
+            if (self.unit.module_index as f64) == 1.0 {
+                atk_scale = 1.15;
+                if (self.unit.module_level as f64) == 2.0 {
+                    additional_scale = 0.4;
+                }
+                if (self.unit.module_level as f64) == 3.0 {
+                    additional_scale = 0.6;
+                }
+            }
         }
-        }
-        let mut newdef = defense * (1.0 -defshred);
+        let mut newdef = defense * (1.0 - defshred);
         if (self.unit.skill_index as f64) < 2.0 {
-        atkbuff += self.unit.skill_parameters.get(0).copied().unwrap_or(0.0) * (self.unit.skill_index as f64);
-        final_atk = self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
-        hitdmg = ((final_atk * atk_scale - newdef) as f64).max((final_atk * atk_scale * 0.05) as f64);
-        extradmg = ((final_atk * atk_scale * additional_scale - newdef) as f64).max((final_atk * atk_scale * additional_scale * 0.05) as f64);
-        dps = (hitdmg+extradmg)/(self.unit.attack_interval as f64) * self.unit.attack_speed/ 100.0;
+            atkbuff += self.unit.skill_parameters.get(0).copied().unwrap_or(0.0)
+                * (self.unit.skill_index as f64);
+            final_atk =
+                self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
+            hitdmg = ((final_atk * atk_scale - newdef) as f64)
+                .max((final_atk * atk_scale * 0.05) as f64);
+            extradmg = ((final_atk * atk_scale * additional_scale - newdef) as f64)
+                .max((final_atk * atk_scale * additional_scale * 0.05) as f64);
+            dps = (hitdmg + extradmg) / (self.unit.attack_interval as f64) * self.unit.attack_speed
+                / 100.0;
         }
         if (self.unit.skill_index as f64) == 2.0 {
-        atkbuff += self.unit.skill_parameters.get(0).copied().unwrap_or(0.0);
-        final_atk = self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
-        hitdmg = ((final_atk * atk_scale - newdef) as f64).max((final_atk * atk_scale * 0.05) as f64);
-        extradmg = ((final_atk * atk_scale * additional_scale - newdef) as f64).max((final_atk * atk_scale * additional_scale * 0.05) as f64);
-        dps = (hitdmg+extradmg)/(self.unit.attack_interval as f64) * self.unit.attack_speed/ 100.0 * (((self.unit.targets as f64)) as f64).min((2) as f64);
+            atkbuff += self.unit.skill_parameters.get(0).copied().unwrap_or(0.0);
+            final_atk =
+                self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
+            hitdmg = ((final_atk * atk_scale - newdef) as f64)
+                .max((final_atk * atk_scale * 0.05) as f64);
+            extradmg = ((final_atk * atk_scale * additional_scale - newdef) as f64)
+                .max((final_atk * atk_scale * additional_scale * 0.05) as f64);
+            dps = (hitdmg + extradmg) / (self.unit.attack_interval as f64) * self.unit.attack_speed
+                / 100.0
+                * ((self.unit.targets as f64) as f64).min((2) as f64);
         }
         if (self.unit.skill_index as f64) == 3.0 {
-        atkbuff += self.unit.skill_parameters.get(2).copied().unwrap_or(0.0);
-        let mut maxtargets = self.unit.skill_parameters.get(0).copied().unwrap_or(0.0);
-        final_atk = self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
-        hitdmg = ((final_atk * atk_scale - newdef) as f64).max((final_atk * atk_scale * 0.05) as f64);
-        extradmg = ((final_atk * atk_scale * additional_scale - newdef) as f64).max((final_atk * atk_scale * additional_scale * 0.05) as f64);
-        dps = (hitdmg+extradmg) * (((self.unit.targets as f64)) as f64).min((maxtargets) as f64);
+            atkbuff += self.unit.skill_parameters.get(2).copied().unwrap_or(0.0);
+            let mut maxtargets = self.unit.skill_parameters.get(0).copied().unwrap_or(0.0);
+            final_atk =
+                self.unit.atk * (1.0 + self.unit.buff_atk + atkbuff) + self.unit.buff_atk_flat;
+            hitdmg = ((final_atk * atk_scale - newdef) as f64)
+                .max((final_atk * atk_scale * 0.05) as f64);
+            extradmg = ((final_atk * atk_scale * additional_scale - newdef) as f64)
+                .max((final_atk * atk_scale * additional_scale * 0.05) as f64);
+            dps =
+                (hitdmg + extradmg) * ((self.unit.targets as f64) as f64).min((maxtargets) as f64);
         }
         return dps;
     }

@@ -20,7 +20,8 @@ impl Scene {
 
     /// Conditionals for this operator
     /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
-    pub const CONDITIONALS: &'static [ConditionalTuple] = &[("trait", "noDrones", true, &[], &[], 0, 0)];
+    pub const CONDITIONALS: &'static [ConditionalTuple] =
+        &[("trait", "noDrones", true, &[], &[], 0, 0)];
 
     /// Creates a new Scene operator
     #[allow(unused_parens)]
@@ -34,15 +35,13 @@ impl Scene {
             Self::AVAILABLE_SKILLS.to_vec(),
         );
 
-
-
         Self { unit }
     }
 
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    /// 
+    ///
     /// drones = 2 if self.talent_dmg else 1
     /// if not self.trait_dmg: drones = 0
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
@@ -52,7 +51,25 @@ impl Scene {
     /// hitdmgdrone = np.fmax(final_atk_drone - defense , final_atk_drone * 0.05)
     /// dps += hitdmgdrone/self.drone_atk_interval * self.attack_speed/100 * drones
     /// return dps
-    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op, clippy::get_first)]
+    #[allow(
+        unused_variables,
+        unused_mut,
+        unused_assignments,
+        unused_parens,
+        clippy::excessive_precision,
+        clippy::unnecessary_cast,
+        clippy::collapsible_if,
+        clippy::double_parens,
+        clippy::if_same_then_else,
+        clippy::nonminimal_bool,
+        clippy::overly_complex_bool_expr,
+        clippy::needless_return,
+        clippy::collapsible_else_if,
+        clippy::neg_multiply,
+        clippy::assign_op_pattern,
+        clippy::eq_op,
+        clippy::get_first
+    )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
@@ -60,13 +77,22 @@ impl Scene {
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         let mut drones = if self.unit.talent_damage { 2.0 } else { 1.0 };
-        if !self.unit.trait_damage { drones = 0.0; }
+        if !self.unit.trait_damage {
+            drones = 0.0;
+        }
         let mut final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
-        let mut hitdmg = ((final_atk * (1.0 -res/ 100.0)) as f64).max((final_atk * 0.05) as f64);
-        let mut dps = hitdmg/(self.unit.attack_interval as f64) * self.unit.attack_speed/ 100.0;
-        let mut final_atk_drone = self.unit.drone_atk * (1.0 + self.unit.buff_atk + self.unit.skill_parameters.get(0).copied().unwrap_or(0.0) * (((self.unit.skill_index as f64)) as f64).min((1) as f64)) + self.unit.buff_atk_flat;
-        let mut hitdmgdrone = ((final_atk_drone - defense) as f64).max((final_atk_drone * 0.05) as f64);
-        dps += hitdmgdrone/(self.unit.drone_atk_interval as f64) * self.unit.attack_speed/ 100.0 * drones;
+        let mut hitdmg = ((final_atk * (1.0 - res / 100.0)) as f64).max((final_atk * 0.05) as f64);
+        let mut dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
+        let mut final_atk_drone = self.unit.drone_atk
+            * (1.0
+                + self.unit.buff_atk
+                + self.unit.skill_parameters.get(0).copied().unwrap_or(0.0)
+                    * ((self.unit.skill_index as f64) as f64).min((1) as f64))
+            + self.unit.buff_atk_flat;
+        let mut hitdmgdrone =
+            ((final_atk_drone - defense) as f64).max((final_atk_drone * 0.05) as f64);
+        dps += hitdmgdrone / (self.unit.drone_atk_interval as f64) * self.unit.attack_speed / 100.0
+            * drones;
         return dps;
     }
 }

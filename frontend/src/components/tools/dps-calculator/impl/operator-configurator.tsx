@@ -548,10 +548,10 @@ export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorC
                                         </div>
                                     )}
 
-                                    {/* External Buffs Section */}
+                                    {/* Operator Buffs Section */}
                                     <div className="space-y-3">
-                                        <Label className="text-muted-foreground text-xs uppercase tracking-wide">External Buffs</Label>
-                                        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                                        <Label className="text-muted-foreground text-xs uppercase tracking-wide">Operator Buffs</Label>
+                                        <div className="grid grid-cols-3 gap-3">
                                             <div className="space-y-1">
                                                 <Label className="text-xs" htmlFor="buffAtk">
                                                     ATK %
@@ -617,7 +617,13 @@ export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorC
                                                     value={operator.params.buffs?.aspd || ""}
                                                 />
                                             </div>
+                                        </div>
+                                    </div>
 
+                                    {/* Enemy Debuffs Section */}
+                                    <div className="space-y-3">
+                                        <Label className="text-muted-foreground text-xs uppercase tracking-wide">Enemy Debuffs</Label>
+                                        <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
                                             <div className="space-y-1">
                                                 <TooltipProvider delayDuration={200}>
                                                     <Tooltip>
@@ -650,17 +656,20 @@ export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorC
                                                     <span className="text-muted-foreground text-xs">%</span>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>
 
-                                    {/* Enemy Shred Section */}
-                                    <div className="space-y-3">
-                                        <Label className="text-muted-foreground text-xs uppercase tracking-wide">Enemy Shred</Label>
-                                        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                                             <div className="space-y-1">
-                                                <Label className="text-xs" htmlFor="shredDef">
-                                                    DEF %
-                                                </Label>
+                                                <TooltipProvider delayDuration={200}>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Label className="cursor-help text-xs" htmlFor="shredDef">
+                                                                DEF Shred %
+                                                            </Label>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Percentage DEF reduction (e.g., Shamare S2)</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
                                                 <div className="flex items-center gap-1">
                                                     <Input
                                                         className="h-8 w-full font-mono text-sm"
@@ -682,30 +691,18 @@ export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorC
                                             </div>
 
                                             <div className="space-y-1">
-                                                <Label className="text-xs" htmlFor="shredDefFlat">
-                                                    DEF Flat
-                                                </Label>
-                                                <Input
-                                                    className="h-8 w-full font-mono text-sm"
-                                                    id="shredDefFlat"
-                                                    max={2000}
-                                                    min={0}
-                                                    onChange={(e) => {
-                                                        const val = Number.parseInt(e.target.value, 10);
-                                                        if (!Number.isNaN(val)) {
-                                                            updateShred("defFlat", Math.max(0, Math.min(val, 2000)));
-                                                        }
-                                                    }}
-                                                    placeholder="0"
-                                                    type="number"
-                                                    value={operator.params.shred?.defFlat || ""}
-                                                />
-                                            </div>
-
-                                            <div className="space-y-1">
-                                                <Label className="text-xs" htmlFor="shredRes">
-                                                    RES %
-                                                </Label>
+                                                <TooltipProvider delayDuration={200}>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Label className="cursor-help text-xs" htmlFor="shredRes">
+                                                                RES Shred %
+                                                            </Label>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Percentage RES reduction (e.g., Ifrit talent)</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
                                                 <div className="flex items-center gap-1">
                                                     <Input
                                                         className="h-8 w-full font-mono text-sm"
@@ -724,6 +721,42 @@ export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorC
                                                     />
                                                     <span className="text-muted-foreground text-xs">%</span>
                                                 </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Flat Shred Section (Advanced) */}
+                                    <div className="space-y-3">
+                                        <TooltipProvider delayDuration={200}>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Label className="cursor-help text-muted-foreground text-xs uppercase tracking-wide">Flat Shred (Advanced)</Label>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Flat DEF/RES reduction - may not be supported by all operators</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="space-y-1">
+                                                <Label className="text-xs" htmlFor="shredDefFlat">
+                                                    DEF Flat
+                                                </Label>
+                                                <Input
+                                                    className="h-8 w-full font-mono text-sm"
+                                                    id="shredDefFlat"
+                                                    max={2000}
+                                                    min={0}
+                                                    onChange={(e) => {
+                                                        const val = Number.parseInt(e.target.value, 10);
+                                                        if (!Number.isNaN(val)) {
+                                                            updateShred("defFlat", Math.max(0, Math.min(val, 2000)));
+                                                        }
+                                                    }}
+                                                    placeholder="0"
+                                                    type="number"
+                                                    value={operator.params.shred?.defFlat || ""}
+                                                />
                                             </div>
 
                                             <div className="space-y-1">

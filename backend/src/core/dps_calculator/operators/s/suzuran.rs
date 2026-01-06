@@ -34,15 +34,13 @@ impl Suzuran {
             Self::AVAILABLE_SKILLS.to_vec(),
         );
 
-
-
         Self { unit }
     }
 
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    /// 
+    ///
     /// if self.skill == 3: return res * 0
     /// atkbuff = self.skill_params[0] if self.skill > 0 else 0
     /// try: atkbuff += self.talent1_params[1]
@@ -55,27 +53,60 @@ impl Suzuran {
     /// dps = hitdmg / self.atk_interval * (self.attack_speed + aspd)/100
     /// if self.skill == 2 and self.targets > 1: dps *= min(self.targets, self.skill_params[1])
     /// return dps*(1+fragile)/(1+self.buff_fragile)
-    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op, clippy::get_first)]
+    #[allow(
+        unused_variables,
+        unused_mut,
+        unused_assignments,
+        unused_parens,
+        clippy::excessive_precision,
+        clippy::unnecessary_cast,
+        clippy::collapsible_if,
+        clippy::double_parens,
+        clippy::if_same_then_else,
+        clippy::nonminimal_bool,
+        clippy::overly_complex_bool_expr,
+        clippy::needless_return,
+        clippy::collapsible_else_if,
+        clippy::neg_multiply,
+        clippy::assign_op_pattern,
+        clippy::eq_op,
+        clippy::get_first
+    )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
-        if (self.unit.skill_index as f64) == 3.0 { return res * 0.0; }
-        let mut atkbuff = if ((self.unit.skill_index as f64) as f64) > 0.0 { self.unit.skill_parameters.get(0).copied().unwrap_or(0.0) } else { 0.0 };
+        if (self.unit.skill_index as f64) == 3.0 {
+            return res * 0.0;
+        }
+        let mut atkbuff = if ((self.unit.skill_index as f64) as f64) > 0.0 {
+            self.unit.skill_parameters.get(0).copied().unwrap_or(0.0)
+        } else {
+            0.0
+        };
         // Python: try: atkbuff += self.talent1_params[1] except: pass
         if let Some(val) = self.unit.talent1_parameters.get(1) {
             atkbuff += val;
         }
-        let mut aspd = if ((self.unit.skill_index as f64) as f64) == 1.0 { self.unit.skill_parameters.get(1).copied().unwrap_or(0.0) } else { 0.0 };
+        let mut aspd = if ((self.unit.skill_index as f64) as f64) == 1.0 {
+            self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
+        } else {
+            0.0
+        };
         let mut fragile = self.unit.talent2_parameters.get(0).copied().unwrap_or(0.0) - 1.0;
         fragile = ((fragile) as f64).max((self.unit.buff_fragile) as f64);
-        let mut final_atk = self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
-        let mut hitdmg = ((final_atk * (1.0 -res/ 100.0)) as f64).max((final_atk * 0.05) as f64);
-        let mut dps = hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd)/ 100.0;
-        if (self.unit.skill_index as f64) == 2.0 && (self.unit.targets as f64) > 1.0 { dps *= (((self.unit.targets as f64)) as f64).min((self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)) as f64); }
-        return dps*(1.0 +fragile)/(1.0 +self.unit.buff_fragile);
+        let mut final_atk =
+            self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;
+        let mut hitdmg = ((final_atk * (1.0 - res / 100.0)) as f64).max((final_atk * 0.05) as f64);
+        let mut dps =
+            hitdmg / (self.unit.attack_interval as f64) * (self.unit.attack_speed + aspd) / 100.0;
+        if (self.unit.skill_index as f64) == 2.0 && (self.unit.targets as f64) > 1.0 {
+            dps *= ((self.unit.targets as f64) as f64)
+                .min((self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)) as f64);
+        }
+        return dps * (1.0 + fragile) / (1.0 + self.unit.buff_fragile);
     }
 }
 

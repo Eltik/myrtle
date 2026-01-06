@@ -20,7 +20,11 @@ impl Frost {
 
     /// Conditionals for this operator
     /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
-    pub const CONDITIONALS: &'static [ConditionalTuple] = &[("trait", "noMines", true, &[0], &[], 0, 0), ("talent", "1MinePerSPcost", true, &[], &[], 0, 0), ("skill", "MineInRange", false, &[2], &[], 0, 0)];
+    pub const CONDITIONALS: &'static [ConditionalTuple] = &[
+        ("trait", "noMines", true, &[0], &[], 0, 0),
+        ("talent", "1MinePerSPcost", true, &[], &[], 0, 0),
+        ("skill", "MineInRange", false, &[2], &[], 0, 0),
+    ];
 
     /// Creates a new Frost operator
     #[allow(unused_parens)]
@@ -34,15 +38,13 @@ impl Frost {
             Self::AVAILABLE_SKILLS.to_vec(),
         );
 
-
-
         Self { unit }
     }
 
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    /// 
+    ///
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
     /// newdef = np.fmax(0, defense - 40 * self.module_lvl) if self.module == 2 and self.module_lvl > 1 else defense
     /// hitdmg = np.fmax(final_atk - newdef, final_atk * 0.05)
@@ -56,31 +58,79 @@ impl Frost {
     /// hitrate = 5 if self.talent_dmg else max(5, self.skill_cost/(1+self.sp_boost))
     /// dps += hitdmg_mine/hitrate
     /// return dps
-    #[allow(unused_variables, unused_mut, unused_assignments, unused_parens, clippy::excessive_precision, clippy::unnecessary_cast, clippy::collapsible_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::needless_return, clippy::collapsible_else_if, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op, clippy::get_first)]
+    #[allow(
+        unused_variables,
+        unused_mut,
+        unused_assignments,
+        unused_parens,
+        clippy::excessive_precision,
+        clippy::unnecessary_cast,
+        clippy::collapsible_if,
+        clippy::double_parens,
+        clippy::if_same_then_else,
+        clippy::nonminimal_bool,
+        clippy::overly_complex_bool_expr,
+        clippy::needless_return,
+        clippy::collapsible_else_if,
+        clippy::neg_multiply,
+        clippy::assign_op_pattern,
+        clippy::eq_op,
+        clippy::get_first
+    )]
     pub fn skill_dps(&self, enemy: &EnemyStats) -> f64 {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
+        let mut hitrate: f64 = 0.0;
         let mut dps: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut hitrate: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut critdmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
 
         final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
-        let mut newdef = if ((self.unit.module_index as f64) as f64) == 2.0 && ((self.unit.module_level as f64) as f64) > 1.0 { ((0) as f64).max((defense - 40.0 * ((self.unit.module_level as f64) as f64)) as f64) } else { defense };
+        let mut newdef = if ((self.unit.module_index as f64) as f64) == 2.0
+            && ((self.unit.module_level as f64) as f64) > 1.0
+        {
+            ((0) as f64).max((defense - 40.0 * ((self.unit.module_level as f64) as f64)) as f64)
+        } else {
+            defense
+        };
         hitdmg = ((final_atk - newdef) as f64).max((final_atk * 0.05) as f64);
-        dps = hitdmg/(self.unit.attack_interval as f64) * self.unit.attack_speed/ 100.0;
+        dps = hitdmg / (self.unit.attack_interval as f64) * self.unit.attack_speed / 100.0;
         if self.unit.trait_damage && (self.unit.skill_index as f64) > 0.0 {
-        critdmg = if ((self.unit.module_index as f64) as f64) == 2.0 { 1.2 } else { 1.0 };
-        let mut mine_scale = if ((self.unit.skill_index as f64) as f64) == 1.0 { self.unit.skill_parameters.get(1).copied().unwrap_or(0.0) } else { self.unit.skill_parameters.get(4).copied().unwrap_or(0.0) };
-        let mut hitdmg_mine = ((final_atk * mine_scale - newdef) as f64).max((final_atk * mine_scale * 0.05) as f64) * critdmg;
-        if (self.unit.skill_index as f64) == 2.0 && self.unit.skill_damage {
-        hitdmg_mine += ((final_atk * self.unit.skill_parameters.get(1).copied().unwrap_or(0.0) - newdef) as f64).max((final_atk * self.unit.skill_parameters.get(1).copied().unwrap_or(0.0) * 0.05) as f64) * 3.0;
-        }
-        hitrate = if self.unit.talent_damage { 5.0 } else { ((5) as f64).max(((self.unit.skill_cost as f64)/(1.0 +(self.unit.sp_boost as f64))) as f64) };
-        dps += hitdmg_mine/hitrate;
+            critdmg = if ((self.unit.module_index as f64) as f64) == 2.0 {
+                1.2
+            } else {
+                1.0
+            };
+            let mut mine_scale = if ((self.unit.skill_index as f64) as f64) == 1.0 {
+                self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
+            } else {
+                self.unit.skill_parameters.get(4).copied().unwrap_or(0.0)
+            };
+            let mut hitdmg_mine = ((final_atk * mine_scale - newdef) as f64)
+                .max((final_atk * mine_scale * 0.05) as f64)
+                * critdmg;
+            if (self.unit.skill_index as f64) == 2.0 && self.unit.skill_damage {
+                hitdmg_mine += ((final_atk
+                    * self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
+                    - newdef) as f64)
+                    .max(
+                        (final_atk
+                            * self.unit.skill_parameters.get(1).copied().unwrap_or(0.0)
+                            * 0.05) as f64,
+                    )
+                    * 3.0;
+            }
+            hitrate = if self.unit.talent_damage {
+                5.0
+            } else {
+                ((5) as f64).max(
+                    ((self.unit.skill_cost as f64) / (1.0 + (self.unit.sp_boost as f64))) as f64,
+                )
+            };
+            dps += hitdmg_mine / hitrate;
         }
         return dps;
     }
