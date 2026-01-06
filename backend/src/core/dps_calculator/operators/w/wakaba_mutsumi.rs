@@ -67,10 +67,10 @@ impl WakabaMutsumi {
         let mut res = enemy.res;
 
         let mut final_atk: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut dps: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
 
         final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
         if (self.unit.skill_index as f64) == 2.0 {

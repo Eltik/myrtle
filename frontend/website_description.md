@@ -1,430 +1,367 @@
-# Website Description
+# Website Accessibility Guide
 
-This document provides a detailed description of the myrtle.moe website, as if describing it to someone who is blind. It covers the purpose, layout, colors, components, and functionality of each page.
+This document provides a detailed description of the myrtle.moe website, designed to be read and understood by users who are blind or visually impaired. It describes the layout, colors, components, and functionality of each page.
 
-## General Theme and Colors
+## Global Layout
 
-The website uses a modern, clean design with a customizable accent color. It supports both light and dark themes.
+The entire website shares a common layout that consists of a header, a main content area, and a footer. The background of every page has a subtle decorative effect with large, blurred, colored circles that are positioned in the corners of the screen.
 
-*   **Light Theme:** Features a very light gray (almost white) background with dark gray text. The default accent color is a vibrant orange-red, used for links, buttons, and highlights.
-*   **Dark Theme:** Features a dark charcoal background with light gray text. The accent color is a brighter version of the one in the light theme, ensuring good contrast.
+### Header
 
-The accent color can be changed by the user, and it affects various elements across the site, including buttons, links, and decorative glows.
+The header is a navigation bar that is fixed to the top of the screen. It has a modern, dark aesthetic with a blurred background that lets the content below it show through slightly. The header has a thin, glowing line at the bottom that gives it a futuristic feel.
 
----
+The header is divided into three sections:
+
+*   **Left:** A logo and the website's name, "myrtle.moe". The logo is a solid square with the primary color of the website. Clicking on the logo or the name takes you back to the home page.
+*   **Center:** The main navigation for the website. This is a pill-shaped component with a list of links. When you hover over a link, a highlighted pill moves to that link with a smooth animation. The currently active page is also highlighted. The navigation items are:
+    *   **Home:** A link to the home page.
+    *   **Operators:** A dropdown menu with links to "Collection" and "Tier List".
+    *   **Tools:** A dropdown menu with links to "Recruitment Calculator", "DPS Charts", and "Randomizer".
+    *   **Players:** A dropdown menu with links to "Search Players" and "Leaderboard".
+    *   **More (represented by an ellipsis icon):** A dropdown menu with links to "About", "Changelog", and "Terms".
+*   **Right:** A set of icons and the user menu.
+    *   **GitHub:** An icon that links to the project's GitHub page.
+    *   **Theme Toggle:** A button that opens a dropdown menu to change the website's theme. You can choose between "Light", "Dark", and "System" modes. You can also customize the accent color of the website using a color picker or a set of predefined presets.
+    *   **User Menu / Login:**
+        *   If you are logged in, this is a dropdown menu that shows your avatar, username, and level. It contains links to your profile and the settings page, as well as a "Logout" button.
+        *   If you are not logged in, this is a "Login" button. Clicking it opens a dialog.
+
+#### Login Dialog
+
+The login dialog is a pop-up window with a modern, morphing animation. It allows you to log in to the website using your YoStar email. The process is as follows:
+
+1.  You enter your email address and select your game server (Global, JP, KR, etc.).
+2.  You click "Send OTP", and a 6-digit code is sent to your email.
+3.  You enter the 6-digit code into the dialog and click "Login".
+
+The dialog also contains a detailed explanation of how the login process works and a disclaimer about using the tool.
+
+### Footer
+
+The footer is at the bottom of the page. It has a simple layout with a top border. It contains:
+
+*   A copyright notice: "© 2025 Myrtle".
+*   Links to "About", "Privacy", and "Terms".
+*   Icons that link to the project's GitHub and Twitter pages.
 
 ## Home Page
 
-### Purpose
+The home page is the main landing page of the website. It is designed to be visually impressive and to give you a quick overview of what the website has to offer. It is divided into five main sections, stacked vertically.
 
-The home page serves as a landing page, introducing the website's features and providing clear calls to action for new and returning users.
+### 1. Hero Section
 
-### Layout
+This is the first thing you see when you visit the website. It's a large, full-width section with a lot of animation and visual effects, designed to grab your attention.
 
-The page has a simple, single-column layout. The main content is centered in the page.
+*   **Appearance:**
+    *   In **dark mode**, the background is a slow-moving collage of artwork from the game Arknights. The images are slightly blurred and have a low opacity, giving them a subtle, dream-like quality. There's also a "vignette" effect, which makes the center of the screen brighter and the edges darker, focusing your attention on the text in the middle.
+    *   In **light mode**, the image collage is replaced with a warm, orange and yellow gradient.
+    *   The main text has a glowing effect that matches the website's accent color.
+*   **Content:**
+    *   **Headline:** A large, bold headline that reads "Sync, discover, and optimize your". The last word of the headline is an animated text loop that cycles through the words: "operators", "roster", "recruitment", "profile", and "progress".
+    *   **Subtitle:** A smaller line of text below the headline that reads "The ultimate toolkit for Arknights Doctors."
+    *   **Buttons:** Two buttons are centered below the subtitle.
+        *   The primary button is large, has a solid background with the website's accent color, and reads "Browse Operators". When you hover over it, it glows and grows slightly larger. It takes you to the "Operators" page.
+        *   The secondary button has an outline style and reads "Get Started". When you click it, the page smoothly scrolls down to the "Features" section.
 
-### Colors and Theme
+### 2. Features Section
 
-The page uses the general theme of the website. The background is either light or dark, depending on the user's preference. The primary (accent) color is used for the looping text and highlights on the cards.
+This section highlights the main features of the website in a clean, grid-based layout.
 
-### Components
+*   **Appearance:** The section has a title that reads "Everything you need in one place", and a subtitle below it. The main content is a grid of six cards.
+*   **Content:** Each card represents a feature and contains an icon, a title, and a short description. The cards are links to the respective feature pages. When you hover over a card, it scales up slightly and its border and icon change color to the website's accent color. The six features are:
+    1.  **Operator Database:** Browse and analyze all Arknights operators.
+    2.  **Tier Lists:** Community-driven tier lists for team building.
+    3.  **Recruitment Calculator:** Find the best tag combinations for recruitment.
+    4.  **Player Leaderboards:** See how you stack up against other players.
+    5.  **DPS Charts:** Compare the damage output of different operators.
+    6.  **Randomizer:** Create random squads and stages for a challenge.
 
-The home page is composed of two main sections:
+### 3. How It Works Section
 
-1.  **Main Content:**
-    *   A large, bold heading that reads: "Elevate your [Arknights/Operator/Farming/Recruitment] experience." The word in the brackets loops through the four options, with each word displayed in the site's accent color and a subtle glow effect.
-    *   A paragraph below the heading provides a brief introduction to the website: "An advanced toolkit for the modern Doctor. Track your operators, plan your strategies, and optimize your gameplay."
+This section explains how to get started with the website in a simple, step-by-step format.
 
-2.  **Bento Grid:**
-    A grid of cards below the main content, arranged in a "bento box" style layout. The grid contains the following cards:
+*   **Appearance:** The section has a title that reads "How it works" and a subtitle. The main content is a two-column layout of four "steps". The background has some large, decorative, blurred circles of color.
+*   **Content:** Each step is presented in a card-like container with a number, a title, a description, and a button. When you hover over a step, a button appears with a call to action.
+    1.  **Connect Your Account:** Explains that you can link your Arknights profile. The button opens the login dialog.
+    2.  **Explore & Discover:** Encourages you to browse the operator database and tier lists. The button links to the "Operators" page.
+    3.  **Plan & Optimize:** Highlights the planning tools like the recruitment calculator. The button links to the "Tools" page.
+    4.  **Track Progress:** Explains that you can monitor your collection and progress. The button links to your profile page.
 
-    *   **Get Started (Large Card):**
-        *   This card spans two columns in the grid.
-        *   It has the title "Get Started" and a description: "Create an account to get started with your Arknights journey."
-        *   It lists three numbered steps:
-            1.  **Connect Your Account:** With a "Connect" button.
-            2.  **View Your Profile:** With a "Profile" button.
-            3.  **Star on GitHub:** With a "GitHub" button.
+### 4. Stats Section
 
-    *   **Statistics (Medium Card):**
-        *   This card has the title "Statistics" and a description: "View our overall website statistics and data."
-        *   It displays a bar chart showing website usage (Desktop vs. Mobile) over the past six months. The bars are colored in shades of the primary accent color.
-        *   Below the chart, there are three key statistics in a row:
-            *   **Total Visitors:** A number (e.g., 1,224).
-            *   **Growth:** A percentage with a plus sign (e.g., +12%), displayed in green.
-            *   **Active Users:** A number (e.g., 847).
+This section displays some impressive statistics about the website to build trust and social proof.
 
-    *   **Operator Database (Small Card):**
-        *   A clickable card with the title "Operator Database" and a description: "Browse all operators with detailed stats, skills, and recommended builds."
-        *   It features an icon of a group of users.
-        *   When hovered over, an arrow icon on the right moves to the right, and the title moves up slightly.
+*   **Appearance:** The section has a title that reads "Trusted by Doctors worldwide" and a subtitle. The main content is a grid of four cards.
+*   **Content:** Each card displays a statistic with a large, animated number that counts up when it comes into view. When you hover over a card, a subtle gradient appears in the background. The four stats are:
+    1.  **300+ Operators:** In the complete database.
+    2.  **50K+ Active Users:** In the global community.
+    3.  **1M+ Calculations:** Performed per month.
+    4.  **99.9% Uptime:** For a reliable service.
 
-    *   **Material Planner (Small Card):**
-        *   A clickable card with the title "Material Planner" and a description: "Calculate resources needed for operator upgrades and mastery training."
-        *   It features a target icon.
-        *   It has the same hover effect as the Operator Database card.
+### 5. CTA (Call to Action) Section
 
-    *   **Event Timeline (Small Card):**
-        *   A clickable card with the title "Event Timeline" and a description: "Stay updated with ongoing and upcoming events, banners, and rewards."
-        *   It features a calendar icon.
-        *   It has the same hover effect as the Operator Database card.
+This is the final section of the home page, designed to encourage you to get started.
 
-    *   **Join the Community (Large Card):**
-        *   This card spans two columns.
-        *   It has the title "Join the Community" and a description: "Connect with fellow Doctors. Share strategies, discuss meta, and get help."
-        *   It contains three buttons with logos for "Discord", "Reddit", and "Twitter", which likely link to the respective communities.
+*   **Appearance:** It's a large, visually appealing container with rounded corners and a gradient background. It has animated, glowing orbs in the background that slowly move and react to your cursor's position, creating a dynamic, 3D-like effect.
+*   **Content:**
+    *   A small badge at the top reads "Ready to optimize your gameplay?".
+    *   A large title reads "Start using Myrtle today".
+    *   A subtitle encourages you to join the community.
+    *   Two buttons are at the bottom:
+        *   "Get Started": A primary button that links to the "Operators" page.
+        *   "View All Tools": A secondary button that links to the "Tools" page.
 
----
+## Operators List Page
 
-## Settings Page
+This page allows you to browse, search, filter, and sort all the operators available in the game. It is a powerful tool for exploring the operator database.
 
-### Purpose
+### Layout and Controls
 
-The Settings Page allows logged-in users to manage their profile and preferences.
+The page has a main title that reads "Operators". Below the title, there is a set of controls to help you find the operators you're looking for.
 
-### Layout
+*   **Search Bar:** A text input field where you can type the name, class, or archetype of an operator to quickly find them.
+*   **View Toggle:** A set of two buttons that lets you switch between a "Grid View" and a "List View".
+    *   In **Grid View**, operators are displayed in a compact grid of cards.
+    *   In **List View**, operators are displayed in a more detailed list. You can also choose to display the list in 1, 2, or 3 columns on larger screens.
+*   **Sort Controls:** A dropdown menu to sort the operators by various criteria like Rarity, Name, Class, HP, ATK, DEF, etc. Next to it is a button to switch between ascending and descending order.
+*   **Filter Button:** A button that opens a detailed filter menu. The button shows a count of how many filters are currently active.
 
-The page has a single-column layout with a maximum width, centering the content on the page. The settings are grouped into cards.
+### Operator Filters
 
-### Colors and Theme
+The filter menu is a pop-up window that allows you to refine the list of operators based on a wide range of criteria. It is divided into two sections:
 
-The page follows the general theme of the website. It makes use of `Card` components which have a slightly different background color from the main page background.
+*   **Basic Filters:**
+    *   **Class:** A set of icons for each of the 8 main classes (Vanguard, Guard, Defender, etc.). You can select multiple classes.
+    *   **Rarity:** A set of buttons to filter by rarity, from 1-star to 6-star. You can select multiple rarities.
+*   **Advanced Filters:** A collapsible section that contains dropdown menus for more specific filtering. You can filter by:
+    *   Archetype (e.g., Pioneer, Marksman)
+    *   Gender
+    *   Nation (e.g., Rhodes Island, Kazimierz)
+    *   Faction (e.g., Blacksteel, Penguin Logistics)
+    *   Race
+    *   Place of Birth
+    *   Artist
 
-### Components
+You can clear all active filters at once by clicking the "Clear all" button at the top of the filter menu.
 
-The Settings Page consists of the following components:
+### Operator Display
 
-*   **Header:**
-    *   A large title "Settings" with a settings icon next to it.
-    *   A short description: "Manage your profile and preferences".
+The main content of the page is the list or grid of operators.
 
-*   **Privacy Settings Card:**
-    *   A card with the title "Privacy Settings" and description "Control how your profile appears to other users".
-    *   It contains a "Leaderboard Visibility" disclosure component.
-        *   **Trigger:** A clickable area that shows the current visibility status ("Your profile is visible..." or "Your profile is hidden..."). It has a chevron icon that rotates 90 degrees when the disclosure is opened.
-        *   **Content:** When opened, it reveals a "Public Profile" switch to toggle the leaderboard visibility on and off. There is also a detailed explanation of what this setting affects.
+*   **Grid View Card:**
+    *   **Appearance:** A rectangular card with the operator's portrait as the main focus. The background has a very faint, large logo of the operator's faction. At the bottom, there is a semi-transparent bar with the operator's name and a colored line indicating their rarity.
+    *   **Interaction:** When you hover your mouse over a card, the operator's portrait zooms in slightly, and a class icon appears in the corner. All other operator cards on the page become grayed out, making the hovered card stand out. If you keep your mouse over the card for a moment, a pop-up appears with more details: name, faction, rarity, archetype, position, and race. Clicking the card takes you to that operator's detailed page.
 
-*   **Profile Management Card:**
-    *   A card with the title "Profile Management" and description "Update your profile data from the game servers".
-    *   It contains a "Refresh Profile Data" disclosure component.
-        *   **Trigger:** Similar to the privacy disclosure, it shows the purpose of this section and has a rotating chevron icon.
-        *   **Content:** When opened, it provides a detailed explanation of what data will be refreshed and a "Refresh Profile Now" button. When the button is clicked, it shows a loading spinner and a "Refreshing Profile..." text until the process is complete.
+*   **List View Card:**
+    *   **Appearance:** A horizontal bar with the operator's portrait on the left and their information on the right. A colored vertical line on the far left indicates the operator's rarity.
+    *   **Content (Single Column):** In the default single-column view, the card is wide and displays the operator's Name, Rarity (as stars), Class (with icon), Archetype, and Faction (with logo).
+    *   **Content (Multi-Column/Mobile):** In a multi-column or mobile view, the card is more compact. It shows the operator's name with their faction logo, and below that, a row with their rarity stars, class icon and name, and archetype.
 
-*   **Coming Soon Card:**
-    *   A dashed border card with the title "Coming Soon" and a description indicating that more settings and features will be added in the future. This card is visually distinct to indicate its placeholder nature.
+### Pagination and Results
 
-If the user is not logged in, the page displays a simple card asking them to log in to access their settings. While the page is loading the user's authentication status, a spinning loader is displayed.
+*   Below the controls, there is a line of text that tells you how many operators are being shown out of the total number of results (e.g., "Showing 1 to 48 of 312 operators").
+*   At the very bottom of the page, there is a pagination control that allows you to navigate through the pages of results.
+*   If your search or filter criteria do not match any operators, a message is displayed with a search icon, telling you that no operators were found and providing a button to clear your filters.
 
----
+## Tier Lists Page
 
-## Admin Page
+This page displays community-driven tier lists that rank operators based on their performance. The page has two different modes: an "index" mode that shows all available tier lists, and a "detail" mode that shows a specific tier list.
 
-### Purpose
+### Tier List Index Page
 
-The Admin Page is a restricted area for authorized administrators to manage the website's content and view statistics. Access is limited to users with specific admin roles (e.g., "super_admin", "tier_list_admin"). Unauthorized users are redirected to a 404 page.
+This is the default view of the page, showing a gallery of all available tier lists.
 
-### Layout
+*   **Layout:** The page has a title that reads "Tier Lists" and a count of how many lists are available. The main content is a grid of cards, each representing a single tier list.
+*   **Tier List Card:**
+    *   **Appearance:** A rectangular card with a header and a content section. The header contains a preview of the top operators in that tier list, shown as a collage of their portraits. The content section displays the name of the tier list, a short description, the number of operators and tiers in the list, and the date it was last updated.
+    *   **Interaction:** The entire card is a link to view the detailed tier list. When you hover over the card, the border and title change to the website's primary accent color, and an arrow icon appears next to the title, indicating that it's clickable.
 
-The page has a wide, single-column layout to accommodate large tables and data grids. The content is enclosed in a single large card with a border.
+### Tier List Detail Page
 
-### Colors and Theme
+When you click on a tier list from the index page, you are taken to this view, which displays the full tier list in detail.
 
-The page uses the general website theme, but with more emphasis on data-dense components like tables and stat cards. It uses colored badges to represent different user roles, servers, and tier list statuses, making it easy to distinguish them at a glance.
-
-### Components
-
-The Admin Page is a comprehensive dashboard composed of several sections:
-
-*   **Header:**
-    *   A welcome message with the admin's nickname (e.g., "Welcome back, Admin!").
-    *   The admin's role is displayed as a colored badge (e.g., `super_admin`).
-    *   A "Refresh" button to reload all the data on the page.
-
-*   **Stats Grid:**
-    *   A grid of four cards displaying key statistics:
-        1.  **Total Users:** Shows total user count, percentage growth, and a breakdown of users by role.
-        2.  **Tier Lists:** Shows the total number of tier lists, percentage change, and the number of active lists.
-        3.  **Total Versions:** Shows the total number of published tier list versions and percentage change.
-        4.  **Operator Placements:** Shows the total number of operators placed across all tier lists and percentage change.
-    *   Each card includes an icon, the main number, and a colored indicator for positive or negative trends.
-
-*   **User Management Table:**
-    *   A full-featured table for managing users.
-    *   **Columns:** User (Avatar and Nickname), UID, Level, Server, Role, and Created date.
-    *   **Functionality:**
-        *   **Sorting:** All columns are sortable.
-        *   **Filtering:** Users can be filtered by role and server, and searched by nickname or UID.
-        *   **Pagination:** The table is paginated with controls to navigate through the user list and change the number of items shown per page.
-        *   **Badges:** Roles and servers are displayed as colored badges for easy identification.
-
-*   **Tier List Management:**
-    *   This is the most complex part of the Admin Page, allowing full control over tier lists. It has two main views: a list view and an editor view.
-    *   **List View (`TierListsTable`):**
-        *   A table showing all tier lists with columns for Name, Status (Active/Inactive), number of Tiers, Operators, and Versions, and the last Updated date.
-        *   It has sorting, filtering, and pagination, similar to the User Management Table.
-        *   Each tier list has a dropdown menu with actions to "View", "Edit", or "Delete" it.
-        *   A "Create" button opens a dialog to create a new tier list.
-    *   **Editor View (`TierListEditor`):**
-        *   A full-screen, drag-and-drop editor for a single tier list.
-        *   **Settings:** Admins can edit the tier list's name, description, and active status.
-        *   **Tiers:** Tiers can be added, deleted, and reordered by dragging. Each tier's name, color, and description can be edited.
-        *   **Operators:** Operators can be dragged between tiers or within a tier to reorder them. New operators can be added from a searchable list of all available operators in the game.
-        *   **Saving and Publishing:** Changes must be saved explicitly. A "Publish Version" button allows creating a versioned snapshot of the tier list with a changelog.
-
-*   **Recent Activity:**
-    *   A card that displays a feed of the most recent changes made to any tier list, such as an operator being moved, a tier being renamed, etc. It shows the type of change, the operator and tier list involved, who made the change, and when.
-
-If the admin data is loading, a spinning loader is displayed in the center of the page.
-
----
-
-## Operator Detail Page
-
-### Purpose
-
-This page provides a comprehensive and detailed view of a single Arknights operator, including their stats, skills, skins, voice lines, and lore. It's designed to be a one-stop-shop for all information related to a specific operator.
-
-### Layout
-
-The page has a visually striking layout dominated by a large hero section at the top. The main content below the hero section is organized into a tabbed interface, which is a vertical sidebar on desktop and a horizontal scrolling list on mobile.
-
-### Colors and Theme
-
-The page makes heavy use of the operator's artwork. The hero section has a parallax effect with the operator's main art. The rest of the page follows the website's general theme, with the accent color used to highlight active tabs and other interactive elements. Rarity is also visually represented with specific colors for glow effects and stars.
-
-### Components
-
-#### Hero Section
-
-*   **Parallax Background:** A large, high-quality image of the operator's artwork is displayed at the top of the page. As the user scrolls, this image recedes and scales, creating a sense of depth.
-*   **Operator Name and Rarity:** The operator's name is displayed in a very large font, with their rarity represented by a series of stars (e.g., ★★★★★★) in a color corresponding to their rarity.
-*   **Tags and Badges:** Badges for the operator's profession (e.g., Caster), position (Melee/Ranged), and faction are displayed below the name.
-*   **Breadcrumb:** A navigation link shows the path from "Operators" to the current operator.
-*   **Faction Logo:** The logo of the operator's faction is displayed on the right side of the hero section on larger screens.
-
-#### Tabs Section
-
-Below the hero section, the content is divided into six tabs:
-
-1.  **Info Tab:**
-    *   This is the default and most complex tab, acting as a "stat calculator".
-    *   **Operator Controls:** A set of interactive controls allows the user to select the operator's Promotion level, Potential, Level, Trust, and Module.
-    *   **Combat Stats:** A grid of stat cards dynamically updates to show the operator's stats (Health, ATK, DEF, etc.) based on the selected controls.
-    *   **Attack Range:** A visual grid displays the operator's attack range, which also updates based on the selected promotion.
-    *   **Talents & Profile:** Collapsible sections show the operator's talents (with descriptions that update based on stats), and profile information (like Place of Birth, Race, etc.).
-    *   **Module Details:** If a module is selected, another collapsible section appears with details about the module's stat bonuses and effects.
-
-2.  **Skills Tab:**
-    *   This tab allows for in-depth analysis of the operator's skills.
-    *   **Skill Selection:** Users can switch between the operator's skills.
-    *   **Single Level View:** A slider lets the user see a skill's description and stats (SP Cost, Duration, etc.) at any specific level.
-    *   **Comparison View:** For skills with Mastery levels, users can select multiple levels to compare them side-by-side, with an option to highlight only the differences between levels.
-    *   **Talents:** A collapsible section at the bottom reiterates the operator's talents.
-
-3.  **Level-Up Costs Tab:**
-    *   This tab is a reference for the materials needed to upgrade the operator. It has its own set of sub-tabs:
-        *   **Elite Promotion:** Shows the materials needed for each promotion (Elite 1, Elite 2).
-        *   **Skill Mastery:** Shows the materials needed for each skill mastery level (M1, M2, M3).
-        *   **Modules:** Shows the materials needed to unlock and upgrade each of the operator's modules.
-
-4.  **Skins Tab:**
-    *   A gallery for viewing the operator's different outfits.
-    *   **Skin Viewer:** A large area displays the artwork of the selected skin, with a fullscreen option.
-    *   **Skin Selector:** A list of thumbnails allows the user to switch between different skins.
-    *   **Skin Details:** A panel shows information like the skin's artist and how to obtain it.
-    *   **Chibi Viewer:** An interactive viewer displays the operator's animated in-game "chibi" sprite, which updates to match the selected skin. It allows playing different animations (like "Idle" or "Attack") and changing the viewing angle.
-
-5.  **Audio Tab:**
-    *   A player for listening to the operator's voice lines.
-    *   **Language Selection:** A dropdown to choose the voice-over language (e.g., Japanese, English).
-    *   **Voice Line List:** Voice lines are grouped into categories (e.g., Greetings, Battle) and displayed in a list. Each entry has a play/pause button, the transcribed text, and a progress bar when playing.
-
-6.  **Lore Tab:**
-    *   Displays the operator's background story and archive files.
-    The lore is presented in collapsible sections (e.g., "Clinical Analysis," "Promotion Record").
-    *   The text is intelligently parsed and styled, with headers, quotes, lists, and technical terms being visually distinct, making it look like a real document.
-
----
-
-## Operator List Page
-
-### Purpose
-
-This page allows users to browse, search, sort, and filter the entire database of Arknights operators. It's designed for efficient discovery and comparison of operators.
-
-### Layout
-
-The page features a main content area with a header, a set of controls for searching and filtering, and the main grid or list of operators. The layout is highly interactive and responsive.
-
-### Colors and Theme
-
-The page follows the general website theme. The accent color is used for active toggles and highlights. Rarity is consistently represented by specific colors on the operator cards. A unique hover effect on the operator cards uses a grayscale effect to draw focus to the hovered operator.
-
-### Components
-
-*   **Header:**
-    *   A large title "Operators" and a brief description.
-
-*   **Search and Controls:**
-    *   **Search Bar:** A prominent search bar at the top allows users to quickly find operators by name.
-    *   **View Mode Toggle:** A toggle switch allows users to switch between a **Grid View** and a **List View**. The toggle itself has a smooth sliding animation.
-    *   **Sort Controls:** Dropdowns and buttons to sort the operators by various criteria (e.g., Name, Rarity) in ascending or descending order.
-    *   **Filter Button:** A button that opens the filter menu. It displays a badge with the number of active filters. On desktop, this opens a popover; on mobile, it opens a full-screen dialog.
-
-*   **Filter Menu (`OperatorFilters`):**
-    *   A comprehensive set of filters to narrow down the operator list.
-    *   **Basic Filters:** For `Class` (with icons) and `Rarity` (e.g., 6★, 5★).
-    *   **Advanced Filters:** A collapsible section with dropdown menus for more specific filtering, including `Archetype`, `Nation`, `Faction`, `Race`, `Gender`, and `Artist`.
-    *   A "Clear all" button allows users to reset all filters.
-
-*   **Operator Display:**
-    *   The operators are displayed in either a grid or a list, depending on the selected view mode.
-    *   **Grid View (`OperatorCardGrid`):**
-        *   Displays operators as compact cards with their portrait, name, and a colored rarity indicator.
-        *   Hovering over a card reveals more details in a popover, including archetype, position, and race.
-    *   **List View (`OperatorCardList`):**
-        *   Displays operators in a list. On desktop, this can be a single wide column with detailed info (Name, Rarity, Class, etc.) or a multi-column compact list. On mobile, it's always a compact list.
-    *   **Hover Effect:** In both views, hovering over an operator card makes all other cards turn to grayscale, which puts the focus on the hovered operator.
-
-*   **Pagination:**
-    *   The list of operators is paginated, with navigation controls at the bottom of the page to move between pages.
-
-*   **Empty State:**
-    *   If no operators match the current search and filter criteria, a message is displayed, along with a button to clear all filters.
-
----
-
-## Tier List Page
-
-### Purpose
-
-This page serves two functions. First, it acts as an index for all available operator tier lists. Second, it provides a detailed view of a specific tier list, showing the ranking of operators across different tiers.
-
-### Layout
-
-The page has two distinct layouts depending on whether the user is viewing the index or a specific tier list. Both layouts are clean and organized.
-
-### Colors and Theme
-
-The page follows the general website theme. The tier list detail view uses a distinct color for each tier label (e.g., S, A, B), with the text color on the label automatically adjusting for contrast, making the tiers easily distinguishable.
-
-### Components
-
-#### Index Mode
-
-When no specific tier list is selected, the page displays an index of all available tier lists.
-
-*   **Header:** A title "Tier Lists" and a count of how many lists are available.
-*   **Tier List Grid:** A grid of cards, each representing a single tier list.
-    *   **Tier List Card:**
-        *   A clickable card that links to the detailed view of that tier list.
-        *   The top of the card has a header that shows a preview of the top-ranked operators in that list.
-        *   The main body of the card displays the tier list's name, description, the number of operators and tiers it contains, and the date it was last updated.
-
-#### Detail Mode
-
-When a specific tier list is selected, the page displays its detailed contents.
-
-*   **Header:**
-    *   The name and description of the tier list.
-    *   A "Changelog" button that shows the version history of the list. Clicking it opens a dialog with a list of all published versions. Clicking a version opens another dialog with the detailed changelog for that version.
-    *   An "Info" button that opens a popover explaining the ranking criteria and how the tier list works.
-*   **Tier Rows:**
-    *   The main content is a list of rows, one for each tier (e.g., S+, S, A).
-    *   **Tier Label:** On the left of each row is a large, colored label with the tier's name (e.g., "S"). If the tier has a description, clicking this label opens a dialog with more information.
-    *   **Operators Grid:** To the right of the label is a grid of operator cards, showing all operators ranked in that tier.
-    *   **Operator Card (`TierOperatorCard`):**
-        *   A compact card showing the operator's portrait and a colored bar for their rarity.
-        *   Hovering over the card reveals the operator's name and a detailed tooltip with their archetype, rarity, faction, and other info.
-        *   The same grayscale hover effect from the Operator List page is used here to highlight the hovered operator.
-*   **Empty State:**
-    *   If a tier has no operators, a message is displayed in that row.
-
----
+*   **Layout:** The page has a header with the name and description of the tier list. Below this, there is information about when the list was last updated and a button to view the changelog. The main body of the page is a vertical stack of "tier rows".
+*   **Info & Changelog:**
+    *   **Info Button:** A small button with a "question mark" icon opens a pop-up with two tabs. One tab explains how the tiers are defined (e.g., what "S+" tier means), and the other tab lists the criteria used for ranking the operators.
+    *   **Changelog:** Clicking the version number (e.g., "v1.2") opens a dialog that shows the history of changes for that tier list. You can click on a specific version to see a more detailed changelog, including a summary and the full text of the changes for that version.
+*   **Tier Row:**
+    *   **Appearance:** Each tier in the list (e.g., S+, S, A, B) is represented by a horizontal row. On the left side of the row is a colored block with the name of the tier (e.g., "S+"). The color of the block corresponds to the tier's rank, ranging from red for the highest tiers to blue and green for the lower tiers. The text color on the block is automatically chosen to be either black or white for the best readability. If a tier has a description, an info icon appears next to the name, and clicking the label opens a dialog with the description.
+    *   **Operators:** To the right of the tier label is a grid of all the operators ranked in that tier. Each operator is shown as a small card with their portrait.
+*   **Operator Card & Tooltip:**
+    *   **Appearance:** The operator cards are small and square, showing just the operator's portrait with a colored line at the bottom to indicate their rarity.
+    *   **Interaction:** When you hover over an operator's card, their name appears in an overlay at the bottom of the card. At the same time, all other operators on the page become grayed out, making the hovered operator stand out. If you keep your mouse over the card, a tooltip appears with more detailed information, including the operator's name, faction, rarity, archetype, position, and race. Clicking the card takes you to that operator's detailed page.
 
 ## Recruitment Calculator Page
 
-### Purpose
-
-This page is a utility for the game Arknights that helps players determine the possible operators they can get from the in-game recruitment system based on a combination of tags.
+This page is a tool to help you find the best combinations of tags in the in-game recruitment to get the operators you want.
 
 ### Layout
 
-The page has a clean, tool-oriented layout. It's divided into three main sections: a header, a tag selection area, and a results area.
+The page is divided into three main sections:
+1.  A header with the title "Recruitment Calculator".
+2.  A "Select Tags" section where you choose the tags you see in the game.
+3.  A "Results" section that shows you the possible outcomes based on the tags you've selected.
 
-### Colors and Theme
+### Tag Selection
 
-The page follows the general website theme. It uses special colors to highlight important recruitment tags: orange for "Top Operator" (which guarantees a 6-star operator) and yellow for "Senior Operator" (which guarantees a 5-star operator). The results are also color-coded based on the rarity of the operators they can produce.
+This section contains all the possible recruitment tags, grouped by type (Position, Class, Affix, etc.).
 
-### Components
+*   **Appearance:** Each group is a collapsible section with a title. Inside, the tags are displayed as buttons. The "Top Operator" and "Senior Operator" tags have special orange and yellow colors, respectively, to make them stand out.
+*   **Interaction:** You can click on the tag buttons to select them. You can select up to 5 tags at a time. When a tag is selected, its appearance changes to the website's primary accent color. When you have selected the maximum number of tags, all other unselected tags become disabled and faded out. You can click the "Reset" button to clear all selected tags.
 
-*   **Header:**
-    *   A title "Recruitment Calculator" with a calculator icon.
-    *   A description explaining that users can select up to 5 tags to see the possible outcomes.
+### Results
 
-*   **Tag Selector:**
-    *   A large area where all the possible recruitment tags are displayed as buttons.
-    *   The tags are grouped by type (e.g., "Class", "Position", "Affix") in collapsible sections.
-    *   Users can click on the tags to select them. A counter shows how many tags are currently selected (up to a maximum of 5).
-    *   Selected tags are visually highlighted. Once 5 tags are selected, all other tags are disabled.
-    *   A "Reset" button allows the user to clear all selected tags.
+This section displays the possible outcomes based on your selected tags. The results are automatically calculated and updated as you select or deselect tags.
 
-*   **Results Section:**
-    *   This section dynamically updates as the user selects and deselects tags.
-    *   **Filter Options:** A set of controls allows the user to refine the results, such as a switch to include or exclude 1-star "Robot" operators.
-    *   **Results List:**
-        *   The main part of this section is a list of all possible outcomes from the selected tags.
-        *   The results are grouped into "High-Value Combinations" (those that guarantee a 5 or 6-star operator) and "Other Combinations".
-        *   **Combination Result:** Each possible outcome is displayed in its own collapsible row.
-            *   The row is highlighted in orange for a guaranteed 6-star or yellow for a guaranteed 5-star.
-            *   The header of the row shows the tags in that combination and the rarity range of the possible operators (e.g., "5★~6★").
-            *   Expanding the row reveals a grid of all the operators that can be recruited with that tag combination.
-            *   **Operator Card:** Each operator is shown as a small card with their portrait, name, rarity, and class icon.
-    If no tags are selected, this area prompts the user to select tags to see the results.
+*   **Filter Options:** At the top of the results section, there are two switches:
+    *   **Include Robots:** A switch to include or exclude robot operators from the results.
+    *   **Show Common First:** A switch that changes the sort order of the operators within each result. By default, they are sorted by rarity from highest to lowest. When this is turned on, common operators (4-star, 3-star, 2-star) are shown before uncommon ones (5-star, 1-star).
+*   **Combination Result:** Each possible combination of your selected tags is displayed in its own collapsible section.
+    *   **Header:** The header of each section shows you the guaranteed rarity you will get with that combination (e.g., "5★~6★"), the tags in the combination, and the number of possible operators. Combinations that guarantee a 5-star or 6-star operator are highlighted with a yellow or orange border and background.
+    *   **Content:** When you expand a section, it shows a grid of all the possible operators you can get with that tag combination.
+*   **Operator Card:** Each operator in the results is shown as a small card with their portrait, name, rarity stars, and class icon.
 
----
+## DPS Calculator Page
+
+This page is a tool for theorycrafters that allows you to calculate and compare the Damage Per Second (DPS) of different operators under various conditions.
+
+### Layout
+
+The page has a header with the title "DPS Calculator" and is divided into two main sections:
+1.  A "DPS Graph" section at the top, which displays the results as a line chart.
+2.  An "Operators" section at the bottom, where you can add and configure the operators you want to compare.
+
+### DPS Graph
+
+This section contains the line chart that visualizes the DPS comparison.
+
+*   **Appearance:** It's a standard line chart with a grid background. If no operators have been added, this area will be empty, prompting you to add an operator.
+*   **Axes:** The horizontal X-axis represents the enemy's stats, while the vertical Y-axis represents the operator's DPS. You can switch the X-axis between "Defense" and "Resistance" using a pair of tabs at the top of the section.
+*   **Lines:** Each operator you add to the comparison is represented by a colored line on the chart.
+*   **Legend:** Below the chart, a legend lists the names of the operators and their specific configurations (e.g., "Surtr E2 P1 S3M3"), each with a colored key that matches their line on the chart.
+*   **Tooltip:** When you move your mouse over the chart, a tooltip appears, showing the precise DPS value for each operator at the specific Defense or Resistance value under your cursor.
+
+### Operator Configuration
+
+This is where you build your comparison. It starts as an empty section with an "Add Operator" button.
+
+*   **Adding an Operator:** Clicking the "Add Operator" button opens a dialog window.
+    *   **Operator Selector:** This dialog contains a searchable list of all the operators available in the calculator. You can scroll through the list or use the search bar to find an operator by name or class. Operators that have already been added to the comparison will appear faded and cannot be selected again. Clicking on an operator adds them to the configuration section and closes the dialog.
+*   **Configuring an Operator:** Each operator you add appears in their own collapsible section.
+    *   **Header:** The header for each operator shows their name, rarity, and current skill/mastery level. It also has a trash can icon to remove the operator from the comparison. A colored line on the left matches the color of their line on the DPS chart.
+    *   **Options:** When you expand an operator's section, you are presented with a variety of controls to configure their stats:
+        *   **Skill:** A dropdown menu to select which skill to use in the calculation.
+        *   **Mastery Level:** A slider to set the skill mastery level from 0 to 3.
+        *   **Module:** A dropdown to select which module to equip (if the operator has one).
+        *   **Potential:** A slider to set the potential from 1 to 6.
+        *   **Trust:** A slider to set the trust percentage from 0 to 100.
+        *   **Elite Level:** A dropdown to set the promotion level (e.g., Elite 0, Elite 1, Elite 2).
+    *   Any changes made to these configurations will automatically update the DPS graph.
+*   **Clearing All:** If you have added one or more operators, a "Clear All" button appears, allowing you to remove all of them at once.
 
 ## User Profile Page
 
-### Purpose
+This page displays a user's Arknights profile, including their owned operators, inventory, and base information.
 
-This page displays the in-game profile of a specific user, including their owned operators, inventory, and base setup. It's a public-facing page that other users can view.
+### User Header
+
+At the top of the page is a large card that summarizes the user's profile.
+*   **Appearance:** It displays the user's chosen secretary as their avatar, their in-game name and friend code (e.g., "Doctor#1234"), their level, and their status message. Next to the name is a button to copy the full username to the clipboard.
+*   **Stats:** Below the basic info, it shows the user's current amount of LMD, Orundum, and Originium, as well as their friend limit. These numbers are animated and count up when they appear on screen.
+
+### Profile Tabs
+
+Below the header, the page is divided into three tabs: "Characters", "Items", and "Base".
+
+#### Characters Tab
+
+This tab displays all of the operators owned by the user.
+*   **Controls:** At the top of this section is a set of controls to filter and sort the characters:
+    *   A search bar to find characters by name.
+    *   A dropdown to sort by Level, Rarity, date Obtained, or Potential.
+    *   A dropdown to filter by rarity (e.g., show only 6-star operators).
+    *   A button to switch between ascending and descending sort order.
+    *   A pair of icon buttons to toggle between a "Detailed View" and a "Compact View".
+*   **Character Cards (Detailed View):** This view shows a grid of large, detailed cards for each operator.
+    *   **Appearance:** Each card shows the operator's full artwork, their name, rarity, class, and elite level. Progress bars for the operator's level and trust are displayed, along with a grid of their combat stats (HP, ATK, DEF, etc.).
+    *   **Accordion:** An accordion at the bottom of the card can be expanded to show the operator's potential, skills, and unlocked modules.
+    *   **Maxed Effect:** If an operator is fully maxed out (max level, potential, skills, and modules), their card has a glowing effect based on their rarity color.
+    *   **Interaction:** Clicking on a card opens a dialog with even more details and a larger view of the artwork.
+*   **Character Cards (Compact View):** This view shows a more condensed grid of smaller cards, inspired by the in-game character icons.
+    *   **Appearance:** Each card is a small square that shows the operator's avatar. The character's name is at the top, and a colored border at the bottom indicates their rarity.
+    *   **Badges:** Various icons and badges are overlaid on the card to show the operator's level, elite status, potential, skill levels, and unlocked modules. If the operator is fully maxed, most of these badges are hidden, and a "Maxed" badge appears over the avatar.
+    *   **Interaction:** Clicking on a card opens the same detailed dialog as the detailed view.
+
+#### Items Tab
+
+This tab displays all of the items in the user's inventory.
+*   **Layout:** It's a table with a search bar at the top. The table is presented as a list of rows within a scrollable area.
+*   **Table:**
+    *   **Header:** The table has three columns: "Icon", "Item", and "Qty" (Quantity). The "Item" and "Qty" column headers are buttons that can be clicked to sort the table by that column.
+    *   **Row:** Each row shows the item's icon, its name and ID, and the quantity the user possesses.
+*   **Interaction:**
+    *   The entire row is a button. Clicking it opens a dialog with detailed information about that item.
+    *   The dialog shows the item's description, usage, how to obtain it, and which game stages it drops from.
+
+#### Base Tab
+
+This tab displays information about the user's base.
+*   **Appearance:** This section is currently a work-in-progress. It displays a notice indicating that the feature is not yet complete. Below the notice, it shows a grid of "Room Cards" for the user's Trading Posts and Factories.
+*   **Room Card:** Each card represents a room in the base. It shows the room's title (e.g., "Factory"), its level, its current production efficiency as a percentage and a progress bar, and other details like the current product being manufactured or the amount of stock in a trading post.
+
+## Settings Page
+
+This page is only accessible to logged-in users and allows them to manage their profile settings.
 
 ### Layout
 
-The page has a header section followed by a tabbed interface for the main content. The layout is clean and focused on presenting the user's data in an organized way.
+The page has a header with the title "Settings" and is composed of several sections contained within cards.
 
-### Colors and Theme
+### Privacy Settings
 
-The page follows the general website theme. It uses progress bars and colored badges to provide at-a-glance information about the user's operators and base.
+This section allows you to control how your profile appears to other users.
+*   **Leaderboard Visibility:** This is a collapsible section that contains a switch to control whether your profile is public on leaderboards.
+    *   When you toggle the switch, a notification appears at the top of the screen confirming that your setting has been saved.
+    *   The section also provides a detailed explanation of what this setting affects, such as your visibility in leaderboards and player search results.
 
-### Components
+### Profile Management
 
-*   **User Header:**
-    *   A large card at the top of the page that displays the user's main profile information.
-    *   **Avatar:** The user's in-game assistant (secretary) is shown as their avatar.
-    *   **User Info:** Displays the user's nickname, ID number, level, and in-game status message. A button allows copying the full username to the clipboard.
-    *   **Stats:** Shows the user's current LMD, Orundum, Originium, and friend limit, with the numbers animating as they count up.
+This section allows you to manage your profile data.
+*   **Refresh Profile Data:** This is a collapsible section that contains a button to "Refresh Profile Now".
+    *   Clicking this button will fetch the latest data for your profile from the game servers, including your character roster, inventory, and base progress.
+    *   While the refresh is in progress, the button will show a loading spinner.
+    *   A notification will appear at the top of the screen to inform you whether the refresh was successful or not.
 
-*   **Tabs Section:**
-    Below the header, the content is divided into three tabs:
+### Coming Soon
 
-    1.  **Characters Tab:**
-        *   Displays the user's entire roster of owned operators.
-        *   **Filters:** Controls at the top allow the user to sort the operators (by Level, Rarity, etc.), filter by rarity, and search by name.
-        *   **View Mode:** A toggle allows switching between a "Detailed View" and a "Compact View".
-        *   **Detailed View:** Shows a grid of large cards, each with the operator's artwork, name, rarity, level, stats, and collapsible sections for skills and modules.
-        *   **Compact View:** Shows a grid of smaller, more compact cards that display a lot of information (level, potential, skill mastery, modules) as small icons and badges around the operator's avatar, similar to the in-game UI.
-        *   **Infinite Scroll:** More operators are automatically loaded as the user scrolls down the page.
-        *   **Dialog:** Clicking on any operator card (in either view) opens a full-screen dialog with even more detailed information about that specific operator, including a parallax header and detailed breakdowns of their stats, skills, and modules.
+A final card on the page indicates that more settings and features will be added in future updates.
 
-    2.  **Items Tab:**
-        *   Displays the user's inventory of items.
-        *   The items are shown in a table-like list that can be sorted by name or quantity.
-        *   A search bar allows filtering the items.
-        *   Clicking on an item opens a dialog with detailed information about it, including its description, usage, and where to farm it.
+## Admin Panel
 
-    3.  **Base Tab:**
-        *   Displays information about the user's in-game base.
-        *   This section is marked as a "work-in-progress".
-        *   It shows a grid of cards for the user's **Trading Posts** and **Factories**, displaying their level, current product or strategy, and efficiency as a percentage and a progress bar.
+This page is a protected area for website administrators to manage content and view statistics. It is not accessible to regular users.
+
+### Layout
+
+The page has a header that welcomes the admin user and shows their role (e.g., "super_admin"). The main content is a dashboard composed of several sections.
+
+*   **Statistics Grid:** A grid of four cards at the top of the page, displaying key statistics:
+    *   Total number of users.
+    *   Total number of tier lists.
+    *   Total number of tier list versions.
+    *   Total number of operator placements in tier lists.
+    Each stat card also shows a percentage change (e.g., "+12%").
+
+*   **User Management:** A table listing recent users.
+    *   **Controls:** The table has controls for searching users, filtering by role or server, and sorting by various columns (Name, UID, Level, etc.).
+    *   **Table Content:** Each row displays a user's avatar, nickname, UID, level, server, role, and the date they signed up.
+
+*   **Tier List Management:** This is the most complex section, allowing admins to create, edit, and delete tier lists.
+    *   **Table View:** By default, it shows a table of all tier lists, similar to the user management table. It includes columns for the tier list's name, status (active/inactive), number of tiers, operators, and versions, and the last updated date. Each row has an "Actions" menu with options to "View", "Edit", and "Delete" the tier list.
+    *   **Editor View:** When an admin clicks "Edit" on a tier list, the view animates to a powerful editor interface.
+        *   **Settings:** The admin can edit the tier list's name, description, and active status.
+        *   **Tier Editor:** The main part of the editor allows full control over the tiers. Tiers are displayed as rows and can be reordered by dragging and dropping.
+        *   **Tier Controls:** For each tier, the admin can change its name, color, and description.
+        *   **Operator Editor:** Within each tier is a grid of operators. Operators can be reordered within a tier or dragged and dropped to a different tier. Each operator card has a remove button. An "Add Operator" button opens a dialog to search for and add new operators to the tier.
+    *   **Saving and Publishing:** After making changes, the admin can save them. If there are unsaved changes, a badge will appear. Once saved, the admin can publish a new version, which prompts them to write a changelog.
+
+*   **Recent Activity:** A list showing the most recent changes made to any of the tier lists, such as an operator being added or moved.

@@ -3307,6 +3307,22 @@ fn generate_main_mod_file(letter_folders: &HashSet<char>, operators: &[OperatorC
     output.push_str("use super::operator_data::OperatorData;\n");
     output.push_str("use super::operator_unit::{DpsCalculator, OperatorParams};\n\n");
 
+    // Generate OperatorMetadata struct
+    output.push_str("/// Metadata about an operator's available configuration options\n");
+    output.push_str("#[derive(Debug, Clone)]\n");
+    output.push_str("pub struct OperatorMetadata {\n");
+    output.push_str("    /// Available skill indices (e.g., [1, 2] or [1, 2, 3])\n");
+    output.push_str("    pub available_skills: Vec<i32>,\n");
+    output.push_str("    /// Available module indices (e.g., [1, 2] or [])\n");
+    output.push_str("    pub available_modules: Vec<i32>,\n");
+    output.push_str("    /// Default skill index for this operator\n");
+    output.push_str("    pub default_skill_index: i32,\n");
+    output.push_str("    /// Default potential for this operator\n");
+    output.push_str("    pub default_potential: i32,\n");
+    output.push_str("    /// Default module index for this operator\n");
+    output.push_str("    pub default_module_index: i32,\n");
+    output.push_str("}\n\n");
+
     for letter in &letters {
         output.push_str(&format!("pub mod {letter};\n"));
     }
@@ -3372,6 +3388,46 @@ fn generate_main_mod_file(letter_folders: &HashSet<char>, operators: &[OperatorC
     }
 
     output.push_str("    ]\n");
+    output.push_str("}\n");
+
+    // Generate get_operator_metadata function
+    output.push('\n');
+    output.push_str("/// Returns metadata about an operator's available configuration options\n");
+    output.push_str("/// \n");
+    output.push_str("/// # Arguments\n");
+    output.push_str("/// * `name` - The operator name (e.g., \"Blaze\", \"ExusiaiAlter\")\n");
+    output.push_str("/// \n");
+    output.push_str("/// # Returns\n");
+    output.push_str("/// Some(OperatorMetadata) if the operator is found, None otherwise\n");
+    output.push_str("pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {\n");
+    output.push_str("    match name {\n");
+
+    for op in &sorted_ops {
+        let struct_name = to_upper_camel_case(&op.class_name);
+        let skills_str = format!(
+            "vec![{}]",
+            op.available_skills
+                .iter()
+                .map(|s| s.to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
+        let modules_str = format!(
+            "vec![{}]",
+            op.available_modules
+                .iter()
+                .map(|m| m.to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
+        output.push_str(&format!(
+            "        \"{struct_name}\" => Some(OperatorMetadata {{\n            available_skills: {skills_str},\n            available_modules: {modules_str},\n            default_skill_index: {},\n            default_potential: {},\n            default_module_index: {},\n        }}),\n",
+            op.default_skill, op.default_pot, op.default_mod
+        ));
+    }
+
+    output.push_str("        _ => None,\n");
+    output.push_str("    }\n");
     output.push_str("}\n");
 
     output

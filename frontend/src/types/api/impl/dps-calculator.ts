@@ -235,6 +235,18 @@ export interface DpsOperatorListEntry {
     rarity: number;
     /** Profession/class */
     profession: string;
+    /** Available skill indices (e.g., [1, 2] or [1, 2, 3]) */
+    availableSkills: number[];
+    /** Available module indices (e.g., [1, 2] or []) */
+    availableModules: number[];
+    /** Default skill index for this operator */
+    defaultSkillIndex: number;
+    /** Default potential for this operator */
+    defaultPotential: number;
+    /** Default module index for this operator */
+    defaultModuleIndex: number;
+    /** Maximum promotion/elite level (0, 1, or 2) based on rarity */
+    maxPromotion: number;
 }
 
 /**
