@@ -14,8 +14,26 @@ import { Slider } from "~/components/ui/shadcn/slider";
 import { Switch } from "~/components/ui/shadcn/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/shadcn/tooltip";
 import { cn } from "~/lib/utils";
-import type { DpsBuffs, DpsConditionals, DpsShred } from "~/types/api/impl/dps-calculator";
+import type { DpsBuffs, DpsConditionalInfo, DpsConditionals, DpsConditionalType, DpsShred } from "~/types/api/impl/dps-calculator";
 import type { OperatorConfiguration } from "./types";
+
+// Map conditional type to DpsConditionals key
+const CONDITIONAL_TYPE_TO_KEY: Record<DpsConditionalType, keyof DpsConditionals> = {
+    trait: "traitDamage",
+    talent: "talentDamage",
+    talent2: "talent2Damage",
+    skill: "skillDamage",
+    module: "moduleDamage",
+};
+
+// Fallback display names for conditional types
+const CONDITIONAL_TYPE_LABELS: Record<DpsConditionalType, string> = {
+    trait: "Trait",
+    talent: "Talent 1",
+    talent2: "Talent 2",
+    skill: "Skill",
+    module: "Module",
+};
 
 interface OperatorConfiguratorProps {
     operator: OperatorConfiguration;
@@ -78,6 +96,46 @@ export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorC
             },
         });
     };
+
+    // Helper to check if a conditional is applicable based on current configuration
+    const isConditionalApplicable = (conditional: DpsConditionalInfo): boolean => {
+        const currentSkill = operator.params.skillIndex ?? operator.availableSkills[0] ?? 1;
+        const currentModule = operator.params.moduleIndex ?? 0;
+        const currentElite = operator.params.promotion ?? operator.maxPromotion;
+        const currentModuleLevel = operator.params.moduleLevel ?? 3;
+
+        // Check skill applicability (empty array = applies to all skills)
+        if (conditional.applicableSkills.length > 0 && !conditional.applicableSkills.includes(currentSkill)) {
+            return false;
+        }
+
+        // Check module applicability (empty array = applies to all modules)
+        if (conditional.applicableModules.length > 0 && !conditional.applicableModules.includes(currentModule)) {
+            return false;
+        }
+
+        // Check elite level requirement
+        if (currentElite < conditional.minElite) {
+            return false;
+        }
+
+        // Check module level requirement (only relevant if a module is selected)
+        if (currentModule > 0 && currentModuleLevel < conditional.minModuleLevel) {
+            return false;
+        }
+
+        return true;
+    };
+
+    // Get applicable conditionals for current configuration
+    const getApplicableConditionals = (): DpsConditionalInfo[] => {
+        if (!operator.conditionalData || operator.conditionalData.length === 0) {
+            return [];
+        }
+        return operator.conditionalData.filter(isConditionalApplicable);
+    };
+
+    const applicableConditionals = getApplicableConditionals();
 
     // Helper to get max level for current promotion
     const getMaxLevel = () => {
@@ -418,109 +476,77 @@ export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorC
                             </DisclosureTrigger>
                             <DisclosureContent>
                                 <div className="mt-3 space-y-6">
-                                    {/* Conditionals Section */}
-                                    <div className="space-y-3">
-                                        <Label className="text-muted-foreground text-xs uppercase tracking-wide">Conditionals</Label>
-                                        <div className="grid grid-cols-2 gap-x-4 gap-y-2 md:grid-cols-3">
-                                            {/* Master Toggle */}
-                                            <TooltipProvider delayDuration={200}>
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <div className="col-span-2 flex items-center justify-between rounded-md border border-primary/30 bg-primary/5 px-3 py-2 md:col-span-3">
-                                                            <Label className="cursor-pointer font-medium text-sm" htmlFor="allCond">
-                                                                All Conditionals
-                                                            </Label>
-                                                            <Switch checked={operator.params.allCond ?? true} id="allCond" onCheckedChange={updateAllCond} />
-                                                        </div>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                        <p>Master toggle for all conditional bonuses</p>
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
+                                    {/* Conditionals Section - Only show if operator has applicable conditionals */}
+                                    {applicableConditionals.length > 0 && (
+                                        <div className="space-y-3">
+                                            <Label className="text-muted-foreground text-xs uppercase tracking-wide">Conditionals</Label>
+                                            <div className="grid grid-cols-2 gap-x-4 gap-y-2 md:grid-cols-3">
+                                                {/* Master Toggle */}
+                                                <TooltipProvider delayDuration={200}>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <div className="col-span-2 flex items-center justify-between rounded-md border border-primary/30 bg-primary/5 px-3 py-2 md:col-span-3">
+                                                                <Label className="cursor-pointer font-medium text-sm" htmlFor={`allCond-${operator.id}`}>
+                                                                    All Conditionals
+                                                                </Label>
+                                                                <Switch checked={operator.params.allCond ?? true} id={`allCond-${operator.id}`} onCheckedChange={updateAllCond} />
+                                                            </div>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Master toggle for all conditional bonuses</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
 
-                                            {/* Individual Conditionals */}
-                                            <TooltipProvider delayDuration={200}>
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <div className="flex items-center justify-between rounded-md border border-border px-3 py-2">
-                                                            <Label className="cursor-pointer text-xs" htmlFor="traitDamage">
-                                                                Trait
-                                                            </Label>
-                                                            <Switch checked={operator.params.conditionals?.traitDamage ?? true} disabled={!(operator.params.allCond ?? true)} id="traitDamage" onCheckedChange={(v) => updateConditional("traitDamage", v)} />
-                                                        </div>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                        <p>Trait passive damage bonuses</p>
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
+                                                {/* Dynamic Conditionals from Backend */}
+                                                {applicableConditionals.map((conditional, idx) => {
+                                                    const paramKey = CONDITIONAL_TYPE_TO_KEY[conditional.conditionalType];
+                                                    const currentValue = operator.params.conditionals?.[paramKey] ?? true;
+                                                    const typeLabel = CONDITIONAL_TYPE_LABELS[conditional.conditionalType];
+                                                    const uniqueId = `${operator.id}-${conditional.conditionalType}-${idx}`;
 
-                                            <TooltipProvider delayDuration={200}>
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <div className="flex items-center justify-between rounded-md border border-border px-3 py-2">
-                                                            <Label className="cursor-pointer text-xs" htmlFor="talentDamage">
-                                                                Talent 1
-                                                            </Label>
-                                                            <Switch checked={operator.params.conditionals?.talentDamage ?? true} disabled={!(operator.params.allCond ?? true)} id="talentDamage" onCheckedChange={(v) => updateConditional("talentDamage", v)} />
-                                                        </div>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                        <p>Primary talent bonuses</p>
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
+                                                    // For inverted conditionals, the name describes what happens when OFF
+                                                    // Show the custom name if available, otherwise show the type label
+                                                    const displayName = conditional.name || typeLabel;
 
-                                            <TooltipProvider delayDuration={200}>
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <div className="flex items-center justify-between rounded-md border border-border px-3 py-2">
-                                                            <Label className="cursor-pointer text-xs" htmlFor="talent2Damage">
-                                                                Talent 2
-                                                            </Label>
-                                                            <Switch checked={operator.params.conditionals?.talent2Damage ?? true} disabled={!(operator.params.allCond ?? true)} id="talent2Damage" onCheckedChange={(v) => updateConditional("talent2Damage", v)} />
-                                                        </div>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                        <p>Secondary talent bonuses</p>
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
+                                                    // Build tooltip with context info
+                                                    const tooltipParts: string[] = [`${typeLabel} conditional`];
+                                                    if (conditional.inverted) {
+                                                        tooltipParts.push(`Label "${displayName}" applies when disabled`);
+                                                    }
+                                                    if (conditional.applicableSkills.length > 0) {
+                                                        tooltipParts.push(`Skills: S${conditional.applicableSkills.join(", S")}`);
+                                                    }
+                                                    if (conditional.applicableModules.length > 0) {
+                                                        tooltipParts.push(`Modules: ${conditional.applicableModules.join(", ")}`);
+                                                    }
 
-                                            <TooltipProvider delayDuration={200}>
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <div className="flex items-center justify-between rounded-md border border-border px-3 py-2">
-                                                            <Label className="cursor-pointer text-xs" htmlFor="skillDamage">
-                                                                Skill
-                                                            </Label>
-                                                            <Switch checked={operator.params.conditionals?.skillDamage ?? true} disabled={!(operator.params.allCond ?? true)} id="skillDamage" onCheckedChange={(v) => updateConditional("skillDamage", v)} />
-                                                        </div>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                        <p>Skill passive effects</p>
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
-
-                                            <TooltipProvider delayDuration={200}>
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <div className="flex items-center justify-between rounded-md border border-border px-3 py-2">
-                                                            <Label className="cursor-pointer text-xs" htmlFor="moduleDamage">
-                                                                Module
-                                                            </Label>
-                                                            <Switch checked={operator.params.conditionals?.moduleDamage ?? true} disabled={!(operator.params.allCond ?? true)} id="moduleDamage" onCheckedChange={(v) => updateConditional("moduleDamage", v)} />
-                                                        </div>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                        <p>Module passive bonuses</p>
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
+                                                    return (
+                                                        <TooltipProvider delayDuration={200} key={uniqueId}>
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <div className={cn("flex items-center justify-between rounded-md border px-3 py-2", conditional.inverted ? "border-amber-500/30 bg-amber-500/5" : "border-border")}>
+                                                                        <Label className="cursor-pointer text-xs" htmlFor={uniqueId}>
+                                                                            <span className="text-muted-foreground">{typeLabel}:</span> {displayName}
+                                                                        </Label>
+                                                                        <Switch checked={currentValue} disabled={!(operator.params.allCond ?? true)} id={uniqueId} onCheckedChange={(v) => updateConditional(paramKey, v)} />
+                                                                    </div>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>
+                                                                    {tooltipParts.map((part, i) => (
+                                                                        // biome-ignore lint/suspicious/noArrayIndexKey: Static tooltip parts
+                                                                        <p className={i === 0 ? "font-medium" : "text-muted-foreground text-xs"} key={i}>
+                                                                            {part}
+                                                                        </p>
+                                                                    ))}
+                                                                </TooltipContent>
+                                                            </Tooltip>
+                                                        </TooltipProvider>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
 
                                     {/* External Buffs Section */}
                                     <div className="space-y-3">
