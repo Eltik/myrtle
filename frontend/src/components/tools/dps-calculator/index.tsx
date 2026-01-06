@@ -69,12 +69,12 @@ export function DpsCalculator({ operators }: DpsCalculatorProps) {
                 rarity: operator.rarity,
                 color: CHART_COLORS[colorIndex] ?? "#3b82f6",
                 params: {
-                    skillIndex: defaultSkill,
-                    masteryLevel: 3,
                     potential: defaultPotential,
                     trust: 100,
                     promotion: defaultPromotion,
                     level: defaultLevel,
+                    skillIndex: defaultSkill,
+                    masteryLevel: 3,
                     moduleIndex: defaultModule,
                     moduleLevel: 3,
                 },
@@ -199,7 +199,7 @@ export function DpsCalculator({ operators }: DpsCalculatorProps) {
                                             <DialogTitle>Select Operator</DialogTitle>
                                             <DialogDescription>Choose an operator to add to the comparison</DialogDescription>
                                         </DialogHeader>
-                                        <OperatorSelector onSelectOperator={handleSelectOperator} operators={operators} selectedOperatorIds={selectedOperators.map((op) => op.operatorId)} />
+                                        <OperatorSelector onSelectOperator={handleSelectOperator} operators={operators} />
                                     </DialogContent>
                                 </Dialog>
                             </div>

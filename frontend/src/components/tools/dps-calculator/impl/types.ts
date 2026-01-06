@@ -14,7 +14,7 @@ export interface OperatorConfiguration {
     rarity: number;
     /** Chart line color */
     color: string;
-    /** DPS calculation parameters */
+    /** DPS calculation parameters (includes skillIndex, masteryLevel, etc.) */
     params: DpsOperatorParams;
     /** Available skill indices (e.g., [1, 2] or [1, 2, 3]) */
     availableSkills: number[];
