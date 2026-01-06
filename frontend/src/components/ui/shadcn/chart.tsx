@@ -149,6 +149,7 @@ function ChartTooltipContent({
             <div className="grid gap-1.5">
                 {payload
                     .filter((item) => item.type !== "none")
+                    .sort((a, b) => (Number(b.value) || 0) - (Number(a.value) || 0))
                     .map((item, index) => {
                         const key = `${nameKey || item.name || item.dataKey || "value"}`;
                         const itemConfig = getPayloadConfigFromPayload(config, item, key);
