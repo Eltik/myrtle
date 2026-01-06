@@ -93,16 +93,16 @@ impl SilverAsh {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut atkbuff: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut dps: f64 = 0.0;
-        let mut bonusdmg: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut avgphys: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut bonusdmg: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut sp_cost: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut avgphys: f64 = 0.0;
 
         atk_scale = 1.0;
         if !self.unit.trait_damage && (self.unit.skill_index as f64) != 3.0 {

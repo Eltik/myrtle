@@ -4,7 +4,7 @@ use axum::{Json, extract::State};
 use serde::Serialize;
 
 use crate::app::state::AppState;
-use crate::core::dps_calculator::operators::get_supported_operator_names;
+use crate::core::dps_calculator::operators::{get_operator_metadata, get_supported_operator_names};
 
 /// Response for listing available DPS calculator operators
 #[derive(Debug, Serialize)]
@@ -30,6 +30,18 @@ pub struct SupportedOperator {
     pub rarity: i32,
     /// Operator profession/class
     pub profession: String,
+    /// Available skill indices (e.g., [1, 2] or [1, 2, 3])
+    pub available_skills: Vec<i32>,
+    /// Available module indices (e.g., [1, 2] or [])
+    pub available_modules: Vec<i32>,
+    /// Default skill index for this operator
+    pub default_skill_index: i32,
+    /// Default potential for this operator
+    pub default_potential: i32,
+    /// Default module index for this operator
+    pub default_module_index: i32,
+    /// Maximum promotion/elite level (0, 1, or 2) based on rarity
+    pub max_promotion: i32,
 }
 
 /// GET /dps-calculator/operators
@@ -44,12 +56,40 @@ pub async fn list_operators(State(state): State<AppState>) -> Json<ListOperators
         let normalized_name = normalize_operator_name(&operator.name);
 
         if supported_names.contains(&normalized_name.as_str()) {
+            let rarity = rarity_to_number(&operator.rarity);
+            let max_promotion = rarity_to_max_promotion(rarity);
+
+            // Get operator metadata (available skills, modules, defaults)
+            let metadata = get_operator_metadata(&normalized_name);
+            let (
+                available_skills,
+                available_modules,
+                default_skill_index,
+                default_potential,
+                default_module_index,
+            ) = match metadata {
+                Some(m) => (
+                    m.available_skills,
+                    m.available_modules,
+                    m.default_skill_index,
+                    m.default_potential,
+                    m.default_module_index,
+                ),
+                None => (vec![], vec![], 0, 1, 0),
+            };
+
             operators.push(SupportedOperator {
                 id: id.clone(),
                 name: operator.name.clone(),
                 calculator_name: normalized_name,
-                rarity: rarity_to_number(&operator.rarity),
+                rarity,
                 profession: format!("{:?}", operator.profession),
+                available_skills,
+                available_modules,
+                default_skill_index,
+                default_potential,
+                default_module_index,
+                max_promotion,
             });
         }
     }
@@ -73,6 +113,17 @@ fn rarity_to_number(rarity: &crate::core::local::types::operator::OperatorRarity
         OperatorRarity::FourStar => 4,
         OperatorRarity::FiveStar => 5,
         OperatorRarity::SixStar => 6,
+    }
+}
+
+/// Convert rarity to maximum promotion level
+/// 1-2 star: E0 max, 3 star: E1 max, 4-6 star: E2 max
+fn rarity_to_max_promotion(rarity: i32) -> i32 {
+    match rarity {
+        1 | 2 => 0,
+        3 => 1,
+        4..=6 => 2,
+        _ => 0,
     }
 }
 

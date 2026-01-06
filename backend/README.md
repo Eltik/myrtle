@@ -1,6 +1,6 @@
 # Myrtle Backend
 
-A high-performance Rust backend for the Myrtle.moe Arknights companion application. This server provides user authentication via Yostar OAuth, player data synchronization, static game data APIs, asset CDN functionality, and community tier list management with versioning and permission controls.
+A high-performance Rust backend for the Myrtle.moe Arknights companion application. This server provides user authentication via Yostar OAuth, player data synchronization, static game data APIs, asset CDN functionality, community tier list management with versioning and permission controls, and a comprehensive DPS calculator with 281 operator implementations.
 
 ## Table of Contents
 
@@ -18,6 +18,7 @@ A high-performance Rust backend for the Myrtle.moe Arknights companion applicati
   - [User Data](#user-data)
   - [Static Data](#static-data)
   - [CDN Assets](#cdn-assets)
+  - [DPS Calculator](#dps-calculator-api)
   - [Tier Lists](#tier-lists)
   - [Admin](#admin)
 - [DPS Calculator](#dps-calculator)
@@ -54,7 +55,8 @@ A high-performance Rust backend for the Myrtle.moe Arknights companion applicati
 | Rate Limiting | Per-IP, per-endpoint rate limiting |
 | Auto-Reload | Hourly configuration refresh from game servers |
 | Admin Statistics | System monitoring and usage statistics |
-| DPS Calculator | Operator damage calculations translated from Python |
+| DPS Calculator | 281 operators with 100% accuracy vs Python reference |
+| DPS Calculator API | REST API for damage calculations with range support |
 
 ### Static Data Endpoints
 
@@ -71,6 +73,13 @@ A high-performance Rust backend for the Myrtle.moe Arknights companion applicati
 | `/static/voices` | Voice line data by operator |
 | `/static/gacha` | Gacha pools and recruitment data |
 | `/static/chibis` | Chibi/spine animation metadata |
+
+### DPS Calculator API
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/dps-calculator` | POST | Calculate DPS with full operator configuration |
+| `/dps-calculator/operators` | GET | List all supported operators with metadata |
 
 ### Asset Serving
 
@@ -249,6 +258,14 @@ curl "http://localhost:3060/static/operators?limit=10"
 # Get specific operator
 curl http://localhost:3060/static/operators/char_002_amiya
 
+# Calculate DPS for an operator
+curl -X POST http://localhost:3060/dps-calculator \
+  -H "Content-Type: application/json" \
+  -d '{"operatorId": "char_017_huang", "params": {"skillIndex": 2}, "enemy": {"defense": 500, "res": 0}}'
+
+# List DPS calculator operators
+curl http://localhost:3060/dps-calculator/operators
+
 # Refresh user data using authentication
 curl -X POST "http://localhost:3060/refresh?uid=123&secret=abc&seqnum=1&server=en"
 ```
@@ -279,6 +296,9 @@ backend/
 │   │       ├── avatar.rs       # Avatar CDN
 │   │       ├── portrait.rs     # Portrait CDN
 │   │       ├── static_data/    # Static data API
+│   │       ├── dps_calculator/ # DPS calculation API
+│   │       │   ├── calculate.rs    # POST /dps-calculator
+│   │       │   └── list.rs         # GET /dps-calculator/operators
 │   │       ├── yostar/         # Yostar OAuth login
 │   │       ├── auth/           # Token verification & settings
 │   │       ├── admin/          # Admin statistics
@@ -288,11 +308,12 @@ backend/
 │   │   ├── user/               # User data fetching & formatting
 │   │   ├── local/              # Game data loading & types
 │   │   ├── cron/               # Background jobs
-│   │   └── dps_calculator/     # DPS calculations (256 operators)
+│   │   └── dps_calculator/     # DPS calculations (281 operators)
 │   │       ├── mod.rs
 │   │       ├── operator_data.rs    # Operator stats and data loading
-│   │       ├── operator_unit.rs    # OperatorUnit struct for calculations
+│   │       ├── operator_unit.rs    # DpsCalculator trait and OperatorUnit
 │   │       └── operators/          # Individual operator implementations
+│   │           ├── mod.rs          # Operator registry and factory
 │   │           ├── a/              # Aak, Absinthe, Aciddrop, etc.
 │   │           ├── b/              # Bagpipe, Blaze, etc.
 │   │           └── ...             # Organized alphabetically (a-z)
@@ -312,7 +333,8 @@ backend/
 │       ├── dps_comparison_test.rs  # Generated Rust integration tests
 │       ├── run_comparison.py       # Python test runner
 │       ├── test_config.json        # Test case configurations
-│       └── operators.json          # Extracted operator metadata
+│       ├── operators.json          # Extracted operator metadata
+│       └── expected_dps.json       # Pre-computed Python DPS values
 ├── external/
 │   └── ArknightsDpsCompare/        # Git submodule - reference implementation
 ├── Cargo.toml
@@ -353,6 +375,22 @@ pub struct GameData {
 }
 ```
 
+#### DPS Calculator Trait
+
+```rust
+/// Trait for operator DPS calculations
+pub trait DpsCalculator {
+    /// Calculate DPS against given enemy stats
+    fn skill_dps(&self, enemy: &EnemyStats) -> f64;
+
+    /// Get reference to the operator unit
+    fn unit(&self) -> &OperatorUnit;
+
+    /// Get mutable reference to the operator unit
+    fn unit_mut(&mut self) -> &mut OperatorUnit;
+}
+```
+
 ### Request Flow
 
 ```
@@ -371,6 +409,7 @@ Client Request
       ├──▶ /health ──▶ Health Check
       ├──▶ /static/* ──▶ Redis Cache ──▶ Game Data
       ├──▶ /cdn/* ──▶ File System ──▶ Asset Streaming
+      ├──▶ /dps-calculator ──▶ DPS Calculator ──▶ Operator Factory
       ├──▶ /send-code ──▶ Yostar API
       ├──▶ /login ──▶ Yostar OAuth ──▶ Game Server Auth
       ├──▶ /refresh ──▶ Game Server ──▶ PostgreSQL
@@ -700,6 +739,218 @@ Serve any asset from the assets directory.
 curl http://localhost:3060/cdn/upk/arts/chararts/char_002_amiya.png
 ```
 
+### DPS Calculator API
+
+The DPS Calculator API provides endpoints for calculating operator damage per second with full configuration support.
+
+#### POST /dps-calculator
+
+Calculate DPS for an operator with given configuration against enemy stats.
+
+**Request Body:**
+```json
+{
+  "operatorId": "char_017_huang",
+  "params": {
+    "potential": 6,
+    "promotion": 2,
+    "level": 90,
+    "trust": 100,
+    "skillIndex": 2,
+    "masteryLevel": 3,
+    "moduleIndex": 1,
+    "moduleLevel": 3,
+    "targets": 3,
+    "buffs": {
+      "atkBuff": 0.0,
+      "atkBuffFlat": 0,
+      "aspd": 0,
+      "fragile": 0.0,
+      "defShred": 0,
+      "defShredPercent": 0.0,
+      "resShred": 0,
+      "resShredPercent": 0.0,
+      "damageBonus": 0.0
+    },
+    "baseBuffs": {
+      "atkBuff": 0.0,
+      "atkBuffFlat": 0
+    },
+    "conditionals": {
+      "traitDamage": true,
+      "talentDamage": true,
+      "talent2Damage": true,
+      "skillDamage": true,
+      "moduleDamage": true
+    }
+  },
+  "enemy": {
+    "defense": 500,
+    "res": 20
+  },
+  "range": {
+    "defenseMin": 0,
+    "defenseMax": 2000,
+    "defenseStep": 100,
+    "resMin": 0,
+    "resMax": 90,
+    "resStep": 10
+  }
+}
+```
+
+**Request Parameters:**
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `operatorId` | string | Yes | - | Operator ID (e.g., "char_017_huang") |
+| `params.potential` | int | No | 6 | Potential rank (1-6) |
+| `params.promotion` | int | No | max | Elite level (0-2) |
+| `params.level` | int | No | max | Operator level |
+| `params.trust` | int | No | 100 | Trust level (0-100) |
+| `params.skillIndex` | int | No | default | Skill index (0=basic, 1=S1, 2=S2, 3=S3) |
+| `params.masteryLevel` | int | No | 3 | Mastery level (0-3) |
+| `params.moduleIndex` | int | No | default | Module index (0=none, 1-3) |
+| `params.moduleLevel` | int | No | 3 | Module level (1-3) |
+| `params.targets` | int | No | 1 | Number of targets |
+| `params.buffs` | object | No | {} | External buffs from allies |
+| `params.baseBuffs` | object | No | {} | Base ATK modifiers |
+| `params.conditionals` | object | No | all true | Conditional damage toggles |
+| `enemy.defense` | float | No | 0 | Enemy defense |
+| `enemy.res` | float | No | 0 | Enemy resistance (%) |
+| `range` | object | No | null | Calculate across defense/res ranges |
+
+**Response (Single):**
+```json
+{
+  "dps": {
+    "skillDps": 5234.56,
+    "totalDamage": 78518.4,
+    "averageDps": 3921.45
+  },
+  "operator": {
+    "id": "char_017_huang",
+    "name": "Blaze",
+    "rarity": 6,
+    "elite": 2,
+    "level": 90,
+    "potential": 6,
+    "trust": 100,
+    "skillIndex": 2,
+    "skillLevel": 10,
+    "moduleIndex": 1,
+    "moduleLevel": 3,
+    "atk": 952.0,
+    "attackInterval": 1.2,
+    "attackSpeed": 100.0,
+    "isPhysical": true,
+    "skillDuration": 15.0,
+    "skillCost": 40,
+    "skillParameters": [0.8, 3],
+    "talent1Parameters": [0.08],
+    "talent2Parameters": []
+  }
+}
+```
+
+**Response (Range):**
+```json
+{
+  "dps": {
+    "byDefense": [
+      {"value": 0, "dps": 8500.0},
+      {"value": 100, "dps": 7850.0},
+      {"value": 200, "dps": 7200.0}
+    ],
+    "byResistance": [
+      {"value": 0, "dps": 8500.0},
+      {"value": 10, "dps": 7650.0},
+      {"value": 20, "dps": 6800.0}
+    ]
+  },
+  "operator": { ... }
+}
+```
+
+**Example Requests:**
+
+```bash
+# Basic DPS calculation
+curl -X POST http://localhost:3060/dps-calculator \
+  -H "Content-Type: application/json" \
+  -d '{"operatorId": "char_017_huang", "enemy": {"defense": 500}}'
+
+# With skill and module selection
+curl -X POST http://localhost:3060/dps-calculator \
+  -H "Content-Type: application/json" \
+  -d '{
+    "operatorId": "char_003_kalts",
+    "params": {
+      "skillIndex": 3,
+      "moduleIndex": 1,
+      "moduleLevel": 3
+    },
+    "enemy": {"defense": 800, "res": 20}
+  }'
+
+# DPS curve across defense values
+curl -X POST http://localhost:3060/dps-calculator \
+  -H "Content-Type: application/json" \
+  -d '{
+    "operatorId": "char_134_ifrit",
+    "params": {"skillIndex": 2},
+    "range": {
+      "defenseMin": 0,
+      "defenseMax": 1500,
+      "defenseStep": 100
+    }
+  }'
+```
+
+#### GET /dps-calculator/operators
+
+List all operators that have DPS calculator implementations.
+
+**Response:**
+```json
+{
+  "count": 281,
+  "operators": [
+    {
+      "id": "char_225_haak",
+      "name": "Aak",
+      "calculatorName": "Aak",
+      "rarity": 6,
+      "profession": "Specialist",
+      "availableSkills": [1, 2, 3],
+      "availableModules": [1, 2],
+      "defaultSkillIndex": 3,
+      "defaultPotential": 1,
+      "defaultModuleIndex": 1,
+      "maxPromotion": 2
+    },
+    {
+      "id": "char_002_amiya",
+      "name": "Amiya",
+      "calculatorName": "Amiya",
+      "rarity": 5,
+      "profession": "Caster",
+      "availableSkills": [1, 2, 3],
+      "availableModules": [1, 2],
+      "defaultSkillIndex": 2,
+      "defaultPotential": 1,
+      "defaultModuleIndex": 1,
+      "maxPromotion": 2
+    }
+  ]
+}
+```
+
+**Example:**
+```bash
+curl http://localhost:3060/dps-calculator/operators
+```
+
 ### Tier Lists
 
 The tier list system allows creating, managing, and versioning community tier lists with permission-based access control.
@@ -850,63 +1101,115 @@ The backend includes a comprehensive DPS (Damage Per Second) calculator that has
 
 | Metric | Value |
 |--------|-------|
-| Operators Implemented | 256 |
-| Test Cases | 2,870 |
-| Success Rate | 99.65% (2,860/2,870) |
+| Operators Implemented | 281 |
+| Test Cases | 5,100 |
+| Pass Rate | 100% |
+| Reference | ArknightsDpsCompare (Python) |
 
 ### How It Works
 
 The DPS calculator computes damage output for operators based on:
 
-- **Operator Stats**: ATK, attack interval, skill multipliers
+- **Operator Stats**: ATK, attack interval, attack speed, skill multipliers
 - **Enemy Stats**: Defense (DEF) and Resistance (RES)
 - **Skill Selection**: Different skills have different damage formulas
 - **Module Selection**: Modules can modify stats and behavior
+- **Conditionals**: Trait, talent, and skill damage toggles
+- **External Buffs**: ATK buffs, ASPD, fragile, DEF/RES shred
 
 ### Architecture
 
+Each operator implements the `DpsCalculator` trait:
+
 ```rust
-// Core calculation unit
-pub struct OperatorUnit {
-    pub base_atk: f64,
-    pub attack_interval: f64,
-    pub skill: i32,
-    pub module: i32,
-    // ... additional fields
+/// Core trait for operator DPS calculations
+pub trait DpsCalculator {
+    /// Calculate DPS while skill is active
+    fn skill_dps(&self, enemy: &EnemyStats) -> f64;
+
+    /// Access operator unit stats
+    fn unit(&self) -> &OperatorUnit;
+    fn unit_mut(&mut self) -> &mut OperatorUnit;
 }
 
-impl OperatorUnit {
-    pub fn calculate_dps(&self, defense: f64, res: f64) -> f64 {
-        // Operator-specific damage calculation
-    }
+/// Operator unit containing all stats and parameters
+pub struct OperatorUnit {
+    pub atk: f64,
+    pub attack_interval: f32,
+    pub attack_speed: f64,
+    pub skill_index: i32,
+    pub module_index: i32,
+    pub module_level: i32,
+    pub skill_parameters: Vec<f64>,
+    pub talent1_parameters: Vec<f64>,
+    pub talent2_parameters: Vec<f64>,
+    // ... additional fields
 }
 ```
 
-Each operator has its own implementation file in `src/core/dps_calculator/operators/` organized alphabetically:
+Operators are organized alphabetically in `src/core/dps_calculator/operators/`:
 
 ```
 operators/
+├── mod.rs              # Registry and factory function
 ├── a/
+│   ├── mod.rs
 │   ├── aak.rs
 │   ├── absinthe.rs
+│   ├── amiya.rs
+│   ├── amiya_guard.rs
 │   └── ...
 ├── b/
+│   ├── mod.rs
 │   ├── bagpipe.rs
 │   ├── blaze.rs
+│   ├── blaze_alter.rs
 │   └── ...
-└── ...
+└── ...                 # 26 folders (a-z)
 ```
 
-### Usage
+### Translation System
+
+Operators are automatically translated from Python to Rust using the `translate_operators` binary:
+
+```bash
+# Translate all operators from Python source
+cargo run --bin translate-operators -- \
+  external/ArknightsDpsCompare/damagecalc/damage_formulas.py \
+  src/core/dps_calculator/operators
+```
+
+The translator handles:
+- Python syntax conversion (self.x → self.unit.x)
+- NumPy functions (np.fmax → f64::max)
+- Operator-specific edge cases (Walter shadows, Muelsyse cloned_op, etc.)
+- Init-time field modifications
+- Module-dependent calculations
+
+### Usage Example
 
 ```rust
-use backend::core::dps_calculator::operators::silverash::Silverash;
+use backend::core::dps_calculator::{
+    operator_data::OperatorData,
+    operator_unit::{OperatorParams, EnemyStats},
+    operators::create_operator,
+};
 
-// Create operator unit with skill 3, no module
-let unit = Silverash::new(3, -1);
+// Create operator with skill 3, module 1
+let params = OperatorParams {
+    skill_index: Some(3),
+    module_index: Some(1),
+    module_level: Some(3),
+    ..Default::default()
+};
+
+// Create the operator calculator
+let calculator = create_operator("SilverAsh", operator_data, params)
+    .expect("Operator not found");
 
 // Calculate DPS against 500 DEF, 0 RES
-let dps = unit.calculate_dps(500.0, 0.0);
+let enemy = EnemyStats { defense: 500.0, res: 0.0 };
+let dps = calculator.skill_dps(&enemy);
 println!("SilverAsh S3 DPS: {:.2}", dps);
 ```
 
@@ -931,19 +1234,19 @@ cargo test -- --nocapture
 cargo test test_name
 
 # Run DPS comparison tests only
-cargo test --test dps_comparison_test
+DATA_DIR=/path/to/gamedata cargo test --test dps_comparison_test
 ```
 
 ### DPS Comparison Tests
 
-The DPS comparison test suite validates the Rust implementations against the Python reference. It includes **2,870 test cases** covering **257 operators** across multiple scenarios.
+The DPS comparison test suite validates the Rust implementations against the Python reference. It includes **5,100 test cases** covering **281 operators** across multiple scenarios with **100% pass rate**.
 
 #### Test Configuration
 
 Each test case specifies:
 - Operator name
-- Skill index (0-based)
-- Module index (-1 for none)
+- Skill index (1-based)
+- Module index (0 for none, 1+ for modules)
 - Defense value
 - Resistance value
 
@@ -956,38 +1259,42 @@ Test scenarios per operator:
 | 500 | 30 | Medium defense + resistance |
 | 1000 | 50 | High defense + resistance |
 
+#### Running DPS Tests
+
+```bash
+# Set game data directory
+export DATA_DIR=/path/to/gamedata/excel
+
+# Run DPS comparison tests
+cargo test --test dps_comparison_test -- --nocapture
+
+# Output:
+# === DPS Comparison Results ===
+# Tested: 5100, Passed: 5100, Failed: 0, Skipped: 450
+# Pass rate: 100.0%
+```
+
 #### Running Python Comparison
 
 The Python runner executes the reference implementation and outputs DPS values:
 
 ```bash
-# Run all test cases
-python3 tests/dps_comparison/run_comparison.py
+# Run single operator calculation
+python3 scripts/python_dps_harness.py SilverAsh 500 0 --skill 3 --module 1
 
-# Save results to JSON
-python3 tests/dps_comparison/run_comparison.py --output results.json
-
-# Generate Rust expected values
-python3 tests/dps_comparison/run_comparison.py --rust-values
-```
-
-Example output:
-```
-Running 2870 test cases from test_config.json...
-  [1/2870] Aak S1 def=0 res=0 -> DPS: 815.45
-  [2/2870] Aak S1 def=300 res=0 -> DPS: 584.68
-  ...
-Completed: 2860 successful, 10 errors
-```
-
-#### Running Rust Integration Tests
-
-```bash
-# Run DPS integration tests
-cargo test --test dps_comparison_test
-
-# Run with detailed output
-cargo test --test dps_comparison_test -- --nocapture
+# Output:
+{
+  "operator": "SilverAsh",
+  "name": "SilverAsh P1 S3 ModX3 rangedAtk",
+  "defense": 500.0,
+  "res": 0.0,
+  "skill": 3,
+  "module": 1,
+  "dps": 5432.10,
+  "atk": 892.0,
+  "attack_speed": 133.0,
+  "attack_interval": 1.3
+}
 ```
 
 ### Generating Test Files
@@ -1030,24 +1337,22 @@ cargo run --bin generate-dps-tests
 This generates:
 - `tests/dps_comparison/test_config.json` - Test case configurations
 - `tests/dps_comparison/dps_comparison_test.rs` - Rust integration tests
-- `tests/dps_comparison/run_comparison.py` - Python test runner
+- `tests/dps_comparison/expected_dps.json` - Pre-computed Python DPS values
 
 #### Step 3: Run Tests
 
 ```bash
-# Run Python comparison
-python3 tests/dps_comparison/run_comparison.py
-
 # Run Rust tests
-cargo test --test dps_comparison_test
+DATA_DIR=/path/to/gamedata cargo test --test dps_comparison_test -- --nocapture
 ```
 
 ### Test Files Reference
 
 | File | Description |
 |------|-------------|
-| `tests/dps_comparison/operators.json` | Extracted operator metadata (257 operators) |
-| `tests/dps_comparison/test_config.json` | Test case configurations (2,870 cases) |
+| `tests/dps_comparison/operators.json` | Extracted operator metadata (281 operators) |
+| `tests/dps_comparison/test_config.json` | Test case configurations |
+| `tests/dps_comparison/expected_dps.json` | Pre-computed Python DPS values (5,100+ cases) |
 | `tests/dps_comparison/dps_comparison_test.rs` | Generated Rust integration tests |
 | `tests/dps_comparison/run_comparison.py` | Python test runner script |
 
@@ -1124,6 +1429,7 @@ git submodule update --remote external/ArknightsDpsCompare
 #### Usage
 
 The submodule is used by:
+- `src/bin/translate_operators.rs` - Translates Python operators to Rust
 - `scripts/extract_operator_data.py` - Extracts operator metadata
 - `scripts/python_dps_harness.py` - Runs Python DPS calculations
 - `tests/dps_comparison/run_comparison.py` - Reference test runner
@@ -1376,25 +1682,45 @@ Output:
 ```
 Generating DPS comparison tests...
 Output directory: tests/dps_comparison
-Loaded 257 operators from operators.json
-Generated 2870 test cases
+Loaded 281 operators from operators.json
+Generated 5100 test cases
 
 Generated test files:
   - tests/dps_comparison/test_config.json
   - tests/dps_comparison/dps_comparison_test.rs
-  - tests/dps_comparison/run_comparison.py
+  - tests/dps_comparison/expected_dps.json
 ```
 
 #### Operator Translator
 
-Translate Python operator implementations to Rust (development tool):
+Translate Python operator implementations to Rust:
 
 ```bash
-# Build and run
-cargo run --bin translate-operators
+# Translate all operators
+cargo run --bin translate-operators -- \
+  external/ArknightsDpsCompare/damagecalc/damage_formulas.py \
+  src/core/dps_calculator/operators
 
-# This parses damage_formulas.py and generates Rust code
+# Output:
+# Parsing Python file...
+# Found 281 operator classes
+# Generating Rust files...
+#   a/  (21 operators)
+#   b/  (11 operators)
+#   ...
+# Next steps:
+#   1. Run 'cargo build' to check for compilation errors
+#   2. Fix any translation issues manually
+#   3. Run tests to verify DPS calculations
 ```
+
+The translator handles:
+- Python-to-Rust syntax conversion
+- NumPy function translation
+- Self-reference conversion (self.x → self.unit.x)
+- Operator-specific edge cases
+- Init-time modifications
+- Module-dependent calculations
 
 ### Scripts
 
@@ -1405,22 +1731,22 @@ Python scripts for DPS calculation and data extraction:
 Python harness for running DPS calculations against the reference implementation:
 
 ```bash
-# Run from scripts directory
-cd scripts
-
 # Calculate DPS for an operator
-python3 -c "
-from python_dps_harness import calculate_dps
-result = calculate_dps('SilverAsh', defense=500, res=0, skill=2, module=1)
-print(f\"DPS: {result['dps']:.2f}\")
-"
+python3 scripts/python_dps_harness.py SilverAsh 500 0 --skill 3 --module 1
 
-# List available operators
-python3 -c "
-from python_dps_harness import list_operators
-for op in list_operators()[:10]:
-    print(op)
-"
+# Output:
+{
+  "operator": "SilverAsh",
+  "name": "SilverAsh P1 S3 ModX3 rangedAtk",
+  "defense": 500.0,
+  "res": 0.0,
+  "skill": 3,
+  "module": 1,
+  "dps": 5432.10,
+  "atk": 892.0,
+  "attack_speed": 133.0,
+  "attack_interval": 1.3
+}
 ```
 
 Functions available:
@@ -1519,6 +1845,21 @@ kill -9 $(lsof -t -i :3060)
 - Wait 60 seconds for window to reset
 - Reduce request frequency
 - Consider caching on client side
+
+#### DPS calculator operator not found
+
+**Cause:** Operator not implemented or name mismatch.
+
+**Solution:**
+```bash
+# List available operators
+curl http://localhost:3060/dps-calculator/operators
+
+# Use exact operatorId from game data
+curl -X POST http://localhost:3060/dps-calculator \
+  -H "Content-Type: application/json" \
+  -d '{"operatorId": "char_017_huang"}'  # Use char_id, not name
+```
 
 ### Debug Logging
 
