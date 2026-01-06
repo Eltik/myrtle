@@ -86,6 +86,7 @@ export function DpsCalculator({ operators }: DpsCalculatorProps) {
                 moduleData: operator.moduleData,
                 phaseLevels: operator.phaseLevels,
                 potentialRanks: operator.potentialRanks,
+                conditionalData: operator.conditionals,
             };
 
             setSelectedOperators((prev) => [...prev, newOperator]);

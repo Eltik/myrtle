@@ -266,6 +266,31 @@ export interface DpsModuleData {
 }
 
 /**
+ * Conditional type enum values
+ */
+export type DpsConditionalType = "trait" | "talent" | "talent2" | "skill" | "module";
+
+/**
+ * Conditional info from backend - describes operator-specific conditionals
+ */
+export interface DpsConditionalInfo {
+    /** Type of conditional: trait, talent, talent2, skill, module */
+    conditionalType: DpsConditionalType;
+    /** Display name for this conditional (e.g., "aerialTarget", "maxStacks", "vsBlocked") */
+    name: string;
+    /** If true, the name/label applies when this conditional is DISABLED */
+    inverted: boolean;
+    /** Which skills this conditional applies to (empty = all skills) */
+    applicableSkills: number[];
+    /** Which modules this conditional applies to (empty = all modules) */
+    applicableModules: number[];
+    /** Minimum elite level required for this conditional to be relevant */
+    minElite: number;
+    /** Minimum module level required for this conditional to be relevant */
+    minModuleLevel: number;
+}
+
+/**
  * Operator entry in the list response
  */
 export interface DpsOperatorListEntry {
@@ -299,6 +324,8 @@ export interface DpsOperatorListEntry {
     phaseLevels?: number[];
     /** Potential rank descriptions (optional, for tooltip display) */
     potentialRanks?: DpsPotentialRank[];
+    /** Operator-specific conditional metadata (optional) */
+    conditionals?: DpsConditionalInfo[];
 }
 
 /**

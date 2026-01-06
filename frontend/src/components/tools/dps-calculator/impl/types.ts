@@ -1,4 +1,4 @@
-import type { DpsModuleData, DpsOperatorParams, DpsPotentialRank, DpsSkillData } from "~/types/api/impl/dps-calculator";
+import type { DpsConditionalInfo, DpsModuleData, DpsOperatorParams, DpsPotentialRank, DpsSkillData } from "~/types/api/impl/dps-calculator";
 
 /**
  * Operator configuration for the DPS calculator
@@ -30,6 +30,8 @@ export interface OperatorConfiguration {
     phaseLevels?: number[];
     /** Potential rank descriptions (for tooltip display) */
     potentialRanks?: DpsPotentialRank[];
+    /** Operator-specific conditional metadata from backend */
+    conditionalData?: DpsConditionalInfo[];
 }
 
 /**
