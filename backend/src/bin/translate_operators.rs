@@ -3353,6 +3353,27 @@ fn generate_main_mod_file(letter_folders: &HashSet<char>, operators: &[OperatorC
     output.push_str("    }\n");
     output.push_str("}\n");
 
+    // Generate get_supported_operator_names function
+    output.push('\n');
+    output.push_str(
+        "/// Returns a list of all operator names that have DPS calculator implementations\n",
+    );
+    output.push_str("/// \n");
+    output.push_str("/// # Returns\n");
+    output.push_str(
+        "/// A static slice of operator names that can be passed to `create_operator()`\n",
+    );
+    output.push_str("pub fn get_supported_operator_names() -> &'static [&'static str] {\n");
+    output.push_str("    &[\n");
+
+    for op in &sorted_ops {
+        let struct_name = to_upper_camel_case(&op.class_name);
+        output.push_str(&format!("        \"{struct_name}\",\n"));
+    }
+
+    output.push_str("    ]\n");
+    output.push_str("}\n");
+
     output
 }
 

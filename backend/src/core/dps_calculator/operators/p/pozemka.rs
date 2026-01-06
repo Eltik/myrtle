@@ -101,17 +101,17 @@ impl Pozemka {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut atk_scale: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut defshred: f64 = 0.0;
-        let mut hitdmg2: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut final_atk2: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut hitdmg_tw: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut final_atk2: f64 = 0.0;
+        let mut hitdmg2: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut defshred: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
 
         defshred = 0.0;
         if self.unit.talent_damage {
