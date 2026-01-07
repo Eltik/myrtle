@@ -1,17 +1,21 @@
 "use client";
 
+import { toPng } from "html-to-image";
 import { BarChart3, Plus, RotateCcw } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
+import { toast } from "sonner";
 import { InView } from "~/components/ui/motion-primitives/in-view";
 import { Button } from "~/components/ui/shadcn/button";
 import { Card } from "~/components/ui/shadcn/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "~/components/ui/shadcn/dialog";
 import { Tabs, TabsList, TabsTrigger } from "~/components/ui/shadcn/tabs";
+import { DpsChartSettingsProvider, useDpsChartSettings } from "~/context/dps-chart-settings-context";
 import type { DpsOperatorListEntry } from "~/types/api/impl/dps-calculator";
-import { DpsChart } from "./impl/dps-chart";
+import { ChartSettingsPopover } from "./impl/chart-settings";
+import { DpsChart, type DpsChartHandle } from "./impl/dps-chart";
 import { OperatorConfigurator } from "./impl/operator-configurator";
 import { OperatorSelector } from "./impl/operator-selector";
-import type { OperatorConfiguration } from "./impl/types";
+import type { ChartDataPoint, OperatorConfiguration } from "./impl/types";
 
 interface DpsCalculatorProps {
     operators: DpsOperatorListEntry[];
@@ -46,10 +50,14 @@ function getDefaultMaxLevel(rarity: number, promotion: number, phaseLevels?: num
     return levels[rarity]?.[promotion] ?? 1;
 }
 
-export function DpsCalculator({ operators }: DpsCalculatorProps) {
+// Inner component that uses the context
+function DpsCalculatorInner({ operators }: DpsCalculatorProps) {
     const [selectedOperators, setSelectedOperators] = useState<OperatorConfiguration[]>([]);
     const [chartMode, setChartMode] = useState<"defense" | "resistance">("defense");
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
+    const chartRef = useRef<DpsChartHandle>(null);
+    const { settings } = useDpsChartSettings();
 
     const handleSelectOperator = useCallback(
         (operator: DpsOperatorListEntry) => {
@@ -107,6 +115,79 @@ export function DpsCalculator({ operators }: DpsCalculatorProps) {
         setSelectedOperators([]);
     }, []);
 
+    const handleExportPng = useCallback(async () => {
+        const chartElement = chartRef.current?.getChartElement();
+        if (!chartElement) {
+            toast.error("No chart to export");
+            return;
+        }
+
+        setIsExporting(true);
+        try {
+            // Get computed background color for themed export
+            const bgColor = settings.export.exportBackground === "themed" ? getComputedStyle(document.body).getPropertyValue("background-color") || "#ffffff" : "transparent";
+
+            const dataUrl = await toPng(chartElement, {
+                pixelRatio: settings.export.exportScale,
+                backgroundColor: bgColor === "transparent" ? undefined : bgColor,
+                filter: (node) => {
+                    // Filter out elements that shouldn't be in export
+                    return !node.classList?.contains("no-export");
+                },
+            });
+
+            // Trigger download
+            const link = document.createElement("a");
+            link.download = `dps-chart-${chartMode}-${Date.now()}.png`;
+            link.href = dataUrl;
+            link.click();
+
+            toast.success("Chart exported successfully");
+        } catch (err) {
+            console.error("Failed to export chart:", err);
+            toast.error("Failed to export chart");
+        } finally {
+            setIsExporting(false);
+        }
+    }, [chartMode, settings.export.exportScale, settings.export.exportBackground]);
+
+    const handleExportCsv = useCallback(() => {
+        const chartData = chartRef.current?.getChartData();
+        const ops = chartRef.current?.getOperators();
+
+        if (!chartData || chartData.length === 0 || !ops || ops.length === 0) {
+            toast.error("No data to export");
+            return;
+        }
+
+        try {
+            // Build CSV headers
+            const headers = [chartMode === "defense" ? "DEF" : "RES", ...ops.map((op) => op.operatorName)];
+
+            // Build CSV rows
+            const rows = chartData.map((point: ChartDataPoint) => {
+                return [point.value, ...ops.map((op) => point[op.id] ?? "")].join(",");
+            });
+
+            const csv = [headers.join(","), ...rows].join("\n");
+
+            // Create and trigger download
+            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+
+            const link = document.createElement("a");
+            link.download = `dps-data-${chartMode}-${Date.now()}.csv`;
+            link.href = url;
+            link.click();
+
+            URL.revokeObjectURL(url);
+            toast.success("Data exported successfully");
+        } catch (err) {
+            console.error("Failed to export CSV:", err);
+            toast.error("Failed to export data");
+        }
+    }, [chartMode]);
+
     return (
         <div className="space-y-8">
             {/* Header */}
@@ -148,6 +229,7 @@ export function DpsCalculator({ operators }: DpsCalculatorProps) {
                                         {selectedOperators.length} operator{selectedOperators.length !== 1 ? "s" : ""}
                                     </span>
                                 )}
+                                <ChartSettingsPopover isExporting={isExporting} onExportCsv={handleExportCsv} onExportPng={handleExportPng} />
                             </div>
 
                             <Tabs onValueChange={(value) => setChartMode(value as "defense" | "resistance")} value={chartMode}>
@@ -163,7 +245,7 @@ export function DpsCalculator({ operators }: DpsCalculatorProps) {
                                 <p className="text-muted-foreground">Add operators below to generate DPS comparison charts</p>
                             </div>
                         ) : (
-                            <DpsChart mode={chartMode} operators={selectedOperators} />
+                            <DpsChart mode={chartMode} operators={selectedOperators} ref={chartRef} />
                         )}
                     </div>
                 </Card>
@@ -222,5 +304,14 @@ export function DpsCalculator({ operators }: DpsCalculatorProps) {
             {/* Footer note */}
             <p className="text-center text-muted-foreground text-xs">Note: DPS calculations are based on operator stats at specified configurations. Results may vary based on actual game conditions and enemy mechanics.</p>
         </div>
+    );
+}
+
+// Export the wrapped component
+export function DpsCalculator({ operators }: DpsCalculatorProps) {
+    return (
+        <DpsChartSettingsProvider>
+            <DpsCalculatorInner operators={operators} />
+        </DpsChartSettingsProvider>
     );
 }
