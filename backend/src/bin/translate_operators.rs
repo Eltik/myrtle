@@ -2637,10 +2637,9 @@ fn parse_conditional_names(init_body: &str) -> Vec<ParsedConditional> {
                             .map(|m| m.as_str())
                             .unwrap_or("0")
                             .parse::<i32>()
+                            && (op == "==" || op == "in")
                         {
-                            if op == "==" || op == "in" {
-                                skills.push(skill);
-                            }
+                            skills.push(skill);
                         }
                     }
 
@@ -2653,10 +2652,9 @@ fn parse_conditional_names(init_body: &str) -> Vec<ParsedConditional> {
                             .map(|m| m.as_str())
                             .unwrap_or("0")
                             .parse::<i32>()
+                            && op == "=="
                         {
-                            if op == "==" {
-                                modules.push(module);
-                            }
+                            modules.push(module);
                         }
                     }
 
