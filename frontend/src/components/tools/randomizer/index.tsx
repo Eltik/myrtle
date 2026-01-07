@@ -36,7 +36,7 @@ interface RandomizerProps {
 
 const STORAGE_KEY_ROSTER = "randomizer-roster";
 const STORAGE_KEY_SETTINGS = "randomizer-settings";
-const SETTINGS_VERSION = 4; // Increment this to force migration
+const SETTINGS_VERSION = 4;
 
 const DEFAULT_SETTINGS: RandomizerSettings = {
     allowedClasses: ["WARRIOR", "SNIPER", "TANK", "MEDIC", "SUPPORT", "CASTER", "SPECIAL", "PIONEER"],
@@ -50,28 +50,23 @@ const DEFAULT_SETTINGS: RandomizerSettings = {
     selectedStages: [],
 };
 
-// Migrate settings from old versions
 function migrateSettings(saved: RandomizerSettings & { _version?: number }): RandomizerSettings {
     const version = saved._version ?? 1;
 
-    // Version 2: Reset onlyE2Operators to false, set correct zone types
     if (version < 2) {
         saved.onlyE2Operators = false;
         saved.onlyCompletedStages = true;
     }
 
-    // Version 3: Reset zone types and selected stages
     if (version < 3) {
         saved.allowedZoneTypes = ["MAINLINE", "ACTIVITY"];
         saved.selectedStages = [];
     }
 
-    // Version 4: Add onlyAvailableStages setting
     if (version < 4) {
         saved.onlyAvailableStages = true;
     }
 
-    // Return without _version field
     const { _version: _, ...settings } = saved;
     return settings as RandomizerSettings;
 }
@@ -192,14 +187,7 @@ export function Randomizer({ zones, stages, operators }: RandomizerProps) {
     }, [availableOperators, roster]);
 
     const handleRandomizeAll = useCallback(() => {
-        const stage = selectRandomStage(
-            stages,
-            zones,
-            settings.allowedZoneTypes,
-            fullUser,
-            settings.onlyCompletedStages,
-            settings.selectedStages, // Pass selectedStages
-        );
+        const stage = selectRandomStage(stages, zones, settings.allowedZoneTypes, fullUser, settings.onlyCompletedStages, settings.selectedStages, settings.onlyAvailableStages);
         setRandomizedStage(stage);
 
         const squad = generateRandomSquad(availableOperators, settings.squadSize, settings.allowDuplicates);
@@ -210,16 +198,9 @@ export function Randomizer({ zones, stages, operators }: RandomizerProps) {
     }, [stages, zones, availableOperators, settings, fullUser]);
 
     const handleRandomizeStage = useCallback(() => {
-        const stage = selectRandomStage(
-            stages,
-            zones,
-            settings.allowedZoneTypes,
-            fullUser,
-            settings.onlyCompletedStages,
-            settings.selectedStages, // Pass selectedStages
-        );
+        const stage = selectRandomStage(stages, zones, settings.allowedZoneTypes, fullUser, settings.onlyCompletedStages, settings.selectedStages, settings.onlyAvailableStages);
         setRandomizedStage(stage);
-    }, [stages, zones, settings.allowedZoneTypes, settings.onlyCompletedStages, settings.selectedStages, fullUser]);
+    }, [stages, zones, settings.allowedZoneTypes, settings.onlyCompletedStages, settings.selectedStages, settings.onlyAvailableStages, fullUser]);
 
     const handleRandomizeSquad = useCallback(() => {
         const squad = generateRandomSquad(availableOperators, settings.squadSize, settings.allowDuplicates);
@@ -268,10 +249,10 @@ export function Randomizer({ zones, stages, operators }: RandomizerProps) {
         }
 
         setRoster(new Set(matchedOperators));
+        setSettings((prev) => ({ ...prev, onlyE2Operators: false }));
         toast.success(`Imported ${matchedOperators.length} operators from your profile`);
     }, [fullUser, operators]);
 
-    // Filter roster to only E2 operators when E2 filter is enabled
     const handleE2Enabled = useCallback(() => {
         if (!fullUser) return;
 
@@ -282,7 +263,6 @@ export function Randomizer({ zones, stages, operators }: RandomizerProps) {
                 .filter((id): id is string => id !== null && id !== undefined),
         );
 
-        // Filter current roster to only keep E2 operators
         const filteredRoster = new Set(Array.from(roster).filter((id) => e2OperatorIds.has(id)));
 
         if (filteredRoster.size !== roster.size) {
@@ -292,32 +272,41 @@ export function Randomizer({ zones, stages, operators }: RandomizerProps) {
     }, [fullUser, roster]);
 
     return (
-        <div className="space-y-6">
-            <div className="space-y-2">
+        <div className="space-y-8">
+            <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                        <Dices className="h-5 w-5 text-primary" />
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-primary/20 to-primary/10 shadow-lg shadow-primary/10">
+                        <Dices className="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                        <h1 className="font-bold text-2xl text-foreground tracking-tight sm:text-3xl">Randomizer</h1>
+                        <h1 className="font-bold text-3xl text-foreground tracking-tight md:text-4xl">Randomizer</h1>
+                        <p className="mt-1 text-muted-foreground text-sm">Create unique challenge runs with randomized stages, operators, and modifiers</p>
                     </div>
                 </div>
-                <p className="max-w-2xl text-muted-foreground">Randomize stages, operators, and challenges for Arknights. Customize your roster and filters to create unique challenge runs.</p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-                <Button className="gap-2 font-semibold" disabled={availableOperators.length === 0 || stages.length === 0} onClick={handleRandomizeAll} size="lg">
-                    <Shuffle className="h-5 w-5" />
-                    Randomize All
-                </Button>
-                {(randomizedStage || randomizedSquad.length > 0 || randomizedChallenge) && (
-                    <Button className="gap-2 bg-transparent" onClick={handleReset} size="lg" variant="outline">
-                        <RotateCcw className="h-4 w-4" />
-                        Reset
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-wrap items-center gap-3">
+                    <Button className="gap-2 shadow-lg shadow-primary/20 transition-all hover:scale-105 hover:shadow-primary/30 hover:shadow-xl" disabled={availableOperators.length === 0 || stages.length === 0} onClick={handleRandomizeAll} size="lg">
+                        <Shuffle className="h-5 w-5" />
+                        Randomize All
                     </Button>
-                )}
-                <div className="text-muted-foreground text-sm">
-                    {roster.size} / {operators.length} operators • {settings.selectedStages?.length > 0 ? `${settings.selectedStages.length} stages selected` : `${stages.length} stages available`}
+                    {(randomizedStage || randomizedSquad.length > 0 || randomizedChallenge) && (
+                        <Button className="gap-2 bg-transparent" onClick={handleReset} size="lg" variant="outline">
+                            <RotateCcw className="h-4 w-4" />
+                            Reset
+                        </Button>
+                    )}
+                </div>
+                <div className="flex flex-wrap gap-3 text-muted-foreground text-sm">
+                    <div className="rounded-lg bg-secondary/50 px-3 py-1.5">
+                        <span className="font-medium text-foreground">{roster.size}</span> / {operators.length} operators
+                    </div>
+                    {settings.selectedStages?.length > 0 && (
+                        <div className="rounded-lg bg-secondary/50 px-3 py-1.5">
+                            <span className="font-medium text-foreground">{settings.selectedStages.length}</span> stages selected
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -331,7 +320,7 @@ export function Randomizer({ zones, stages, operators }: RandomizerProps) {
                 </div>
             )}
 
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="grid min-w-0 gap-6 lg:grid-cols-2 xl:gap-8">
                 <RosterPanel hasProfile={hasProfile} onImportProfile={handleImportProfile} operators={operators} roster={roster} setRoster={setRoster} />
 
                 <div className="space-y-6">
