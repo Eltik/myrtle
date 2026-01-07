@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "~/components/ui/shadcn/chart";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import { Area, Bar, CartesianGrid, ComposedChart, Legend, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { ChartContainer } from "~/components/ui/shadcn/chart";
 import { Skeleton } from "~/components/ui/shadcn/skeleton";
+import { useDpsChartSettings } from "~/context/dps-chart-settings-context";
 import { calculateDpsRange, isDpsRangeResult } from "~/lib/dps-calculator";
+import { formatChartNumber, getGridStrokeDasharray } from "~/lib/dps-chart-settings";
 import type { DpsConditionalType } from "~/types/api/impl/dps-calculator";
 import type { ChartDataPoint, OperatorConfiguration } from "./types";
 
@@ -104,15 +106,62 @@ function buildOperatorLabel(op: OperatorConfiguration): string {
     return parts.join(" ");
 }
 
+export interface DpsChartHandle {
+    getChartElement: () => HTMLDivElement | null;
+    getChartData: () => ChartDataPoint[];
+    getOperators: () => OperatorConfiguration[];
+}
+
 interface DpsChartProps {
     operators: OperatorConfiguration[];
     mode: "defense" | "resistance";
 }
 
-export function DpsChart({ operators, mode }: DpsChartProps) {
+// Custom tooltip component
+function CustomTooltip({ active, payload, label, mode, formatLabel }: { active?: boolean; payload?: Array<{ dataKey: string; value: number; color: string; name: string }>; label?: number; mode: string; formatLabel: (v: number) => string }) {
+    if (!active || !payload || payload.length === 0) return null;
+
+    // Deduplicate entries by dataKey (prevents duplicates when area fill + line are both present)
+    const uniqueEntries = payload.filter((entry, index, self) => self.findIndex((e) => e.dataKey === entry.dataKey) === index);
+
+    return (
+        <div className="rounded-lg border bg-background p-2 shadow-md">
+            <p className="mb-1 font-medium text-sm">
+                {mode === "defense" ? "DEF" : "RES"}: {label}
+            </p>
+            {uniqueEntries.map((entry) => (
+                <p className="text-sm" key={entry.dataKey} style={{ color: entry.color }}>
+                    {entry.name}: {formatLabel(entry.value)}
+                </p>
+            ))}
+        </div>
+    );
+}
+
+// Custom label component for data points
+function CustomLabel({ x, y, value, formatLabel, index, interval, color }: { x?: number; y?: number; value?: number; formatLabel: (v: number) => string; index?: number; interval: number; color?: string }) {
+    if (index === undefined || index % interval !== 0 || value === undefined) return null;
+
+    return (
+        <text fill={color || "#888888"} fontSize={10} textAnchor="middle" x={x} y={(y ?? 0) - 10}>
+            {formatLabel(value)}
+        </text>
+    );
+}
+
+export const DpsChart = forwardRef<DpsChartHandle, DpsChartProps>(function DpsChart({ operators, mode }, ref) {
+    const containerRef = useRef<HTMLDivElement>(null);
     const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const { settings } = useDpsChartSettings();
+
+    // Expose methods via ref for export functionality
+    useImperativeHandle(ref, () => ({
+        getChartElement: () => containerRef.current,
+        getChartData: () => chartData,
+        getOperators: () => operators,
+    }));
 
     useEffect(() => {
         const fetchDpsData = async () => {
@@ -125,17 +174,17 @@ export function DpsChart({ operators, mode }: DpsChartProps) {
             setError(null);
 
             try {
-                // Fetch DPS data for all operators in parallel
+                // Fetch DPS data for all operators in parallel using settings.range
                 const results = await Promise.all(
                     operators.map(async (op) => {
                         try {
                             const result = await calculateDpsRange(op.operatorId, op.params, {
-                                minDef: 0,
-                                maxDef: 3000,
-                                defStep: 20,
-                                minRes: 0,
-                                maxRes: 120,
-                                resStep: 10,
+                                minDef: settings.range.minDef,
+                                maxDef: settings.range.maxDef,
+                                defStep: settings.range.defStep,
+                                minRes: settings.range.minRes,
+                                maxRes: settings.range.maxRes,
+                                resStep: settings.range.resStep,
                             });
 
                             if (!isDpsRangeResult(result.dps)) {
@@ -188,87 +237,195 @@ export function DpsChart({ operators, mode }: DpsChartProps) {
         };
 
         void fetchDpsData();
-    }, [operators, mode]);
+    }, [operators, mode, settings.range]);
+
+    // Build chart config from operators with detailed labels
+    const chartConfig = useMemo(
+        () =>
+            operators.reduce(
+                (config, op) => {
+                    config[op.id] = {
+                        label: buildOperatorLabel(op),
+                        color: op.color,
+                    };
+                    return config;
+                },
+                {} as Record<string, { label: string; color: string }>,
+            ),
+        [operators],
+    );
+
+    // Custom label formatter for data labels
+    const formatLabel = useMemo(() => {
+        return (value: number) => formatChartNumber(value, settings.dataDisplay.numberFormat, settings.dataDisplay.decimalPlaces);
+    }, [settings.dataDisplay.numberFormat, settings.dataDisplay.decimalPlaces]);
+
+    // Determine legend layout props based on position
+    const legendProps = useMemo(() => {
+        const legendPosition = settings.visual.legendPosition;
+        if (legendPosition === "top") {
+            return { verticalAlign: "top" as const, align: "center" as const, wrapperStyle: { paddingBottom: "20px" } };
+        }
+        if (legendPosition === "left") {
+            return { verticalAlign: "middle" as const, align: "left" as const, layout: "vertical" as const, wrapperStyle: { paddingRight: "20px" } };
+        }
+        if (legendPosition === "right") {
+            return { verticalAlign: "middle" as const, align: "right" as const, layout: "vertical" as const, wrapperStyle: { paddingLeft: "20px" } };
+        }
+        // "bottom" and default
+        return { verticalAlign: "bottom" as const, align: "center" as const, wrapperStyle: { paddingTop: "20px" } };
+    }, [settings.visual]);
 
     if (loading) {
         return (
             <div className="space-y-3">
                 <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-[400px] w-full" />
+                <Skeleton className="w-full" style={{ height: settings.visual.chartHeight }} />
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="flex h-[400px] items-center justify-center rounded-lg border border-destructive/50 bg-destructive/10 text-destructive">
+            <div className="flex items-center justify-center rounded-lg border border-destructive/50 bg-destructive/10 text-destructive" style={{ height: settings.visual.chartHeight }}>
                 <p className="text-sm">{error}</p>
             </div>
         );
     }
 
     if (chartData.length === 0) {
-        return <div className="flex h-[400px] items-center justify-center text-muted-foreground text-sm">No data to display</div>;
+        return (
+            <div className="flex items-center justify-center text-muted-foreground text-sm" style={{ height: settings.visual.chartHeight }}>
+                No data to display
+            </div>
+        );
     }
 
-    // Build chart config from operators with detailed labels
-    const chartConfig = operators.reduce(
-        (config, op) => {
-            config[op.id] = {
-                label: buildOperatorLabel(op),
-                color: op.color,
+    const { visual, dataDisplay } = settings;
+
+    // Render chart elements based on chart type
+    const renderChartElements = () => {
+        const elements: React.ReactNode[] = [];
+
+        operators.forEach((op) => {
+            const commonProps = {
+                key: op.id,
+                dataKey: op.id,
+                name: chartConfig[op.id]?.label || op.operatorName,
+                isAnimationActive: visual.enableAnimation,
             };
-            return config;
-        },
-        {} as Record<string, { label: string; color: string }>,
-    );
+
+            if (visual.chartType === "bar") {
+                elements.push(<Bar {...commonProps} fill={op.color} fillOpacity={0.8} />);
+            } else if (visual.chartType === "area") {
+                elements.push(
+                    <Area
+                        {...commonProps}
+                        activeDot={visual.showDots ? { r: visual.dotSize + 2 } : { r: 4 }}
+                        dot={visual.showDots ? { r: visual.dotSize, fill: op.color } : false}
+                        fill={op.color}
+                        fillOpacity={visual.areaFillOpacity}
+                        label={dataDisplay.showDataLabels ? (props: { x?: number; y?: number; value?: number; index?: number }) => <CustomLabel color={op.color} formatLabel={formatLabel} index={props.index} interval={dataDisplay.dataLabelInterval} value={props.value} x={props.x} y={props.y} /> : undefined}
+                        stroke={op.color}
+                        strokeWidth={visual.strokeWidth}
+                        type={visual.lineType}
+                    />,
+                );
+            } else {
+                // "line" chart type (default)
+                // Optionally add area fill underneath (legendType="none" prevents duplicate legend entries)
+                if (visual.showAreaFill) {
+                    elements.push(<Area dataKey={op.id} fill={op.color} fillOpacity={visual.areaFillOpacity} isAnimationActive={visual.enableAnimation} key={`area-${op.id}`} legendType="none" name={chartConfig[op.id]?.label || op.operatorName} stroke="none" type={visual.lineType} />);
+                }
+                elements.push(
+                    <Line
+                        {...commonProps}
+                        activeDot={visual.showDots ? { r: visual.dotSize + 2 } : { r: 4 }}
+                        dot={visual.showDots ? { r: visual.dotSize, fill: op.color } : false}
+                        label={dataDisplay.showDataLabels ? (props: { x?: number; y?: number; value?: number; index?: number }) => <CustomLabel color={op.color} formatLabel={formatLabel} index={props.index} interval={dataDisplay.dataLabelInterval} value={props.value} x={props.x} y={props.y} /> : undefined}
+                        stroke={op.color}
+                        strokeWidth={visual.strokeWidth}
+                        type={visual.lineType}
+                    />,
+                );
+            }
+        });
+
+        return elements;
+    };
 
     return (
-        <ChartContainer className="h-[400px] w-full" config={chartConfig}>
-            <ResponsiveContainer height="100%" width="100%">
-                <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                    <CartesianGrid className="stroke-border/50" strokeDasharray="3 3" />
-                    <XAxis
-                        className="text-muted-foreground"
-                        dataKey="value"
-                        label={{
-                            value: mode === "defense" ? "Defense" : "Resistance",
-                            position: "insideBottom",
-                            offset: -10,
-                        }}
-                    />
-                    <YAxis
-                        className="text-muted-foreground"
-                        label={{
-                            value: "DPS",
-                            angle: -90,
-                            position: "insideLeft",
-                        }}
-                    />
-                    <ChartTooltip
-                        content={
-                            <ChartTooltipContent
-                                labelFormatter={(_, payload) => {
-                                    // Access the actual x-axis value from the data payload
-                                    const dataPoint = payload?.[0]?.payload as ChartDataPoint | undefined;
-                                    const xValue = dataPoint?.value;
-                                    return `${mode === "defense" ? "DEF" : "RES"}: ${xValue ?? ""}`;
-                                }}
-                            />
-                        }
-                    />
-                    <Legend
-                        formatter={(value) => {
-                            const config = chartConfig[value as string];
-                            return config?.label || value;
-                        }}
-                        wrapperStyle={{ paddingTop: "20px" }}
-                    />
-                    {operators.map((op) => (
-                        <Line dataKey={op.id} dot={false} key={op.id} name={op.id} stroke={op.color} strokeWidth={2} type="monotone" />
-                    ))}
-                </LineChart>
-            </ResponsiveContainer>
-        </ChartContainer>
+        <div ref={containerRef}>
+            <ChartContainer className="w-full" config={chartConfig} style={{ height: visual.chartHeight }}>
+                <ResponsiveContainer height="100%" width="100%">
+                    <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                        {/* Grid */}
+                        {visual.showGrid && <CartesianGrid className="stroke-border/50" strokeDasharray={getGridStrokeDasharray(visual.gridStyle)} />}
+
+                        {/* Axes */}
+                        <XAxis
+                            className="text-muted-foreground"
+                            dataKey="value"
+                            domain={["auto", "auto"]}
+                            label={
+                                dataDisplay.showAxisLabels
+                                    ? {
+                                          value: mode === "defense" ? "Defense" : "Resistance",
+                                          position: "insideBottom",
+                                          offset: -10,
+                                          className: "fill-muted-foreground",
+                                      }
+                                    : undefined
+                            }
+                            scale={dataDisplay.yAxisScale === "log" ? "log" : "auto"}
+                            tickFormatter={(value) => String(value)}
+                        />
+                        <YAxis
+                            className="text-muted-foreground"
+                            domain={["auto", "auto"]}
+                            label={
+                                dataDisplay.showAxisLabels
+                                    ? {
+                                          value: "DPS",
+                                          angle: -90,
+                                          position: "insideLeft",
+                                          className: "fill-muted-foreground",
+                                      }
+                                    : undefined
+                            }
+                            scale={dataDisplay.yAxisScale === "log" ? "log" : "auto"}
+                            tickFormatter={formatLabel}
+                        />
+
+                        {/* Reference Lines - using orange color for visibility on both light/dark themes and exports */}
+                        {dataDisplay.showReferenceLines &&
+                            dataDisplay.referenceLineValues.map((value) => (
+                                <ReferenceLine
+                                    key={`ref-${value}`}
+                                    label={{
+                                        value: formatLabel(value),
+                                        position: "right",
+                                        fill: "#f97316",
+                                        fontSize: 10,
+                                    }}
+                                    stroke="#f97316"
+                                    strokeDasharray="5 5"
+                                    strokeWidth={1.5}
+                                    y={value}
+                                />
+                            ))}
+
+                        {/* Tooltip */}
+                        {dataDisplay.showTooltip && <Tooltip content={<CustomTooltip formatLabel={formatLabel} mode={mode} />} />}
+
+                        {/* Legend */}
+                        {visual.legendPosition !== "none" && <Legend {...legendProps} />}
+
+                        {/* Chart elements (lines, areas, or bars) */}
+                        {renderChartElements()}
+                    </ComposedChart>
+                </ResponsiveContainer>
+            </ChartContainer>
+        </div>
     );
-}
+});
