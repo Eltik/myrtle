@@ -2,9 +2,9 @@
 
 import { toPng } from "html-to-image";
 import { BarChart3, Plus, RotateCcw } from "lucide-react";
+import { motion } from "motion/react";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
-import { InView } from "~/components/ui/motion-primitives/in-view";
 import { Button } from "~/components/ui/shadcn/button";
 import { Card } from "~/components/ui/shadcn/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "~/components/ui/shadcn/dialog";
@@ -16,6 +16,17 @@ import { DpsChart, type DpsChartHandle } from "./impl/dps-chart";
 import { OperatorConfigurator } from "./impl/operator-configurator";
 import { OperatorSelector } from "./impl/operator-selector";
 import type { ChartDataPoint, OperatorConfiguration } from "./impl/types";
+
+// Snappy animation variants
+const fadeInUp = {
+    initial: { opacity: 0, y: 12 },
+    animate: { opacity: 1, y: 0 },
+};
+
+const snappyTransition = {
+    duration: 0.25,
+    ease: [0.25, 0.1, 0.25, 1] as const,
+};
 
 interface DpsCalculatorProps {
     operators: DpsOperatorListEntry[];
@@ -191,13 +202,7 @@ function DpsCalculatorInner({ operators }: DpsCalculatorProps) {
     return (
         <div className="space-y-8">
             {/* Header */}
-            <InView
-                transition={{ duration: 0.5 }}
-                variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    visible: { opacity: 1, y: 0 },
-                }}
-            >
+            <motion.div {...fadeInUp} transition={snappyTransition}>
                 <div className="space-y-2">
                     <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
@@ -209,16 +214,10 @@ function DpsCalculatorInner({ operators }: DpsCalculatorProps) {
                     </div>
                     <p className="max-w-2xl text-muted-foreground">Calculate and compare operator damage output against varying enemy defense and resistance values. Add multiple operators to create comparison charts.</p>
                 </div>
-            </InView>
+            </motion.div>
 
             {/* Chart Section */}
-            <InView
-                transition={{ duration: 0.5, delay: 0.1 }}
-                variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    visible: { opacity: 1, y: 0 },
-                }}
-            >
+            <motion.div {...fadeInUp} transition={{ ...snappyTransition, delay: 0.05 }}>
                 <Card className="border-border bg-card/30 p-4 backdrop-blur-sm sm:p-6">
                     <div className="space-y-4">
                         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -249,16 +248,10 @@ function DpsCalculatorInner({ operators }: DpsCalculatorProps) {
                         )}
                     </div>
                 </Card>
-            </InView>
+            </motion.div>
 
             {/* Operator Configuration Section */}
-            <InView
-                transition={{ duration: 0.5, delay: 0.2 }}
-                variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    visible: { opacity: 1, y: 0 },
-                }}
-            >
+            <motion.div {...fadeInUp} transition={{ ...snappyTransition, delay: 0.1 }}>
                 <Card className="border-border bg-card/30 p-4 backdrop-blur-sm sm:p-6">
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
@@ -299,10 +292,12 @@ function DpsCalculatorInner({ operators }: DpsCalculatorProps) {
                         )}
                     </div>
                 </Card>
-            </InView>
+            </motion.div>
 
             {/* Footer note */}
-            <p className="text-center text-muted-foreground text-xs">Note: DPS calculations are based on operator stats at specified configurations. Results may vary based on actual game conditions and enemy mechanics.</p>
+            <motion.p {...fadeInUp} className="text-center text-muted-foreground text-xs" transition={{ ...snappyTransition, delay: 0.15 }}>
+                Note: DPS calculations are based on operator stats at specified configurations. Results may vary based on actual game conditions and enemy mechanics.
+            </motion.p>
         </div>
     );
 }
