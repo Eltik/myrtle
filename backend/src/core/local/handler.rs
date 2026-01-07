@@ -20,8 +20,10 @@ use crate::core::local::types::module::{
 use crate::core::local::types::range::Ranges;
 use crate::core::local::types::skill::{RawSkill, SkillTableFile};
 use crate::core::local::types::skin::{SkinData, SkinTableFile};
+use crate::core::local::types::stage::{Stage, StageTableFile};
 use crate::core::local::types::trust::Favor;
 use crate::core::local::types::voice::{Voices, VoicesTableFile};
+use crate::core::local::types::zone::{Zone, ZoneTableFile};
 use crate::core::local::types::{GameData, operator::CharacterTable};
 use crate::events::{ChibiStats, ConfigEvent, EventEmitter};
 
@@ -289,6 +291,30 @@ pub fn init_game_data(
         }
     };
 
+    // ============ Load Zone Table ============
+    let zones: HashMap<String, Zone> = match handler.load_table::<ZoneTableFile>("zone_table") {
+        Ok(zone_table) => zone_table.zones,
+        Err(e) => {
+            events.emit(ConfigEvent::GameDataTableWarning {
+                table: "zone_table".to_string(),
+                error: e.to_string(),
+            });
+            HashMap::new()
+        }
+    };
+
+    // ============ Load Stage Table ============
+    let stages: HashMap<String, Stage> = match handler.load_table::<StageTableFile>("stage_table") {
+        Ok(stage_table) => stage_table.stages,
+        Err(e) => {
+            events.emit(ConfigEvent::GameDataTableWarning {
+                table: "stage_table".to_string(),
+                error: e.to_string(),
+            });
+            HashMap::new()
+        }
+    };
+
     // ============ Load Chibi Data ============
     let chibi_result = init_chibi_data(assets_dir);
     let chibis = chibi_result.data;
@@ -411,6 +437,8 @@ pub fn init_game_data(
         voices,
         gacha,
         chibis,
+        zones,
+        stages,
         asset_mappings,
     })
 }

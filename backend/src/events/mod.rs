@@ -32,6 +32,8 @@ pub struct GameDataStats {
     pub ranges: usize,
     pub gacha_pools: usize,
     pub voices: usize,
+    pub zones: usize,
+    pub stages: usize,
 }
 
 /// Chibi data statistics

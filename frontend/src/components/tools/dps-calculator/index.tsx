@@ -240,7 +240,7 @@ function DpsCalculatorInner({ operators }: DpsCalculatorProps) {
                         </div>
 
                         {selectedOperators.length === 0 ? (
-                            <div className="flex h-[400px] flex-col items-center justify-center gap-4 text-center">
+                            <div className="flex h-100 flex-col items-center justify-center gap-4 text-center">
                                 <p className="text-muted-foreground">Add operators below to generate DPS comparison charts</p>
                             </div>
                         ) : (

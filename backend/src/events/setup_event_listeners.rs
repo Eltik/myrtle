@@ -282,12 +282,16 @@ fn log_game_data_stats(stats: &GameDataStats) {
     );
 
     println!(
-        "{} {} {} │ {} {}",
+        "{} {} {} │ {} {} │ {} {} │ {} {}",
         "│".dimmed(),
         "Ranges".dimmed(),
         stats.ranges.to_string().cyan(),
         "Gacha pools".dimmed(),
         stats.gacha_pools.to_string().cyan(),
+        "Zones".dimmed(),
+        stats.zones.to_string().cyan(),
+        "Stages".dimmed(),
+        stats.stages.to_string().cyan(),
     );
 
     log::success("Game data loaded successfully");
