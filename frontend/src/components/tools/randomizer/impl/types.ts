@@ -5,6 +5,7 @@ export interface RandomizerSettings {
     squadSize: number;
     allowDuplicates: boolean;
     onlyCompletedStages: boolean;
+    onlyAvailableStages: boolean; // Only show stages from currently open or permanent events
     onlyE2Operators: boolean;
     selectedStages: string[]; // Stage IDs that are manually selected
 }

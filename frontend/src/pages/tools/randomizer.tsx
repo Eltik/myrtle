@@ -44,7 +44,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async () => {
 
         // Fetch all data in parallel
         const [zonesResponse, stagesResponse, operatorsResponse] = await Promise.all([
-            // Fetch zones (MAINLINE and ACTIVITY - ACTIVITY contains side stories, intermezzis, and events)
+            // Fetch zones (MAINLINE and ACTIVITY - stages only reference activity zone IDs)
             fetch(`${backendURL}/static/zones?types=MAINLINE,ACTIVITY&limit=1000`, {
                 method: "GET",
                 headers: { "Content-Type": "application/json" },

@@ -1,8 +1,9 @@
 "use client";
 
-import { Check } from "lucide-react";
-import { useMemo } from "react";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "~/components/ui/shadcn/accordion";
+import { Check, ChevronDown } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "~/components/ui/motion-primitives/accordion";
+import { Disclosure, DisclosureContent, DisclosureTrigger } from "~/components/ui/motion-primitives/disclosure";
 import { Button } from "~/components/ui/shadcn/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/shadcn/card";
 import { Label } from "~/components/ui/shadcn/label";
@@ -10,11 +11,14 @@ import { Switch } from "~/components/ui/shadcn/switch";
 import type { Stage } from "~/types/api/impl/stage";
 import type { User } from "~/types/api/impl/user";
 import type { Zone } from "~/types/api/impl/zone";
+import { ACTIVITY_NAMES, formatEventDate, getActivityEventTimes, getActivityIdFromZoneId, getActivityStartTime, getPermanentEventInfo, isActivityCurrentlyOpen, isRerunActivity } from "./activity-names";
 
 interface ZoneFilterPanelProps {
     allowedZoneTypes: string[];
     setAllowedZoneTypes: (types: string[]) => void;
     hasProfile?: boolean;
+    onlyAvailableStages?: boolean;
+    setOnlyAvailableStages?: (value: boolean) => void;
     onlyCompletedStages?: boolean;
     setOnlyCompletedStages?: (value: boolean) => void;
     stages: Stage[];
@@ -52,52 +56,220 @@ function naturalSortCompare(a: string, b: string): number {
     return 0;
 }
 
-export function ZoneFilterPanel({ allowedZoneTypes, setAllowedZoneTypes, hasProfile, onlyCompletedStages, setOnlyCompletedStages, stages, zones, selectedStages, setSelectedStages, user }: ZoneFilterPanelProps) {
+// Get display name for a stage (adds CM suffix for challenge mode)
+function getStageDisplayName(stage: Stage): string {
+    if (stage.difficulty === "FOUR_STAR") {
+        return `${stage.code} CM`;
+    }
+    return stage.code;
+}
+
+// Extract chapter number from main zone ID for sorting
+// e.g., "main_10" -> 10
+function getMainZoneSortNumber(zoneId: string): number {
+    const mainMatch = zoneId.match(/^main_(\d+)/);
+    if (mainMatch?.[1]) {
+        return Number.parseInt(mainMatch[1], 10);
+    }
+    return 0;
+}
+
+// Grouped event data structure for ACTIVITY zones
+interface GroupedEvent {
+    activityId: string; // For permanent events, this is the retroId
+    eventName: string;
+    startTime: number;
+    endTime: number;
+    isOpen: boolean;
+    dateRange: string;
+    isPermanent: boolean;
+    permanentType?: "SIDESTORY" | "BRANCHLINE";
+    zones: Array<{
+        zoneId: string;
+        zone: Zone | undefined;
+        stages: Stage[];
+        zoneName: string;
+    }>;
+    totalStages: number;
+}
+
+export function ZoneFilterPanel({ allowedZoneTypes, setAllowedZoneTypes, hasProfile, onlyAvailableStages, setOnlyAvailableStages, onlyCompletedStages, setOnlyCompletedStages, stages, zones, selectedStages, setSelectedStages, user }: ZoneFilterPanelProps) {
     const safeAllowedZoneTypes = allowedZoneTypes ?? [];
     const safeSelectedStages = selectedStages ?? [];
+    const [openZoneTypes, setOpenZoneTypes] = useState<string[]>([]);
+    const [openEventId, setOpenEventId] = useState<string | null>(null);
+    const [openZoneId, setOpenZoneId] = useState<string | null>(null);
 
-    const availableStages = useMemo(() => {
-        let filtered = stages;
+    // Group stages by zone type, then by zone
+    const stagesByZoneType = useMemo(() => {
+        const result = new Map<string, Map<string, Stage[]>>();
 
-        // Filter by zone type
-        if (safeAllowedZoneTypes.length > 0) {
-            filtered = filtered.filter((stage) => {
-                const zone = zones.find((z) => z.zoneId === stage.zoneId);
-                return zone && safeAllowedZoneTypes.includes(zone.type);
-            });
+        for (const zoneType of ZONE_TYPES) {
+            result.set(zoneType.value, new Map());
         }
 
-        // Filter by completion status
-        if (onlyCompletedStages && user) {
-            filtered = filtered.filter((stage) => {
+        for (const stage of stages) {
+            const zone = zones.find((z) => z.zoneId === stage.zoneId);
+            if (!zone) continue;
+
+            // Filter by completion status if enabled
+            if (onlyCompletedStages && user) {
                 const stageData = user.dungeon.stages[stage.stageId];
-                return stageData && stageData.completeTimes > 0;
-            });
-        }
+                if (!stageData || stageData.completeTimes <= 0) continue;
+            }
 
-        return filtered;
-    }, [stages, zones, safeAllowedZoneTypes, onlyCompletedStages, user]);
+            const zoneTypeMap = result.get(zone.type);
+            if (!zoneTypeMap) continue;
 
-    const stagesByZone = useMemo(() => {
-        const grouped = new Map<string, Stage[]>();
-        for (const stage of availableStages) {
-            const existing = grouped.get(stage.zoneId) ?? [];
+            const existing = zoneTypeMap.get(stage.zoneId) ?? [];
             existing.push(stage);
-            grouped.set(stage.zoneId, existing);
+            zoneTypeMap.set(stage.zoneId, existing);
         }
-        // Sort stages within each zone by code
-        for (const [zoneId, zoneStages] of grouped.entries()) {
-            grouped.set(
-                zoneId,
-                zoneStages.sort((a, b) => naturalSortCompare(a.code, b.code)),
-            );
-        }
-        return grouped;
-    }, [availableStages]);
 
-    const filteredSelectedCount = useMemo(() => {
-        return safeSelectedStages.filter((stageId) => availableStages.some((s) => s.stageId === stageId)).length;
-    }, [safeSelectedStages, availableStages]);
+        // Sort stages within each zone by code
+        for (const [, zoneTypeMap] of result.entries()) {
+            for (const [zoneId, zoneStages] of zoneTypeMap.entries()) {
+                zoneTypeMap.set(
+                    zoneId,
+                    zoneStages.sort((a, b) => naturalSortCompare(a.code, b.code)),
+                );
+            }
+        }
+
+        return result;
+    }, [stages, zones, onlyCompletedStages, user]);
+
+    // Get sorted zones for MAINLINE zone type
+    const getSortedMainlineZones = () => {
+        const zoneTypeMap = stagesByZoneType.get("MAINLINE");
+        if (!zoneTypeMap) return [];
+
+        return Array.from(zoneTypeMap.entries())
+            .map(([zoneId, zoneStages]) => ({
+                zoneId,
+                zone: zones.find((z) => z.zoneId === zoneId),
+                stages: zoneStages,
+            }))
+            .filter((entry) => entry.zone)
+            .sort((a, b) => {
+                const aNum = getMainZoneSortNumber(a.zoneId);
+                const bNum = getMainZoneSortNumber(b.zoneId);
+                return aNum - bNum;
+            });
+    };
+
+    // Get grouped events for ACTIVITY zone type (sorted by open status first, then recency)
+    const getGroupedEvents = (): GroupedEvent[] => {
+        const zoneTypeMap = stagesByZoneType.get("ACTIVITY");
+        if (!zoneTypeMap) return [];
+
+        // Group zones by activity ID (or retroId for permanent events)
+        const eventMap = new Map<string, GroupedEvent>();
+
+        for (const [zoneId, zoneStages] of zoneTypeMap.entries()) {
+            const activityId = getActivityIdFromZoneId(zoneId);
+            if (!activityId) continue;
+
+            const zone = zones.find((z) => z.zoneId === zoneId);
+            if (!zone) continue;
+
+            // Check if this is a permanent event
+            const permanentInfo = getPermanentEventInfo(activityId);
+            const isRerun = isRerunActivity(zoneId);
+
+            // Skip reruns that are NOT part of permanent side stories
+            if (isRerun && !permanentInfo) continue;
+
+            // For permanent events, group by retroId; otherwise by activityId
+            const groupKey = permanentInfo?.retroId ?? activityId;
+            const eventName = permanentInfo?.name ?? ACTIVITY_NAMES[activityId] ?? activityId;
+            const zoneName = zone.zoneNameSecond ?? zone.zoneNameFirst ?? zoneId;
+
+            if (!eventMap.has(groupKey)) {
+                const times = getActivityEventTimes(activityId);
+                const startTime = times?.start ?? getActivityStartTime(activityId);
+                const endTime = times?.end ?? 0;
+                // Permanent events are always "open" (available)
+                const isOpen = permanentInfo ? true : isActivityCurrentlyOpen(activityId);
+                const dateRange = permanentInfo ? "" : times ? `${formatEventDate(times.start)} - ${formatEventDate(times.end)}` : "";
+
+                eventMap.set(groupKey, {
+                    activityId: groupKey,
+                    eventName,
+                    startTime,
+                    endTime,
+                    isOpen,
+                    dateRange,
+                    isPermanent: !!permanentInfo,
+                    permanentType: permanentInfo?.type,
+                    zones: [],
+                    totalStages: 0,
+                });
+            }
+
+            const event = eventMap.get(groupKey);
+            if (!event) continue;
+            event.zones.push({
+                zoneId,
+                zone,
+                stages: zoneStages,
+                zoneName,
+            });
+            event.totalStages += zoneStages.length;
+        }
+
+        // Sort zones within each event by zone index
+        for (const event of eventMap.values()) {
+            event.zones.sort((a, b) => (a.zone?.zoneIndex ?? 0) - (b.zone?.zoneIndex ?? 0));
+        }
+
+        // Filter to only available events if setting is enabled
+        let events = Array.from(eventMap.values());
+        if (onlyAvailableStages) {
+            events = events.filter((event) => event.isOpen || event.isPermanent);
+        }
+
+        // Sort events:
+        // 1. Currently open (non-permanent) first
+        // 2. Then permanent events (always available)
+        // 3. Then by start time (newest first)
+        return events.sort((a, b) => {
+            // Non-permanent open events come first
+            const aOpenNonPerm = a.isOpen && !a.isPermanent;
+            const bOpenNonPerm = b.isOpen && !b.isPermanent;
+            if (aOpenNonPerm !== bOpenNonPerm) {
+                return aOpenNonPerm ? -1 : 1;
+            }
+            // Then permanent events
+            if (a.isPermanent !== b.isPermanent) {
+                return a.isPermanent ? -1 : 1;
+            }
+            // Then sort by start time (newest first)
+            return b.startTime - a.startTime;
+        });
+    };
+
+    // Count stages for a zone type
+    const getStageCountForType = (zoneType: string) => {
+        const zoneTypeMap = stagesByZoneType.get(zoneType);
+        if (!zoneTypeMap) return 0;
+        let count = 0;
+        for (const stagesInZone of zoneTypeMap.values()) {
+            count += stagesInZone.length;
+        }
+        return count;
+    };
+
+    // Count selected stages for a zone type
+    const getSelectedCountForType = (zoneType: string) => {
+        const zoneTypeMap = stagesByZoneType.get(zoneType);
+        if (!zoneTypeMap) return 0;
+        let count = 0;
+        for (const stagesInZone of zoneTypeMap.values()) {
+            count += stagesInZone.filter((s) => safeSelectedStages.includes(s.stageId)).length;
+        }
+        return count;
+    };
 
     const toggleZoneType = (type: string) => {
         if (safeAllowedZoneTypes.includes(type)) {
@@ -110,10 +282,6 @@ export function ZoneFilterPanel({ allowedZoneTypes, setAllowedZoneTypes, hasProf
         }
     };
 
-    const selectAll = () => {
-        setAllowedZoneTypes(ZONE_TYPES.map((zt) => zt.value));
-    };
-
     const toggleStage = (stageId: string) => {
         if (safeSelectedStages.includes(stageId)) {
             setSelectedStages(safeSelectedStages.filter((id) => id !== stageId));
@@ -122,15 +290,47 @@ export function ZoneFilterPanel({ allowedZoneTypes, setAllowedZoneTypes, hasProf
         }
     };
 
-    const selectAllStages = () => {
-        setSelectedStages(availableStages.map((s) => s.stageId));
+    const selectAllStagesForType = (zoneType: string) => {
+        const zoneTypeMap = stagesByZoneType.get(zoneType);
+        if (!zoneTypeMap) return;
+
+        const stageIds: string[] = [];
+        for (const stagesInZone of zoneTypeMap.values()) {
+            for (const stage of stagesInZone) {
+                stageIds.push(stage.stageId);
+            }
+        }
+
+        const newSelected = new Set([...safeSelectedStages, ...stageIds]);
+        setSelectedStages(Array.from(newSelected));
     };
 
-    const deselectAllStages = () => {
-        setSelectedStages([]);
+    const deselectAllStagesForType = (zoneType: string) => {
+        const zoneTypeMap = stagesByZoneType.get(zoneType);
+        if (!zoneTypeMap) return;
+
+        const stageIdsToRemove = new Set<string>();
+        for (const stagesInZone of zoneTypeMap.values()) {
+            for (const stage of stagesInZone) {
+                stageIdsToRemove.add(stage.stageId);
+            }
+        }
+
+        setSelectedStages(safeSelectedStages.filter((id) => !stageIdsToRemove.has(id)));
     };
 
-    const allSelected = safeAllowedZoneTypes.length === ZONE_TYPES.length;
+    const toggleZoneTypeOpen = (zoneType: string) => {
+        setOpenZoneTypes((prev) => (prev.includes(zoneType) ? prev.filter((t) => t !== zoneType) : [...prev, zoneType]));
+    };
+
+    const totalSelected = safeSelectedStages.length;
+    const totalStages = stages.filter((stage) => {
+        if (onlyCompletedStages && user) {
+            const stageData = user.dungeon.stages[stage.stageId];
+            return stageData && stageData.completeTimes > 0;
+        }
+        return true;
+    }).length;
 
     return (
         <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
@@ -138,39 +338,12 @@ export function ZoneFilterPanel({ allowedZoneTypes, setAllowedZoneTypes, hasProf
                 <div className="flex items-center justify-between">
                     <div>
                         <CardTitle className="font-semibold text-foreground text-lg">Zone & Stage Filters</CardTitle>
-                        <CardDescription className="text-muted-foreground text-sm">Filter which zones and stages can be selected</CardDescription>
+                        <CardDescription className="text-muted-foreground text-sm">{totalSelected > 0 ? `${totalSelected} stages selected` : `${totalStages} stages available`}</CardDescription>
                     </div>
-                    <Button className="bg-transparent text-xs" disabled={allSelected} onClick={selectAll} size="sm" variant="outline">
-                        Select All Types
-                    </Button>
                 </div>
             </CardHeader>
             <CardContent>
                 <div className="space-y-4">
-                    {/* Zone Types */}
-                    <div className="space-y-2">
-                        {ZONE_TYPES.map((zoneType) => {
-                            const isSelected = safeAllowedZoneTypes.includes(zoneType.value);
-                            return (
-                                <button className={`w-full rounded-lg border px-4 py-3 text-left transition-all ${isSelected ? "border-primary/50 bg-primary/10" : "border-border/50 bg-card/30 hover:border-border hover:bg-card/50"}`} key={zoneType.value} onClick={() => toggleZoneType(zoneType.value)} type="button">
-                                    <div className="flex items-start justify-between gap-3">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-medium text-foreground text-sm">{zoneType.label}</span>
-                                            </div>
-                                            <p className="mt-0.5 text-muted-foreground text-xs">{zoneType.description}</p>
-                                        </div>
-                                        {isSelected && (
-                                            <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary">
-                                                <Check className="h-3 w-3 text-primary-foreground" />
-                                            </div>
-                                        )}
-                                    </div>
-                                </button>
-                            );
-                        })}
-                    </div>
-
                     {/* Completion Filter */}
                     {hasProfile && setOnlyCompletedStages && (
                         <div className="flex items-center justify-between rounded-lg border border-border/50 bg-secondary/30 p-3">
@@ -184,77 +357,233 @@ export function ZoneFilterPanel({ allowedZoneTypes, setAllowedZoneTypes, hasProf
                         </div>
                     )}
 
-                    <div className="space-y-2 rounded-lg border border-border/50 bg-secondary/30 p-3">
-                        <div className="flex items-center justify-between">
+                    {/* Available Stages Filter */}
+                    {setOnlyAvailableStages && (
+                        <div className="flex items-center justify-between rounded-lg border border-border/50 bg-secondary/30 p-3">
                             <div className="space-y-0.5">
-                                <Label className="font-medium text-foreground text-sm">Manual Stage Selection</Label>
-                                <p className="text-muted-foreground text-xs">{safeSelectedStages.length > 0 ? `${filteredSelectedCount} stages selected` : `${availableStages.length} stages available`}</p>
+                                <Label className="font-medium text-foreground text-sm" htmlFor="only-available">
+                                    Only Available Stages
+                                </Label>
+                                <p className="text-muted-foreground text-xs">Only show stages from currently open or permanent events</p>
                             </div>
-                            <div className="flex gap-2">
-                                <Button className="h-7 text-xs" onClick={selectAllStages} size="sm" variant="ghost">
-                                    All
-                                </Button>
-                                <Button className="h-7 text-xs" onClick={deselectAllStages} size="sm" variant="ghost">
-                                    None
-                                </Button>
-                            </div>
+                            <Switch checked={onlyAvailableStages ?? false} id="only-available" onCheckedChange={setOnlyAvailableStages} />
                         </div>
+                    )}
 
-                        <Accordion className="w-full" collapsible type="single">
-                            {Array.from(stagesByZone.entries())
-                                .sort(([aZoneId], [bZoneId]) => {
-                                    const aZone = zones.find((z) => z.zoneId === aZoneId);
-                                    const bZone = zones.find((z) => z.zoneId === bZoneId);
-                                    if (!aZone || !bZone) return aZoneId.localeCompare(bZoneId);
+                    {/* Zone Type Disclosures with smooth animation */}
+                    <div className="space-y-2">
+                        {ZONE_TYPES.map((zoneType) => {
+                            const isEnabled = safeAllowedZoneTypes.includes(zoneType.value);
+                            const isOpen = openZoneTypes.includes(zoneType.value);
+                            const stageCount = getStageCountForType(zoneType.value);
+                            const selectedCount = getSelectedCountForType(zoneType.value);
+                            const isActivityType = zoneType.value === "ACTIVITY";
+                            const isMainlineType = zoneType.value === "MAINLINE";
+                            const groupedEvents = isActivityType ? getGroupedEvents() : [];
+                            const mainlineZones = isMainlineType ? getSortedMainlineZones() : [];
 
-                                    // Sort by zone type order first (MAINLINE, SIDESTORY, BRANCHLINE, ACTIVITY)
-                                    const typeOrder = ZONE_TYPES.map((t) => t.value);
-                                    const aTypeIndex = typeOrder.indexOf(aZone.type);
-                                    const bTypeIndex = typeOrder.indexOf(bZone.type);
-                                    if (aTypeIndex !== bTypeIndex) {
-                                        return aTypeIndex - bTypeIndex;
-                                    }
-
-                                    // Then sort by zoneIndex within the same type
-                                    return aZone.zoneIndex - bZone.zoneIndex;
-                                })
-                                .map(([zoneId, zoneStages]) => {
-                                    const zone = zones.find((z) => z.zoneId === zoneId);
-                                    const zoneName = zone?.zoneNameFirst ?? zone?.zoneNameSecond ?? zoneId;
-                                    const selectedInZone = zoneStages.filter((s) => safeSelectedStages.includes(s.stageId)).length;
-
-                                    return (
-                                        <AccordionItem className="border-border/50" key={zoneId} value={zoneId}>
-                                            <AccordionTrigger className="py-2 text-sm hover:no-underline">
-                                                <div className="flex w-full items-center justify-between pr-2">
-                                                    <span className="text-foreground">{zoneName}</span>
-                                                    <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground text-xs">{selectedInZone > 0 ? `${selectedInZone} / ${zoneStages.length}` : zoneStages.length}</span>
+                            return (
+                                <Disclosure key={zoneType.value} onOpenChange={() => toggleZoneTypeOpen(zoneType.value)} open={isOpen} transition={{ duration: 0.2, ease: "easeInOut" }}>
+                                    <div className={`rounded-lg border transition-colors ${isEnabled ? "border-primary/50 bg-primary/5" : "border-border/50 bg-card/30"}`}>
+                                        <div className="flex items-center justify-between p-3">
+                                            <DisclosureTrigger>
+                                                <div className="flex flex-1 cursor-pointer items-center gap-2">
+                                                    <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+                                                    <div className="flex-1 text-left">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-medium text-foreground text-sm">{zoneType.label}</span>
+                                                            <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground text-xs">{selectedCount > 0 ? `${selectedCount} / ${stageCount}` : stageCount}</span>
+                                                        </div>
+                                                        <p className="mt-0.5 text-muted-foreground text-xs">{zoneType.description}</p>
+                                                    </div>
                                                 </div>
-                                            </AccordionTrigger>
-                                            <AccordionContent>
-                                                <div className="max-h-48 space-y-1 overflow-y-auto pr-2">
-                                                    {zoneStages.map((stage) => {
-                                                        const isSelected = safeSelectedStages.includes(stage.stageId);
-                                                        return (
-                                                            <button
-                                                                className={`w-full rounded px-3 py-2 text-left text-sm transition-colors ${isSelected ? "bg-primary/20 text-foreground" : "bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground"}`}
-                                                                key={stage.stageId}
-                                                                onClick={() => toggleStage(stage.stageId)}
-                                                                type="button"
-                                                            >
-                                                                <div className="flex items-center justify-between gap-2">
-                                                                    <span className="truncate">{stage.code}</span>
-                                                                    {isSelected && <Check className="h-3 w-3 shrink-0 text-primary" />}
-                                                                </div>
-                                                            </button>
-                                                        );
-                                                    })}
+                                            </DisclosureTrigger>
+                                            <button
+                                                className={`ml-2 flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-colors ${isEnabled ? "bg-primary" : "border border-border bg-secondary hover:bg-secondary/80"}`}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    toggleZoneType(zoneType.value);
+                                                }}
+                                                type="button"
+                                            >
+                                                {isEnabled && <Check className="h-3.5 w-3.5 text-primary-foreground" />}
+                                            </button>
+                                        </div>
+
+                                        <DisclosureContent>
+                                            <div className="border-border/50 border-t px-3 pb-3">
+                                                <div className="flex items-center justify-between py-2">
+                                                    <span className="text-muted-foreground text-xs">Manual Selection</span>
+                                                    <div className="flex gap-1">
+                                                        <Button className="h-6 px-2 text-xs" onClick={() => selectAllStagesForType(zoneType.value)} size="sm" variant="ghost">
+                                                            All
+                                                        </Button>
+                                                        <Button className="h-6 px-2 text-xs" onClick={() => deselectAllStagesForType(zoneType.value)} size="sm" variant="ghost">
+                                                            None
+                                                        </Button>
+                                                    </div>
                                                 </div>
-                                            </AccordionContent>
-                                        </AccordionItem>
-                                    );
-                                })}
-                        </Accordion>
+
+                                                {/* ACTIVITY zones: grouped by event */}
+                                                {isActivityType && (
+                                                    <Accordion
+                                                        className="w-full"
+                                                        expandedValue={openEventId}
+                                                        onValueChange={(value) => {
+                                                            setOpenEventId(value as string | null);
+                                                            setOpenZoneId(null);
+                                                        }}
+                                                        transition={{ duration: 0.2, ease: "easeInOut" }}
+                                                    >
+                                                        {groupedEvents.map((event) => {
+                                                            const eventSelectedCount = event.zones.reduce((sum, z) => sum + z.stages.filter((s) => safeSelectedStages.includes(s.stageId)).length, 0);
+                                                            const hasMultipleZones = event.zones.length > 1;
+
+                                                            return (
+                                                                <AccordionItem className="border-border/50 border-b last:border-b-0" key={event.activityId} value={event.activityId}>
+                                                                    <AccordionTrigger className="flex w-full items-center justify-between py-2 text-sm">
+                                                                        <div className="flex flex-col items-start gap-0.5">
+                                                                            <div className="flex items-center gap-2">
+                                                                                <span className="text-foreground">{event.eventName}</span>
+                                                                                {event.isPermanent ? (
+                                                                                    <span className="rounded-full bg-blue-500/20 px-1.5 py-0.5 font-medium text-[10px] text-blue-500">{event.permanentType === "BRANCHLINE" ? "INTERMEZZO" : "SIDE STORY"}</span>
+                                                                                ) : event.isOpen ? (
+                                                                                    <span className="rounded-full bg-green-500/20 px-1.5 py-0.5 font-medium text-[10px] text-green-500">OPEN</span>
+                                                                                ) : null}
+                                                                            </div>
+                                                                            {event.dateRange && <span className="text-[10px] text-muted-foreground">{event.dateRange}</span>}
+                                                                        </div>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground text-xs">{eventSelectedCount > 0 ? `${eventSelectedCount} / ${event.totalStages}` : event.totalStages}</span>
+                                                                            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${openEventId === event.activityId ? "rotate-180" : ""}`} />
+                                                                        </div>
+                                                                    </AccordionTrigger>
+                                                                    <AccordionContent className="overflow-hidden">
+                                                                        {hasMultipleZones ? (
+                                                                            // Multiple zones within event - show nested structure
+                                                                            <Accordion className="w-full pl-2" expandedValue={openZoneId} onValueChange={(value) => setOpenZoneId(value as string | null)} transition={{ duration: 0.2, ease: "easeInOut" }}>
+                                                                                {event.zones.map((zoneData) => {
+                                                                                    const zoneSelectedCount = zoneData.stages.filter((s) => safeSelectedStages.includes(s.stageId)).length;
+                                                                                    return (
+                                                                                        <AccordionItem className="border-border/30 border-b last:border-b-0" key={zoneData.zoneId} value={zoneData.zoneId}>
+                                                                                            <AccordionTrigger className="flex w-full items-center justify-between py-1.5 text-sm">
+                                                                                                <span className="text-muted-foreground text-xs">{zoneData.zoneName}</span>
+                                                                                                <div className="flex items-center gap-2">
+                                                                                                    <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground text-xs">{zoneSelectedCount > 0 ? `${zoneSelectedCount} / ${zoneData.stages.length}` : zoneData.stages.length}</span>
+                                                                                                    <ChevronDown className={`h-3 w-3 text-muted-foreground transition-transform duration-200 ${openZoneId === zoneData.zoneId ? "rotate-180" : ""}`} />
+                                                                                                </div>
+                                                                                            </AccordionTrigger>
+                                                                                            <AccordionContent className="overflow-hidden">
+                                                                                                <div className="max-h-48 space-y-1 overflow-y-auto pr-2 pb-2">
+                                                                                                    {zoneData.stages.map((stage) => {
+                                                                                                        const isSelected = safeSelectedStages.includes(stage.stageId);
+                                                                                                        const isChallengeMode = stage.difficulty === "FOUR_STAR";
+                                                                                                        return (
+                                                                                                            <button
+                                                                                                                className={`w-full rounded px-3 py-2 text-left text-sm transition-colors ${isSelected ? "bg-primary/20 text-foreground" : "bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground"}`}
+                                                                                                                key={stage.stageId}
+                                                                                                                onClick={() => toggleStage(stage.stageId)}
+                                                                                                                type="button"
+                                                                                                            >
+                                                                                                                <div className="flex items-center justify-between gap-2">
+                                                                                                                    <span className="flex items-center gap-1.5 truncate">
+                                                                                                                        {getStageDisplayName(stage)}
+                                                                                                                        {isChallengeMode && <span className="rounded bg-amber-500/20 px-1 py-0.5 font-medium text-[10px] text-amber-500">CM</span>}
+                                                                                                                    </span>
+                                                                                                                    {isSelected && <Check className="h-3 w-3 shrink-0 text-primary" />}
+                                                                                                                </div>
+                                                                                                            </button>
+                                                                                                        );
+                                                                                                    })}
+                                                                                                </div>
+                                                                                            </AccordionContent>
+                                                                                        </AccordionItem>
+                                                                                    );
+                                                                                })}
+                                                                            </Accordion>
+                                                                        ) : (
+                                                                            // Single zone - show stages directly
+                                                                            <div className="max-h-48 space-y-1 overflow-y-auto pr-2 pb-2">
+                                                                                {event.zones[0]?.stages.map((stage) => {
+                                                                                    const isSelected = safeSelectedStages.includes(stage.stageId);
+                                                                                    const isChallengeMode = stage.difficulty === "FOUR_STAR";
+                                                                                    return (
+                                                                                        <button
+                                                                                            className={`w-full rounded px-3 py-2 text-left text-sm transition-colors ${isSelected ? "bg-primary/20 text-foreground" : "bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground"}`}
+                                                                                            key={stage.stageId}
+                                                                                            onClick={() => toggleStage(stage.stageId)}
+                                                                                            type="button"
+                                                                                        >
+                                                                                            <div className="flex items-center justify-between gap-2">
+                                                                                                <span className="flex items-center gap-1.5 truncate">
+                                                                                                    {getStageDisplayName(stage)}
+                                                                                                    {isChallengeMode && <span className="rounded bg-amber-500/20 px-1 py-0.5 font-medium text-[10px] text-amber-500">CM</span>}
+                                                                                                </span>
+                                                                                                {isSelected && <Check className="h-3 w-3 shrink-0 text-primary" />}
+                                                                                            </div>
+                                                                                        </button>
+                                                                                    );
+                                                                                })}
+                                                                            </div>
+                                                                        )}
+                                                                    </AccordionContent>
+                                                                </AccordionItem>
+                                                            );
+                                                        })}
+                                                    </Accordion>
+                                                )}
+
+                                                {/* MAINLINE zones: simple list */}
+                                                {isMainlineType && (
+                                                    <Accordion className="w-full" expandedValue={openZoneId} onValueChange={(value) => setOpenZoneId(value as string | null)} transition={{ duration: 0.2, ease: "easeInOut" }}>
+                                                        {mainlineZones.map(({ zoneId, zone, stages: zoneStages }) => {
+                                                            const zoneName = zone?.zoneNameFirst ?? zone?.zoneNameSecond ?? zoneId;
+                                                            const selectedInZone = zoneStages.filter((s) => safeSelectedStages.includes(s.stageId)).length;
+
+                                                            return (
+                                                                <AccordionItem className="border-border/50 border-b last:border-b-0" key={zoneId} value={zoneId}>
+                                                                    <AccordionTrigger className="flex w-full items-center justify-between py-2 text-sm">
+                                                                        <span className="text-foreground">{zoneName}</span>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground text-xs">{selectedInZone > 0 ? `${selectedInZone} / ${zoneStages.length}` : zoneStages.length}</span>
+                                                                            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${openZoneId === zoneId ? "rotate-180" : ""}`} />
+                                                                        </div>
+                                                                    </AccordionTrigger>
+                                                                    <AccordionContent className="overflow-hidden">
+                                                                        <div className="max-h-48 space-y-1 overflow-y-auto pr-2 pb-2">
+                                                                            {zoneStages.map((stage) => {
+                                                                                const isSelected = safeSelectedStages.includes(stage.stageId);
+                                                                                const isChallengeMode = stage.difficulty === "FOUR_STAR";
+                                                                                return (
+                                                                                    <button
+                                                                                        className={`w-full rounded px-3 py-2 text-left text-sm transition-colors ${isSelected ? "bg-primary/20 text-foreground" : "bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground"}`}
+                                                                                        key={stage.stageId}
+                                                                                        onClick={() => toggleStage(stage.stageId)}
+                                                                                        type="button"
+                                                                                    >
+                                                                                        <div className="flex items-center justify-between gap-2">
+                                                                                            <span className="flex items-center gap-1.5 truncate">
+                                                                                                {getStageDisplayName(stage)}
+                                                                                                {isChallengeMode && <span className="rounded bg-amber-500/20 px-1 py-0.5 font-medium text-[10px] text-amber-500">CM</span>}
+                                                                                            </span>
+                                                                                            {isSelected && <Check className="h-3 w-3 shrink-0 text-primary" />}
+                                                                                        </div>
+                                                                                    </button>
+                                                                                );
+                                                                            })}
+                                                                        </div>
+                                                                    </AccordionContent>
+                                                                </AccordionItem>
+                                                            );
+                                                        })}
+                                                    </Accordion>
+                                                )}
+                                            </div>
+                                        </DisclosureContent>
+                                    </div>
+                                </Disclosure>
+                            );
+                        })}
                     </div>
                 </div>
             </CardContent>
