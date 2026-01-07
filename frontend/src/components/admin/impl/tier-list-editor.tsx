@@ -172,7 +172,7 @@ function DroppableTierZone({ tierId, isOver, children }: DroppableTierZoneProps)
     });
 
     return (
-        <div className={cn("min-h-[60px] rounded-md p-4 transition-colors", isOver && "bg-primary/10 ring-2 ring-primary ring-inset")} ref={setNodeRef}>
+        <div className={cn("min-h-15 rounded-md p-4 transition-colors", isOver && "bg-primary/10 ring-2 ring-primary ring-inset")} ref={setNodeRef}>
             {children}
         </div>
     );
@@ -759,9 +759,9 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
                             </span>
                         </div>
 
-                        <ScrollArea className="h-[60vh] max-h-[600px] rounded-md border p-4">
+                        <ScrollArea className="h-[60vh] max-h-150 rounded-md border p-4">
                             {operatorsLoading ? (
-                                <div className="flex h-full min-h-[200px] flex-col items-center justify-center gap-3 text-muted-foreground">
+                                <div className="flex h-full min-h-50 flex-col items-center justify-center gap-3 text-muted-foreground">
                                     <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                                     <p>Loading operators...</p>
                                 </div>
@@ -803,7 +803,7 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
                                     })}
                                 </div>
                             ) : (
-                                <div className="flex h-full min-h-[200px] items-center justify-center text-muted-foreground">No operators found matching your search</div>
+                                <div className="flex h-full min-h-50 items-center justify-center text-muted-foreground">No operators found matching your search</div>
                             )}
                         </ScrollArea>
                     </div>
