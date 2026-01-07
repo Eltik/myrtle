@@ -93,22 +93,22 @@ pub async fn get_all_stages(
                 .values()
                 .filter(|stage| {
                     // Exclude types filter
-                    if let Some(ref excludes) = exclude_set {
-                        if excludes.contains(&stage.stage_type) {
-                            return false;
-                        }
+                    if let Some(ref excludes) = exclude_set
+                        && excludes.contains(&stage.stage_type)
+                    {
+                        return false;
                     }
                     // Include types filter
-                    if let Some(ref includes) = include_set {
-                        if !includes.contains(&stage.stage_type) {
-                            return false;
-                        }
+                    if let Some(ref includes) = include_set
+                        && !includes.contains(&stage.stage_type)
+                    {
+                        return false;
                     }
                     // Zone ID filter
-                    if let Some(ref zone_id) = zone_id_filter {
-                        if &stage.zone_id != zone_id {
-                            return false;
-                        }
+                    if let Some(ref zone_id) = zone_id_filter
+                        && &stage.zone_id != zone_id
+                    {
+                        return false;
                     }
                     true
                 })
@@ -243,10 +243,10 @@ pub async fn get_stages_by_zone(
                         return false;
                     }
                     // Exclude types filter
-                    if let Some(ref excludes) = exclude_set {
-                        if excludes.contains(&stage.stage_type) {
-                            return false;
-                        }
+                    if let Some(ref excludes) = exclude_set
+                        && excludes.contains(&stage.stage_type)
+                    {
+                        return false;
                     }
                     true
                 })
