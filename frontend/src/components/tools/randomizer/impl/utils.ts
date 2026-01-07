@@ -2,6 +2,7 @@ import type { Stage } from "~/types/api/impl/stage";
 import type { User } from "~/types/api/impl/user";
 import type { Zone } from "~/types/api/impl/zone";
 import type { RandomizerOperator } from "../index";
+import { getActivityIdFromZoneId, getPermanentEventInfo, getPermanentZonePrefix, isActivityCurrentlyOpen } from "./activity-names";
 import type { Challenge } from "./types";
 
 // Challenge pool based on common Arknights challenge run types
@@ -42,7 +43,8 @@ export function selectRandomStage(
     allowedZoneTypes: string[] = [],
     user?: User | null,
     onlyCompleted = false,
-    selectedStages: string[] = [], // Added selectedStages parameter
+    selectedStages: string[] = [],
+    onlyAvailableStages = false, // Added onlyAvailableStages parameter
 ): Stage | null {
     if (stages.length === 0) return null;
 
@@ -51,7 +53,6 @@ export function selectRandomStage(
     if (selectedStages.length > 0) {
         filteredStages = filteredStages.filter((stage) => selectedStages.includes(stage.stageId));
     } else {
-        // Filter by zone type if specified and no manual selection
         if (allowedZoneTypes.length > 0) {
             filteredStages = filteredStages.filter((stage) => {
                 const zone = zones.find((z) => z.zoneId === stage.zoneId);
@@ -64,6 +65,31 @@ export function selectRandomStage(
         filteredStages = filteredStages.filter((stage) => {
             const stageData = user.dungeon.stages[stage.stageId];
             return stageData && stageData.completeTimes > 0;
+        });
+    }
+
+    if (onlyAvailableStages) {
+        filteredStages = filteredStages.filter((stage) => {
+            const zone = zones.find((z) => z.zoneId === stage.zoneId);
+            if (!zone) return false;
+
+            // Main story stages are always available
+            if (zone.type === "MAINLINE") return true;
+
+            // Check if this is a permanent zone (e.g., permanent_sidestory_1_zone1)
+            const permanentPrefix = getPermanentZonePrefix(stage.zoneId);
+            if (permanentPrefix) return true;
+
+            // For activity zones, check if event is open or has become permanent
+            const activityId = getActivityIdFromZoneId(stage.zoneId);
+            if (!activityId) return false;
+
+            // Check if this activity is now a permanent side story/intermezzo
+            const permanentInfo = getPermanentEventInfo(activityId);
+            if (permanentInfo) return true;
+
+            // Check if the event is currently running
+            return isActivityCurrentlyOpen(activityId);
         });
     }
 
@@ -105,7 +131,13 @@ export function generateRandomSquad(operators: RandomizerOperator[], squadSize: 
 
 export function generateChallenge(): Challenge {
     const randomIndex = Math.floor(Math.random() * CHALLENGES.length);
-    return CHALLENGES[randomIndex] ?? { type: "restriction", title: "Random Challenge", description: "Complete the stage with any restrictions you choose" };
+    return (
+        CHALLENGES[randomIndex] ?? {
+            type: "restriction",
+            title: "Random Challenge",
+            description: "Complete the stage with any restrictions you choose",
+        }
+    );
 }
 
 export function getRarityNumber(rarity: string): number {
