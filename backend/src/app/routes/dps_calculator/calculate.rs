@@ -13,6 +13,8 @@ use crate::core::dps_calculator::{
     operators::create_operator,
 };
 
+use super::utils::normalize_operator_name;
+
 /// Request body for DPS calculation
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -465,60 +467,5 @@ fn convert_params(params: &DpsParams) -> OperatorParams {
             res_flat: params.shred.res_flat,
         }),
         ..Default::default()
-    }
-}
-
-/// Normalize operator name to PascalCase format expected by create_operator
-///
-/// Examples:
-/// - "Blue Poison" -> "BluePoison"
-/// - "Ch'en" -> "Chen"
-/// - "Exusiai the Sankta" -> "Exusiai"
-/// - "SilverAsh" -> "SilverAsh"
-/// - "12F" -> "12F" (numbers preserved)
-fn normalize_operator_name(name: &str) -> String {
-    // Handle special cases with alternate forms
-    let name = match name {
-        // Known alternates with different naming conventions
-        n if n.contains("Alter") || n.ends_with(" the") => {
-            // Handle "Operator the Title" format - take just the name
-            n.split(" the ").next().unwrap_or(n)
-        }
-        _ => name,
-    };
-
-    // Remove special characters and convert to PascalCase
-    let mut result = String::new();
-    let mut capitalize_next = true;
-
-    for c in name.chars() {
-        if c.is_alphanumeric() {
-            if capitalize_next {
-                result.push(c.to_ascii_uppercase());
-                capitalize_next = false;
-            } else {
-                result.push(c);
-            }
-        } else if c == ' ' || c == '-' {
-            // Space and hyphen: capitalize next character
-            capitalize_next = true;
-        }
-        // Apostrophes and other special characters are just removed (don't capitalize next)
-    }
-
-    result
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_normalize_operator_name() {
-        assert_eq!(normalize_operator_name("Blue Poison"), "BluePoison");
-        assert_eq!(normalize_operator_name("Ch'en"), "Chen");
-        assert_eq!(normalize_operator_name("SilverAsh"), "SilverAsh");
-        assert_eq!(normalize_operator_name("12F"), "12F");
-        assert_eq!(normalize_operator_name("Projekt Red"), "ProjektRed");
     }
 }

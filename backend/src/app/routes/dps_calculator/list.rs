@@ -6,6 +6,8 @@ use serde::Serialize;
 use crate::app::state::AppState;
 use crate::core::dps_calculator::operators::{get_operator_metadata, get_supported_operator_names};
 
+use super::utils::normalize_operator_name;
+
 /// Response for listing available DPS calculator operators
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -185,30 +187,4 @@ fn rarity_to_max_promotion(rarity: i32) -> i32 {
         4..=6 => 2,
         _ => 0,
     }
-}
-
-/// Normalize operator name to match calculator naming convention
-fn normalize_operator_name(name: &str) -> String {
-    let name = match name {
-        n if n.contains("Alter") || n.ends_with(" the") => n.split(" the ").next().unwrap_or(n),
-        _ => name,
-    };
-
-    let mut result = String::new();
-    let mut capitalize_next = true;
-
-    for c in name.chars() {
-        if c.is_alphanumeric() {
-            if capitalize_next {
-                result.push(c.to_ascii_uppercase());
-                capitalize_next = false;
-            } else {
-                result.push(c);
-            }
-        } else if c == ' ' || c == '-' {
-            capitalize_next = true;
-        }
-    }
-
-    result
 }
