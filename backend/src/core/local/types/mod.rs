@@ -5,7 +5,7 @@ use crate::core::local::{
     types::{
         chibi::ChibiData, gacha::GachaData, handbook::Handbook, material::Materials,
         module::Modules, operator::Operator, range::Ranges, skill::Skill, skin::SkinData,
-        trust::Favor, voice::Voices,
+        stage::Stage, trust::Favor, voice::Voices, zone::Zone,
     },
 };
 
@@ -20,8 +20,10 @@ pub mod range;
 pub mod serde_helpers;
 pub mod skill;
 pub mod skin;
+pub mod stage;
 pub mod trust;
 pub mod voice;
+pub mod zone;
 
 #[derive(Debug, Clone, Default)]
 pub struct GameData {
@@ -36,6 +38,8 @@ pub struct GameData {
     pub voices: Voices,
     pub gacha: GachaData,
     pub chibis: ChibiData,
+    pub zones: HashMap<String, Zone>,
+    pub stages: HashMap<String, Stage>,
     pub asset_mappings: AssetMappings,
 }
 

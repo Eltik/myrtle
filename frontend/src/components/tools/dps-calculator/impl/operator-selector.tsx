@@ -153,7 +153,7 @@ export function OperatorSelector({ operators, onSelectOperator }: OperatorSelect
                     const color = rarityColors[rarity] ?? "#ffffff";
                     return (
                         <Button
-                            className={cn("h-7 min-w-[42px] px-2 font-medium text-xs transition-all duration-150", isSelected ? "ring-2 ring-offset-1 ring-offset-background" : "opacity-60 hover:opacity-100")}
+                            className={cn("h-7 min-w-10.5 px-2 font-medium text-xs transition-all duration-150", isSelected ? "ring-2 ring-offset-1 ring-offset-background" : "opacity-60 hover:opacity-100")}
                             key={rarity}
                             onClick={() => toggleRarity(rarity)}
                             size="sm"
@@ -200,7 +200,7 @@ export function OperatorSelector({ operators, onSelectOperator }: OperatorSelect
             )}
 
             {/* Operator List */}
-            <ScrollArea className="h-[280px] rounded-md border border-border">
+            <ScrollArea className="h-70 rounded-md border border-border">
                 <div className="grid grid-cols-1 gap-2 p-3 sm:grid-cols-2 lg:grid-cols-3">
                     {filteredAndSortedOperators.map((operator) => {
                         const rarityColor = rarityColors[operator.rarity] ?? "#ffffff";
@@ -221,7 +221,7 @@ export function OperatorSelector({ operators, onSelectOperator }: OperatorSelect
                     })}
                 </div>
 
-                {filteredAndSortedOperators.length === 0 && <div className="flex h-[200px] items-center justify-center text-muted-foreground text-sm">No operators found</div>}
+                {filteredAndSortedOperators.length === 0 && <div className="flex h-50 items-center justify-center text-muted-foreground text-sm">No operators found</div>}
             </ScrollArea>
         </div>
     );

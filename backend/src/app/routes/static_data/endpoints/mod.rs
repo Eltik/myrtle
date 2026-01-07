@@ -7,5 +7,7 @@ pub mod operators;
 pub mod ranges;
 pub mod skills;
 pub mod skins;
+pub mod stages;
 pub mod trust;
 pub mod voices;
+pub mod zones;

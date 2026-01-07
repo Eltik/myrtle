@@ -93,5 +93,15 @@ pub fn router() -> Router<AppState> {
             "/chibis/{operator_code}",
             get(endpoints::chibis::get_chibi_by_operator),
         )
+        // Zones
+        .route("/zones", get(endpoints::zones::get_all_zones))
+        .route("/zones/{id}", get(endpoints::zones::get_zone_by_id))
+        // Stages
+        .route("/stages", get(endpoints::stages::get_all_stages))
+        .route("/stages/{id}", get(endpoints::stages::get_stage_by_id))
+        .route(
+            "/stages/zone/{zone_id}",
+            get(endpoints::stages::get_stages_by_zone),
+        )
         .layer(CompressionLayer::new())
 }

@@ -251,6 +251,8 @@ pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
             ranges: game_data.ranges.len(),
             gacha_pools: game_data.gacha.gacha_pool_client.len(),
             voices: game_data.voices.char_words.len(),
+            zones: game_data.zones.len(),
+            stages: game_data.stages.len(),
         }));
     } else {
         events.emit(ConfigEvent::GameDataEmpty);
