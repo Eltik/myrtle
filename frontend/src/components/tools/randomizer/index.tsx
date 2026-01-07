@@ -36,7 +36,7 @@ interface RandomizerProps {
 
 const STORAGE_KEY_ROSTER = "randomizer-roster";
 const STORAGE_KEY_SETTINGS = "randomizer-settings";
-const SETTINGS_VERSION = 2; // Increment this to force migration
+const SETTINGS_VERSION = 4; // Increment this to force migration
 
 const DEFAULT_SETTINGS: RandomizerSettings = {
     allowedClasses: ["WARRIOR", "SNIPER", "TANK", "MEDIC", "SUPPORT", "CASTER", "SPECIAL", "PIONEER"],
@@ -45,6 +45,7 @@ const DEFAULT_SETTINGS: RandomizerSettings = {
     squadSize: 12,
     allowDuplicates: false,
     onlyCompletedStages: true,
+    onlyAvailableStages: true,
     onlyE2Operators: false,
     selectedStages: [],
 };
@@ -57,8 +58,17 @@ function migrateSettings(saved: RandomizerSettings & { _version?: number }): Ran
     if (version < 2) {
         saved.onlyE2Operators = false;
         saved.onlyCompletedStages = true;
-        // Set zone types to MAINLINE and ACTIVITY (ACTIVITY contains side stories and intermezzis)
+    }
+
+    // Version 3: Reset zone types and selected stages
+    if (version < 3) {
         saved.allowedZoneTypes = ["MAINLINE", "ACTIVITY"];
+        saved.selectedStages = [];
+    }
+
+    // Version 4: Add onlyAvailableStages setting
+    if (version < 4) {
+        saved.onlyAvailableStages = true;
     }
 
     // Return without _version field
@@ -330,9 +340,11 @@ export function Randomizer({ zones, stages, operators }: RandomizerProps) {
                     <ZoneFilterPanel
                         allowedZoneTypes={settings.allowedZoneTypes}
                         hasProfile={hasProfile}
+                        onlyAvailableStages={settings.onlyAvailableStages}
                         onlyCompletedStages={settings.onlyCompletedStages}
                         selectedStages={settings.selectedStages}
                         setAllowedZoneTypes={(types) => setSettings({ ...settings, allowedZoneTypes: types })}
+                        setOnlyAvailableStages={(value) => setSettings({ ...settings, onlyAvailableStages: value })}
                         setOnlyCompletedStages={(value) => setSettings({ ...settings, onlyCompletedStages: value })}
                         setSelectedStages={(stages) => setSettings({ ...settings, selectedStages: stages })}
                         stages={stages}

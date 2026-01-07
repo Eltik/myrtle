@@ -1,5 +1,5 @@
 "use client";
-import { AnimatePresence, MotionConfig, motion, type Transition, type Variant, type Variants } from "motion/react";
+import { MotionConfig, motion, type Transition, type Variant, type Variants } from "motion/react";
 import React, { createContext, type ReactNode, useContext, useState } from "react";
 import { cn } from "~/lib/utils";
 
@@ -116,9 +116,11 @@ function AccordionContent({ children, className, ...props }: AccordionContentPro
     const value = (props as { value?: React.Key }).value;
     const isExpanded = value === expandedValue;
 
+    // Use CSS grid technique for smooth height animation without layout shifts
+    // grid-template-rows: 0fr -> 1fr animates height without removing from DOM
     const BASE_VARIANTS: Variants = {
-        expanded: { height: "auto", opacity: 1 },
-        collapsed: { height: 0, opacity: 0 },
+        expanded: { gridTemplateRows: "1fr", opacity: 1 },
+        collapsed: { gridTemplateRows: "0fr", opacity: 0 },
     };
 
     const combinedVariants = {
@@ -127,13 +129,9 @@ function AccordionContent({ children, className, ...props }: AccordionContentPro
     };
 
     return (
-        <AnimatePresence initial={false}>
-            {isExpanded && (
-                <motion.div animate="expanded" className={className} exit="collapsed" initial="collapsed" variants={combinedVariants}>
-                    {children}
-                </motion.div>
-            )}
-        </AnimatePresence>
+        <motion.div animate={isExpanded ? "expanded" : "collapsed"} className={cn("grid", className)} initial={false} style={{ willChange: "grid-template-rows, opacity" }} variants={combinedVariants}>
+            <div className="overflow-hidden">{children}</div>
+        </motion.div>
     );
 }
 

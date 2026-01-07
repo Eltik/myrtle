@@ -132,7 +132,7 @@ export function FilterPanel({ settings, setSettings, hasProfile, onFiltersChange
                         return (
                             <button className={`flex items-center gap-1 rounded-lg border px-3 py-2 transition-all ${isSelected ? "border-primary bg-primary/10" : "border-border bg-secondary/50 hover:border-border/80"}`} key={rarity} onClick={() => handleRarityToggle(rarity)} type="button">
                                 <span className="font-medium text-sm" style={{ color: rarityColor }}>
-                                    {"★".repeat(rarity)}
+                                    {rarity}★
                                 </span>
                             </button>
                         );

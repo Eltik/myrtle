@@ -105,7 +105,7 @@ export function generateRandomSquad(operators: RandomizerOperator[], squadSize: 
 
 export function generateChallenge(): Challenge {
     const randomIndex = Math.floor(Math.random() * CHALLENGES.length);
-    return CHALLENGES[randomIndex] ?? CHALLENGES[0]!;
+    return CHALLENGES[randomIndex] ?? { type: "restriction", title: "Random Challenge", description: "Complete the stage with any restrictions you choose" };
 }
 
 export function getRarityNumber(rarity: string): number {

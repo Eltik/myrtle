@@ -88,14 +88,15 @@ export function RosterPanel({ operators, roster, setRoster, onImportProfile, has
 
             <div className="max-h-96 space-y-1 overflow-y-auto rounded-lg border border-border/50 bg-secondary/30 p-2">
                 {filteredOperators.map((operator) => {
-                    if (!operator.id) return null;
-                    const isSelected = roster.has(operator.id);
+                    const operatorId = operator.id;
+                    if (!operatorId) return null;
+                    const isSelected = roster.has(operatorId);
                     const rarityNum = getRarityNumber(operator.rarity);
                     const rarityColor = RARITY_COLORS[rarityNum] ?? RARITY_COLORS[1];
                     const className = CLASS_DISPLAY[operator.profession] ?? operator.profession;
 
                     return (
-                        <button className="flex w-full items-center gap-3 rounded-md p-2 transition-colors hover:bg-accent/50" key={operator.id} onClick={() => handleToggle(operator.id!)} type="button">
+                        <button className="flex w-full items-center gap-3 rounded-md p-2 transition-colors hover:bg-accent/50" key={operatorId} onClick={() => handleToggle(operatorId)} type="button">
                             <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md border border-border">
                                 <Image alt={operator.name} className="h-full w-full object-cover" height={48} src={`/api/cdn${operator.portrait || "/placeholder.svg"}`} width={48} />
                             </div>
