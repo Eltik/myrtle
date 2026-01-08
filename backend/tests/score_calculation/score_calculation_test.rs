@@ -430,10 +430,11 @@ mod tests {
         println!("Exported full score to: {}", full_path.display());
 
         // Export just operator scores (sorted by total score)
-        let operators_json =
-            serde_json::to_string_pretty(&score.operator_scores).expect("Failed to serialize operators");
+        let operators_json = serde_json::to_string_pretty(&score.operator_scores)
+            .expect("Failed to serialize operators");
         let operators_path = output_dir.join("operator_scores.json");
-        std::fs::write(&operators_path, &operators_json).expect("Failed to write operator scores JSON");
+        std::fs::write(&operators_path, &operators_json)
+            .expect("Failed to write operator scores JSON");
         println!("Exported operator scores to: {}", operators_path.display());
 
         // Export just zone scores
