@@ -4,6 +4,7 @@ use cbc::cipher::{BlockDecryptMut, KeyIvInit};
 use indicatif::{ProgressBar, ProgressStyle};
 use rayon::prelude::*;
 use regex::Regex;
+use std::io::Cursor;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
@@ -73,7 +74,7 @@ pub fn decode_aes_file(path: &Path) -> Result<serde_json::Value> {
         }
         Err(_) => {
             // Try BSON
-            let doc: bson::Document = bson::from_slice(&decrypted)
+            let doc: bson::Document = bson::Document::from_reader(Cursor::new(&decrypted))
                 .with_context(|| format!("Failed to decode as JSON or BSON: {:?}", path))?;
             log::debug!("Decoded BSON from {:?}", path);
             Ok(serde_json::to_value(doc)?)
