@@ -1,10 +1,11 @@
 use std::collections::HashMap;
 
 use crate::core::local::types::operator::{Operator, OperatorProfession, OperatorRarity};
+use crate::core::local::types::skin::SkinData;
 use crate::core::local::types::trust::Favor;
 use crate::core::user::types::{CharacterSkill, EquipData};
 
-use super::types::{CompletionStatus, MasteryDetails, ModuleDetails};
+use super::types::{CompletionStatus, MasteryDetails, ModuleDetails, SkinDetails};
 
 /// Base points by rarity (reflects material cost investment)
 pub fn get_base_score(rarity: &OperatorRarity) -> f32 {
@@ -221,4 +222,117 @@ pub fn is_token_or_trap(char_id: &str, operator: &Operator) -> bool {
     }
 
     false
+}
+
+/// Get detailed skin information for an operator
+/// Analyzes owned skins by tier: L2D (animated), store-bought, and event rewards
+pub fn get_operator_skin_details(
+    char_id: &str,
+    user_character_skins: &HashMap<String, i32>,
+    skin_data: &SkinData,
+) -> SkinDetails {
+    let mut owned_count = 0;
+    let mut total_available = 0;
+    let mut owned_l2d = 0;
+    let mut owned_store = 0;
+    let mut owned_event = 0;
+    let mut total_l2d = 0;
+    let mut total_store = 0;
+    let mut total_event = 0;
+
+    for (skin_id, skin) in &skin_data.char_skins {
+        // Only count skins for this operator
+        if skin.char_id != char_id {
+            continue;
+        }
+
+        // Skip default skins (E0/E1/E2)
+        if !skin.is_buy_skin {
+            continue;
+        }
+
+        // Determine skin type
+        let is_l2d = skin.dyn_illust_id.is_some() || skin.dyn_portrait_id.is_some();
+        let obtain_approach = skin.display_skin.obtain_approach.as_deref().unwrap_or("");
+        let is_store = obtain_approach == "Store";
+        let is_event = matches!(obtain_approach, "Event Reward" | "Event Gift");
+
+        // Count totals by type
+        total_available += 1;
+        if is_l2d {
+            total_l2d += 1;
+        }
+        if is_store {
+            total_store += 1;
+        } else if is_event {
+            total_event += 1;
+        }
+
+        // Check if user owns this skin
+        if user_character_skins.contains_key(skin_id) {
+            owned_count += 1;
+            if is_l2d {
+                owned_l2d += 1;
+            }
+            if is_store {
+                owned_store += 1;
+            } else if is_event {
+                owned_event += 1;
+            }
+        }
+    }
+
+    // Calculate completion percentage
+    let completion_percentage = if total_available > 0 {
+        (owned_count as f32 / total_available as f32) * 100.0
+    } else {
+        0.0
+    };
+
+    SkinDetails {
+        owned_count,
+        total_available,
+        owned_l2d,
+        owned_store,
+        owned_event,
+        total_l2d,
+        total_store,
+        total_event,
+        completion_percentage,
+    }
+}
+
+/// Calculate skin score based on collection completion
+/// Scoring (modest to not overshadow gameplay investment):
+/// - Store skins: 15 points each (18 OP investment)
+/// - L2D skins: 21 points each (24 OP investment, +6 bonus over standard)
+/// - Event skins: 8 points each (shows dedication/participation)
+/// - Completion bonuses:
+///   - 100% collection: +30 points
+///   - 75%+ collection: +15 points
+///   - 50%+ collection: +8 points
+pub fn calculate_skin_score(details: &SkinDetails) -> f32 {
+    // Base scoring by skin type (kept modest relative to gameplay investment)
+    let store_score = details.owned_store as f32 * 15.0;
+    let l2d_score = details.owned_l2d as f32 * 21.0;
+    let event_score = details.owned_event as f32 * 8.0;
+
+    let base_score = store_score + l2d_score + event_score;
+
+    // Collection completion bonus (only if operator has available skins)
+    let completion_bonus = if details.total_available > 0 {
+        if details.completion_percentage >= 100.0 {
+            30.0 // Full collection bonus
+        } else if details.completion_percentage >= 75.0 {
+            15.0
+        } else if details.completion_percentage >= 50.0 {
+            8.0
+        } else {
+            0.0
+        }
+    } else {
+        0.0
+    };
+
+    base_score + completion_bonus
 }
