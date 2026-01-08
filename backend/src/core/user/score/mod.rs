@@ -3,9 +3,13 @@
 //! Calculates a numerical score for a user's account based on:
 //! - Operator investment (rarity, level, mastery, modules, skins)
 //! - Stage completion (mainline, sidestory, events)
+//! - Integrated Strategies (Roguelike) progress
+//! - Reclamation Algorithm (Sandbox) progress
 
 pub mod calculate;
 pub mod operators;
+pub mod roguelike;
+pub mod sandbox;
 pub mod stages;
 pub mod types;
 
@@ -15,11 +19,10 @@ pub use operators::{
     CompletionStatus, MasteryDetails, ModuleDetails, OperatorScore, SkinDetails,
     calculate_operator_score,
 };
+pub use roguelike::{
+    RoguelikeBreakdown, RoguelikeScore, RoguelikeThemeDetails, RoguelikeThemeScore,
+    calculate_roguelike_score,
+};
+pub use sandbox::{SandboxAreaScore, SandboxBreakdown, SandboxScore, calculate_sandbox_score};
 pub use stages::{ZoneScore, calculate_stage_score};
 pub use types::{ScoreBreakdown, UserScore};
-
-// TODO: Add scoring for future aspects:
-// - Integrated Strategies (Roguelike) progress
-// - Contingency Contract scores
-// - Medal collection
-// - Base/RIIC efficiency

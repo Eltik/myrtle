@@ -7,6 +7,8 @@ use super::operators::{
     calculate_operator_score, helpers::is_token_or_trap, helpers::rarity_to_int,
     types::OperatorScore,
 };
+use super::roguelike::calculate_roguelike_score;
+use super::sandbox::calculate_sandbox_score;
 use super::stages::calculate_stage_score;
 use super::types::{ScoreBreakdown, UserScore};
 
@@ -100,15 +102,47 @@ pub fn calculate_user_score(user: &User, game_data: &GameData) -> UserScore {
     breakdown.total_stages_available = stage_result.breakdown.total_stages_available;
     breakdown.total_perfect_clears = stage_result.breakdown.total_perfect_clears;
 
+    // === ROGUELIKE (INTEGRATED STRATEGIES) SCORING ===
+    let roguelike_result = calculate_roguelike_score(user);
+
+    // Merge roguelike breakdown into main breakdown
+    breakdown.roguelike_themes_played = roguelike_result.breakdown.themes_played;
+    breakdown.roguelike_total_endings = roguelike_result.breakdown.total_endings;
+    breakdown.roguelike_total_bp_levels = roguelike_result.breakdown.total_bp_levels;
+    breakdown.roguelike_total_buffs = roguelike_result.breakdown.total_buffs;
+    breakdown.roguelike_total_collectibles = roguelike_result.breakdown.total_collectibles;
+    breakdown.roguelike_total_runs = roguelike_result.breakdown.total_runs;
+
+    // === SANDBOX (RECLAMATION ALGORITHM) SCORING ===
+    let sandbox_result = calculate_sandbox_score(user);
+
+    // Merge sandbox breakdown into main breakdown
+    breakdown.sandbox_places_completed = sandbox_result.breakdown.places_completed;
+    breakdown.sandbox_places_discovered = sandbox_result.breakdown.places_discovered;
+    breakdown.sandbox_places_total = sandbox_result.breakdown.places_total;
+    breakdown.sandbox_completion_percentage = sandbox_result.breakdown.places_completion_percentage;
+    breakdown.sandbox_nodes_completed = sandbox_result.breakdown.total_nodes_completed;
+    breakdown.sandbox_tech_trees_completed = sandbox_result.breakdown.tech_trees_completed;
+    breakdown.sandbox_stories_unlocked = sandbox_result.breakdown.stories_unlocked;
+
     // Combined total score
-    let total_score = operator_total + stage_result.total_score;
+    let total_score = operator_total
+        + stage_result.total_score
+        + roguelike_result.total_score
+        + sandbox_result.total_score;
 
     UserScore {
         total_score,
         operator_score: operator_total,
         stage_score: stage_result.total_score,
+        roguelike_score: roguelike_result.total_score,
+        sandbox_score: sandbox_result.total_score,
         operator_scores,
         zone_scores: stage_result.zone_scores,
+        roguelike_theme_scores: roguelike_result.theme_scores.clone(),
+        sandbox_area_scores: sandbox_result.area_scores.clone(),
+        roguelike_details: roguelike_result,
+        sandbox_details: sandbox_result,
         breakdown,
     }
 }
