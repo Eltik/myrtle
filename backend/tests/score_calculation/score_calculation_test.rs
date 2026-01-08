@@ -206,6 +206,103 @@ mod tests {
             );
         }
 
+        // Roguelike (Integrated Strategies) stats
+        println!();
+        println!("Roguelike (Integrated Strategies):");
+        println!("  Roguelike Score: {:.2}", score.roguelike_score);
+        println!(
+            "  Themes Played: {}",
+            score.breakdown.roguelike_themes_played
+        );
+        println!(
+            "  Total Endings: {}",
+            score.breakdown.roguelike_total_endings
+        );
+        println!(
+            "  Total BP Levels: {}",
+            score.breakdown.roguelike_total_bp_levels
+        );
+        println!("  Total Buffs: {}", score.breakdown.roguelike_total_buffs);
+        println!(
+            "  Total Collectibles: {}",
+            score.breakdown.roguelike_total_collectibles
+        );
+        println!("  Total Runs: {}", score.breakdown.roguelike_total_runs);
+
+        // Print roguelike theme scores
+        if !score.roguelike_theme_scores.is_empty() {
+            println!();
+            println!("Roguelike Theme Scores:");
+            for theme in &score.roguelike_theme_scores {
+                println!("  {}: {:.2} pts", theme.theme_id, theme.total_score);
+                println!(
+                    "    Endings: {} ({:.0}), BP: {} ({:.0}), Buffs: {} ({:.0})",
+                    theme.details.endings_unlocked,
+                    theme.endings_score,
+                    theme.details.bp_level,
+                    theme.bp_score,
+                    theme.details.buffs_unlocked,
+                    theme.buffs_score
+                );
+                println!(
+                    "    Collectibles: {} bands, {} relics, {} capsules ({:.0})",
+                    theme.details.bands_unlocked,
+                    theme.details.relics_unlocked,
+                    theme.details.capsules_unlocked,
+                    theme.collectibles_score
+                );
+                println!(
+                    "    Runs: {} normal, {} challenge, {} monthly ({} total)",
+                    theme.details.normal_runs,
+                    theme.details.challenge_runs,
+                    theme.details.month_team_runs,
+                    theme.details.normal_runs
+                        + theme.details.challenge_runs
+                        + theme.details.month_team_runs
+                );
+            }
+        }
+
+        // Sandbox (Reclamation Algorithm) stats
+        println!();
+        println!("Sandbox (Reclamation Algorithm):");
+        println!("  Sandbox Score: {:.2}", score.sandbox_score);
+        println!(
+            "  Places: {}/{} completed, {} discovered ({:.1}%)",
+            score.breakdown.sandbox_places_completed,
+            score.breakdown.sandbox_places_total,
+            score.breakdown.sandbox_places_discovered,
+            score.breakdown.sandbox_completion_percentage
+        );
+        println!(
+            "  Nodes Completed: {}",
+            score.breakdown.sandbox_nodes_completed
+        );
+        println!(
+            "  Tech Trees: {}",
+            score.breakdown.sandbox_tech_trees_completed
+        );
+        println!(
+            "  Stories Unlocked: {}",
+            score.breakdown.sandbox_stories_unlocked
+        );
+
+        // Print sandbox area scores
+        if !score.sandbox_area_scores.is_empty() {
+            println!();
+            println!("Sandbox Area Scores:");
+            for area in &score.sandbox_area_scores {
+                println!(
+                    "  Area {}: {:.2} pts ({}/{} places, {} nodes)",
+                    area.area,
+                    area.total_score,
+                    area.places_completed,
+                    area.places_total,
+                    area.nodes_completed
+                );
+            }
+        }
+
         // Basic assertions
         assert!(score.total_score > 0.0, "Total score should be positive");
         assert!(score.breakdown.total_operators > 0, "Should have operators");
@@ -451,14 +548,33 @@ mod tests {
         std::fs::write(&breakdown_path, &breakdown_json).expect("Failed to write breakdown JSON");
         println!("Exported score breakdown to: {}", breakdown_path.display());
 
+        // Export roguelike scores
+        let roguelike_json = serde_json::to_string_pretty(&score.roguelike_details)
+            .expect("Failed to serialize roguelike");
+        let roguelike_path = output_dir.join("roguelike_scores.json");
+        std::fs::write(&roguelike_path, &roguelike_json)
+            .expect("Failed to write roguelike scores JSON");
+        println!("Exported roguelike scores to: {}", roguelike_path.display());
+
+        // Export sandbox scores
+        let sandbox_json = serde_json::to_string_pretty(&score.sandbox_details)
+            .expect("Failed to serialize sandbox");
+        let sandbox_path = output_dir.join("sandbox_scores.json");
+        std::fs::write(&sandbox_path, &sandbox_json).expect("Failed to write sandbox scores JSON");
+        println!("Exported sandbox scores to: {}", sandbox_path.display());
+
         // Summary
         println!();
         println!("=== Export Summary ===");
         println!("Total Score: {:.2}", score.total_score);
         println!("  Operator Score: {:.2}", score.operator_score);
         println!("  Stage Score: {:.2}", score.stage_score);
+        println!("  Roguelike Score: {:.2}", score.roguelike_score);
+        println!("  Sandbox Score: {:.2}", score.sandbox_score);
         println!("Operators: {}", score.operator_scores.len());
         println!("Zones: {}", score.zone_scores.len());
+        println!("Roguelike Themes: {}", score.roguelike_theme_scores.len());
+        println!("Sandbox Areas: {}", score.sandbox_area_scores.len());
         println!();
         println!("Files exported to: {}", output_dir.display());
     }
