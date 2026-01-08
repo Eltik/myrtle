@@ -4,20 +4,21 @@ use crate::core::local::types::GameData;
 use crate::core::user::types::User;
 
 use super::operators::{
-    calculate_operator_score,
-    helpers::is_token_or_trap,
-    helpers::rarity_to_int,
-    types::{OperatorScore, ScoreBreakdown, UserScore},
+    calculate_operator_score, helpers::is_token_or_trap, helpers::rarity_to_int,
+    types::OperatorScore,
 };
+use super::stages::calculate_stage_score;
+use super::types::{ScoreBreakdown, UserScore};
 
 /// Calculate the total score for a user's account
 ///
 /// Iterates through all operators in the user's roster, excluding tokens and traps,
-/// and calculates individual scores plus aggregate statistics.
+/// and calculates individual scores plus aggregate statistics. Also calculates
+/// stage completion scores across all zones.
 pub fn calculate_user_score(user: &User, game_data: &GameData) -> UserScore {
     let mut operator_scores: Vec<OperatorScore> = Vec::new();
     let mut breakdown = ScoreBreakdown::default();
-    let mut total_score = 0.0;
+    let mut operator_total = 0.0;
 
     // Get user's owned skins
     let user_skins = &user.skin.character_skins;
@@ -76,21 +77,38 @@ pub fn calculate_user_score(user: &User, game_data: &GameData) -> UserScore {
             breakdown.full_skin_collection_count += 1;
         }
 
-        total_score += score.total_score;
+        operator_total += score.total_score;
         operator_scores.push(score);
     }
 
     // Calculate average score
     if breakdown.total_operators > 0 {
-        breakdown.average_score_per_operator = total_score / breakdown.total_operators as f32;
+        breakdown.average_score_per_operator = operator_total / breakdown.total_operators as f32;
     }
 
     // Sort operator scores by total score descending
     operator_scores.sort_by(|a, b| b.total_score.partial_cmp(&a.total_score).unwrap());
 
+    // === STAGE SCORING ===
+    let stage_result = calculate_stage_score(user, game_data);
+
+    // Merge stage breakdown into main breakdown
+    breakdown.mainline_completion = stage_result.breakdown.mainline_completion;
+    breakdown.sidestory_completion = stage_result.breakdown.sidestory_completion;
+    breakdown.activity_completion = stage_result.breakdown.activity_completion;
+    breakdown.total_stages_completed = stage_result.breakdown.total_stages_completed;
+    breakdown.total_stages_available = stage_result.breakdown.total_stages_available;
+    breakdown.total_perfect_clears = stage_result.breakdown.total_perfect_clears;
+
+    // Combined total score
+    let total_score = operator_total + stage_result.total_score;
+
     UserScore {
         total_score,
+        operator_score: operator_total,
+        stage_score: stage_result.total_score,
         operator_scores,
+        zone_scores: stage_result.zone_scores,
         breakdown,
     }
 }

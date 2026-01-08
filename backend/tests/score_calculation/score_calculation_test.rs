@@ -167,6 +167,45 @@ mod tests {
             score.breakdown.average_score_per_operator
         );
 
+        // Stage completion stats
+        println!();
+        println!("Stage Completion:");
+        println!("  Operator Score: {:.2}", score.operator_score);
+        println!("  Stage Score: {:.2}", score.stage_score);
+        println!(
+            "  Mainline Completion: {:.1}%",
+            score.breakdown.mainline_completion
+        );
+        println!(
+            "  Sidestory Completion: {:.1}%",
+            score.breakdown.sidestory_completion
+        );
+        println!(
+            "  Activity Completion: {:.1}%",
+            score.breakdown.activity_completion
+        );
+        println!(
+            "  Stages Completed: {}/{}",
+            score.breakdown.total_stages_completed, score.breakdown.total_stages_available
+        );
+        println!("  Perfect Clears: {}", score.breakdown.total_perfect_clears);
+
+        // Print top zones by score
+        println!();
+        println!("Top 10 Zones by Score:");
+        for (i, zone) in score.zone_scores.iter().take(10).enumerate() {
+            println!(
+                "  {}. {} ({:?}): {:.2} pts ({}/{} = {:.1}%)",
+                i + 1,
+                zone.zone_name,
+                zone.zone_type,
+                zone.score,
+                zone.completed_stages,
+                zone.total_stages,
+                zone.completion_percentage
+            );
+        }
+
         // Basic assertions
         assert!(score.total_score > 0.0, "Total score should be positive");
         assert!(score.breakdown.total_operators > 0, "Should have operators");
@@ -362,5 +401,64 @@ mod tests {
             "Verified: All score components are reasonable for {} operators",
             score.operator_scores.len()
         );
+    }
+
+    /// Export scores to JSON file for review
+    /// Run with: cargo test --test score_calculation_test test_export_scores -- --nocapture
+    #[test]
+    fn test_export_scores() {
+        let Some(game_data) = get_game_data() else {
+            println!("DATA_DIR not set, skipping export test");
+            return;
+        };
+
+        let Some(user) = get_user_data() else {
+            println!("User data not loaded, skipping export test");
+            return;
+        };
+
+        let score = calculate_user_score(user, game_data);
+
+        // Create output directory if it doesn't exist
+        let output_dir = std::path::Path::new("tests/score_calculation/output");
+        std::fs::create_dir_all(output_dir).expect("Failed to create output directory");
+
+        // Export full score to JSON
+        let full_json = serde_json::to_string_pretty(&score).expect("Failed to serialize score");
+        let full_path = output_dir.join("user_score_full.json");
+        std::fs::write(&full_path, &full_json).expect("Failed to write full score JSON");
+        println!("Exported full score to: {}", full_path.display());
+
+        // Export just operator scores (sorted by total score)
+        let operators_json =
+            serde_json::to_string_pretty(&score.operator_scores).expect("Failed to serialize operators");
+        let operators_path = output_dir.join("operator_scores.json");
+        std::fs::write(&operators_path, &operators_json).expect("Failed to write operator scores JSON");
+        println!("Exported operator scores to: {}", operators_path.display());
+
+        // Export just zone scores
+        let zones_json =
+            serde_json::to_string_pretty(&score.zone_scores).expect("Failed to serialize zones");
+        let zones_path = output_dir.join("zone_scores.json");
+        std::fs::write(&zones_path, &zones_json).expect("Failed to write zone scores JSON");
+        println!("Exported zone scores to: {}", zones_path.display());
+
+        // Export breakdown summary
+        let breakdown_json =
+            serde_json::to_string_pretty(&score.breakdown).expect("Failed to serialize breakdown");
+        let breakdown_path = output_dir.join("score_breakdown.json");
+        std::fs::write(&breakdown_path, &breakdown_json).expect("Failed to write breakdown JSON");
+        println!("Exported score breakdown to: {}", breakdown_path.display());
+
+        // Summary
+        println!();
+        println!("=== Export Summary ===");
+        println!("Total Score: {:.2}", score.total_score);
+        println!("  Operator Score: {:.2}", score.operator_score);
+        println!("  Stage Score: {:.2}", score.stage_score);
+        println!("Operators: {}", score.operator_scores.len());
+        println!("Zones: {}", score.zone_scores.len());
+        println!();
+        println!("Files exported to: {}", output_dir.display());
     }
 }

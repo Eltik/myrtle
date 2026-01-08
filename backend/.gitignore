@@ -5,3 +5,4 @@ types claude.txt
 debug_logs/
 debug_sync_data.json
 __pycache__
+/tests/score_calculation/output

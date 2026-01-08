@@ -13,9 +13,6 @@ pub mod calculate;
 pub mod helpers;
 pub mod types;
 
-// Re-export main function for convenience
+// Re-export main function and types for convenience
 pub use calculate::calculate_operator_score;
-pub use types::{
-    CompletionStatus, MasteryDetails, ModuleDetails, OperatorScore, ScoreBreakdown, SkinDetails,
-    UserScore,
-};
+pub use types::{CompletionStatus, MasteryDetails, ModuleDetails, OperatorScore, SkinDetails};
