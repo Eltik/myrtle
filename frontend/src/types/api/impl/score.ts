@@ -1,12 +1,7 @@
 // Score types - Converted from backend Rust types
 
 /** Completion status of an operator based on investment */
-export type CompletionStatus =
-    | "not_started"
-    | "in_progress"
-    | "partially_completed"
-    | "highly_invested"
-    | "absolutely_completed";
+export type CompletionStatus = "not_started" | "in_progress" | "partially_completed" | "highly_invested" | "absolutely_completed";
 
 /** Details about mastery investment */
 export interface MasteryDetails {
