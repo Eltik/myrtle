@@ -7,6 +7,7 @@
 //! - Potential rank
 //! - Skill masteries (M3 = main milestone)
 //! - Module levels (Mod3 = main milestone)
+//! - Skin collection (L2D skins worth more, collection completion bonuses)
 
 pub mod calculate;
 pub mod helpers;
@@ -15,5 +16,6 @@ pub mod types;
 // Re-export main function for convenience
 pub use calculate::calculate_operator_score;
 pub use types::{
-    CompletionStatus, MasteryDetails, ModuleDetails, OperatorScore, ScoreBreakdown, UserScore,
+    CompletionStatus, MasteryDetails, ModuleDetails, OperatorScore, ScoreBreakdown, SkinDetails,
+    UserScore,
 };

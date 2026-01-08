@@ -19,6 +19,9 @@ pub fn calculate_user_score(user: &User, game_data: &GameData) -> UserScore {
     let mut breakdown = ScoreBreakdown::default();
     let mut total_score = 0.0;
 
+    // Get user's owned skins
+    let user_skins = &user.skin.character_skins;
+
     for character in user.troop.chars.values() {
         // Look up operator data from game_data
         let operator = match game_data.operators.get(&character.char_id) {
@@ -37,6 +40,8 @@ pub fn calculate_user_score(user: &User, game_data: &GameData) -> UserScore {
             &operator.name,
             &operator.rarity,
             &game_data.favor,
+            user_skins,
+            &game_data.skins,
         );
 
         // Update breakdown statistics
@@ -61,6 +66,14 @@ pub fn calculate_user_score(user: &User, game_data: &GameData) -> UserScore {
         // Count E2 operators
         if character.evolve_phase >= 2 {
             breakdown.e2_count += 1;
+        }
+
+        // Count skin statistics
+        breakdown.total_skins_owned += score.skin_details.owned_count;
+        if score.skin_details.total_available > 0
+            && score.skin_details.completion_percentage >= 100.0
+        {
+            breakdown.full_skin_collection_count += 1;
         }
 
         total_score += score.total_score;

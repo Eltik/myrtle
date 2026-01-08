@@ -22,7 +22,7 @@ pub struct User {
     pub recruit: Recruit,
     pub push_flags: PushFlags,
     pub equipment: Equipment,
-    pub skin: Skin,
+    pub skin: UserSkin,
     pub shop: Shop,
     pub mission: Mission,
     pub social: Social,
@@ -286,9 +286,9 @@ pub struct Equipment {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
-pub struct Skin {
-    pub character_skins: serde_json::Value,
-    pub skin_ts: serde_json::Value,
+pub struct UserSkin {
+    pub character_skins: HashMap<String, i32>,
+    pub skin_ts: HashMap<String, i64>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

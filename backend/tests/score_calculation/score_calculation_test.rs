@@ -157,6 +157,11 @@ mod tests {
         println!("  E2 Count: {}", score.breakdown.e2_count);
         println!("  M3+ Operators: {}", score.breakdown.m3_count);
         println!("  M9 Operators: {}", score.breakdown.m9_count);
+        println!("  Total Skins Owned: {}", score.breakdown.total_skins_owned);
+        println!(
+            "  Full Skin Collections: {}",
+            score.breakdown.full_skin_collection_count
+        );
         println!(
             "  Average Score: {:.2}",
             score.breakdown.average_score_per_operator
@@ -183,14 +188,26 @@ mod tests {
                 op.completion_status
             );
             println!(
-                "      Base: {:.0}, Level: {:.0}, Trust: {:.1}, Potential: {:.0}, Mastery: {:.0}, Module: {:.0}",
+                "      Base: {:.0}, Level: {:.0}, Trust: {:.1}, Potential: {:.0}, Mastery: {:.0}, Module: {:.0}, Skin: {:.0}",
                 op.base_score,
                 op.level_score,
                 op.trust_score,
                 op.potential_score,
                 op.mastery_score,
-                op.module_score
+                op.module_score,
+                op.skin_score
             );
+            if op.skin_details.total_available > 0 {
+                println!(
+                    "      Skins: {}/{} ({:.0}% complete) [L2D: {}, Store: {}, Event: {}]",
+                    op.skin_details.owned_count,
+                    op.skin_details.total_available,
+                    op.skin_details.completion_percentage,
+                    op.skin_details.owned_l2d,
+                    op.skin_details.owned_store,
+                    op.skin_details.owned_event
+                );
+            }
         }
 
         // Verify M9 operators are marked as AbsolutelyCompleted
@@ -302,6 +319,11 @@ mod tests {
                 "Module score should be non-negative for {}",
                 op.name
             );
+            assert!(
+                op.skin_score >= 0.0,
+                "Skin score should be non-negative for {}",
+                op.name
+            );
 
             // Total should equal sum of components
             let expected_total = op.base_score
@@ -309,11 +331,14 @@ mod tests {
                 + op.trust_score
                 + op.potential_score
                 + op.mastery_score
-                + op.module_score;
+                + op.module_score
+                + op.skin_score;
             assert!(
                 (op.total_score - expected_total).abs() < 0.01,
-                "Total score should equal sum of components for {}",
-                op.name
+                "Total score should equal sum of components for {} (expected {:.2}, got {:.2})",
+                op.name,
+                expected_total,
+                op.total_score
             );
 
             // Base score should match rarity

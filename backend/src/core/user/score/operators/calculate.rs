@@ -1,11 +1,14 @@
+use std::collections::HashMap;
+
 use crate::core::local::types::operator::OperatorRarity;
+use crate::core::local::types::skin::SkinData;
 use crate::core::local::types::trust::Favor;
 use crate::core::user::types::CharacterData;
 
 use super::helpers::{
     calculate_level_score, calculate_mastery_score, calculate_module_score,
-    calculate_potential_score, calculate_trust_score, get_base_score, get_completion_status,
-    rarity_to_int,
+    calculate_potential_score, calculate_skin_score, calculate_trust_score, get_base_score,
+    get_completion_status, get_operator_skin_details, rarity_to_int,
 };
 use super::types::OperatorScore;
 
@@ -15,6 +18,8 @@ pub fn calculate_operator_score(
     operator_name: &str,
     rarity: &OperatorRarity,
     favor_table: &Favor,
+    user_skins: &HashMap<String, i32>,
+    skin_data: &SkinData,
 ) -> OperatorScore {
     // Base score from rarity
     let base_score = get_base_score(rarity);
@@ -34,13 +39,22 @@ pub fn calculate_operator_score(
     // Module score and details
     let (module_score, module_details) = calculate_module_score(&character.equip);
 
+    // Skin score and details
+    let skin_details = get_operator_skin_details(&character.char_id, user_skins, skin_data);
+    let skin_score = calculate_skin_score(&skin_details);
+
     // Determine completion status
     let completion_status =
         get_completion_status(&mastery_details, &module_details, character.evolve_phase);
 
     // Total score
-    let total_score =
-        base_score + level_score + trust_score + potential_score + mastery_score + module_score;
+    let total_score = base_score
+        + level_score
+        + trust_score
+        + potential_score
+        + mastery_score
+        + module_score
+        + skin_score;
 
     OperatorScore {
         char_id: character.char_id.clone(),
@@ -52,9 +66,11 @@ pub fn calculate_operator_score(
         potential_score,
         mastery_score,
         module_score,
+        skin_score,
         total_score,
         completion_status,
         mastery_details,
         module_details,
+        skin_details,
     }
 }
