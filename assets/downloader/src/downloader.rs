@@ -5,8 +5,8 @@ use chrono;
 use cipher::{BlockDecryptMut, KeyIvInit};
 use crossterm::event::{self, Event, KeyCode};
 use indicatif::{MultiProgress, ProgressBar};
+use rand::rng;
 use rand::seq::SliceRandom;
-use rand::thread_rng;
 use rayon::prelude::*;
 use regex::Regex;
 use reqwest::blocking::get;
@@ -805,7 +805,7 @@ impl ArkAssets {
                 .collect()
         };
 
-        files_vec.shuffle(&mut thread_rng());
+        files_vec.shuffle(&mut rng());
 
         // Extract data from self that we need in the parallel closure
         let server = self.server;
@@ -1117,21 +1117,29 @@ impl ArkAssets {
                                                     let save_path = unpack_dir.join(format!("{}.json", name_val));
                                                     let _ = fs::write(&save_path, json_str);
                                                 }
-                                            } else if let Ok(docs) = bson::from_slice::<Vec<bson::Document>>(&decrypted) {
-                                                for (i, doc) in docs.iter().enumerate() {
-                                                    if let Ok(json_val) = serde_json::to_value(doc) {
-                                                        if let Ok(json_str) = serde_json::to_string_pretty(&json_val) {
-                                                            let suffix = if i >= 1 { format!("_{}", i) } else { String::new() };
-                                                            let save_path = unpack_dir.join(format!("{}{}.json", name_val, suffix));
-                                                            let _ = fs::write(&save_path, json_str);
+                                            } else {
+                                                // Try to parse as BSON documents
+                                                let mut cursor = Cursor::new(&decrypted);
+                                                let mut docs: Vec<bson::Document> = Vec::new();
+                                                while let Ok(doc) = bson::Document::from_reader(&mut cursor) {
+                                                    docs.push(doc);
+                                                }
+                                                if !docs.is_empty() {
+                                                    for (i, doc) in docs.iter().enumerate() {
+                                                        if let Ok(json_val) = serde_json::to_value(doc) {
+                                                            if let Ok(json_str) = serde_json::to_string_pretty(&json_val) {
+                                                                let suffix = if i >= 1 { format!("_{}", i) } else { String::new() };
+                                                                let save_path = unpack_dir.join(format!("{}{}.json", name_val, suffix));
+                                                                let _ = fs::write(&save_path, json_str);
+                                                            }
                                                         }
                                                     }
+                                                } else {
+                                                    let re_ext = Regex::new(r"\.(lua|atlas|skel)$").unwrap();
+                                                    let extension = if re_ext.is_match(name_val) { "" } else { ".txt" };
+                                                    let save_path = unpack_dir.join(format!("{}{}", name_val, extension));
+                                                    let _ = fs::write(&save_path, decrypted);
                                                 }
-                                            } else {
-                                                let re_ext = Regex::new(r"\.(lua|atlas|skel)$").unwrap();
-                                                let extension = if re_ext.is_match(name_val) { "" } else { ".txt" };
-                                                let save_path = unpack_dir.join(format!("{}{}", name_val, extension));
-                                                let _ = fs::write(&save_path, decrypted);
                                             }
                                         }
                                     }

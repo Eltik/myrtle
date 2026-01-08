@@ -156,4 +156,3 @@ fn calculate_zone_score(zone_type: &ZoneType, completed: i32, perfect: i32, tota
 
     (completed as f32 * base_per_stage) + (perfect as f32 * perfect_bonus)
 }
-
