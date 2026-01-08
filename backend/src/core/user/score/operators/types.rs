@@ -25,6 +25,7 @@ pub struct OperatorScore {
     pub rarity: i32,
     pub base_score: f32,
     pub level_score: f32,
+    pub trust_score: f32,
     pub potential_score: f32,
     pub mastery_score: f32,
     pub module_score: f32,

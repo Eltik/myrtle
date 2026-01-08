@@ -32,7 +32,12 @@ pub fn calculate_user_score(user: &User, game_data: &GameData) -> UserScore {
         }
 
         // Calculate individual operator score
-        let score = calculate_operator_score(character, &operator.name, &operator.rarity);
+        let score = calculate_operator_score(
+            character,
+            &operator.name,
+            &operator.rarity,
+            &game_data.favor,
+        );
 
         // Update breakdown statistics
         breakdown.total_operators += 1;

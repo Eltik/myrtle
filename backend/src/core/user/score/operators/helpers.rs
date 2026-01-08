@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::core::local::types::operator::{Operator, OperatorProfession, OperatorRarity};
+use crate::core::local::types::trust::Favor;
 use crate::core::user::types::{CharacterSkill, EquipData};
 
 use super::types::{CompletionStatus, MasteryDetails, ModuleDetails};
@@ -40,6 +41,30 @@ pub fn calculate_level_score(evolve_phase: i32, level: i32) -> f32 {
         2 => 150.0 + (level as f32 * 2.0),
         _ => 0.0,
     }
+}
+
+pub fn calculate_trust_score(favor_point: i32, favor_table: &Favor) -> f32 {
+    let trust_percent = get_trust_percent(favor_table, favor_point);
+
+    // 0-100%: Main rewards (0-30 points) - stats matter here
+    // 100-200%: Minor bonus (30-50 points) - dedication reward
+    if trust_percent <= 100.0 {
+        (trust_percent / 100.0 * 30.0) as f32
+    } else {
+        30.0 + ((trust_percent - 100.0) / 100.0 * 20.0) as f32
+    }
+}
+
+/// Get trust percentage from favor points
+/// Finds the highest threshold in favor_frames that the user has reached
+fn get_trust_percent(favor_table: &Favor, favor_point: i32) -> f64 {
+    favor_table
+        .favor_frames
+        .iter()
+        .rev()
+        .find(|frame| favor_point >= frame.data.favor_point)
+        .map(|frame| frame.data.percent)
+        .unwrap_or(0.0)
 }
 
 /// Calculate potential score

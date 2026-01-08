@@ -183,9 +183,10 @@ mod tests {
                 op.completion_status
             );
             println!(
-                "      Base: {:.0}, Level: {:.0}, Potential: {:.0}, Mastery: {:.0}, Module: {:.0}",
+                "      Base: {:.0}, Level: {:.0}, Trust: {:.1}, Potential: {:.0}, Mastery: {:.0}, Module: {:.0}",
                 op.base_score,
                 op.level_score,
+                op.trust_score,
                 op.potential_score,
                 op.mastery_score,
                 op.module_score
@@ -282,6 +283,11 @@ mod tests {
                 op.name
             );
             assert!(
+                op.trust_score >= 0.0 && op.trust_score <= 50.0,
+                "Trust score should be between 0 and 50 for {}",
+                op.name
+            );
+            assert!(
                 op.potential_score >= 0.0,
                 "Potential score should be non-negative for {}",
                 op.name
@@ -300,6 +306,7 @@ mod tests {
             // Total should equal sum of components
             let expected_total = op.base_score
                 + op.level_score
+                + op.trust_score
                 + op.potential_score
                 + op.mastery_score
                 + op.module_score;
