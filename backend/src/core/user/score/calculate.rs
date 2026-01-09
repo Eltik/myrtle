@@ -3,6 +3,7 @@
 use crate::core::local::types::GameData;
 use crate::core::user::types::User;
 
+use super::base::calculate_base_score;
 use super::medal::calculate_medal_score;
 use super::operators::{
     calculate_operator_score, helpers::is_token_or_trap, helpers::rarity_to_int,
@@ -147,12 +148,28 @@ pub fn calculate_user_score(user: &User, game_data: &GameData) -> UserScore {
     breakdown.medal_t2d5_earned = medal_result.breakdown.t2d5_earned;
     breakdown.medal_groups_complete = medal_result.breakdown.groups_complete;
 
+    // === BASE (RIIC) EFFICIENCY SCORING ===
+    let base_result = calculate_base_score(user);
+
+    // Merge base breakdown into main breakdown
+    breakdown.base_trading_post_count = base_result.breakdown.trading_post_count;
+    breakdown.base_factory_count = base_result.breakdown.factory_count;
+    breakdown.base_power_plant_count = base_result.breakdown.power_plant_count;
+    breakdown.base_dormitory_count = base_result.breakdown.dormitory_count;
+    breakdown.base_avg_trading_efficiency = base_result.breakdown.avg_trading_efficiency;
+    breakdown.base_avg_factory_efficiency = base_result.breakdown.avg_factory_efficiency;
+    breakdown.base_total_comfort = base_result.breakdown.total_comfort;
+    breakdown.base_electricity_balance = base_result.breakdown.total_electricity_output
+        - base_result.breakdown.total_electricity_consumption;
+    breakdown.base_max_level_buildings = base_result.breakdown.max_level_buildings;
+
     // Combined total score
     let total_score = operator_total
         + stage_result.total_score
         + roguelike_result.total_score
         + sandbox_result.total_score
-        + medal_result.total_score;
+        + medal_result.total_score
+        + base_result.total_score;
 
     UserScore {
         total_score,
@@ -161,6 +178,7 @@ pub fn calculate_user_score(user: &User, game_data: &GameData) -> UserScore {
         roguelike_score: roguelike_result.total_score,
         sandbox_score: sandbox_result.total_score,
         medal_score: medal_result.total_score,
+        base_score: base_result.total_score,
         operator_scores,
         zone_scores: stage_result.zone_scores,
         roguelike_theme_scores: roguelike_result.theme_scores.clone(),
@@ -169,6 +187,7 @@ pub fn calculate_user_score(user: &User, game_data: &GameData) -> UserScore {
         roguelike_details: roguelike_result,
         sandbox_details: sandbox_result,
         medal_details: medal_result,
+        base_details: base_result,
         breakdown,
     }
 }
