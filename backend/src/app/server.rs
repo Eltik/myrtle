@@ -18,6 +18,7 @@ use crate::app::routes::auth::verify::verify_token;
 use crate::app::routes::avatar::serve_avatar;
 use crate::app::routes::dps_calculator::{calculate_dps, list_operators};
 use crate::app::routes::get_user::{get_user_by_path, get_user_by_query};
+use crate::app::routes::leaderboard::get_leaderboard;
 use crate::app::routes::portrait::serve_portrait;
 use crate::app::routes::static_data;
 use crate::app::routes::tier_lists;
@@ -66,6 +67,7 @@ fn create_router(state: AppState) -> Router {
         .route("/cdn/portrait/{char_id}", get(serve_portrait))
         .route("/get-user", get(get_user_by_query))
         .route("/get-user/{uid}", get(get_user_by_path))
+        .route("/leaderboard", get(get_leaderboard))
         .route("/send-code", post(send_code_by_query))
         .route("/send-code/{email}", post(send_code_by_email))
         .route(

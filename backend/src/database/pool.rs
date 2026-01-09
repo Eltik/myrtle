@@ -165,5 +165,22 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
+    // Leaderboard performance indices
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_users_server ON users(server)")
+        .execute(pool)
+        .await?;
+
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_users_total_score ON users (((score->>'totalScore')::FLOAT) DESC NULLS LAST) WHERE score IS NOT NULL AND score != 'null'::jsonb",
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_users_composite_score ON users (((score->'grade'->>'compositeScore')::FLOAT) DESC NULLS LAST) WHERE score IS NOT NULL AND score != 'null'::jsonb",
+    )
+    .execute(pool)
+    .await?;
+
     Ok(())
 }

@@ -3,6 +3,7 @@ pub mod auth;
 pub mod avatar;
 pub mod dps_calculator;
 pub mod get_user;
+pub mod leaderboard;
 pub mod portrait;
 pub mod static_data;
 pub mod tier_lists;
