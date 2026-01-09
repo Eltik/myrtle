@@ -86,6 +86,10 @@ pub struct ScoreBreakdown {
     pub roguelike_total_collectibles: i32,
     /// Total runs completed
     pub roguelike_total_runs: i32,
+    /// Total challenges cleared at max difficulty (grade 2)
+    pub roguelike_grade_2_challenges: i32,
+    /// Number of themes with at least one grade 2 clear
+    pub roguelike_themes_at_max_difficulty: i32,
 
     // === Sandbox (Reclamation Algorithm) Stats ===
     /// Places completed (state = 2)
@@ -98,10 +102,20 @@ pub struct ScoreBreakdown {
     pub sandbox_completion_percentage: f32,
     /// Total nodes completed
     pub sandbox_nodes_completed: i32,
+    /// Landmark nodes completed
+    pub sandbox_landmark_nodes: i32,
+    /// Special nodes completed
+    pub sandbox_special_nodes: i32,
     /// Tech trees completed
     pub sandbox_tech_trees_completed: i32,
     /// Stories unlocked
     pub sandbox_stories_unlocked: i32,
+    /// Events triggered
+    pub sandbox_events_completed: i32,
+    /// Log entries collected
+    pub sandbox_log_entries: i32,
+    /// Chapters with at least one log
+    pub sandbox_chapters_with_logs: i32,
 }
 
 impl Default for ScoreBreakdown {
@@ -133,14 +147,21 @@ impl Default for ScoreBreakdown {
             roguelike_total_buffs: 0,
             roguelike_total_collectibles: 0,
             roguelike_total_runs: 0,
+            roguelike_grade_2_challenges: 0,
+            roguelike_themes_at_max_difficulty: 0,
             // Sandbox stats
             sandbox_places_completed: 0,
             sandbox_places_discovered: 0,
             sandbox_places_total: 0,
             sandbox_completion_percentage: 0.0,
             sandbox_nodes_completed: 0,
+            sandbox_landmark_nodes: 0,
+            sandbox_special_nodes: 0,
             sandbox_tech_trees_completed: 0,
             sandbox_stories_unlocked: 0,
+            sandbox_events_completed: 0,
+            sandbox_log_entries: 0,
+            sandbox_chapters_with_logs: 0,
         }
     }
 }

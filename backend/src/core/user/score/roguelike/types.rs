@@ -13,6 +13,7 @@ pub struct RoguelikeThemeScore {
     pub buffs_score: f32,
     pub collectibles_score: f32,
     pub challenge_score: f32,
+    pub difficulty_score: f32,
     pub details: RoguelikeThemeDetails,
 }
 
@@ -40,6 +41,8 @@ pub struct RoguelikeThemeDetails {
     /// Challenge mode grades achieved
     pub challenge_grades_achieved: i32,
     pub highest_challenge_grade: i32,
+    /// Challenges cleared at max difficulty (grade 2)
+    pub grade_2_challenges: i32,
 }
 
 /// Overall roguelike score aggregating all themes
@@ -61,6 +64,10 @@ pub struct RoguelikeBreakdown {
     pub total_buffs: i32,
     pub total_collectibles: i32,
     pub total_runs: i32,
+    /// Total challenges cleared at max difficulty (grade 2) across all themes
+    pub total_grade_2_challenges: i32,
+    /// Number of themes with at least one grade 2 clear
+    pub themes_at_max_difficulty: i32,
 }
 
 impl Default for RoguelikeScore {

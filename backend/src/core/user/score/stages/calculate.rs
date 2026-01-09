@@ -54,7 +54,16 @@ pub fn calculate_stage_score(user: &User, game_data: &GameData) -> StageScore {
 
         breakdown.total_stages_available += total_stages;
 
-        match zone.zone_type {
+        // Determine effective zone type - treat zones with "side" in ID as sidestory
+        // since SIDESTORY zones in zone_table have no stages, but activity side zones do
+        let is_sidestory_content = zone_id.contains("side");
+        let effective_zone_type = if is_sidestory_content {
+            ZoneType::Sidestory
+        } else {
+            zone.zone_type.clone()
+        };
+
+        match effective_zone_type {
             ZoneType::Mainline => {
                 mainline_completed += completed_stages;
                 mainline_total += total_stages;
@@ -77,7 +86,7 @@ pub fn calculate_stage_score(user: &User, game_data: &GameData) -> StageScore {
         };
 
         let score = calculate_zone_score(
-            &zone.zone_type,
+            &effective_zone_type,
             completed_stages,
             perfect_stages,
             total_stages,
@@ -92,7 +101,7 @@ pub fn calculate_stage_score(user: &User, game_data: &GameData) -> StageScore {
         zone_scores.push(ZoneScore {
             zone_id: zone_id.clone(),
             zone_name,
-            zone_type: zone.zone_type.clone(),
+            zone_type: effective_zone_type,
             zone_index: zone.zone_index,
             total_stages,
             completed_stages,

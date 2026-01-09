@@ -112,6 +112,9 @@ pub fn calculate_user_score(user: &User, game_data: &GameData) -> UserScore {
     breakdown.roguelike_total_buffs = roguelike_result.breakdown.total_buffs;
     breakdown.roguelike_total_collectibles = roguelike_result.breakdown.total_collectibles;
     breakdown.roguelike_total_runs = roguelike_result.breakdown.total_runs;
+    breakdown.roguelike_grade_2_challenges = roguelike_result.breakdown.total_grade_2_challenges;
+    breakdown.roguelike_themes_at_max_difficulty =
+        roguelike_result.breakdown.themes_at_max_difficulty;
 
     // === SANDBOX (RECLAMATION ALGORITHM) SCORING ===
     let sandbox_result = calculate_sandbox_score(user);
@@ -122,8 +125,13 @@ pub fn calculate_user_score(user: &User, game_data: &GameData) -> UserScore {
     breakdown.sandbox_places_total = sandbox_result.breakdown.places_total;
     breakdown.sandbox_completion_percentage = sandbox_result.breakdown.places_completion_percentage;
     breakdown.sandbox_nodes_completed = sandbox_result.breakdown.total_nodes_completed;
+    breakdown.sandbox_landmark_nodes = sandbox_result.breakdown.landmark_nodes_completed;
+    breakdown.sandbox_special_nodes = sandbox_result.breakdown.special_nodes_completed;
     breakdown.sandbox_tech_trees_completed = sandbox_result.breakdown.tech_trees_completed;
     breakdown.sandbox_stories_unlocked = sandbox_result.breakdown.stories_unlocked;
+    breakdown.sandbox_events_completed = sandbox_result.breakdown.events_completed;
+    breakdown.sandbox_log_entries = sandbox_result.breakdown.log_entries_collected;
+    breakdown.sandbox_chapters_with_logs = sandbox_result.breakdown.chapters_with_logs;
 
     // Combined total score
     let total_score = operator_total

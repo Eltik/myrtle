@@ -16,6 +16,10 @@ mod points {
     pub const RELIC_UNLOCKED: f32 = 2.0;
     pub const CAPSULE_UNLOCKED: f32 = 2.0;
     pub const CHALLENGE_GRADE: f32 = 15.0;
+    /// Bonus per challenge cleared at max difficulty (grade 2)
+    pub const GRADE_2_BONUS: f32 = 25.0;
+    /// Bonus per theme with at least one grade 2 clear
+    pub const MAX_DIFFICULTY_THEME: f32 = 100.0;
 }
 
 /// Calculate roguelike score for a user
@@ -40,6 +44,10 @@ pub fn calculate_roguelike_score(user: &User) -> RoguelikeScore {
             breakdown.total_runs += theme_score.details.normal_runs
                 + theme_score.details.challenge_runs
                 + theme_score.details.month_team_runs;
+            breakdown.total_grade_2_challenges += theme_score.details.grade_2_challenges;
+            if theme_score.details.grade_2_challenges > 0 {
+                breakdown.themes_at_max_difficulty += 1;
+            }
 
             theme_scores.push(theme_score);
         }
@@ -166,15 +174,19 @@ fn calculate_theme_score(theme_id: &str, data: &serde_json::Value) -> Option<Rog
         && let Some(grade) = challenge.get("grade")
         && let Some(obj) = grade.as_object()
     {
-        // Count challenges with grade > 0
-        details.challenge_grades_achieved = obj
-            .values()
-            .filter(|v| v.as_i64().map(|g| g > 0).unwrap_or(false))
-            .count() as i32;
-
-        // Find highest grade
-        details.highest_challenge_grade =
-            obj.values().filter_map(|v| v.as_i64()).max().unwrap_or(0) as i32;
+        for grade_val in obj.values() {
+            if let Some(g) = grade_val.as_i64() {
+                if g > 0 {
+                    details.challenge_grades_achieved += 1;
+                }
+                if g >= 2 {
+                    details.grade_2_challenges += 1;
+                }
+                if g > details.highest_challenge_grade as i64 {
+                    details.highest_challenge_grade = g as i32;
+                }
+            }
+        }
     }
 
     // Check if theme has been played
@@ -193,8 +205,21 @@ fn calculate_theme_score(theme_id: &str, data: &serde_json::Value) -> Option<Rog
         + (details.capsules_unlocked as f32 * points::CAPSULE_UNLOCKED);
     let challenge_score = details.challenge_grades_achieved as f32 * points::CHALLENGE_GRADE;
 
-    let total_score =
-        base_score + endings_score + bp_score + buffs_score + collectibles_score + challenge_score;
+    // Difficulty score: bonus for grade 2 clears + bonus for having any grade 2 on this theme
+    let difficulty_score = (details.grade_2_challenges as f32 * points::GRADE_2_BONUS)
+        + if details.highest_challenge_grade >= 2 {
+            points::MAX_DIFFICULTY_THEME
+        } else {
+            0.0
+        };
+
+    let total_score = base_score
+        + endings_score
+        + bp_score
+        + buffs_score
+        + collectibles_score
+        + challenge_score
+        + difficulty_score;
 
     Some(RoguelikeThemeScore {
         theme_id: theme_id.to_string(),
@@ -204,6 +229,7 @@ fn calculate_theme_score(theme_id: &str, data: &serde_json::Value) -> Option<Rog
         buffs_score,
         collectibles_score,
         challenge_score,
+        difficulty_score,
         details,
     })
 }
