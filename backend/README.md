@@ -26,6 +26,7 @@ A high-performance Rust backend for the Myrtle.moe Arknights companion applicati
 - [Testing](#testing)
   - [Running Tests](#running-tests)
   - [DPS Comparison Tests](#dps-comparison-tests)
+  - [Score Calculation Tests](#score-calculation-tests)
   - [Generating Test Files](#generating-test-files)
 - [Game Data](#game-data)
 - [External Dependencies](#external-dependencies)
@@ -58,7 +59,7 @@ A high-performance Rust backend for the Myrtle.moe Arknights companion applicati
 | Admin Statistics | System monitoring and usage statistics |
 | DPS Calculator | 281 operators with 100% accuracy vs Python reference |
 | DPS Calculator API | REST API for damage calculations with range support |
-| User Scoring | Account valuation across operators, stages, roguelike, sandbox |
+| User Scoring | Account valuation across operators, stages, roguelike, sandbox, medals, base efficiency |
 
 ### Static Data Endpoints
 
@@ -307,7 +308,8 @@ backend/
 │   │       └── tier_lists/     # Tier list management
 │   ├── core/
 │   │   ├── authentication/     # Yostar OAuth, JWT, headers, sessions
-│   │   ├── user/               # User data fetching & formatting
+│   │   ├── user/               # User data fetching, formatting & scoring
+│   │   │   └── score/          # Account scoring (operators, stages, roguelike, sandbox, medals, base)
 │   │   ├── local/              # Game data loading & types
 │   │   ├── cron/               # Background jobs
 │   │   └── dps_calculator/     # DPS calculations (281 operators)
@@ -331,12 +333,15 @@ backend/
 │   ├── python_dps_harness.py       # Python harness for DPS calculations
 │   └── extract_operator_data.py    # Extract operator data from Python source
 ├── tests/
-│   └── dps_comparison/
-│       ├── dps_comparison_test.rs  # Generated Rust integration tests
-│       ├── run_comparison.py       # Python test runner
-│       ├── test_config.json        # Test case configurations
-│       ├── operators.json          # Extracted operator metadata
-│       └── expected_dps.json       # Pre-computed Python DPS values
+│   ├── dps_comparison/
+│   │   ├── dps_comparison_test.rs  # Generated Rust integration tests
+│   │   ├── run_comparison.py       # Python test runner
+│   │   ├── test_config.json        # Test case configurations
+│   │   ├── operators.json          # Extracted operator metadata
+│   │   └── expected_dps.json       # Pre-computed Python DPS values
+│   └── score_calculation/
+│       ├── score_calculation_test.rs  # User scoring integration tests
+│       └── output/                     # Generated score JSON files
 ├── external/
 │   └── ArknightsDpsCompare/        # Git submodule - reference implementation
 ├── Cargo.toml
@@ -1235,6 +1240,8 @@ The scoring system calculates a total account score by aggregating:
 | Stage Score | Story and event completion progress |
 | Roguelike Score | Integrated Strategies (IS) progress |
 | Sandbox Score | Reclamation Algorithm (RA) progress |
+| Medal Score | Medal achievements with rarity and category bonuses |
+| Base Score | RIIC efficiency (trading posts, factories, power plants, etc.) |
 
 ### Operator Scoring
 
@@ -1399,6 +1406,130 @@ Progress in RA mode:
 - Events triggered
 - Log entries collected
 
+### Medal Scoring
+
+Progress in earning game medals with rarity-based point values:
+
+#### Base Points (by Rarity)
+
+| Rarity | Points | Description |
+|--------|--------|-------------|
+| T1 (Common) | 5 | Basic achievement medals |
+| T2 (Uncommon) | 15 | Intermediate medals |
+| T3 (Rare) | 50 | Difficult achievement medals |
+| T2D5 (Special) | 75 | Special difficulty medals |
+
+#### Category Multipliers
+
+| Category | Multiplier | Description |
+|----------|------------|-------------|
+| Records Medal (playerMedal) | 1.0x | Player statistics |
+| Episodes Medal (stageMedal) | 1.1x | Stage completion |
+| Annihilation Medal (campMedal) | 1.2x | Annihilation clears |
+| SSS Medal (towerMedal) | 1.3x | Stationary Security Service |
+| Progress Medal (growthMedal) | 1.0x | Account progression |
+| Chronicles Medal (storyMedal) | 1.0x | Story completion |
+| Base Medal (buildMedal) | 1.0x | RIIC achievements |
+| Event Medal (activityMedal) | 1.0x | Limited-time events |
+| Traveler Medal (rogueMedal) | 1.2x | Integrated Strategies |
+| Secret Medal (hiddenMedal) | 1.5x | Hidden achievements |
+
+#### Group Completion Bonuses
+
+| Group Size | Bonus |
+|------------|-------|
+| Small (1-5 medals) | 25 pts |
+| Medium (6-10 medals) | 50 pts |
+| Large (11+ medals) | 100 pts |
+
+**Breakdown includes:**
+- Total medals earned/available
+- Completion percentage by rarity
+- Medals earned per category
+- Groups fully completed
+
+### Base (RIIC) Efficiency Scoring
+
+Scores for your Rhodes Island Infrastructure Complex based on operational efficiency:
+
+#### Trading Post (per room)
+
+| Component | Formula |
+|-----------|---------|
+| Base | 50 pts |
+| Level | 25 pts x level |
+| Efficiency | (speed - 1.0) x 100 pts |
+| Max efficiency (>=200%) | +200 pts |
+| Gold strategy | +10 pts |
+| Order capacity | (stockLimit - 6) x 5 pts |
+| Presets | 25 pts per additional preset |
+| Full rotation | +15 pts x presets if all full |
+
+#### Factory (per room)
+
+| Component | Formula |
+|-----------|---------|
+| Base | 50 pts |
+| Level | 25 pts x level |
+| Efficiency | (speed - 1.0) x 100 pts |
+| Max efficiency (>=200%) | +200 pts |
+| Capacity | (capacity - base) x 2 pts |
+| Presets | 25 pts per additional preset |
+
+#### Power Plant (per room)
+
+| Component | Formula |
+|-----------|---------|
+| Base | 30 pts |
+| Level | 20 pts x level |
+| Electricity | output x 0.5 pts |
+| Drone recovery | 10 pts x level |
+
+Electricity output: 60/130/270 for levels 1/2/3
+
+#### Dormitory (per room)
+
+| Component | Formula |
+|-----------|---------|
+| Base | 20 pts |
+| Level | 15 pts x level |
+| Comfort | comfort x 0.02 pts |
+| Max comfort (5000) | +50 pts |
+
+#### Control Center
+
+| Component | Formula |
+|-----------|---------|
+| Base | 100 pts |
+| Level | 50 pts x level |
+| Buff score | (trading + manufacture buff) x 200 pts |
+| AP reduction | |apCost| x 2 pts |
+| Presets | 25 pts per additional preset |
+
+#### Reception Room & Office
+
+| Component | Formula |
+|-----------|---------|
+| Base | 40 pts |
+| Level | 20 pts x level |
+| Operators | 10 pts per stationed operator |
+
+#### Global Bonuses
+
+| Bonus | Points | Condition |
+|-------|--------|-----------|
+| Electricity Balanced | 100 | Output >= consumption |
+| High Efficiency | 300 | Average efficiency > 150% |
+| Full Base | 500 | All production buildings at max level |
+
+**Breakdown includes:**
+- Building counts and levels
+- Average trading/factory efficiency
+- Total comfort across dormitories
+- Electricity balance
+- Labor metrics
+- Operator distribution (production/support/rest)
+
 ### Architecture
 
 The scoring system is modular with dedicated calculators:
@@ -1421,10 +1552,18 @@ src/core/user/score/
 │   ├── mod.rs
 │   ├── types.rs           # RoguelikeScore, ThemeScore
 │   └── calculate.rs       # IS progress scoring
-└── sandbox/
+├── sandbox/
+│   ├── mod.rs
+│   ├── types.rs           # SandboxScore, AreaScore
+│   └── calculate.rs       # RA progress scoring
+├── medal/
+│   ├── mod.rs
+│   ├── types.rs           # MedalScore, MedalCategoryScore
+│   └── calculate.rs       # Medal achievement scoring
+└── base/
     ├── mod.rs
-    ├── types.rs           # SandboxScore, AreaScore
-    └── calculate.rs       # RA progress scoring
+    ├── types.rs           # BaseScore, building types
+    └── calculate.rs       # RIIC efficiency scoring
 ```
 
 ### Usage Example
@@ -1440,22 +1579,28 @@ println!("Operator Score: {:.2}", score.operator_score);
 println!("Stage Score: {:.2}", score.stage_score);
 println!("Roguelike Score: {:.2}", score.roguelike_score);
 println!("Sandbox Score: {:.2}", score.sandbox_score);
+println!("Medal Score: {:.2}", score.medal_score);
+println!("Base Score: {:.2}", score.base_score);
 
 // Access breakdown
 println!("6-star operators: {}", score.breakdown.six_star_count);
 println!("M9 operators: {}", score.breakdown.m9_count);
 println!("Mainline completion: {:.1}%", score.breakdown.mainline_completion);
+println!("Medals earned: {}/{}", score.breakdown.medal_total_earned, score.breakdown.medal_total_available);
+println!("Base efficiency: {:.1}%", score.breakdown.base_avg_trading_efficiency);
 ```
 
 ### Response Structure
 
 ```json
 {
-  "totalScore": 125000.50,
-  "operatorScore": 95000.25,
-  "stageScore": 15000.00,
-  "roguelikeScore": 12000.25,
-  "sandboxScore": 3000.00,
+  "totalScore": 242010.22,
+  "operatorScore": 203431.72,
+  "stageScore": 2780.00,
+  "roguelikeScore": 9728.00,
+  "sandboxScore": 2682.00,
+  "medalScore": 11011.50,
+  "baseScore": 12377.00,
   "operatorScores": [
     {
       "charId": "char_002_amiya",
@@ -1478,6 +1623,74 @@ println!("Mainline completion: {:.1}%", score.breakdown.mainline_completion);
   "zoneScores": [...],
   "roguelikeThemeScores": [...],
   "sandboxAreaScores": [...],
+  "medalCategoryScores": [
+    {
+      "category": "stageMedal",
+      "categoryName": "Episodes Medal",
+      "totalScore": 1250.50,
+      "medalsEarned": 45,
+      "medalsAvailable": 60,
+      "completionPercentage": 75.0,
+      "t1Earned": 20,
+      "t2Earned": 15,
+      "t3Earned": 8,
+      "t2d5Earned": 2
+    }
+  ],
+  "medalDetails": {
+    "totalScore": 11011.50,
+    "rarityScore": 9500.00,
+    "categoryBonusScore": 1011.50,
+    "groupBonusScore": 500.00,
+    "breakdown": {
+      "totalMedalsEarned": 450,
+      "totalMedalsAvailable": 1304,
+      "totalCompletionPercentage": 34.5,
+      "groupsComplete": 12,
+      "groupsTotal": 85
+    }
+  },
+  "baseDetails": {
+    "totalScore": 12377.00,
+    "tradingScore": 505.00,
+    "factoryScore": 728.00,
+    "powerScore": 765.00,
+    "dormitoryScore": 980.00,
+    "controlCenterScore": 8569.00,
+    "receptionScore": 120.00,
+    "officeScore": 110.00,
+    "globalBonusScore": 600.00,
+    "tradingPosts": [...],
+    "factories": [...],
+    "powerPlants": [...],
+    "dormitories": [...],
+    "controlCenter": {
+      "slotId": "slot_34",
+      "level": 5,
+      "globalBuffScore": 8364.00,
+      "apCostScore": 150.00,
+      "totalScore": 8569.00,
+      "details": {
+        "tradingBuff": 20.07,
+        "manufactureBuff": 20.00,
+        "apCostReduction": 75,
+        "operatorsStationed": 5,
+        "presetCount": 2,
+        "operatorsPerPreset": [5, 5]
+      }
+    },
+    "breakdown": {
+      "tradingPostCount": 2,
+      "factoryCount": 4,
+      "powerPlantCount": 3,
+      "dormitoryCount": 4,
+      "maxLevelBuildings": 16,
+      "avgTradingEfficiency": 90.0,
+      "avgFactoryEfficiency": 94.25,
+      "totalComfort": 20000,
+      "electricityBalance": 70
+    }
+  },
   "breakdown": {
     "totalOperators": 280,
     "sixStarCount": 45,
@@ -1491,7 +1704,15 @@ println!("Mainline completion: {:.1}%", score.breakdown.mainline_completion);
     "roguelikeThemesPlayed": 5,
     "roguelikeTotalEndings": 25,
     "sandboxPlacesCompleted": 45,
-    "sandboxCompletionPercentage": 90.0
+    "sandboxCompletionPercentage": 90.0,
+    "medalTotalEarned": 450,
+    "medalTotalAvailable": 1304,
+    "medalCompletionPercentage": 34.5,
+    "medalGroupsComplete": 12,
+    "baseTradingPostCount": 2,
+    "baseFactoryCount": 4,
+    "baseAvgTradingEfficiency": 90.0,
+    "baseMaxLevelBuildings": 16
   }
 }
 ```
@@ -1573,6 +1794,46 @@ python3 scripts/python_dps_harness.py SilverAsh 500 0 --skill 3 --module 1
   "attack_interval": 1.3
 }
 ```
+
+### Score Calculation Tests
+
+The score calculation test suite validates the user scoring system with real user data.
+
+#### Running Score Tests
+
+```bash
+# Set data directories
+export DATA_DIR=/path/to/gamedata/excel
+export ASSETS_DIR=/path/to/assets
+
+# Run score calculation tests
+cargo test --test score_calculation_test -- --nocapture
+
+# Output:
+# === User Score Calculation Results ===
+# Total Score: 242,010.22
+# ├── Operator Score: 203,431.72
+# ├── Stage Score: 2,780.00
+# ├── Roguelike Score: 9,728.00
+# ├── Sandbox Score: 2,682.00
+# ├── Medal Score: 11,011.50
+# └── Base Score: 12,377.00
+```
+
+#### Score Output Files
+
+The tests generate JSON files in `tests/score_calculation/output/`:
+
+| File | Description |
+|------|-------------|
+| `user_score_full.json` | Complete scoring data |
+| `operator_scores.json` | Individual operator scores |
+| `zone_scores.json` | Stage completion by zone |
+| `roguelike_scores.json` | IS theme progress |
+| `sandbox_scores.json` | RA area progress |
+| `medal_scores.json` | Medal category breakdown |
+| `base_scores.json` | RIIC efficiency breakdown |
+| `score_breakdown.json` | Summary statistics |
 
 ### Generating Test Files
 
