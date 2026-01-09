@@ -5,6 +5,7 @@
 
 use serde::{Deserialize, Serialize};
 
+use super::medal::types::{MedalCategoryScore, MedalScore};
 use super::operators::types::OperatorScore;
 use super::roguelike::types::{RoguelikeScore, RoguelikeThemeScore};
 use super::sandbox::types::{SandboxAreaScore, SandboxScore};
@@ -14,7 +15,7 @@ use super::stages::types::ZoneScore;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UserScore {
-    /// Combined total score (operators + stages + roguelike + sandbox)
+    /// Combined total score (operators + stages + roguelike + sandbox + medal)
     pub total_score: f32,
     /// Score from operator investment only
     pub operator_score: f32,
@@ -24,6 +25,8 @@ pub struct UserScore {
     pub roguelike_score: f32,
     /// Score from sandbox (Reclamation Algorithm) progress
     pub sandbox_score: f32,
+    /// Score from medal completions
+    pub medal_score: f32,
     /// Individual operator scores sorted by total descending
     pub operator_scores: Vec<OperatorScore>,
     /// Zone/chapter completion scores
@@ -32,10 +35,14 @@ pub struct UserScore {
     pub roguelike_theme_scores: Vec<RoguelikeThemeScore>,
     /// Sandbox area scores
     pub sandbox_area_scores: Vec<SandboxAreaScore>,
+    /// Medal category scores
+    pub medal_category_scores: Vec<MedalCategoryScore>,
     /// Detailed roguelike progress
     pub roguelike_details: RoguelikeScore,
     /// Detailed sandbox progress
     pub sandbox_details: SandboxScore,
+    /// Detailed medal progress
+    pub medal_details: MedalScore,
     /// Summary statistics
     pub breakdown: ScoreBreakdown,
 }
@@ -116,6 +123,24 @@ pub struct ScoreBreakdown {
     pub sandbox_log_entries: i32,
     /// Chapters with at least one log
     pub sandbox_chapters_with_logs: i32,
+
+    // === Medal Stats ===
+    /// Total medals earned
+    pub medal_total_earned: i32,
+    /// Total medals available
+    pub medal_total_available: i32,
+    /// Medal completion percentage
+    pub medal_completion_percentage: f32,
+    /// T1 (Common) medals earned
+    pub medal_t1_earned: i32,
+    /// T2 (Uncommon) medals earned
+    pub medal_t2_earned: i32,
+    /// T3 (Rare) medals earned
+    pub medal_t3_earned: i32,
+    /// T2D5 (Special) medals earned
+    pub medal_t2d5_earned: i32,
+    /// Number of medal groups fully completed
+    pub medal_groups_complete: i32,
 }
 
 impl Default for ScoreBreakdown {
@@ -162,6 +187,15 @@ impl Default for ScoreBreakdown {
             sandbox_events_completed: 0,
             sandbox_log_entries: 0,
             sandbox_chapters_with_logs: 0,
+            // Medal stats
+            medal_total_earned: 0,
+            medal_total_available: 0,
+            medal_completion_percentage: 0.0,
+            medal_t1_earned: 0,
+            medal_t2_earned: 0,
+            medal_t3_earned: 0,
+            medal_t2d5_earned: 0,
+            medal_groups_complete: 0,
         }
     }
 }
@@ -174,12 +208,15 @@ impl Default for UserScore {
             stage_score: 0.0,
             roguelike_score: 0.0,
             sandbox_score: 0.0,
+            medal_score: 0.0,
             operator_scores: Vec::new(),
             zone_scores: Vec::new(),
             roguelike_theme_scores: Vec::new(),
             sandbox_area_scores: Vec::new(),
+            medal_category_scores: Vec::new(),
             roguelike_details: RoguelikeScore::default(),
             sandbox_details: SandboxScore::default(),
+            medal_details: MedalScore::default(),
             breakdown: ScoreBreakdown::default(),
         }
     }

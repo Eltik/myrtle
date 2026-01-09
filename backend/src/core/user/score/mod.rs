@@ -5,8 +5,10 @@
 //! - Stage completion (mainline, sidestory, events)
 //! - Integrated Strategies (Roguelike) progress
 //! - Reclamation Algorithm (Sandbox) progress
+//! - Medal completions
 
 pub mod calculate;
+pub mod medal;
 pub mod operators;
 pub mod roguelike;
 pub mod sandbox;
@@ -15,6 +17,9 @@ pub mod types;
 
 // Re-export main types and functions for convenience
 pub use calculate::calculate_user_score;
+pub use medal::{
+    MedalBreakdown, MedalCategoryScore, MedalGroupScore, MedalScore, calculate_medal_score,
+};
 pub use operators::{
     CompletionStatus, MasteryDetails, ModuleDetails, OperatorScore, SkinDetails,
     calculate_operator_score,
