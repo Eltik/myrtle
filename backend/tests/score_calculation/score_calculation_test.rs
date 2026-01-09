@@ -228,6 +228,14 @@ mod tests {
             score.breakdown.roguelike_total_collectibles
         );
         println!("  Total Runs: {}", score.breakdown.roguelike_total_runs);
+        println!(
+            "  Grade 2 (Max Difficulty) Challenges: {}",
+            score.breakdown.roguelike_grade_2_challenges
+        );
+        println!(
+            "  Themes at Max Difficulty: {}",
+            score.breakdown.roguelike_themes_at_max_difficulty
+        );
 
         // Print roguelike theme scores
         if !score.roguelike_theme_scores.is_empty() {
@@ -260,6 +268,12 @@ mod tests {
                         + theme.details.challenge_runs
                         + theme.details.month_team_runs
                 );
+                println!(
+                    "    Difficulty: {} grade 2 clears, highest grade {} ({:.0} pts)",
+                    theme.details.grade_2_challenges,
+                    theme.details.highest_challenge_grade,
+                    theme.difficulty_score
+                );
             }
         }
 
@@ -275,8 +289,10 @@ mod tests {
             score.breakdown.sandbox_completion_percentage
         );
         println!(
-            "  Nodes Completed: {}",
-            score.breakdown.sandbox_nodes_completed
+            "  Nodes Completed: {} (landmarks: {}, special: {})",
+            score.breakdown.sandbox_nodes_completed,
+            score.breakdown.sandbox_landmark_nodes,
+            score.breakdown.sandbox_special_nodes
         );
         println!(
             "  Tech Trees: {}",
@@ -285,6 +301,30 @@ mod tests {
         println!(
             "  Stories Unlocked: {}",
             score.breakdown.sandbox_stories_unlocked
+        );
+        println!(
+            "  Events Completed: {}",
+            score.breakdown.sandbox_events_completed
+        );
+        println!(
+            "  Log Entries: {} ({} chapters with logs)",
+            score.breakdown.sandbox_log_entries, score.breakdown.sandbox_chapters_with_logs
+        );
+
+        // Print sandbox score breakdown
+        println!();
+        println!("Sandbox Score Breakdown:");
+        println!(
+            "  Places: {:.0}, Nodes: {:.0}, Tech Trees: {:.0}",
+            score.sandbox_details.places_score,
+            score.sandbox_details.nodes_score,
+            score.sandbox_details.tech_tree_score
+        );
+        println!(
+            "  Stories: {:.0}, Events: {:.0}, Logs: {:.0}",
+            score.sandbox_details.stories_score,
+            score.sandbox_details.events_score,
+            score.sandbox_details.logs_score
         );
 
         // Print sandbox area scores

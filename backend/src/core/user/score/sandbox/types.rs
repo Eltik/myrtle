@@ -26,6 +26,8 @@ pub struct SandboxScore {
     pub tech_tree_score: f32,
     pub stories_score: f32,
     pub endings_score: f32,
+    pub events_score: f32,
+    pub logs_score: f32,
     pub area_scores: Vec<SandboxAreaScore>,
     pub breakdown: SandboxBreakdown,
 }
@@ -47,11 +49,19 @@ pub struct SandboxBreakdown {
     pub ending_nodes_completed: i32,
     pub tech_nodes_completed: i32,
     pub treasure_nodes_completed: i32,
+    pub landmark_nodes_completed: i32,
+    pub special_nodes_completed: i32,
     pub total_nodes_completed: i32,
     /// Tech trees
     pub tech_trees_completed: i32,
     /// Stories
     pub stories_unlocked: i32,
+    /// Events triggered
+    pub events_completed: i32,
+    /// Log entries collected
+    pub log_entries_collected: i32,
+    pub chapters_with_logs: i32,
+    pub total_chapters: i32,
 }
 
 impl Default for SandboxScore {
@@ -63,6 +73,8 @@ impl Default for SandboxScore {
             tech_tree_score: 0.0,
             stories_score: 0.0,
             endings_score: 0.0,
+            events_score: 0.0,
+            logs_score: 0.0,
             area_scores: Vec::new(),
             breakdown: SandboxBreakdown::default(),
         }
