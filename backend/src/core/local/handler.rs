@@ -14,6 +14,7 @@ use crate::core::local::gamedata::voice::enrich_all_voices;
 use crate::core::local::types::gacha::{GachaData, GachaTableFile};
 use crate::core::local::types::handbook::{Handbook, HandbookTableFile};
 use crate::core::local::types::material::{ItemTableFile, Materials};
+use crate::core::local::types::medal::{MedalData, MedalTableFile};
 use crate::core::local::types::module::{
     BattleEquip, BattleEquipTableFile, Modules, RawModules, UniequipTableFile,
 };
@@ -315,6 +316,18 @@ pub fn init_game_data(
         }
     };
 
+    // ============ Load Medal Table ============
+    let medals: MedalData = match handler.load_table::<MedalTableFile>("medal_table") {
+        Ok(medal_table) => MedalData::from_table(medal_table),
+        Err(e) => {
+            events.emit(ConfigEvent::GameDataTableWarning {
+                table: "medal_table".to_string(),
+                error: e.to_string(),
+            });
+            MedalData::default()
+        }
+    };
+
     // ============ Load Chibi Data ============
     let chibi_result = init_chibi_data(assets_dir);
     let chibis = chibi_result.data;
@@ -439,6 +452,7 @@ pub fn init_game_data(
         chibis,
         zones,
         stages,
+        medals,
         asset_mappings,
     })
 }

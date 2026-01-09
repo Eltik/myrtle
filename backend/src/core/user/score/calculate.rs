@@ -3,6 +3,7 @@
 use crate::core::local::types::GameData;
 use crate::core::user::types::User;
 
+use super::medal::calculate_medal_score;
 use super::operators::{
     calculate_operator_score, helpers::is_token_or_trap, helpers::rarity_to_int,
     types::OperatorScore,
@@ -133,11 +134,25 @@ pub fn calculate_user_score(user: &User, game_data: &GameData) -> UserScore {
     breakdown.sandbox_log_entries = sandbox_result.breakdown.log_entries_collected;
     breakdown.sandbox_chapters_with_logs = sandbox_result.breakdown.chapters_with_logs;
 
+    // === MEDAL SCORING ===
+    let medal_result = calculate_medal_score(user, &game_data.medals);
+
+    // Merge medal breakdown into main breakdown
+    breakdown.medal_total_earned = medal_result.breakdown.total_medals_earned;
+    breakdown.medal_total_available = medal_result.breakdown.total_medals_available;
+    breakdown.medal_completion_percentage = medal_result.breakdown.total_completion_percentage;
+    breakdown.medal_t1_earned = medal_result.breakdown.t1_earned;
+    breakdown.medal_t2_earned = medal_result.breakdown.t2_earned;
+    breakdown.medal_t3_earned = medal_result.breakdown.t3_earned;
+    breakdown.medal_t2d5_earned = medal_result.breakdown.t2d5_earned;
+    breakdown.medal_groups_complete = medal_result.breakdown.groups_complete;
+
     // Combined total score
     let total_score = operator_total
         + stage_result.total_score
         + roguelike_result.total_score
-        + sandbox_result.total_score;
+        + sandbox_result.total_score
+        + medal_result.total_score;
 
     UserScore {
         total_score,
@@ -145,12 +160,15 @@ pub fn calculate_user_score(user: &User, game_data: &GameData) -> UserScore {
         stage_score: stage_result.total_score,
         roguelike_score: roguelike_result.total_score,
         sandbox_score: sandbox_result.total_score,
+        medal_score: medal_result.total_score,
         operator_scores,
         zone_scores: stage_result.zone_scores,
         roguelike_theme_scores: roguelike_result.theme_scores.clone(),
         sandbox_area_scores: sandbox_result.area_scores.clone(),
+        medal_category_scores: medal_result.category_scores.clone(),
         roguelike_details: roguelike_result,
         sandbox_details: sandbox_result,
+        medal_details: medal_result,
         breakdown,
     }
 }

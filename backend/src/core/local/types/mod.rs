@@ -4,8 +4,8 @@ use crate::core::local::{
     asset_mapping::AssetMappings,
     types::{
         chibi::ChibiData, gacha::GachaData, handbook::Handbook, material::Materials,
-        module::Modules, operator::Operator, range::Ranges, skill::Skill, skin::SkinData,
-        stage::Stage, trust::Favor, voice::Voices, zone::Zone,
+        medal::MedalData, module::Modules, operator::Operator, range::Ranges, skill::Skill,
+        skin::SkinData, stage::Stage, trust::Favor, voice::Voices, zone::Zone,
     },
 };
 
@@ -14,6 +14,7 @@ pub mod enemy;
 pub mod gacha;
 pub mod handbook;
 pub mod material;
+pub mod medal;
 pub mod module;
 pub mod operator;
 pub mod range;
@@ -40,6 +41,7 @@ pub struct GameData {
     pub chibis: ChibiData,
     pub zones: HashMap<String, Zone>,
     pub stages: HashMap<String, Stage>,
+    pub medals: MedalData,
     pub asset_mappings: AssetMappings,
 }
 

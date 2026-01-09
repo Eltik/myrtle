@@ -343,6 +343,54 @@ mod tests {
             }
         }
 
+        // Medal stats
+        println!();
+        println!("Medals:");
+        println!("  Medal Score: {:.2}", score.medal_score);
+        println!(
+            "  Medals Earned: {}/{} ({:.1}%)",
+            score.breakdown.medal_total_earned,
+            score.breakdown.medal_total_available,
+            score.breakdown.medal_completion_percentage
+        );
+        println!(
+            "  By Rarity: T1={}, T2={}, T3={}, T2D5={}",
+            score.breakdown.medal_t1_earned,
+            score.breakdown.medal_t2_earned,
+            score.breakdown.medal_t3_earned,
+            score.breakdown.medal_t2d5_earned
+        );
+        println!(
+            "  Groups Complete: {}",
+            score.breakdown.medal_groups_complete
+        );
+
+        // Print medal score breakdown
+        println!();
+        println!("Medal Score Breakdown:");
+        println!(
+            "  Rarity Score: {:.0}, Category Bonus: {:.0}, Group Bonus: {:.0}",
+            score.medal_details.rarity_score,
+            score.medal_details.category_bonus_score,
+            score.medal_details.group_bonus_score
+        );
+
+        // Print top medal categories by score
+        if !score.medal_category_scores.is_empty() {
+            println!();
+            println!("Medal Category Scores:");
+            for cat in &score.medal_category_scores {
+                println!(
+                    "  {}: {:.2} pts ({}/{} = {:.1}%)",
+                    cat.category_name,
+                    cat.total_score,
+                    cat.medals_earned,
+                    cat.medals_available,
+                    cat.completion_percentage
+                );
+            }
+        }
+
         // Basic assertions
         assert!(score.total_score > 0.0, "Total score should be positive");
         assert!(score.breakdown.total_operators > 0, "Should have operators");
@@ -603,6 +651,13 @@ mod tests {
         std::fs::write(&sandbox_path, &sandbox_json).expect("Failed to write sandbox scores JSON");
         println!("Exported sandbox scores to: {}", sandbox_path.display());
 
+        // Export medal scores
+        let medal_json =
+            serde_json::to_string_pretty(&score.medal_details).expect("Failed to serialize medals");
+        let medal_path = output_dir.join("medal_scores.json");
+        std::fs::write(&medal_path, &medal_json).expect("Failed to write medal scores JSON");
+        println!("Exported medal scores to: {}", medal_path.display());
+
         // Summary
         println!();
         println!("=== Export Summary ===");
@@ -611,10 +666,16 @@ mod tests {
         println!("  Stage Score: {:.2}", score.stage_score);
         println!("  Roguelike Score: {:.2}", score.roguelike_score);
         println!("  Sandbox Score: {:.2}", score.sandbox_score);
+        println!("  Medal Score: {:.2}", score.medal_score);
         println!("Operators: {}", score.operator_scores.len());
         println!("Zones: {}", score.zone_scores.len());
         println!("Roguelike Themes: {}", score.roguelike_theme_scores.len());
         println!("Sandbox Areas: {}", score.sandbox_area_scores.len());
+        println!(
+            "Medal Categories: {} ({} medals earned)",
+            score.medal_category_scores.len(),
+            score.breakdown.medal_total_earned
+        );
         println!();
         println!("Files exported to: {}", output_dir.display());
     }
