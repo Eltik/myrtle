@@ -3,6 +3,7 @@
 export * from "./impl/enemy";
 export * from "./impl/gacha";
 export * from "./impl/handbook";
+export * from "./impl/leaderboard";
 export * from "./impl/material";
 export * from "./impl/module";
 export * from "./impl/operator";
