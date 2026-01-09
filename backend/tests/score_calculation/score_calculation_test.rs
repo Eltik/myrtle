@@ -391,6 +391,157 @@ mod tests {
             }
         }
 
+        // Base (RIIC) Efficiency stats
+        println!();
+        println!("Base (RIIC) Efficiency:");
+        println!("  Base Score: {:.2}", score.base_score);
+        println!(
+            "  Trading Posts: {} (avg {:.1}% efficiency)",
+            score.breakdown.base_trading_post_count, score.breakdown.base_avg_trading_efficiency
+        );
+        println!(
+            "  Factories: {} (avg {:.1}% efficiency)",
+            score.breakdown.base_factory_count, score.breakdown.base_avg_factory_efficiency
+        );
+        println!("  Power Plants: {}", score.breakdown.base_power_plant_count);
+        println!(
+            "  Dormitories: {} (total comfort: {})",
+            score.breakdown.base_dormitory_count, score.breakdown.base_total_comfort
+        );
+        println!(
+            "  Electricity Balance: {}",
+            score.breakdown.base_electricity_balance
+        );
+        println!(
+            "  Max Level Buildings: {}",
+            score.breakdown.base_max_level_buildings
+        );
+
+        // Print base score breakdown
+        println!();
+        println!("Base Score Breakdown:");
+        println!(
+            "  Trading: {:.0}, Factory: {:.0}, Power: {:.0}, Dormitory: {:.0}",
+            score.base_details.trading_score,
+            score.base_details.factory_score,
+            score.base_details.power_score,
+            score.base_details.dormitory_score
+        );
+        println!(
+            "  Control Center: {:.0}, Reception: {:.0}, Office: {:.0}",
+            score.base_details.control_center_score,
+            score.base_details.reception_score,
+            score.base_details.office_score
+        );
+        println!(
+            "  Global Bonuses: {:.0}",
+            score.base_details.global_bonus_score
+        );
+
+        // Print trading post details
+        if !score.base_details.trading_posts.is_empty() {
+            println!();
+            println!("Trading Post Scores:");
+            for tp in &score.base_details.trading_posts {
+                println!(
+                    "  {}: {:.2} pts (level {}, {:.0}% efficiency, {} orders)",
+                    tp.slot_id,
+                    tp.total_score,
+                    tp.level,
+                    tp.details.speed_multiplier * 100.0,
+                    tp.details.stock_limit
+                );
+                if tp.details.preset_count > 0 {
+                    let ops_per_preset: Vec<String> = tp
+                        .details
+                        .operators_per_preset
+                        .iter()
+                        .map(|n| n.to_string())
+                        .collect();
+                    println!(
+                        "    Presets: {} rotations [{}] (+{:.0} pts)",
+                        tp.details.preset_count,
+                        ops_per_preset.join(", "),
+                        tp.preset_score
+                    );
+                }
+            }
+        }
+
+        // Print factory details
+        if !score.base_details.factories.is_empty() {
+            println!();
+            println!("Factory Scores:");
+            for f in &score.base_details.factories {
+                println!(
+                    "  {}: {:.2} pts (level {}, {:.0}% efficiency, {})",
+                    f.slot_id,
+                    f.total_score,
+                    f.level,
+                    f.details.speed_multiplier * 100.0,
+                    f.details.production_type
+                );
+                if f.details.preset_count > 0 {
+                    let ops_per_preset: Vec<String> = f
+                        .details
+                        .operators_per_preset
+                        .iter()
+                        .map(|n| n.to_string())
+                        .collect();
+                    println!(
+                        "    Presets: {} rotations [{}] (+{:.0} pts)",
+                        f.details.preset_count,
+                        ops_per_preset.join(", "),
+                        f.preset_score
+                    );
+                }
+            }
+        }
+
+        // Print dormitory details
+        if !score.base_details.dormitories.is_empty() {
+            println!();
+            println!("Dormitory Scores:");
+            for d in &score.base_details.dormitories {
+                println!(
+                    "  {}: {:.2} pts (level {}, comfort {}/5000 = {:.1}%)",
+                    d.slot_id,
+                    d.total_score,
+                    d.level,
+                    d.details.comfort_level,
+                    d.details.comfort_percentage
+                );
+            }
+        }
+
+        // Print control center details
+        if let Some(ref cc) = score.base_details.control_center {
+            println!();
+            println!("Control Center:");
+            println!(
+                "  {}: {:.2} pts (level {}, {} operators)",
+                cc.slot_id, cc.total_score, cc.level, cc.details.operators_stationed
+            );
+            println!(
+                "  Buffs: Trading {:.2}%, Manufacture {:.2}%",
+                cc.details.trading_buff, cc.details.manufacture_buff
+            );
+            println!("  AP Cost Reduction: {}", cc.details.ap_cost_reduction);
+            if cc.details.preset_count > 0 {
+                let ops_per_preset: Vec<String> = cc
+                    .details
+                    .operators_per_preset
+                    .iter()
+                    .map(|n| n.to_string())
+                    .collect();
+                println!(
+                    "  Presets: {} rotations [{}]",
+                    cc.details.preset_count,
+                    ops_per_preset.join(", ")
+                );
+            }
+        }
+
         // Basic assertions
         assert!(score.total_score > 0.0, "Total score should be positive");
         assert!(score.breakdown.total_operators > 0, "Should have operators");
@@ -658,6 +809,13 @@ mod tests {
         std::fs::write(&medal_path, &medal_json).expect("Failed to write medal scores JSON");
         println!("Exported medal scores to: {}", medal_path.display());
 
+        // Export base scores
+        let base_json =
+            serde_json::to_string_pretty(&score.base_details).expect("Failed to serialize base");
+        let base_path = output_dir.join("base_scores.json");
+        std::fs::write(&base_path, &base_json).expect("Failed to write base scores JSON");
+        println!("Exported base scores to: {}", base_path.display());
+
         // Summary
         println!();
         println!("=== Export Summary ===");
@@ -667,6 +825,7 @@ mod tests {
         println!("  Roguelike Score: {:.2}", score.roguelike_score);
         println!("  Sandbox Score: {:.2}", score.sandbox_score);
         println!("  Medal Score: {:.2}", score.medal_score);
+        println!("  Base Score: {:.2}", score.base_score);
         println!("Operators: {}", score.operator_scores.len());
         println!("Zones: {}", score.zone_scores.len());
         println!("Roguelike Themes: {}", score.roguelike_theme_scores.len());
@@ -675,6 +834,13 @@ mod tests {
             "Medal Categories: {} ({} medals earned)",
             score.medal_category_scores.len(),
             score.breakdown.medal_total_earned
+        );
+        println!(
+            "Base Buildings: {} trading, {} factory, {} power, {} dorm",
+            score.breakdown.base_trading_post_count,
+            score.breakdown.base_factory_count,
+            score.breakdown.base_power_plant_count,
+            score.breakdown.base_dormitory_count
         );
         println!();
         println!("Files exported to: {}", output_dir.display());

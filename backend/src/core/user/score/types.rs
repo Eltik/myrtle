@@ -5,6 +5,7 @@
 
 use serde::{Deserialize, Serialize};
 
+use super::base::types::BaseScore;
 use super::medal::types::{MedalCategoryScore, MedalScore};
 use super::operators::types::OperatorScore;
 use super::roguelike::types::{RoguelikeScore, RoguelikeThemeScore};
@@ -15,7 +16,7 @@ use super::stages::types::ZoneScore;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UserScore {
-    /// Combined total score (operators + stages + roguelike + sandbox + medal)
+    /// Combined total score (operators + stages + roguelike + sandbox + medal + base)
     pub total_score: f32,
     /// Score from operator investment only
     pub operator_score: f32,
@@ -27,6 +28,8 @@ pub struct UserScore {
     pub sandbox_score: f32,
     /// Score from medal completions
     pub medal_score: f32,
+    /// Score from base (RIIC) efficiency
+    pub base_score: f32,
     /// Individual operator scores sorted by total descending
     pub operator_scores: Vec<OperatorScore>,
     /// Zone/chapter completion scores
@@ -43,6 +46,8 @@ pub struct UserScore {
     pub sandbox_details: SandboxScore,
     /// Detailed medal progress
     pub medal_details: MedalScore,
+    /// Detailed base efficiency progress
+    pub base_details: BaseScore,
     /// Summary statistics
     pub breakdown: ScoreBreakdown,
 }
@@ -141,6 +146,26 @@ pub struct ScoreBreakdown {
     pub medal_t2d5_earned: i32,
     /// Number of medal groups fully completed
     pub medal_groups_complete: i32,
+
+    // === Base (RIIC) Efficiency Stats ===
+    /// Number of trading posts
+    pub base_trading_post_count: i32,
+    /// Number of factories
+    pub base_factory_count: i32,
+    /// Number of power plants
+    pub base_power_plant_count: i32,
+    /// Number of dormitories
+    pub base_dormitory_count: i32,
+    /// Average trading post efficiency (percentage)
+    pub base_avg_trading_efficiency: f32,
+    /// Average factory efficiency (percentage)
+    pub base_avg_factory_efficiency: f32,
+    /// Total comfort across all dormitories
+    pub base_total_comfort: i32,
+    /// Electricity balance (output - consumption)
+    pub base_electricity_balance: i32,
+    /// Number of buildings at max level
+    pub base_max_level_buildings: i32,
 }
 
 impl Default for ScoreBreakdown {
@@ -196,6 +221,16 @@ impl Default for ScoreBreakdown {
             medal_t3_earned: 0,
             medal_t2d5_earned: 0,
             medal_groups_complete: 0,
+            // Base stats
+            base_trading_post_count: 0,
+            base_factory_count: 0,
+            base_power_plant_count: 0,
+            base_dormitory_count: 0,
+            base_avg_trading_efficiency: 0.0,
+            base_avg_factory_efficiency: 0.0,
+            base_total_comfort: 0,
+            base_electricity_balance: 0,
+            base_max_level_buildings: 0,
         }
     }
 }
@@ -209,6 +244,7 @@ impl Default for UserScore {
             roguelike_score: 0.0,
             sandbox_score: 0.0,
             medal_score: 0.0,
+            base_score: 0.0,
             operator_scores: Vec::new(),
             zone_scores: Vec::new(),
             roguelike_theme_scores: Vec::new(),
@@ -217,6 +253,7 @@ impl Default for UserScore {
             roguelike_details: RoguelikeScore::default(),
             sandbox_details: SandboxScore::default(),
             medal_details: MedalScore::default(),
+            base_details: BaseScore::default(),
             breakdown: ScoreBreakdown::default(),
         }
     }

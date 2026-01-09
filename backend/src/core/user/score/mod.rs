@@ -6,7 +6,9 @@
 //! - Integrated Strategies (Roguelike) progress
 //! - Reclamation Algorithm (Sandbox) progress
 //! - Medal completions
+//! - Base (RIIC) efficiency
 
+pub mod base;
 pub mod calculate;
 pub mod medal;
 pub mod operators;
@@ -16,6 +18,10 @@ pub mod stages;
 pub mod types;
 
 // Re-export main types and functions for convenience
+pub use base::{
+    BaseBreakdown, BaseScore, ControlCenterScore, DormitoryScore, FactoryScore, OfficeScore,
+    PowerPlantScore, ReceptionRoomScore, TradingPostScore, calculate_base_score,
+};
 pub use calculate::calculate_user_score;
 pub use medal::{
     MedalBreakdown, MedalCategoryScore, MedalGroupScore, MedalScore, calculate_medal_score,
