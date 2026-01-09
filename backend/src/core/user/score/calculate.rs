@@ -4,6 +4,7 @@ use crate::core::local::types::GameData;
 use crate::core::user::types::User;
 
 use super::base::calculate_base_score;
+use super::grade::calculate_user_grade;
 use super::medal::calculate_medal_score;
 use super::operators::{
     calculate_operator_score, helpers::is_token_or_trap, helpers::rarity_to_int,
@@ -171,6 +172,31 @@ pub fn calculate_user_score(user: &User, game_data: &GameData) -> UserScore {
         + medal_result.total_score
         + base_result.total_score;
 
+    // Build partial score for grade calculation
+    let partial_score = UserScore {
+        total_score,
+        operator_score: operator_total,
+        stage_score: stage_result.total_score,
+        roguelike_score: roguelike_result.total_score,
+        sandbox_score: sandbox_result.total_score,
+        medal_score: medal_result.total_score,
+        base_score: base_result.total_score,
+        operator_scores: operator_scores.clone(),
+        zone_scores: stage_result.zone_scores.clone(),
+        roguelike_theme_scores: roguelike_result.theme_scores.clone(),
+        sandbox_area_scores: sandbox_result.area_scores.clone(),
+        medal_category_scores: medal_result.category_scores.clone(),
+        roguelike_details: roguelike_result.clone(),
+        sandbox_details: sandbox_result.clone(),
+        medal_details: medal_result.clone(),
+        base_details: base_result.clone(),
+        breakdown: breakdown.clone(),
+        grade: Default::default(), // Temporary placeholder
+    };
+
+    // Calculate user grade from score and live user data
+    let grade = calculate_user_grade(user, &partial_score);
+
     UserScore {
         total_score,
         operator_score: operator_total,
@@ -189,5 +215,6 @@ pub fn calculate_user_score(user: &User, game_data: &GameData) -> UserScore {
         medal_details: medal_result,
         base_details: base_result,
         breakdown,
+        grade,
     }
 }

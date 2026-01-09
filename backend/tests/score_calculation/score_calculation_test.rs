@@ -12,7 +12,7 @@ use std::sync::OnceLock;
 
 use backend::core::local::handler::init_game_data;
 use backend::core::local::types::GameData;
-use backend::core::user::score::{CompletionStatus, calculate_user_score};
+use backend::core::user::score::{CompletionStatus, Grade, calculate_user_score};
 use backend::core::user::types::User as UserData;
 use backend::database::models::user::User as DatabaseUser;
 use backend::events::EventEmitter;
@@ -55,20 +55,33 @@ fn get_user_data() -> Option<&'static UserData> {
             match std::fs::read_to_string(&user_path) {
                 Ok(content) => {
                     // Try parsing as DatabaseUser first (full row with id, uid, server, data)
-                    if let Ok(db_user) = serde_json::from_str::<DatabaseUser>(&content) {
-                        // DatabaseUser.data is serde_json::Value, need to convert to UserData
-                        match serde_json::from_value::<UserData>(db_user.data) {
-                            Ok(user_data) => return Some(user_data),
-                            Err(e) => {
-                                eprintln!("Failed to parse user data from DatabaseUser: {e}");
+                    match serde_json::from_str::<DatabaseUser>(&content) {
+                        Ok(db_user) => {
+                            // DatabaseUser.data is serde_json::Value, need to convert to UserData
+                            match serde_json::from_value::<UserData>(db_user.data) {
+                                Ok(user_data) => {
+                                    eprintln!("Successfully parsed user data from DatabaseUser");
+                                    return Some(user_data);
+                                }
+                                Err(e) => {
+                                    eprintln!(
+                                        "Failed to parse user data from DatabaseUser.data: {e}"
+                                    );
+                                }
                             }
+                        }
+                        Err(e) => {
+                            eprintln!("Failed to parse as DatabaseUser: {e}");
                         }
                     }
                     // Fall back to parsing as direct UserData
                     match serde_json::from_str::<UserData>(&content) {
-                        Ok(user) => Some(user),
+                        Ok(user) => {
+                            eprintln!("Successfully parsed as direct UserData");
+                            Some(user)
+                        }
                         Err(e) => {
-                            eprintln!("Failed to parse user data: {e}");
+                            eprintln!("Failed to parse as direct UserData: {e}");
                             None
                         }
                     }
@@ -542,6 +555,65 @@ mod tests {
             }
         }
 
+        // === USER GRADE ===
+        println!();
+        println!("=== User Grade ===");
+        println!("  Grade: {:?}", score.grade.grade);
+        println!("  Composite Score: {:.2}", score.grade.composite_score);
+        println!("  Account Age: {} days", score.grade.account_age_days);
+        println!("  Normalized Score: {:.2}", score.grade.normalized_score);
+        println!(
+            "  Percentile Estimate: {:.1}%",
+            score.grade.percentile_estimate
+        );
+        println!();
+        println!("Activity Metrics:");
+        println!(
+            "  Days Since Login: {}",
+            score.grade.activity_metrics.days_since_login
+        );
+        println!(
+            "  Login Recency Score: {:.2}",
+            score.grade.activity_metrics.login_recency_score
+        );
+        println!(
+            "  Login Frequency Score: {:.2} ({}/{} check-ins)",
+            score.grade.activity_metrics.login_frequency_score,
+            score.grade.activity_metrics.total_check_ins,
+            score.grade.activity_metrics.expected_check_ins
+        );
+        println!(
+            "  Consistency Score: {:.2}",
+            score.grade.activity_metrics.consistency_score
+        );
+        println!(
+            "  Total Activity Score: {:.2}",
+            score.grade.activity_metrics.total_activity_score
+        );
+        println!();
+        println!("Engagement Metrics:");
+        println!(
+            "  Content Variety Score: {:.2} ({}/6 types)",
+            score.grade.engagement_metrics.content_variety_score,
+            score.grade.engagement_metrics.content_types_engaged
+        );
+        println!(
+            "  Roguelike Depth Score: {:.2}",
+            score.grade.engagement_metrics.roguelike_depth_score
+        );
+        println!(
+            "  Stage Diversity Score: {:.2}",
+            score.grade.engagement_metrics.stage_diversity_score
+        );
+        println!(
+            "  Progression Depth Score: {:.2}",
+            score.grade.engagement_metrics.progression_depth_score
+        );
+        println!(
+            "  Total Engagement Score: {:.2}",
+            score.grade.engagement_metrics.total_engagement_score
+        );
+
         // Basic assertions
         assert!(score.total_score > 0.0, "Total score should be positive");
         assert!(score.breakdown.total_operators > 0, "Should have operators");
@@ -844,5 +916,356 @@ mod tests {
         );
         println!();
         println!("Files exported to: {}", output_dir.display());
+    }
+
+    // =====================================================
+    // GRADE TESTS
+    // =====================================================
+
+    /// Test that grade is calculated and included in score
+    #[test]
+    fn test_grade_calculated() {
+        let Some(game_data) = get_game_data() else {
+            println!("DATA_DIR not set, skipping grade test");
+            return;
+        };
+
+        let Some(user) = get_user_data() else {
+            println!("User data not loaded, skipping grade test");
+            return;
+        };
+
+        let score = calculate_user_score(user, game_data);
+
+        // Grade should be calculated
+        assert!(
+            score.grade.calculated_at > 0,
+            "Grade should have a calculation timestamp"
+        );
+
+        // Composite score should be in valid range
+        assert!(
+            score.grade.composite_score >= 0.0 && score.grade.composite_score <= 100.0,
+            "Composite score should be between 0 and 100, got {}",
+            score.grade.composite_score
+        );
+
+        // Grade should match composite score
+        let expected_grade = Grade::from_score(score.grade.composite_score);
+        assert_eq!(
+            score.grade.grade, expected_grade,
+            "Grade should match composite score"
+        );
+
+        println!(
+            "Grade test passed: {:?} ({:.2})",
+            score.grade.grade, score.grade.composite_score
+        );
+    }
+
+    /// Test that grade components are valid
+    #[test]
+    fn test_grade_components_valid() {
+        let Some(game_data) = get_game_data() else {
+            println!("DATA_DIR not set, skipping grade components test");
+            return;
+        };
+
+        let Some(user) = get_user_data() else {
+            println!("User data not loaded, skipping grade components test");
+            return;
+        };
+
+        let score = calculate_user_score(user, game_data);
+        let grade = &score.grade;
+
+        // Normalized score should be in valid range
+        assert!(
+            grade.normalized_score >= 0.0 && grade.normalized_score <= 100.0,
+            "Normalized score should be between 0 and 100, got {}",
+            grade.normalized_score
+        );
+
+        // Activity metrics should be in valid ranges
+        assert!(
+            grade.activity_metrics.login_recency_score >= 0.0
+                && grade.activity_metrics.login_recency_score <= 100.0,
+            "Login recency score should be between 0 and 100"
+        );
+        assert!(
+            grade.activity_metrics.login_frequency_score >= 0.0
+                && grade.activity_metrics.login_frequency_score <= 100.0,
+            "Login frequency score should be between 0 and 100"
+        );
+        assert!(
+            grade.activity_metrics.consistency_score >= 0.0
+                && grade.activity_metrics.consistency_score <= 100.0,
+            "Consistency score should be between 0 and 100"
+        );
+        assert!(
+            grade.activity_metrics.total_activity_score >= 0.0
+                && grade.activity_metrics.total_activity_score <= 100.0,
+            "Total activity score should be between 0 and 100"
+        );
+
+        // Engagement metrics should be in valid ranges
+        assert!(
+            grade.engagement_metrics.content_variety_score >= 0.0
+                && grade.engagement_metrics.content_variety_score <= 100.0,
+            "Content variety score should be between 0 and 100"
+        );
+        assert!(
+            grade.engagement_metrics.roguelike_depth_score >= 0.0
+                && grade.engagement_metrics.roguelike_depth_score <= 100.0,
+            "Roguelike depth score should be between 0 and 100"
+        );
+        assert!(
+            grade.engagement_metrics.stage_diversity_score >= 0.0
+                && grade.engagement_metrics.stage_diversity_score <= 100.0,
+            "Stage diversity score should be between 0 and 100"
+        );
+        assert!(
+            grade.engagement_metrics.progression_depth_score >= 0.0
+                && grade.engagement_metrics.progression_depth_score <= 100.0,
+            "Progression depth score should be between 0 and 100"
+        );
+        assert!(
+            grade.engagement_metrics.total_engagement_score >= 0.0
+                && grade.engagement_metrics.total_engagement_score <= 100.0,
+            "Total engagement score should be between 0 and 100"
+        );
+
+        // Content types engaged should be between 0 and 6
+        assert!(
+            grade.engagement_metrics.content_types_engaged >= 0
+                && grade.engagement_metrics.content_types_engaged <= 6,
+            "Content types engaged should be between 0 and 6"
+        );
+
+        // Percentile estimate should be in valid range
+        assert!(
+            grade.percentile_estimate >= 0.0 && grade.percentile_estimate <= 100.0,
+            "Percentile estimate should be between 0 and 100"
+        );
+
+        // Account age should be positive for real users
+        assert!(
+            grade.account_age_days >= 0,
+            "Account age should be non-negative"
+        );
+
+        println!("All grade components are valid");
+        println!("  Normalized Score: {:.2}", grade.normalized_score);
+        println!(
+            "  Activity Score: {:.2}",
+            grade.activity_metrics.total_activity_score
+        );
+        println!(
+            "  Engagement Score: {:.2}",
+            grade.engagement_metrics.total_engagement_score
+        );
+    }
+
+    /// Test grade thresholds are applied correctly
+    #[test]
+    fn test_grade_thresholds() {
+        // Test Grade::from_score for all thresholds
+        assert_eq!(Grade::from_score(100.0), Grade::S);
+        assert_eq!(Grade::from_score(95.0), Grade::S);
+        assert_eq!(Grade::from_score(90.0), Grade::S);
+
+        assert_eq!(Grade::from_score(89.0), Grade::A);
+        assert_eq!(Grade::from_score(80.0), Grade::A);
+        assert_eq!(Grade::from_score(75.0), Grade::A);
+
+        assert_eq!(Grade::from_score(74.0), Grade::B);
+        assert_eq!(Grade::from_score(65.0), Grade::B);
+        assert_eq!(Grade::from_score(60.0), Grade::B);
+
+        assert_eq!(Grade::from_score(59.0), Grade::C);
+        assert_eq!(Grade::from_score(50.0), Grade::C);
+        assert_eq!(Grade::from_score(45.0), Grade::C);
+
+        assert_eq!(Grade::from_score(44.0), Grade::D);
+        assert_eq!(Grade::from_score(35.0), Grade::D);
+        assert_eq!(Grade::from_score(30.0), Grade::D);
+
+        assert_eq!(Grade::from_score(29.0), Grade::F);
+        assert_eq!(Grade::from_score(15.0), Grade::F);
+        assert_eq!(Grade::from_score(0.0), Grade::F);
+
+        // Edge cases
+        assert_eq!(Grade::from_score(-10.0), Grade::F);
+        assert_eq!(Grade::from_score(150.0), Grade::S); // Over 100 still S
+
+        println!("All grade thresholds are correct");
+    }
+
+    /// Test grade numeric values for sorting
+    #[test]
+    fn test_grade_numeric_values() {
+        assert!(Grade::S.numeric_value() > Grade::A.numeric_value());
+        assert!(Grade::A.numeric_value() > Grade::B.numeric_value());
+        assert!(Grade::B.numeric_value() > Grade::C.numeric_value());
+        assert!(Grade::C.numeric_value() > Grade::D.numeric_value());
+        assert!(Grade::D.numeric_value() > Grade::F.numeric_value());
+
+        assert_eq!(Grade::S.numeric_value(), 6);
+        assert_eq!(Grade::A.numeric_value(), 5);
+        assert_eq!(Grade::B.numeric_value(), 4);
+        assert_eq!(Grade::C.numeric_value(), 3);
+        assert_eq!(Grade::D.numeric_value(), 2);
+        assert_eq!(Grade::F.numeric_value(), 1);
+
+        println!("Grade numeric values are correct for sorting");
+    }
+
+    /// Test grade string representation
+    #[test]
+    fn test_grade_as_str() {
+        assert_eq!(Grade::S.as_str(), "S");
+        assert_eq!(Grade::A.as_str(), "A");
+        assert_eq!(Grade::B.as_str(), "B");
+        assert_eq!(Grade::C.as_str(), "C");
+        assert_eq!(Grade::D.as_str(), "D");
+        assert_eq!(Grade::F.as_str(), "F");
+
+        println!("Grade string representations are correct");
+    }
+
+    /// Test grade activity metrics reflect user state
+    #[test]
+    fn test_grade_activity_reflects_user() {
+        let Some(game_data) = get_game_data() else {
+            println!("DATA_DIR not set, skipping grade activity test");
+            return;
+        };
+
+        let Some(user) = get_user_data() else {
+            println!("User data not loaded, skipping grade activity test");
+            return;
+        };
+
+        let score = calculate_user_score(user, game_data);
+        let grade = &score.grade;
+
+        // Check-in count should match user data
+        let user_check_ins = user.check_in.check_in_history.len() as i32;
+        assert_eq!(
+            grade.activity_metrics.total_check_ins, user_check_ins,
+            "Grade check-in count should match user check-in history"
+        );
+
+        // Days since login should be 0 since we calculate as of last_online_ts
+        assert_eq!(
+            grade.activity_metrics.days_since_login, 0,
+            "Days since login should be 0 (calculated as of last login time)"
+        );
+
+        println!(
+            "Activity metrics reflect user state: {} check-ins, account age {} days",
+            grade.activity_metrics.total_check_ins, grade.account_age_days
+        );
+    }
+
+    /// Test grade engagement metrics reflect breakdown
+    #[test]
+    fn test_grade_engagement_reflects_breakdown() {
+        let Some(game_data) = get_game_data() else {
+            println!("DATA_DIR not set, skipping grade engagement test");
+            return;
+        };
+
+        let Some(user) = get_user_data() else {
+            println!("User data not loaded, skipping grade engagement test");
+            return;
+        };
+
+        let score = calculate_user_score(user, game_data);
+        let grade = &score.grade;
+        let breakdown = &score.breakdown;
+
+        // Content variety should reflect actual content engagement
+        let mut expected_content_types = 0;
+        if breakdown.roguelike_themes_played > 0 {
+            expected_content_types += 1;
+        }
+        if breakdown.sandbox_places_completed > 0 {
+            expected_content_types += 1;
+        }
+        if breakdown.medal_total_earned > 10 {
+            expected_content_types += 1;
+        }
+        if breakdown.mainline_completion > 50.0 {
+            expected_content_types += 1;
+        }
+        if breakdown.total_stages_completed > 100 {
+            expected_content_types += 1;
+        }
+        if breakdown.base_max_level_buildings > 0 {
+            expected_content_types += 1;
+        }
+
+        assert_eq!(
+            grade.engagement_metrics.content_types_engaged, expected_content_types,
+            "Content types engaged should match breakdown"
+        );
+
+        println!(
+            "Engagement metrics reflect breakdown: {}/6 content types engaged",
+            grade.engagement_metrics.content_types_engaged
+        );
+    }
+
+    /// Export grade details to JSON file
+    #[test]
+    fn test_export_grade() {
+        let Some(game_data) = get_game_data() else {
+            println!("DATA_DIR not set, skipping grade export test");
+            return;
+        };
+
+        let Some(user) = get_user_data() else {
+            println!("User data not loaded, skipping grade export test");
+            return;
+        };
+
+        let score = calculate_user_score(user, game_data);
+
+        // Create output directory if it doesn't exist
+        let output_dir = std::path::Path::new("tests/score_calculation/output");
+        std::fs::create_dir_all(output_dir).expect("Failed to create output directory");
+
+        // Export grade to JSON
+        let grade_json =
+            serde_json::to_string_pretty(&score.grade).expect("Failed to serialize grade");
+        let grade_path = output_dir.join("user_grade.json");
+        std::fs::write(&grade_path, &grade_json).expect("Failed to write grade JSON");
+        println!("Exported grade to: {}", grade_path.display());
+
+        // Summary
+        println!();
+        println!("=== Grade Export Summary ===");
+        println!("Grade: {:?}", score.grade.grade);
+        println!("Composite Score: {:.2}", score.grade.composite_score);
+        println!("Account Age: {} days", score.grade.account_age_days);
+        println!(
+            "Percentile Estimate: {:.1}%",
+            score.grade.percentile_estimate
+        );
+        println!();
+        println!("Component Scores:");
+        println!(
+            "  Normalized Score: {:.2} (50% weight)",
+            score.grade.normalized_score
+        );
+        println!(
+            "  Activity Score: {:.2} (30% weight)",
+            score.grade.activity_metrics.total_activity_score
+        );
+        println!(
+            "  Engagement Score: {:.2} (20% weight)",
+            score.grade.engagement_metrics.total_engagement_score
+        );
     }
 }

@@ -11,6 +11,7 @@ pub struct User {
     pub data: serde_json::Value,
     pub settings: serde_json::Value,
     pub role: String,
+    #[serde(default)]
     pub score: serde_json::Value,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,

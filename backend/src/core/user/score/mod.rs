@@ -7,9 +7,11 @@
 //! - Reclamation Algorithm (Sandbox) progress
 //! - Medal completions
 //! - Base (RIIC) efficiency
+//! - User grade (S/A/B/C/D/F) based on activity and engagement
 
 pub mod base;
 pub mod calculate;
+pub mod grade;
 pub mod medal;
 pub mod operators;
 pub mod roguelike;
@@ -23,6 +25,7 @@ pub use base::{
     PowerPlantScore, ReceptionRoomScore, TradingPostScore, calculate_base_score,
 };
 pub use calculate::calculate_user_score;
+pub use grade::{ActivityMetrics, EngagementMetrics, Grade, UserGrade, calculate_user_grade};
 pub use medal::{
     MedalBreakdown, MedalCategoryScore, MedalGroupScore, MedalScore, calculate_medal_score,
 };

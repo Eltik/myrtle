@@ -6,6 +6,7 @@
 use serde::{Deserialize, Serialize};
 
 use super::base::types::BaseScore;
+use super::grade::types::UserGrade;
 use super::medal::types::{MedalCategoryScore, MedalScore};
 use super::operators::types::OperatorScore;
 use super::roguelike::types::{RoguelikeScore, RoguelikeThemeScore};
@@ -50,6 +51,8 @@ pub struct UserScore {
     pub base_details: BaseScore,
     /// Summary statistics
     pub breakdown: ScoreBreakdown,
+    /// User grade (S/A/B/C/D/F) with detailed metrics
+    pub grade: UserGrade,
 }
 
 /// Summary statistics for the account
@@ -255,6 +258,7 @@ impl Default for UserScore {
             medal_details: MedalScore::default(),
             base_details: BaseScore::default(),
             breakdown: ScoreBreakdown::default(),
+            grade: UserGrade::default(),
         }
     }
 }
