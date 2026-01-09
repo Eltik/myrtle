@@ -22,6 +22,7 @@ A high-performance Rust backend for the Myrtle.moe Arknights companion applicati
   - [Tier Lists](#tier-lists)
   - [Admin](#admin)
 - [DPS Calculator](#dps-calculator)
+- [User Scoring](#user-scoring)
 - [Testing](#testing)
   - [Running Tests](#running-tests)
   - [DPS Comparison Tests](#dps-comparison-tests)
@@ -57,6 +58,7 @@ A high-performance Rust backend for the Myrtle.moe Arknights companion applicati
 | Admin Statistics | System monitoring and usage statistics |
 | DPS Calculator | 281 operators with 100% accuracy vs Python reference |
 | DPS Calculator API | REST API for damage calculations with range support |
+| User Scoring | Account valuation across operators, stages, roguelike, sandbox |
 
 ### Static Data Endpoints
 
@@ -1218,6 +1220,281 @@ println!("SilverAsh S3 DPS: {:.2}", dps);
 The Rust implementations are validated against the Python reference:
 - **Source**: `external/ArknightsDpsCompare/damagecalc/damage_formulas.py`
 - **Data**: `external/ArknightsDpsCompare/Database/JsonReader.py`
+
+## User Scoring
+
+The backend includes a comprehensive user account scoring system that evaluates player progress across multiple game modes.
+
+### Overview
+
+The scoring system calculates a total account score by aggregating:
+
+| Category | Description |
+|----------|-------------|
+| Operator Score | Investment in operators (level, mastery, modules, skins) |
+| Stage Score | Story and event completion progress |
+| Roguelike Score | Integrated Strategies (IS) progress |
+| Sandbox Score | Reclamation Algorithm (RA) progress |
+
+### Operator Scoring
+
+Each operator is scored based on investment level:
+
+#### Base Score (by Rarity)
+
+| Rarity | Points |
+|--------|--------|
+| 6-star | 500 |
+| 5-star | 400 |
+| 4-star | 150 |
+| 3-star | 30 |
+| 2-star | 10 |
+| 1-star | 5 |
+
+#### Level Score
+
+| Elite | Formula |
+|-------|---------|
+| E0 | level × 0.5 |
+| E1 | 50 + (level × 1.0) |
+| E2 | 150 + (level × 2.0) |
+
+Example: E2 Level 90 = 150 + 180 = **330 points**
+
+#### Trust Score
+
+| Trust % | Points |
+|---------|--------|
+| 0-100% | 0-30 pts (linear) |
+| 100-200% | 30-50 pts (dedication bonus) |
+
+#### Potential Score
+
+| Potential | Points |
+|-----------|--------|
+| P1 | 0 |
+| P2 | 10 |
+| P3 | 25 |
+| P4 | 45 |
+| P5 | 70 |
+| P6 | 100 |
+
+#### Mastery Score (per skill)
+
+| Mastery | Points |
+|---------|--------|
+| M0 | 0 |
+| M1 | 30 |
+| M2 | 70 |
+| M3 | 150 |
+
+M9 operator (3 skills at M3) = 450 mastery points
+
+#### Module Score (per module)
+
+| Level | Points |
+|-------|--------|
+| Mod 1 | 50 |
+| Mod 2 | 100 |
+| Mod 3 | 150 |
+| Mod 4 | 160 |
+| Mod 5 | 170 |
+| Mod 6 | 180 |
+
+#### Skin Score
+
+| Skin Type | Points |
+|-----------|--------|
+| Store skin | 15 |
+| L2D skin | 21 |
+| Event skin | 8 |
+
+**Collection Bonuses:**
+- 100% collection: +30 pts
+- 75%+ collection: +15 pts
+- 50%+ collection: +8 pts
+
+#### Completion Status
+
+Operators are categorized by investment level:
+
+| Status | Criteria |
+|--------|----------|
+| Not Started | E0, no mastery, no modules |
+| In Progress | Some investment but no M3 |
+| Partially Completed | At least one M3 skill |
+| Highly Invested | M6 or multiple max modules |
+| Absolutely Completed | M9 (all skills at M3) |
+
+### Stage Scoring
+
+Stage completion tracks progress across game modes:
+
+| Mode | Description |
+|------|-------------|
+| Mainline | Main story chapters |
+| Sidestory | Side story events (zones with "side" in ID) |
+| Activity | Limited-time events |
+
+**Metrics tracked:**
+- Completion percentage per mode
+- Total stages completed
+- Perfect (3-star) clears
+
+### Roguelike Scoring (Integrated Strategies)
+
+Progress across all IS themes (Phantom, Mizuki, Sami, Sarkaz, Babel):
+
+| Achievement | Points |
+|-------------|--------|
+| Theme played | 50 |
+| Ending unlocked | 25 |
+| BP level | 5 |
+| Buff unlocked | 10 |
+| Band unlocked | 3 |
+| Relic unlocked | 2 |
+| Capsule unlocked | 2 |
+| Challenge grade cleared | 15 |
+| Grade 2 (max difficulty) clear | 25 |
+| Theme at max difficulty | 100 |
+
+**Breakdown includes:**
+- Themes played
+- Total endings unlocked
+- Total BP levels
+- Total buffs
+- Total collectibles (bands + relics + capsules)
+- Total runs
+- Grade 2 challenges cleared
+- Themes at max difficulty
+
+### Sandbox Scoring (Reclamation Algorithm)
+
+Progress in RA mode:
+
+| Achievement | Points |
+|-------------|--------|
+| Place discovered | 5 |
+| Place completed | 15 |
+| Battle node | 3 |
+| Choice node | 2 |
+| Event node | 2 |
+| Ending node | 25 |
+| Tech node | 5 |
+| Treasure node | 3 |
+| Landmark node | 8 |
+| Special node | 5 |
+| Tech tree completed | 50 |
+| Story unlocked | 10 |
+| Event completed | 1 |
+| Log entry collected | 2 |
+| Chapter with logs | 15 |
+
+**Breakdown includes:**
+- Places completed/discovered/total
+- Completion percentage
+- Nodes completed by type
+- Tech trees completed
+- Stories unlocked
+- Events triggered
+- Log entries collected
+
+### Architecture
+
+The scoring system is modular with dedicated calculators:
+
+```
+src/core/user/score/
+├── mod.rs                 # Module exports
+├── types.rs               # UserScore, ScoreBreakdown
+├── calculate.rs           # Main aggregation function
+├── operators/
+│   ├── mod.rs
+│   ├── types.rs           # OperatorScore, CompletionStatus
+│   ├── calculate.rs       # Per-operator scoring
+│   └── helpers.rs         # Score calculation helpers
+├── stages/
+│   ├── mod.rs
+│   ├── types.rs           # ZoneScore, StageBreakdown
+│   └── calculate.rs       # Stage completion scoring
+├── roguelike/
+│   ├── mod.rs
+│   ├── types.rs           # RoguelikeScore, ThemeScore
+│   └── calculate.rs       # IS progress scoring
+└── sandbox/
+    ├── mod.rs
+    ├── types.rs           # SandboxScore, AreaScore
+    └── calculate.rs       # RA progress scoring
+```
+
+### Usage Example
+
+```rust
+use backend::core::user::score::calculate_user_score;
+
+// Calculate score for a user
+let score = calculate_user_score(&user, &game_data);
+
+println!("Total Score: {:.2}", score.total_score);
+println!("Operator Score: {:.2}", score.operator_score);
+println!("Stage Score: {:.2}", score.stage_score);
+println!("Roguelike Score: {:.2}", score.roguelike_score);
+println!("Sandbox Score: {:.2}", score.sandbox_score);
+
+// Access breakdown
+println!("6-star operators: {}", score.breakdown.six_star_count);
+println!("M9 operators: {}", score.breakdown.m9_count);
+println!("Mainline completion: {:.1}%", score.breakdown.mainline_completion);
+```
+
+### Response Structure
+
+```json
+{
+  "totalScore": 125000.50,
+  "operatorScore": 95000.25,
+  "stageScore": 15000.00,
+  "roguelikeScore": 12000.25,
+  "sandboxScore": 3000.00,
+  "operatorScores": [
+    {
+      "charId": "char_002_amiya",
+      "name": "Amiya",
+      "rarity": 5,
+      "baseScore": 400,
+      "levelScore": 330,
+      "trustScore": 50,
+      "potentialScore": 100,
+      "masteryScore": 450,
+      "moduleScore": 300,
+      "skinScore": 45,
+      "totalScore": 1675,
+      "completionStatus": "absolutely_completed",
+      "masteryDetails": { "m3Count": 3, "totalMasteryLevels": 9 },
+      "moduleDetails": { "modulesUnlocked": 2, "modulesAtMax": 2, "highestLevel": 3 },
+      "skinDetails": { "ownedCount": 3, "totalAvailable": 5, "completionPercentage": 60.0 }
+    }
+  ],
+  "zoneScores": [...],
+  "roguelikeThemeScores": [...],
+  "sandboxAreaScores": [...],
+  "breakdown": {
+    "totalOperators": 280,
+    "sixStarCount": 45,
+    "fiveStarCount": 80,
+    "m9Count": 15,
+    "m3Count": 50,
+    "e2Count": 120,
+    "mainlineCompletion": 100.0,
+    "sidestoryCompletion": 85.5,
+    "activityCompletion": 72.3,
+    "roguelikeThemesPlayed": 5,
+    "roguelikeTotalEndings": 25,
+    "sandboxPlacesCompleted": 45,
+    "sandboxCompletionPercentage": 90.0
+  }
+}
+```
 
 ## Testing
 
