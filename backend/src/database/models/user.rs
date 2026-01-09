@@ -169,4 +169,63 @@ impl User {
         .fetch_one(pool)
         .await
     }
+
+    /// Find users for leaderboard with dynamic sorting
+    ///
+    /// # Arguments
+    /// * `pool` - Database connection pool
+    /// * `sort_expression` - SQL expression for ORDER BY clause
+    /// * `order` - Sort order ("ASC" or "DESC")
+    /// * `server` - Optional server filter
+    /// * `limit` - Maximum number of results
+    /// * `offset` - Pagination offset
+    pub async fn find_for_leaderboard(
+        pool: &PgPool,
+        sort_expression: &str,
+        order: &str,
+        server: Option<&str>,
+        limit: i64,
+        offset: i64,
+    ) -> Result<Vec<Self>, sqlx::Error> {
+        let query = format!(
+            r#"
+            SELECT * FROM users
+            WHERE score IS NOT NULL
+              AND score != 'null'::jsonb
+              AND ($1::VARCHAR IS NULL OR server = $1)
+            ORDER BY {} {} NULLS LAST
+            LIMIT $2 OFFSET $3
+            "#,
+            sort_expression, order
+        );
+
+        sqlx::query_as::<_, Self>(&query)
+            .bind(server)
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(pool)
+            .await
+    }
+
+    /// Count users for leaderboard pagination
+    ///
+    /// # Arguments
+    /// * `pool` - Database connection pool
+    /// * `server` - Optional server filter
+    pub async fn count_for_leaderboard(
+        pool: &PgPool,
+        server: Option<&str>,
+    ) -> Result<i64, sqlx::Error> {
+        sqlx::query_scalar(
+            r#"
+            SELECT COUNT(*) FROM users
+            WHERE score IS NOT NULL
+              AND score != 'null'::jsonb
+              AND ($1::VARCHAR IS NULL OR server = $1)
+            "#,
+        )
+        .bind(server)
+        .fetch_one(pool)
+        .await
+    }
 }
