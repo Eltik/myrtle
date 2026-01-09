@@ -11,6 +11,7 @@ pub struct User {
     pub data: serde_json::Value,
     pub settings: serde_json::Value,
     pub role: String,
+    pub score: serde_json::Value,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -21,20 +22,22 @@ pub struct CreateUser {
     pub uid: String,
     pub server: String,
     pub data: serde_json::Value,
+    pub score: serde_json::Value,
 }
 
 impl User {
     pub async fn create(pool: &PgPool, input: CreateUser) -> Result<Self, sqlx::Error> {
         sqlx::query_as::<_, Self>(
             r#"
-            INSERT INTO users (uid, server, data)
-            VALUES ($1, $2, $3)
+            INSERT INTO users (uid, server, data, score)
+            VALUES ($1, $2, $3, $4)
             RETURNING *
             "#,
         )
         .bind(&input.uid)
         .bind(&input.server)
         .bind(&input.data)
+        .bind(&input.score)
         .fetch_one(pool)
         .await
     }
@@ -141,6 +144,26 @@ impl User {
             "#,
         )
         .bind(role)
+        .bind(id)
+        .fetch_one(pool)
+        .await
+    }
+
+    /// Update score
+    pub async fn update_score(
+        pool: &PgPool,
+        id: Uuid,
+        score: &serde_json::Value,
+    ) -> Result<Self, sqlx::Error> {
+        sqlx::query_as::<_, Self>(
+            r#"
+            UPDATE users
+            SET score = $1, updated_at = NOW()
+            WHERE id = $2
+            RETURNING *
+            "#,
+        )
+        .bind(score)
         .bind(id)
         .fetch_one(pool)
         .await

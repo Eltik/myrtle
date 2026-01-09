@@ -5,7 +5,7 @@ use crate::{
             constants::{AuthSession, Server},
             jwt,
         },
-        user::{self},
+        user::{self, score::calculate_user_score},
     },
     database::models::user::{CreateUser, User},
     events::ConfigEvent,
@@ -87,9 +87,12 @@ async fn refresh_impl(
     })?;
 
     let user_data = data.ok_or(ApiError::NotFound("User not found.".into()))?;
-
     let user_json = serde_json::to_value(&user_data)
         .map_err(|_| ApiError::Internal("Failed to serialize user.".into()))?;
+
+    let user_score = calculate_user_score(&user_data, &state.game_data);
+    let score_json = serde_json::to_value(&user_score)
+        .map_err(|_| ApiError::Internal("Failed to serialize score.".into()))?;
 
     let existing = User::find_by_uid(&state.db, uid)
         .await
@@ -99,6 +102,10 @@ async fn refresh_impl(
         let updated = User::update_data(&state.db, existing_user.id, user_json.clone())
             .await
             .map_err(|_| ApiError::Internal("Failed to update user.".into()))?;
+
+        let updated = User::update_score(&state.db, updated.id, &score_json)
+            .await
+            .map_err(|_| ApiError::Internal("Failed to update score.".into()))?;
 
         state.events.emit(ConfigEvent::DatabaseUserUpdated {
             uid: uid.to_string(),
@@ -113,6 +120,7 @@ async fn refresh_impl(
                 uid: uid.to_string(),
                 server: server.as_str().to_string(),
                 data: user_json.clone(),
+                score: score_json.clone(),
             },
         )
         .await

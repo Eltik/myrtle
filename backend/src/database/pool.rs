@@ -21,6 +21,7 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             data JSONB NOT NULL DEFAULT '{}',
             settings JSONB NOT NULL DEFAULT '{}',
             role VARCHAR(50) NOT NULL DEFAULT 'user',
+            score JSONB NOT NULL DEFAULT '{}',
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )
