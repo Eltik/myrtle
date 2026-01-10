@@ -1,12 +1,22 @@
 import type { GetServerSideProps, NextPage } from "next";
+import Head from "next/head";
+import { LeaderboardPage as LeaderboardContent } from "~/components/users/leaderboard";
 import type { LeaderboardResponse } from "~/types/api";
 
 interface Props {
     data: LeaderboardResponse;
 }
 
-const LeaderboardPage: NextPage<Props> = ({ data: _data }) => {
-    return null;
+const LeaderboardPage: NextPage<Props> = ({ data }) => {
+    return (
+        <>
+            <Head>
+                <title>Leaderboard - myrtle.moe</title>
+                <meta content="View the top Arknights players ranked by collection, progress, and achievements." name="description" />
+            </Head>
+            <LeaderboardContent initialData={data} />
+        </>
+    );
 };
 
 export const getServerSideProps: GetServerSideProps<Props> = async (context) => {
