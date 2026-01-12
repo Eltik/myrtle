@@ -2,9 +2,9 @@ import type { GetServerSideProps } from "next";
 import Head from "next/head";
 import { InView } from "~/components/ui/motion-primitives/in-view";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/shadcn/tabs";
-import { BaseView } from "~/components/user/base-view";
 import { CharactersGrid } from "~/components/user/characters-grid";
 import { ItemsGrid } from "~/components/user/items-grid";
+import { ScoreView } from "~/components/user/score-view";
 import { UserHeader } from "~/components/user/user-header";
 import type { StoredUser } from "~/types/api/impl/user";
 
@@ -55,7 +55,7 @@ export default function UserPage({ userData, error }: UserPageProps) {
                         <TabsList>
                             <TabsTrigger value="characters">Characters</TabsTrigger>
                             <TabsTrigger value="items">Items</TabsTrigger>
-                            <TabsTrigger value="base">Base</TabsTrigger>
+                            <TabsTrigger value="score">Score</TabsTrigger>
                         </TabsList>
 
                         <TabsContent className="space-y-4" value="characters">
@@ -68,9 +68,9 @@ export default function UserPage({ userData, error }: UserPageProps) {
                             <ItemsGrid data={data} />
                         </TabsContent>
 
-                        <TabsContent className="space-y-4" value="base">
-                            <h2 className="font-bold text-2xl">Base</h2>
-                            <BaseView data={data} />
+                        <TabsContent className="space-y-4" value="score">
+                            <h2 className="font-bold text-2xl">Score & Grade</h2>
+                            <ScoreView scoreData={userData.score} />
                         </TabsContent>
                     </Tabs>
                 </InView>
