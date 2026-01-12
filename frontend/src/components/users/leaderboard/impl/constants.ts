@@ -20,13 +20,42 @@ export const SERVERS = [
     { value: "bili", label: "Bilibili" },
 ] as const;
 
-export const GRADE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-    S: { bg: "bg-amber-500/20", text: "text-amber-500", border: "border-amber-500/50" },
-    A: { bg: "bg-emerald-500/20", text: "text-emerald-500", border: "border-emerald-500/50" },
-    B: { bg: "bg-sky-500/20", text: "text-sky-500", border: "border-sky-500/50" },
-    C: { bg: "bg-violet-500/20", text: "text-violet-500", border: "border-violet-500/50" },
-    D: { bg: "bg-orange-500/20", text: "text-orange-500", border: "border-orange-500/50" },
-    F: { bg: "bg-red-500/20", text: "text-red-500", border: "border-red-500/50" },
+type GradeColorValue = { bg: string; text: string; border: string; glow?: string };
+
+export const GRADE_COLORS: Record<string, GradeColorValue> & { F: GradeColorValue } = {
+    S: {
+        bg: "bg-rose-500/20",
+        text: "text-rose-400",
+        border: "border-rose-500/50",
+        glow: "shadow-[0_0_12px_rgba(251,113,133,0.6)]",
+    },
+    A: {
+        bg: "bg-orange-500/20",
+        text: "text-orange-400",
+        border: "border-orange-500/50",
+        glow: "shadow-[0_0_10px_rgba(251,146,60,0.5)]",
+    },
+    B: {
+        bg: "bg-amber-500/20",
+        text: "text-amber-400",
+        border: "border-amber-500/50",
+        glow: "shadow-[0_0_8px_rgba(251,191,36,0.4)]",
+    },
+    C: {
+        bg: "bg-yellow-500/20",
+        text: "text-yellow-400",
+        border: "border-yellow-500/50",
+    },
+    D: {
+        bg: "bg-lime-500/20",
+        text: "text-lime-400",
+        border: "border-lime-500/50",
+    },
+    F: {
+        bg: "bg-cyan-500/20",
+        text: "text-cyan-400",
+        border: "border-cyan-500/50",
+    },
 };
 
 export const SCORE_CATEGORIES = [
@@ -44,6 +73,11 @@ export const SCORE_CATEGORIES = [
     { key: "sandboxScore", label: "Sandbox", description: "Reclamation Algorithm progress and unlocks" },
     { key: "medalScore", label: "Medals", description: "Medal collection across all categories" },
     { key: "baseScore", label: "Base", description: "Rhodes Island infrastructure and furniture collection" },
+    {
+        key: "compositeScore",
+        label: "Composite",
+        description: "50% progression relative to account age, 30% activity, 20% content engagement",
+    },
 ] as const;
 
 /** Default avatar - Amiya E1 */

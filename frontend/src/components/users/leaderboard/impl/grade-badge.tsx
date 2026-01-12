@@ -8,7 +8,7 @@ interface GradeBadgeProps {
 }
 
 export function GradeBadge({ grade, size = "md", showLabel = false }: GradeBadgeProps) {
-    const colors = GRADE_COLORS[grade] || GRADE_COLORS.F;
+    const colors = GRADE_COLORS[grade] ?? GRADE_COLORS.F;
 
     const sizeClasses = {
         sm: "h-5 w-5 text-xs",
@@ -18,7 +18,7 @@ export function GradeBadge({ grade, size = "md", showLabel = false }: GradeBadge
 
     return (
         <div className="flex items-center justify-center gap-2">
-            <div className={cn("flex items-center justify-center rounded-md border font-bold", colors.bg, colors.text, colors.border, sizeClasses[size])}>{grade}</div>
+            <div className={cn("flex items-center justify-center rounded-md border font-bold transition-shadow", colors.bg, colors.text, colors.border, sizeClasses[size], colors.glow)}>{grade}</div>
             {showLabel && <span className="text-muted-foreground text-sm">Grade</span>}
         </div>
     );
