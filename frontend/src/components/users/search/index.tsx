@@ -90,6 +90,7 @@ export function SearchPageContent({ initialData }: SearchPageContentProps) {
                 order: (query.order as "asc" | "desc") || "desc",
                 limit: 24,
                 offset: Number(query.offset) || 0,
+                fields: "data", // Request full data for hover card info
             };
 
             // Handle level range

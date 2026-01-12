@@ -1,5 +1,8 @@
 import type { SearchGrade, SearchSortBy } from "~/types/api";
 
+/** Delay in ms before showing hover card */
+export const HOVER_DELAY = 500;
+
 // Sort options focused on user information (not leaderboard scores)
 export const SORT_OPTIONS: { value: SearchSortBy; label: string }[] = [
     { value: "nickname", label: "Name" },
