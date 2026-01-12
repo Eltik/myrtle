@@ -20,6 +20,7 @@ use crate::app::routes::dps_calculator::{calculate_dps, list_operators};
 use crate::app::routes::get_user::{get_user_by_path, get_user_by_query};
 use crate::app::routes::leaderboard::get_leaderboard;
 use crate::app::routes::portrait::serve_portrait;
+use crate::app::routes::search::search_users;
 use crate::app::routes::static_data;
 use crate::app::routes::tier_lists;
 use crate::app::routes::yostar::login::{login_by_query, login_by_server, login_no_server};
@@ -68,6 +69,7 @@ fn create_router(state: AppState) -> Router {
         .route("/get-user", get(get_user_by_query))
         .route("/get-user/{uid}", get(get_user_by_path))
         .route("/leaderboard", get(get_leaderboard))
+        .route("/search", get(search_users))
         .route("/send-code", post(send_code_by_query))
         .route("/send-code/{email}", post(send_code_by_email))
         .route(
