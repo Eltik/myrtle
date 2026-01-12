@@ -62,6 +62,14 @@ export function buildSearchParamsFromQuery(query: Record<string, string | string
         }
     }
 
+    const levelMin = query.levelMin;
+    const levelMax = query.levelMax;
+    if ((levelMin && typeof levelMin === "string") || (levelMax && typeof levelMax === "string")) {
+        const min = levelMin && typeof levelMin === "string" ? levelMin : "";
+        const max = levelMax && typeof levelMax === "string" ? levelMax : "";
+        searchParams.set("level", `${min},${max}`);
+    }
+
     return searchParams;
 }
 
