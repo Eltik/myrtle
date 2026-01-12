@@ -1,44 +1,25 @@
 "use client";
 
-import { ChevronDown, ChevronLeft, ChevronRight, Grid, List, RotateCcw, Search, SlidersHorizontal, Users, X } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Grid, List, RotateCcw, Search, SlidersHorizontal, Users } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import Link from "next/link";
 import { useRouter } from "next/router";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { InView } from "~/components/ui/motion-primitives/in-view";
-import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/shadcn/avatar";
-import { Badge } from "~/components/ui/shadcn/badge";
 import { Button } from "~/components/ui/shadcn/button";
-import { Card, CardContent } from "~/components/ui/shadcn/card";
 import { Collapsible, CollapsibleContent } from "~/components/ui/shadcn/collapsible";
 import { Input } from "~/components/ui/shadcn/input";
 import { Label } from "~/components/ui/shadcn/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/shadcn/select";
-import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/shadcn/tooltip";
 import { clearSearchAbortController, fetchSearchResultsCached, getSearchAbortController } from "~/lib/search-utils";
 import { cn } from "~/lib/utils";
-import type { SearchGrade, SearchQuery, SearchResponse, SearchResultEntry, SearchServer, SearchSortBy } from "~/types/api";
-import { getAvatarUrl, SERVERS } from "../leaderboard/impl/constants";
-import { GradeBadge } from "../leaderboard/impl/grade-badge";
-
-// Sort options focused on user information (not leaderboard scores)
-const SORT_OPTIONS: { value: SearchSortBy; label: string }[] = [
-    { value: "nickname", label: "Name" },
-    { value: "level", label: "Level" },
-    { value: "updated_at", label: "Recently Updated" },
-    { value: "created_at", label: "Date Joined" },
-    { value: "register_ts", label: "Account Age" },
-];
-
-const GRADES: { value: SearchGrade | "all"; label: string }[] = [
-    { value: "all", label: "All Grades" },
-    { value: "S", label: "S Grade" },
-    { value: "A", label: "A Grade" },
-    { value: "B", label: "B Grade" },
-    { value: "C", label: "C Grade" },
-    { value: "D", label: "D Grade" },
-    { value: "F", label: "F Grade" },
-];
+import type { SearchGrade, SearchQuery, SearchResponse, SearchServer, SearchSortBy } from "~/types/api";
+import { SERVERS } from "../leaderboard/impl/constants";
+import { GRADES, SORT_OPTIONS } from "./impl/constants";
+import { EmptyState } from "./impl/empty-state";
+import { FilterPill } from "./impl/filter-pill";
+import { generatePaginationItems } from "./impl/helpers";
+import { SearchResultsGrid } from "./impl/search-results-grid";
+import { SearchResultsList } from "./impl/search-results-list";
 
 interface SearchPageContentProps {
     initialData: SearchResponse;
@@ -490,191 +471,4 @@ export function SearchPageContent({ initialData }: SearchPageContentProps) {
             )}
         </div>
     );
-}
-
-// Grid view of search results
-function SearchResultsGrid({ results }: { results: SearchResultEntry[] }) {
-    return (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {results.map((result) => (
-                <SearchResultCard key={`${result.uid}-${result.server}`} result={result} />
-            ))}
-        </div>
-    );
-}
-
-// Individual result card - memoized to prevent unnecessary re-renders
-const SearchResultCard = React.memo(function SearchResultCard({ result }: { result: SearchResultEntry }) {
-    return (
-        <Link href={`/user/${result.uid}`}>
-            <Card className="group h-full overflow-hidden transition-all duration-200 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5">
-                <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                        <Avatar className="h-14 w-14 shrink-0 border border-border transition-transform duration-200 group-hover:scale-105">
-                            <AvatarImage alt={result.nickname} src={getAvatarUrl(result.avatarId) || "/placeholder.svg"} />
-                            <AvatarFallback className="text-sm">{result.nickname.slice(0, 2).toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                                <h3 className="truncate font-medium text-base transition-colors group-hover:text-primary">{result.nickname}</h3>
-                            </div>
-                            <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                                <Badge className="text-xs uppercase" variant="secondary">
-                                    {result.server}
-                                </Badge>
-                                <span className="text-muted-foreground text-xs">Lv. {result.level}</span>
-                            </div>
-                        </div>
-                        <GradeBadge grade={result.grade} size="sm" />
-                    </div>
-
-                    {/* Additional info */}
-                    <div className="mt-3 flex items-center justify-between border-border/50 border-t pt-3 text-muted-foreground text-xs">
-                        <span>UID: {result.uid}</span>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <span className="cursor-help">{formatRelativeTime(result.updatedAt)}</span>
-                            </TooltipTrigger>
-                            <TooltipContent variant="dark">Last updated: {new Date(result.updatedAt).toLocaleDateString()}</TooltipContent>
-                        </Tooltip>
-                    </div>
-                </CardContent>
-            </Card>
-        </Link>
-    );
-});
-
-// List view of search results
-function SearchResultsList({ results }: { results: SearchResultEntry[] }) {
-    return (
-        <div className="space-y-2">
-            {results.map((result) => (
-                <SearchResultRow key={`${result.uid}-${result.server}`} result={result} />
-            ))}
-        </div>
-    );
-}
-
-// Individual result row (for list view) - memoized to prevent unnecessary re-renders
-const SearchResultRow = React.memo(function SearchResultRow({ result }: { result: SearchResultEntry }) {
-    return (
-        <Link href={`/user/${result.uid}`}>
-            <div className="group flex items-center gap-4 rounded-lg border bg-card/50 p-3 transition-all duration-200 hover:border-primary/50 hover:bg-card">
-                <Avatar className="h-12 w-12 shrink-0 border border-border">
-                    <AvatarImage alt={result.nickname} src={getAvatarUrl(result.avatarId) || "/placeholder.svg"} />
-                    <AvatarFallback className="text-sm">{result.nickname.slice(0, 2).toUpperCase()}</AvatarFallback>
-                </Avatar>
-
-                <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                        <h3 className="truncate font-medium transition-colors group-hover:text-primary">{result.nickname}</h3>
-                        <Badge className="shrink-0 text-xs uppercase" variant="secondary">
-                            {result.server}
-                        </Badge>
-                    </div>
-                    <p className="text-muted-foreground text-sm">
-                        Level {result.level} · UID: {result.uid}
-                    </p>
-                </div>
-
-                <div className="hidden items-center gap-4 sm:flex">
-                    <div className="text-right">
-                        <p className="text-muted-foreground text-xs">Updated</p>
-                        <p className="text-sm">{formatRelativeTime(result.updatedAt)}</p>
-                    </div>
-                    <GradeBadge grade={result.grade} />
-                </div>
-
-                <div className="flex items-center sm:hidden">
-                    <GradeBadge grade={result.grade} size="sm" />
-                </div>
-            </div>
-        </Link>
-    );
-});
-
-// Empty state component
-function EmptyState({ hasFilters, onReset }: { hasFilters: boolean; onReset: () => void }) {
-    return (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card/30 py-16">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                <Search className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <h3 className="mb-2 font-medium text-lg">No players found</h3>
-            <p className="mb-4 max-w-sm text-center text-muted-foreground text-sm">{hasFilters ? "Try adjusting your filters or search terms to find more players." : "Start searching for players by name or UID above."}</p>
-            {hasFilters && (
-                <Button onClick={onReset} variant="outline">
-                    <RotateCcw className="mr-2 h-4 w-4" />
-                    Clear Filters
-                </Button>
-            )}
-        </div>
-    );
-}
-
-// Filter pill component
-function FilterPill({ label, onRemove }: { label: string; onRemove: () => void }) {
-    return (
-        <motion.div animate={{ opacity: 1, scale: 1 }} className="flex items-center gap-1 rounded-full bg-primary/10 py-1 pr-1 pl-3 text-sm" exit={{ opacity: 0, scale: 0.9 }} initial={{ opacity: 0, scale: 0.9 }} layout>
-            <span className="text-primary">{label}</span>
-            <button
-                className="flex h-5 w-5 items-center justify-center rounded-full transition-colors hover:bg-primary/20"
-                onClick={(e) => {
-                    e.preventDefault();
-                    onRemove();
-                }}
-                type="button"
-            >
-                <X className="h-3 w-3 text-primary" />
-            </button>
-        </motion.div>
-    );
-}
-
-// Helper function for relative time
-function formatRelativeTime(dateString: string): string {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) return "Today";
-    if (diffDays === 1) return "Yesterday";
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-    if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
-    return `${Math.floor(diffDays / 365)} years ago`;
-}
-
-// Pagination helper
-type PaginationItem = { type: "page"; value: number } | { type: "ellipsis"; position: "start" | "end" };
-
-function generatePaginationItems(currentPage: number, totalPages: number): PaginationItem[] {
-    const items: PaginationItem[] = [];
-
-    if (totalPages <= 7) {
-        for (let i = 1; i <= totalPages; i++) items.push({ type: "page", value: i });
-        return items;
-    }
-
-    items.push({ type: "page", value: 1 });
-
-    if (currentPage > 3) {
-        items.push({ type: "ellipsis", position: "start" });
-    }
-
-    const start = Math.max(2, currentPage - 1);
-    const end = Math.min(totalPages - 1, currentPage + 1);
-
-    for (let i = start; i <= end; i++) {
-        items.push({ type: "page", value: i });
-    }
-
-    if (currentPage < totalPages - 2) {
-        items.push({ type: "ellipsis", position: "end" });
-    }
-
-    items.push({ type: "page", value: totalPages });
-
-    return items;
 }
