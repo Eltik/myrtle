@@ -79,7 +79,7 @@ export interface SearchResultEntry {
     grade: string;
     totalScore: number;
     updatedAt: string;
-    /** Optional full user data (only if requested via 'fields' param) */
+    /** Optional full user data (only if requested via 'fields' param) - contains status.resume, status.registerTs, etc. */
     data?: Record<string, unknown>;
     /** Optional full score data (only if requested via 'fields' param) */
     score?: Record<string, unknown>;

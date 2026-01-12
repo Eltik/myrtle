@@ -30,6 +30,9 @@ export const getServerSideProps: GetServerSideProps<Props> = async (context) => 
         searchParams.set("limit", "24");
     }
 
+    // Request full data for hover card info (resume, registerTs, etc.)
+    searchParams.set("fields", "data");
+
     const backendUrl = new URL("/search", env.BACKEND_URL);
     backendUrl.search = searchParams.toString();
 
