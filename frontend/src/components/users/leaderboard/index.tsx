@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/shadcn/table";
 import { cn } from "~/lib/utils";
 import type { LeaderboardEntry, LeaderboardResponse, SortBy } from "~/types/api";
+import { generatePaginationItems } from "../shared/pagination";
 import { getAvatarUrl, SERVERS, SORT_OPTIONS } from "./impl/constants";
 import { GradeBadge } from "./impl/grade-badge";
 import { LeaderboardRowDialog } from "./impl/leaderboard-row-dialog";
@@ -249,36 +250,4 @@ export function LeaderboardPage({ initialData }: LeaderboardPageProps) {
             <LeaderboardRowDialog entry={selectedEntry} onClose={() => setSelectedEntry(null)} />
         </div>
     );
-}
-
-type PaginationItem = { type: "page"; value: number } | { type: "ellipsis"; position: "start" | "end" };
-
-function generatePaginationItems(currentPage: number, totalPages: number): PaginationItem[] {
-    const items: PaginationItem[] = [];
-
-    if (totalPages <= 7) {
-        for (let i = 1; i <= totalPages; i++) items.push({ type: "page", value: i });
-        return items;
-    }
-
-    items.push({ type: "page", value: 1 });
-
-    if (currentPage > 3) {
-        items.push({ type: "ellipsis", position: "start" });
-    }
-
-    const start = Math.max(2, currentPage - 1);
-    const end = Math.min(totalPages - 1, currentPage + 1);
-
-    for (let i = start; i <= end; i++) {
-        items.push({ type: "page", value: i });
-    }
-
-    if (currentPage < totalPages - 2) {
-        items.push({ type: "ellipsis", position: "end" });
-    }
-
-    items.push({ type: "page", value: totalPages });
-
-    return items;
 }
