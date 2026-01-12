@@ -130,6 +130,8 @@ pub enum SortField {
     Nickname,
     CreatedAt,
     UpdatedAt,
+    /// When the user started playing Arknights (from game data)
+    RegisterTs,
 }
 
 impl SortField {
@@ -147,6 +149,7 @@ impl SortField {
             Self::Nickname => "nickname",
             Self::CreatedAt => "created_at",
             Self::UpdatedAt => "updated_at",
+            Self::RegisterTs => "register_ts",
         }
     }
 
@@ -164,6 +167,7 @@ impl SortField {
             Self::Nickname => "LOWER(data->'status'->>'nickName')",
             Self::CreatedAt => "created_at",
             Self::UpdatedAt => "updated_at",
+            Self::RegisterTs => "COALESCE((data->'status'->>'registerTs')::BIGINT, 0)",
         }
     }
 }
