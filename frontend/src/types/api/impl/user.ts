@@ -85,7 +85,61 @@ export interface StoredUser {
     uid: string;
     server: string;
     data: User; // The actual game User data
+    settings: Record<string, unknown>;
+    role: string;
+    score: StoredUserScore | null; // Score data calculated by backend
     createdAt: string; // ISO date string
+    updatedAt: string; // ISO date string
+}
+
+// Score data stored in database (matches backend UserScore)
+export interface StoredUserScore {
+    totalScore: number;
+    operatorScore: number;
+    stageScore: number;
+    roguelikeScore: number;
+    sandboxScore: number;
+    medalScore: number;
+    baseScore: number;
+    grade: StoredUserGrade;
+    breakdown: Record<string, unknown>;
+    // Additional detailed fields available but not commonly used in UI
+    operatorScores?: unknown[];
+    zoneScores?: unknown[];
+    roguelikeThemeScores?: unknown[];
+    sandboxAreaScores?: unknown[];
+    medalCategoryScores?: unknown[];
+    roguelikeDetails?: unknown;
+    sandboxDetails?: unknown;
+    medalDetails?: unknown;
+    baseDetails?: unknown;
+}
+
+// Grade information (matches backend UserGrade)
+export interface StoredUserGrade {
+    grade: "S" | "A" | "B" | "C" | "D" | "F";
+    compositeScore: number;
+    accountAgeDays: number;
+    normalizedScore: number;
+    activityMetrics: {
+        daysSinceLogin: number;
+        loginRecencyScore: number;
+        loginFrequencyScore: number;
+        consistencyScore: number;
+        totalActivityScore: number;
+        totalCheckIns?: number;
+        expectedCheckIns?: number;
+    };
+    engagementMetrics: {
+        contentVarietyScore: number;
+        roguelikeDepthScore: number;
+        stageDiversityScore: number;
+        progressionDepthScore: number;
+        totalEngagementScore: number;
+        contentTypesEngaged: number;
+    };
+    percentileEstimate: number;
+    calculatedAt?: number;
 }
 
 /** Response from account/syncData endpoint */

@@ -39,8 +39,9 @@ export function GlowEffect({ className, style, colors = ["#FF5733", "#33FF57", "
             },
         },
         breathe: {
-            background: [...colors.map((color) => `radial-gradient(circle at 50% 50%, ${color} 0%, transparent 100%)`)],
-            scale: [1 * scale, 1.05 * scale, 1 * scale],
+            // Simplified 2-frame animation for better performance
+            background: [`radial-gradient(circle at 50% 50%, ${colors[0]} 0%, transparent 100%)`, `radial-gradient(circle at 50% 50%, ${colors[colors.length - 1] ?? colors[0]} 0%, transparent 100%)`],
+            scale: [1 * scale, 1.02 * scale, 1 * scale],
             transition: {
                 ...(transition ?? {
                     ...BASE_TRANSITION,
@@ -103,8 +104,10 @@ export function GlowEffect({ className, style, colors = ["#FF5733", "#33FF57", "
                 {
                     ...style,
                     "--scale": scale,
-                    willChange: "transform",
+                    willChange: mode === "static" ? "auto" : "transform, background",
                     backfaceVisibility: "hidden",
+                    WebkitBackfaceVisibility: "hidden",
+                    contain: "layout paint",
                 } as React.CSSProperties
             }
         />
