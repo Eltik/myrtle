@@ -4,8 +4,9 @@
 
 /**
  * Sort options for search results
+ * Note: Backend uses snake_case for sort fields
  */
-export type SearchSortBy = "totalScore" | "compositeScore" | "operatorScore" | "stageScore" | "roguelikeScore" | "sandboxScore" | "medalScore" | "baseScore" | "level" | "nickname" | "createdAt" | "updatedAt";
+export type SearchSortBy = "total_score" | "composite_score" | "operator_score" | "stage_score" | "roguelike_score" | "sandbox_score" | "medal_score" | "base_score" | "level" | "nickname" | "created_at" | "updated_at" | "register_ts";
 
 /**
  * Valid server values
