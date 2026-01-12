@@ -182,5 +182,21 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
+    // Search performance indices
+    // Note: pg_trgm extension must be enabled for GIN trigram index
+    // Run: CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+    // Level index for range queries
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_users_level ON users (((data->'status'->>'level')::INT))",
+    )
+    .execute(pool)
+    .await?;
+
+    // Grade index for exact match filtering
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_users_grade ON users ((score->'grade'->>'grade'))")
+        .execute(pool)
+        .await?;
+
     Ok(())
 }
