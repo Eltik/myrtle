@@ -5,6 +5,56 @@
 
 use serde::{Deserialize, Serialize};
 
+/// Activity metrics breakdown for grade calculation
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ActivityMetricsResponse {
+    /// Days since last login
+    pub days_since_login: i64,
+    /// Login recency score (0-100)
+    pub login_recency_score: f32,
+    /// Login frequency score (0-100)
+    pub login_frequency_score: f32,
+    /// Mission completion consistency score (0-100)
+    pub consistency_score: f32,
+    /// Combined activity score (0-100)
+    pub total_activity_score: f32,
+}
+
+/// Engagement metrics breakdown for grade calculation
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EngagementMetricsResponse {
+    /// Content variety score (0-100)
+    pub content_variety_score: f32,
+    /// Roguelike engagement depth (0-100)
+    pub roguelike_depth_score: f32,
+    /// Stage completion diversity (0-100)
+    pub stage_diversity_score: f32,
+    /// Account progression depth (0-100)
+    pub progression_depth_score: f32,
+    /// Combined engagement score (0-100)
+    pub total_engagement_score: f32,
+    /// Number of content types engaged (out of 6)
+    pub content_types_engaged: i32,
+}
+
+/// Detailed grade breakdown showing how the grade was calculated
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GradeBreakdown {
+    /// Account age in days
+    pub account_age_days: i64,
+    /// Normalized score component (0-100) - 50% weight
+    pub normalized_score: f32,
+    /// Activity metrics (30% weight)
+    pub activity_metrics: ActivityMetricsResponse,
+    /// Engagement metrics (20% weight)
+    pub engagement_metrics: EngagementMetricsResponse,
+    /// Estimated percentile ranking
+    pub percentile_estimate: f32,
+}
+
 /// Sorting options for the leaderboard
 #[derive(Debug, Clone, Copy, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
@@ -110,6 +160,7 @@ pub struct LeaderboardEntry {
     pub base_score: f32,
     pub composite_score: f32,
     pub grade: String,
+    pub grade_breakdown: GradeBreakdown,
     pub updated_at: String,
 }
 

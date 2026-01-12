@@ -1,36 +1,36 @@
-import { Crown, Medal, Trophy } from "lucide-react";
+import { Medal } from "lucide-react";
 import { cn } from "~/lib/utils";
 
 interface RankBadgeProps {
     rank: number;
 }
 
+const RANK_STYLES = {
+    1: {
+        bg: "bg-amber-500/20",
+        iconColor: "text-amber-400",
+        glow: "shadow-[0_0_12px_rgba(251,191,36,0.5)]",
+    },
+    2: {
+        bg: "bg-slate-400/20",
+        iconColor: "text-slate-300",
+        glow: "",
+    },
+    3: {
+        bg: "bg-amber-700/20",
+        iconColor: "text-amber-600",
+        glow: "",
+    },
+};
+
 export function RankBadge({ rank }: RankBadgeProps) {
-    if (rank === 1) {
-        return (
-            <div className="flex items-center justify-center">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/20">
-                    <Trophy className="h-4 w-4 text-amber-500" />
-                </div>
-            </div>
-        );
-    }
+    if (rank >= 1 && rank <= 3) {
+        const style = RANK_STYLES[rank as 1 | 2 | 3];
 
-    if (rank === 2) {
         return (
             <div className="flex items-center justify-center">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-400/20">
-                    <Medal className="h-4 w-4 text-slate-400" />
-                </div>
-            </div>
-        );
-    }
-
-    if (rank === 3) {
-        return (
-            <div className="flex items-center justify-center">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-700/20">
-                    <Crown className="h-4 w-4 text-amber-700" />
+                <div className={cn("flex h-8 w-8 items-center justify-center rounded-full", style.bg, style.glow)}>
+                    <Medal className={cn("h-4 w-4", style.iconColor)} />
                 </div>
             </div>
         );
