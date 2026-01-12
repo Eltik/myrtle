@@ -1,236 +1,232 @@
 "use client";
 
-import { ArrowDown, ArrowUp, ChevronDown, ChevronLeft, ChevronRight, Filter, Search, Users, X } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Grid, List, RotateCcw, Search, SlidersHorizontal, Users, X } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { InView } from "~/components/ui/motion-primitives/in-view";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/shadcn/avatar";
 import { Badge } from "~/components/ui/shadcn/badge";
 import { Button } from "~/components/ui/shadcn/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/shadcn/collapsible";
+import { Card, CardContent } from "~/components/ui/shadcn/card";
+import { Collapsible, CollapsibleContent } from "~/components/ui/shadcn/collapsible";
 import { Input } from "~/components/ui/shadcn/input";
+import { Label } from "~/components/ui/shadcn/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/shadcn/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/shadcn/tooltip";
 import { clearSearchAbortController, fetchSearchResultsCached, getSearchAbortController } from "~/lib/search-utils";
 import { cn } from "~/lib/utils";
-import type { SearchQuery, SearchResponse, SearchResultEntry, SearchServer } from "~/types/api";
-import { getAvatarUrl } from "../leaderboard/impl/constants";
+import type { SearchGrade, SearchQuery, SearchResponse, SearchResultEntry, SearchServer, SearchSortBy } from "~/types/api";
+import { getAvatarUrl, SERVERS } from "../leaderboard/impl/constants";
+import { GradeBadge } from "../leaderboard/impl/grade-badge";
 
-// Constants
-const SERVERS: { value: SearchServer | "all"; label: string }[] = [
-    { value: "all", label: "All Servers" },
-    { value: "en", label: "Global (EN)" },
-    { value: "jp", label: "Japan" },
-    { value: "cn", label: "China" },
-    { value: "kr", label: "Korea" },
-    { value: "tw", label: "Taiwan" },
-    { value: "bili", label: "Bilibili" },
-];
-
-const SERVER_COLORS: Record<string, string> = {
-    en: "bg-blue-500/15 text-blue-400 border-blue-500/30",
-    jp: "bg-pink-500/15 text-pink-400 border-pink-500/30",
-    kr: "bg-purple-500/15 text-purple-400 border-purple-500/30",
-    cn: "bg-red-500/15 text-red-400 border-red-500/30",
-    bili: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
-    tw: "bg-green-500/15 text-green-400 border-green-500/30",
-};
-
-const SORT_OPTIONS = [
+// Sort options focused on user information (not leaderboard scores)
+const SORT_OPTIONS: { value: SearchSortBy; label: string }[] = [
     { value: "nickname", label: "Name" },
     { value: "level", label: "Level" },
-    { value: "updated_at", label: "Last Updated" },
-    { value: "register_ts", label: "Join Date" },
-] as const;
+    { value: "updated_at", label: "Recently Updated" },
+    { value: "created_at", label: "Date Joined" },
+    { value: "register_ts", label: "Account Age" },
+];
 
-interface SearchPageProps {
+const GRADES: { value: SearchGrade | "all"; label: string }[] = [
+    { value: "all", label: "All Grades" },
+    { value: "S", label: "S Grade" },
+    { value: "A", label: "A Grade" },
+    { value: "B", label: "B Grade" },
+    { value: "C", label: "C Grade" },
+    { value: "D", label: "D Grade" },
+    { value: "F", label: "F Grade" },
+];
+
+interface SearchPageContentProps {
     initialData: SearchResponse;
 }
 
-export function SearchPage({ initialData }: SearchPageProps) {
+export function SearchPageContent({ initialData }: SearchPageContentProps) {
     const router = useRouter();
     const [data, setData] = useState(initialData);
     const [isLoading, setIsLoading] = useState(false);
+    const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
     const [filtersOpen, setFiltersOpen] = useState(false);
+    const searchInputRef = useRef<HTMLInputElement>(null);
 
-    // Search state
-    const [searchInput, setSearchInput] = useState((router.query.nickname as string) || "");
-    const [debouncedSearch, setDebouncedSearch] = useState(searchInput);
-
-    // Level filter state (controlled inputs)
-    const [minLevel, setMinLevel] = useState((router.query.level as string)?.split(",")[0] || "");
-    const [maxLevel, setMaxLevel] = useState((router.query.level as string)?.split(",")[1] || "");
-
-    // Filter state (managed locally to avoid stale router.query issues)
-    const [currentServer, setCurrentServer] = useState((router.query.server as string) || "all");
-    const [currentSortBy, setCurrentSortBy] = useState((router.query.sortBy as string) || "nickname");
-    const [currentOrder, setCurrentOrder] = useState<"asc" | "desc">((router.query.order as "asc" | "desc") || "asc");
+    // All search state managed locally (initialized from router.query for SSR)
+    const [nickname, setNickname] = useState((router.query.nickname as string) || "");
+    const [uid, setUid] = useState((router.query.uid as string) || "");
+    const [currentServer, setCurrentServer] = useState<SearchServer | "all">((router.query.server as SearchServer | "all") || "all");
+    const [currentGrade, setCurrentGrade] = useState<SearchGrade | "all">((router.query.grade as SearchGrade | "all") || "all");
+    const [currentSortBy, setCurrentSortBy] = useState<SearchSortBy>((router.query.sortBy as SearchSortBy) || "updated_at");
+    const [currentOrder, setCurrentOrder] = useState<"asc" | "desc">((router.query.order as "asc" | "desc") || "desc");
     const [currentOffset, setCurrentOffset] = useState(Number(router.query.offset) || 0);
-
-    // Track if this is the initial mount to avoid unnecessary fetches
-    const isInitialMount = useRef(true);
+    const [levelMin, setLevelMin] = useState((router.query.levelMin as string) || "");
+    const [levelMax, setLevelMax] = useState((router.query.levelMax as string) || "");
 
     const limit = data.pagination.limit;
+    const totalPages = Math.ceil(data.pagination.total / limit);
+    const currentPage = Math.floor(currentOffset / limit) + 1;
 
-    // Sync level inputs with URL when URL changes externally
-    // biome-ignore lint/correctness/useExhaustiveDependencies: Only sync when URL changes, not when local state changes
-    useEffect(() => {
-        const urlMinLevel = (router.query.level as string)?.split(",")[0] || "";
-        const urlMaxLevel = (router.query.level as string)?.split(",")[1] || "";
-        if (urlMinLevel !== minLevel) setMinLevel(urlMinLevel);
-        if (urlMaxLevel !== maxLevel) setMaxLevel(urlMaxLevel);
-    }, [router.query.level]);
+    const hasActiveFilters = !!(nickname || uid || currentServer !== "all" || currentGrade !== "all" || levelMin || levelMax);
 
-    // Debounce search input
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setDebouncedSearch(searchInput);
-        }, 300);
-        return () => clearTimeout(timer);
-    }, [searchInput]);
-
-    // Trigger search when debounced value changes
-    // biome-ignore lint/correctness/useExhaustiveDependencies: Only trigger on debouncedSearch change, updateFilters is stable via useCallback
-    useEffect(() => {
-        // Skip on initial mount - SSR already provides data
-        if (isInitialMount.current) {
-            isInitialMount.current = false;
-            return;
-        }
-
-        // Read current nickname from URL directly (not router.query which may be stale)
-        const currentUrl = new URL(window.location.href);
-        const currentNickname = currentUrl.searchParams.get("nickname") || "";
-
-        if (debouncedSearch !== currentNickname) {
-            void updateFilters({ nickname: debouncedSearch || undefined, offset: "0" });
-        }
-    }, [debouncedSearch]);
-
-    const updateFilters = useCallback(async (newParams: Record<string, string | undefined>) => {
+    const updateSearch = useCallback(async (newParams: Record<string, string | undefined>, resetOffset = true) => {
         setIsLoading(true);
 
-        // Read current params from URL directly (not router.query which may be stale)
+        // Read current params from URL directly to avoid stale router.query
         const currentUrl = new URL(window.location.href);
-        const currentParams: Record<string, string> = {};
+        const currentParams: Record<string, string | undefined> = {};
         currentUrl.searchParams.forEach((value, key) => {
             currentParams[key] = value;
         });
 
-        // Merge with new params
-        const query: Record<string, string | undefined> = { ...currentParams, ...newParams };
+        const query: Record<string, string | undefined> = {
+            ...currentParams,
+            ...newParams,
+        };
 
-        // Remove undefined/null values and "all" server filter
+        // Reset offset when filters change
+        if (resetOffset) {
+            query.offset = "0";
+        }
+
+        // Clean up empty/default values
         for (const key of Object.keys(query)) {
-            if (query[key] === undefined || query[key] === null || query[key] === "" || (key === "server" && query[key] === "all")) {
+            if (query[key] === undefined || query[key] === null || query[key] === "" || (key === "server" && query[key] === "all") || (key === "grade" && query[key] === "all")) {
                 delete query[key];
             }
         }
 
-        // Build SearchQuery from the cleaned query params
-        const searchQuery: SearchQuery = {};
-        for (const [key, value] of Object.entries(query)) {
-            if (value) {
-                if (key === "limit" || key === "offset") {
-                    (searchQuery as Record<string, unknown>)[key] = Number(value);
-                } else {
-                    (searchQuery as Record<string, unknown>)[key] = String(value);
-                }
-            }
-        }
-
         try {
-            // Get abort controller for this request (cancels any pending request)
             const controller = getSearchAbortController();
 
-            const newData = await fetchSearchResultsCached(searchQuery, {
-                signal: controller.signal,
-            });
+            // Build search params
+            const searchQuery: SearchQuery = {
+                nickname: query.nickname,
+                uid: query.uid,
+                server: query.server as SearchServer | undefined,
+                grade: query.grade as SearchGrade | undefined,
+                sortBy: (query.sortBy as SearchSortBy) || "updated_at",
+                order: (query.order as "asc" | "desc") || "desc",
+                limit: 24,
+                offset: Number(query.offset) || 0,
+            };
 
-            setData(newData);
+            // Handle level range
+            if (query.levelMin || query.levelMax) {
+                searchQuery.level = `${query.levelMin || ""},${query.levelMax || ""}`;
+            }
+
+            const result = await fetchSearchResultsCached(searchQuery, { signal: controller.signal });
+            setData(result);
             clearSearchAbortController();
 
-            // Update URL after successful fetch using replace to avoid re-render cascade
-            // Use window.history directly to avoid triggering Next.js router re-renders
-            const url = new URL(window.location.href);
-            url.search = "";
+            // Update URL silently after successful fetch (no React re-render)
+            const newSearchParams = new URLSearchParams();
             for (const [key, value] of Object.entries(query)) {
-                if (value) url.searchParams.set(key, String(value));
+                if (value !== undefined) {
+                    newSearchParams.set(key, value);
+                }
             }
-            window.history.replaceState({ ...window.history.state, as: url.pathname + url.search, url: url.pathname + url.search }, "", url.pathname + url.search);
+            const newUrl = `${window.location.pathname}${newSearchParams.toString() ? `?${newSearchParams.toString()}` : ""}`;
+            window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, "", newUrl);
         } catch (error) {
-            // Don't log abort errors - they're expected when requests are canceled
-            if (error instanceof Error && error.name === "AbortError") {
-                return;
+            if (error instanceof Error && error.name !== "AbortError") {
+                console.error("Search failed:", error);
             }
-            console.error("Failed to fetch search results:", error);
         } finally {
             setIsLoading(false);
         }
     }, []);
 
-    const handleServerChange = (server: string) => {
-        setCurrentServer(server);
-        setCurrentOffset(0);
-        void updateFilters({ server: server === "all" ? undefined : server, offset: "0" });
+    // Debounced search for text inputs
+    const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    const handleSearchInput = useCallback(
+        (value: string, field: "nickname" | "uid") => {
+            if (field === "nickname") {
+                setNickname(value);
+            } else {
+                setUid(value);
+            }
+
+            // Debounce the actual search
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+            }
+            searchTimeoutRef.current = setTimeout(() => {
+                void updateSearch({ [field]: value || undefined });
+            }, 300);
+        },
+        [updateSearch],
+    );
+
+    const handleServerChange = (value: string) => {
+        setCurrentServer(value as SearchServer | "all");
+        void updateSearch({ server: value === "all" ? undefined : value });
     };
 
-    const handleSortChange = (sortBy: string) => {
-        setCurrentSortBy(sortBy);
-        setCurrentOffset(0);
-        void updateFilters({ sortBy, offset: "0" });
+    const handleGradeChange = (value: string) => {
+        setCurrentGrade(value as SearchGrade | "all");
+        void updateSearch({ grade: value === "all" ? undefined : value });
+    };
+
+    const handleSortChange = (value: string) => {
+        setCurrentSortBy(value as SearchSortBy);
+        void updateSearch({ sortBy: value }, false);
     };
 
     const handleOrderToggle = () => {
         const newOrder = currentOrder === "desc" ? "asc" : "desc";
         setCurrentOrder(newOrder);
-        setCurrentOffset(0);
-        void updateFilters({ order: newOrder, offset: "0" });
+        void updateSearch({ order: newOrder }, false);
     };
 
-    const handleLevelFilter = (min: string, max: string) => {
-        let levelParam: string | undefined;
-        if (min && max) {
-            levelParam = `${min},${max}`;
-        } else if (min) {
-            levelParam = min;
-        } else if (max) {
-            levelParam = `,${max}`;
-        }
+    const handleLevelFilter = () => {
+        void updateSearch({
+            levelMin: levelMin || undefined,
+            levelMax: levelMax || undefined,
+        });
+    };
+
+    const handleResetFilters = () => {
+        setNickname("");
+        setUid("");
+        setLevelMin("");
+        setLevelMax("");
+        setCurrentServer("all");
+        setCurrentGrade("all");
+        setCurrentSortBy("updated_at");
+        setCurrentOrder("desc");
         setCurrentOffset(0);
-        void updateFilters({ level: levelParam, offset: "0" });
+        void updateSearch({
+            nickname: undefined,
+            uid: undefined,
+            server: undefined,
+            grade: undefined,
+            levelMin: undefined,
+            levelMax: undefined,
+            sortBy: "updated_at",
+            order: "desc",
+        });
     };
 
     const handlePageChange = (newOffset: number) => {
         setCurrentOffset(newOffset);
-        void updateFilters({ offset: String(newOffset) });
+        void updateSearch({ offset: String(newOffset) }, false);
         window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
-    const clearFilters = () => {
-        setSearchInput("");
-        setMinLevel("");
-        setMaxLevel("");
-        setCurrentServer("all");
-        setCurrentSortBy("nickname");
-        setCurrentOrder("asc");
-        setCurrentOffset(0);
-        void updateFilters({
-            nickname: undefined,
-            server: undefined,
-            level: undefined,
-            sortBy: "nickname",
-            order: "asc",
-            offset: "0",
-        });
-    };
-
-    const hasActiveFilters = useMemo(() => {
-        return searchInput !== "" || currentServer !== "all" || minLevel !== "" || maxLevel !== "";
-    }, [searchInput, currentServer, minLevel, maxLevel]);
-
-    const currentPage = Math.floor(currentOffset / limit) + 1;
-    const totalPages = Math.ceil(data.pagination.total / limit);
+    // Keyboard shortcut for search
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+                e.preventDefault();
+                searchInputRef.current?.focus();
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, []);
 
     return (
         <div className="min-w-0 space-y-6">
@@ -250,36 +246,34 @@ export function SearchPage({ initialData }: SearchPageProps) {
                         </div>
                         <div>
                             <h1 className="font-bold text-3xl text-foreground md:text-4xl">Player Search</h1>
-                            <p className="text-muted-foreground">Find Arknights players by name, server, or level</p>
+                            <p className="text-muted-foreground">Find Arknights players by name, UID, or filter by server and level</p>
                         </div>
                     </div>
                 </div>
             </InView>
 
-            {/* Search Bar */}
+            {/* Main Search Bar */}
             <InView
                 once
-                transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
+                transition={{ duration: 0.4, ease: "easeOut", delay: 0.05 }}
                 variants={{
                     hidden: { opacity: 0, y: 10 },
                     visible: { opacity: 1, y: 0 },
                 }}
             >
                 <div className="relative">
-                    <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-muted-foreground z-5" />
-                    <Input className="h-12 rounded-xl border-border/50 bg-card/80 pr-12 pl-12 text-base shadow-sm backdrop-blur-sm transition-all focus:border-primary/50 focus:bg-card focus:shadow-md" onChange={(e) => setSearchInput(e.target.value)} placeholder="Search by nickname..." value={searchInput} />
-                    {searchInput && (
-                        <button className="absolute top-1/2 right-4 -translate-y-1/2 rounded-full p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground" onClick={() => setSearchInput("")} type="button">
-                            <X className="h-4 w-4" />
-                        </button>
-                    )}
+                    <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input className="h-12 pr-20 pl-10 text-base" onChange={(e) => handleSearchInput(e.target.value, "nickname")} placeholder="Search by player name..." ref={searchInputRef} value={nickname} />
+                    <kbd className="pointer-events-none absolute top-1/2 right-3 hidden -translate-y-1/2 select-none items-center gap-1 rounded border bg-muted px-1.5 py-0.5 font-medium font-mono text-muted-foreground text-xs sm:flex">
+                        <span className="text-xs">⌘</span>K
+                    </kbd>
                 </div>
             </InView>
 
             {/* Filters Section */}
             <InView
                 once
-                transition={{ duration: 0.4, delay: 0.15, ease: "easeOut" }}
+                transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
                 variants={{
                     hidden: { opacity: 0, y: 10 },
                     visible: { opacity: 1, y: 0 },
@@ -287,139 +281,185 @@ export function SearchPage({ initialData }: SearchPageProps) {
             >
                 <div className="space-y-4">
                     {/* Quick Filters Row */}
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex flex-wrap items-center gap-2">
-                            {/* Server Filter */}
-                            <Select onValueChange={handleServerChange} value={currentServer}>
-                                <SelectTrigger className="h-9 w-32 border-border/50 bg-card/80">
-                                    <SelectValue placeholder="Server" />
+                    <div className="flex flex-wrap items-center gap-2">
+                        {/* Server Filter */}
+                        <Select onValueChange={handleServerChange} value={currentServer}>
+                            <SelectTrigger className="w-32">
+                                <SelectValue placeholder="Server" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {SERVERS.map((server) => (
+                                    <SelectItem key={server.value} value={server.value}>
+                                        {server.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+
+                        {/* Grade Filter */}
+                        <Select onValueChange={handleGradeChange} value={currentGrade}>
+                            <SelectTrigger className="w-32">
+                                <SelectValue placeholder="Grade" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {GRADES.map((grade) => (
+                                    <SelectItem key={grade.value} value={grade.value}>
+                                        {grade.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+
+                        {/* Sort */}
+                        <div className="flex h-9 items-center gap-1 rounded-md border border-input bg-transparent px-1">
+                            <Select onValueChange={handleSortChange} value={currentSortBy}>
+                                <SelectTrigger className="h-7 w-36 border-0 bg-transparent px-2 text-sm shadow-none focus:ring-0">
+                                    <SelectValue placeholder="Sort by" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {SERVERS.map((server) => (
-                                        <SelectItem key={server.value} value={server.value}>
-                                            {server.label}
+                                    {SORT_OPTIONS.map((option) => (
+                                        <SelectItem key={option.value} value={option.value}>
+                                            {option.label}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
-
-                            {/* Sort Options */}
-                            <div className="flex h-9 items-center gap-1 rounded-md border border-border/50 bg-card/80 px-1">
-                                <Select onValueChange={handleSortChange} value={currentSortBy}>
-                                    <SelectTrigger className="h-7 w-28 border-0 bg-transparent px-2 text-sm shadow-none focus:ring-0">
-                                        <SelectValue placeholder="Sort by" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {SORT_OPTIONS.map((option) => (
-                                            <SelectItem key={option.value} value={option.value}>
-                                                {option.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <button className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground" onClick={handleOrderToggle} type="button">
-                                    {currentOrder === "asc" ? <ArrowUp className="h-3.5 w-3.5" /> : <ArrowDown className="h-3.5 w-3.5" />}
-                                </button>
-                            </div>
-
-                            {/* Advanced Filters Toggle */}
-                            <Collapsible onOpenChange={setFiltersOpen} open={filtersOpen}>
-                                <CollapsibleTrigger asChild>
-                                    <Button className="h-9 gap-1.5 bg-transparent" size="sm" variant="outline">
-                                        <Filter className="h-3.5 w-3.5" />
-                                        <span className="hidden sm:inline">Filters</span>
-                                        <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", filtersOpen && "rotate-180")} />
-                                        {hasActiveFilters && <span className="size-1.5 rounded-full bg-primary" />}
-                                    </Button>
-                                </CollapsibleTrigger>
-                            </Collapsible>
-
-                            {hasActiveFilters && (
-                                <Button className="h-9" onClick={clearFilters} size="sm" variant="ghost">
-                                    Clear all
-                                </Button>
-                            )}
+                            <button className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground" onClick={handleOrderToggle} type="button">
+                                <motion.div animate={{ rotate: currentOrder === "asc" ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                                    <ChevronDown className="h-4 w-4" />
+                                </motion.div>
+                            </button>
                         </div>
 
-                        {/* Results count */}
-                        <div className="text-muted-foreground text-sm">
-                            {data.pagination.total > 0 ? (
-                                <span>
-                                    {currentOffset + 1}-{Math.min(currentOffset + limit, data.pagination.total)} of {data.pagination.total.toLocaleString()} players
-                                </span>
-                            ) : (
-                                <span>No players found</span>
+                        {/* Advanced Filters Toggle */}
+                        <Button className={cn("gap-2", filtersOpen && "bg-secondary")} onClick={() => setFiltersOpen(!filtersOpen)} size="sm" variant="outline">
+                            <SlidersHorizontal className="h-4 w-4" />
+                            <span className="hidden sm:inline">More Filters</span>
+                            <motion.div animate={{ rotate: filtersOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                                <ChevronDown className="h-3 w-3" />
+                            </motion.div>
+                        </Button>
+
+                        {/* Reset Filters */}
+                        <AnimatePresence>
+                            {hasActiveFilters && (
+                                <motion.div animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} initial={{ opacity: 0, scale: 0.9 }}>
+                                    <Button className="gap-1 text-muted-foreground" onClick={handleResetFilters} size="sm" variant="ghost">
+                                        <RotateCcw className="h-3 w-3" />
+                                        Reset
+                                    </Button>
+                                </motion.div>
                             )}
+                        </AnimatePresence>
+
+                        {/* Spacer */}
+                        <div className="flex-1" />
+
+                        {/* View Toggle */}
+                        <div className="flex h-9 items-center rounded-md border border-input p-1">
+                            <button className={cn("flex h-7 w-7 items-center justify-center rounded transition-colors", viewMode === "grid" ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground")} onClick={() => setViewMode("grid")} type="button">
+                                <Grid className="h-4 w-4" />
+                            </button>
+                            <button className={cn("flex h-7 w-7 items-center justify-center rounded transition-colors", viewMode === "list" ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground")} onClick={() => setViewMode("list")} type="button">
+                                <List className="h-4 w-4" />
+                            </button>
                         </div>
                     </div>
 
                     {/* Advanced Filters Panel */}
                     <Collapsible onOpenChange={setFiltersOpen} open={filtersOpen}>
                         <CollapsibleContent>
-                            <div className="rounded-lg border border-border/50 bg-card/50 p-4">
+                            <div className="rounded-lg border bg-card/50 p-4">
                                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                                    {/* UID Search */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="uid-search">Search by UID</Label>
+                                        <Input id="uid-search" onChange={(e) => handleSearchInput(e.target.value, "uid")} placeholder="Enter exact UID..." value={uid} />
+                                    </div>
+
                                     {/* Level Range */}
                                     <div className="space-y-2">
-                                        <label className="font-medium text-muted-foreground text-sm" htmlFor="level-min">
-                                            Level Range
-                                        </label>
+                                        <Label>Level Range</Label>
                                         <div className="flex items-center gap-2">
-                                            <Input
-                                                className="h-9"
-                                                id="level-min"
-                                                max={150}
-                                                min={1}
-                                                onBlur={() => handleLevelFilter(minLevel, maxLevel)}
-                                                onChange={(e) => setMinLevel(e.target.value)}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === "Enter") {
-                                                        handleLevelFilter(minLevel, maxLevel);
-                                                    }
-                                                }}
-                                                placeholder="Min"
-                                                type="number"
-                                                value={minLevel}
-                                            />
+                                            <Input className="w-20" max={120} min={1} onChange={(e) => setLevelMin(e.target.value)} placeholder="Min" type="number" value={levelMin} />
                                             <span className="text-muted-foreground">-</span>
-                                            <Input
-                                                className="h-9"
-                                                max={150}
-                                                min={1}
-                                                onBlur={() => handleLevelFilter(minLevel, maxLevel)}
-                                                onChange={(e) => setMaxLevel(e.target.value)}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === "Enter") {
-                                                        handleLevelFilter(minLevel, maxLevel);
-                                                    }
-                                                }}
-                                                placeholder="Max"
-                                                type="number"
-                                                value={maxLevel}
-                                            />
+                                            <Input className="w-20" max={120} min={1} onChange={(e) => setLevelMax(e.target.value)} placeholder="Max" type="number" value={levelMax} />
+                                            <Button onClick={handleLevelFilter} size="sm" variant="secondary">
+                                                Apply
+                                            </Button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </CollapsibleContent>
                     </Collapsible>
+
+                    {/* Active Filters Pills */}
+                    <AnimatePresence>
+                        {hasActiveFilters && (
+                            <motion.div animate={{ opacity: 1, y: 0 }} className="flex flex-wrap gap-2" exit={{ opacity: 0, y: -10 }} initial={{ opacity: 0, y: -10 }}>
+                                {nickname && (
+                                    <FilterPill
+                                        label={`Name: ${nickname}`}
+                                        onRemove={() => {
+                                            setNickname("");
+                                            void updateSearch({ nickname: undefined });
+                                        }}
+                                    />
+                                )}
+                                {uid && (
+                                    <FilterPill
+                                        label={`UID: ${uid}`}
+                                        onRemove={() => {
+                                            setUid("");
+                                            void updateSearch({ uid: undefined });
+                                        }}
+                                    />
+                                )}
+                                {currentServer !== "all" && <FilterPill label={`Server: ${SERVERS.find((s) => s.value === currentServer)?.label || currentServer}`} onRemove={() => void updateSearch({ server: undefined })} />}
+                                {currentGrade !== "all" && <FilterPill label={`Grade: ${currentGrade}`} onRemove={() => void updateSearch({ grade: undefined })} />}
+                                {(levelMin || levelMax) && (
+                                    <FilterPill
+                                        label={`Level: ${levelMin || "1"}-${levelMax || "120"}`}
+                                        onRemove={() => {
+                                            setLevelMin("");
+                                            setLevelMax("");
+                                            void updateSearch({ levelMin: undefined, levelMax: undefined });
+                                        }}
+                                    />
+                                )}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </InView>
 
-            {/* Results Grid */}
-            <div className={cn("transition-opacity", isLoading && "opacity-60")}>
-                {data.results.length > 0 ? (
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        {data.results.map((entry) => (
-                            <UserCard entry={entry} key={`${entry.uid}-${entry.server}`} />
-                        ))}
-                    </div>
-                ) : (
-                    <div className="flex flex-col items-center justify-center rounded-xl border border-border/50 border-dashed bg-card/30 py-16 text-center">
-                        <Users className="mb-4 h-12 w-12 text-muted-foreground/50" />
-                        <h3 className="mb-1 font-medium text-lg">No players found</h3>
-                        <p className="text-muted-foreground text-sm">Try adjusting your search or filters to find players</p>
-                    </div>
-                )}
+            {/* Results Count */}
+            <div className="flex items-center justify-between">
+                <p className="text-muted-foreground text-sm">
+                    {data.pagination.total > 0 ? (
+                        <>
+                            Showing {currentOffset + 1}-{Math.min(currentOffset + limit, data.pagination.total)} of <span className="font-medium text-foreground">{data.pagination.total.toLocaleString()}</span> players
+                        </>
+                    ) : (
+                        "No players found"
+                    )}
+                </p>
+            </div>
+
+            {/* Results */}
+            <div className={cn("transition-opacity duration-200", isLoading && "opacity-60")}>
+                <AnimatePresence mode="wait">
+                    {data.results.length > 0 ? (
+                        <motion.div animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} initial={{ opacity: 0, y: 10 }} key={`${viewMode}-${data.pagination.offset}-${data.pagination.total}`} transition={{ duration: 0.2, ease: "easeOut" }}>
+                            {viewMode === "grid" ? <SearchResultsGrid results={data.results} /> : <SearchResultsList results={data.results} />}
+                        </motion.div>
+                    ) : (
+                        <motion.div animate={{ opacity: 1 }} exit={{ opacity: 0 }} initial={{ opacity: 0 }} key="empty" transition={{ duration: 0.2 }}>
+                            <EmptyState hasFilters={hasActiveFilters} onReset={handleResetFilters} />
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
 
             {/* Pagination */}
@@ -452,36 +492,144 @@ export function SearchPage({ initialData }: SearchPageProps) {
     );
 }
 
-// User Card Component - memoized to prevent unnecessary re-renders
-const UserCard = memo(function UserCard({ entry }: { entry: SearchResultEntry }) {
-    const serverColor = SERVER_COLORS[entry.server] || "bg-zinc-500/15 text-zinc-400 border-zinc-500/30";
-
+// Grid view of search results
+function SearchResultsGrid({ results }: { results: SearchResultEntry[] }) {
     return (
-        <Link className="group block rounded-xl border border-border/50 bg-card/80 p-4 shadow-sm backdrop-blur-sm transition-all hover:border-border hover:bg-card hover:shadow-md" href={`/user/${entry.uid}`}>
-            <div className="flex items-start gap-4">
-                <Avatar className="h-14 w-14 border border-border/50 transition-transform group-hover:scale-105">
-                    <AvatarImage alt={entry.nickname} src={getAvatarUrl(entry.avatarId) || "/placeholder.svg"} />
-                    <AvatarFallback className="text-base">{entry.nickname.slice(0, 2).toUpperCase()}</AvatarFallback>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {results.map((result) => (
+                <SearchResultCard key={`${result.uid}-${result.server}`} result={result} />
+            ))}
+        </div>
+    );
+}
+
+// Individual result card - memoized to prevent unnecessary re-renders
+const SearchResultCard = React.memo(function SearchResultCard({ result }: { result: SearchResultEntry }) {
+    return (
+        <Link href={`/user/${result.uid}`}>
+            <Card className="group h-full overflow-hidden transition-all duration-200 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5">
+                <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                        <Avatar className="h-14 w-14 shrink-0 border border-border transition-transform duration-200 group-hover:scale-105">
+                            <AvatarImage alt={result.nickname} src={getAvatarUrl(result.avatarId) || "/placeholder.svg"} />
+                            <AvatarFallback className="text-sm">{result.nickname.slice(0, 2).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                                <h3 className="truncate font-medium text-base transition-colors group-hover:text-primary">{result.nickname}</h3>
+                            </div>
+                            <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                                <Badge className="text-xs uppercase" variant="secondary">
+                                    {result.server}
+                                </Badge>
+                                <span className="text-muted-foreground text-xs">Lv. {result.level}</span>
+                            </div>
+                        </div>
+                        <GradeBadge grade={result.grade} size="sm" />
+                    </div>
+
+                    {/* Additional info */}
+                    <div className="mt-3 flex items-center justify-between border-border/50 border-t pt-3 text-muted-foreground text-xs">
+                        <span>UID: {result.uid}</span>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <span className="cursor-help">{formatRelativeTime(result.updatedAt)}</span>
+                            </TooltipTrigger>
+                            <TooltipContent variant="dark">Last updated: {new Date(result.updatedAt).toLocaleDateString()}</TooltipContent>
+                        </Tooltip>
+                    </div>
+                </CardContent>
+            </Card>
+        </Link>
+    );
+});
+
+// List view of search results
+function SearchResultsList({ results }: { results: SearchResultEntry[] }) {
+    return (
+        <div className="space-y-2">
+            {results.map((result) => (
+                <SearchResultRow key={`${result.uid}-${result.server}`} result={result} />
+            ))}
+        </div>
+    );
+}
+
+// Individual result row (for list view) - memoized to prevent unnecessary re-renders
+const SearchResultRow = React.memo(function SearchResultRow({ result }: { result: SearchResultEntry }) {
+    return (
+        <Link href={`/user/${result.uid}`}>
+            <div className="group flex items-center gap-4 rounded-lg border bg-card/50 p-3 transition-all duration-200 hover:border-primary/50 hover:bg-card">
+                <Avatar className="h-12 w-12 shrink-0 border border-border">
+                    <AvatarImage alt={result.nickname} src={getAvatarUrl(result.avatarId) || "/placeholder.svg"} />
+                    <AvatarFallback className="text-sm">{result.nickname.slice(0, 2).toUpperCase()}</AvatarFallback>
                 </Avatar>
+
                 <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                        <h3 className="truncate font-semibold text-base transition-colors group-hover:text-primary">{entry.nickname}</h3>
-                    </div>
-                    <div className="mt-1 flex flex-wrap items-center gap-2">
-                        <Badge className={cn("border text-xs", serverColor)} variant="outline">
-                            {entry.server.toUpperCase()}
+                        <h3 className="truncate font-medium transition-colors group-hover:text-primary">{result.nickname}</h3>
+                        <Badge className="shrink-0 text-xs uppercase" variant="secondary">
+                            {result.server}
                         </Badge>
-                        <span className="text-muted-foreground text-sm">Lv. {entry.level}</span>
                     </div>
+                    <p className="text-muted-foreground text-sm">
+                        Level {result.level} · UID: {result.uid}
+                    </p>
                 </div>
-            </div>
-            {/* Updated time */}
-            <div className="mt-3 border-border/30 border-t pt-3">
-                <p className="text-muted-foreground text-xs">Last updated {formatRelativeTime(entry.updatedAt)}</p>
+
+                <div className="hidden items-center gap-4 sm:flex">
+                    <div className="text-right">
+                        <p className="text-muted-foreground text-xs">Updated</p>
+                        <p className="text-sm">{formatRelativeTime(result.updatedAt)}</p>
+                    </div>
+                    <GradeBadge grade={result.grade} />
+                </div>
+
+                <div className="flex items-center sm:hidden">
+                    <GradeBadge grade={result.grade} size="sm" />
+                </div>
             </div>
         </Link>
     );
 });
+
+// Empty state component
+function EmptyState({ hasFilters, onReset }: { hasFilters: boolean; onReset: () => void }) {
+    return (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card/30 py-16">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                <Search className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h3 className="mb-2 font-medium text-lg">No players found</h3>
+            <p className="mb-4 max-w-sm text-center text-muted-foreground text-sm">{hasFilters ? "Try adjusting your filters or search terms to find more players." : "Start searching for players by name or UID above."}</p>
+            {hasFilters && (
+                <Button onClick={onReset} variant="outline">
+                    <RotateCcw className="mr-2 h-4 w-4" />
+                    Clear Filters
+                </Button>
+            )}
+        </div>
+    );
+}
+
+// Filter pill component
+function FilterPill({ label, onRemove }: { label: string; onRemove: () => void }) {
+    return (
+        <motion.div animate={{ opacity: 1, scale: 1 }} className="flex items-center gap-1 rounded-full bg-primary/10 py-1 pr-1 pl-3 text-sm" exit={{ opacity: 0, scale: 0.9 }} initial={{ opacity: 0, scale: 0.9 }} layout>
+            <span className="text-primary">{label}</span>
+            <button
+                className="flex h-5 w-5 items-center justify-center rounded-full transition-colors hover:bg-primary/20"
+                onClick={(e) => {
+                    e.preventDefault();
+                    onRemove();
+                }}
+                type="button"
+            >
+                <X className="h-3 w-3 text-primary" />
+            </button>
+        </motion.div>
+    );
+}
 
 // Helper function for relative time
 function formatRelativeTime(dateString: string): string {
@@ -490,8 +638,8 @@ function formatRelativeTime(dateString: string): string {
     const diffMs = now.getTime() - date.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    if (diffDays === 0) return "today";
-    if (diffDays === 1) return "yesterday";
+    if (diffDays === 0) return "Today";
+    if (diffDays === 1) return "Yesterday";
     if (diffDays < 7) return `${diffDays} days ago`;
     if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
     if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
