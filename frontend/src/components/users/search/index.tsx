@@ -54,9 +54,9 @@ export function SearchPageContent({ initialData }: SearchPageContentProps) {
         setIsLoading(true);
 
         // Read current params from URL directly to avoid stale router.query
-        const currentUrl = new URL(window.location.href);
+        const currentURL = new URL(window.location.href);
         const currentParams: Record<string, string | undefined> = {};
-        currentUrl.searchParams.forEach((value, key) => {
+        currentURL.searchParams.forEach((value, key) => {
             currentParams[key] = value;
         });
 
@@ -109,8 +109,8 @@ export function SearchPageContent({ initialData }: SearchPageContentProps) {
                     newSearchParams.set(key, value);
                 }
             }
-            const newUrl = `${window.location.pathname}${newSearchParams.toString() ? `?${newSearchParams.toString()}` : ""}`;
-            window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, "", newUrl);
+            const newURL = `${window.location.pathname}${newSearchParams.toString() ? `?${newSearchParams.toString()}` : ""}`;
+            window.history.replaceState({ ...window.history.state, as: newURL, url: newURL }, "", newURL);
         } catch (error) {
             if (error instanceof Error && error.name !== "AbortError") {
                 console.error("Search failed:", error);

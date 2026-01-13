@@ -1,5 +1,5 @@
 import type { GetServerSideProps } from "next";
-import Head from "next/head";
+import { SEO } from "~/components/seo";
 import { InView } from "~/components/ui/motion-primitives/in-view";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/shadcn/tabs";
 import { CharactersGrid } from "~/components/user/characters-grid";
@@ -10,17 +10,15 @@ import type { StoredUser } from "~/types/api/impl/user";
 
 interface UserPageProps {
     userData: StoredUser | null;
+    userId: string;
     error?: string;
 }
 
-export default function UserPage({ userData, error }: UserPageProps) {
+export default function UserPage({ userData, userId, error }: UserPageProps) {
     if (error || !userData || !userData.data) {
         return (
             <>
-                <Head>
-                    <title>User Not Found - myrtle.moe</title>
-                    <meta content="User profile not found" name="description" />
-                </Head>
+                <SEO description="User profile not found on myrtle.moe." noIndex path={`/user/${userId}`} title="User Not Found" />
                 <div className="container mx-auto flex min-h-[50vh] items-center justify-center p-4">
                     <div className="text-center">
                         <h1 className="mb-4 font-bold text-4xl">User Not Found</h1>
@@ -37,10 +35,7 @@ export default function UserPage({ userData, error }: UserPageProps) {
 
     return (
         <>
-            <Head>
-                <title>{possessive} Arknights Profile - myrtle.moe</title>
-                <meta content={`View ${possessive} Arknights profile on myrtle.moe.`} name="description" />
-            </Head>
+            <SEO description={`View ${possessive} Arknights profile on myrtle.moe. See their operator roster, inventory, and account score.`} keywords={[nickName, "Arknights profile", "player profile", "operator collection"]} path={`/user/${userId}`} title={`${possessive} Arknights Profile`} type="profile" />
             <div className="container mx-auto p-4">
                 <UserHeader data={data} />
 
@@ -85,10 +80,10 @@ export const getServerSideProps: GetServerSideProps<UserPageProps> = async (cont
     try {
         const { env } = await import("~/env");
 
-        const backendUrl = new URL("/get-user", env.BACKEND_URL);
-        backendUrl.searchParams.set("uid", id);
+        const backendURL = new URL("/get-user", env.BACKEND_URL);
+        backendURL.searchParams.set("uid", id);
 
-        const response = await fetch(backendUrl.toString(), {
+        const response = await fetch(backendURL.toString(), {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
@@ -100,6 +95,7 @@ export const getServerSideProps: GetServerSideProps<UserPageProps> = async (cont
                 return {
                     props: {
                         userData: null,
+                        userId: id,
                         error: "User not found",
                     },
                 };
@@ -109,6 +105,7 @@ export const getServerSideProps: GetServerSideProps<UserPageProps> = async (cont
             return {
                 props: {
                     userData: null,
+                    userId: id,
                     error: "Failed to fetch user data",
                 },
             };
@@ -120,6 +117,7 @@ export const getServerSideProps: GetServerSideProps<UserPageProps> = async (cont
             return {
                 props: {
                     userData: null,
+                    userId: id,
                     error: "Invalid user data received",
                 },
             };
@@ -128,6 +126,7 @@ export const getServerSideProps: GetServerSideProps<UserPageProps> = async (cont
         return {
             props: {
                 userData,
+                userId: id,
             },
         };
     } catch (error) {
@@ -135,6 +134,7 @@ export const getServerSideProps: GetServerSideProps<UserPageProps> = async (cont
         return {
             props: {
                 userData: null,
+                userId: id,
                 error: error instanceof Error ? error.message : "Failed to fetch user data",
             },
         };

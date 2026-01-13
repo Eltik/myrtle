@@ -40,8 +40,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         }
 
         // Step 2: Verify token and check role with backend
-        const verifyUrl = new URL("/auth/verify", env.BACKEND_URL);
-        const verifyResponse = await fetch(verifyUrl.toString(), {
+        const verifyURL = new URL("/auth/verify", env.BACKEND_URL);
+        const verifyResponse = await fetch(verifyURL.toString(), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ token: siteToken }),
@@ -72,8 +72,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         }
 
         // Step 4: Fetch admin stats from backend (requires backend /admin/stats endpoint)
-        const statsUrl = new URL("/admin/stats", env.BACKEND_URL);
-        const statsResponse = await fetch(statsUrl.toString(), {
+        const statsURL = new URL("/admin/stats", env.BACKEND_URL);
+        const statsResponse = await fetch(statsURL.toString(), {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",

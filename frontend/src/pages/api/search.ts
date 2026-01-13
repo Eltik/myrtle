@@ -9,11 +9,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const searchParams = buildSearchParamsFromQuery(req.query);
-    const backendUrl = new URL("/search", env.BACKEND_URL);
-    backendUrl.search = searchParams.toString();
+    const backendURL = new URL("/search", env.BACKEND_URL);
+    backendURL.search = searchParams.toString();
 
     try {
-        const response = await fetch(backendUrl.toString(), {
+        const response = await fetch(backendURL.toString(), {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",

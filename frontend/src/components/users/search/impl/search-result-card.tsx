@@ -6,7 +6,7 @@ import { Badge } from "~/components/ui/shadcn/badge";
 import { Card, CardContent } from "~/components/ui/shadcn/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/shadcn/tooltip";
 import type { SearchResultEntry } from "~/types/api";
-import { getAvatarUrl } from "../../leaderboard/impl/constants";
+import { getAvatarURL } from "../../leaderboard/impl/constants";
 import { formatAccountAge, formatRegistrationDate, getOperatorCount, getStatusData } from "./helpers";
 import { UserHoverCard } from "./user-hover-card";
 
@@ -27,7 +27,7 @@ export const SearchResultCard = React.memo(function SearchResultCard({ result }:
                 <CardContent className="p-4">
                     <div className="flex items-start gap-3">
                         <Avatar className="h-14 w-14 shrink-0 border border-border transition-transform duration-200 group-hover:scale-105">
-                            <AvatarImage alt={result.nickname} src={getAvatarUrl(result.avatarId) || "/placeholder.svg"} />
+                            <AvatarImage alt={result.nickname} src={getAvatarURL(result.avatarId) || "/placeholder.svg"} />
                             <AvatarFallback className="text-sm">{result.nickname.slice(0, 2).toUpperCase()}</AvatarFallback>
                         </Avatar>
                         <div className="min-w-0 flex-1">

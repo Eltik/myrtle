@@ -92,7 +92,7 @@ const DEFAULT_AVATAR = "/api/cdn/avatar/char_002_amiya";
  * 4. E0/E1 skins (ends with #1): Strip the #1 suffix → char_xxx (base ID)
  * 5. Base character IDs (no @ or #): Keep as is → char_xxx
  */
-export function getAvatarUrl(avatarId: string | null): string {
+export function getAvatarURL(avatarId: string | null): string {
     if (!avatarId) return DEFAULT_AVATAR;
 
     // Custom skins use @ and need special handling for #

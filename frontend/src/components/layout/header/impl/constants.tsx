@@ -32,9 +32,10 @@ export const navItems: NavItem[] = [
         label: <Ellipsis />,
         href: "#",
         dropdown: [
-            { label: "About", href: "/about", description: "About this project" },
-            { label: "Changelog", href: "/changelog", description: "Recent updates" },
-            { label: "Terms", href: "/terms", description: "Terms of use" },
+            { label: "Privacy", href: "/privacy", description: "Privacy policy" },
+            { label: "Terms", href: "/terms", description: "Terms of service" },
+            { label: "GitHub", href: "/github", description: "View source code", external: true },
+            { label: "Discord", href: "/discord", description: "Join our community", external: true },
         ],
     },
 ];

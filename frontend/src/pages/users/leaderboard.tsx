@@ -1,5 +1,5 @@
 import type { GetServerSideProps, NextPage } from "next";
-import Head from "next/head";
+import { SEO } from "~/components/seo";
 import { LeaderboardPage as LeaderboardContent } from "~/components/users/leaderboard";
 import type { LeaderboardResponse } from "~/types/api";
 
@@ -10,10 +10,12 @@ interface Props {
 const LeaderboardPage: NextPage<Props> = ({ data }) => {
     return (
         <>
-            <Head>
-                <title>Leaderboard - myrtle.moe</title>
-                <meta content="View the top Arknights players ranked by collection, progress, and achievements." name="description" />
-            </Head>
+            <SEO
+                description="View the top Arknights players ranked by collection, progress, and achievements. Compare your account across operators, stages, roguelike, sandbox, medals, and base scores."
+                keywords={["leaderboard", "top players", "player rankings", "account score", "Arknights rankings"]}
+                path="/users/leaderboard"
+                title="Leaderboard"
+            />
             <LeaderboardContent initialData={data} />
         </>
     );
@@ -23,26 +25,26 @@ export const getServerSideProps: GetServerSideProps<Props> = async (context) => 
     const { sort_by, order, server, limit, offset } = context.query;
 
     const { env } = await import("~/env");
-    const backendUrl = new URL("/leaderboard", env.BACKEND_URL);
+    const backendURL = new URL("/leaderboard", env.BACKEND_URL);
 
     if (sort_by && typeof sort_by === "string") {
-        backendUrl.searchParams.set("sort_by", sort_by);
+        backendURL.searchParams.set("sort_by", sort_by);
     }
     if (order && typeof order === "string") {
-        backendUrl.searchParams.set("order", order);
+        backendURL.searchParams.set("order", order);
     }
     if (server && typeof server === "string") {
-        backendUrl.searchParams.set("server", server);
+        backendURL.searchParams.set("server", server);
     }
     if (limit && typeof limit === "string") {
-        backendUrl.searchParams.set("limit", limit);
+        backendURL.searchParams.set("limit", limit);
     }
     if (offset && typeof offset === "string") {
-        backendUrl.searchParams.set("offset", offset);
+        backendURL.searchParams.set("offset", offset);
     }
 
     try {
-        const response = await fetch(backendUrl.toString(), {
+        const response = await fetch(backendURL.toString(), {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",

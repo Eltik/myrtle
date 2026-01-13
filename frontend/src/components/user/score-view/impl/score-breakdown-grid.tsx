@@ -24,7 +24,7 @@ export function ScoreBreakdownGrid({ scoreData }: ScoreBreakdownGridProps) {
     const categories = Object.entries(SCORE_CATEGORY_CONFIG);
 
     return (
-        <Card className="border-border/50 bg-gradient-to-b from-card/60 to-card/40 backdrop-blur-sm">
+        <Card className="border-border/50 bg-linear-to-b from-card/60 to-card/40 backdrop-blur-sm">
             <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2 font-medium text-muted-foreground text-sm">
                     <BarChart3 className="h-4 w-4" />

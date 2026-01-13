@@ -44,9 +44,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             publicProfile,
         };
 
-        const updateUrl = new URL("/auth/update-settings", env.BACKEND_URL);
+        const updateURL = new URL("/auth/update-settings", env.BACKEND_URL);
 
-        const updateResponse = await fetch(updateUrl.toString(), {
+        const updateResponse = await fetch(updateURL.toString(), {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

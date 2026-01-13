@@ -37,10 +37,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         const { uid } = session;
 
         // Build backend URL to get user data (no refresh)
-        const backendUrl = new URL("/get-user", env.BACKEND_URL);
-        backendUrl.searchParams.set("uid", uid);
+        const backendURL = new URL("/get-user", env.BACKEND_URL);
+        backendURL.searchParams.set("uid", uid);
 
-        const userResponse = await fetch(backendUrl.toString(), {
+        const userResponse = await fetch(backendURL.toString(), {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",

@@ -1,5 +1,5 @@
 import type { GetServerSideProps, NextPage } from "next";
-import Head from "next/head";
+import { SEO } from "~/components/seo";
 import { RecruitmentCalculator } from "~/components/tools/recruitment-calculator";
 import type { GachaTag, RecruitableOperatorWithTags } from "~/components/tools/recruitment-calculator/impl/types";
 import { env } from "~/env";
@@ -13,10 +13,12 @@ interface Props {
 const RecruitmentPage: NextPage<Props> = ({ tags, recruitableOperators, initialSelectedTagNames }) => {
     return (
         <>
-            <Head>
-                <title>Recruitment Calculator | myrtle.moe</title>
-                <meta content="Calculate Arknights recruitment probabilities and find the best tag combinations for desired operators." name="description" />
-            </Head>
+            <SEO
+                description="Calculate Arknights recruitment probabilities and find the best tag combinations for desired operators. Optimize your recruitment permits."
+                keywords={["recruitment calculator", "recruitment tags", "tag combinations", "recruitment optimization"]}
+                path="/tools/recruitment"
+                title="Recruitment Calculator"
+            />
             <RecruitmentCalculator initialSelectedTagNames={initialSelectedTagNames} recruitableOperators={recruitableOperators} tags={tags} />
         </>
     );

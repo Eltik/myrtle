@@ -1,9 +1,9 @@
 "use client";
 
-import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
 import { AdminPanel } from "~/components/admin";
+import { SEO } from "~/components/seo";
 import { useAuth } from "~/hooks/use-auth";
 import type { AdminRole, AdminStats } from "~/types/frontend/admin";
 
@@ -78,10 +78,7 @@ export default function AdminPage() {
     if (loading || authorized === null || authorized === false) {
         return (
             <>
-                <Head>
-                    <title>Admin - myrtle.moe</title>
-                    <meta content="Admin panel" name="description" />
-                </Head>
+                <SEO description="Admin panel for myrtle.moe" noIndex path="/admin" title="Admin" />
                 <div className="flex min-h-[50vh] items-center justify-center">
                     <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                 </div>
@@ -97,11 +94,7 @@ export default function AdminPage() {
     // Authorized admin view
     return (
         <>
-            <Head>
-                <title>Admin - myrtle.moe</title>
-                <meta content="Admin panel" name="description" />
-            </Head>
-
+            <SEO description="Admin panel for myrtle.moe" noIndex path="/admin" title="Admin" />
             <AdminPanel onRefresh={fetchStats} role={role as AdminRole} stats={stats} statsLoading={statsLoading} user={user} />
         </>
     );

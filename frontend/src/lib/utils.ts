@@ -382,8 +382,8 @@ export function getAvatarById(charId: string): string {
  * Uses the dynamic avatar route which looks up the correct directory.
  */
 export function getAvatarSkinId(user: { status?: { secretary: string; secretarySkinId: string } } | null): string {
-    // Use getSecretaryAvatarUrl which handles all the complexity
-    return getSecretaryAvatarUrl(user);
+    // Use getSecretaryAvatarURL which handles all the complexity
+    return getSecretaryAvatarURL(user);
 }
 
 /**
@@ -417,7 +417,7 @@ export function getProfessionIconName(profession: string): string {
  * Gets the operator image URL based on character ID, skin, evolve phase, and template.
  * Handles different skin types: default skins, E2 skins, and custom skins.
  */
-export function getOperatorImageUrl(charId: string, skin: string, evolvePhase: number, currentTmpl?: string | null, tmpl?: Record<string, { skinId: string }> | null): string {
+export function getOperatorImageURL(charId: string, skin: string, evolvePhase: number, currentTmpl?: string | null, tmpl?: Record<string, { skinId: string }> | null): string {
     let skinId = skin;
 
     // Check if using a template (for operators with alternate forms like Amiya)
@@ -449,7 +449,7 @@ export function getOperatorImageUrl(charId: string, skin: string, evolvePhase: n
  * Gets the avatar URL for a user's secretary using the dynamic avatar route.
  * The backend will look up the correct directory from asset mappings.
  */
-export function getSecretaryAvatarUrl(user: { status?: { secretary: string; secretarySkinId: string } } | null): string {
+export function getSecretaryAvatarURL(user: { status?: { secretary: string; secretarySkinId: string } } | null): string {
     const DEFAULT_AVATAR = "/api/cdn/avatar/char_002_amiya";
 
     if (!user?.status) return DEFAULT_AVATAR;

@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { navItems } from "./constants";
@@ -263,7 +263,10 @@ export function NavDesktop({ pathname }: NavDesktopProps) {
                                     <div className="p-1.5">
                                         {item.dropdown.map((dropdownItem) => (
                                             <Link className="group/item flex flex-col gap-0.5 rounded-md px-3 py-2 transition-colors hover:bg-secondary" href={dropdownItem.href} key={dropdownItem.label}>
-                                                <span className="font-medium text-foreground text-sm">{dropdownItem.label}</span>
+                                                <span className="flex items-center gap-1.5 font-medium text-foreground text-sm">
+                                                    {dropdownItem.label}
+                                                    {dropdownItem.external && <ExternalLink className="h-3 w-3 text-muted-foreground" />}
+                                                </span>
                                                 <span className="text-muted-foreground text-xs">{dropdownItem.description}</span>
                                             </Link>
                                         ))}

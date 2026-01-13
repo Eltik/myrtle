@@ -51,12 +51,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         const { email, server }: SendCodeInput = parseResult.data;
 
         // Build backend URL with properly encoded parameters
-        const backendUrl = new URL("/send-code", env.BACKEND_URL);
-        backendUrl.searchParams.set("email", email);
-        backendUrl.searchParams.set("server", server);
+        const backendURL = new URL("/send-code", env.BACKEND_URL);
+        backendURL.searchParams.set("email", email);
+        backendURL.searchParams.set("server", server);
 
         // Call backend to send verification code
-        const sendCodeResponse = await fetch(backendUrl.toString(), {
+        const sendCodeResponse = await fetch(backendURL.toString(), {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

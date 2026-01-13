@@ -23,8 +23,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     try {
         // Get raw URL to handle special characters properly
-        const rawUrl = req.url ?? "";
-        const urlParts = rawUrl.split("/api/cdn/")[1];
+        const rawURL = req.url ?? "";
+        const urlParts = rawURL.split("/api/cdn/")[1];
         if (!urlParts) {
             return res.status(400).json({ error: "Invalid path" });
         }
@@ -49,18 +49,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                   })
                   .join("/")
             : "";
-        const backendUrl = `${env.BACKEND_URL ?? ""}/cdn/${encodedPath}`;
-        const fullUrl = queryPart ? `${backendUrl}?${queryPart}` : backendUrl;
+        const backendURL = `${env.BACKEND_URL ?? ""}/cdn/${encodedPath}`;
+        const fullURL = queryPart ? `${backendURL}?${queryPart}` : backendURL;
 
         // console.log("CDN proxy request:", {
         //     originalPath: pathPart,
         //     encodedPath,
-        //     backendUrl,
-        //     fullUrl
+        //     backendURL,
+        //     fullURL
         // });
 
         // Make request to backend
-        const response = await fetch(fullUrl, {
+        const response = await fetch(fullURL, {
             headers: {
                 // Forward specific headers from client request if needed
                 Accept: req.headers.accept ?? "*/*",
@@ -74,7 +74,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (!response.ok) {
             console.error("Backend request failed:", {
                 status: response.status,
-                url: fullUrl,
+                url: fullURL,
                 statusText: response.statusText,
             });
             return res.status(response.status).json({

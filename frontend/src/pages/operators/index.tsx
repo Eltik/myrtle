@@ -1,6 +1,6 @@
 import type { GetServerSideProps, NextPage } from "next";
-import Head from "next/head";
 import { OperatorDetail } from "~/components/operators/detail/operator-detail";
+import { SEO } from "~/components/seo";
 import { env } from "~/env.js";
 import type { Operator } from "~/types/api";
 
@@ -11,10 +11,7 @@ interface Props {
 const OperatorPage: NextPage<Props> = ({ operator }) => {
     return (
         <>
-            <Head>
-                <title>{`${operator.name} - Operator Details | myrtle.moe`}</title>
-                <meta content={`View detailed information about ${operator.name} including stats, skills, talents, skins, and voice lines.`} name="description" />
-            </Head>
+            <SEO description={`View detailed information about ${operator.name} including stats, skills, talents, skins, and voice lines.`} keywords={[operator.name, "Arknights operator", "operator stats", "skills", "talents"]} path={`/operators/${operator.id}`} title={`${operator.name} - Operator Details`} />
             <OperatorDetail operator={operator} />
         </>
     );

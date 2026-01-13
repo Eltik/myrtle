@@ -17,7 +17,7 @@ type ApiResponse = PublishSuccessResponse | PublishErrorResponse;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
     const { slug } = req.query;
-    const backendUrl = env.BACKEND_URL;
+    const backendURL = env.BACKEND_URL;
 
     if (!slug || typeof slug !== "string") {
         return res.status(400).json({
@@ -54,7 +54,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             });
         }
 
-        const response = await fetch(`${backendUrl}/tier-lists/${slug}/publish`, {
+        const response = await fetch(`${backendURL}/tier-lists/${slug}/publish`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

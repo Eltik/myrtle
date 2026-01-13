@@ -67,12 +67,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         const { email, code, server }: LoginInput = parseResult.data;
 
         // Step 1: Authenticate with backend
-        const loginUrl = new URL("/login", env.BACKEND_URL);
-        loginUrl.searchParams.set("email", email);
-        loginUrl.searchParams.set("code", code.toString());
-        loginUrl.searchParams.set("server", server);
+        const loginURL = new URL("/login", env.BACKEND_URL);
+        loginURL.searchParams.set("email", email);
+        loginURL.searchParams.set("code", code.toString());
+        loginURL.searchParams.set("server", server);
 
-        const loginResponse = await fetch(loginUrl.toString(), {
+        const loginResponse = await fetch(loginURL.toString(), {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -101,13 +101,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         }
 
         // Step 2: Refresh to fetch user data and store in database
-        const refreshUrl = new URL("/refresh", env.BACKEND_URL);
-        refreshUrl.searchParams.set("uid", backendData.uid);
-        refreshUrl.searchParams.set("secret", backendData.secret);
-        refreshUrl.searchParams.set("seqnum", backendData.seqnum.toString());
-        refreshUrl.searchParams.set("server", server);
+        const refreshURL = new URL("/refresh", env.BACKEND_URL);
+        refreshURL.searchParams.set("uid", backendData.uid);
+        refreshURL.searchParams.set("secret", backendData.secret);
+        refreshURL.searchParams.set("seqnum", backendData.seqnum.toString());
+        refreshURL.searchParams.set("server", server);
 
-        const refreshResponse = await fetch(refreshUrl.toString(), {
+        const refreshResponse = await fetch(refreshURL.toString(), {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
