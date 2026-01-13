@@ -3,22 +3,55 @@ import { env } from "../../../env";
 
 /**
  * API route that proxies requests to the backend CDN service
- * This allows for more control compared to rewrites, like:
- * - Adding authentication
- * - Request validation
- * - Error handling
- * - Response transformation
+ * Optimizations:
+ * - Request coalescing (dedupe concurrent identical requests)
+ * - Aggressive caching with stale-while-revalidate
+ * - ETag/conditional request support for revalidation
  */
+
+// Cached response data for request coalescing
+interface CachedResponse {
+    status: number;
+    contentType: string;
+    etag: string | null;
+    lastModified: string | null;
+    buffer: Buffer;
+}
+
+// In-memory request coalescing to dedupe concurrent requests
+const pendingRequests = new Map<string, Promise<CachedResponse | null>>();
+
+export const config = {
+    api: {
+        responseLimit: false, // Allow large files
+    },
+};
+
+async function fetchAndBuffer(url: string, headers: Record<string, string>): Promise<CachedResponse | null> {
+    const response = await fetch(url, { headers });
+
+    // Handle 304 Not Modified
+    if (response.status === 304) {
+        return null;
+    }
+
+    const buffer = Buffer.from(await response.arrayBuffer());
+
+    return {
+        status: response.status,
+        contentType: response.headers.get("Content-Type") ?? "application/octet-stream",
+        etag: response.headers.get("ETag"),
+        lastModified: response.headers.get("Last-Modified"),
+        buffer,
+    };
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     // Only allow GET requests
     if (req.method !== "GET") {
         return res.status(405).json({ error: "Method not allowed" });
     }
 
-    // Log the raw incoming URL first thing
-    // console.log("RAW CDN request URL:", req.url);
-
-    // Determine if we're in development mode
     const isDevelopment = env.NODE_ENV === "development";
 
     try {
@@ -33,7 +66,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const [pathPart, queryPart] = urlParts.split("?");
 
         // Build the backend URL, maintaining the original encoding
-        // Handle both encoded and unencoded special characters
         const encodedPath = pathPart
             ? pathPart
                   .split("/")
@@ -43,7 +75,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                           return segment;
                       }
                       // Handle special characters like # that might be unencoded
-                      // First replace # with %23, then encode any other special characters
                       const withHashEncoded = segment.replace(/#/g, "%23");
                       return encodeURIComponent(withHashEncoded);
                   })
@@ -52,62 +83,74 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const backendURL = `${env.BACKEND_URL ?? ""}/cdn/${encodedPath}`;
         const fullURL = queryPart ? `${backendURL}?${queryPart}` : backendURL;
 
-        // console.log("CDN proxy request:", {
-        //     originalPath: pathPart,
-        //     encodedPath,
-        //     backendURL,
-        //     fullURL
-        // });
+        // Build request headers
+        const fetchHeaders: Record<string, string> = {
+            Accept: req.headers.accept ?? "*/*",
+            "Accept-Encoding": (req.headers["accept-encoding"] as string) ?? "",
+            "User-Agent": req.headers["user-agent"] ?? "",
+            "X-Forwarded-For": (req.headers["x-forwarded-for"] as string) ?? req.socket.remoteAddress ?? "",
+        };
+        // Forward conditional request headers for revalidation
+        if (req.headers["if-none-match"]) {
+            fetchHeaders["If-None-Match"] = req.headers["if-none-match"] as string;
+        }
+        if (req.headers["if-modified-since"]) {
+            fetchHeaders["If-Modified-Since"] = req.headers["if-modified-since"] as string;
+        }
 
-        // Make request to backend
-        const response = await fetch(fullURL, {
-            headers: {
-                // Forward specific headers from client request if needed
-                Accept: req.headers.accept ?? "*/*",
-                "Accept-Encoding": (req.headers["accept-encoding"] as string) ?? "",
-                "User-Agent": req.headers["user-agent"] ?? "",
-                "X-Forwarded-For": (req.headers["x-forwarded-for"] as string) ?? req.socket.remoteAddress ?? "",
-            },
-        });
+        // Request coalescing: reuse in-flight requests for same URL
+        let responsePromise = pendingRequests.get(fullURL);
+        if (!responsePromise) {
+            responsePromise = fetchAndBuffer(fullURL, fetchHeaders);
+            pendingRequests.set(fullURL, responsePromise);
+            // Clean up after response completes
+            responsePromise.finally(() => {
+                setTimeout(() => pendingRequests.delete(fullURL), 100);
+            });
+        }
+
+        const cachedResponse = await responsePromise;
+
+        // Handle 304 Not Modified
+        if (cachedResponse === null) {
+            return res.status(304).end();
+        }
 
         // If response failed, return error
-        if (!response.ok) {
+        if (cachedResponse.status < 200 || cachedResponse.status >= 300) {
             console.error("Backend request failed:", {
-                status: response.status,
+                status: cachedResponse.status,
                 url: fullURL,
-                statusText: response.statusText,
             });
-            return res.status(response.status).json({
+            return res.status(cachedResponse.status).json({
                 error: "Failed to fetch asset",
-                status: response.status,
+                status: cachedResponse.status,
             });
         }
 
-        // Get content type and other headers from backend response
-        const contentType = response.headers.get("Content-Type") ?? "application/octet-stream";
-        const contentLength = response.headers.get("Content-Length");
-        const cacheControl = isDevelopment ? "no-store, max-age=0" : (response.headers.get("Cache-Control") ?? null);
-        const etag = response.headers.get("ETag");
-        const lastModified = response.headers.get("Last-Modified");
+        const isImage = cachedResponse.contentType.startsWith("image/");
 
         // Set response headers
-        res.setHeader("Content-Type", contentType);
-        if (contentLength) res.setHeader("Content-Length", contentLength);
+        res.setHeader("Content-Type", cachedResponse.contentType);
+        res.setHeader("Content-Length", cachedResponse.buffer.length);
 
-        // In development, always use no-cache, otherwise use the backend's cache control
-        if (cacheControl) res.setHeader("Cache-Control", cacheControl);
-
-        if (etag) res.setHeader("ETag", etag);
-        if (lastModified) res.setHeader("Last-Modified", lastModified);
-
-        // If in development mode, log that caching is disabled
+        // Cache headers: stale-while-revalidate for occasionally-updated assets
         if (isDevelopment) {
-            console.log("Development mode: CDN cache disabled");
+            res.setHeader("Cache-Control", "no-store, max-age=0");
+        } else if (isImage) {
+            // 1 day fresh, 7 days stale-while-revalidate
+            res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
+        } else {
+            // Non-images: shorter cache
+            res.setHeader("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
         }
 
-        // Get the response body as buffer and send it
-        const buffer = await response.arrayBuffer();
-        res.status(response.status).send(Buffer.from(buffer));
+        // ETag and Last-Modified for conditional requests
+        if (cachedResponse.etag) res.setHeader("ETag", cachedResponse.etag);
+        if (cachedResponse.lastModified) res.setHeader("Last-Modified", cachedResponse.lastModified);
+
+        // Send the buffered response
+        res.status(cachedResponse.status).send(cachedResponse.buffer);
     } catch (error) {
         console.error("Error proxying to CDN:", error);
         res.status(500).json({ error: "Internal server error" });
