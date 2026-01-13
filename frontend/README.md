@@ -167,10 +167,17 @@ frontend/
 | `/operators` | Operator Detail | Detailed operator information with tabs (uses query params) |
 | `/operators/list` | Operators List | Browse all operators with filters and pagination |
 | `/operators/tier-list` | Tier List | Community tier lists with version history |
-| `/user/[id]` | User Profile | Player profile with characters, items, base |
+| `/user/[id]` | User Profile | Player profile with characters, items, base, scores |
+| `/users/leaderboard` | Leaderboard | Global user leaderboard with sorting options |
+| `/users/search` | User Search | Search users by nickname, UID, or filters |
 | `/tools/recruitment` | Recruitment Calculator | Calculate tag combinations |
+| `/tools/dps` | DPS Calculator | Calculate operator DPS with charts |
+| `/tools/randomizer` | Randomizer | Random operator selector |
 | `/settings` | Settings | User account settings and preferences |
 | `/admin` | Admin Panel | Role-gated admin interface for management |
+| `/privacy` | Privacy Policy | Comprehensive privacy policy documentation |
+| `/terms` | Terms of Service | Terms and conditions for using the site |
+| `/profile` | Profile Redirect | Redirects authenticated users to their profile |
 
 ### Data Fetching
 
@@ -283,6 +290,7 @@ Located in `src/components/user/`:
 | `CharacterDialog` | Character detail modal |
 | `ItemsGrid` | Inventory table with search and details |
 | `ItemDetailCard` | Item detail display |
+| `ScoreView` | User score breakdown with categories |
 | `BaseView` | Base facilities overview |
 | `FactoriesSection` | Factories display |
 | `TradingPostsSection` | Trading posts display |
@@ -332,6 +340,8 @@ Located in `src/components/tools/`:
 | Component | Purpose |
 |-----------|---------|
 | `HueSlider` | Custom color hue slider for theme customization |
+| `CDNImage` | Optimized image component with blur placeholder and fade-in animation |
+| `SEO` | Meta tags component for page SEO |
 
 ## API Routes
 
@@ -389,6 +399,34 @@ POST /api/static
 GET /api/cdn/upk/chararts/char_002_amiya/char_002_amiya_1.png
 GET /api/cdn/avatar/char_002_amiya
 ```
+
+**CDN Proxy Features:**
+- Request coalescing (deduplicates concurrent identical requests)
+- Aggressive caching with stale-while-revalidate (1-day fresh, 7-day stale for images)
+- ETag and conditional request support (If-None-Match, If-Modified-Since)
+- Large file support (no response size limit)
+
+### DPS Calculator
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/dps-calculator` | GET | List operators with DPS calculator support |
+| `/api/dps-calculator` | POST | Calculate DPS for an operator |
+
+### Leaderboard & Search
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/leaderboard` | GET/POST | Get user leaderboard with sorting |
+| `/api/search` | POST | Search users by nickname, UID, etc. |
+
+### OG Image Generation
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/og/user` | GET | Generate Open Graph image for user profiles |
+
+Uses Edge runtime for fast image generation.
 
 ### Settings
 
@@ -453,6 +491,20 @@ Detects clicks outside a referenced element.
 ```typescript
 const ref = useRef<HTMLDivElement>(null);
 useClickOutside(ref, () => setOpen(false));
+```
+
+### useCDNPrefetch
+
+Prefetch CDN images for better performance.
+
+```typescript
+import { useCDNPrefetch, usePrefetchOperatorImages } from "~/hooks/use-cdn-prefetch";
+
+// Generic prefetch for any URLs
+useCDNPrefetch(["/api/cdn/avatar/char_002_amiya"]);
+
+// Prefetch operator portraits (automatically prefetches first 20 with delay)
+usePrefetchOperatorImages(operators);
 ```
 
 ## Context
@@ -592,15 +644,39 @@ Located in `src/lib/`:
 | `AKServerSchema` | Zod schema for Arknights servers |
 | `SessionSchema` | Session data validation schema |
 
+### backend-fetch.ts
+
+Utility for making authenticated requests to the backend API with automatic rate limit bypass.
+
+```typescript
+import { backendFetch } from "~/lib/backend-fetch";
+
+// Automatically includes X-Internal-Service-Key header
+const response = await backendFetch("/leaderboard", {
+    method: "GET"
+});
+
+// Works like fetch() but with auth header
+const data = await backendFetch("/search", {
+    method: "POST",
+    body: JSON.stringify({ nickname: "Doctor" })
+});
+```
+
+All API routes use this utility to bypass backend rate limiting.
+
 ## Configuration
 
 ### Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `BACKEND_URL` | Backend API URL | `http://localhost:3060` |
-| `NODE_ENV` | Environment mode | `development` |
-| `SKIP_ENV_VALIDATION` | Skip env validation (for Docker) | - |
+| Variable | Required | Description | Default |
+|----------|----------|-------------|---------|
+| `BACKEND_URL` | Yes | Backend API URL | `http://localhost:3060` |
+| `INTERNAL_SERVICE_KEY` | Yes | Secret key for bypassing backend rate limits (min 32 chars) | - |
+| `NODE_ENV` | No | Environment mode | `development` |
+| `SKIP_ENV_VALIDATION` | No | Skip env validation (for Docker) | - |
+
+**Note:** The `INTERNAL_SERVICE_KEY` must match the key configured in the backend. Generate with: `openssl rand -base64 32`
 
 ### next.config.js
 
