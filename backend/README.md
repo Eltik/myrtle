@@ -215,6 +215,8 @@ cargo run --bin backend --release
 | `REDIS_URL` | Yes | - | Redis connection string |
 | `DATA_DIR` | No | `./data` | Directory containing game data JSON files (see `/assets` directory) |
 | `ASSETS_DIR` | No | `./assets` | Directory containing extracted game assets (see `/assets` directory) |
+| `JWT_SECRET` | Yes | - | Secret key for JWT token signing and verification |
+| `INTERNAL_SERVICE_KEY` | No | - | Secret key to bypass rate limiting (for internal services like frontend API routes) |
 
 ### Example .env
 
@@ -228,6 +230,13 @@ REDIS_URL=redis://:password@localhost:6379
 # Data directories
 DATA_DIR=/opt/myrtle/assets/Unpacked/decoded/gamedata/excel
 ASSETS_DIR=/opt/myrtle/assets/Unpacked
+
+# Authentication
+JWT_SECRET=your-secret-key-at-least-32-characters-long
+
+# Optional: Internal service key for rate limit bypass (min 32 chars)
+# Generate with: openssl rand -base64 32
+INTERNAL_SERVICE_KEY=your-internal-service-key-here
 ```
 
 ## Usage
@@ -354,12 +363,14 @@ backend/
 
 ```rust
 pub struct AppState {
-    pub db: PgPool,                           // PostgreSQL connection pool
-    pub config: Arc<RwLock<GlobalConfig>>,    // Server configs (domains, versions)
-    pub events: Arc<EventEmitter>,            // Event system
-    pub client: Client,                       // HTTP client for game API
-    pub game_data: Arc<GameData>,             // Static game data
-    pub redis: MultiplexedConnection,         // Redis for caching
+    pub db: PgPool,                              // PostgreSQL connection pool
+    pub config: Arc<RwLock<GlobalConfig>>,       // Server configs (domains, versions)
+    pub events: Arc<EventEmitter>,               // Event system
+    pub client: Client,                          // HTTP client for game API
+    pub game_data: Arc<GameData>,                // Static game data
+    pub redis: MultiplexedConnection,            // Redis for caching
+    pub jwt_secret: String,                      // JWT secret for token validation
+    pub internal_service_key: Option<String>,    // Optional key for rate limit bypass
 }
 ```
 
@@ -553,6 +564,62 @@ Fetch latest player data from game server and store in database.
 - `POST /refresh/{uid}/{secret}/{seqnum}/{server}`
 
 **Response:** Full player data with enriched static information.
+
+#### GET /leaderboard
+
+Get paginated leaderboard with customizable sorting. Results are cached in Redis for 5 minutes.
+
+**Query Parameters:**
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `sort_by` | string | No | `totalScore` | Sort field (see options below) |
+| `order` | string | No | `desc` | Sort order: `asc` or `desc` |
+| `server` | string | No | - | Filter by server: `en`, `jp`, `kr` |
+| `limit` | integer | No | 50 | Results per page (max 100) |
+| `offset` | integer | No | 0 | Pagination offset |
+
+**Sort options:**
+- `totalScore` - Overall account score
+- `compositeScore` - Weighted composite score
+- `operatorScore` - Operator investment score
+- `stageScore` - Stage completion score
+- `roguelikeScore` - Integrated Strategies progress
+- `sandboxScore` - Reclamation Algorithm progress
+- `medalScore` - Medal achievement score
+- `baseScore` - RIIC efficiency score
+
+**Note:** Only users with `publicProfile: true` in their settings appear in the leaderboard.
+
+```bash
+# Get top 10 by total score
+curl "http://localhost:3060/leaderboard?limit=10"
+
+# Get top 50 by operator score for EN server
+curl "http://localhost:3060/leaderboard?sort_by=operatorScore&server=en&limit=50"
+```
+
+#### GET /search
+
+Search users with advanced filtering. Results are cached in Redis for 2 minutes.
+
+**Query Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `nickname` | string | No | Search by nickname (partial match) |
+| `uid` | string | No | Search by exact UID |
+| `server` | string | No | Filter by server |
+| `level` | integer | No | Minimum doctor level |
+| `limit` | integer | No | Results limit (default 20) |
+
+**Note:** Only users with `publicProfile: true` in their settings appear in search results.
+
+```bash
+# Search by nickname
+curl "http://localhost:3060/search?nickname=Doctor"
+
+# Search by UID
+curl "http://localhost:3060/search?uid=12345678"
+```
 
 #### GET /get-user
 
@@ -1986,10 +2053,14 @@ CREATE TABLE users (
     data JSONB NOT NULL DEFAULT '{}',
     settings JSONB NOT NULL DEFAULT '{}',
     role VARCHAR(50) NOT NULL DEFAULT 'user',
+    score JSONB NOT NULL DEFAULT '{}',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 ```
+
+**Settings fields:**
+- `publicProfile` (boolean) - Whether profile appears in leaderboard/search results
 
 #### Tier List Tables
 
@@ -2148,6 +2219,26 @@ The server implements per-IP, per-endpoint rate limiting:
 // Rate limit key format: "{ip}:{path}"
 // Example: "192.168.1.1:/static/operators"
 ```
+
+### Internal Service Bypass
+
+Internal services (like the frontend's API routes) can bypass rate limiting by including a secret key in the request headers:
+
+```bash
+# Header for rate limit bypass
+X-Internal-Service-Key: <your-internal-service-key>
+```
+
+**Security features:**
+- Uses constant-time comparison to prevent timing attacks
+- Header name is intentionally non-obvious (`x-internal-service-key`)
+- Key is never exposed to browser clients (server-side only)
+- Missing or invalid key gracefully falls back to normal rate limiting
+
+**Setup:**
+1. Generate a secure key: `openssl rand -base64 32`
+2. Set `INTERNAL_SERVICE_KEY` environment variable on both backend and frontend
+3. Frontend API routes automatically include the header via `backendFetch()` utility
 
 ## Development
 
