@@ -36,7 +36,7 @@ const MAX_ELITE_BY_RARITY: Record<number, number> = {
  * Gets the avatar URL for an operator based on their current skin.
  * Uses the /api/cdn/avatar/ endpoint which the backend resolves.
  */
-function getOperatorAvatarUrl(charId: string, skin: string, evolvePhase: number, currentTmpl?: string | null, tmpl?: Record<string, { skinId: string }> | null): string {
+function getOperatorAvatarUrl(charId: string, skin: string, _evolvePhase: number, currentTmpl?: string | null, tmpl?: Record<string, { skinId: string }> | null): string {
     let skinId = skin;
 
     // Check if using a template (for operators with alternate forms like Amiya)
@@ -44,20 +44,29 @@ function getOperatorAvatarUrl(charId: string, skin: string, evolvePhase: number,
         skinId = tmpl[currentTmpl].skinId;
     }
 
-    // If no skin ID, use default based on evolve phase
+    // If no skin ID, use just charId (backend resolves correct file)
     if (!skinId) {
-        const suffix = evolvePhase >= 2 ? "_2" : "_1";
-        return `/api/cdn/avatar/${charId}${suffix}`;
+        return `/api/cdn/avatar/${charId}`;
     }
 
-    // Normalize skin ID for avatar lookup
+    // Custom skins with @: Replace @ with _, encode # as %23
     if (skinId.includes("@")) {
-        // Custom skins: Replace @ with _, encode # as %23
         const normalizedSkinId = skinId.replaceAll("@", "_").replaceAll("#", "%23");
         return `/api/cdn/avatar/${normalizedSkinId}`;
     }
 
-    // Default/E2 skins: Replace # with _
+    // Default skin (ends with #1 or _1): Use just charId (backend resolves correct file)
+    if (skinId.endsWith("#1") || skinId.endsWith("_1")) {
+        return `/api/cdn/avatar/${charId}`;
+    }
+
+    // E2 skin (ends with #2 or _2): Normalize and use
+    if (skinId.endsWith("#2") || skinId.endsWith("_2")) {
+        const normalizedSkinId = skinId.replaceAll("#", "_");
+        return `/api/cdn/avatar/${normalizedSkinId}`;
+    }
+
+    // Other skins: Replace # with _
     const normalizedSkinId = skinId.replaceAll("#", "_");
     return `/api/cdn/avatar/${normalizedSkinId}`;
 }
