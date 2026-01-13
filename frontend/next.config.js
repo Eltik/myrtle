@@ -32,6 +32,20 @@ const config = {
                 hostname: "**.*.*.*",
             },
         ],
+        minimumCacheTTL: 86400, // 1 day minimum cache for optimized images
+    },
+    async headers() {
+        return [
+            {
+                source: "/api/cdn/:path*",
+                headers: [
+                    {
+                        key: "Cache-Control",
+                        value: "public, max-age=86400, stale-while-revalidate=604800",
+                    },
+                ],
+            },
+        ];
     },
     async redirects() {
         return [
