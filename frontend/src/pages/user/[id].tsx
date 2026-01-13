@@ -11,10 +11,11 @@ import type { StoredUser } from "~/types/api/impl/user";
 interface UserPageProps {
     userData: StoredUser | null;
     userId: string;
+    baseUrl: string;
     error?: string;
 }
 
-export default function UserPage({ userData, userId, error }: UserPageProps) {
+export default function UserPage({ userData, userId, baseUrl, error }: UserPageProps) {
     if (error || !userData || !userData.data) {
         return (
             <>
@@ -35,7 +36,14 @@ export default function UserPage({ userData, userId, error }: UserPageProps) {
 
     return (
         <>
-            <SEO description={`View ${possessive} Arknights profile on myrtle.moe. See their operator roster, inventory, and account score.`} keywords={[nickName, "Arknights profile", "player profile", "operator collection"]} path={`/user/${userId}`} title={`${possessive} Arknights Profile`} type="profile" />
+            <SEO
+                description={`View ${possessive} Arknights profile on myrtle.moe. See their operator roster, inventory, and account score.`}
+                image={`${baseUrl}/api/og/user?id=${userId}`}
+                keywords={[nickName, "Arknights profile", "player profile", "operator collection"]}
+                path={`/user/${userId}`}
+                title={`${possessive} Arknights Profile`}
+                type="profile"
+            />
             <div className="container mx-auto p-4">
                 <UserHeader data={data} />
 
@@ -76,6 +84,12 @@ export default function UserPage({ userData, userId, error }: UserPageProps) {
 
 export const getServerSideProps: GetServerSideProps<UserPageProps> = async (context) => {
     const { id } = context.params as { id: string };
+    const { req } = context;
+
+    // Build base URL from request headers
+    const protocol = req.headers["x-forwarded-proto"] || "https";
+    const host = req.headers.host || "myrtle.moe";
+    const baseUrl = `${protocol}://${host}`;
 
     try {
         const { env } = await import("~/env");
@@ -96,6 +110,7 @@ export const getServerSideProps: GetServerSideProps<UserPageProps> = async (cont
                     props: {
                         userData: null,
                         userId: id,
+                        baseUrl,
                         error: "User not found",
                     },
                 };
@@ -106,6 +121,7 @@ export const getServerSideProps: GetServerSideProps<UserPageProps> = async (cont
                 props: {
                     userData: null,
                     userId: id,
+                    baseUrl,
                     error: "Failed to fetch user data",
                 },
             };
@@ -118,6 +134,7 @@ export const getServerSideProps: GetServerSideProps<UserPageProps> = async (cont
                 props: {
                     userData: null,
                     userId: id,
+                    baseUrl,
                     error: "Invalid user data received",
                 },
             };
@@ -127,6 +144,7 @@ export const getServerSideProps: GetServerSideProps<UserPageProps> = async (cont
             props: {
                 userData,
                 userId: id,
+                baseUrl,
             },
         };
     } catch (error) {
@@ -135,6 +153,7 @@ export const getServerSideProps: GetServerSideProps<UserPageProps> = async (cont
             props: {
                 userData: null,
                 userId: id,
+                baseUrl,
                 error: error instanceof Error ? error.message : "Failed to fetch user data",
             },
         };
