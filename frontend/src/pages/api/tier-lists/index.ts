@@ -35,12 +35,12 @@ interface ApiErrorResponse {
 type ApiResponse = ApiSuccessResponse | ApiErrorResponse;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
-    const backendUrl = env.BACKEND_URL;
+    const backendURL = env.BACKEND_URL;
 
     try {
         if (req.method === "GET") {
             // GET /tier-lists - List all tier lists (public)
-            const response = await fetch(`${backendUrl}/tier-lists`, {
+            const response = await fetch(`${backendURL}/tier-lists`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -83,7 +83,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
                 });
             }
 
-            const response = await fetch(`${backendUrl}/tier-lists`, {
+            const response = await fetch(`${backendURL}/tier-lists`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

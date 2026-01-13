@@ -3,7 +3,7 @@ import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/shadcn/avatar";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "~/components/ui/shadcn/hover-card";
 import type { SearchResultEntry } from "~/types/api";
-import { getAvatarUrl } from "../../leaderboard/impl/constants";
+import { getAvatarURL } from "../../leaderboard/impl/constants";
 import { GradeBadge } from "../../leaderboard/impl/grade-badge";
 import { HOVER_DELAY } from "./constants";
 import { formatAccountAge, formatRelativeTime, formatSecretaryName, getStatusData } from "./helpers";
@@ -24,7 +24,7 @@ export function UserHoverCard({ result, children, side = "top" }: UserHoverCardP
 
     const secretaryDisplay = formatSecretaryName(secretary);
     const accountAge = formatAccountAge(registerTs);
-    const secretaryAvatarUrl = secretary ? getAvatarUrl(secretary) : null;
+    const secretaryAvatarURL = secretary ? getAvatarURL(secretary) : null;
 
     return (
         <HoverCard closeDelay={50} openDelay={HOVER_DELAY}>
@@ -33,7 +33,7 @@ export function UserHoverCard({ result, children, side = "top" }: UserHoverCardP
                 <div className="flex items-start gap-4">
                     {/* Avatar */}
                     <Avatar className="h-16 w-16 shrink-0 border border-border">
-                        <AvatarImage alt={result.nickname} src={getAvatarUrl(result.avatarId) || "/placeholder.svg"} />
+                        <AvatarImage alt={result.nickname} src={getAvatarURL(result.avatarId) || "/placeholder.svg"} />
                         <AvatarFallback className="text-lg">{result.nickname.slice(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
 
@@ -59,9 +59,9 @@ export function UserHoverCard({ result, children, side = "top" }: UserHoverCardP
                     {/* Secretary/Assistant */}
                     {secretaryDisplay && (
                         <div className="flex items-center gap-2 text-sm">
-                            {secretaryAvatarUrl ? (
+                            {secretaryAvatarURL ? (
                                 <div className="relative h-5 w-5 shrink-0 overflow-hidden rounded">
-                                    <Image alt={secretaryDisplay} className="object-cover" fill sizes="20px" src={secretaryAvatarUrl} />
+                                    <Image alt={secretaryDisplay} className="object-cover" fill sizes="20px" src={secretaryAvatarURL} />
                                 </div>
                             ) : (
                                 <User className="h-4 w-4 shrink-0 text-muted-foreground" />

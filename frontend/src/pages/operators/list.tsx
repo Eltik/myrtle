@@ -1,6 +1,6 @@
 import type { NextPage } from "next";
-import Head from "next/head";
 import { OperatorsList } from "~/components/operators/list/operators-list";
+import { SEO } from "~/components/seo";
 import { env } from "~/env";
 import type { Operator } from "~/types/api";
 import type { OperatorFromList } from "~/types/api/operators";
@@ -8,10 +8,7 @@ import type { OperatorFromList } from "~/types/api/operators";
 const Operators: NextPage<Props> = ({ data }) => {
     return (
         <>
-            <Head>
-                <title>Operators</title>
-                <meta content="Browse all Arknights operators with detailed stats, skills, and information." name="description" />
-            </Head>
+            <SEO description="Browse all Arknights operators with detailed stats, skills, talents, and information. Filter by class, rarity, and more." keywords={["Arknights operators", "operator list", "operator database", "operator stats"]} path="/operators/list" title="Operators" />
             <OperatorsList data={data} />
         </>
     );

@@ -13,7 +13,7 @@ import { Progress } from "~/components/ui/shadcn/progress";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/shadcn/tooltip";
 import { cn } from "~/lib/utils";
 import type { LeaderboardEntry } from "~/types/api";
-import { GRADE_COLORS, getAvatarUrl, SCORE_CATEGORIES } from "./constants";
+import { GRADE_COLORS, getAvatarURL, SCORE_CATEGORIES } from "./constants";
 import { GradeBadge } from "./grade-badge";
 import { RankBadge } from "./rank-badge";
 
@@ -93,7 +93,7 @@ function DialogContent({ entry, onClose }: { entry: LeaderboardEntry; onClose: (
             <motion.div animate={{ opacity: 1, y: 0 }} className="mb-6" initial={{ opacity: 0, y: -10 }} transition={{ delay: 0.05 }}>
                 <div className="flex items-start gap-4">
                     <Avatar className="h-16 w-16 border-2 border-border">
-                        <AvatarImage alt={entry.nickname} src={getAvatarUrl(entry.avatarId)} />
+                        <AvatarImage alt={entry.nickname} src={getAvatarURL(entry.avatarId)} />
                         <AvatarFallback className="text-lg">{entry.nickname.slice(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">

@@ -3,9 +3,9 @@
 import { ChevronRight, RefreshCw, SettingsIcon, UserX } from "lucide-react";
 import { motion } from "motion/react";
 import type { GetServerSideProps } from "next";
-import Head from "next/head";
 import { useState } from "react";
 import { toast } from "sonner";
+import { SEO } from "~/components/seo";
 import { Disclosure, DisclosureContent, DisclosureTrigger } from "~/components/ui/motion-primitives/disclosure";
 import { Button } from "~/components/ui/shadcn/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/shadcn/card";
@@ -67,10 +67,7 @@ export default function SettingsPage() {
     if (loading) {
         return (
             <>
-                <Head>
-                    <title>Settings - myrtle.moe</title>
-                    <meta content="Manage your profile settings" name="description" />
-                </Head>
+                <SEO description="Manage your myrtle.moe profile settings, privacy preferences, and account options." noIndex path="/settings" title="Settings" />
                 <div className="flex min-h-[50vh] items-center justify-center">
                     <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                 </div>
@@ -81,10 +78,7 @@ export default function SettingsPage() {
     if (!user?.status) {
         return (
             <>
-                <Head>
-                    <title>Settings - myrtle.moe</title>
-                    <meta content="Manage your profile settings" name="description" />
-                </Head>
+                <SEO description="Manage your myrtle.moe profile settings, privacy preferences, and account options." noIndex path="/settings" title="Settings" />
                 <div className="container mx-auto flex min-h-[50vh] items-center justify-center p-4">
                     <Card className="max-w-md">
                         <CardHeader>
@@ -99,10 +93,7 @@ export default function SettingsPage() {
 
     return (
         <>
-            <Head>
-                <title>Settings - myrtle.moe</title>
-                <meta content="Manage your profile settings" name="description" />
-            </Head>
+            <SEO description="Manage your myrtle.moe profile settings, privacy preferences, and account options." noIndex path="/settings" title="Settings" />
 
             <div className="mx-auto max-w-3xl space-y-6">
                 <div className="space-y-2">

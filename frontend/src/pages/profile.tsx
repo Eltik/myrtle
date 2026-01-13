@@ -1,8 +1,8 @@
 "use client";
 
-import Head from "next/head";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
+import { SEO } from "~/components/seo";
 import { useAuth } from "~/hooks/use-auth";
 
 export default function ProfilePage() {
@@ -21,9 +21,7 @@ export default function ProfilePage() {
     if (loading) {
         return (
             <>
-                <Head>
-                    <title>Profile - myrtle.moe</title>
-                </Head>
+                <SEO description="View your Arknights profile on myrtle.moe" noIndex path="/profile" title="Profile" />
                 <div className="container mx-auto flex min-h-[50vh] items-center justify-center p-4">
                     <div className="text-center">
                         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -37,10 +35,7 @@ export default function ProfilePage() {
     if (!user?.status?.uid) {
         return (
             <>
-                <Head>
-                    <title>Profile Not Found - myrtle.moe</title>
-                    <meta content="Profile not found" name="description" />
-                </Head>
+                <SEO description="Profile not found. You need to be logged in to view your profile." noIndex path="/profile" title="Profile Not Found" />
                 <div className="container mx-auto flex min-h-[50vh] items-center justify-center p-4">
                     <div className="text-center">
                         <h1 className="mb-4 font-bold text-4xl">Profile Not Found</h1>
@@ -54,9 +49,7 @@ export default function ProfilePage() {
     // Redirecting state (shouldn't be visible for long)
     return (
         <>
-            <Head>
-                <title>Redirecting... - myrtle.moe</title>
-            </Head>
+            <SEO description="Redirecting to your profile" noIndex path="/profile" title="Redirecting..." />
             <div className="container mx-auto flex min-h-[50vh] items-center justify-center p-4">
                 <div className="text-center">
                     <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />

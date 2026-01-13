@@ -1,7 +1,7 @@
 import type { GetServerSidePropsContext, NextPage } from "next";
-import Head from "next/head";
 import { TierListView } from "~/components/operators/tier-list";
 import { TierListIndex } from "~/components/operators/tier-list/impl/tier-list-index";
+import { SEO } from "~/components/seo";
 import { env } from "~/env";
 import type { Operator } from "~/types/api";
 import type { TierListResponse, TierListVersionSummary } from "~/types/api/impl/tier-list";
@@ -38,10 +38,12 @@ const TierListPage: NextPage<TierListPageProps> = (props) => {
     if (props.mode === "index") {
         return (
             <>
-                <Head>
-                    <title>Tier Lists - Arknights Operator Rankings</title>
-                    <meta content="Browse all Arknights operator tier lists and rankings. Find the best operators for your team." name="description" />
-                </Head>
+                <SEO
+                    description="Browse all Arknights operator tier lists and rankings. Find the best operators for your team with community-curated rankings."
+                    keywords={["tier list", "operator rankings", "best operators", "meta operators"]}
+                    path="/operators/tier-list"
+                    title="Tier Lists - Arknights Operator Rankings"
+                />
                 <TierListIndex tierLists={props.tierLists} />
             </>
         );
@@ -49,10 +51,12 @@ const TierListPage: NextPage<TierListPageProps> = (props) => {
 
     return (
         <>
-            <Head>
-                <title>{props.tierListData.tier_list.name} - Operator Tier List</title>
-                <meta content={props.tierListData.tier_list.description ?? "View operator rankings and tier list"} name="description" />
-            </Head>
+            <SEO
+                description={props.tierListData.tier_list.description ?? "View operator rankings and tier list for Arknights."}
+                keywords={["tier list", props.tierListData.tier_list.name, "operator rankings"]}
+                path={`/operators/tier-list?slug=${props.tierListData.tier_list.slug}`}
+                title={`${props.tierListData.tier_list.name} - Operator Tier List`}
+            />
             <TierListView operatorsData={props.operatorsData} tierListData={props.tierListData} versions={props.versions} />
         </>
     );

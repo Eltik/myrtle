@@ -36,7 +36,7 @@ type ApiResponse = ApiSuccessResponse | ApiErrorResponse;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
     const { slug } = req.query;
-    const backendUrl = env.BACKEND_URL;
+    const backendURL = env.BACKEND_URL;
 
     if (!slug || typeof slug !== "string") {
         return res.status(400).json({
@@ -73,7 +73,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         }
 
         // First, get the current state of the tier list
-        const currentResponse = await fetch(`${backendUrl}/tier-lists/${slug}`, {
+        const currentResponse = await fetch(`${backendURL}/tier-lists/${slug}`, {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
@@ -107,7 +107,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         // Delete tiers that are no longer present
         for (const currentTier of currentTiers) {
             if (!tierIdsToKeep.has(currentTier.id)) {
-                await fetch(`${backendUrl}/tier-lists/${slug}/tiers/${currentTier.id}`, {
+                await fetch(`${backendURL}/tier-lists/${slug}/tiers/${currentTier.id}`, {
                     method: "DELETE",
                     headers: {
                         "Content-Type": "application/json",
@@ -120,7 +120,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         // Create new tiers
         const tierIdMap = new Map<string, string>(); // old temp id -> new real id
         for (const tier of tiersToCreate) {
-            const createResponse = await fetch(`${backendUrl}/tier-lists/${slug}/tiers`, {
+            const createResponse = await fetch(`${backendURL}/tier-lists/${slug}/tiers`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -142,7 +142,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
                 // Add placements to the new tier
                 for (const placement of tier.placements) {
-                    await fetch(`${backendUrl}/tier-lists/${slug}/placements`, {
+                    await fetch(`${backendURL}/tier-lists/${slug}/placements`, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
@@ -176,7 +176,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         // Update existing tiers and collect placement operations
         for (const tier of tiersToUpdate) {
             // Update tier metadata (excluding display_order - handled by reorder endpoint)
-            const tierUpdateResponse = await fetch(`${backendUrl}/tier-lists/${slug}/tiers/${tier.id}`, {
+            const tierUpdateResponse = await fetch(`${backendURL}/tier-lists/${slug}/tiers/${tier.id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -234,7 +234,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         // 1. Move placements to different tiers (must happen first)
         for (const { placementId, newTierId, placement } of placementsToMove) {
             console.log(`Moving placement ${placementId} to tier ${newTierId}`);
-            const moveResponse = await fetch(`${backendUrl}/tier-lists/${slug}/placements/${placementId}/move`, {
+            const moveResponse = await fetch(`${backendURL}/tier-lists/${slug}/placements/${placementId}/move`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -255,7 +255,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         // 2. Create genuinely new placements
         for (const { tierId, placement } of placementsToCreate) {
             console.log(`Creating placement for operator ${placement.operator_id} in tier ${tierId}`);
-            const createResponse = await fetch(`${backendUrl}/tier-lists/${slug}/placements`, {
+            const createResponse = await fetch(`${backendURL}/tier-lists/${slug}/placements`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -277,7 +277,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
         // 3. Update existing placements (sub_order, notes)
         for (const { placementId, placement } of placementsToUpdate) {
-            const updateResponse = await fetch(`${backendUrl}/tier-lists/${slug}/placements/${placementId}`, {
+            const updateResponse = await fetch(`${backendURL}/tier-lists/${slug}/placements/${placementId}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -297,7 +297,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         // 4. Delete removed placements
         for (const placementId of placementsToDelete) {
             console.log(`Deleting placement ${placementId}`);
-            const deleteResponse = await fetch(`${backendUrl}/tier-lists/${slug}/placements/${placementId}`, {
+            const deleteResponse = await fetch(`${backendURL}/tier-lists/${slug}/placements/${placementId}`, {
                 method: "DELETE",
                 headers: {
                     "Content-Type": "application/json",
@@ -316,7 +316,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             display_order: index,
         }));
 
-        await fetch(`${backendUrl}/tier-lists/${slug}/tiers/reorder`, {
+        await fetch(`${backendURL}/tier-lists/${slug}/tiers/reorder`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

@@ -1,5 +1,5 @@
 import type { GetServerSideProps, NextPage } from "next";
-import Head from "next/head";
+import { SEO } from "~/components/seo";
 import type { RandomizerOperator } from "~/components/tools/randomizer";
 import { Randomizer } from "~/components/tools/randomizer";
 import { env } from "~/env";
@@ -22,10 +22,12 @@ interface Props {
 const RandomizerPage: NextPage<Props> = ({ zones, stages, operators }) => {
     return (
         <>
-            <Head>
-                <title>Randomizer | myrtle.moe</title>
-                <meta content="Randomize Arknights stages and operators for challenge runs and squad randomization." name="description" />
-            </Head>
+            <SEO
+                description="Randomize Arknights stages and operators for challenge runs. Create random squad compositions and test your skills with surprise operator selections."
+                keywords={["randomizer", "random squad", "challenge run", "random operators", "random stage"]}
+                path="/tools/randomizer"
+                title="Randomizer"
+            />
             <Randomizer operators={operators} stages={stages} zones={zones} />
         </>
     );

@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { InView } from "~/components/ui/motion-primitives/in-view";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/shadcn/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/shadcn/card";
-import { getSecretaryAvatarUrl } from "~/lib/utils";
+import { getSecretaryAvatarURL } from "~/lib/utils";
 import type { User } from "~/types/api/impl/user";
 import { Stat } from "./impl/stat";
 
@@ -38,7 +38,7 @@ export function UserHeader({ data }: UserHeaderProps) {
                 <CardHeader>
                     <div className="flex items-center space-x-4">
                         <Avatar className="h-20 w-20">
-                            <AvatarImage alt={data.status?.nickName ?? "User"} src={getSecretaryAvatarUrl(data)} />
+                            <AvatarImage alt={data.status?.nickName ?? "User"} src={getSecretaryAvatarURL(data)} />
                             <AvatarFallback>{data.status?.nickName?.slice(0, 1) ?? "E"}</AvatarFallback>
                         </Avatar>
                         <div>

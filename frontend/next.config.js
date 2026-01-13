@@ -33,6 +33,20 @@ const config = {
             },
         ],
     },
+    async redirects() {
+        return [
+            {
+                source: "/discord",
+                destination: "https://discord.gg",
+                permanent: false,
+            },
+            {
+                source: "/github",
+                destination: "https://github.com",
+                permanent: false,
+            },
+        ];
+    },
 };
 
 export default config;

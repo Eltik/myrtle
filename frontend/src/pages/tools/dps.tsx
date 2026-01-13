@@ -1,5 +1,5 @@
 import type { GetServerSideProps, NextPage } from "next";
-import Head from "next/head";
+import { SEO } from "~/components/seo";
 import { DpsCalculator } from "~/components/tools/dps-calculator";
 import { env } from "~/env";
 import type { DpsOperatorListEntry } from "~/types/api/impl/dps-calculator";
@@ -11,10 +11,12 @@ interface Props {
 const DpsCalculatorPage: NextPage<Props> = ({ operators }) => {
     return (
         <>
-            <Head>
-                <title>DPS Calculator | myrtle.moe</title>
-                <meta content="Calculate and compare operator DPS in Arknights. Generate DPS curves against different enemy defense and resistance values." name="description" />
-            </Head>
+            <SEO
+                description="Calculate and compare operator DPS in Arknights with 100% accuracy. Generate DPS curves against different enemy defense and resistance values. Supports 280+ operators."
+                keywords={["DPS calculator", "damage calculator", "operator damage", "DPS comparison", "enemy defense"]}
+                path="/tools/dps"
+                title="DPS Calculator"
+            />
             <DpsCalculator operators={operators} />
         </>
     );

@@ -1,6 +1,6 @@
 "use client";
 
-import { Cog, LogOut, Menu } from "lucide-react";
+import { Cog, ExternalLink, LogOut, Menu } from "lucide-react";
 import Link from "next/link";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "~/components/ui/shadcn/accordion";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/shadcn/avatar";
@@ -54,7 +54,10 @@ export function NavMobile({ pathname, user, loading, logout, mobileMenuOpen, set
                                                     key={dropdownItem.label}
                                                     onClick={() => setMobileMenuOpen(false)}
                                                 >
-                                                    <span className="font-medium text-sm">{dropdownItem.label}</span>
+                                                    <span className="flex items-center gap-1.5 font-medium text-sm">
+                                                        {dropdownItem.label}
+                                                        {dropdownItem.external && <ExternalLink className="h-3 w-3 text-muted-foreground" />}
+                                                    </span>
                                                     <span className="text-muted-foreground text-xs">{dropdownItem.description}</span>
                                                 </Link>
                                             ))}

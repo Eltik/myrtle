@@ -9,7 +9,7 @@ import { Card, CardContent } from "~/components/ui/shadcn/card";
 import { Progress } from "~/components/ui/shadcn/progress";
 import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
 import { Separator } from "~/components/ui/shadcn/separator";
-import { formatProfession, getOperatorImageUrl, getProfessionIconName, getRarityStarCount } from "~/lib/utils";
+import { formatProfession, getOperatorImageURL, getProfessionIconName, getRarityStarCount } from "~/lib/utils";
 import type { CharacterData, CharacterStatic } from "~/types/api/impl/user";
 import { CharacterDialog } from "./impl/character-dialog";
 import { getAttributeStats } from "./impl/helpers";
@@ -77,7 +77,7 @@ export function CharacterCard({ data }: CharacterCardProps) {
 
         return isMaxPotential && isMaxLevel && isMaxSkills;
     })();
-    const operatorImage = getOperatorImageUrl(data.charId, data.skin, data.evolvePhase, data.currentTmpl, data.tmpl as Record<string, { skinId: string }> | null);
+    const operatorImage = getOperatorImageURL(data.charId, data.skin, data.evolvePhase, data.currentTmpl, data.tmpl as Record<string, { skinId: string }> | null);
     const rarityColor = RARITY_COLORS[starCount] ?? "#ffffff";
 
     return (

@@ -32,13 +32,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         const { uid, secret, seqnum, server } = session;
 
         // Call backend /refresh to fetch fresh data from game servers
-        const refreshUrl = new URL("/refresh", env.BACKEND_URL);
-        refreshUrl.searchParams.set("uid", uid);
-        refreshUrl.searchParams.set("secret", secret);
-        refreshUrl.searchParams.set("seqnum", seqnum.toString());
-        refreshUrl.searchParams.set("server", server);
+        const refreshURL = new URL("/refresh", env.BACKEND_URL);
+        refreshURL.searchParams.set("uid", uid);
+        refreshURL.searchParams.set("secret", secret);
+        refreshURL.searchParams.set("seqnum", seqnum.toString());
+        refreshURL.searchParams.set("server", server);
 
-        const refreshResponse = await fetch(refreshUrl.toString(), {
+        const refreshResponse = await fetch(refreshURL.toString(), {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

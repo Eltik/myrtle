@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/shadcn/avat
 import { Badge } from "~/components/ui/shadcn/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/shadcn/tooltip";
 import type { SearchResultEntry } from "~/types/api";
-import { getAvatarUrl } from "../../leaderboard/impl/constants";
+import { getAvatarURL } from "../../leaderboard/impl/constants";
 import { formatAccountAge, formatRegistrationDate, getOperatorCount, getStatusData } from "./helpers";
 import { UserHoverCard } from "./user-hover-card";
 
@@ -24,7 +24,7 @@ export const SearchResultRow = React.memo(function SearchResultRow({ result }: S
         <Link href={`/user/${result.uid}`}>
             <div className="group flex items-center gap-4 rounded-lg border bg-card/50 p-3 transition-all duration-200 hover:border-primary/50 hover:bg-card">
                 <Avatar className="h-12 w-12 shrink-0 border border-border">
-                    <AvatarImage alt={result.nickname} src={getAvatarUrl(result.avatarId) || "/placeholder.svg"} />
+                    <AvatarImage alt={result.nickname} src={getAvatarURL(result.avatarId) || "/placeholder.svg"} />
                     <AvatarFallback className="text-sm">{result.nickname.slice(0, 2).toUpperCase()}</AvatarFallback>
                 </Avatar>
 

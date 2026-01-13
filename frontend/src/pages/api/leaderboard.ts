@@ -9,26 +9,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const { sort_by, order, server, limit, offset } = req.query;
 
-    const backendUrl = new URL("/leaderboard", env.BACKEND_URL);
+    const backendURL = new URL("/leaderboard", env.BACKEND_URL);
 
     if (sort_by && typeof sort_by === "string") {
-        backendUrl.searchParams.set("sort_by", sort_by);
+        backendURL.searchParams.set("sort_by", sort_by);
     }
     if (order && typeof order === "string") {
-        backendUrl.searchParams.set("order", order);
+        backendURL.searchParams.set("order", order);
     }
     if (server && typeof server === "string") {
-        backendUrl.searchParams.set("server", server);
+        backendURL.searchParams.set("server", server);
     }
     if (limit && typeof limit === "string") {
-        backendUrl.searchParams.set("limit", limit);
+        backendURL.searchParams.set("limit", limit);
     }
     if (offset && typeof offset === "string") {
-        backendUrl.searchParams.set("offset", offset);
+        backendURL.searchParams.set("offset", offset);
     }
 
     try {
-        const response = await fetch(backendUrl.toString(), {
+        const response = await fetch(backendURL.toString(), {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",

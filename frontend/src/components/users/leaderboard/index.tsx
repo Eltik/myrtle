@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~
 import { cn } from "~/lib/utils";
 import type { LeaderboardEntry, LeaderboardResponse, SortBy } from "~/types/api";
 import { generatePaginationItems } from "../shared/pagination";
-import { getAvatarUrl, SERVERS, SORT_OPTIONS } from "./impl/constants";
+import { getAvatarURL, SERVERS, SORT_OPTIONS } from "./impl/constants";
 import { GradeBadge } from "./impl/grade-badge";
 import { LeaderboardRowDialog } from "./impl/leaderboard-row-dialog";
 import { RankBadge } from "./impl/rank-badge";
@@ -180,7 +180,7 @@ export function LeaderboardPage({ initialData }: LeaderboardPageProps) {
                                     <TableCell className="py-4">
                                         <div className="flex items-center gap-4">
                                             <Avatar className="h-11 w-11 border border-border">
-                                                <AvatarImage alt={entry.nickname} src={getAvatarUrl(entry.avatarId)} />
+                                                <AvatarImage alt={entry.nickname} src={getAvatarURL(entry.avatarId)} />
                                                 <AvatarFallback className="text-sm">{entry.nickname.slice(0, 2).toUpperCase()}</AvatarFallback>
                                             </Avatar>
                                             <div className="min-w-0">
