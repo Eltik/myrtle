@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
-import { env } from "~/env";
+import { backendFetch } from "~/lib/backend-fetch";
 
 // Valid Arknights server regions
 const AKServerSchema = z.enum(["en", "jp", "kr", "cn", "bili", "tw"]);
@@ -51,16 +51,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         const { email, server }: SendCodeInput = parseResult.data;
 
         // Build backend URL with properly encoded parameters
-        const backendURL = new URL("/send-code", env.BACKEND_URL);
-        backendURL.searchParams.set("email", email);
-        backendURL.searchParams.set("server", server);
+        const params = new URLSearchParams();
+        params.set("email", email);
+        params.set("server", server);
 
         // Call backend to send verification code
-        const sendCodeResponse = await fetch(backendURL.toString(), {
+        const sendCodeResponse = await backendFetch(`/send-code?${params.toString()}`, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
         });
 
         if (!sendCodeResponse.ok) {

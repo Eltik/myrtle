@@ -182,7 +182,7 @@ fn create_router(state: AppState) -> Router {
         // Admin routes
         .route("/admin/stats", get(admin::stats::get_stats))
         .layer(middleware::from_fn_with_state(
-            rate_store.clone(),
+            (rate_store.clone(), state.clone()),
             rate_limit,
         ))
         .with_state(state)
@@ -269,6 +269,7 @@ pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
     events.emit(ConfigEvent::RedisConnected);
 
     let jwt_secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
+    let internal_service_key = std::env::var("INTERNAL_SERVICE_KEY").ok();
 
     // Create app state
     let state = AppState {
@@ -279,6 +280,7 @@ pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
         game_data,
         redis,
         jwt_secret,
+        internal_service_key,
     };
 
     // Start cron jobs

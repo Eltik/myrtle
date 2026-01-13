@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { env } from "~/env";
+import { backendFetch } from "~/lib/backend-fetch";
 import type { TierListVersionDetail } from "~/types/api/impl/tier-list";
 
 interface ApiErrorResponse {
@@ -11,7 +11,6 @@ type ApiResponse = TierListVersionDetail | ApiErrorResponse;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
     const { slug, version } = req.query;
-    const backendURL = env.BACKEND_URL;
 
     if (!slug || typeof slug !== "string") {
         return res.status(400).json({
@@ -36,12 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     try {
-        const response = await fetch(`${backendURL}/tier-lists/${slug}/versions/${version}`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
+        const response = await backendFetch(`/tier-lists/${slug}/versions/${version}`);
 
         if (!response.ok) {
             if (response.status === 404) {

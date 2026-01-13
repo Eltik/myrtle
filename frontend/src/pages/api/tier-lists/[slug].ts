@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { env } from "~/env";
 import { getSiteToken } from "~/lib/auth";
+import { backendFetch } from "~/lib/backend-fetch";
 import type { TierListResponse } from "~/types/api/impl/tier-list";
 
 interface ApiSuccessResponse {
@@ -19,7 +19,6 @@ type ApiResponse = ApiSuccessResponse | ApiErrorResponse | TierListResponse;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
     const { slug } = req.query;
-    const backendURL = env.BACKEND_URL;
 
     if (!slug || typeof slug !== "string") {
         return res.status(400).json({
@@ -33,10 +32,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             // GET /tier-lists/{slug} - Get tier list with all tiers and placements (public)
             // Add cache-busting for admin requests (when _t parameter is present)
             const bustCache = req.query._t !== undefined;
-            const response = await fetch(`${backendURL}/tier-lists/${slug}`, {
+            const response = await backendFetch(`/tier-lists/${slug}`, {
                 method: "GET",
                 headers: {
-                    "Content-Type": "application/json",
                     ...(bustCache && { "Cache-Control": "no-cache, no-store, must-revalidate" }),
                 },
                 cache: bustCache ? "no-store" : undefined,
@@ -106,10 +104,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
             const { name, description, is_active } = req.body;
 
-            const response = await fetch(`${backendURL}/tier-lists/${slug}`, {
+            const response = await backendFetch(`/tier-lists/${slug}`, {
                 method: "PUT",
                 headers: {
-                    "Content-Type": "application/json",
                     Authorization: `Bearer ${siteToken}`,
                 },
                 body: JSON.stringify({
@@ -146,10 +143,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
                 });
             }
 
-            const response = await fetch(`${backendURL}/tier-lists/${slug}`, {
+            const response = await backendFetch(`/tier-lists/${slug}`, {
                 method: "DELETE",
                 headers: {
-                    "Content-Type": "application/json",
                     Authorization: `Bearer ${siteToken}`,
                 },
             });

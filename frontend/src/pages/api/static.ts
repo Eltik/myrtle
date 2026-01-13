@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { unstable_cache } from "next/cache";
 import { env } from "~/env";
+import { backendFetch } from "~/lib/backend-fetch";
 import type { ChibiCharacter } from "~/types/api/impl/chibi";
 import type { Item } from "~/types/api/impl/material";
 import type { Module, ModuleData, Modules } from "~/types/api/impl/module";
@@ -105,15 +106,13 @@ const isDevelopment = env.NODE_ENV === "development";
 
 // Function to fetch data from backend using GET requests
 const fetchWithoutCache = async <T>(endpoint: string): Promise<T> => {
-    const url = `${env.BACKEND_URL}${endpoint}`;
     if (isDevelopment) {
-        console.log(`[DEV MODE] Fetching GET ${url}`);
+        console.log(`[DEV MODE] Fetching GET ${env.BACKEND_URL}${endpoint}`);
     }
 
-    const response = await fetch(url, {
+    const response = await backendFetch(endpoint, {
         method: "GET",
         headers: {
-            "Content-Type": "application/json",
             "Accept-Encoding": "gzip, deflate",
         },
     });

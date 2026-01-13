@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { env } from "~/env";
 import { getSessionFromCookie, setAuthCookies } from "~/lib/auth";
+import { backendFetch } from "~/lib/backend-fetch";
 import type { User } from "~/types/api";
 
 interface BackendRefreshResponse {
@@ -32,17 +32,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         const { uid, secret, seqnum, server } = session;
 
         // Call backend /refresh to fetch fresh data from game servers
-        const refreshURL = new URL("/refresh", env.BACKEND_URL);
-        refreshURL.searchParams.set("uid", uid);
-        refreshURL.searchParams.set("secret", secret);
-        refreshURL.searchParams.set("seqnum", seqnum.toString());
-        refreshURL.searchParams.set("server", server);
+        const params = new URLSearchParams();
+        params.set("uid", uid);
+        params.set("secret", secret);
+        params.set("seqnum", seqnum.toString());
+        params.set("server", server);
 
-        const refreshResponse = await fetch(refreshURL.toString(), {
+        const refreshResponse = await backendFetch(`/refresh?${params.toString()}`, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
         });
 
         if (!refreshResponse.ok) {

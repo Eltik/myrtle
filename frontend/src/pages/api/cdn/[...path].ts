@@ -89,6 +89,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             "Accept-Encoding": (req.headers["accept-encoding"] as string) ?? "",
             "User-Agent": req.headers["user-agent"] ?? "",
             "X-Forwarded-For": (req.headers["x-forwarded-for"] as string) ?? req.socket.remoteAddress ?? "",
+            "X-Internal-Service-Key": env.INTERNAL_SERVICE_KEY,
         };
         // Forward conditional request headers for revalidation
         if (req.headers["if-none-match"]) {

@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { env } from "~/env";
+import { backendFetch } from "~/lib/backend-fetch";
 import type { DpsCalculateRequest, DpsCalculateResponse, DpsListOperatorsResponse } from "~/types/api/impl/dps-calculator";
 
 /**
@@ -19,16 +20,13 @@ const isDevelopment = env.NODE_ENV === "development";
  * Fetch data from the backend
  */
 async function fetchFromBackend<T>(endpoint: string, options?: RequestInit): Promise<T> {
-    const url = `${env.BACKEND_URL}${endpoint}`;
-
     if (isDevelopment) {
-        console.log(`[DPS Calculator] Fetching ${options?.method ?? "GET"} ${url}`);
+        console.log(`[DPS Calculator] Fetching ${options?.method ?? "GET"} ${env.BACKEND_URL}${endpoint}`);
     }
 
-    const response = await fetch(url, {
+    const response = await backendFetch(endpoint, {
         ...options,
         headers: {
-            "Content-Type": "application/json",
             "Accept-Encoding": "gzip, deflate",
             ...options?.headers,
         },

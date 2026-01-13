@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { env } from "~/env";
 import { getSiteToken } from "~/lib/auth";
+import { backendFetch } from "~/lib/backend-fetch";
 
 interface TierListFromBackend {
     id: string;
@@ -35,17 +35,10 @@ interface ApiErrorResponse {
 type ApiResponse = ApiSuccessResponse | ApiErrorResponse;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
-    const backendURL = env.BACKEND_URL;
-
     try {
         if (req.method === "GET") {
             // GET /tier-lists - List all tier lists (public)
-            const response = await fetch(`${backendURL}/tier-lists`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            });
+            const response = await backendFetch("/tier-lists");
 
             if (!response.ok) {
                 const errorText = await response.text();
@@ -83,10 +76,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
                 });
             }
 
-            const response = await fetch(`${backendURL}/tier-lists`, {
+            const response = await backendFetch("/tier-lists", {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
                     Authorization: `Bearer ${siteToken}`,
                 },
                 body: JSON.stringify({
