@@ -60,8 +60,7 @@ function getAvatarUrl(baseUrl: string, charId: string, skinId: string | null): s
         return `${baseUrl}/api/cdn/avatar/${normalizedSkinId}`;
     }
 
-    // Default skin (ends with #1 or _1): Use just charId (matching getSecretaryAvatarURL logic)
-    // The backend avatar endpoint resolves the correct file automatically
+    // Default skin (ends with #1 or _1): Use just charId (backend resolves correct file)
     if (skinId.endsWith("#1") || skinId.endsWith("_1")) {
         return `${baseUrl}/api/cdn/avatar/${charId}`;
     }
