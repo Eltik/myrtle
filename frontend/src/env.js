@@ -9,6 +9,7 @@ export const env = createEnv({
     server: {
         NODE_ENV: z.enum(["development", "test", "production"]),
         BACKEND_URL: z.string(),
+        INTERNAL_SERVICE_KEY: z.string().min(32),
     },
 
     /**
@@ -28,6 +29,7 @@ export const env = createEnv({
         NODE_ENV: process.env.NODE_ENV,
         // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
         BACKEND_URL: process.env.BACKEND_URL,
+        INTERNAL_SERVICE_KEY: process.env.INTERNAL_SERVICE_KEY,
     },
     /**
      * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
-import { env } from "~/env";
 import { AKServerSchema, setAuthCookies } from "~/lib/auth";
+import { backendFetch } from "~/lib/backend-fetch";
 import type { User } from "~/types/api";
 
 // Login request validation schema
@@ -67,16 +67,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         const { email, code, server }: LoginInput = parseResult.data;
 
         // Step 1: Authenticate with backend
-        const loginURL = new URL("/login", env.BACKEND_URL);
-        loginURL.searchParams.set("email", email);
-        loginURL.searchParams.set("code", code.toString());
-        loginURL.searchParams.set("server", server);
+        const loginParams = new URLSearchParams();
+        loginParams.set("email", email);
+        loginParams.set("code", code.toString());
+        loginParams.set("server", server);
 
-        const loginResponse = await fetch(loginURL.toString(), {
+        const loginResponse = await backendFetch(`/login?${loginParams.toString()}`, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
         });
 
         if (!loginResponse.ok) {
@@ -101,17 +98,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         }
 
         // Step 2: Refresh to fetch user data and store in database
-        const refreshURL = new URL("/refresh", env.BACKEND_URL);
-        refreshURL.searchParams.set("uid", backendData.uid);
-        refreshURL.searchParams.set("secret", backendData.secret);
-        refreshURL.searchParams.set("seqnum", backendData.seqnum.toString());
-        refreshURL.searchParams.set("server", server);
+        const refreshParams = new URLSearchParams();
+        refreshParams.set("uid", backendData.uid);
+        refreshParams.set("secret", backendData.secret);
+        refreshParams.set("seqnum", backendData.seqnum.toString());
+        refreshParams.set("server", server);
 
-        const refreshResponse = await fetch(refreshURL.toString(), {
+        const refreshResponse = await backendFetch(`/refresh?${refreshParams.toString()}`, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
         });
 
         if (!refreshResponse.ok) {

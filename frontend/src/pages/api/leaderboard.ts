@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { env } from "~/env";
+import { backendFetch } from "~/lib/backend-fetch";
 import type { LeaderboardResponse } from "~/types/api";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -9,31 +9,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const { sort_by, order, server, limit, offset } = req.query;
 
-    const backendURL = new URL("/leaderboard", env.BACKEND_URL);
+    const params = new URLSearchParams();
 
     if (sort_by && typeof sort_by === "string") {
-        backendURL.searchParams.set("sort_by", sort_by);
+        params.set("sort_by", sort_by);
     }
     if (order && typeof order === "string") {
-        backendURL.searchParams.set("order", order);
+        params.set("order", order);
     }
     if (server && typeof server === "string") {
-        backendURL.searchParams.set("server", server);
+        params.set("server", server);
     }
     if (limit && typeof limit === "string") {
-        backendURL.searchParams.set("limit", limit);
+        params.set("limit", limit);
     }
     if (offset && typeof offset === "string") {
-        backendURL.searchParams.set("offset", offset);
+        params.set("offset", offset);
     }
 
     try {
-        const response = await fetch(backendURL.toString(), {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
+        const response = await backendFetch(`/leaderboard?${params.toString()}`);
 
         if (!response.ok) {
             return res.status(response.status).json({ error: "Failed to fetch leaderboard" });

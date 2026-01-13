@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { env } from "~/env";
 import { clearAuthCookies, getSessionFromCookie } from "~/lib/auth";
+import { backendFetch } from "~/lib/backend-fetch";
 import type { User } from "~/types/api";
 
 interface SuccessResponse {
@@ -37,15 +37,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         const { uid } = session;
 
         // Build backend URL to get user data (no refresh)
-        const backendURL = new URL("/get-user", env.BACKEND_URL);
-        backendURL.searchParams.set("uid", uid);
-
-        const userResponse = await fetch(backendURL.toString(), {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
+        const userResponse = await backendFetch(`/get-user?uid=${encodeURIComponent(uid)}`);
 
         if (!userResponse.ok) {
             const errorText = await userResponse.text();

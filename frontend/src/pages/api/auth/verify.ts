@@ -1,6 +1,6 @@
 import { parse } from "cookie";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { env } from "~/env";
+import { backendFetch } from "~/lib/backend-fetch";
 
 interface VerifyResponse {
     valid: boolean;
@@ -36,10 +36,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         }
 
         // Call backend to verify token
-        const verifyURL = new URL("/auth/verify", env.BACKEND_URL);
-        const verifyResponse = await fetch(verifyURL.toString(), {
+        const verifyResponse = await backendFetch("/auth/verify", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ token: siteToken }),
         });
 

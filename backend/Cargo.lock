@@ -171,6 +171,7 @@ dependencies = [
  "serde_repr",
  "sha1",
  "sqlx",
+ "subtle",
  "tokio",
  "tokio-util",
  "tower-http",

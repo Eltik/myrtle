@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { env } from "~/env";
+import { backendFetch } from "~/lib/backend-fetch";
 import { buildSearchParamsFromQuery } from "~/lib/search-utils";
 import type { SearchResponse } from "~/types/api";
 
@@ -9,16 +9,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const searchParams = buildSearchParamsFromQuery(req.query);
-    const backendURL = new URL("/search", env.BACKEND_URL);
-    backendURL.search = searchParams.toString();
 
     try {
-        const response = await fetch(backendURL.toString(), {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
+        const response = await backendFetch(`/search?${searchParams.toString()}`);
 
         if (!response.ok) {
             return res.status(response.status).json({ error: "Failed to fetch search results" });

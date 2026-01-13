@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
-import { env } from "~/env";
 import { getSessionFromCookie, getSiteToken } from "~/lib/auth";
+import { backendFetch } from "~/lib/backend-fetch";
 
 const UpdateVisibilitySchema = z.object({
     publicProfile: z.boolean(),
@@ -44,13 +44,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             publicProfile,
         };
 
-        const updateURL = new URL("/auth/update-settings", env.BACKEND_URL);
-
-        const updateResponse = await fetch(updateURL.toString(), {
+        const updateResponse = await backendFetch("/auth/update-settings", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
             body: JSON.stringify({
                 token,
                 settings,

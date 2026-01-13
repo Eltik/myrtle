@@ -206,7 +206,10 @@ export default async function handler(req: NextRequest) {
     try {
         const backendUrl = process.env.BACKEND_URL;
         const response = await fetch(`${backendUrl}/get-user?uid=${userId}`, {
-            headers: { "Content-Type": "application/json" },
+            headers: {
+                "Content-Type": "application/json",
+                "X-Internal-Service-Key": process.env.INTERNAL_SERVICE_KEY ?? "",
+            },
         });
 
         if (!response.ok) {

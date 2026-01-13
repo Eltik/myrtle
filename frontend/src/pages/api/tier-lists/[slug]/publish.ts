@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { env } from "~/env";
 import { getSiteToken } from "~/lib/auth";
+import { backendFetch } from "~/lib/backend-fetch";
 import type { TierListVersionSummary } from "~/types/api/impl/tier-list";
 
 interface PublishSuccessResponse {
@@ -17,7 +17,6 @@ type ApiResponse = PublishSuccessResponse | PublishErrorResponse;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
     const { slug } = req.query;
-    const backendURL = env.BACKEND_URL;
 
     if (!slug || typeof slug !== "string") {
         return res.status(400).json({
@@ -54,10 +53,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             });
         }
 
-        const response = await fetch(`${backendURL}/tier-lists/${slug}/publish`, {
+        const response = await backendFetch(`/tier-lists/${slug}/publish`, {
             method: "POST",
             headers: {
-                "Content-Type": "application/json",
                 Authorization: `Bearer ${siteToken}`,
             },
             body: JSON.stringify({
