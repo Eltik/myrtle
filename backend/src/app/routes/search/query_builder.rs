@@ -128,6 +128,15 @@ impl SearchQueryBuilder {
         self.offset = offset.max(0);
     }
 
+    /// Add privacy filter to exclude users with publicProfile set to false
+    /// Users with no publicProfile setting (default) are treated as public
+    pub fn add_privacy_filter(&mut self) {
+        self.conditions.push(FilterCondition {
+            sql: "(settings->>'publicProfile' IS NULL OR (settings->>'publicProfile')::BOOLEAN = true)".to_string(),
+            params: vec![],
+        });
+    }
+
     /// Check if any conditions have been added
     pub fn has_conditions(&self) -> bool {
         !self.conditions.is_empty()
