@@ -193,6 +193,7 @@ impl User {
             WHERE score IS NOT NULL
               AND score != 'null'::jsonb
               AND ($1::VARCHAR IS NULL OR server = $1)
+              AND (settings->>'publicProfile' IS NULL OR (settings->>'publicProfile')::BOOLEAN = true)
             ORDER BY {} {} NULLS LAST
             LIMIT $2 OFFSET $3
             "#,
@@ -222,6 +223,7 @@ impl User {
             WHERE score IS NOT NULL
               AND score != 'null'::jsonb
               AND ($1::VARCHAR IS NULL OR server = $1)
+              AND (settings->>'publicProfile' IS NULL OR (settings->>'publicProfile')::BOOLEAN = true)
             "#,
         )
         .bind(server)

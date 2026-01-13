@@ -45,6 +45,7 @@ pub async fn search_users(
 
     // Build search query
     let mut builder = SearchQueryBuilder::new(params.logic);
+    builder.add_privacy_filter(); // Filter out users with publicProfile: false
     let filters_applied = apply_filters(&mut builder, &params)?;
 
     builder.set_sort(params.sort_by.to_sql_expression(), order);
