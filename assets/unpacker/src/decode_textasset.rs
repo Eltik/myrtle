@@ -1,5 +1,6 @@
 use aes::Aes128;
 use anyhow::{Context, Result};
+use base64::Engine;
 use cbc::cipher::{BlockDecryptMut, KeyIvInit};
 use indicatif::{ProgressBar, ProgressStyle};
 use rayon::prelude::*;
@@ -101,23 +102,57 @@ fn is_up_to_date(input: &Path, output: &Path) -> bool {
     output_time >= input_time
 }
 
-/// Strip hash suffix from filename (6 hex chars at the end)
+/// Strip hash suffix from filename (6 hex chars before extension or at end)
 fn strip_hash_suffix(filename: &str) -> String {
-    let hash_suffix_re = Regex::new(r"[a-f0-9]{6}$").unwrap();
-    hash_suffix_re.replace(filename, "").to_string()
+    // Handle filenames with extensions: "activity_table2333c8.txt" -> "activity_table.txt"
+    // Also handle without extensions: "activity_table2333c8" -> "activity_table"
+    let hash_suffix_re = Regex::new(r"[a-f0-9]{6}(\.[^.]+)?$").unwrap();
+    if let Some(caps) = hash_suffix_re.captures(filename) {
+        // If there's an extension, preserve it
+        if let Some(ext) = caps.get(1) {
+            let without_hash = &filename[..filename.len() - caps[0].len()];
+            return format!("{}{}", without_hash, ext.as_str());
+        }
+    }
+    // No extension case - just strip the hash
+    let simple_re = Regex::new(r"[a-f0-9]{6}$").unwrap();
+    simple_re.replace(filename, "").to_string()
 }
 
 /// Get output path for a file, using manifest if available
 fn get_output_path(filename: &str, destdir: &Path, manifest: Option<&ResourceManifest>) -> PathBuf {
     if let Some(m) = manifest {
+        // Try with full filename first
         if let Some(path) = m.get_output_path(filename) {
-            // Use manifest path with .json extension
             return destdir.join(format!("{}.json", path));
+        }
+        // Try without extension (manifest might store names without .txt)
+        if let Some(stem) = filename.strip_suffix(".txt") {
+            if let Some(path) = m.get_output_path(stem) {
+                return destdir.join(format!("{}.json", path));
+            }
         }
     }
     // Fallback: strip hash suffix and output directly to destdir
     let clean_name = strip_hash_suffix(filename);
+    // Remove .txt extension for cleaner output names
+    let clean_name = clean_name.strip_suffix(".txt").unwrap_or(&clean_name);
     destdir.join(format!("{}.json", clean_name))
+}
+
+/// Decode base64-prefixed data if present
+fn decode_base64_if_prefixed(data: &[u8]) -> Option<Vec<u8>> {
+    const BASE64_PREFIX: &[u8] = b"base64:";
+
+    if data.starts_with(BASE64_PREFIX) {
+        let b64_data = &data[BASE64_PREFIX.len()..];
+        // Try to decode as base64
+        base64::engine::general_purpose::STANDARD
+            .decode(b64_data)
+            .ok()
+    } else {
+        None
+    }
 }
 
 /// Process a single text asset file
@@ -126,8 +161,7 @@ fn text_asset_resolve(
     destdir: &Path,
     manifest: Option<&ResourceManifest>,
 ) -> Result<bool> {
-    // Skip if not a binary file
-    if !fp.is_file() || !is_binary_file(fp) {
+    if !fp.is_file() {
         return Ok(false);
     }
 
@@ -140,7 +174,18 @@ fn text_asset_resolve(
         return Ok(false);
     }
 
-    let data = std::fs::read(fp)?;
+    let raw_data = std::fs::read(fp)?;
+
+    // Check if it's base64-encoded (starts with "base64:")
+    let data = if let Some(decoded) = decode_base64_if_prefixed(&raw_data) {
+        log::debug!("Decoded base64 data from {:?}", fp);
+        decoded
+    } else if is_binary_file(fp) {
+        raw_data
+    } else {
+        // Not binary and not base64-prefixed, skip
+        return Ok(false);
+    };
 
     // Try FlatBuffer decoding first (skip 128-byte RSA signature)
     if data.len() > 128 {
