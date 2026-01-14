@@ -576,6 +576,12 @@ fn is_raw_encrypted_file(path: &Path) -> bool {
 /// Prefers files with actual dialogue content over summaries.
 /// For story files, full dialogue scripts contain [Dialog] or [name= markers.
 fn should_overwrite(source: &Path, dest: &Path) -> bool {
+    // NEVER overwrite decoded .json files with raw source files
+    // The decode step produces .json files which should be preserved
+    if dest.extension().and_then(|e| e.to_str()) == Some("json") {
+        return false;
+    }
+
     // For non-text files, always overwrite
     let ext = source.extension().and_then(|e| e.to_str()).unwrap_or("");
     if ext != "txt"
