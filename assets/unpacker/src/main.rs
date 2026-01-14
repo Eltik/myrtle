@@ -95,7 +95,7 @@ enum Commands {
         manifest: Option<PathBuf>,
 
         /// Also reorganize plain text files (story, etc.) to proper paths
-        #[arg(long, default_value = "true")]
+        #[arg(long)]
         reorganize: bool,
     },
 
