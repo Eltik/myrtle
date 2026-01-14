@@ -10,9 +10,12 @@ fn get_voice_dir(lang: &LangType) -> &'static str {
         LangType::En => "voice_en",
         LangType::Kr => "voice_kr",
         // Custom languages
-        LangType::CnTopolect | LangType::Ger | LangType::Ita | LangType::Rus | LangType::Fre => {
-            "voice_custom"
-        }
+        LangType::CnTopolect
+        | LangType::Ger
+        | LangType::Ita
+        | LangType::Rus
+        | LangType::Fre
+        | LangType::Spa => "voice_custom",
         LangType::Linkage => "voice", // fallback
     }
 }
@@ -33,6 +36,7 @@ fn appended_custom(lang: &LangType) -> &'static str {
         LangType::Rus => "_rus",
         LangType::CnTopolect => "_cn_topolect",
         LangType::Fre => "_fre",
+        LangType::Spa => "_spa",
         _ => "",
     }
 }

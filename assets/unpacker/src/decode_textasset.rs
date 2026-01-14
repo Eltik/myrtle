@@ -61,26 +61,26 @@ pub fn aes_cbc_decrypt(data: &[u8], mask: &[u8; 32], has_rsa: bool) -> Result<Ve
     Ok(decrypted)
 }
 
-/// Decode an encrypted Arknights file to JSON
-pub fn decode_aes_file(path: &Path) -> Result<serde_json::Value> {
-    let data = std::fs::read(path).with_context(|| format!("Failed to read file: {:?}", path))?;
-
-    let decrypted = aes_cbc_decrypt(&data, MASK_V2, true)?;
+/// Decode AES encrypted data to JSON (from bytes)
+pub fn decode_aes_data(data: &[u8]) -> Result<serde_json::Value> {
+    let decrypted = aes_cbc_decrypt(data, MASK_V2, true)?;
 
     // Try JSON first
     match serde_json::from_slice(&decrypted) {
-        Ok(json) => {
-            log::debug!("Decoded JSON from {:?}", path);
-            Ok(json)
-        }
+        Ok(json) => Ok(json),
         Err(_) => {
             // Try BSON
             let doc: bson::Document = bson::Document::from_reader(Cursor::new(&decrypted))
-                .with_context(|| format!("Failed to decode as JSON or BSON: {:?}", path))?;
-            log::debug!("Decoded BSON from {:?}", path);
+                .with_context(|| "Failed to decode as JSON or BSON")?;
             Ok(serde_json::to_value(doc)?)
         }
     }
+}
+
+/// Decode an encrypted Arknights file to JSON
+pub fn decode_aes_file(path: &Path) -> Result<serde_json::Value> {
+    let data = std::fs::read(path).with_context(|| format!("Failed to read file: {:?}", path))?;
+    decode_aes_data(&data)
 }
 
 /// Check if output file is up-to-date (newer than input)
@@ -211,8 +211,8 @@ fn text_asset_resolve(
         }
     }
 
-    // Try AES decryption
-    match decode_aes_file(fp) {
+    // Try AES decryption on the (possibly base64-decoded) data
+    match decode_aes_data(&data) {
         Ok(json) => {
             let json_str = serde_json::to_string_pretty(&json)?;
 
