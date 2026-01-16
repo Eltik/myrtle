@@ -2,6 +2,10 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
+// Re-export S3 types for CLI use
+use assets_unpacker::s3_bridge::{ExtractOptions, S3Config, S3Workflow};
+use assets_unpacker::s3_manifest::TrackedS3Workflow;
+
 #[derive(Parser)]
 #[command(name = "assets-unpacker")]
 #[command(version = "0.1.0")]
@@ -145,6 +149,92 @@ enum Commands {
         /// Path to resource manifest (.idx file)
         #[arg(short, long)]
         manifest: Option<PathBuf>,
+    },
+
+    /// Extract assets from S3-compatible storage
+    ///
+    /// Downloads asset bundles from S3, processes them locally, and uploads
+    /// extracted assets back to S3. Uses environment variables for configuration:
+    ///
+    /// S3_ENDPOINT, S3_INPUT_BUCKET, S3_OUTPUT_BUCKET, S3_REGION,
+    /// S3_ACCESS_KEY, S3_SECRET_KEY, S3_PATH_STYLE
+    S3Extract {
+        /// Prefix filter for input files (e.g., "assets/" to only process files in assets/)
+        #[arg(short = 'p', long)]
+        input_prefix: Option<String>,
+
+        /// Output prefix for extracted assets (e.g., "extracted/")
+        #[arg(short, long, default_value = "")]
+        output_prefix: String,
+
+        /// Extract images
+        #[arg(long, default_value = "true")]
+        image: bool,
+
+        /// Extract text assets
+        #[arg(long, default_value = "true")]
+        text: bool,
+
+        /// Extract audio
+        #[arg(long, default_value = "true")]
+        audio: bool,
+
+        /// Extract Spine models
+        #[arg(long, default_value = "true")]
+        spine: bool,
+
+        /// Merge alpha textures into RGBA
+        #[arg(long, default_value = "false")]
+        merge_alpha: bool,
+
+        /// Group by source file
+        #[arg(long, default_value = "true")]
+        group: bool,
+
+        /// Force re-extraction even if already processed
+        #[arg(long, default_value = "false")]
+        force: bool,
+
+        /// Number of concurrent S3 uploads (default: 4)
+        #[arg(short = 'c', long, default_value = "4")]
+        concurrency: usize,
+    },
+
+    /// List asset bundles in S3 input bucket
+    S3List {
+        /// Prefix filter for listing
+        #[arg(short = 'p', long)]
+        prefix: Option<String>,
+
+        /// Show manifest statistics
+        #[arg(long)]
+        stats: bool,
+    },
+
+    /// Download files from S3 to local directory
+    S3Download {
+        /// S3 key or prefix to download
+        #[arg(short, long)]
+        key: String,
+
+        /// Local output directory
+        #[arg(short, long)]
+        output: PathBuf,
+    },
+
+    /// Upload local directory to S3
+    S3Upload {
+        /// Local input directory
+        #[arg(short, long)]
+        input: PathBuf,
+
+        /// S3 output prefix
+        #[arg(short = 'p', long, default_value = "")]
+        prefix: String,
+
+        /// Number of concurrent uploads
+        #[arg(short = 'c', long, default_value = "4")]
+        concurrency: usize,
     },
 }
 
@@ -292,6 +382,180 @@ fn main() -> Result<()> {
             manifest,
         } => {
             assets_unpacker::reorganize::main(&input, output.as_deref(), manifest.as_deref())?;
+        }
+
+        // S3 Commands
+        Commands::S3Extract {
+            input_prefix,
+            output_prefix,
+            image,
+            text,
+            audio,
+            spine,
+            merge_alpha,
+            group,
+            force,
+            concurrency,
+        } => {
+            let rt = tokio::runtime::Runtime::new()?;
+            rt.block_on(async {
+                let config = S3Config::from_env()?;
+                let client = assets_unpacker::s3_bridge::S3Client::new(config)?;
+
+                let mut workflow = TrackedS3Workflow::new(client, concurrency, None).await?;
+
+                // List all asset bundles
+                let bundles = workflow
+                    .workflow()
+                    .list_input_bundles(input_prefix.as_deref())
+                    .await?;
+
+                println!("Found {} asset bundles to process", bundles.len());
+
+                if bundles.is_empty() {
+                    return Ok::<_, anyhow::Error>(());
+                }
+
+                let options = ExtractOptions {
+                    extract_images: image,
+                    extract_text: text,
+                    extract_audio: audio,
+                    extract_spine: spine,
+                    merge_alpha,
+                    group_by_source: group,
+                    force,
+                    concurrency,
+                };
+
+                // Process with tracking
+                let stats = workflow
+                    .process_with_tracking(
+                        &bundles,
+                        &output_prefix,
+                        force,
+                        |input_path, output_path| {
+                            // Call the existing extraction logic
+                            assets_unpacker::resolve_ab::main(
+                                input_path,
+                                output_path,
+                                false, // delete
+                                options.extract_images,
+                                options.extract_text,
+                                options.extract_audio,
+                                options.extract_spine,
+                                options.merge_alpha,
+                                options.group_by_source,
+                                options.force,
+                                1, // threads (sequential for S3 workflow)
+                                0, // skip_large_mb
+                            )?;
+
+                            // Count output files as assets
+                            let count = walkdir::WalkDir::new(output_path)
+                                .into_iter()
+                                .filter_map(|e| e.ok())
+                                .filter(|e| e.file_type().is_file())
+                                .count();
+
+                            Ok(count)
+                        },
+                    )
+                    .await?;
+
+                println!("\nExtraction complete: {}", stats);
+                workflow.print_stats();
+
+                Ok(())
+            })?;
+        }
+
+        Commands::S3List { prefix, stats } => {
+            let rt = tokio::runtime::Runtime::new()?;
+            rt.block_on(async {
+                let config = S3Config::from_env()?;
+                let client = assets_unpacker::s3_bridge::S3Client::new(config)?;
+
+                // List asset bundles
+                let workflow = S3Workflow::new(client, 1);
+                let bundles = workflow.list_input_bundles(prefix.as_deref()).await?;
+
+                println!("Asset bundles in input bucket:");
+                for bundle in &bundles {
+                    println!("  {}", bundle);
+                }
+                println!("\nTotal: {} files", bundles.len());
+
+                // Show manifest stats if requested
+                if stats {
+                    let manifest = assets_unpacker::s3_manifest::S3Manifest::load(
+                        workflow.client(),
+                        None,
+                    )
+                    .await?;
+                    println!("\n{}", manifest.stats());
+                }
+
+                Ok::<_, anyhow::Error>(())
+            })?;
+        }
+
+        Commands::S3Download { key, output } => {
+            let rt = tokio::runtime::Runtime::new()?;
+            rt.block_on(async {
+                let config = S3Config::from_env()?;
+                let client = assets_unpacker::s3_bridge::S3Client::new(config)?;
+
+                std::fs::create_dir_all(&output)?;
+
+                // Check if it's a single file or a prefix
+                let keys = client.list_input_objects(Some(&key)).await?;
+
+                if keys.is_empty() {
+                    // Try as exact key
+                    let local_path = output.join(
+                        std::path::Path::new(&key)
+                            .file_name()
+                            .unwrap_or_else(|| std::ffi::OsStr::new("file")),
+                    );
+                    println!("Downloading: {} -> {}", key, local_path.display());
+                    client.download_file(&key, &local_path).await?;
+                } else {
+                    // Download all matching files
+                    println!("Downloading {} files...", keys.len());
+                    for k in &keys {
+                        let relative = k.strip_prefix(&key).unwrap_or(k);
+                        let local_path = output.join(relative);
+                        println!("  {} -> {}", k, local_path.display());
+                        client.download_file(k, &local_path).await?;
+                    }
+                }
+
+                println!("Download complete.");
+                Ok::<_, anyhow::Error>(())
+            })?;
+        }
+
+        Commands::S3Upload {
+            input,
+            prefix,
+            concurrency,
+        } => {
+            let rt = tokio::runtime::Runtime::new()?;
+            rt.block_on(async {
+                let config = S3Config::from_env()?;
+                let client = assets_unpacker::s3_bridge::S3Client::new(config)?;
+
+                let batch_ops = assets_unpacker::s3_bridge::S3BatchOperations::new(
+                    std::sync::Arc::new(client),
+                    concurrency,
+                );
+
+                println!("Uploading {} to S3 prefix '{}'...", input.display(), prefix);
+                let stats = batch_ops.upload_directory(&input, &prefix).await?;
+
+                println!("Upload complete: {}", stats);
+                Ok::<_, anyhow::Error>(())
+            })?;
         }
     }
 

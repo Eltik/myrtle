@@ -6,3 +6,7 @@
 
 pub mod downloader;
 pub mod utils;
+
+// S3-compatible storage support
+pub mod s3_bridge;
+pub mod s3_manifest;

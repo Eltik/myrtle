@@ -53,6 +53,7 @@ A high-performance Rust backend for the Myrtle.moe Arknights companion applicati
 | Static Data API | Operators, skills, modules, materials, skins, and more |
 | Tier List Management | Create, edit, and version community tier lists |
 | Asset CDN | Serve avatars, portraits, and game assets |
+| S3 Storage | Optional S3-compatible storage for assets (MinIO, R2, B2, AWS) |
 | Redis Caching | Response caching with ETag support |
 | Rate Limiting | Per-IP, per-endpoint rate limiting |
 | Auto-Reload | Hourly configuration refresh from game servers |
@@ -218,6 +219,26 @@ cargo run --bin backend --release
 | `JWT_SECRET` | Yes | - | Secret key for JWT token signing and verification |
 | `INTERNAL_SERVICE_KEY` | No | - | Secret key to bypass rate limiting (for internal services like frontend API routes) |
 
+### S3-Compatible Storage (Optional)
+
+The backend supports serving assets from S3-compatible storage services (MinIO, Cloudflare R2, Backblaze B2, AWS S3, etc.) in addition to or instead of the local filesystem.
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `ASSET_MODE` | No | `local` | Asset serving mode: `local`, `s3`, or `hybrid` |
+| `S3_ENDPOINT` | If S3 | - | S3-compatible endpoint URL |
+| `S3_BUCKET` | If S3 | - | Bucket name for assets |
+| `S3_REGION` | No | `us-east-1` | Region name |
+| `S3_ACCESS_KEY` | If S3 | - | Access key ID |
+| `S3_SECRET_KEY` | If S3 | - | Secret access key |
+| `S3_PATH_STYLE` | No | `true` | Use path-style URLs (required for MinIO/R2/B2) |
+| `S3_PREFIX` | No | - | Optional key prefix for all assets |
+
+**Asset Modes:**
+- `local` - Serve assets from local filesystem only (default)
+- `s3` - Serve assets from S3 only
+- `hybrid` - Try local first, fall back to S3 if not found
+
 ### Example .env
 
 ```bash
@@ -237,6 +258,16 @@ JWT_SECRET=your-secret-key-at-least-32-characters-long
 # Optional: Internal service key for rate limit bypass (min 32 chars)
 # Generate with: openssl rand -base64 32
 INTERNAL_SERVICE_KEY=your-internal-service-key-here
+
+# Optional: S3-compatible storage for assets
+# ASSET_MODE=hybrid
+# S3_ENDPOINT=https://your-account-id.r2.cloudflarestorage.com
+# S3_BUCKET=myrtle-assets
+# S3_REGION=auto
+# S3_ACCESS_KEY=your-access-key
+# S3_SECRET_KEY=your-secret-key
+# S3_PATH_STYLE=true
+# S3_PREFIX=assets/en
 ```
 
 ## Usage
@@ -320,6 +351,10 @@ backend/
 │   │   ├── user/               # User data fetching, formatting & scoring
 │   │   │   └── score/          # Account scoring (operators, stages, roguelike, sandbox, medals, base)
 │   │   ├── local/              # Game data loading & types
+│   │   ├── s3/                 # S3-compatible storage support
+│   │   │   ├── mod.rs          # AssetSource abstraction
+│   │   │   ├── client.rs       # S3 client wrapper
+│   │   │   └── config.rs       # S3 configuration
 │   │   ├── cron/               # Background jobs
 │   │   └── dps_calculator/     # DPS calculations (281 operators)
 │   │       ├── mod.rs

@@ -135,6 +135,12 @@ pub enum ConfigEvent {
         uid: String,
         server: String,
     },
+
+    // Asset source (S3)
+    AssetSourceError(String),
+    AssetSourceS3Enabled {
+        mode: String,
+    },
 }
 
 pub struct EventEmitter {
