@@ -11,6 +11,10 @@ A high-performance Rust implementation for downloading and unpacking Arknights g
   - [Basic Usage](#basic-usage)
   - [Advanced Usage](#advanced-usage)
   - [Version Checking](#version-checking)
+- [S3-Compatible Storage](#s3-compatible-storage)
+  - [S3 Configuration](#s3-configuration)
+  - [S3 Commands](#s3-commands)
+  - [S3 Manifest Tracking](#s3-manifest-tracking)
 - [Command Line Interface](#command-line-interface)
 - [Architecture](#architecture)
 - [Asset Processing](#asset-processing)
@@ -29,7 +33,7 @@ A high-performance Rust implementation for downloading and unpacking Arknights g
 
 | Feature | Description |
 |---------|-------------|
-| Multi-Server Support | Official (Global) and Bilibili (CN) servers |
+| Multi-Server Support | Official (CN), Bilibili (CN), EN (Global), JP, KR, TW servers |
 | Smart Caching | MD5-based duplicate detection and skip |
 | Parallel Processing | Concurrent downloads, unzipping, and unpacking |
 | Asset Conversion | Automatic conversion to usable formats |
@@ -38,6 +42,7 @@ A high-performance Rust implementation for downloading and unpacking Arknights g
 | Progress Tracking | Real-time progress bars and statistics |
 | Selective Download | Interactive package selection |
 | Version Monitoring | Automatic update detection and tracking |
+| S3-Compatible Storage | Direct upload to MinIO, Cloudflare R2, Backblaze B2, AWS S3, etc. |
 | Production Ready | Designed for CI/CD, cron jobs, and automation |
 
 ### Asset Processing Capabilities
@@ -283,30 +288,345 @@ if let Some(version) = ArkAssets::load_version_cache(Servers::OFFICIAL, "./ArkAs
 }
 ```
 
+## S3-Compatible Storage
+
+The downloader supports uploading assets directly to S3-compatible storage services, including MinIO, Cloudflare R2, Backblaze B2, AWS S3, and others. This enables cloud-based asset management, CDN distribution, and serverless workflows.
+
+### S3 Configuration
+
+S3 storage is configured via environment variables:
+
+| Variable | Required | Description | Example |
+|----------|----------|-------------|---------|
+| `S3_ENDPOINT` | Yes | S3-compatible endpoint URL | `https://s3.us-west-2.amazonaws.com` |
+| `S3_BUCKET` | Yes | Bucket name for uploads | `arknights-assets` |
+| `S3_REGION` | No | Region name (default: `us-east-1`) | `us-west-2` |
+| `S3_ACCESS_KEY` | Yes | Access key ID | `AKIAIOSFODNN7EXAMPLE` |
+| `S3_SECRET_KEY` | Yes | Secret access key | `wJalrXUtnFEMI/K7...` |
+| `S3_PATH_STYLE` | No | Use path-style URLs (default: `true`) | `false` |
+
+**Configuration Examples:**
+
+```bash
+# AWS S3
+export S3_ENDPOINT="https://s3.us-west-2.amazonaws.com"
+export S3_BUCKET="arknights-assets"
+export S3_REGION="us-west-2"
+export S3_ACCESS_KEY="your-access-key"
+export S3_SECRET_KEY="your-secret-key"
+export S3_PATH_STYLE="false"
+
+# MinIO (local or self-hosted)
+export S3_ENDPOINT="http://localhost:9000"
+export S3_BUCKET="arknights"
+export S3_REGION="us-east-1"
+export S3_ACCESS_KEY="minioadmin"
+export S3_SECRET_KEY="minioadmin"
+export S3_PATH_STYLE="true"
+
+# Cloudflare R2
+export S3_ENDPOINT="https://your-account-id.r2.cloudflarestorage.com"
+export S3_BUCKET="arknights-assets"
+export S3_REGION="auto"
+export S3_ACCESS_KEY="your-r2-access-key"
+export S3_SECRET_KEY="your-r2-secret-key"
+export S3_PATH_STYLE="true"
+
+# Backblaze B2
+export S3_ENDPOINT="https://s3.us-west-002.backblazeb2.com"
+export S3_BUCKET="arknights-assets"
+export S3_REGION="us-west-002"
+export S3_ACCESS_KEY="your-key-id"
+export S3_SECRET_KEY="your-application-key"
+export S3_PATH_STYLE="true"
+```
+
+### S3 Commands
+
+The downloader provides several S3-related subcommands:
+
+#### `s3-sync` - Sync Local Directory to S3
+
+Upload a local directory to S3 with manifest tracking.
+
+```bash
+# Sync default save directory to S3
+cargo run --release -- s3-sync
+
+# Sync specific directory with prefix
+cargo run --release -- s3-sync --input ./ArkAssets --prefix "en/assets" --concurrency 8
+```
+
+**Options:**
+
+| Option | Short | Default | Description |
+|--------|-------|---------|-------------|
+| `--input` | `-i` | savedir | Local directory to sync |
+| `--prefix` | `-p` | `""` | S3 key prefix for uploads |
+| `--concurrency` | `-c` | `4` | Number of concurrent uploads |
+
+#### `s3-download` - Download and Upload to S3
+
+Download assets from game server and upload directly to S3 in one operation.
+
+```bash
+# Download EN server assets and upload to S3
+cargo run --release -- s3-download --server en --output-prefix "en/assets"
+
+# Download specific packages
+cargo run --release -- s3-download \
+  --server en \
+  --packages "gamedata/excel,arts/characters" \
+  --output-prefix "en/latest" \
+  --concurrency 8
+```
+
+**Options:**
+
+| Option | Short | Default | Description |
+|--------|-------|---------|-------------|
+| `--server` | `-s` | (global) | Server to download from |
+| `--packages` | `-p` | None | Comma-separated packages |
+| `--output-prefix` | `-o` | `""` | S3 key prefix for uploads |
+| `--concurrency` | `-c` | `4` | Number of concurrent S3 uploads |
+| `--threads` | `-t` | (auto) | Download thread count |
+
+#### `s3-list` - List S3 Objects
+
+List files in the S3 bucket.
+
+```bash
+# List all files
+cargo run --release -- s3-list
+
+# List files with prefix filter
+cargo run --release -- s3-list --prefix "en/assets/"
+
+# Show manifest statistics
+cargo run --release -- s3-list --stats
+```
+
+**Options:**
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--prefix` | `-p` | Filter by key prefix |
+| `--stats` | | Show manifest statistics |
+
+#### `s3-upload` - Upload Directory to S3
+
+Simple directory upload without manifest tracking.
+
+```bash
+# Upload a directory
+cargo run --release -- s3-upload --input ./my-assets --prefix "custom/upload"
+```
+
+**Options:**
+
+| Option | Short | Default | Description |
+|--------|-------|---------|-------------|
+| `--input` | `-i` | (required) | Local directory to upload |
+| `--prefix` | `-p` | `""` | S3 key prefix |
+| `--concurrency` | `-c` | `4` | Concurrent uploads |
+
+### S3 Manifest Tracking
+
+The S3 sync operations use a JSON manifest file (`.download_manifest.json`) stored in the S3 bucket to track:
+
+- **File hashes**: MD5 checksums to detect changes
+- **Upload timestamps**: When each file was last synced
+- **Server versions**: Resource and client versions per server
+- **Server attribution**: Which server each file came from
+
+**Manifest Structure:**
+
+```json
+{
+  "version": 1,
+  "last_updated": "2024-02-15T14:30:00Z",
+  "server_versions": {
+    "en": {
+      "res_version": "24-02-09-15-22-33-941721",
+      "client_version": "1.9.51",
+      "synced_at": "2024-02-15T14:30:00Z"
+    }
+  },
+  "entries": {
+    "en/assets/gamedata/excel/character_table.json": {
+      "md5": "abc123...",
+      "size": 1048576,
+      "uploaded_at": "2024-02-15T14:30:00Z",
+      "server": "en"
+    }
+  },
+  "total_files": 12500,
+  "total_bytes": 5368709120
+}
+```
+
+**Benefits:**
+
+- **Incremental syncs**: Only upload changed files
+- **Multi-server support**: Track assets from different servers separately
+- **Audit trail**: Know when and where each file came from
+- **Statistics**: Total file count and size tracking
+
+### S3 Workflow Examples
+
+#### Daily Update Pipeline
+
+```bash
+#!/bin/bash
+# daily-update.sh
+
+set -euo pipefail
+
+# Configure S3
+export S3_ENDPOINT="https://s3.example.com"
+export S3_BUCKET="arknights-cdn"
+export S3_ACCESS_KEY="$AWS_ACCESS_KEY"
+export S3_SECRET_KEY="$AWS_SECRET_KEY"
+
+# Download and sync each server
+for server in en jp kr tw; do
+  echo "Processing $server server..."
+
+  cargo run --release -- s3-download \
+    --server "$server" \
+    --output-prefix "$server/assets" \
+    --concurrency 8
+done
+
+echo "All servers synced!"
+```
+
+#### Docker with S3 Upload
+
+```dockerfile
+FROM rust:1.75-slim as builder
+
+WORKDIR /app
+COPY . .
+RUN cargo build --release
+
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /app/target/release/arknights-downloader /usr/local/bin/
+
+# S3 configuration via environment
+ENV S3_ENDPOINT=""
+ENV S3_BUCKET=""
+ENV S3_ACCESS_KEY=""
+ENV S3_SECRET_KEY=""
+
+CMD ["arknights-downloader", "s3-download", "--server", "en", "--output-prefix", "en/latest"]
+```
+
+```bash
+# Run with S3 credentials
+docker run -e S3_ENDPOINT="..." -e S3_BUCKET="..." \
+  -e S3_ACCESS_KEY="..." -e S3_SECRET_KEY="..." \
+  arknights-downloader
+```
+
+#### Kubernetes CronJob
+
+```yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: arknights-s3-sync
+spec:
+  schedule: "0 */6 * * *"  # Every 6 hours
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: sync
+            image: your-registry/arknights-downloader:latest
+            command:
+            - /usr/local/bin/arknights-downloader
+            - s3-download
+            - --server
+            - en
+            - --output-prefix
+            - en/assets
+            env:
+            - name: S3_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: s3-credentials
+                  key: endpoint
+            - name: S3_BUCKET
+              valueFrom:
+                secretKeyRef:
+                  name: s3-credentials
+                  key: bucket
+            - name: S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s3-credentials
+                  key: access-key
+            - name: S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s3-credentials
+                  key: secret-key
+          restartPolicy: OnFailure
+```
+
 ## Command Line Interface
 
 ### Synopsis
 
 ```bash
-arknights-downloader [OPTIONS]
+arknights-downloader [OPTIONS] [COMMAND]
 ```
 
-### Options
+### Global Options
 
 | Option | Short | Type | Default | Description |
 |--------|-------|------|---------|-------------|
-| `--server` | `-s` | String | `official` | Server to download from (`official` or `bilibili`) |
+| `--server` | `-s` | String | `en` | Server to download from |
 | `--savedir` | `-d` | String | `./ArkAssets` | Directory to save downloaded assets |
 | `--packages` | `-p` | String | None | Comma-separated list of packages to download |
+| `--threads` | `-t` | Number | (auto) | Number of parallel processing threads |
+
+### Server Options
+
+| Server | Aliases | Description |
+|--------|---------|-------------|
+| `en` | `global`, `us` | Global/EN server (Yostar) |
+| `official` | `cn` | CN Official (Hypergryph) |
+| `bilibili` | `bili`, `b` | CN Bilibili |
+| `jp` | `japan` | Japan server (Yostar) |
+| `kr` | `korea` | Korea server (Yostar) |
+| `tw` | `taiwan` | Taiwan server (Gryphline) |
+
+### Commands
+
+| Command | Description |
+|---------|-------------|
+| `download` | Download assets from game server (default) |
+| `s3-sync` | Sync local directory to S3 |
+| `s3-download` | Download assets and upload to S3 |
+| `s3-list` | List files in S3 bucket |
+| `s3-upload` | Upload local directory to S3 |
 
 ### Examples
 
 ```bash
-# Default: Interactive mode, official server
+# Default: Interactive mode, EN server
 cargo run --release
 
-# Bilibili server
-cargo run --release -- --server bilibili
+# Download from different servers
+cargo run --release -- --server en
+cargo run --release -- --server jp
+cargo run --release -- --server official
 
 # Custom save directory
 cargo run --release -- --savedir /data/arknights
@@ -314,11 +634,19 @@ cargo run --release -- --savedir /data/arknights
 # Non-interactive: specific packages
 cargo run --release -- --packages "gamedata/excel,arts/characters"
 
+# Control thread count
+cargo run --release -- --threads 4
+
 # Combination
 cargo run --release -- \
-  --server bilibili \
+  --server jp \
   --savedir /mnt/storage/ark \
-  --packages "gamedata/excel,gamedata/levels"
+  --packages "gamedata/excel,gamedata/levels" \
+  --threads 8
+
+# S3 operations (requires S3 environment variables)
+cargo run --release -- s3-download --server en --output-prefix "en/assets"
+cargo run --release -- s3-list --stats
 ```
 
 ## Architecture
@@ -1236,6 +1564,36 @@ cargo run --release -- --savedir ./ArkAssets
 - Verify write permissions
 - Check `savedir` path is correct
 
+#### S3 "Failed to upload" errors
+
+**Cause:** S3 credentials or endpoint configuration issue.
+
+**Solutions:**
+- Verify all required environment variables are set
+- Check endpoint URL format (include `https://`)
+- Verify bucket exists and is accessible
+- For MinIO/self-hosted: ensure `S3_PATH_STYLE=true`
+- Check access key permissions allow `PutObject`
+
+#### S3 "Connection refused" or timeout
+
+**Cause:** Network or endpoint issue.
+
+**Solutions:**
+- Verify endpoint URL is correct
+- Check firewall rules allow S3 port (443 or custom)
+- For local MinIO: ensure service is running
+- Try with `curl` to test connectivity
+
+#### S3 manifest not updating
+
+**Cause:** Manifest save failing or path issues.
+
+**Solutions:**
+- Check S3 bucket write permissions
+- Look for `.download_manifest.json` in bucket root
+- Enable debug logging to see manifest operations
+
 ### Debug Mode
 
 Enable debug logging:
@@ -1257,10 +1615,12 @@ This will show:
 ```
 arknights-downloader/
 ├── src/
-│   ├── main.rs           # CLI entry point
+│   ├── main.rs           # CLI entry point with subcommands
 │   ├── lib.rs            # Library root
 │   ├── downloader.rs     # Core download logic
-│   └── utils.rs          # Helper functions
+│   ├── utils.rs          # Helper functions
+│   ├── s3_bridge.rs      # S3-compatible storage client
+│   └── s3_manifest.rs    # S3 manifest tracking
 ├── examples/
 │   ├── check_updates.rs  # Simple version checker
 │   └── automated_monitor.rs # Production monitor
@@ -1303,6 +1663,11 @@ Key dependencies (see `Cargo.toml` for full list):
 | `image` | Image processing |
 | `chrono` | Timestamp handling |
 | `clap` | CLI argument parsing |
+| `rust-s3` | S3-compatible storage operations |
+| `tokio` | Async runtime for S3 I/O |
+| `futures` | Async stream utilities |
+| `walkdir` | Directory traversal |
+| `anyhow` | Error handling |
 
 ### Adding Features
 

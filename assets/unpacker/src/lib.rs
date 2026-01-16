@@ -22,6 +22,10 @@ pub mod resource_manifest;
 pub mod sprite_packer;
 pub mod utils;
 
+// S3-compatible storage support
+pub mod s3_bridge;
+pub mod s3_manifest;
+
 // FlatBuffer JSON serialization (handles unknown enum values gracefully)
 #[macro_use]
 pub mod fb_json_macros;

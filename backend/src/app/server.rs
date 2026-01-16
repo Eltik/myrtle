@@ -31,6 +31,7 @@ use crate::app::routes::yostar::send_code::{
 use crate::app::state::{AppState, get_global_config, init_global_config};
 use crate::core::authentication::{config::GlobalConfig, loaders};
 use crate::core::local::handler::init_game_data_or_default;
+use crate::core::s3::AssetSource;
 use crate::database::pool::{create_pool, init_tables};
 use crate::events::setup_event_listeners::setup_event_listeners;
 use crate::events::{ConfigEvent, EventEmitter, GameDataStats};
@@ -51,13 +52,10 @@ async fn root() -> &'static str {
 fn create_router(state: AppState) -> Router {
     let rate_store: RateLimitStore = Arc::new(RwLock::new(HashMap::new()));
 
-    let assets_dir = std::env::var("ASSETS_DIR")
-        .map(PathBuf::from)
-        .unwrap_or_else(|_| PathBuf::from("assets"));
-
+    // Use the asset source from state for CDN routes
     let cdn_router = Router::new()
         .route("/cdn/{*asset_path}", get(serve_asset))
-        .with_state(assets_dir);
+        .with_state(state.asset_source.clone());
 
     let static_router = static_data::router();
 
@@ -271,6 +269,19 @@ pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let jwt_secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
     let internal_service_key = std::env::var("INTERNAL_SERVICE_KEY").ok();
 
+    // Initialize asset source (supports local, S3, or hybrid mode)
+    let asset_source = AssetSource::from_env().unwrap_or_else(|e| {
+        events.emit(ConfigEvent::AssetSourceError(e.clone()));
+        AssetSource::local_only(assets_dir.clone())
+    });
+
+    // Log asset source mode
+    if asset_source.has_s3() {
+        events.emit(ConfigEvent::AssetSourceS3Enabled {
+            mode: format!("{:?}", asset_source.mode()),
+        });
+    }
+
     // Create app state
     let state = AppState {
         db,
@@ -281,6 +292,7 @@ pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
         redis,
         jwt_secret,
         internal_service_key,
+        asset_source,
     };
 
     // Start cron jobs

@@ -191,6 +191,19 @@ pub fn setup_event_listeners(events: &Arc<EventEmitter>) {
                         server.dimmed()
                     );
                 }
+
+                // Asset source (S3)
+                ConfigEvent::AssetSourceError(error) => {
+                    log::warn(&format!("S3 asset source error: {error}"));
+                }
+                ConfigEvent::AssetSourceS3Enabled { mode } => {
+                    println!(
+                        "{} {} S3 asset source enabled (mode: {})",
+                        "│".dimmed(),
+                        "☁".cyan().bold(),
+                        mode.cyan()
+                    );
+                }
             }
         }
     });

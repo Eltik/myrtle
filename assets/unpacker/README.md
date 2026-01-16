@@ -13,6 +13,7 @@ A high-performance Rust implementation of an Arknights game asset extractor and 
   - [Decode Command](#decode-command)
   - [Portraits Command](#portraits-command)
   - [Reorganize Command](#reorganize-command)
+  - [S3 Commands](#s3-commands)
 - [Output Structure](#output-structure)
 - [How It Works](#how-it-works)
 - [Architecture](#architecture)
@@ -93,6 +94,17 @@ A high-performance Rust implementation of an Arknights game asset extractor and 
   - Handles multi-gigabyte asset bundles
   - Resource reader for external `.resS` files
 
+### S3-Compatible Storage
+- **Remote Storage Support**: Process assets directly from S3-compatible storage
+  - Works with any S3-compatible service (MinIO, Cloudflare R2, Backblaze B2, DigitalOcean Spaces, etc.)
+  - Download → Process locally → Upload workflow
+  - Parallel uploads with configurable concurrency
+
+- **Manifest Tracking**: S3-stored JSON manifest for incremental processing
+  - Tracks processed files with hash-based change detection
+  - Periodic saves to prevent data loss on interruption
+  - Statistics and progress reporting
+
 ## Installation
 
 ### Prerequisites
@@ -165,6 +177,14 @@ install_name_tool -add_rpath /usr/local/lib target/release/assets-unpacker
   --input /path/to/ArkAssets/arts/charportraits \
   --output ./portraits \
   --delete
+
+# Extract from S3-compatible storage (set env vars first)
+export S3_ENDPOINT="https://your-s3-endpoint.com"
+export S3_INPUT_BUCKET="arknights-raw"
+export S3_OUTPUT_BUCKET="arknights-extracted"
+export S3_ACCESS_KEY="your-access-key"
+export S3_SECRET_KEY="your-secret-key"
+./target/release/assets-unpacker s3-extract -o "extracted/"
 ```
 
 ## Usage
@@ -463,6 +483,218 @@ Arknights has different game versions (CN, EN/Global, JP, KR) that sometimes hav
 
 This ensures EN/Global assets decode correctly even when they differ from the CN version.
 
+### S3 Commands
+
+The S3 commands allow you to process assets stored in S3-compatible storage services. This is useful for cloud-based workflows where assets are stored remotely rather than locally.
+
+#### S3 Configuration
+
+All S3 commands use environment variables for configuration:
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `S3_ENDPOINT` | S3 endpoint URL (e.g., `https://s3.example.com`) | Yes |
+| `S3_INPUT_BUCKET` | Bucket containing input asset bundles | Yes |
+| `S3_OUTPUT_BUCKET` | Bucket for extracted output files | Yes |
+| `S3_REGION` | Region name (default: `us-east-1`) | No |
+| `S3_ACCESS_KEY` | Access key ID | Yes |
+| `S3_SECRET_KEY` | Secret access key | Yes |
+| `S3_PATH_STYLE` | Use path-style URLs (`true`/`false`, default: `true`) | No |
+
+```bash
+# Example configuration for MinIO
+export S3_ENDPOINT="http://localhost:9000"
+export S3_INPUT_BUCKET="arknights-raw"
+export S3_OUTPUT_BUCKET="arknights-extracted"
+export S3_REGION="us-east-1"
+export S3_ACCESS_KEY="minioadmin"
+export S3_SECRET_KEY="minioadmin"
+export S3_PATH_STYLE="true"
+
+# Example configuration for Cloudflare R2
+export S3_ENDPOINT="https://<account-id>.r2.cloudflarestorage.com"
+export S3_INPUT_BUCKET="arknights-raw"
+export S3_OUTPUT_BUCKET="arknights-extracted"
+export S3_REGION="auto"
+export S3_ACCESS_KEY="<r2-access-key>"
+export S3_SECRET_KEY="<r2-secret-key>"
+export S3_PATH_STYLE="true"
+```
+
+#### S3 Extract Command
+
+Downloads asset bundles from S3, processes them locally using the standard extraction logic, and uploads results back to S3.
+
+```bash
+assets-unpacker s3-extract [OPTIONS]
+```
+
+##### Options
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `-p, --input-prefix <PREFIX>` | Filter input files by prefix (e.g., `assets/`) | None (all `.ab` files) |
+| `-o, --output-prefix <PREFIX>` | Output prefix for extracted assets | `""` (root) |
+| `--image` | Extract textures and sprites | `true` |
+| `--text` | Extract text assets | `true` |
+| `--audio` | Extract audio clips | `true` |
+| `--spine` | Extract and organize Spine assets | `true` |
+| `--merge-alpha` | Merge alpha textures into RGBA | `false` |
+| `--group` | Group output by source file | `true` |
+| `--force` | Force re-extraction (ignore manifest) | `false` |
+| `-c, --concurrency <N>` | Number of concurrent S3 uploads | `4` |
+
+##### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    S3 Input Bucket                          │
+│                  (Asset Bundles .ab)                        │
+└──────────────────────────┬──────────────────────────────────┘
+                           │ Download to temp
+                           v
+┌─────────────────────────────────────────────────────────────┐
+│              Local Temp Storage                             │
+│     ┌───────────────────────────────────────────────┐       │
+│     │     Standard extraction logic (unchanged)     │       │
+│     │   - extract_images()                          │       │
+│     │   - extract_audio()                           │       │
+│     │   - extract_spine()                           │       │
+│     └───────────────────────────────────────────────┘       │
+└───────────────────────────┬─────────────────────────────────┘
+                            │ Upload results (parallel)
+                            v
+┌─────────────────────────────────────────────────────────────┐
+│                   S3 Output Bucket                          │
+│         (Extracted assets + .extraction_manifest.json)      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+##### Examples
+
+```bash
+# Extract all asset bundles from S3
+assets-unpacker s3-extract -o "extracted/"
+
+# Extract only files from a specific prefix
+assets-unpacker s3-extract -p "android/arts/" -o "extracted/arts/"
+
+# High-concurrency extraction for faster uploads
+assets-unpacker s3-extract -o "extracted/" -c 16
+
+# Force re-extraction of all files
+assets-unpacker s3-extract -o "extracted/" --force
+
+# Extract only images (skip audio and text)
+assets-unpacker s3-extract -o "images/" --audio=false --text=false
+```
+
+#### S3 List Command
+
+Lists asset bundles in the S3 input bucket and optionally shows manifest statistics.
+
+```bash
+assets-unpacker s3-list [OPTIONS]
+```
+
+##### Options
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `-p, --prefix <PREFIX>` | Filter listing by prefix | None |
+| `--stats` | Show manifest statistics | `false` |
+
+##### Examples
+
+```bash
+# List all asset bundles
+assets-unpacker s3-list
+
+# List files in a specific prefix
+assets-unpacker s3-list -p "android/arts/"
+
+# Show manifest statistics (processed files, total assets, etc.)
+assets-unpacker s3-list --stats
+```
+
+#### S3 Download Command
+
+Downloads files from the S3 input bucket to a local directory.
+
+```bash
+assets-unpacker s3-download --key <KEY> --output <PATH>
+```
+
+##### Options
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `-k, --key <KEY>` | S3 key or prefix to download | Required |
+| `-o, --output <PATH>` | Local output directory | Required |
+
+##### Examples
+
+```bash
+# Download a single file
+assets-unpacker s3-download -k "assets/char_002_amiya.ab" -o ./local/
+
+# Download all files with a prefix
+assets-unpacker s3-download -k "assets/arts/" -o ./local/arts/
+```
+
+#### S3 Upload Command
+
+Uploads a local directory to the S3 output bucket.
+
+```bash
+assets-unpacker s3-upload --input <PATH> --prefix <PREFIX>
+```
+
+##### Options
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `-i, --input <PATH>` | Local directory to upload | Required |
+| `-p, --prefix <PREFIX>` | S3 output prefix | `""` (root) |
+| `-c, --concurrency <N>` | Number of concurrent uploads | `4` |
+
+##### Examples
+
+```bash
+# Upload extracted files to S3
+assets-unpacker s3-upload -i ./extracted -p "processed/"
+
+# High-concurrency upload
+assets-unpacker s3-upload -i ./output -p "assets/" -c 16
+```
+
+#### S3 Manifest
+
+The S3 workflow maintains a `.extraction_manifest.json` file in the output bucket to track processed files:
+
+```json
+{
+  "version": 1,
+  "last_updated": "2024-01-15T12:00:00Z",
+  "entries": {
+    "assets/char_002_amiya.ab": {
+      "hash": "1234567:abc123",
+      "processed_at": "2024-01-15T12:00:00Z",
+      "asset_count": 45,
+      "input_size": 2048576,
+      "output_prefix": "extracted/"
+    }
+  },
+  "total_processed": 150,
+  "total_assets": 5000
+}
+```
+
+This enables:
+- **Incremental processing**: Skip unchanged files on subsequent runs
+- **Progress tracking**: Know how many files have been processed
+- **Recovery**: Resume after interruption without reprocessing
+
 ## Output Structure
 
 ### Directory Layout
@@ -622,7 +854,12 @@ src/
 ├── collect_voice.rs        # Audio collection
 ├── config.rs               # Configuration constants
 ├── resource_manifest.rs    # Resource manifest parsing
-├── utils.rs                # Utility functions
+├── s3_bridge.rs            # S3-compatible storage operations
+├── s3_manifest.rs          # S3-stored manifest for incremental tracking
+├── utils/                  # Utility functions
+│   ├── file_utils.rs       # File I/O helpers
+│   ├── saver.rs            # Thread-safe file saving
+│   └── progress.rs         # Progress tracking
 ├── generated_fbs/          # Generated FlatBuffers code (CN schemas)
 │   ├── character_table_generated.rs
 │   ├── skill_table_generated.rs
@@ -843,6 +1080,9 @@ Key dependencies:
 - **aes**, **cbc**: AES-CBC decryption
 - **flatbuffers**: FlatBuffers support
 - **clap**: Command-line parsing
+- **rust-s3**: S3-compatible storage client
+- **tokio**: Async runtime for S3 operations
+- **futures**: Async utilities for parallel uploads
 
 ## Troubleshooting
 
@@ -890,6 +1130,23 @@ Or delete the manifest:
 ```bash
 rm output/.extraction_manifest.json
 ```
+
+#### S3 Connection Issues
+
+**"Failed to connect to S3":**
+- Verify `S3_ENDPOINT` is correct and accessible
+- Check firewall rules allow outbound connections
+- Ensure `S3_PATH_STYLE` is set correctly (`true` for MinIO, varies for other services)
+
+**"Access denied" or "Invalid credentials":**
+- Verify `S3_ACCESS_KEY` and `S3_SECRET_KEY` are correct
+- Check bucket policies allow the operations you're performing
+- Ensure the credentials have read access to input bucket and write access to output bucket
+
+**"Bucket not found":**
+- Verify `S3_INPUT_BUCKET` and `S3_OUTPUT_BUCKET` names are correct
+- Ensure buckets exist in the specified region
+- Check `S3_REGION` matches where buckets were created
 
 ### Debug Logging
 

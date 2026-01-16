@@ -6,7 +6,7 @@ use sqlx::PgPool;
 use tokio::sync::RwLock;
 
 use crate::{
-    core::{authentication::config::GlobalConfig, local::types::GameData},
+    core::{authentication::config::GlobalConfig, local::types::GameData, s3::AssetSource},
     events::EventEmitter,
 };
 
@@ -20,6 +20,7 @@ pub struct AppState {
     pub redis: MultiplexedConnection,
     pub jwt_secret: String,
     pub internal_service_key: Option<String>,
+    pub asset_source: AssetSource,
 }
 
 static GLOBAL_CONFIG: OnceLock<Arc<RwLock<GlobalConfig>>> = OnceLock::new();
