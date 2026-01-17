@@ -15,6 +15,10 @@ path = "src/bin/translate_operators.rs"
 name = "generate-dps-tests"
 path = "src/bin/generate_dps_tests.rs"
 
+[[bin]]
+name = "db-backup"
+path = "src/bin/db_backup.rs"
+
 [[test]]
 name = "dps_comparison_test"
 path = "tests/dps_comparison/dps_comparison_test.rs"
@@ -58,3 +62,9 @@ rust-s3 = "0.34"
 futures = "0.3"
 anyhow = "1.0"
 log = "0.4"
+
+# Database backup/restore tool
+clap = { version = "4", features = ["derive"] }
+sha2 = "0.10"
+indicatif = "0.17"
+dialoguer = "0.11"
