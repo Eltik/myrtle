@@ -28,8 +28,7 @@ use tokio::fs::File;
 use tokio_util::io::ReaderStream;
 
 /// Asset source mode
-#[derive(Debug, Clone, Copy, PartialEq)]
-#[derive(Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum AssetMode {
     /// Use local filesystem only
     #[default]
@@ -39,7 +38,6 @@ pub enum AssetMode {
     /// Try local first, fall back to S3
     LocalWithS3Fallback,
 }
-
 
 impl AssetMode {
     /// Parse from environment variable string
@@ -196,13 +194,11 @@ impl AssetSource {
         }
 
         // Determine content type
-        let mime_type = content_type
-            .map(String::from)
-            .unwrap_or_else(|| {
-                mime_guess::from_path(&file_path)
-                    .first_or_octet_stream()
-                    .to_string()
-            });
+        let mime_type = content_type.map(String::from).unwrap_or_else(|| {
+            mime_guess::from_path(&file_path)
+                .first_or_octet_stream()
+                .to_string()
+        });
 
         // Stream file
         let file = File::open(&file_path)
@@ -240,13 +236,14 @@ impl AssetSource {
                 // Check If-None-Match
                 if let Some(etag_ref) = &etag
                     && let Some(if_none_match) = headers.get(header::IF_NONE_MATCH)
-                        && if_none_match.to_str().ok() == Some(etag_ref) {
-                            return Ok(Response::builder()
-                                .status(StatusCode::NOT_MODIFIED)
-                                .header(header::CACHE_CONTROL, "public, max-age=86400")
-                                .body(Body::empty())
-                                .unwrap());
-                        }
+                    && if_none_match.to_str().ok() == Some(etag_ref)
+                {
+                    return Ok(Response::builder()
+                        .status(StatusCode::NOT_MODIFIED)
+                        .header(header::CACHE_CONTROL, "public, max-age=86400")
+                        .body(Body::empty())
+                        .unwrap());
+                }
 
                 // Determine content type
                 let mime_type = content_type

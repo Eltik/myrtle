@@ -66,11 +66,11 @@ fn validate_path(asset_path: &str, base_dir: &Path) -> Option<String> {
 
     // For local mode, verify the path resolves within base_dir
     let requested = base_dir.join(&sanitized);
-    if let (Ok(canonical), Ok(base_canonical)) =
-        (requested.canonicalize(), base_dir.canonicalize())
-        && !canonical.starts_with(&base_canonical) {
-            return None; // Path traversal attempt
-        }
+    if let (Ok(canonical), Ok(base_canonical)) = (requested.canonicalize(), base_dir.canonicalize())
+        && !canonical.starts_with(&base_canonical)
+    {
+        return None; // Path traversal attempt
+    }
 
     // Return the sanitized relative path
     Some(sanitized)
