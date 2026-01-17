@@ -39,18 +39,6 @@ mod constants {
     pub const STAGE_WEIGHT: f32 = 0.25;
     /// Weight for progression depth within engagement score
     pub const PROGRESSION_WEIGHT: f32 = 0.25;
-
-    // Thresholds for engagement calculations
-    /// Expected E2 operators for max score
-    pub const EXPECTED_E2_COUNT: f32 = 50.0;
-    /// Expected M3 operators for max score
-    pub const EXPECTED_M3_COUNT: f32 = 30.0;
-    /// Expected roguelike runs for good engagement
-    pub const EXPECTED_ROGUELIKE_RUNS: f32 = 100.0;
-    /// Number of roguelike themes available
-    pub const TOTAL_ROGUELIKE_THEMES: f32 = 5.0;
-    /// Expected themes at max difficulty for mastery
-    pub const EXPECTED_MAX_DIFFICULTY_THEMES: f32 = 3.0;
 }
 
 /// Calculate user grade from score and user data
@@ -143,16 +131,29 @@ fn normalize_total_score(total_score: f32, account_age_days: i64) -> f32 {
 }
 
 /// Calculate activity metrics from user data
-fn calculate_activity_metrics(user: &User, now: i64, account_age_days: i64) -> ActivityMetrics {
+fn calculate_activity_metrics(user: &User, now: i64, _account_age_days: i64) -> ActivityMetrics {
     let days_since_login = calculate_days_since_login(user.status.last_online_ts, now);
 
     // 1. Login Recency Score - exponential decay based on last login
     let login_recency_score = calculate_recency_score(days_since_login);
 
-    // 2. Login Frequency Score - based on check-in history
-    let total_check_ins = user.check_in.check_in_history.len() as i32;
-    let expected_check_ins = (account_age_days as i32).min(365); // Cap at 1 year
-    let login_frequency_score = calculate_frequency_score(total_check_ins, expected_check_ins);
+    // 2. Login Frequency Score - based on check-in cycle completion
+    // FIX: Count actual check-ins (1s in the array), not the array length
+    let check_ins_this_cycle = user
+        .check_in
+        .check_in_history
+        .iter()
+        .filter(|&&x| x == 1)
+        .count() as i32;
+    let check_in_cycle_length = user.check_in.check_in_history.len() as i32;
+
+    // Calculate completion rate for current cycle
+    let check_in_completion_rate = if check_in_cycle_length > 0 {
+        (check_ins_this_cycle as f32 / check_in_cycle_length as f32) * 100.0
+    } else {
+        0.0
+    };
+    let login_frequency_score = check_in_completion_rate;
 
     // 3. Mission Consistency Score - based on daily/weekly mission states
     let consistency_score = calculate_consistency_score(user);
@@ -168,8 +169,9 @@ fn calculate_activity_metrics(user: &User, now: i64, account_age_days: i64) -> A
         login_frequency_score,
         consistency_score,
         total_activity_score,
-        total_check_ins,
-        expected_check_ins,
+        check_ins_this_cycle,
+        check_in_cycle_length,
+        check_in_completion_rate,
     }
 }
 
@@ -196,16 +198,6 @@ fn calculate_recency_score(days_since_login: i64) -> f32 {
         61..=90 => 8.0,  // Within three months
         _ => 3.0,        // Very inactive
     }
-}
-
-/// Calculate frequency score based on check-in ratio
-fn calculate_frequency_score(total_check_ins: i32, expected_check_ins: i32) -> f32 {
-    if expected_check_ins <= 0 {
-        return 0.0;
-    }
-
-    let frequency_ratio = (total_check_ins as f32 / expected_check_ins as f32).min(1.0);
-    frequency_ratio * 100.0
 }
 
 /// Calculate consistency score based on mission completion
@@ -260,31 +252,32 @@ fn calculate_engagement_metrics(breakdown: &ScoreBreakdown) -> EngagementMetrics
 }
 
 /// Count how many different content types the user has engaged with
+/// Uses percentage thresholds for consistent measurement
 fn count_content_types_engaged(breakdown: &ScoreBreakdown) -> i32 {
     let mut count = 0;
 
-    // Roguelike engagement
-    if breakdown.roguelike_themes_played > 0 {
+    // Roguelike engagement (>5% themes completion)
+    if breakdown.roguelike_themes_completion_percentage > 5.0 {
         count += 1;
     }
 
-    // Sandbox engagement
-    if breakdown.sandbox_places_completed > 0 {
+    // Sandbox engagement (>5% completion)
+    if breakdown.sandbox_completion_percentage > 5.0 {
         count += 1;
     }
 
-    // Medal collection
-    if breakdown.medal_total_earned > 10 {
+    // Medal collection (>5% completion)
+    if breakdown.medal_completion_percentage > 5.0 {
         count += 1;
     }
 
-    // Mainline progression
+    // Mainline progression (>50% completion)
     if breakdown.mainline_completion > 50.0 {
         count += 1;
     }
 
-    // Stage completion (significant amount)
-    if breakdown.total_stages_completed > 100 {
+    // Stage completion (>10% overall completion)
+    if breakdown.overall_stage_completion_percentage > 10.0 {
         count += 1;
     }
 
@@ -296,25 +289,18 @@ fn count_content_types_engaged(breakdown: &ScoreBreakdown) -> i32 {
     count
 }
 
-/// Calculate roguelike engagement depth score
+/// Calculate roguelike engagement depth score using completion percentages
 fn calculate_roguelike_engagement(breakdown: &ScoreBreakdown) -> f32 {
-    // Themes played factor (30%)
-    let themes_factor =
-        (breakdown.roguelike_themes_played as f32 / constants::TOTAL_ROGUELIKE_THEMES).min(1.0)
-            * 30.0;
+    // Themes completion factor (20%) - uses game data max
+    let themes_factor = breakdown.roguelike_themes_completion_percentage * 0.20;
 
-    // Runs completed factor (30%)
-    let runs_factor = (breakdown.roguelike_total_runs as f32 / constants::EXPECTED_ROGUELIKE_RUNS)
-        .min(1.0)
-        * 30.0;
+    // Collectibles completion factor (40%) - actual completable content
+    let collectibles_factor = breakdown.roguelike_collectibles_completion_percentage * 0.40;
 
-    // Max difficulty achievements factor (40%)
-    let difficulty_factor = (breakdown.roguelike_themes_at_max_difficulty as f32
-        / constants::EXPECTED_MAX_DIFFICULTY_THEMES)
-        .min(1.0)
-        * 40.0;
+    // Challenge completion factor (40%) - grade 2 clears as % of total challenges
+    let challenge_factor = breakdown.roguelike_challenges_completion_percentage * 0.40;
 
-    themes_factor + runs_factor + difficulty_factor
+    themes_factor + collectibles_factor + challenge_factor
 }
 
 /// Calculate stage completion diversity score
@@ -327,18 +313,22 @@ fn calculate_stage_diversity(breakdown: &ScoreBreakdown) -> f32 {
     mainline_weight + sidestory_weight + activity_weight
 }
 
-/// Calculate account progression depth score
+/// Calculate account progression depth score using completion percentages
 fn calculate_progression_depth(breakdown: &ScoreBreakdown) -> f32 {
-    // E2 operators factor (30%)
-    let e2_factor = (breakdown.e2_count as f32 / constants::EXPECTED_E2_COUNT).min(1.0) * 30.0;
+    // Operator collection factor (30%) - owned / available
+    let operator_factor = breakdown.operator_collection_percentage * 0.30;
 
-    // M3 mastery factor (30%)
-    let m3_factor = (breakdown.m3_count as f32 / constants::EXPECTED_M3_COUNT).min(1.0) * 30.0;
+    // Operator investment factor (30%) - E2 count as ratio of owned operators
+    let investment_factor = if breakdown.total_operators > 0 {
+        ((breakdown.e2_count as f32 / breakdown.total_operators as f32) * 100.0).min(100.0) * 0.30
+    } else {
+        0.0
+    };
 
     // Medal completion factor (40%)
     let medal_factor = breakdown.medal_completion_percentage * 0.40;
 
-    e2_factor + m3_factor + medal_factor
+    operator_factor + investment_factor + medal_factor
 }
 
 /// Estimate percentile ranking based on composite score
@@ -390,14 +380,6 @@ mod tests {
         assert_eq!(calculate_recency_score(30), 30.0);
         assert_eq!(calculate_recency_score(60), 15.0);
         assert_eq!(calculate_recency_score(100), 3.0);
-    }
-
-    #[test]
-    fn test_frequency_score() {
-        assert_eq!(calculate_frequency_score(365, 365), 100.0);
-        assert_eq!(calculate_frequency_score(180, 365), 180.0 / 365.0 * 100.0);
-        assert_eq!(calculate_frequency_score(0, 365), 0.0);
-        assert_eq!(calculate_frequency_score(100, 0), 0.0); // Edge case
     }
 
     #[test]

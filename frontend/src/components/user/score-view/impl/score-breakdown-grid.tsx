@@ -10,15 +10,29 @@ interface ScoreBreakdownGridProps {
     scoreData: StoredUserScore;
 }
 
-// Approximate max values for percentage calculation (based on typical high scores)
-const MAX_SCORES: Record<string, number> = {
-    operatorScore: 500000,
-    stageScore: 100000,
-    roguelikeScore: 50000,
-    sandboxScore: 30000,
-    medalScore: 50000,
-    baseScore: 20000,
-};
+// Get completion info for a category if available from actual game data
+function getCompletionInfo(key: string, scoreData: StoredUserScore): { percentage: number; label: string } | null {
+    const summary = scoreData.completionSummary;
+
+    if (!summary) return null;
+
+    switch (key) {
+        case "operatorScore":
+            return summary.operators?.percentage > 0 ? { percentage: summary.operators.percentage, label: `${summary.operators.current}/${summary.operators.maximum} operators` } : null;
+        case "stageScore":
+            return summary.stages?.percentage > 0 ? { percentage: summary.stages.percentage, label: `${summary.stages.current}/${summary.stages.maximum} stages` } : null;
+        case "roguelikeScore":
+            // Use consistent percentage from summary for both bar and label
+            return summary.roguelike?.percentage > 0 ? { percentage: summary.roguelike.percentage, label: `${summary.roguelike.current}/${summary.roguelike.maximum} collectibles` } : null;
+        case "sandboxScore":
+            return summary.sandbox?.percentage > 0 ? { percentage: summary.sandbox.percentage, label: `${summary.sandbox.current}/${summary.sandbox.maximum} places` } : null;
+        case "medalScore":
+            return summary.medals?.percentage > 0 ? { percentage: summary.medals.percentage, label: `${summary.medals.current}/${summary.medals.maximum} medals` } : null;
+        default:
+            // No completion data for baseScore (efficiency metric, not completable)
+            return null;
+    }
+}
 
 export function ScoreBreakdownGrid({ scoreData }: ScoreBreakdownGridProps) {
     const categories = Object.entries(SCORE_CATEGORY_CONFIG);
@@ -32,20 +46,23 @@ export function ScoreBreakdownGrid({ scoreData }: ScoreBreakdownGridProps) {
                 </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-5">
-                {categories.map(([key, config], index) => (
-                    <ScoreCategoryBar
-                        bgColor={config.bgColor}
-                        color={config.color}
-                        delay={index * 0.08}
-                        description={config.description}
-                        icon={config.icon}
-                        key={key}
-                        label={config.label}
-                        maxScore={MAX_SCORES[key] ?? 100000}
-                        progressColor={config.progressColor}
-                        score={scoreData[key as keyof StoredUserScore] as number}
-                    />
-                ))}
+                {categories.map(([key, config], index) => {
+                    const completionInfo = getCompletionInfo(key, scoreData);
+                    return (
+                        <ScoreCategoryBar
+                            bgColor={config.bgColor}
+                            color={config.color}
+                            completionInfo={completionInfo ?? undefined}
+                            delay={index * 0.08}
+                            description={config.description}
+                            icon={config.icon}
+                            key={key}
+                            label={config.label}
+                            progressColor={config.progressColor}
+                            score={scoreData[key as keyof StoredUserScore] as number}
+                        />
+                    );
+                })}
             </CardContent>
         </Card>
     );

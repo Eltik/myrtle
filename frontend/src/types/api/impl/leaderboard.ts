@@ -13,21 +13,27 @@ export type SortBy = "total_score" | "operator_score" | "stage_score" | "rogueli
 export interface ActivityMetrics {
     /** Days since last login */
     daysSinceLogin: number;
-    /** Login recency score (0-100) */
+    /** Login recency score (0-100) - based on last_online_ts */
     loginRecencyScore: number;
-    /** Login frequency score (0-100) */
+    /** Login frequency score (0-100) - based on check-in cycle completion */
     loginFrequencyScore: number;
     /** Mission completion consistency score (0-100) */
     consistencyScore: number;
     /** Combined activity score (0-100) */
     totalActivityScore: number;
+    /** Days checked in during current cycle (count of 1s in check_in_history) */
+    checkInsThisCycle: number;
+    /** Total days in current check-in cycle window (typically 15-16) */
+    checkInCycleLength: number;
+    /** Check-in completion rate for current cycle (0-100) */
+    checkInCompletionRate: number;
 }
 
 /**
  * Engagement metrics breakdown for grade calculation
  */
 export interface EngagementMetrics {
-    /** Content variety score (0-100) */
+    /** Content variety score (0-100) - how many content types engaged */
     contentVarietyScore: number;
     /** Roguelike engagement depth (0-100) */
     roguelikeDepthScore: number;

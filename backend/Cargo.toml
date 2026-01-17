@@ -19,6 +19,10 @@ path = "src/bin/generate_dps_tests.rs"
 name = "db-backup"
 path = "src/bin/db_backup.rs"
 
+[[bin]]
+name = "sync-scores"
+path = "src/bin/sync_scores.rs"
+
 [[test]]
 name = "dps_comparison_test"
 path = "tests/dps_comparison/dps_comparison_test.rs"

@@ -80,7 +80,6 @@ function DialogContent({ entry, onClose }: { entry: LeaderboardEntry; onClose: (
         { key: "baseScore", value: entry.baseScore },
     ];
 
-    const maxScore = Math.max(...scores.map((s) => s.value), 1);
     const gradeColors = GRADE_COLORS[entry.grade] ?? GRADE_COLORS.F;
 
     return (
@@ -192,6 +191,11 @@ function DialogContent({ entry, onClose }: { entry: LeaderboardEntry; onClose: (
                                     <span className="text-muted-foreground">Consistency:</span>
                                     <span>{entry.gradeBreakdown.activityMetrics.consistencyScore.toFixed(1)}</span>
                                 </div>
+                                {entry.gradeBreakdown.activityMetrics.checkInsThisCycle > 0 && (
+                                    <p className="mt-1 text-muted-foreground">
+                                        Check-ins: {entry.gradeBreakdown.activityMetrics.checkInsThisCycle}/{entry.gradeBreakdown.activityMetrics.checkInCycleLength} ({Math.round(entry.gradeBreakdown.activityMetrics.checkInCompletionRate ?? 0)}%)
+                                    </p>
+                                )}
                                 {entry.gradeBreakdown.activityMetrics.daysSinceLogin > 0 && <p className="mt-1 text-muted-foreground">Last login: {entry.gradeBreakdown.activityMetrics.daysSinceLogin} days ago</p>}
                             </div>
                         </TooltipContent>
@@ -243,21 +247,17 @@ function DialogContent({ entry, onClose }: { entry: LeaderboardEntry; onClose: (
             {/* Score Breakdown */}
             <motion.div animate={{ opacity: 1, y: 0 }} className="space-y-4" initial={{ opacity: 0, y: 10 }} transition={{ delay: 0.15 }}>
                 <h3 className="font-medium text-sm">Score Breakdown</h3>
-                <div className="space-y-3">
+                <div className="space-y-2">
                     {scores.map((score, index) => {
                         const category = SCORE_CATEGORIES.find((c) => c.key === score.key);
-                        const percentage = (score.value / maxScore) * 100;
 
                         return (
                             <motion.div animate={{ opacity: 1, x: 0 }} initial={{ opacity: 0, x: -10 }} key={score.key} transition={{ delay: 0.2 + index * 0.03 }}>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <div className="cursor-help space-y-1.5 rounded-md transition-colors hover:bg-secondary/50">
-                                            <div className="flex items-center justify-between text-sm">
-                                                <span className="text-muted-foreground">{category?.label ?? score.key}</span>
-                                                <span className="font-mono">{score.value.toLocaleString()}</span>
-                                            </div>
-                                            <Progress className="h-2" value={percentage} />
+                                        <div className="flex cursor-help items-center justify-between rounded-md px-2 py-1.5 transition-colors hover:bg-secondary/50">
+                                            <span className="text-muted-foreground text-sm">{category?.label ?? score.key}</span>
+                                            <span className="font-mono text-sm">{score.value.toLocaleString()}</span>
                                         </div>
                                     </TooltipTrigger>
                                     <TooltipContent className="z-[9999]" side="top" variant="dark">

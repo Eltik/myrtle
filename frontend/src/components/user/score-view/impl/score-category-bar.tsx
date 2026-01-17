@@ -10,16 +10,22 @@ interface ScoreCategoryBarProps {
     label: string;
     description: string;
     score: number;
-    maxScore: number;
     icon: LucideIcon;
     color: string;
     bgColor: string;
     progressColor: string;
     delay?: number;
+    /** Real completion info from game data (if available) */
+    completionInfo?: {
+        percentage: number;
+        label: string;
+    };
 }
 
-export function ScoreCategoryBar({ label, description, score, maxScore, icon: Icon, color, bgColor, progressColor, delay = 0 }: ScoreCategoryBarProps) {
-    const percentage = maxScore > 0 ? Math.min((score / maxScore) * 100, 100) : 0;
+export function ScoreCategoryBar({ label, description, score, icon: Icon, color, bgColor, progressColor, delay = 0, completionInfo }: ScoreCategoryBarProps) {
+    // Only show progress bar if we have real completion data
+    const hasCompletionData = !!completionInfo;
+    const percentage = completionInfo?.percentage ?? 0;
 
     return (
         <Tooltip>
@@ -35,19 +41,24 @@ export function ScoreCategoryBar({ label, description, score, maxScore, icon: Ic
                                 <p className="hidden text-muted-foreground text-xs sm:block">{description}</p>
                             </div>
                         </div>
-                        <AnimatedNumber className={cn("font-semibold text-sm tabular-nums", color)} springOptions={{ stiffness: 100, damping: 20 }} value={score} />
+                        <div className="flex flex-col items-end gap-0.5">
+                            <AnimatedNumber className={cn("font-semibold text-sm tabular-nums", color)} springOptions={{ stiffness: 100, damping: 20 }} value={score} />
+                            {completionInfo && <span className="text-[10px] text-muted-foreground">{completionInfo.label}</span>}
+                        </div>
                     </div>
 
-                    {/* Progress bar */}
-                    <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted/50">
-                        <motion.div animate={{ width: `${percentage}%` }} className={cn("h-full rounded-full", progressColor)} initial={{ width: 0 }} transition={{ delay: delay + 0.2, duration: 0.6, ease: "easeOut" }} />
-                    </div>
+                    {/* Progress bar - only shown when we have real completion data */}
+                    {hasCompletionData && (
+                        <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted/50">
+                            <motion.div animate={{ width: `${percentage}%` }} className={cn("h-full rounded-full", progressColor)} initial={{ width: 0 }} transition={{ delay: delay + 0.2, duration: 0.6, ease: "easeOut" }} />
+                        </div>
+                    )}
                 </motion.div>
             </TooltipTrigger>
             <TooltipContent className="max-w-[220px]" sideOffset={5} variant="dark">
                 <p className="font-medium">{label}</p>
                 <p className="text-muted-foreground">{description}</p>
-                <p className="mt-1 text-[10px] text-muted-foreground/70">{percentage.toFixed(1)}% of estimated maximum</p>
+                {hasCompletionData && <p className="mt-1 text-[10px] text-muted-foreground/70">{percentage.toFixed(1)}% completion</p>}
             </TooltipContent>
         </Tooltip>
     );

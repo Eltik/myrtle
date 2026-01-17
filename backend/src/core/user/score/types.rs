@@ -53,6 +53,8 @@ pub struct UserScore {
     pub breakdown: ScoreBreakdown,
     /// User grade (S/A/B/C/D/F) with detailed metrics
     pub grade: UserGrade,
+    /// Summary of all finite completion metrics
+    pub completion_summary: CompletionSummary,
 }
 
 /// Summary statistics for the account
@@ -73,6 +75,10 @@ pub struct ScoreBreakdown {
     pub total_skins_owned: i32,
     /// Operators with full skin collection (100%)
     pub full_skin_collection_count: i32,
+    /// Total operators available in the game (excluding tokens/traps)
+    pub total_operators_available: i32,
+    /// Operator collection completion percentage (0-100)
+    pub operator_collection_percentage: f32,
 
     // === Stage Stats ===
     /// Main story completion percentage (0-100)
@@ -87,6 +93,8 @@ pub struct ScoreBreakdown {
     pub total_stages_available: i32,
     /// Total perfect/3-star clears
     pub total_perfect_clears: i32,
+    /// Overall stage completion percentage (0-100)
+    pub overall_stage_completion_percentage: f32,
 
     // === Roguelike (Integrated Strategies) Stats ===
     /// Number of roguelike themes played
@@ -105,6 +113,24 @@ pub struct ScoreBreakdown {
     pub roguelike_grade_2_challenges: i32,
     /// Number of themes with at least one grade 2 clear
     pub roguelike_themes_at_max_difficulty: i32,
+    /// Total themes available in the game
+    pub roguelike_total_themes_available: i32,
+    /// Total endings available across all themes
+    pub roguelike_total_max_endings: i32,
+    /// Total collectibles available across all themes
+    pub roguelike_total_max_collectibles: i32,
+    /// Total challenges available across all themes
+    pub roguelike_total_max_challenges: i32,
+    /// Roguelike themes completion percentage (0-100)
+    pub roguelike_themes_completion_percentage: f32,
+    /// Roguelike endings completion percentage (0-100)
+    pub roguelike_endings_completion_percentage: f32,
+    /// Roguelike collectibles completion percentage (0-100)
+    pub roguelike_collectibles_completion_percentage: f32,
+    /// Roguelike challenges (grade 2) completion percentage (0-100)
+    pub roguelike_challenges_completion_percentage: f32,
+    /// Overall roguelike completion percentage (0-100)
+    pub roguelike_overall_completion_percentage: f32,
 
     // === Sandbox (Reclamation Algorithm) Stats ===
     /// Places completed (state = 2)
@@ -169,6 +195,14 @@ pub struct ScoreBreakdown {
     pub base_electricity_balance: i32,
     /// Number of buildings at max level
     pub base_max_level_buildings: i32,
+
+    // === Check-In Stats ===
+    /// Days checked in during current cycle (count of 1s in check_in_history)
+    pub check_in_current_cycle: i32,
+    /// Total days in current check-in cycle window (typically 15-16)
+    pub check_in_cycle_length: i32,
+    /// Check-in completion percentage for current cycle (0-100)
+    pub check_in_completion_percentage: f32,
 }
 
 impl Default for ScoreBreakdown {
@@ -186,6 +220,8 @@ impl Default for ScoreBreakdown {
             average_score_per_operator: 0.0,
             total_skins_owned: 0,
             full_skin_collection_count: 0,
+            total_operators_available: 0,
+            operator_collection_percentage: 0.0,
             // Stage stats
             mainline_completion: 0.0,
             sidestory_completion: 0.0,
@@ -193,6 +229,7 @@ impl Default for ScoreBreakdown {
             total_stages_completed: 0,
             total_stages_available: 0,
             total_perfect_clears: 0,
+            overall_stage_completion_percentage: 0.0,
             // Roguelike stats
             roguelike_themes_played: 0,
             roguelike_total_endings: 0,
@@ -202,6 +239,15 @@ impl Default for ScoreBreakdown {
             roguelike_total_runs: 0,
             roguelike_grade_2_challenges: 0,
             roguelike_themes_at_max_difficulty: 0,
+            roguelike_total_themes_available: 0,
+            roguelike_total_max_endings: 0,
+            roguelike_total_max_collectibles: 0,
+            roguelike_total_max_challenges: 0,
+            roguelike_themes_completion_percentage: 0.0,
+            roguelike_endings_completion_percentage: 0.0,
+            roguelike_collectibles_completion_percentage: 0.0,
+            roguelike_challenges_completion_percentage: 0.0,
+            roguelike_overall_completion_percentage: 0.0,
             // Sandbox stats
             sandbox_places_completed: 0,
             sandbox_places_discovered: 0,
@@ -234,6 +280,10 @@ impl Default for ScoreBreakdown {
             base_total_comfort: 0,
             base_electricity_balance: 0,
             base_max_level_buildings: 0,
+            // Check-in stats
+            check_in_current_cycle: 0,
+            check_in_cycle_length: 0,
+            check_in_completion_percentage: 0.0,
         }
     }
 }
@@ -259,6 +309,52 @@ impl Default for UserScore {
             base_details: BaseScore::default(),
             breakdown: ScoreBreakdown::default(),
             grade: UserGrade::default(),
+            completion_summary: CompletionSummary::default(),
         }
     }
+}
+
+/// A single completion metric with current, maximum, and percentage
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CompletionMetric {
+    /// Current count achieved
+    pub current: i32,
+    /// Maximum possible count
+    pub maximum: i32,
+    /// Completion percentage (0-100)
+    pub percentage: f32,
+}
+
+impl CompletionMetric {
+    pub fn new(current: i32, maximum: i32) -> Self {
+        let percentage = if maximum > 0 {
+            (current as f32 / maximum as f32) * 100.0
+        } else {
+            0.0
+        };
+        Self {
+            current,
+            maximum,
+            percentage,
+        }
+    }
+}
+
+/// Summary of all finite completion metrics for easy access
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CompletionSummary {
+    /// Operator collection: owned / available
+    pub operators: CompletionMetric,
+    /// Stage completion: completed / available
+    pub stages: CompletionMetric,
+    /// Medal completion: earned / available
+    pub medals: CompletionMetric,
+    /// Roguelike overall completion (collectibles-focused)
+    pub roguelike: CompletionMetric,
+    /// Sandbox places completion: completed / total
+    pub sandbox: CompletionMetric,
+    /// Check-in completion: days checked in / cycle length
+    pub check_in: CompletionMetric,
 }

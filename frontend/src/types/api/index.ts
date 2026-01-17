@@ -8,6 +8,7 @@ export * from "./impl/material";
 export * from "./impl/module";
 export * from "./impl/operator";
 export * from "./impl/range";
+export * from "./impl/score";
 export * from "./impl/search";
 export * from "./impl/skill";
 export * from "./impl/skin";

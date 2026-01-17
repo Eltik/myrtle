@@ -19,6 +19,7 @@ use crate::core::local::types::module::{
     BattleEquip, BattleEquipTableFile, Modules, RawModules, UniequipTableFile,
 };
 use crate::core::local::types::range::Ranges;
+use crate::core::local::types::roguelike::RoguelikeGameData;
 use crate::core::local::types::skill::{RawSkill, SkillTableFile};
 use crate::core::local::types::skin::{SkinData, SkinTableFile};
 use crate::core::local::types::stage::{Stage, StageTableFile};
@@ -328,6 +329,11 @@ pub fn init_game_data(
         }
     };
 
+    // ============ Load Roguelike Game Data ============
+    // The roguelike_topic_table.json has a complex nested structure that doesn't
+    // easily map to per-theme data. Use hardcoded known values instead.
+    let roguelike = RoguelikeGameData::with_known_values();
+
     // ============ Load Chibi Data ============
     let chibi_result = init_chibi_data(assets_dir);
     let chibis = chibi_result.data;
@@ -453,6 +459,7 @@ pub fn init_game_data(
         zones,
         stages,
         medals,
+        roguelike,
         asset_mappings,
     })
 }
