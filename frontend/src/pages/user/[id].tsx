@@ -6,6 +6,7 @@ import { CharactersGrid } from "~/components/user/characters-grid";
 import { ItemsGrid } from "~/components/user/items-grid";
 import { ScoreView } from "~/components/user/score-view";
 import { UserHeader } from "~/components/user/user-header";
+import { env } from "~/env";
 import type { StoredUser } from "~/types/api/impl/user";
 
 interface UserPageProps {
@@ -89,7 +90,7 @@ export const getServerSideProps: GetServerSideProps<UserPageProps> = async (cont
     // Build base URL from request headers
     const protocol = req.headers["x-forwarded-proto"] || "https";
     const host = req.headers.host || "myrtle.moe";
-    const baseUrl = `${protocol}://${host}`;
+    const baseUrl = env.NODE_ENV === "production" ? "https://myrtle.moe" : `${protocol}://${host}`;
 
     try {
         const { env } = await import("~/env");

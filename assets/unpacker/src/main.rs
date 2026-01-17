@@ -487,11 +487,9 @@ fn main() -> Result<()> {
 
                 // Show manifest stats if requested
                 if stats {
-                    let manifest = assets_unpacker::s3_manifest::S3Manifest::load(
-                        workflow.client(),
-                        None,
-                    )
-                    .await?;
+                    let manifest =
+                        assets_unpacker::s3_manifest::S3Manifest::load(workflow.client(), None)
+                            .await?;
                     println!("\n{}", manifest.stats());
                 }
 

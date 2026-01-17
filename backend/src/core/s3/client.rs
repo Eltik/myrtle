@@ -59,7 +59,11 @@ impl S3AssetClient {
     /// Build the full key with optional prefix
     fn build_key(&self, key: &str) -> String {
         match &self.config.prefix {
-            Some(prefix) => format!("{}/{}", prefix.trim_end_matches('/'), key.trim_start_matches('/')),
+            Some(prefix) => format!(
+                "{}/{}",
+                prefix.trim_end_matches('/'),
+                key.trim_start_matches('/')
+            ),
             None => key.to_string(),
         }
     }
@@ -108,10 +112,7 @@ impl S3AssetClient {
             .map_err(|e| format!("Failed to download {}: {}", full_key, e))?;
 
         // Extract ETag from headers
-        let etag = response
-            .headers()
-            .get("etag")
-            .map(|s| s.to_string());
+        let etag = response.headers().get("etag").map(|s| s.to_string());
 
         // Extract content type from headers
         let content_type = response
@@ -125,7 +126,11 @@ impl S3AssetClient {
     /// List objects with optional prefix
     pub async fn list_objects(&self, prefix: Option<&str>) -> Result<Vec<String>, String> {
         let full_prefix = match (prefix, &self.config.prefix) {
-            (Some(p), Some(base)) => format!("{}/{}", base.trim_end_matches('/'), p.trim_start_matches('/')),
+            (Some(p), Some(base)) => format!(
+                "{}/{}",
+                base.trim_end_matches('/'),
+                p.trim_start_matches('/')
+            ),
             (Some(p), None) => p.to_string(),
             (None, Some(base)) => base.clone(),
             (None, None) => String::new(),
@@ -142,7 +147,9 @@ impl S3AssetClient {
             for object in &list_result.contents {
                 // Strip the prefix from the returned keys
                 let key = match &self.config.prefix {
-                    Some(p) => object.key.strip_prefix(&format!("{}/", p.trim_end_matches('/')))
+                    Some(p) => object
+                        .key
+                        .strip_prefix(&format!("{}/", p.trim_end_matches('/')))
                         .unwrap_or(&object.key)
                         .to_string(),
                     None => object.key.clone(),
@@ -184,10 +191,17 @@ mod tests {
             "test",
             "test",
             true,
-        ).with_prefix("assets/en");
+        )
+        .with_prefix("assets/en");
         let client = S3AssetClient::new(config).unwrap();
 
-        assert_eq!(client.build_key("path/to/file.png"), "assets/en/path/to/file.png");
-        assert_eq!(client.build_key("/path/to/file.png"), "assets/en/path/to/file.png");
+        assert_eq!(
+            client.build_key("path/to/file.png"),
+            "assets/en/path/to/file.png"
+        );
+        assert_eq!(
+            client.build_key("/path/to/file.png"),
+            "assets/en/path/to/file.png"
+        );
     }
 }

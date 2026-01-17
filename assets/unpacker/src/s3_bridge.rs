@@ -243,10 +243,17 @@ impl S3Client {
             Err(e) => {
                 // Check if it's a 404 error (object not found)
                 let err_str = e.to_string();
-                if err_str.contains("404") || err_str.contains("NoSuchKey") || err_str.contains("Not Found") {
+                if err_str.contains("404")
+                    || err_str.contains("NoSuchKey")
+                    || err_str.contains("Not Found")
+                {
                     Ok(false)
                 } else {
-                    Err(anyhow::anyhow!("Failed to check existence of {}: {}", key, e))
+                    Err(anyhow::anyhow!(
+                        "Failed to check existence of {}: {}",
+                        key,
+                        e
+                    ))
                 }
             }
         }
@@ -304,11 +311,10 @@ impl S3BatchOperations {
             .collect();
 
         // Process with limited concurrency
-        let results: Vec<Result<(String, PathBuf)>> =
-            futures::stream::iter(downloads)
-                .buffer_unordered(self.concurrency)
-                .collect()
-                .await;
+        let results: Vec<Result<(String, PathBuf)>> = futures::stream::iter(downloads)
+            .buffer_unordered(self.concurrency)
+            .collect()
+            .await;
 
         results.into_iter().collect()
     }
@@ -335,14 +341,16 @@ impl S3BatchOperations {
                 let prefix = prefix.to_string();
 
                 async move {
-                    let relative = local_path
-                        .strip_prefix(&base_dir)
-                        .unwrap_or(&local_path);
+                    let relative = local_path.strip_prefix(&base_dir).unwrap_or(&local_path);
 
                     let key = if prefix.is_empty() {
                         relative.to_string_lossy().to_string()
                     } else {
-                        format!("{}/{}", prefix.trim_end_matches('/'), relative.to_string_lossy())
+                        format!(
+                            "{}/{}",
+                            prefix.trim_end_matches('/'),
+                            relative.to_string_lossy()
+                        )
                     };
 
                     // Replace backslashes with forward slashes for S3 compatibility
@@ -533,12 +541,7 @@ impl S3Workflow {
         let mut total_stats = UploadStats::default();
 
         for (i, input_key) in input_keys.iter().enumerate() {
-            println!(
-                "[{}/{}] Processing: {}",
-                i + 1,
-                input_keys.len(),
-                input_key
-            );
+            println!("[{}/{}] Processing: {}", i + 1, input_keys.len(), input_key);
 
             // Create temp directories for this file
             let temp_input = TempDir::new()?;

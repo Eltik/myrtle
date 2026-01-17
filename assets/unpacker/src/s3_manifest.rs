@@ -62,16 +62,21 @@ impl S3Manifest {
 
         // Check if manifest exists
         if !client.output_exists(manifest_key).await? {
-            log::info!("No existing manifest found at {}, creating new one", manifest_key);
+            log::info!(
+                "No existing manifest found at {}, creating new one",
+                manifest_key
+            );
             return Ok(Self::new());
         }
 
         // Download and parse
-        let data = client.download_to_memory(manifest_key).await
+        let data = client
+            .download_to_memory(manifest_key)
+            .await
             .context("Failed to download manifest from S3")?;
 
-        let manifest: S3Manifest = serde_json::from_slice(&data)
-            .context("Failed to parse manifest JSON")?;
+        let manifest: S3Manifest =
+            serde_json::from_slice(&data).context("Failed to parse manifest JSON")?;
 
         log::info!(
             "Loaded manifest with {} entries ({} total assets)",
@@ -89,10 +94,11 @@ impl S3Manifest {
         let mut manifest = self.clone();
         manifest.last_updated = Some(Utc::now());
 
-        let json = serde_json::to_vec_pretty(&manifest)
-            .context("Failed to serialize manifest")?;
+        let json = serde_json::to_vec_pretty(&manifest).context("Failed to serialize manifest")?;
 
-        client.upload_bytes(&json, manifest_key).await
+        client
+            .upload_bytes(&json, manifest_key)
+            .await
             .context("Failed to upload manifest to S3")?;
 
         log::info!("Saved manifest to {}", manifest_key);
@@ -187,10 +193,18 @@ impl std::fmt::Display for ManifestStats {
             self.total_input_bytes as f64 / (1024.0 * 1024.0)
         )?;
         if let Some(oldest) = self.oldest_entry {
-            writeln!(f, "  Oldest Entry: {}", oldest.format("%Y-%m-%d %H:%M:%S UTC"))?;
+            writeln!(
+                f,
+                "  Oldest Entry: {}",
+                oldest.format("%Y-%m-%d %H:%M:%S UTC")
+            )?;
         }
         if let Some(newest) = self.newest_entry {
-            writeln!(f, "  Newest Entry: {}", newest.format("%Y-%m-%d %H:%M:%S UTC"))?;
+            writeln!(
+                f,
+                "  Newest Entry: {}",
+                newest.format("%Y-%m-%d %H:%M:%S UTC")
+            )?;
         }
         Ok(())
     }
