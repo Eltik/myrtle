@@ -90,13 +90,17 @@ export interface ScoreBreakdown {
     sidestoryCompletion: number;
     /** Event/activity completion percentage (0-100) */
     activityCompletion: number;
-    /** Total stages completed across all zones */
+    /** Permanent stages completed (mainline + sidestory only) */
+    permanentStagesCompleted: number;
+    /** Permanent stages available (mainline + sidestory only) */
+    permanentStagesAvailable: number;
+    /** Total stages completed across all zones (including time-limited) */
     totalStagesCompleted: number;
-    /** Total stages available in the game */
+    /** Total stages available in the game (including time-limited) */
     totalStagesAvailable: number;
     /** Total perfect/3-star clears */
     totalPerfectClears: number;
-    /** Overall stage completion percentage (0-100) */
+    /** Overall stage completion percentage (0-100) - based on permanent stages only */
     overallStageCompletionPercentage: number;
 
     // === Roguelike (Integrated Strategies) Stats ===

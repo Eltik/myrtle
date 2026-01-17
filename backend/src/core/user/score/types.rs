@@ -87,13 +87,17 @@ pub struct ScoreBreakdown {
     pub sidestory_completion: f32,
     /// Event/activity completion percentage (0-100)
     pub activity_completion: f32,
-    /// Total stages completed across all zones
+    /// Permanent stages completed (mainline + sidestory only)
+    pub permanent_stages_completed: i32,
+    /// Permanent stages available (mainline + sidestory only)
+    pub permanent_stages_available: i32,
+    /// Total stages completed across all zones (including time-limited)
     pub total_stages_completed: i32,
-    /// Total stages available in the game
+    /// Total stages available in the game (including time-limited)
     pub total_stages_available: i32,
     /// Total perfect/3-star clears
     pub total_perfect_clears: i32,
-    /// Overall stage completion percentage (0-100)
+    /// Overall stage completion percentage (0-100) - based on permanent stages only
     pub overall_stage_completion_percentage: f32,
 
     // === Roguelike (Integrated Strategies) Stats ===
@@ -226,6 +230,8 @@ impl Default for ScoreBreakdown {
             mainline_completion: 0.0,
             sidestory_completion: 0.0,
             activity_completion: 0.0,
+            permanent_stages_completed: 0,
+            permanent_stages_available: 0,
             total_stages_completed: 0,
             total_stages_available: 0,
             total_perfect_clears: 0,

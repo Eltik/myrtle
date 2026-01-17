@@ -115,13 +115,17 @@ pub fn calculate_user_score(user: &User, game_data: &GameData) -> UserScore {
     breakdown.mainline_completion = stage_result.breakdown.mainline_completion;
     breakdown.sidestory_completion = stage_result.breakdown.sidestory_completion;
     breakdown.activity_completion = stage_result.breakdown.activity_completion;
+    breakdown.permanent_stages_completed = stage_result.breakdown.permanent_stages_completed;
+    breakdown.permanent_stages_available = stage_result.breakdown.permanent_stages_available;
     breakdown.total_stages_completed = stage_result.breakdown.total_stages_completed;
     breakdown.total_stages_available = stage_result.breakdown.total_stages_available;
     breakdown.total_perfect_clears = stage_result.breakdown.total_perfect_clears;
 
-    // Calculate overall stage completion percentage
-    breakdown.overall_stage_completion_percentage = if breakdown.total_stages_available > 0 {
-        (breakdown.total_stages_completed as f32 / breakdown.total_stages_available as f32) * 100.0
+    // Calculate overall stage completion percentage based on PERMANENT stages only
+    // (mainline + sidestory - excludes time-limited activity stages)
+    breakdown.overall_stage_completion_percentage = if breakdown.permanent_stages_available > 0 {
+        (breakdown.permanent_stages_completed as f32 / breakdown.permanent_stages_available as f32)
+            * 100.0
     } else {
         0.0
     };
@@ -249,9 +253,10 @@ pub fn calculate_user_score(user: &User, game_data: &GameData) -> UserScore {
                 breakdown.total_operators,
                 breakdown.total_operators_available,
             ),
+            // Use permanent stages (mainline + sidestory) for completion tracking
             stages: CompletionMetric::new(
-                breakdown.total_stages_completed,
-                breakdown.total_stages_available,
+                breakdown.permanent_stages_completed,
+                breakdown.permanent_stages_available,
             ),
             medals: CompletionMetric::new(
                 breakdown.medal_total_earned,
@@ -299,9 +304,10 @@ pub fn calculate_user_score(user: &User, game_data: &GameData) -> UserScore {
                 breakdown.total_operators,
                 breakdown.total_operators_available,
             ),
+            // Use permanent stages (mainline + sidestory) for completion tracking
             stages: CompletionMetric::new(
-                breakdown.total_stages_completed,
-                breakdown.total_stages_available,
+                breakdown.permanent_stages_completed,
+                breakdown.permanent_stages_available,
             ),
             medals: CompletionMetric::new(
                 breakdown.medal_total_earned,

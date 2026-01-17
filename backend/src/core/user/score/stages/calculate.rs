@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::core::local::types::{GameData, zone::ZoneType};
+use crate::core::local::types::{GameData, stage::StageType, zone::ZoneType};
 use crate::core::user::types::User;
 
 use super::types::{StageBreakdown, StageScore, ZoneScore};
@@ -40,12 +40,16 @@ pub fn calculate_stage_score(user: &User, game_data: &GameData) -> StageScore {
 
         for stage_id in stage_ids {
             if let Some(user_stage) = user.dungeon.stages.get(*stage_id) {
-                if user_stage.complete_times > 0 {
+                // Use state >= 2 for completion check (not complete_times)
+                // Easy/tough mode stages have complete_times=0 but state=3 when cleared
+                // state=2: cleared (2-star), state=3: perfect (3-star)
+                if user_stage.state >= 2 {
                     completed_stages += 1;
                     breakdown.total_stages_completed += 1;
                 }
 
-                if user_stage.state >= 2 {
+                // state >= 3 means 3-star (perfect) clear
+                if user_stage.state >= 3 {
                     perfect_stages += 1;
                     breakdown.total_perfect_clears += 1;
                 }
@@ -54,25 +58,67 @@ pub fn calculate_stage_score(user: &User, game_data: &GameData) -> StageScore {
 
         breakdown.total_stages_available += total_stages;
 
-        // Determine effective zone type - treat zones with "side" in ID as sidestory
-        // since SIDESTORY zones in zone_table have no stages, but activity side zones do
-        let is_sidestory_content = zone_id.contains("side");
-        let effective_zone_type = if is_sidestory_content {
-            ZoneType::Sidestory
-        } else {
-            zone.zone_type.clone()
+        // Determine effective zone type
+        // Only apply "permanent_sidestory" heuristic for zones with Unknown type
+        // to handle cases where stage zone_ids don't match zone_table entries.
+        // IMPORTANT: Do NOT override Activity type zones even if they have "side"
+        // in the name (e.g., "act43side_zone1" is time-limited, not permanent sidestory)
+        let effective_zone_type = match zone.zone_type {
+            ZoneType::Unknown if zone_id.contains("permanent_sidestory") => ZoneType::Sidestory,
+            _ => zone.zone_type.clone(),
         };
 
         match effective_zone_type {
-            ZoneType::Mainline => {
-                mainline_completed += completed_stages;
-                mainline_total += total_stages;
+            ZoneType::Mainline | ZoneType::MainlineActivity => {
+                // MainlineActivity = former events that became permanent mainline content
+                // (e.g., Episode 15 "Dissociative Recombination")
+                //
+                // Exclude from mainline completion count:
+                // 1. "act" prefixed stages - anniversary/collaboration event stages
+                // 2. SUB type stages - optional side content (tr_s_X, sub_XX-X-X)
+                let mainline_stage_ids: Vec<&&str> = stage_ids
+                    .iter()
+                    .filter(|s| {
+                        // Exclude act-prefixed stages
+                        if s.starts_with("act") {
+                            return false;
+                        }
+                        // Exclude SUB type stages
+                        if let Some(stage) = game_data.stages.get(**s)
+                            && stage.stage_type == StageType::Sub
+                        {
+                            return false;
+                        }
+                        true
+                    })
+                    .collect();
+
+                let mut mainline_zone_completed = 0;
+                let mainline_zone_total = mainline_stage_ids.len() as i32;
+
+                for stage_id in &mainline_stage_ids {
+                    if let Some(user_stage) = user.dungeon.stages.get(**stage_id)
+                        && user_stage.state >= 2
+                    {
+                        mainline_zone_completed += 1;
+                    }
+                }
+
+                mainline_completed += mainline_zone_completed;
+                mainline_total += mainline_zone_total;
+                // Mainline is permanent content (excluding act-prefixed and SUB stages)
+                breakdown.permanent_stages_completed += mainline_zone_completed;
+                breakdown.permanent_stages_available += mainline_zone_total;
             }
             ZoneType::Sidestory | ZoneType::Branchline => {
                 sidestory_completed += completed_stages;
                 sidestory_total += total_stages;
+                // Sidestory/Branchline is permanent content
+                breakdown.permanent_stages_completed += completed_stages;
+                breakdown.permanent_stages_available += total_stages;
             }
-            ZoneType::Activity | ZoneType::MainlineActivity => {
+            ZoneType::Activity => {
+                // Activity stages are time-limited, NOT counted as permanent
                 activity_completed += completed_stages;
                 activity_total += total_stages;
             }

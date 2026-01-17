@@ -38,7 +38,13 @@ pub struct StageBreakdown {
     pub mainline_completion: f32,  // Main story %
     pub sidestory_completion: f32, // Side stories %
     pub activity_completion: f32,  // Events %
+    /// Permanent stages completed (mainline + sidestory only - always available content)
+    pub permanent_stages_completed: i32,
+    /// Permanent stages available (mainline + sidestory only)
+    pub permanent_stages_available: i32,
+    /// All stages completed (including time-limited activities)
     pub total_stages_completed: i32,
+    /// All stages available (including time-limited activities)
     pub total_stages_available: i32,
     pub total_perfect_clears: i32,
 }
