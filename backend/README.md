@@ -35,6 +35,7 @@ A high-performance Rust backend for the Myrtle.moe Arknights companion applicati
 - [Rate Limiting](#rate-limiting)
 - [Development](#development)
   - [CLI Tools](#cli-tools)
+  - [Database Backup & Restore](#database-backup--restore)
   - [Scripts](#scripts)
 - [Troubleshooting](#troubleshooting)
 - [License](#license)
@@ -323,9 +324,17 @@ backend/
 │   ├── main.rs                 # Entry point
 │   ├── lib.rs                  # Module exports
 │   ├── bin/
+│   │   ├── db_backup.rs            # Database export/import CLI tool
 │   │   ├── generate_dps_tests.rs   # Generate DPS comparison test files
 │   │   ├── manage_permissions.rs   # CLI tool for permission management
 │   │   └── translate_operators.rs  # Python-to-Rust operator translator
+│   ├── backup/
+│   │   ├── mod.rs                  # Database backup module
+│   │   ├── cli.rs                  # CLI argument parsing
+│   │   ├── types.rs                # Export/import types
+│   │   ├── export.rs               # PostgreSQL & Redis export
+│   │   ├── import.rs               # Transactional import with safety
+│   │   └── verify.rs               # Checksum verification
 │   ├── app/
 │   │   ├── mod.rs
 │   │   ├── server.rs           # Axum server setup
@@ -2311,6 +2320,13 @@ RUST_LOG=debug cargo run
 
 The project includes several CLI tools for various tasks:
 
+| Tool | Binary | Description |
+|------|--------|-------------|
+| Permission Manager | `manage-permissions` | Manage user roles and tier list permissions |
+| DPS Test Generator | `generate-dps-tests` | Generate DPS comparison test files |
+| Operator Translator | `translate-operators` | Translate Python operators to Rust |
+| Database Backup | `db-backup` | Export and import PostgreSQL/Redis data |
+
 #### Permission Manager
 
 Manage user permissions from the command line:
@@ -2385,6 +2401,99 @@ The translator handles:
 - Operator-specific edge cases
 - Init-time modifications
 - Module-dependent calculations
+
+### Database Backup & Restore
+
+The `db-backup` CLI tool provides comprehensive database export and import functionality with safety measures.
+
+#### Features
+
+| Feature | Description |
+|---------|-------------|
+| Full Export | Export all PostgreSQL tables and Redis cache to JSON |
+| Selective Export | Export specific tables or Redis patterns only |
+| Compression | Optional gzip compression for exported files |
+| Checksum Validation | SHA-256 checksums for data integrity verification |
+| Transactional Import | PostgreSQL imports wrapped in transactions with rollback |
+| Conflict Strategies | Truncate, merge, or skip existing data |
+| Dry Run | Validate imports without modifying data |
+| Confirmation Prompts | Interactive confirmation before destructive operations |
+
+#### Usage
+
+```bash
+# Export all databases
+cargo run --bin db-backup -- export
+
+# Export with gzip compression
+cargo run --bin db-backup -- export --compress
+
+# Export specific tables only
+cargo run --bin db-backup -- export --tables users,tier_lists
+
+# Export only Redis cache
+cargo run --bin db-backup -- export --redis-only
+
+# Export with custom name
+cargo run --bin db-backup -- export --name my-backup
+
+# List available backups
+cargo run --bin db-backup -- list
+
+# Verify backup integrity
+cargo run --bin db-backup -- verify 2024-01-15_143022
+
+# Deep verification (compare with live database)
+cargo run --bin db-backup -- verify 2024-01-15_143022 --deep
+
+# Import with confirmation prompt
+cargo run --bin db-backup -- import 2024-01-15_143022
+
+# Import with merge strategy (upsert instead of truncate)
+cargo run --bin db-backup -- import 2024-01-15_143022 --conflict-strategy merge
+
+# Import skipping existing records
+cargo run --bin db-backup -- import 2024-01-15_143022 --conflict-strategy skip
+
+# Dry run (validate without importing)
+cargo run --bin db-backup -- import 2024-01-15_143022 --dry-run
+
+# Skip confirmation prompts (use with caution!)
+cargo run --bin db-backup -- import 2024-01-15_143022 --yes
+```
+
+#### Export Output Structure
+
+```
+backups/
+└── 2024-01-15_143022/
+    ├── manifest.json              # Metadata, checksums, row counts
+    ├── users.json                 # PostgreSQL tables
+    ├── tier_lists.json
+    ├── tiers.json
+    ├── tier_placements.json
+    ├── tier_list_versions.json
+    ├── tier_change_log.json
+    ├── tier_list_permissions.json
+    └── redis_cache.json           # Redis cache data
+```
+
+#### Conflict Strategies
+
+| Strategy | Description |
+|----------|-------------|
+| `truncate` | Delete all existing data before import (default) |
+| `merge` | Upsert: update existing records, insert new ones |
+| `skip` | Only insert new records, skip existing |
+
+#### Safety Measures
+
+1. **Checksum Validation** - SHA-256 hash verification before import
+2. **Confirmation Prompts** - Interactive confirmation for destructive operations
+3. **Transactional Import** - Full rollback on any PostgreSQL error
+4. **Dry Run Mode** - Validate data without modifying anything
+5. **Foreign Key Ordering** - Tables imported in correct dependency order
+6. **Progress Indicators** - Visual progress during export/import operations
 
 ### Scripts
 
