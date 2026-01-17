@@ -35,8 +35,8 @@ export function ActivityMetricsCard({ grade, className }: ActivityMetricsCardPro
             icon: Activity,
             color: "stroke-emerald-500",
             tooltipTitle: "Login Frequency",
-            tooltipContent: activityMetrics.totalCheckIns ? `${activityMetrics.totalCheckIns} total check-ins` : "Based on login patterns",
-            tooltipDetail: "How often you log in over time",
+            tooltipContent: activityMetrics.checkInsThisCycle ? `${activityMetrics.checkInsThisCycle}/${activityMetrics.checkInCycleLength} check-ins this cycle` : "Based on login patterns",
+            tooltipDetail: `${Math.round(activityMetrics.checkInCompletionRate ?? 0)}% check-in completion`,
         },
         {
             key: "consistency",
@@ -44,8 +44,8 @@ export function ActivityMetricsCard({ grade, className }: ActivityMetricsCardPro
             value: activityMetrics.consistencyScore,
             icon: Calendar,
             color: "stroke-violet-500",
-            tooltipTitle: "Login Consistency",
-            tooltipContent: activityMetrics.totalCheckIns && activityMetrics.expectedCheckIns ? `${activityMetrics.totalCheckIns} / ${activityMetrics.expectedCheckIns} expected logins` : "Based on daily login streaks",
+            tooltipTitle: "Mission Consistency",
+            tooltipContent: "Based on daily/weekly mission completion",
             tooltipDetail: "Regularity of your play sessions",
         },
     ];

@@ -1,6 +1,9 @@
 // User types - Converted from backend Rust types
 // Includes types from ak-roster (https://github.com/neeia/ak-roster)
 
+import type { ActivityMetrics, EngagementMetrics } from "./leaderboard";
+import type { CompletionSummary, RoguelikeScore, RoguelikeThemeScore, ScoreBreakdown } from "./score";
+
 // Server type aliases
 export type ApiServer = "en" | "jp" | "cn" | "kr";
 export type YostarServer = "en" | "jp" | "kr";
@@ -102,14 +105,15 @@ export interface StoredUserScore {
     medalScore: number;
     baseScore: number;
     grade: StoredUserGrade;
-    breakdown: Record<string, unknown>;
+    breakdown: ScoreBreakdown;
+    completionSummary: CompletionSummary;
     // Additional detailed fields available but not commonly used in UI
     operatorScores?: unknown[];
     zoneScores?: unknown[];
-    roguelikeThemeScores?: unknown[];
+    roguelikeThemeScores?: RoguelikeThemeScore[];
     sandboxAreaScores?: unknown[];
     medalCategoryScores?: unknown[];
-    roguelikeDetails?: unknown;
+    roguelikeDetails?: RoguelikeScore;
     sandboxDetails?: unknown;
     medalDetails?: unknown;
     baseDetails?: unknown;
@@ -121,25 +125,10 @@ export interface StoredUserGrade {
     compositeScore: number;
     accountAgeDays: number;
     normalizedScore: number;
-    activityMetrics: {
-        daysSinceLogin: number;
-        loginRecencyScore: number;
-        loginFrequencyScore: number;
-        consistencyScore: number;
-        totalActivityScore: number;
-        totalCheckIns?: number;
-        expectedCheckIns?: number;
-    };
-    engagementMetrics: {
-        contentVarietyScore: number;
-        roguelikeDepthScore: number;
-        stageDiversityScore: number;
-        progressionDepthScore: number;
-        totalEngagementScore: number;
-        contentTypesEngaged: number;
-    };
+    activityMetrics: ActivityMetrics;
+    engagementMetrics: EngagementMetrics;
     percentileEstimate: number;
-    calculatedAt?: number;
+    calculatedAt: number;
 }
 
 /** Response from account/syncData endpoint */

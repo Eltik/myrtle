@@ -65,16 +65,18 @@ pub struct ActivityMetrics {
     pub days_since_login: i64,
     /// Login recency score (0-100) - based on last_online_ts
     pub login_recency_score: f32,
-    /// Login frequency score (0-100) - based on check-in history
+    /// Login frequency score (0-100) - based on check-in cycle completion
     pub login_frequency_score: f32,
     /// Mission completion consistency score (0-100)
     pub consistency_score: f32,
     /// Combined activity score (0-100)
     pub total_activity_score: f32,
-    /// Total check-ins recorded
-    pub total_check_ins: i32,
-    /// Expected check-ins based on account age (capped at 365)
-    pub expected_check_ins: i32,
+    /// Days checked in during current cycle (count of 1s in check_in_history)
+    pub check_ins_this_cycle: i32,
+    /// Total days in current check-in cycle window (typically 15-16)
+    pub check_in_cycle_length: i32,
+    /// Check-in completion rate for current cycle (0-100)
+    pub check_in_completion_rate: f32,
 }
 
 /// Engagement depth metrics measuring content variety and progression

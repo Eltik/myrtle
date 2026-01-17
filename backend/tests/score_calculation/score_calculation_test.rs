@@ -577,10 +577,10 @@ mod tests {
             score.grade.activity_metrics.login_recency_score
         );
         println!(
-            "  Login Frequency Score: {:.2} ({}/{} check-ins)",
+            "  Login Frequency Score: {:.2} ({}/{} check-ins this cycle)",
             score.grade.activity_metrics.login_frequency_score,
-            score.grade.activity_metrics.total_check_ins,
-            score.grade.activity_metrics.expected_check_ins
+            score.grade.activity_metrics.check_ins_this_cycle,
+            score.grade.activity_metrics.check_in_cycle_length
         );
         println!(
             "  Consistency Score: {:.2}",
@@ -1149,11 +1149,21 @@ mod tests {
         let score = calculate_user_score(user, game_data);
         let grade = &score.grade;
 
-        // Check-in count should match user data
-        let user_check_ins = user.check_in.check_in_history.len() as i32;
+        // Check-in count should match actual check-ins in user data (count of 1s)
+        let user_check_ins = user
+            .check_in
+            .check_in_history
+            .iter()
+            .filter(|&&x| x == 1)
+            .count() as i32;
+        let cycle_length = user.check_in.check_in_history.len() as i32;
         assert_eq!(
-            grade.activity_metrics.total_check_ins, user_check_ins,
-            "Grade check-in count should match user check-in history"
+            grade.activity_metrics.check_ins_this_cycle, user_check_ins,
+            "Grade check-in count should match actual check-ins in user history"
+        );
+        assert_eq!(
+            grade.activity_metrics.check_in_cycle_length, cycle_length,
+            "Grade cycle length should match user check-in history length"
         );
 
         // Days since login should be 0 since we calculate as of last_online_ts
@@ -1163,8 +1173,10 @@ mod tests {
         );
 
         println!(
-            "Activity metrics reflect user state: {} check-ins, account age {} days",
-            grade.activity_metrics.total_check_ins, grade.account_age_days
+            "Activity metrics reflect user state: {}/{} check-ins this cycle, account age {} days",
+            grade.activity_metrics.check_ins_this_cycle,
+            grade.activity_metrics.check_in_cycle_length,
+            grade.account_age_days
         );
     }
 
@@ -1186,20 +1198,21 @@ mod tests {
         let breakdown = &score.breakdown;
 
         // Content variety should reflect actual content engagement
+        // Uses percentage thresholds for consistent measurement
         let mut expected_content_types = 0;
-        if breakdown.roguelike_themes_played > 0 {
+        if breakdown.roguelike_themes_completion_percentage > 5.0 {
             expected_content_types += 1;
         }
-        if breakdown.sandbox_places_completed > 0 {
+        if breakdown.sandbox_completion_percentage > 5.0 {
             expected_content_types += 1;
         }
-        if breakdown.medal_total_earned > 10 {
+        if breakdown.medal_completion_percentage > 5.0 {
             expected_content_types += 1;
         }
         if breakdown.mainline_completion > 50.0 {
             expected_content_types += 1;
         }
-        if breakdown.total_stages_completed > 100 {
+        if breakdown.overall_stage_completion_percentage > 10.0 {
             expected_content_types += 1;
         }
         if breakdown.base_max_level_buildings > 0 {

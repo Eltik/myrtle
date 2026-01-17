@@ -13,7 +13,7 @@ use super::operators::{
 use super::roguelike::calculate_roguelike_score;
 use super::sandbox::calculate_sandbox_score;
 use super::stages::calculate_stage_score;
-use super::types::{ScoreBreakdown, UserScore};
+use super::types::{CompletionMetric, CompletionSummary, ScoreBreakdown, UserScore};
 
 /// Calculate the total score for a user's account
 ///
@@ -91,6 +91,20 @@ pub fn calculate_user_score(user: &User, game_data: &GameData) -> UserScore {
         breakdown.average_score_per_operator = operator_total / breakdown.total_operators as f32;
     }
 
+    // Count total available operators (excluding tokens/traps)
+    breakdown.total_operators_available = game_data
+        .operators
+        .iter()
+        .filter(|(char_id, op)| !is_token_or_trap(char_id, op))
+        .count() as i32;
+
+    // Calculate operator collection percentage
+    breakdown.operator_collection_percentage = if breakdown.total_operators_available > 0 {
+        (breakdown.total_operators as f32 / breakdown.total_operators_available as f32) * 100.0
+    } else {
+        0.0
+    };
+
     // Sort operator scores by total score descending
     operator_scores.sort_by(|a, b| b.total_score.partial_cmp(&a.total_score).unwrap());
 
@@ -105,8 +119,15 @@ pub fn calculate_user_score(user: &User, game_data: &GameData) -> UserScore {
     breakdown.total_stages_available = stage_result.breakdown.total_stages_available;
     breakdown.total_perfect_clears = stage_result.breakdown.total_perfect_clears;
 
+    // Calculate overall stage completion percentage
+    breakdown.overall_stage_completion_percentage = if breakdown.total_stages_available > 0 {
+        (breakdown.total_stages_completed as f32 / breakdown.total_stages_available as f32) * 100.0
+    } else {
+        0.0
+    };
+
     // === ROGUELIKE (INTEGRATED STRATEGIES) SCORING ===
-    let roguelike_result = calculate_roguelike_score(user);
+    let roguelike_result = calculate_roguelike_score(user, &game_data.roguelike);
 
     // Merge roguelike breakdown into main breakdown
     breakdown.roguelike_themes_played = roguelike_result.breakdown.themes_played;
@@ -118,6 +139,23 @@ pub fn calculate_user_score(user: &User, game_data: &GameData) -> UserScore {
     breakdown.roguelike_grade_2_challenges = roguelike_result.breakdown.total_grade_2_challenges;
     breakdown.roguelike_themes_at_max_difficulty =
         roguelike_result.breakdown.themes_at_max_difficulty;
+
+    // Merge new roguelike max values and percentages
+    breakdown.roguelike_total_themes_available = roguelike_result.breakdown.total_themes_available;
+    breakdown.roguelike_total_max_endings = roguelike_result.breakdown.total_max_endings;
+    breakdown.roguelike_total_max_collectibles = roguelike_result.breakdown.total_max_collectibles;
+    breakdown.roguelike_total_max_challenges = roguelike_result.breakdown.total_max_challenges;
+    breakdown.roguelike_themes_completion_percentage =
+        roguelike_result.breakdown.themes_completion_percentage;
+    breakdown.roguelike_endings_completion_percentage =
+        roguelike_result.breakdown.endings_completion_percentage;
+    breakdown.roguelike_collectibles_completion_percentage = roguelike_result
+        .breakdown
+        .collectibles_completion_percentage;
+    breakdown.roguelike_challenges_completion_percentage =
+        roguelike_result.breakdown.challenges_completion_percentage;
+    breakdown.roguelike_overall_completion_percentage =
+        roguelike_result.breakdown.overall_completion_percentage;
 
     // === SANDBOX (RECLAMATION ALGORITHM) SCORING ===
     let sandbox_result = calculate_sandbox_score(user);
@@ -164,6 +202,20 @@ pub fn calculate_user_score(user: &User, game_data: &GameData) -> UserScore {
         - base_result.breakdown.total_electricity_consumption;
     breakdown.base_max_level_buildings = base_result.breakdown.max_level_buildings;
 
+    // === CHECK-IN STATS ===
+    breakdown.check_in_current_cycle = user
+        .check_in
+        .check_in_history
+        .iter()
+        .filter(|&&x| x == 1)
+        .count() as i32;
+    breakdown.check_in_cycle_length = user.check_in.check_in_history.len() as i32;
+    breakdown.check_in_completion_percentage = if breakdown.check_in_cycle_length > 0 {
+        (breakdown.check_in_current_cycle as f32 / breakdown.check_in_cycle_length as f32) * 100.0
+    } else {
+        0.0
+    };
+
     // Combined total score
     let total_score = operator_total
         + stage_result.total_score
@@ -192,6 +244,32 @@ pub fn calculate_user_score(user: &User, game_data: &GameData) -> UserScore {
         base_details: base_result.clone(),
         breakdown: breakdown.clone(),
         grade: Default::default(), // Temporary placeholder
+        completion_summary: CompletionSummary {
+            operators: CompletionMetric::new(
+                breakdown.total_operators,
+                breakdown.total_operators_available,
+            ),
+            stages: CompletionMetric::new(
+                breakdown.total_stages_completed,
+                breakdown.total_stages_available,
+            ),
+            medals: CompletionMetric::new(
+                breakdown.medal_total_earned,
+                breakdown.medal_total_available,
+            ),
+            roguelike: CompletionMetric::new(
+                breakdown.roguelike_total_collectibles,
+                breakdown.roguelike_total_max_collectibles,
+            ),
+            sandbox: CompletionMetric::new(
+                breakdown.sandbox_places_completed,
+                breakdown.sandbox_places_total,
+            ),
+            check_in: CompletionMetric::new(
+                breakdown.check_in_current_cycle,
+                breakdown.check_in_cycle_length,
+            ),
+        },
     };
 
     // Calculate user grade from score and live user data
@@ -214,7 +292,33 @@ pub fn calculate_user_score(user: &User, game_data: &GameData) -> UserScore {
         sandbox_details: sandbox_result,
         medal_details: medal_result,
         base_details: base_result,
-        breakdown,
+        breakdown: breakdown.clone(),
         grade,
+        completion_summary: CompletionSummary {
+            operators: CompletionMetric::new(
+                breakdown.total_operators,
+                breakdown.total_operators_available,
+            ),
+            stages: CompletionMetric::new(
+                breakdown.total_stages_completed,
+                breakdown.total_stages_available,
+            ),
+            medals: CompletionMetric::new(
+                breakdown.medal_total_earned,
+                breakdown.medal_total_available,
+            ),
+            roguelike: CompletionMetric::new(
+                breakdown.roguelike_total_collectibles,
+                breakdown.roguelike_total_max_collectibles,
+            ),
+            sandbox: CompletionMetric::new(
+                breakdown.sandbox_places_completed,
+                breakdown.sandbox_places_total,
+            ),
+            check_in: CompletionMetric::new(
+                breakdown.check_in_current_cycle,
+                breakdown.check_in_cycle_length,
+            ),
+        },
     }
 }

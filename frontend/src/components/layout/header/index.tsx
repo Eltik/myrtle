@@ -1,6 +1,7 @@
 "use client";
 
 import { Github } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState } from "react";
@@ -35,7 +36,9 @@ export function Header() {
                 <div className="header-top-line absolute inset-x-0 top-0 h-px" />
                 <div className="relative flex h-14 items-center justify-between px-4">
                     <Link className="flex items-center gap-2" href="/">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">{/* tbd logo here */}</div>
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+                            <Image alt="Logo" height={32} src="/logo/bust_transparent.png" width={32} />
+                        </div>
                         <span className="font-semibold text-base text-foreground">myrtle.moe</span>
                     </Link>
 

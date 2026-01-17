@@ -327,6 +327,7 @@ backend/
 │   │   ├── db_backup.rs            # Database export/import CLI tool
 │   │   ├── generate_dps_tests.rs   # Generate DPS comparison test files
 │   │   ├── manage_permissions.rs   # CLI tool for permission management
+│   │   ├── sync_scores.rs          # Recalculate scores for all users
 │   │   └── translate_operators.rs  # Python-to-Rust operator translator
 │   ├── backup/
 │   │   ├── mod.rs                  # Database backup module
@@ -359,7 +360,10 @@ backend/
 │   │   ├── authentication/     # Yostar OAuth, JWT, headers, sessions
 │   │   ├── user/               # User data fetching, formatting & scoring
 │   │   │   └── score/          # Account scoring (operators, stages, roguelike, sandbox, medals, base)
+│   │   │       └── grade/      # User grade calculation (activity, engagement metrics)
 │   │   ├── local/              # Game data loading & types
+│   │   │   └── types/
+│   │   │       └── roguelike.rs  # Roguelike game data types (max values per theme)
 │   │   ├── s3/                 # S3-compatible storage support
 │   │   │   ├── mod.rs          # AssetSource abstraction
 │   │   │   ├── client.rs       # S3 client wrapper
@@ -434,6 +438,7 @@ pub struct GameData {
     pub gacha: GachaData,
     pub chibis: ChibiData,
     pub asset_mappings: AssetMappings,
+    pub roguelike: RoguelikeGameData,  // Max values for IS themes
 }
 ```
 
@@ -1339,7 +1344,7 @@ The Rust implementations are validated against the Python reference:
 
 ## User Scoring
 
-The backend includes a comprehensive user account scoring system that evaluates player progress across multiple game modes.
+The backend includes a comprehensive user account scoring system that evaluates player progress across multiple game modes. The system uses game data to calculate max possible values and completion percentages for each category.
 
 ### Overview
 
@@ -1349,10 +1354,33 @@ The scoring system calculates a total account score by aggregating:
 |----------|-------------|
 | Operator Score | Investment in operators (level, mastery, modules, skins) |
 | Stage Score | Story and event completion progress |
-| Roguelike Score | Integrated Strategies (IS) progress |
+| Roguelike Score | Integrated Strategies (IS) progress with game data max values |
 | Sandbox Score | Reclamation Algorithm (RA) progress |
 | Medal Score | Medal achievements with rarity and category bonuses |
 | Base Score | RIIC efficiency (trading posts, factories, power plants, etc.) |
+
+### Completion Summary
+
+The scoring system includes a `CompletionSummary` that aggregates completion metrics across all categories:
+
+```rust
+pub struct CompletionSummary {
+    pub operators: CompletionMetric,   // owned / available
+    pub stages: CompletionMetric,      // completed / available
+    pub medals: CompletionMetric,      // earned / available
+    pub roguelike: CompletionMetric,   // collectibles obtained / max
+    pub sandbox: CompletionMetric,     // places completed / total
+    pub check_in: CompletionMetric,    // current cycle check-ins / cycle length
+}
+
+pub struct CompletionMetric {
+    pub current: i32,
+    pub maximum: i32,
+    pub percentage: f32,  // 0-100
+}
+```
+
+This provides a unified view of account completion progress across all game modes.
 
 ### Operator Scoring
 
@@ -1461,7 +1489,7 @@ Stage completion tracks progress across game modes:
 
 ### Roguelike Scoring (Integrated Strategies)
 
-Progress across all IS themes (Phantom, Mizuki, Sami, Sarkaz, Babel):
+Progress across all IS themes (Phantom, Mizuki, Sami, Sarkaz, Babel). Max values are loaded from `roguelike_topic_table.json` game data.
 
 | Achievement | Points |
 |-------------|--------|
@@ -1476,15 +1504,27 @@ Progress across all IS themes (Phantom, Mizuki, Sami, Sarkaz, Babel):
 | Grade 2 (max difficulty) clear | 25 |
 | Theme at max difficulty | 100 |
 
+**Max Values per Theme (from game data):**
+
+| Theme | Endings | Relics | Capsules | Bands | Challenges | Monthly Squads | Max Difficulty |
+|-------|---------|--------|----------|-------|------------|----------------|----------------|
+| Phantom (rogue_1) | 4 | 265 | 26 | 0 | 12 | 8 | 15 |
+| Mizuki (rogue_2) | 4 | 294 | 0 | 12 | 12 | 8 | 18 |
+| Sami (rogue_3) | 5 | 380 | 0 | 0 | 13 | 8 | 15 |
+| Sarkaz (rogue_4) | 5 | 431 | 0 | 55 | 12 | 8 | 18 |
+| Babel (rogue_5) | 4 | 481 | 0 | 40 | 0 | 7 | 15 |
+| **Total** | **22** | **1851** | **26** | **107** | **49** | **39** | - |
+
 **Breakdown includes:**
 - Themes played
-- Total endings unlocked
+- Total endings unlocked (with max and completion %)
 - Total BP levels
 - Total buffs
-- Total collectibles (bands + relics + capsules)
+- Total collectibles (bands + relics + capsules) with completion %
 - Total runs
-- Grade 2 challenges cleared
+- Grade 2 challenges cleared with completion %
 - Themes at max difficulty
+- Per-theme completion percentages
 
 ### Sandbox Scoring (Reclamation Algorithm)
 
@@ -1732,7 +1772,25 @@ println!("Base efficiency: {:.1}%", score.breakdown.base_avg_trading_efficiency)
     }
   ],
   "zoneScores": [...],
-  "roguelikeThemeScores": [...],
+  "roguelikeThemeScores": [
+    {
+      "themeId": "rogue_3",
+      "themeName": "Sami",
+      "score": 2500.0,
+      "details": {
+        "endingsUnlocked": 4,
+        "maxEndings": 5,
+        "endingsCompletionPercentage": 80.0,
+        "relicsCollected": 320,
+        "maxRelics": 380,
+        "relicsCompletionPercentage": 84.2,
+        "challengesCompletedAtGrade2": 10,
+        "maxChallenges": 13,
+        "challengesAtMaxGradePercentage": 76.9,
+        "overallCompletionPercentage": 82.5
+      }
+    }
+  ],
   "sandboxAreaScores": [...],
   "medalCategoryScores": [
     {
@@ -1802,24 +1860,46 @@ println!("Base efficiency: {:.1}%", score.breakdown.base_avg_trading_efficiency)
       "electricityBalance": 70
     }
   },
+  "completionSummary": {
+    "operators": { "current": 280, "maximum": 350, "percentage": 80.0 },
+    "stages": { "current": 450, "maximum": 520, "percentage": 86.5 },
+    "medals": { "current": 450, "maximum": 1304, "percentage": 34.5 },
+    "roguelike": { "current": 1500, "maximum": 1984, "percentage": 75.6 },
+    "sandbox": { "current": 45, "maximum": 50, "percentage": 90.0 },
+    "checkIn": { "current": 15, "maximum": 16, "percentage": 93.75 }
+  },
   "breakdown": {
     "totalOperators": 280,
+    "totalOperatorsAvailable": 350,
+    "operatorCollectionPercentage": 80.0,
     "sixStarCount": 45,
     "fiveStarCount": 80,
     "m9Count": 15,
     "m3Count": 50,
     "e2Count": 120,
+    "totalStagesAvailable": 520,
+    "totalStagesCompleted": 450,
+    "overallStageCompletionPercentage": 86.5,
     "mainlineCompletion": 100.0,
     "sidestoryCompletion": 85.5,
     "activityCompletion": 72.3,
     "roguelikeThemesPlayed": 5,
-    "roguelikeTotalEndings": 25,
+    "roguelikeTotalEndings": 20,
+    "roguelikeTotalMaxEndings": 22,
+    "roguelikeEndingsCompletionPercentage": 90.9,
+    "roguelikeTotalCollectibles": 1500,
+    "roguelikeTotalMaxCollectibles": 1984,
+    "roguelikeCollectiblesCompletionPercentage": 75.6,
+    "roguelikeOverallCompletionPercentage": 78.5,
     "sandboxPlacesCompleted": 45,
     "sandboxCompletionPercentage": 90.0,
     "medalTotalEarned": 450,
     "medalTotalAvailable": 1304,
     "medalCompletionPercentage": 34.5,
     "medalGroupsComplete": 12,
+    "checkInCurrentCycle": 15,
+    "checkInCycleLength": 16,
+    "checkInCompletionPercentage": 93.75,
     "baseTradingPostCount": 2,
     "baseFactoryCount": 4,
     "baseAvgTradingEfficiency": 90.0,
@@ -2024,6 +2104,7 @@ Place these JSON files in your `DATA_DIR` or extract them via the [assets unpack
 | `charword_table.json` | Voice line data |
 | `gacha_table.json` | Gacha pools |
 | `handbook_info_table.json` | Operator lore |
+| `roguelike_topic_table.json` | Integrated Strategies theme data (max values for scoring) |
 
 ### Data Enrichment
 
@@ -2326,6 +2407,7 @@ The project includes several CLI tools for various tasks:
 | DPS Test Generator | `generate-dps-tests` | Generate DPS comparison test files |
 | Operator Translator | `translate-operators` | Translate Python operators to Rust |
 | Database Backup | `db-backup` | Export and import PostgreSQL/Redis data |
+| Score Sync | `sync-scores` | Recalculate scores for all users in the database |
 
 #### Permission Manager
 
@@ -2494,6 +2576,40 @@ backups/
 4. **Dry Run Mode** - Validate data without modifying anything
 5. **Foreign Key Ordering** - Tables imported in correct dependency order
 6. **Progress Indicators** - Visual progress during export/import operations
+
+#### Score Sync
+
+Recalculate scores for all users in the database using the latest scoring algorithm and game data. Useful after updating the scoring system or game data.
+
+```bash
+# Set required environment variables
+export DATABASE_URL=postgres://localhost/myrtle
+export DATA_DIR=/path/to/gamedata/excel
+export ASSETS_DIR=/path/to/assets
+
+# Run score sync
+cargo run --bin sync-scores
+
+# Output:
+# Loading game data from: /path/to/gamedata/excel
+# Loading assets from: /path/to/assets
+# Game data loaded: 350 operators, 800 skills, ...
+# Fetching all users...
+# Found 15 users to sync
+# [1/15] Syncing user 12345678...
+#   Total Score: 242,010.22
+# [2/15] Syncing user 23456789...
+#   Total Score: 185,432.50
+# ...
+# Sync complete! Processed 15 users in 27.99s
+```
+
+The sync-scores tool:
+- Loads current game data including roguelike max values
+- Fetches all users from the database
+- Recalculates scores using the latest algorithm
+- Updates the `score` JSONB column for each user
+- Reports progress and total scores for each user
 
 ### Scripts
 
