@@ -1,15 +1,17 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { env } from "../../../env";
 
+// Log environment verification at module load
+console.log("[CDN Proxy] Module loaded, BACKEND_URL:", env.BACKEND_URL ? "✓ set" : "✗ missing");
+
 /**
  * API route that proxies requests to the backend CDN service
- * Optimizations:
- * - Request coalescing (dedupe concurrent identical requests)
+ * Features:
  * - Aggressive caching with stale-while-revalidate
  * - ETag/conditional request support for revalidation
  */
 
-// Cached response data for request coalescing
+// Response data structure
 interface CachedResponse {
     status: number;
     contentType: string;
@@ -18,9 +20,6 @@ interface CachedResponse {
     buffer: Buffer;
 }
 
-// In-memory request coalescing to dedupe concurrent requests
-const pendingRequests = new Map<string, Promise<CachedResponse | null>>();
-
 export const config = {
     api: {
         responseLimit: false, // Allow large files
@@ -28,25 +27,32 @@ export const config = {
 };
 
 async function fetchAndBuffer(url: string, headers: Record<string, string>): Promise<CachedResponse | null> {
-    const response = await fetch(url, { headers });
+    try {
+        const response = await fetch(url, { headers });
 
-    // Handle 304 Not Modified
-    if (response.status === 304) {
-        return null;
+        // Handle 304 Not Modified
+        if (response.status === 304) {
+            return null;
+        }
+
+        const buffer = Buffer.from(await response.arrayBuffer());
+
+        return {
+            status: response.status,
+            contentType: response.headers.get("Content-Type") ?? "application/octet-stream",
+            etag: response.headers.get("ETag"),
+            lastModified: response.headers.get("Last-Modified"),
+            buffer,
+        };
+    } catch (error) {
+        console.error("fetchAndBuffer error:", { url, error: error instanceof Error ? error.message : String(error) });
+        throw error;
     }
-
-    const buffer = Buffer.from(await response.arrayBuffer());
-
-    return {
-        status: response.status,
-        contentType: response.headers.get("Content-Type") ?? "application/octet-stream",
-        etag: response.headers.get("ETag"),
-        lastModified: response.headers.get("Last-Modified"),
-        buffer,
-    };
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+    console.log("[CDN Proxy] Handler called:", req.method, req.url);
+
     // Only allow GET requests
     if (req.method !== "GET") {
         return res.status(405).json({ error: "Method not allowed" });
@@ -66,6 +72,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const [pathPart, queryPart] = urlParts.split("?");
 
         // Build the backend URL, maintaining the original encoding
+        // Note: getAvatarURL already handles special characters like # and @
         const encodedPath = pathPart
             ? pathPart
                   .split("/")
@@ -74,9 +81,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                       if (segment.includes("%")) {
                           return segment;
                       }
-                      // Handle special characters like # that might be unencoded
-                      const withHashEncoded = segment.replace(/#/g, "%23");
-                      return encodeURIComponent(withHashEncoded);
+                      return encodeURIComponent(segment);
                   })
                   .join("/")
             : "";
@@ -84,9 +89,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const fullURL = queryPart ? `${backendURL}?${queryPart}` : backendURL;
 
         // Build request headers
+        // Note: Don't forward Accept-Encoding to avoid potential decompression issues
         const fetchHeaders: Record<string, string> = {
             Accept: req.headers.accept ?? "*/*",
-            "Accept-Encoding": (req.headers["accept-encoding"] as string) ?? "",
             "User-Agent": req.headers["user-agent"] ?? "",
             "X-Forwarded-For": (req.headers["x-forwarded-for"] as string) ?? req.socket.remoteAddress ?? "",
             "X-Internal-Service-Key": env.INTERNAL_SERVICE_KEY,
@@ -99,18 +104,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             fetchHeaders["If-Modified-Since"] = req.headers["if-modified-since"] as string;
         }
 
-        // Request coalescing: reuse in-flight requests for same URL
-        let responsePromise = pendingRequests.get(fullURL);
-        if (!responsePromise) {
-            responsePromise = fetchAndBuffer(fullURL, fetchHeaders);
-            pendingRequests.set(fullURL, responsePromise);
-            // Clean up after response completes
-            responsePromise.finally(() => {
-                setTimeout(() => pendingRequests.delete(fullURL), 100);
-            });
-        }
-
-        const cachedResponse = await responsePromise;
+        // Disable request coalescing temporarily - it may be causing 500 errors with concurrent requests
+        // TODO: Re-enable after fixing the underlying issue
+        const cachedResponse = await fetchAndBuffer(fullURL, fetchHeaders);
 
         // Handle 304 Not Modified
         if (cachedResponse === null) {
@@ -153,7 +149,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // Send the buffered response
         res.status(cachedResponse.status).send(cachedResponse.buffer);
     } catch (error) {
-        console.error("Error proxying to CDN:", error);
-        res.status(500).json({ error: "Internal server error" });
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorStack = error instanceof Error ? error.stack : undefined;
+        console.error("Error proxying to CDN:", {
+            message: errorMessage,
+            stack: errorStack,
+            url: req.url,
+        });
+        res.status(500).json({ error: "Internal server error", details: errorMessage });
     }
 }

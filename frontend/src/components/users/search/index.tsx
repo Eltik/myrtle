@@ -81,6 +81,8 @@ export function SearchPageContent({ initialData }: SearchPageContentProps) {
             const controller = getSearchAbortController();
 
             // Build search params
+            // Note: Do NOT request fields=data here - it includes the entire game profile JSONB
+            // which is very large. Hover cards lazy-load data on demand instead.
             const searchQuery: SearchQuery = {
                 nickname: query.nickname,
                 uid: query.uid,
@@ -90,7 +92,6 @@ export function SearchPageContent({ initialData }: SearchPageContentProps) {
                 order: (query.order as "asc" | "desc") || "desc",
                 limit: 24,
                 offset: Number(query.offset) || 0,
-                fields: "data", // Request full data for hover card info
             };
 
             // Handle level range

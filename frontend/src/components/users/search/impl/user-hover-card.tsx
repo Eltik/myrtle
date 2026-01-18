@@ -1,4 +1,4 @@
-import { Calendar, Clock, User } from "lucide-react";
+import { Clock, User } from "lucide-react";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/shadcn/avatar";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "~/components/ui/shadcn/hover-card";
@@ -6,7 +6,7 @@ import type { SearchResultEntry } from "~/types/api";
 import { getAvatarURL } from "../../leaderboard/impl/constants";
 import { GradeBadge } from "../../leaderboard/impl/grade-badge";
 import { HOVER_DELAY } from "./constants";
-import { formatAccountAge, formatRelativeTime, formatSecretaryName, getStatusData } from "./helpers";
+import { formatRelativeTime, formatSecretaryName } from "./helpers";
 
 interface UserHoverCardProps {
     result: SearchResultEntry;
@@ -15,15 +15,10 @@ interface UserHoverCardProps {
 }
 
 export function UserHoverCard({ result, children, side = "top" }: UserHoverCardProps) {
-    // Extract data from result.data.status (populated when fields=data is requested)
-    const status = getStatusData(result);
-
-    const resume = status?.resume as string | undefined;
-    const registerTs = status?.registerTs as number | undefined;
-    const secretary = result.secretary ?? (status?.secretary as string | undefined);
-
+    // Use only fields available in the base search response (no lazy loading needed)
+    // This avoids fetching the massive 4MB+ data field for each user
+    const secretary = result.secretary;
     const secretaryDisplay = formatSecretaryName(secretary);
-    const accountAge = formatAccountAge(registerTs);
     const secretaryAvatarURL = secretary ? getAvatarURL(secretary) : null;
 
     return (
@@ -71,28 +66,12 @@ export function UserHoverCard({ result, children, side = "top" }: UserHoverCardP
                         </div>
                     )}
 
-                    {/* Account Age */}
-                    {accountAge && (
-                        <div className="flex items-center gap-2 text-sm">
-                            <Calendar className="h-4 w-4 shrink-0 text-muted-foreground" />
-                            <span className="text-muted-foreground">Account Age:</span>
-                            <span className="font-medium">{accountAge}</span>
-                        </div>
-                    )}
-
                     {/* Last Updated */}
                     <div className="flex items-center gap-2 text-sm">
                         <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
                         <span className="text-muted-foreground">Updated:</span>
                         <span className="font-medium">{formatRelativeTime(result.updatedAt)}</span>
                     </div>
-
-                    {/* Resume/Bio (if available and not empty) */}
-                    {resume?.trim() && (
-                        <div className="mt-2 rounded bg-muted/50 p-2">
-                            <p className="line-clamp-2 text-muted-foreground text-xs italic">"{resume}"</p>
-                        </div>
-                    )}
                 </div>
             </HoverCardContent>
         </HoverCard>
