@@ -227,22 +227,31 @@ fn transform_to_search_entry(
         .and_then(|l| l.as_i64())
         .unwrap_or(0);
 
-    // Extract avatar ID from user.data JSONB
-    let avatar_id = user
-        .data
-        .get("status")
-        .and_then(|s| s.get("avatar"))
-        .and_then(|a| a.get("id"))
-        .and_then(|id| id.as_str())
-        .map(|s| s.to_string());
-
-    // Extract secretary from user.data JSONB
-    let secretary = user
-        .data
-        .get("status")
+    // Extract avatar from secretary skin ID (matches user profile behavior)
+    let status = user.data.get("status");
+    let secretary = status
         .and_then(|s| s.get("secretary"))
-        .and_then(|s| s.as_str())
-        .map(|s| s.to_string());
+        .and_then(|s| s.as_str());
+    let secretary_skin_id = status
+        .and_then(|s| s.get("secretarySkinId"))
+        .and_then(|s| s.as_str());
+
+    // Use secretarySkinId for avatar, falling back to secretary base ID for default skins
+    let avatar_id = match (secretary, secretary_skin_id) {
+        (Some(sec), Some(skin_id)) => {
+            // If skin doesn't contain @ and ends with #1, use base secretary ID
+            if !skin_id.contains('@') && skin_id.ends_with("#1") {
+                Some(sec.to_string())
+            } else {
+                Some(skin_id.to_string())
+            }
+        }
+        (Some(sec), None) => Some(sec.to_string()),
+        _ => None,
+    };
+
+    // Keep secretary as separate field for filtering
+    let secretary = secretary.map(|s| s.to_string());
 
     // Extract grade from score JSONB
     let grade = user

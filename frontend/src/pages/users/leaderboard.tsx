@@ -43,6 +43,9 @@ export const getServerSideProps: GetServerSideProps<Props> = async (context) => 
         backendURL.searchParams.set("offset", offset);
     }
 
+    // Request minimal fields for initial table view (optimization)
+    backendURL.searchParams.set("fields", "minimal");
+
     try {
         const response = await fetch(backendURL.toString(), {
             method: "GET",

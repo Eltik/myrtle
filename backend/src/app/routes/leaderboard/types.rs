@@ -55,6 +55,27 @@ pub struct GradeBreakdown {
     pub percentile_estimate: f32,
 }
 
+/// Field selection mode for leaderboard entries
+#[derive(Debug, Clone, Copy, Deserialize, Default, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum LeaderboardFields {
+    /// Minimal fields for table view (default)
+    #[default]
+    Minimal,
+    /// Full fields including all scores and grade breakdown
+    Full,
+}
+
+impl LeaderboardFields {
+    /// Get string representation for cache key
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Minimal => "minimal",
+            Self::Full => "full",
+        }
+    }
+}
+
 /// Sorting options for the leaderboard
 #[derive(Debug, Clone, Copy, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
@@ -122,6 +143,9 @@ pub struct LeaderboardQuery {
     /// Pagination offset (default: 0)
     #[serde(default)]
     pub offset: i64,
+    /// Field selection mode: "minimal" (default) or "full"
+    #[serde(default)]
+    pub fields: LeaderboardFields,
 }
 
 fn default_order() -> String {
@@ -145,6 +169,7 @@ pub struct LeaderboardResponse {
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LeaderboardEntry {
+    // Core fields (always present)
     pub rank: i64,
     pub uid: String,
     pub server: String,
@@ -152,16 +177,26 @@ pub struct LeaderboardEntry {
     pub level: i64,
     pub avatar_id: Option<String>,
     pub total_score: f32,
-    pub operator_score: f32,
-    pub stage_score: f32,
-    pub roguelike_score: f32,
-    pub sandbox_score: f32,
-    pub medal_score: f32,
-    pub base_score: f32,
-    pub composite_score: f32,
     pub grade: String,
-    pub grade_breakdown: GradeBreakdown,
     pub updated_at: String,
+
+    // Optional fields (only with fields=full)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub operator_score: Option<f32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stage_score: Option<f32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub roguelike_score: Option<f32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sandbox_score: Option<f32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub medal_score: Option<f32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub base_score: Option<f32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub composite_score: Option<f32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub grade_breakdown: Option<GradeBreakdown>,
 }
 
 /// Pagination information
@@ -181,4 +216,5 @@ pub struct LeaderboardMeta {
     pub sort_by: String,
     pub order: String,
     pub server_filter: Option<String>,
+    pub fields: String,
 }

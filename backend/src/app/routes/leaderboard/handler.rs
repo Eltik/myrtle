@@ -26,14 +26,15 @@ pub async fn get_leaderboard(
     let offset = params.offset.max(0);
     let order = if params.order == "asc" { "ASC" } else { "DESC" };
 
-    // Build cache key
+    // Build cache key (includes fields parameter for different cached responses)
     let cache_key = format!(
-        "leaderboard:{}:{}:{}:{}:{}",
+        "leaderboard:{}:{}:{}:{}:{}:{}",
         params.sort_by.as_str(),
         order.to_lowercase(),
         params.server.as_deref().unwrap_or("all"),
         limit,
-        offset
+        offset,
+        params.fields.as_str()
     );
 
     // Check Redis cache
@@ -63,11 +64,11 @@ pub async fn get_leaderboard(
         .await
         .unwrap_or(0);
 
-    // Transform to response entries
+    // Transform to response entries (pass fields parameter for conditional field inclusion)
     let entries: Vec<LeaderboardEntry> = users
         .into_iter()
         .enumerate()
-        .map(|(i, user)| transform_to_entry(user, offset + i as i64 + 1))
+        .map(|(i, user)| transform_to_entry(user, offset + i as i64 + 1, params.fields))
         .collect();
 
     let response = LeaderboardResponse {
@@ -82,6 +83,7 @@ pub async fn get_leaderboard(
             sort_by: params.sort_by.as_str().to_string(),
             order: order.to_lowercase(),
             server_filter: params.server,
+            fields: params.fields.as_str().to_string(),
         },
     };
 
@@ -94,7 +96,7 @@ pub async fn get_leaderboard(
 }
 
 /// Transform a User database record into a LeaderboardEntry
-fn transform_to_entry(user: User, rank: i64) -> LeaderboardEntry {
+fn transform_to_entry(user: User, rank: i64, fields: LeaderboardFields) -> LeaderboardEntry {
     // Extract nickname from user.data JSONB
     let nickname = user
         .data
@@ -112,18 +114,34 @@ fn transform_to_entry(user: User, rank: i64) -> LeaderboardEntry {
         .and_then(|l| l.as_i64())
         .unwrap_or(0);
 
-    // Extract avatar ID from user.data JSONB
-    let avatar_id = user
-        .data
-        .get("status")
-        .and_then(|s| s.get("avatar"))
-        .and_then(|a| a.get("id"))
-        .and_then(|id| id.as_str())
-        .map(|s| s.to_string());
+    // Extract avatar from secretary skin ID (matches user profile behavior)
+    let status = user.data.get("status");
+    let secretary = status
+        .and_then(|s| s.get("secretary"))
+        .and_then(|s| s.as_str());
+    let secretary_skin_id = status
+        .and_then(|s| s.get("secretarySkinId"))
+        .and_then(|s| s.as_str());
+
+    // Use secretarySkinId for avatar, falling back to secretary base ID for default skins
+    let avatar_id = match (secretary, secretary_skin_id) {
+        (Some(sec), Some(skin_id)) => {
+            // If skin doesn't contain @ and ends with #1, use base secretary ID
+            if !skin_id.contains('@') && skin_id.ends_with("#1") {
+                Some(sec.to_string())
+            } else {
+                Some(skin_id.to_string())
+            }
+        }
+        (Some(sec), None) => Some(sec.to_string()),
+        _ => None,
+    };
 
     let grade_data = user.score.get("grade");
+    let is_full = fields == LeaderboardFields::Full;
 
     LeaderboardEntry {
+        // Core fields (always present)
         rank,
         uid: user.uid,
         server: user.server,
@@ -131,23 +149,59 @@ fn transform_to_entry(user: User, rank: i64) -> LeaderboardEntry {
         level,
         avatar_id,
         total_score: extract_f32(&user.score, "totalScore"),
-        operator_score: extract_f32(&user.score, "operatorScore"),
-        stage_score: extract_f32(&user.score, "stageScore"),
-        roguelike_score: extract_f32(&user.score, "roguelikeScore"),
-        sandbox_score: extract_f32(&user.score, "sandboxScore"),
-        medal_score: extract_f32(&user.score, "medalScore"),
-        base_score: extract_f32(&user.score, "baseScore"),
-        composite_score: grade_data
-            .and_then(|g| g.get("compositeScore"))
-            .and_then(|v| v.as_f64())
-            .unwrap_or(0.0) as f32,
         grade: grade_data
             .and_then(|g| g.get("grade"))
             .and_then(|v| v.as_str())
             .unwrap_or("F")
             .to_string(),
-        grade_breakdown: extract_grade_breakdown(grade_data),
         updated_at: user.updated_at.to_rfc3339(),
+
+        // Optional fields (only with fields=full)
+        operator_score: if is_full {
+            Some(extract_f32(&user.score, "operatorScore"))
+        } else {
+            None
+        },
+        stage_score: if is_full {
+            Some(extract_f32(&user.score, "stageScore"))
+        } else {
+            None
+        },
+        roguelike_score: if is_full {
+            Some(extract_f32(&user.score, "roguelikeScore"))
+        } else {
+            None
+        },
+        sandbox_score: if is_full {
+            Some(extract_f32(&user.score, "sandboxScore"))
+        } else {
+            None
+        },
+        medal_score: if is_full {
+            Some(extract_f32(&user.score, "medalScore"))
+        } else {
+            None
+        },
+        base_score: if is_full {
+            Some(extract_f32(&user.score, "baseScore"))
+        } else {
+            None
+        },
+        composite_score: if is_full {
+            Some(
+                grade_data
+                    .and_then(|g| g.get("compositeScore"))
+                    .and_then(|v| v.as_f64())
+                    .unwrap_or(0.0) as f32,
+            )
+        } else {
+            None
+        },
+        grade_breakdown: if is_full {
+            Some(extract_grade_breakdown(grade_data))
+        } else {
+            None
+        },
     }
 }
 
