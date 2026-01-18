@@ -27,8 +27,9 @@ export const getServerSideProps: GetServerSideProps<Props> = async (context) => 
         searchParams.set("limit", "24");
     }
 
-    // Request full data for hover card info (resume, registerTs, etc.)
-    searchParams.set("fields", "data");
+    // Do NOT request fields=data here - it includes the entire game profile JSONB
+    // which is very large (all operators, stages, etc.) and slows down page load.
+    // Instead, hover cards will lazy-load the data on demand.
 
     const backendURL = new URL("/search", env.BACKEND_URL);
     backendURL.search = searchParams.toString();
