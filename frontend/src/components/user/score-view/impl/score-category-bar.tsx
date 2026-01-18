@@ -42,7 +42,7 @@ export function ScoreCategoryBar({ label, description, score, icon: Icon, color,
                             </div>
                         </div>
                         <div className="flex flex-col items-end gap-0.5">
-                            <AnimatedNumber className={cn("font-semibold text-sm tabular-nums", color)} springOptions={{ stiffness: 100, damping: 20 }} value={score} />
+                            <AnimatedNumber className={cn("font-semibold text-sm tabular-nums", color)} decimals={2} springOptions={{ stiffness: 100, damping: 20 }} value={score} />
                             {completionInfo && <span className="text-[10px] text-muted-foreground">{completionInfo.label}</span>}
                         </div>
                     </div>

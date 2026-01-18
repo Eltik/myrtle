@@ -48,7 +48,7 @@ export function Header() {
                         <NavMobile loading={loading} logout={logout} mobileMenuOpen={mobileMenuOpen} pathname={router.pathname} setMobileMenuOpen={setMobileMenuOpen} user={user} />
 
                         <Button asChild className="h-8 w-8" size="icon" variant="ghost">
-                            <Link href="https://github.com" rel="noopener noreferrer" target="_blank">
+                            <Link href="/github" rel="noopener noreferrer" target="_blank">
                                 <Github className="h-4 w-4" />
                                 <span className="sr-only">GitHub</span>
                             </Link>

@@ -11,6 +11,20 @@ import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
 import { cn } from "~/lib/utils";
 import type { DpsOperatorListEntry } from "~/types/api/impl/dps-calculator";
 
+// Reverse mapping: display name -> internal name (e.g., "Guard" -> "WARRIOR")
+const DISPLAY_TO_CLASS: Record<string, string> = Object.fromEntries(Object.entries(CLASS_DISPLAY).map(([internal, display]) => [display.toUpperCase(), internal]));
+
+// Normalize any profession string to internal class name
+function normalizeClass(profession: string): string {
+    const upper = profession.toUpperCase();
+    // Check if it's already an internal name
+    if (CLASSES.includes(upper as (typeof CLASSES)[number])) {
+        return upper;
+    }
+    // Otherwise try to map from display name
+    return DISPLAY_TO_CLASS[upper] ?? upper;
+}
+
 type SortOption = "name-asc" | "name-desc" | "rarity-desc" | "rarity-asc";
 
 const SORT_OPTIONS: { value: SortOption; label: string; icon: React.ReactNode }[] = [
@@ -82,7 +96,7 @@ export function OperatorSelector({ operators, onSelectOperator }: OperatorSelect
 
         // Filter by class
         if (selectedClasses.size > 0) {
-            result = result.filter((op) => selectedClasses.has(op.profession));
+            result = result.filter((op) => selectedClasses.has(normalizeClass(op.profession)));
         }
 
         // Sort
@@ -179,7 +193,7 @@ export function OperatorSelector({ operators, onSelectOperator }: OperatorSelect
                 {CLASSES.map((cls) => {
                     const isSelected = selectedClasses.has(cls);
                     return (
-                        <Button className={cn("h-7 px-2 font-medium text-xs transition-all duration-150", isSelected ? "bg-primary text-primary-foreground" : "opacity-60 hover:opacity-100")} key={cls} onClick={() => toggleClass(cls)} size="sm" variant="outline">
+                        <Button className={cn("h-7 px-2 font-medium text-xs transition-all duration-150", isSelected ? "bg-primary" : "opacity-60 hover:opacity-100")} key={cls} onClick={() => toggleClass(cls)} size="sm" variant="outline">
                             {CLASS_DISPLAY[cls] ?? cls}
                         </Button>
                     );
