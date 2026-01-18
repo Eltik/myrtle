@@ -20,9 +20,10 @@ import { RankBadge } from "./rank-badge";
 interface LeaderboardRowDialogProps {
     entry: LeaderboardEntry | null;
     onClose: () => void;
+    isLoading?: boolean;
 }
 
-export function LeaderboardRowDialog({ entry, onClose }: LeaderboardRowDialogProps) {
+export function LeaderboardRowDialog({ entry, onClose, isLoading }: LeaderboardRowDialogProps) {
     const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -60,7 +61,7 @@ export function LeaderboardRowDialog({ entry, onClose }: LeaderboardRowDialogPro
                     {/* Dialog */}
                     <motion.div animate={{ opacity: 1, scale: 1, y: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4" exit={{ opacity: 0, scale: 0.95, y: 10 }} initial={{ opacity: 0, scale: 0.95, y: 10 }} onClick={handleBackdropClick} transition={{ type: "spring", stiffness: 300, damping: 30 }}>
                         <motion.div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border bg-card p-6 shadow-xl" layoutId="dialog-content" onClick={(e) => e.stopPropagation()} ref={containerRef}>
-                            <DialogContent entry={entry} onClose={onClose} />
+                            <DialogContent entry={entry} isLoading={isLoading} onClose={onClose} />
                         </motion.div>
                     </motion.div>
                 </>
@@ -70,17 +71,18 @@ export function LeaderboardRowDialog({ entry, onClose }: LeaderboardRowDialogPro
     );
 }
 
-function DialogContent({ entry, onClose }: { entry: LeaderboardEntry; onClose: () => void }) {
+function DialogContent({ entry, onClose, isLoading }: { entry: LeaderboardEntry; onClose: () => void; isLoading?: boolean }) {
     const scores = [
-        { key: "operatorScore", value: entry.operatorScore },
-        { key: "stageScore", value: entry.stageScore },
-        { key: "roguelikeScore", value: entry.roguelikeScore },
-        { key: "sandboxScore", value: entry.sandboxScore },
-        { key: "medalScore", value: entry.medalScore },
-        { key: "baseScore", value: entry.baseScore },
+        { key: "operatorScore", value: entry.operatorScore ?? 0 },
+        { key: "stageScore", value: entry.stageScore ?? 0 },
+        { key: "roguelikeScore", value: entry.roguelikeScore ?? 0 },
+        { key: "sandboxScore", value: entry.sandboxScore ?? 0 },
+        { key: "medalScore", value: entry.medalScore ?? 0 },
+        { key: "baseScore", value: entry.baseScore ?? 0 },
     ];
 
     const gradeColors = GRADE_COLORS[entry.grade] ?? GRADE_COLORS.F;
+    const gradeBreakdown = entry.gradeBreakdown;
 
     return (
         <>
@@ -135,114 +137,124 @@ function DialogContent({ entry, onClose }: { entry: LeaderboardEntry; onClose: (
                 </div>
             </motion.div>
 
-            {/* Grade Breakdown */}
-            <motion.div animate={{ opacity: 1, y: 0 }} className="mb-6" initial={{ opacity: 0, y: 10 }} transition={{ delay: 0.12 }}>
-                <div className="mb-3 flex items-center justify-between">
-                    <h3 className="font-medium text-sm">Grade Breakdown</h3>
-                    <span className="text-muted-foreground text-xs">Account age: {entry.gradeBreakdown.accountAgeDays} days</span>
-                </div>
-                <div className="space-y-2">
-                    {/* Normalized Score - 50% */}
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <div className="cursor-help">
-                                <div className="mb-1 flex items-center justify-between text-sm">
-                                    <span className="text-muted-foreground">Progression Score</span>
-                                    <span className="font-mono">{entry.gradeBreakdown.normalizedScore.toFixed(1)}</span>
+            {/* Grade Breakdown - only show when full data is available */}
+            {isLoading ? (
+                <motion.div animate={{ opacity: 1, y: 0 }} className="mb-6" initial={{ opacity: 0, y: 10 }} transition={{ delay: 0.12 }}>
+                    <h3 className="mb-3 font-medium text-sm">Grade Breakdown</h3>
+                    <div className="flex items-center justify-center py-8">
+                        <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                        <span className="ml-2 text-muted-foreground text-sm">Loading details...</span>
+                    </div>
+                </motion.div>
+            ) : gradeBreakdown ? (
+                <motion.div animate={{ opacity: 1, y: 0 }} className="mb-6" initial={{ opacity: 0, y: 10 }} transition={{ delay: 0.12 }}>
+                    <div className="mb-3 flex items-center justify-between">
+                        <h3 className="font-medium text-sm">Grade Breakdown</h3>
+                        <span className="text-muted-foreground text-xs">Account age: {gradeBreakdown.accountAgeDays} days</span>
+                    </div>
+                    <div className="space-y-2">
+                        {/* Normalized Score - 50% */}
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div className="cursor-help">
+                                    <div className="mb-1 flex items-center justify-between text-sm">
+                                        <span className="text-muted-foreground">Progression Score</span>
+                                        <span className="font-mono">{gradeBreakdown.normalizedScore.toFixed(1)}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Progress className="h-2 flex-1" value={gradeBreakdown.normalizedScore} />
+                                        <span className="w-8 text-muted-foreground text-xs">50%</span>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <Progress className="h-2 flex-1" value={entry.gradeBreakdown.normalizedScore} />
-                                    <span className="w-8 text-muted-foreground text-xs">50%</span>
-                                </div>
-                            </div>
-                        </TooltipTrigger>
-                        <TooltipContent className="z-[9999]" side="top" variant="dark">
-                            <p className="font-medium">Progression Score</p>
-                            <p className="text-muted-foreground text-xs">Performance relative to account age</p>
-                        </TooltipContent>
-                    </Tooltip>
+                            </TooltipTrigger>
+                            <TooltipContent className="z-[9999]" side="top" variant="dark">
+                                <p className="font-medium">Progression Score</p>
+                                <p className="text-muted-foreground text-xs">Performance relative to account age</p>
+                            </TooltipContent>
+                        </Tooltip>
 
-                    {/* Activity Score - 30% */}
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <div className="cursor-help">
-                                <div className="mb-1 flex items-center justify-between text-sm">
-                                    <span className="text-muted-foreground">Activity Score</span>
-                                    <span className="font-mono">{entry.gradeBreakdown.activityMetrics.totalActivityScore.toFixed(1)}</span>
+                        {/* Activity Score - 30% */}
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div className="cursor-help">
+                                    <div className="mb-1 flex items-center justify-between text-sm">
+                                        <span className="text-muted-foreground">Activity Score</span>
+                                        <span className="font-mono">{gradeBreakdown.activityMetrics.totalActivityScore.toFixed(1)}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Progress className="h-2 flex-1" value={gradeBreakdown.activityMetrics.totalActivityScore} />
+                                        <span className="w-8 text-muted-foreground text-xs">30%</span>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <Progress className="h-2 flex-1" value={entry.gradeBreakdown.activityMetrics.totalActivityScore} />
-                                    <span className="w-8 text-muted-foreground text-xs">30%</span>
+                            </TooltipTrigger>
+                            <TooltipContent className="z-[9999] max-w-xs" side="top" variant="dark">
+                                <p className="mb-1 font-medium">Activity Score Breakdown</p>
+                                <div className="space-y-0.5 text-xs">
+                                    <div className="flex justify-between gap-4">
+                                        <span className="text-muted-foreground">Login Recency:</span>
+                                        <span>{gradeBreakdown.activityMetrics.loginRecencyScore.toFixed(1)}</span>
+                                    </div>
+                                    <div className="flex justify-between gap-4">
+                                        <span className="text-muted-foreground">Login Frequency:</span>
+                                        <span>{gradeBreakdown.activityMetrics.loginFrequencyScore.toFixed(1)}</span>
+                                    </div>
+                                    <div className="flex justify-between gap-4">
+                                        <span className="text-muted-foreground">Consistency:</span>
+                                        <span>{gradeBreakdown.activityMetrics.consistencyScore.toFixed(1)}</span>
+                                    </div>
+                                    {gradeBreakdown.activityMetrics.checkInsThisCycle > 0 && (
+                                        <p className="mt-1 text-muted-foreground">
+                                            Check-ins: {gradeBreakdown.activityMetrics.checkInsThisCycle}/{gradeBreakdown.activityMetrics.checkInCycleLength} ({Math.round(gradeBreakdown.activityMetrics.checkInCompletionRate ?? 0)}%)
+                                        </p>
+                                    )}
+                                    {gradeBreakdown.activityMetrics.daysSinceLogin > 0 && <p className="mt-1 text-muted-foreground">Last login: {gradeBreakdown.activityMetrics.daysSinceLogin} days ago</p>}
                                 </div>
-                            </div>
-                        </TooltipTrigger>
-                        <TooltipContent className="z-[9999] max-w-xs" side="top" variant="dark">
-                            <p className="mb-1 font-medium">Activity Score Breakdown</p>
-                            <div className="space-y-0.5 text-xs">
-                                <div className="flex justify-between gap-4">
-                                    <span className="text-muted-foreground">Login Recency:</span>
-                                    <span>{entry.gradeBreakdown.activityMetrics.loginRecencyScore.toFixed(1)}</span>
-                                </div>
-                                <div className="flex justify-between gap-4">
-                                    <span className="text-muted-foreground">Login Frequency:</span>
-                                    <span>{entry.gradeBreakdown.activityMetrics.loginFrequencyScore.toFixed(1)}</span>
-                                </div>
-                                <div className="flex justify-between gap-4">
-                                    <span className="text-muted-foreground">Consistency:</span>
-                                    <span>{entry.gradeBreakdown.activityMetrics.consistencyScore.toFixed(1)}</span>
-                                </div>
-                                {entry.gradeBreakdown.activityMetrics.checkInsThisCycle > 0 && (
-                                    <p className="mt-1 text-muted-foreground">
-                                        Check-ins: {entry.gradeBreakdown.activityMetrics.checkInsThisCycle}/{entry.gradeBreakdown.activityMetrics.checkInCycleLength} ({Math.round(entry.gradeBreakdown.activityMetrics.checkInCompletionRate ?? 0)}%)
-                                    </p>
-                                )}
-                                {entry.gradeBreakdown.activityMetrics.daysSinceLogin > 0 && <p className="mt-1 text-muted-foreground">Last login: {entry.gradeBreakdown.activityMetrics.daysSinceLogin} days ago</p>}
-                            </div>
-                        </TooltipContent>
-                    </Tooltip>
+                            </TooltipContent>
+                        </Tooltip>
 
-                    {/* Engagement Score - 20% */}
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <div className="cursor-help">
-                                <div className="mb-1 flex items-center justify-between text-sm">
-                                    <span className="text-muted-foreground">Engagement Score</span>
-                                    <span className="font-mono">{entry.gradeBreakdown.engagementMetrics.totalEngagementScore.toFixed(1)}</span>
+                        {/* Engagement Score - 20% */}
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div className="cursor-help">
+                                    <div className="mb-1 flex items-center justify-between text-sm">
+                                        <span className="text-muted-foreground">Engagement Score</span>
+                                        <span className="font-mono">{gradeBreakdown.engagementMetrics.totalEngagementScore.toFixed(1)}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Progress className="h-2 flex-1" value={gradeBreakdown.engagementMetrics.totalEngagementScore} />
+                                        <span className="w-8 text-muted-foreground text-xs">20%</span>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <Progress className="h-2 flex-1" value={entry.gradeBreakdown.engagementMetrics.totalEngagementScore} />
-                                    <span className="w-8 text-muted-foreground text-xs">20%</span>
+                            </TooltipTrigger>
+                            <TooltipContent className="z-[9999] max-w-xs" side="top" variant="dark">
+                                <p className="mb-1 font-medium">Engagement Score Breakdown</p>
+                                <div className="space-y-0.5 text-xs">
+                                    <div className="flex justify-between gap-4">
+                                        <span className="text-muted-foreground">Content Variety:</span>
+                                        <span>{gradeBreakdown.engagementMetrics.contentVarietyScore.toFixed(1)}</span>
+                                    </div>
+                                    <div className="flex justify-between gap-4">
+                                        <span className="text-muted-foreground">Roguelike Depth:</span>
+                                        <span>{gradeBreakdown.engagementMetrics.roguelikeDepthScore.toFixed(1)}</span>
+                                    </div>
+                                    <div className="flex justify-between gap-4">
+                                        <span className="text-muted-foreground">Stage Diversity:</span>
+                                        <span>{gradeBreakdown.engagementMetrics.stageDiversityScore.toFixed(1)}</span>
+                                    </div>
+                                    <div className="flex justify-between gap-4">
+                                        <span className="text-muted-foreground">Progression Depth:</span>
+                                        <span>{gradeBreakdown.engagementMetrics.progressionDepthScore.toFixed(1)}</span>
+                                    </div>
+                                    <p className="mt-1 text-muted-foreground">Content types: {gradeBreakdown.engagementMetrics.contentTypesEngaged}/6</p>
                                 </div>
-                            </div>
-                        </TooltipTrigger>
-                        <TooltipContent className="z-[9999] max-w-xs" side="top" variant="dark">
-                            <p className="mb-1 font-medium">Engagement Score Breakdown</p>
-                            <div className="space-y-0.5 text-xs">
-                                <div className="flex justify-between gap-4">
-                                    <span className="text-muted-foreground">Content Variety:</span>
-                                    <span>{entry.gradeBreakdown.engagementMetrics.contentVarietyScore.toFixed(1)}</span>
-                                </div>
-                                <div className="flex justify-between gap-4">
-                                    <span className="text-muted-foreground">Roguelike Depth:</span>
-                                    <span>{entry.gradeBreakdown.engagementMetrics.roguelikeDepthScore.toFixed(1)}</span>
-                                </div>
-                                <div className="flex justify-between gap-4">
-                                    <span className="text-muted-foreground">Stage Diversity:</span>
-                                    <span>{entry.gradeBreakdown.engagementMetrics.stageDiversityScore.toFixed(1)}</span>
-                                </div>
-                                <div className="flex justify-between gap-4">
-                                    <span className="text-muted-foreground">Progression Depth:</span>
-                                    <span>{entry.gradeBreakdown.engagementMetrics.progressionDepthScore.toFixed(1)}</span>
-                                </div>
-                                <p className="mt-1 text-muted-foreground">Content types: {entry.gradeBreakdown.engagementMetrics.contentTypesEngaged}/6</p>
-                            </div>
-                        </TooltipContent>
-                    </Tooltip>
-                </div>
+                            </TooltipContent>
+                        </Tooltip>
+                    </div>
 
-                {/* Percentile */}
-                {entry.gradeBreakdown.percentileEstimate > 0 && <div className="mt-3 text-center text-muted-foreground text-xs">Estimated top {(100 - entry.gradeBreakdown.percentileEstimate).toFixed(0)}% of players</div>}
-            </motion.div>
+                    {/* Percentile */}
+                    {gradeBreakdown.percentileEstimate > 0 && <div className="mt-3 text-center text-muted-foreground text-xs">Estimated top {(100 - gradeBreakdown.percentileEstimate).toFixed(0)}% of players</div>}
+                </motion.div>
+            ) : null}
 
             {/* Score Breakdown */}
             <motion.div animate={{ opacity: 1, y: 0 }} className="space-y-4" initial={{ opacity: 0, y: 10 }} transition={{ delay: 0.15 }}>
@@ -275,7 +287,7 @@ function DialogContent({ entry, onClose }: { entry: LeaderboardEntry; onClose: (
                         <TooltipTrigger asChild>
                             <div className="mt-4 flex cursor-help items-center justify-between rounded-lg border bg-secondary/30 px-4 py-3 transition-colors hover:bg-secondary/50">
                                 <span className="text-muted-foreground text-sm">Composite Score</span>
-                                <span className="font-bold font-mono">{entry.compositeScore.toLocaleString()}</span>
+                                <span className="font-bold font-mono">{(entry.compositeScore ?? 0).toLocaleString()}</span>
                             </div>
                         </TooltipTrigger>
                         <TooltipContent className="z-[9999]" side="top" variant="dark">

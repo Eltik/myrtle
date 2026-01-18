@@ -8,6 +8,13 @@
 export type SortBy = "total_score" | "operator_score" | "stage_score" | "roguelike_score" | "sandbox_score" | "medal_score" | "base_score" | "composite_score" | "grade";
 
 /**
+ * Field selection mode for leaderboard entries
+ * - "minimal": Core fields only (rank, uid, server, nickname, level, avatarId, totalScore, grade, updatedAt)
+ * - "full": All fields including individual scores and gradeBreakdown
+ */
+export type LeaderboardFieldsMode = "minimal" | "full";
+
+/**
  * Activity metrics breakdown for grade calculation
  */
 export interface ActivityMetrics {
@@ -77,12 +84,16 @@ export interface LeaderboardQuery {
     limit?: number;
     /** Pagination offset (default: 0) */
     offset?: number;
+    /** Field selection mode: "minimal" (default) or "full" */
+    fields?: LeaderboardFieldsMode;
 }
 
 /**
  * Single leaderboard entry representing a user's ranking
+ * Note: Score fields and gradeBreakdown are only present when fields=full
  */
 export interface LeaderboardEntry {
+    // Core fields (always present)
     rank: number;
     uid: string;
     server: string;
@@ -90,19 +101,21 @@ export interface LeaderboardEntry {
     level: number;
     avatarId: string | null;
     totalScore: number;
-    operatorScore: number;
-    stageScore: number;
-    roguelikeScore: number;
-    sandboxScore: number;
-    medalScore: number;
-    baseScore: number;
-    compositeScore: number;
     /** Grade letter: "S", "A", "B", "C", "D", or "F" */
     grade: string;
-    /** Detailed breakdown of how the grade was calculated */
-    gradeBreakdown: GradeBreakdown;
     /** ISO 8601 timestamp */
     updatedAt: string;
+
+    // Optional fields (only present when fields=full)
+    operatorScore?: number;
+    stageScore?: number;
+    roguelikeScore?: number;
+    sandboxScore?: number;
+    medalScore?: number;
+    baseScore?: number;
+    compositeScore?: number;
+    /** Detailed breakdown of how the grade was calculated */
+    gradeBreakdown?: GradeBreakdown;
 }
 
 /**
@@ -122,6 +135,7 @@ export interface LeaderboardMeta {
     sortBy: string;
     order: string;
     serverFilter: string | null;
+    fields: string;
 }
 
 /**

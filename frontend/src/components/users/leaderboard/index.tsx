@@ -27,6 +27,8 @@ export function LeaderboardPage({ initialData }: LeaderboardPageProps) {
     const [data, setData] = useState(initialData);
     const [isLoading, setIsLoading] = useState(false);
     const [selectedEntry, setSelectedEntry] = useState<LeaderboardEntry | null>(null);
+    const [fullEntryData, setFullEntryData] = useState<LeaderboardEntry | null>(null);
+    const [isLoadingDetail, setIsLoadingDetail] = useState(false);
 
     // Get current filter values from URL or defaults
     const currentSortBy = (router.query.sort_by as SortBy) || "total_score";
@@ -85,6 +87,58 @@ export function LeaderboardPage({ initialData }: LeaderboardPageProps) {
         void updateFilters({ offset: String(newOffset) });
         window.scrollTo({ top: 0, behavior: "smooth" });
     };
+
+    const handleRowClick = useCallback(
+        async (entry: LeaderboardEntry) => {
+            setSelectedEntry(entry);
+
+            // If we already have full data (gradeBreakdown exists), use it directly
+            if (entry.gradeBreakdown) {
+                setFullEntryData(entry);
+                return;
+            }
+
+            // Fetch full data for the detail modal
+            setIsLoadingDetail(true);
+            try {
+                const params = new URLSearchParams();
+                params.set("fields", "full");
+                params.set("limit", "1");
+
+                // Calculate the offset for this specific entry
+                const entryIndex = data.entries.findIndex((e) => e.uid === entry.uid && e.server === entry.server);
+                if (entryIndex !== -1) {
+                    const currentOffset = Number(router.query.offset) || 0;
+                    params.set("offset", String(currentOffset + entryIndex));
+                }
+
+                if (router.query.sort_by) params.set("sort_by", String(router.query.sort_by));
+                if (router.query.order) params.set("order", String(router.query.order));
+                if (router.query.server) params.set("server", String(router.query.server));
+
+                const response = await fetch(`/api/leaderboard?${params.toString()}`);
+                if (response.ok) {
+                    const fullData = (await response.json()) as LeaderboardResponse;
+                    const firstEntry = fullData.entries[0];
+                    if (firstEntry) {
+                        setFullEntryData(firstEntry);
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to fetch full entry data:", error);
+                // Fallback to showing what we have
+                setFullEntryData(entry);
+            } finally {
+                setIsLoadingDetail(false);
+            }
+        },
+        [data.entries, router.query],
+    );
+
+    const handleCloseDialog = useCallback(() => {
+        setSelectedEntry(null);
+        setFullEntryData(null);
+    }, []);
 
     const currentPage = Math.floor(currentOffset / limit) + 1;
     const totalPages = Math.ceil(data.pagination.total / limit);
@@ -173,7 +227,7 @@ export function LeaderboardPage({ initialData }: LeaderboardPageProps) {
                     <TableBody>
                         {data.entries.length > 0 ? (
                             data.entries.map((entry) => (
-                                <TableRow className="cursor-pointer transition-colors hover:bg-muted/50" key={`${entry.uid}-${entry.server}`} onClick={() => setSelectedEntry(entry)}>
+                                <TableRow className="cursor-pointer transition-colors hover:bg-muted/50" key={`${entry.uid}-${entry.server}`} onClick={() => void handleRowClick(entry)}>
                                     <TableCell className="py-4 text-center">
                                         <RankBadge rank={entry.rank} />
                                     </TableCell>
@@ -246,8 +300,8 @@ export function LeaderboardPage({ initialData }: LeaderboardPageProps) {
                 </div>
             )}
 
-            {/* Detail Dialog */}
-            <LeaderboardRowDialog entry={selectedEntry} onClose={() => setSelectedEntry(null)} />
+            {/* Detail Dialog - uses fullEntryData when available for complete score breakdown */}
+            <LeaderboardRowDialog entry={fullEntryData ?? selectedEntry} isLoading={isLoadingDetail} onClose={handleCloseDialog} />
         </div>
     );
 }

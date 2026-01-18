@@ -7,7 +7,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(405).json({ error: "Method not allowed" });
     }
 
-    const { sort_by, order, server, limit, offset } = req.query;
+    const { sort_by, order, server, limit, offset, fields } = req.query;
 
     const params = new URLSearchParams();
 
@@ -25,6 +25,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
     if (offset && typeof offset === "string") {
         params.set("offset", offset);
+    }
+    if (fields && typeof fields === "string") {
+        params.set("fields", fields);
     }
 
     try {
