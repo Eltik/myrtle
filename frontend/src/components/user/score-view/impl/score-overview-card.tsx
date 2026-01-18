@@ -82,7 +82,7 @@ export function ScoreOverviewCard({ scoreData, className }: ScoreOverviewCardPro
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex items-center justify-between text-xs">
                                                     <span className="truncate text-muted-foreground">{cat.config?.label}</span>
-                                                    <span className={cn("font-medium tabular-nums", cat.config?.color)}>{cat.value.toLocaleString()}</span>
+                                                    <span className={cn("font-medium tabular-nums", cat.config?.color)}>{Math.round(cat.value).toLocaleString()}</span>
                                                 </div>
                                                 <div className="relative mt-0.5 h-1 w-full overflow-hidden rounded-full bg-muted/30">
                                                     <motion.div animate={{ width: `${Math.min(cat.percentage, 100)}%` }} className={cn("h-full rounded-full", cat.config?.progressColor)} initial={{ width: 0 }} transition={{ delay: 0.4 + index * 0.1, duration: 0.5 }} />
