@@ -73,7 +73,7 @@ export function ScoreOverviewCard({ scoreData, className }: ScoreOverviewCardPro
                             return (
                                 <Tooltip key={cat.key}>
                                     <TooltipTrigger asChild>
-                                        <motion.div animate={{ x: 0, opacity: 1 }} className="-mx-2 flex cursor-help items-center gap-2 rounded-md px-2 py-1.5 transition-colors hover:bg-muted/40" initial={{ x: -10, opacity: 0 }} transition={{ delay: 0.3 + index * 0.08 }}>
+                                        <motion.div animate={{ x: 0, opacity: 1 }} className="-mx-2 flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors hover:bg-muted/40" initial={{ x: -10, opacity: 0 }} transition={{ delay: 0.3 + index * 0.08 }}>
                                             {Icon && (
                                                 <div className={cn("flex h-5 w-5 items-center justify-center rounded", cat.config?.bgColor)}>
                                                     <Icon className={cn("h-3 w-3", cat.config?.color)} />

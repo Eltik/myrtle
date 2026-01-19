@@ -183,7 +183,27 @@ function MorphingDialogContent({ children, className, style }: MorphingDialogCon
     useClickOutside(containerRef, (event) => {
         // Ignore clicks inside Radix UI portals (Select, DropdownMenu, Popover, etc.)
         const target = event.target as HTMLElement;
-        if (target.closest("[data-radix-popper-content-wrapper]") || target.closest("[data-radix-select-viewport]") || target.closest("[data-radix-menu-content]") || target.closest("[role='listbox']")) {
+
+        // Check for Radix UI portal content (various data attributes and roles)
+        const isInsideRadixPortal =
+            target.closest("[data-radix-popper-content-wrapper]") ||
+            target.closest("[data-radix-select-viewport]") ||
+            target.closest("[data-radix-menu-content]") ||
+            target.closest("[data-radix-dialog-content]") ||
+            target.closest("[data-radix-popover-content]") ||
+            target.closest("[data-radix-dropdown-menu-content]") ||
+            target.closest("[data-radix-collection-item]") ||
+            target.closest("[data-slot='dropdown-menu-content']") ||
+            target.closest("[data-slot='dropdown-menu-checkbox-item']") ||
+            target.closest("[data-slot='select-content']") ||
+            target.closest("[role='listbox']") ||
+            target.closest("[role='dialog']") ||
+            target.closest("[role='menu']") ||
+            target.closest("[role='menuitem']") ||
+            target.closest("[role='menuitemcheckbox']") ||
+            target.closest("[role='option']");
+
+        if (isInsideRadixPortal) {
             return;
         }
         if (isOpen) {
@@ -205,12 +225,25 @@ export type MorphingDialogContainerProps = {
 };
 
 function MorphingDialogContainer({ children }: MorphingDialogContainerProps) {
-    const { isOpen, uniqueId } = useMorphingDialog();
+    const { isOpen, setIsOpen, uniqueId } = useMorphingDialog();
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
         setMounted(true);
         return () => setMounted(false);
+    }, []);
+
+    const handleBackdropClick = useCallback(() => {
+        setIsOpen(false);
+    }, [setIsOpen]);
+
+    // Explicitly handle focus for inputs on mobile - the pointer-events manipulation can interfere with native focus
+    const handleContentTouchEnd = useCallback((e: React.TouchEvent) => {
+        const target = e.target as HTMLElement;
+        if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
+            // Use setTimeout to ensure focus happens after all event processing
+            setTimeout(() => target.focus(), 0);
+        }
     }, []);
 
     if (!mounted) return null;
@@ -219,8 +252,14 @@ function MorphingDialogContainer({ children }: MorphingDialogContainerProps) {
         <AnimatePresence initial={false} mode="sync">
             {isOpen && (
                 <>
-                    <motion.div animate={{ opacity: 1 }} className="fixed inset-0 z-60 h-full w-full bg-black/60 backdrop-blur-sm" exit={{ opacity: 0 }} initial={{ opacity: 0 }} key={`backdrop-${uniqueId}`} />
-                    <div className="fixed inset-0 z-60 flex items-center justify-center">{children}</div>
+                    {/* Backdrop - clickable to close */}
+                    <motion.div animate={{ opacity: 1 }} className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm" exit={{ opacity: 0 }} initial={{ opacity: 0 }} key={`backdrop-${uniqueId}`} onClick={handleBackdropClick} />
+                    {/* Content container - pointer-events-none so clicks pass through to backdrop, but children have pointer-events-auto */}
+                    <div className="pointer-events-none fixed inset-0 z-[101] flex items-center justify-center">
+                        <div className="pointer-events-auto" onTouchEnd={handleContentTouchEnd} style={{ touchAction: "auto" }}>
+                            {children}
+                        </div>
+                    </div>
                 </>
             )}
         </AnimatePresence>,

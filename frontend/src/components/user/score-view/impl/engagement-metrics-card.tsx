@@ -77,7 +77,7 @@ export function EngagementMetricsCard({ grade, className }: EngagementMetricsCar
                     </span>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <motion.span animate={{ opacity: 1 }} className="cursor-help text-muted-foreground text-xs" initial={{ opacity: 0 }} transition={{ delay: 0.3 }}>
+                            <motion.span animate={{ opacity: 1 }} className="text-muted-foreground text-xs" initial={{ opacity: 0 }} transition={{ delay: 0.3 }}>
                                 {engagementMetrics.contentTypesEngaged} types
                             </motion.span>
                         </TooltipTrigger>
@@ -92,7 +92,7 @@ export function EngagementMetricsCard({ grade, className }: EngagementMetricsCar
                 {/* Total engagement score */}
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <motion.div animate={{ y: 0, opacity: 1 }} className="mb-4 flex cursor-help items-center justify-between rounded-lg bg-muted/30 px-3 py-2" initial={{ y: 10, opacity: 0 }} transition={{ delay: 0.1 }}>
+                        <motion.div animate={{ y: 0, opacity: 1 }} className="mb-4 flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2" initial={{ y: 10, opacity: 0 }} transition={{ delay: 0.1 }}>
                             <span className="text-muted-foreground text-sm">Total Engagement</span>
                             <AnimatedNumber className="font-semibold text-lg" springOptions={{ stiffness: 80, damping: 15 }} value={Math.round(engagementMetrics.totalEngagementScore)} />
                         </motion.div>
@@ -110,7 +110,7 @@ export function EngagementMetricsCard({ grade, className }: EngagementMetricsCar
                         return (
                             <Tooltip key={metric.key}>
                                 <TooltipTrigger asChild>
-                                    <motion.div animate={{ x: 0, opacity: 1 }} className="-mx-2 flex cursor-help items-center gap-2 rounded-md px-2 py-1.5 transition-colors hover:bg-muted/40" initial={{ x: -10, opacity: 0 }} transition={{ delay: 0.2 + index * 0.08 }}>
+                                    <motion.div animate={{ x: 0, opacity: 1 }} className="-mx-2 flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors hover:bg-muted/40" initial={{ x: -10, opacity: 0 }} transition={{ delay: 0.2 + index * 0.08 }}>
                                         <div className={cn("flex h-6 w-6 items-center justify-center rounded", metric.bgColor)}>
                                             <Icon className={cn("h-3.5 w-3.5", metric.color)} />
                                         </div>

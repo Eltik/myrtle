@@ -30,7 +30,7 @@ export function ScoreCategoryBar({ label, description, score, icon: Icon, color,
     return (
         <Tooltip>
             <TooltipTrigger asChild>
-                <motion.div animate={{ x: 0, opacity: 1 }} className="group -mx-3 cursor-help rounded-lg px-3 py-2 transition-colors hover:bg-muted/40" initial={{ x: -20, opacity: 0 }} transition={{ delay, duration: 0.4, ease: "easeOut" }}>
+                <motion.div animate={{ x: 0, opacity: 1 }} className="group -mx-3 rounded-lg px-3 py-2 transition-colors hover:bg-muted/40" initial={{ x: -20, opacity: 0 }} transition={{ delay, duration: 0.4, ease: "easeOut" }}>
                     <div className="mb-2 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <div className={cn("flex h-7 w-7 items-center justify-center rounded-md", bgColor)}>

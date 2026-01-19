@@ -135,7 +135,25 @@ function MorphingPopoverContent({ children, className, ...props }: MorphingPopov
             }
 
             // Don't close if clicking inside Radix UI portals (Select, DropdownMenu, Popover, etc.)
-            if (target.closest("[data-radix-popper-content-wrapper]") || target.closest("[data-radix-select-viewport]") || target.closest("[data-radix-menu-content]") || target.closest("[role='listbox']")) {
+            const isInsideRadixPortal =
+                target.closest("[data-radix-popper-content-wrapper]") ||
+                target.closest("[data-radix-select-viewport]") ||
+                target.closest("[data-radix-menu-content]") ||
+                target.closest("[data-radix-dialog-content]") ||
+                target.closest("[data-radix-popover-content]") ||
+                target.closest("[data-radix-dropdown-menu-content]") ||
+                target.closest("[data-radix-collection-item]") ||
+                target.closest("[data-slot='dropdown-menu-content']") ||
+                target.closest("[data-slot='dropdown-menu-checkbox-item']") ||
+                target.closest("[data-slot='select-content']") ||
+                target.closest("[role='listbox']") ||
+                target.closest("[role='dialog']") ||
+                target.closest("[role='menu']") ||
+                target.closest("[role='menuitem']") ||
+                target.closest("[role='menuitemcheckbox']") ||
+                target.closest("[role='option']");
+
+            if (isInsideRadixPortal) {
                 return;
             }
 
@@ -148,12 +166,12 @@ function MorphingPopoverContent({ children, className, ...props }: MorphingPopov
 
         // Use mousedown to match click timing
         document.addEventListener("mousedown", handleClickOutside);
-        document.addEventListener("touchstart", handleClickOutside);
+        document.addEventListener("touchend", handleClickOutside);
         document.addEventListener("keydown", handleKeyDown);
 
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
-            document.removeEventListener("touchstart", handleClickOutside);
+            document.removeEventListener("touchend", handleClickOutside);
             document.removeEventListener("keydown", handleKeyDown);
         };
     }, [context.isOpen, context.close, context.triggerRef]);

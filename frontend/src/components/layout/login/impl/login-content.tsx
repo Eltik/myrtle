@@ -195,7 +195,7 @@ export function LoginContent({ onSuccess }: LoginContentProps) {
                                     <SelectTrigger id="server">
                                         <SelectValue placeholder="Select server" />
                                     </SelectTrigger>
-                                    <SelectContent className="z-70">
+                                    <SelectContent className="z-[110]">
                                         {SERVER_OPTIONS.map((option) => (
                                             <SelectItem key={option.value} value={option.value}>
                                                 {option.label}

@@ -60,7 +60,7 @@ export function ActivityMetricsCard({ grade, className }: ActivityMetricsCardPro
                     </span>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <motion.span animate={{ opacity: 1 }} className="cursor-help text-muted-foreground text-xs" initial={{ opacity: 0 }} transition={{ delay: 0.3 }}>
+                            <motion.span animate={{ opacity: 1 }} className="text-muted-foreground text-xs" initial={{ opacity: 0 }} transition={{ delay: 0.3 }}>
                                 {accountAgeDays} days
                             </motion.span>
                         </TooltipTrigger>
@@ -75,7 +75,7 @@ export function ActivityMetricsCard({ grade, className }: ActivityMetricsCardPro
                 {/* Total activity score */}
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <motion.div animate={{ y: 0, opacity: 1 }} className="mb-4 flex cursor-help items-center justify-between rounded-lg bg-muted/30 px-3 py-2" initial={{ y: 10, opacity: 0 }} transition={{ delay: 0.1 }}>
+                        <motion.div animate={{ y: 0, opacity: 1 }} className="mb-4 flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2" initial={{ y: 10, opacity: 0 }} transition={{ delay: 0.1 }}>
                             <span className="text-muted-foreground text-sm">Total Activity</span>
                             <AnimatedNumber className="font-semibold text-lg" springOptions={{ stiffness: 80, damping: 15 }} value={Math.round(activityMetrics.totalActivityScore)} />
                         </motion.div>
@@ -91,7 +91,7 @@ export function ActivityMetricsCard({ grade, className }: ActivityMetricsCardPro
                     {metrics.map((metric, index) => (
                         <Tooltip key={metric.key}>
                             <TooltipTrigger asChild>
-                                <motion.div animate={{ scale: 1, opacity: 1 }} className="flex cursor-help flex-col items-center gap-1 rounded-lg px-3 py-2 transition-colors hover:bg-muted/40" initial={{ scale: 0.8, opacity: 0 }} transition={{ delay: 0.2 + index * 0.1 }}>
+                                <motion.div animate={{ scale: 1, opacity: 1 }} className="flex flex-col items-center gap-1 rounded-lg px-3 py-2 transition-colors hover:bg-muted/40" initial={{ scale: 0.8, opacity: 0 }} transition={{ delay: 0.2 + index * 0.1 }}>
                                     <CircularProgress delay={0.3 + index * 0.15} max={100} progressClassName={cn(metric.color)} size={52} strokeWidth={4} value={metric.value} />
                                     <span className="text-muted-foreground text-xs">{metric.label}</span>
                                 </motion.div>

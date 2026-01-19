@@ -11,11 +11,11 @@ function useClickOutside<T extends HTMLElement>(ref: RefObject<T | null>, handle
         };
 
         document.addEventListener("mousedown", handleClickOutside);
-        document.addEventListener("touchstart", handleClickOutside);
+        document.addEventListener("touchend", handleClickOutside);
 
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
-            document.removeEventListener("touchstart", handleClickOutside);
+            document.removeEventListener("touchend", handleClickOutside);
         };
     }, [ref, handler]);
 }
