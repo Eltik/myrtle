@@ -70,5 +70,5 @@ log = "0.4"
 # Database backup/restore tool
 clap = { version = "4", features = ["derive"] }
 sha2 = "0.10"
-indicatif = "0.17"
+indicatif = "0.18"
 dialoguer = "0.11"
