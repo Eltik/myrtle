@@ -1,23 +1,99 @@
 "use client";
 
-import { Calendar, Maximize2, Palette } from "lucide-react";
+import { Brush, Calendar, ChevronRight, FileText, Maximize2, MessageCircle, Palette, Sparkles, Tag } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { Disclosure, DisclosureContent, DisclosureTrigger } from "~/components/ui/motion-primitives/disclosure";
 import { Button } from "~/components/ui/shadcn/button";
 import { Dialog, DialogContent, DialogTrigger } from "~/components/ui/shadcn/dialog";
 import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
 import { Skeleton } from "~/components/ui/shadcn/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/shadcn/tooltip";
 import { cn } from "~/lib/utils";
 import type { Operator } from "~/types/api";
 import type { ChibiCharacter } from "~/types/api/impl/chibi";
 import { ChibiViewer } from "../chibi-viewer";
+import { ColorTagText } from "./impl/color-tag-parser";
 import { formatSkinsForOperator } from "./impl/helpers";
 import type { UISkin } from "./impl/types";
 
 interface SkinsContentProps {
     operator: Operator;
 }
+
+// Helper component for displaying color swatches
+interface ColorSwatchesProps {
+    colors: string[];
+}
+
+const ColorSwatches = memo(function ColorSwatches({ colors }: ColorSwatchesProps) {
+    const validColors = colors.filter((c) => c?.startsWith("#"));
+
+    if (validColors.length === 0) return null;
+
+    return (
+        <div className="flex flex-wrap items-center gap-1.5">
+            {validColors.map((color) => (
+                <Tooltip key={color}>
+                    <TooltipTrigger asChild>
+                        <div className="h-6 w-6 cursor-pointer rounded-md border border-border/50 shadow-sm transition-transform hover:scale-110" style={{ backgroundColor: color }} />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <span className="font-mono text-xs">{color.toUpperCase()}</span>
+                    </TooltipContent>
+                </Tooltip>
+            ))}
+        </div>
+    );
+});
+
+// Helper component for consistent detail row styling
+interface DetailRowProps {
+    icon: React.ElementType;
+    label: string;
+    children: React.ReactNode;
+}
+
+const DetailRow = memo(function DetailRow({ icon: Icon, label, children }: DetailRowProps) {
+    return (
+        <div className="flex items-start gap-2">
+            <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+            <div className="min-w-0 flex-1">
+                <div className="text-muted-foreground text-xs">{label}</div>
+                <div className="text-foreground text-sm">{children}</div>
+            </div>
+        </div>
+    );
+});
+
+// Helper component for collapsible text sections
+interface CollapsibleSectionProps {
+    icon: React.ElementType;
+    label: string;
+    children: React.ReactNode;
+}
+
+const CollapsibleSection = memo(function CollapsibleSection({ icon: Icon, label, children }: CollapsibleSectionProps) {
+    const [isOpen, setIsOpen] = useState(false);
+
+    return (
+        <Disclosure className="rounded-md border border-border/50 bg-secondary/20" onOpenChange={setIsOpen} open={isOpen} transition={{ duration: 0.2, ease: "easeInOut" }}>
+            <DisclosureTrigger>
+                <div className="flex w-full cursor-pointer items-center justify-between px-3 py-2 hover:bg-secondary/30">
+                    <div className="flex items-center gap-2">
+                        <Icon className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-foreground text-sm">{label}</span>
+                    </div>
+                    <ChevronRight className={cn("h-4 w-4 text-muted-foreground transition-transform duration-200", isOpen && "rotate-90")} />
+                </div>
+            </DisclosureTrigger>
+            <DisclosureContent>
+                <div className="border-border/50 border-t px-3 py-2">{children}</div>
+            </DisclosureContent>
+        </Disclosure>
+    );
+});
 
 export const SkinsContent = memo(function SkinsContent({ operator }: SkinsContentProps) {
     const [skins, setSkins] = useState<UISkin[]>([]);
@@ -237,30 +313,79 @@ export const SkinsContent = memo(function SkinsContent({ operator }: SkinsConten
                             <h3 className="mb-3 font-medium text-foreground">{selectedSkinData?.displaySkin?.skinName ?? selectedSkinData?.name ?? "Default"}</h3>
 
                             {selectedSkinData?.displaySkin ? (
-                                <div className="space-y-3 text-sm">
-                                    {selectedSkinData.displaySkin.drawerList && selectedSkinData.displaySkin.drawerList.length > 0 && (
-                                        <div className="flex items-start gap-2">
-                                            <Palette className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                                            <div>
-                                                <div className="text-muted-foreground text-xs">Artist</div>
-                                                <div className="text-foreground">{selectedSkinData.displaySkin.drawerList.join(", ")}</div>
-                                            </div>
-                                        </div>
+                                <div className="space-y-3">
+                                    {/* Color Palette */}
+                                    {selectedSkinData.displaySkin.colorList && selectedSkinData.displaySkin.colorList.length > 0 && (
+                                        <DetailRow icon={Palette} label="Color Palette">
+                                            <ColorSwatches colors={selectedSkinData.displaySkin.colorList} />
+                                        </DetailRow>
                                     )}
+
+                                    {/* Artist */}
+                                    {selectedSkinData.displaySkin.drawerList && selectedSkinData.displaySkin.drawerList.length > 0 && (
+                                        <DetailRow icon={Brush} label="Artist">
+                                            {selectedSkinData.displaySkin.drawerList.join(", ")}
+                                        </DetailRow>
+                                    )}
+
+                                    {/* Designer */}
+                                    {selectedSkinData.displaySkin.designerList && selectedSkinData.displaySkin.designerList.length > 0 && (
+                                        <DetailRow icon={Sparkles} label="Designer">
+                                            {selectedSkinData.displaySkin.designerList.join(", ")}
+                                        </DetailRow>
+                                    )}
+
+                                    {/* Collection/Skin Group */}
+                                    {selectedSkinData.displaySkin.skinGroupName && (
+                                        <DetailRow icon={Tag} label="Collection">
+                                            {selectedSkinData.displaySkin.skinGroupName}
+                                        </DetailRow>
+                                    )}
+
+                                    {/* Obtain Approach */}
                                     {selectedSkinData.displaySkin.obtainApproach && (
-                                        <div className="flex items-start gap-2">
-                                            <Calendar className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                                            <div>
-                                                <div className="text-muted-foreground text-xs">Obtain</div>
-                                                <div className="text-foreground">{selectedSkinData.displaySkin.obtainApproach}</div>
-                                            </div>
-                                        </div>
+                                        <DetailRow icon={Calendar} label="Obtain">
+                                            {selectedSkinData.displaySkin.obtainApproach}
+                                        </DetailRow>
                                     )}
                                 </div>
                             ) : (
-                                <p>N/A</p>
+                                <p className="text-muted-foreground text-sm">Default operator appearance</p>
                             )}
                         </div>
+
+                        {/* Collapsible Text Sections */}
+                        {selectedSkinData?.displaySkin && (
+                            <div className="space-y-2">
+                                {/* Description */}
+                                {selectedSkinData.displaySkin.description && (
+                                    <CollapsibleSection icon={FileText} label="Description">
+                                        <p className="text-muted-foreground text-sm leading-relaxed">{selectedSkinData.displaySkin.description}</p>
+                                    </CollapsibleSection>
+                                )}
+
+                                {/* Dialog */}
+                                {selectedSkinData.displaySkin.dialog && (
+                                    <CollapsibleSection icon={MessageCircle} label="Dialog">
+                                        <p className="text-muted-foreground text-sm italic leading-relaxed">"{selectedSkinData.displaySkin.dialog}"</p>
+                                    </CollapsibleSection>
+                                )}
+
+                                {/* Content (with color tag parsing) */}
+                                {selectedSkinData.displaySkin.content && (
+                                    <CollapsibleSection icon={FileText} label="Content">
+                                        <ColorTagText className="text-sm leading-relaxed" text={selectedSkinData.displaySkin.content} />
+                                    </CollapsibleSection>
+                                )}
+
+                                {/* Usage */}
+                                {selectedSkinData.displaySkin.usage && (
+                                    <CollapsibleSection icon={Sparkles} label="Usage">
+                                        <p className="text-muted-foreground text-sm leading-relaxed">{selectedSkinData.displaySkin.usage}</p>
+                                    </CollapsibleSection>
+                                )}
+                            </div>
+                        )}
 
                         {/* Chibi Viewer */}
                         {chibiData && <ChibiViewer chibi={chibiData} skinName={chibiSkinName} />}
