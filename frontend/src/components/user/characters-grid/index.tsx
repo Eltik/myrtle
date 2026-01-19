@@ -69,7 +69,7 @@ export function CharactersGrid({ data }: CharactersGridProps) {
                     ))}
                 </div>
             ) : (
-                <div className="flex flex-wrap justify-center gap-3 sm:justify-start">
+                <div className="grid 3xl:grid-cols-7 grid-cols-3 justify-center gap-3 sm:grid-cols-4 sm:justify-start lg:grid-cols-5 xl:grid-cols-6">
                     {sortedAndFilteredCharacters.slice(0, displayCount).map((char, index) => (
                         <div key={char.charId} ref={index === displayCount - 1 ? lastCharacterRef : null}>
                             <CompactCharacterCard data={char} />

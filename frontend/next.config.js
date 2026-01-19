@@ -51,12 +51,12 @@ const config = {
         return [
             {
                 source: "/discord",
-                destination: "https://discord.gg",
+                destination: "https://discord.gg/j2CjDvVztA",
                 permanent: false,
             },
             {
                 source: "/github",
-                destination: "https://github.com",
+                destination: "https://github.com/Eltik/myrtle",
                 permanent: false,
             },
         ];

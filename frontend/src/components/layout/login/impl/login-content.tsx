@@ -153,7 +153,7 @@ export function LoginContent({ onSuccess }: LoginContentProps) {
                                     <ChevronDown className="h-4 w-4 text-zinc-50 transition-transform duration-200 group-data-expanded:-rotate-180" />
                                 </div>
                             </AccordionTrigger>
-                            <AccordionContent className="pt-4 text-muted-foreground text-sm leading-relaxed">
+                            <AccordionContent className="text-muted-foreground text-sm leading-relaxed">
                                 <div className="max-h-64 overflow-y-auto pr-2">
                                     <p className="mb-3">Myrtle follows the same authentication steps used by the game client when you sign in.</p>
                                     <ol className="mb-3 list-decimal space-y-2 pl-4">
@@ -195,7 +195,7 @@ export function LoginContent({ onSuccess }: LoginContentProps) {
                                     <SelectTrigger id="server">
                                         <SelectValue placeholder="Select server" />
                                     </SelectTrigger>
-                                    <SelectContent className="z-[110]">
+                                    <SelectContent className="z-110">
                                         {SERVER_OPTIONS.map((option) => (
                                             <SelectItem key={option.value} value={option.value}>
                                                 {option.label}
