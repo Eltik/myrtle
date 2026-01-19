@@ -27,7 +27,7 @@ export function FilterDropdown<T extends string>({ label, placeholder, options, 
                         <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="max-h-64 w-56 overflow-y-auto">
+                <DropdownMenuContent className="z-[110] max-h-64 w-56 overflow-y-auto">
                     <DropdownMenuLabel>{label}</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     {options.map((option) => (

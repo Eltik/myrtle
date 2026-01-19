@@ -25,7 +25,7 @@ export function Login({ variant = "default" }: LoginProps) {
                 <LoginTriggerButton variant={variant} />
             </MorphingDialogTrigger>
             <MorphingDialogContainer>
-                <MorphingDialogContent className="relative w-[calc(100vw-2rem)] max-w-md rounded-xl shadow-2xl backdrop-blur-sm">
+                <MorphingDialogContent className="relative w-[calc(100vw-2rem)] max-w-md overflow-y-auto rounded-xl bg-card/95 shadow-2xl backdrop-blur-sm">
                     <MorphingDialogClose className="absolute top-3 right-3 z-10 flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-secondary/50 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground">
                         <X className="h-4 w-4" />
                     </MorphingDialogClose>
