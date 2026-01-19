@@ -175,7 +175,7 @@ export function NavDesktop({ pathname }: NavDesktopProps) {
                     }}
                 />
                 <div
-                    className="pointer-events-none absolute bottom-[3px] z-2 h-px rounded-full"
+                    className="pointer-events-none absolute bottom-0.75 z-2 h-px rounded-full"
                     style={{
                         left: hoverStyle.left + 4,
                         width: Math.max(0, hoverStyle.width - 8),

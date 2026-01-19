@@ -1,6 +1,7 @@
 "use client";
 
 import { Cog, ExternalLink, LogOut, Menu } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "~/components/ui/shadcn/accordion";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/shadcn/avatar";
@@ -30,10 +31,12 @@ export function NavMobile({ pathname, user, loading, logout, mobileMenuOpen, set
                     <span className="sr-only">Open menu</span>
                 </Button>
             </SheetTrigger>
-            <SheetContent className="mobile-nav-bg w-[280px] overflow-y-auto border-border sm:w-[320px]" side="left">
+            <SheetContent className="mobile-nav-bg w-70 overflow-y-auto border-border sm:w-[320px]" side="left">
                 <SheetHeader className="border-border border-b pb-4">
                     <SheetTitle className="flex items-center gap-2">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary" />
+                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary">
+                            <Image alt="Logo" height={32} src="/logo/bust_transparent.png" width={32} />
+                        </div>
                         <span className="font-semibold text-foreground">myrtle.moe</span>
                     </SheetTitle>
                 </SheetHeader>

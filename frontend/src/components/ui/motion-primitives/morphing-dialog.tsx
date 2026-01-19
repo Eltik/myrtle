@@ -253,9 +253,9 @@ function MorphingDialogContainer({ children }: MorphingDialogContainerProps) {
             {isOpen && (
                 <>
                     {/* Backdrop - clickable to close */}
-                    <motion.div animate={{ opacity: 1 }} className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm" exit={{ opacity: 0 }} initial={{ opacity: 0 }} key={`backdrop-${uniqueId}`} onClick={handleBackdropClick} />
+                    <motion.div animate={{ opacity: 1 }} className="fixed inset-0 z-100 bg-black/60 backdrop-blur-sm" exit={{ opacity: 0 }} initial={{ opacity: 0 }} key={`backdrop-${uniqueId}`} onClick={handleBackdropClick} />
                     {/* Content container - pointer-events-none so clicks pass through to backdrop, but children have pointer-events-auto */}
-                    <div className="pointer-events-none fixed inset-0 z-[101] flex items-center justify-center">
+                    <div className="pointer-events-none fixed inset-0 z-101 flex items-center justify-center">
                         <div className="pointer-events-auto" onTouchEnd={handleContentTouchEnd} style={{ touchAction: "auto" }}>
                             {children}
                         </div>
