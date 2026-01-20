@@ -18,6 +18,8 @@ interface TierListsTableProps {
     onDelete?: (tierList: TierListSummary) => void;
     onCreate?: () => void;
     onView?: (tierList: TierListSummary) => void;
+    canCreate?: boolean;
+    canDelete?: boolean;
 }
 
 type SortField = "name" | "operatorCount" | "tierCount" | "versionCount" | "createdAt" | "updatedAt";
@@ -37,7 +39,7 @@ function StatusBadge({ isActive }: { isActive: boolean }) {
     );
 }
 
-export function TierListsTable({ tierLists, loading = false, onRefresh, onEdit, onDelete, onCreate, onView }: TierListsTableProps) {
+export function TierListsTable({ tierLists, loading = false, onRefresh, onEdit, onDelete, onCreate, onView, canCreate = true, canDelete = true }: TierListsTableProps) {
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState<string>("all");
     const [sortField, setSortField] = useState<SortField>("updatedAt");
@@ -165,7 +167,7 @@ export function TierListsTable({ tierLists, loading = false, onRefresh, onEdit, 
 
                 <div className="flex items-center gap-2">
                     <span className="text-muted-foreground text-sm">{filteredAndSortedTierLists.length} tier lists</span>
-                    {onCreate && (
+                    {canCreate && onCreate && (
                         <Button className="h-8 gap-1.5" onClick={onCreate} size="sm" variant="default">
                             <Plus className="h-3.5 w-3.5" />
                             <span className="hidden sm:inline">Create</span>
@@ -316,7 +318,7 @@ export function TierListsTable({ tierLists, loading = false, onRefresh, onEdit, 
                                                         Edit
                                                     </DropdownMenuItem>
                                                 )}
-                                                {onDelete && (
+                                                {canDelete && onDelete && (
                                                     <>
                                                         <DropdownMenuSeparator />
                                                         <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => onDelete(tierList)}>

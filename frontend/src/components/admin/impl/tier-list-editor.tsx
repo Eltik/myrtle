@@ -53,6 +53,7 @@ interface TierListEditorProps {
     onBack: () => void;
     onSave?: (data: TierListResponse) => Promise<void>;
     onPublish?: () => void;
+    canToggleActive?: boolean;
 }
 
 interface EditableTier extends TierWithPlacements {
@@ -178,7 +179,7 @@ function DroppableTierZone({ tierId, isOver, children }: DroppableTierZoneProps)
     );
 }
 
-export function TierListEditor({ tierListData, operatorsData, allOperators, operatorsLoading = false, onBack, onSave, onPublish }: TierListEditorProps) {
+export function TierListEditor({ tierListData, operatorsData, allOperators, operatorsLoading = false, onBack, onSave, onPublish, canToggleActive = true }: TierListEditorProps) {
     const [tiers, setTiers] = useState<EditableTier[]>(tierListData.tiers.map((t) => ({ ...t })));
     const [tierListName, setTierListName] = useState(tierListData.tier_list.name);
     const [tierListDescription, setTierListDescription] = useState(tierListData.tier_list.description ?? "");
@@ -567,9 +568,9 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
                         <div className="flex items-center justify-between space-x-2 rounded-lg border p-4">
                             <div className="space-y-0.5">
                                 <Label>Active Status</Label>
-                                <p className="text-muted-foreground text-sm">Make this tier list publicly visible</p>
+                                <p className="text-muted-foreground text-sm">{canToggleActive ? "Make this tier list publicly visible" : "You don't have permission to change visibility"}</p>
                             </div>
-                            <Switch checked={isActive} onCheckedChange={setIsActive} />
+                            <Switch checked={isActive} disabled={!canToggleActive} onCheckedChange={setIsActive} />
                         </div>
                     </div>
                     <div className="space-y-2">

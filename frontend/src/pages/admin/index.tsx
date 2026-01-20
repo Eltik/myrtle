@@ -5,13 +5,9 @@ import { useCallback, useEffect, useState } from "react";
 import { AdminPanel } from "~/components/admin";
 import { SEO } from "~/components/seo";
 import { useAuth } from "~/hooks/use-auth";
-import type { AdminRole, AdminStats } from "~/types/frontend/admin";
-
-const ADMIN_ROLES: AdminRole[] = ["super_admin", "tier_list_admin"];
-
-function isAdminRole(role: string | undefined): role is AdminRole {
-    return role !== undefined && ADMIN_ROLES.includes(role as AdminRole);
-}
+import type { AdminRole } from "~/lib/permissions";
+import { isAdminRole } from "~/lib/permissions";
+import type { AdminStats } from "~/types/frontend/admin";
 
 export default function AdminPage() {
     const router = useRouter();

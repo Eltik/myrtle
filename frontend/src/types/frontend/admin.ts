@@ -1,4 +1,4 @@
-export type AdminRole = "super_admin" | "tier_list_admin";
+export type { AdminRole } from "~/lib/permissions";
 
 // User statistics for admin dashboard
 export interface UserStats {
@@ -60,7 +60,7 @@ export interface RecentActivity {
 
 // Complete admin stats response
 export interface AdminStats {
-    users: UserStats;
+    users: UserStats | null;
     tierLists: TierListStats;
     recentActivity: RecentActivity[];
 }

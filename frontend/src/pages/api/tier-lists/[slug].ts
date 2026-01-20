@@ -1,6 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getSiteToken } from "~/lib/auth";
 import { backendFetch } from "~/lib/backend-fetch";
+import type { AdminRole } from "~/lib/permissions";
+import { canDeleteTierList, canToggleTierListActive, isAdminRole } from "~/lib/permissions";
 import type { TierListResponse } from "~/types/api/impl/tier-list";
 
 interface ApiSuccessResponse {
@@ -16,6 +18,28 @@ interface ApiErrorResponse {
 }
 
 type ApiResponse = ApiSuccessResponse | ApiErrorResponse | TierListResponse;
+
+interface VerifyResponse {
+    valid: boolean;
+    role?: string;
+}
+
+async function verifyUserRole(token: string): Promise<{ valid: boolean; role: AdminRole | null }> {
+    try {
+        const response = await backendFetch("/auth/verify", {
+            method: "POST",
+            body: JSON.stringify({ token }),
+        });
+        if (!response.ok) return { valid: false, role: null };
+        const data: VerifyResponse = await response.json();
+        if (!data.valid || !data.role || !isAdminRole(data.role)) {
+            return { valid: false, role: null };
+        }
+        return { valid: true, role: data.role as AdminRole };
+    } catch {
+        return { valid: false, role: null };
+    }
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
     const { slug } = req.query;
@@ -104,6 +128,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
             const { name, description, is_active } = req.body;
 
+            // Check if user can toggle active status - if not, strip is_active from request
+            let allowedIsActive: boolean | undefined;
+            if (is_active !== undefined) {
+                const { valid, role } = await verifyUserRole(siteToken);
+                if (valid && canToggleTierListActive(role)) {
+                    allowedIsActive = is_active;
+                }
+                // If user doesn't have permission, we just don't send is_active to backend
+            }
+
             const response = await backendFetch(`/tier-lists/${slug}`, {
                 method: "PUT",
                 headers: {
@@ -112,7 +146,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
                 body: JSON.stringify({
                     name,
                     description,
-                    is_active,
+                    ...(allowedIsActive !== undefined && { is_active: allowedIsActive }),
                 }),
             });
 
@@ -133,13 +167,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         }
 
         if (req.method === "DELETE") {
-            // DELETE /tier-lists/{slug} - Delete tier list (requires Admin permission)
+            // DELETE /tier-lists/{slug} - Delete tier list (requires TierListAdmin or SuperAdmin)
             const siteToken = getSiteToken(req);
 
             if (!siteToken) {
                 return res.status(401).json({
                     success: false,
                     error: "Not authenticated",
+                });
+            }
+
+            // Server-side role verification
+            const { valid, role } = await verifyUserRole(siteToken);
+            if (!valid || !canDeleteTierList(role)) {
+                return res.status(403).json({
+                    success: false,
+                    error: "You don't have permission to delete tier lists",
                 });
             }
 
