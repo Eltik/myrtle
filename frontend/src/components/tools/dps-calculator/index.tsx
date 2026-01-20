@@ -1,6 +1,5 @@
 "use client";
 
-import { toPng } from "html-to-image";
 import { BarChart3, Plus, RotateCcw } from "lucide-react";
 import { motion } from "motion/react";
 import { useCallback, useRef, useState } from "react";
@@ -12,7 +11,8 @@ import { Tabs, TabsList, TabsTrigger } from "~/components/ui/shadcn/tabs";
 import { DpsChartSettingsProvider, useDpsChartSettings } from "~/context/dps-chart-settings-context";
 import type { DpsOperatorListEntry } from "~/types/api/impl/dps-calculator";
 import { ChartSettingsPopover } from "./impl/chart-settings";
-import { DpsChart, type DpsChartHandle } from "./impl/dps-chart";
+import type { DpsChartHandle } from "./impl/dps-chart";
+import { DynamicDpsChart } from "./impl/dynamic-dps-chart";
 import { OperatorConfigurator } from "./impl/operator-configurator";
 import { OperatorSelector } from "./impl/operator-selector";
 import type { ChartDataPoint, OperatorConfiguration } from "./impl/types";
@@ -135,6 +135,9 @@ function DpsCalculatorInner({ operators }: DpsCalculatorProps) {
 
         setIsExporting(true);
         try {
+            // Dynamic import - only load html-to-image when actually needed
+            const { toPng } = await import("html-to-image");
+
             // Get computed background color for themed export
             const bgColor = settings.export.exportBackground === "themed" ? getComputedStyle(document.body).getPropertyValue("background-color") || "#ffffff" : "transparent";
 
@@ -244,7 +247,7 @@ function DpsCalculatorInner({ operators }: DpsCalculatorProps) {
                                 <p className="text-muted-foreground">Add operators below to generate DPS comparison charts</p>
                             </div>
                         ) : (
-                            <DpsChart mode={chartMode} operators={selectedOperators} ref={chartRef} />
+                            <DynamicDpsChart mode={chartMode} operators={selectedOperators} ref={chartRef} />
                         )}
                     </div>
                 </Card>
