@@ -28,6 +28,7 @@ export function UserHeader({ data }: UserHeaderProps) {
 
     return (
         <InView
+            once
             transition={{ duration: 0.5, ease: "easeOut" }}
             variants={{
                 hidden: { opacity: 0, y: -20 },
@@ -50,7 +51,7 @@ export function UserHeader({ data }: UserHeaderProps) {
                                     </div>
                                     <motion.button
                                         animate={{ scale: isCopied ? [1, 0.85, 1] : 1 }}
-                                        className="relative hidden size-[34px] cursor-pointer items-center justify-center rounded-md border transition-colors duration-150 hover:bg-secondary md:flex"
+                                        className="relative hidden size-8.5 cursor-pointer items-center justify-center rounded-md border transition-colors duration-150 hover:bg-secondary md:flex"
                                         onClick={handleCopyUsername}
                                         onKeyDown={(e) => e.key === "Enter" && handleCopyUsername()}
                                         tabIndex={0}

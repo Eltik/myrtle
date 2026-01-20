@@ -13,7 +13,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/shadcn/
 import { cn } from "~/lib/utils";
 import type { Operator } from "~/types/api";
 import type { ChibiCharacter } from "~/types/api/impl/chibi";
-import { ChibiViewer } from "../chibi-viewer";
+import { DynamicChibiViewer } from "../chibi-viewer/dynamic";
 import { ColorTagText } from "./impl/color-tag-parser";
 import { formatSkinsForOperator } from "./impl/helpers";
 import type { UISkin } from "./impl/types";
@@ -387,8 +387,8 @@ export const SkinsContent = memo(function SkinsContent({ operator }: SkinsConten
                             </div>
                         )}
 
-                        {/* Chibi Viewer */}
-                        {chibiData && <ChibiViewer chibi={chibiData} skinName={chibiSkinName} />}
+                        {/* Chibi Viewer - Dynamically loaded to reduce bundle size */}
+                        {chibiData && <DynamicChibiViewer chibi={chibiData} skinName={chibiSkinName} />}
                     </div>
                 </div>
             )}

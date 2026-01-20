@@ -4,6 +4,41 @@ import { motion, type SpringOptions, useMotionValue, useSpring, useTransform } f
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "~/lib/utils";
 
+// Check if user prefers reduced motion
+function usePrefersReducedMotion() {
+    const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+    useEffect(() => {
+        const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+        setPrefersReducedMotion(mediaQuery.matches);
+
+        const handler = (event: MediaQueryListEvent) => setPrefersReducedMotion(event.matches);
+        mediaQuery.addEventListener("change", handler);
+        return () => mediaQuery.removeEventListener("change", handler);
+    }, []);
+
+    return prefersReducedMotion;
+}
+
+// Check if device is mobile (touch device or narrow viewport)
+function useIsMobile() {
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => {
+            const hasTouch = window.matchMedia("(pointer: coarse)").matches;
+            const isNarrow = window.innerWidth < 768;
+            setIsMobile(hasTouch || isNarrow);
+        };
+
+        checkMobile();
+        window.addEventListener("resize", checkMobile);
+        return () => window.removeEventListener("resize", checkMobile);
+    }, []);
+
+    return isMobile;
+}
+
 type AnimatedGradientOrbsProps = {
     className?: string;
     cursorInfluence?: number;
@@ -38,6 +73,15 @@ export function AnimatedGradientOrbs({ className, cursorInfluence = 0.15, spring
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
     const animationFrameRef = useRef<number>(0);
 
+    // Performance optimizations
+    const prefersReducedMotion = usePrefersReducedMotion();
+    const isMobile = useIsMobile();
+    const [isVisible, setIsVisible] = useState(true);
+    const frameCountRef = useRef(0);
+
+    // On mobile, only render every 3rd frame (~20fps instead of 60fps)
+    const frameSkip = isMobile ? 3 : 1;
+
     // Track hover state and virtual time for variable-speed animation
     const isHoveredRef = useRef(false);
     const virtualTimeRef = useRef(0);
@@ -57,6 +101,23 @@ export function AnimatedGradientOrbs({ className, cursorInfluence = 0.15, spring
     const autoOffsetY1 = useMotionValue(0);
     const autoOffsetX2 = useMotionValue(0);
     const autoOffsetY2 = useMotionValue(0);
+
+    // Visibility detection - pause animation when off-screen
+    useEffect(() => {
+        if (!containerRef.current) return;
+
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry) {
+                    setIsVisible(entry.isIntersecting);
+                }
+            },
+            { threshold: 0.1 },
+        );
+
+        observer.observe(containerRef.current);
+        return () => observer.disconnect();
+    }, []);
 
     // Setup parent element reference and dimensions
     useEffect(() => {
@@ -132,7 +193,23 @@ export function AnimatedGradientOrbs({ className, cursorInfluence = 0.15, spring
 
     // Auto-animation loop with variable speed
     useEffect(() => {
+        // Don't run animation if user prefers reduced motion or component not visible
+        if (prefersReducedMotion) return;
+
         const animate = (timestamp: number) => {
+            // Skip animation when not visible (performance optimization)
+            if (!isVisible) {
+                animationFrameRef.current = requestAnimationFrame(animate);
+                return;
+            }
+
+            // Frame skipping for mobile devices (render every Nth frame)
+            frameCountRef.current++;
+            if (frameCountRef.current % frameSkip !== 0) {
+                animationFrameRef.current = requestAnimationFrame(animate);
+                return;
+            }
+
             // Calculate delta time
             if (lastTimestampRef.current === 0) {
                 lastTimestampRef.current = timestamp;
@@ -163,7 +240,7 @@ export function AnimatedGradientOrbs({ className, cursorInfluence = 0.15, spring
 
         animationFrameRef.current = requestAnimationFrame(animate);
         return () => cancelAnimationFrame(animationFrameRef.current);
-    }, [autoOffsetX1, autoOffsetY1, autoOffsetX2, autoOffsetY2]);
+    }, [autoOffsetX1, autoOffsetY1, autoOffsetX2, autoOffsetY2, prefersReducedMotion, isVisible, frameSkip]);
 
     // Calculate cursor influence on each orb
     const cursorInfluenceX = dimensions.width * cursorInfluence;
@@ -193,6 +270,44 @@ export function AnimatedGradientOrbs({ className, cursorInfluence = 0.15, spring
         const auto = values[1] ?? 0;
         return `calc(${ORB2_BASE_Y}% + ${auto + mouse * cursorInfluenceY * 0.7}px)`;
     });
+
+    // Static fallback for reduced motion preference
+    if (prefersReducedMotion) {
+        return (
+            <div className={cn("pointer-events-none absolute inset-0 overflow-hidden", className)} ref={containerRef}>
+                {/* Static Orb 1 - Top Right */}
+                <div
+                    className="absolute rounded-full blur-3xl"
+                    style={{
+                        left: `${ORB1_BASE_X}%`,
+                        top: `${ORB1_BASE_Y}%`,
+                        width: ORB1_SIZE,
+                        height: ORB1_SIZE,
+                        background: `
+                            radial-gradient(ellipse 60% 40% at 30% 30%, oklch(0.85 0.18 25 / 0.4) 0%, transparent 50%),
+                            radial-gradient(ellipse 80% 80% at 50% 50%, oklch(0.65 0.20 25 / 0.25) 0%, oklch(0.55 0.22 25 / 0.15) 50%, transparent 70%),
+                            radial-gradient(circle at 70% 70%, oklch(0.45 0.18 25 / 0.2) 0%, transparent 50%)
+                        `,
+                    }}
+                />
+                {/* Static Orb 2 - Bottom Left */}
+                <div
+                    className="absolute rounded-full blur-3xl"
+                    style={{
+                        left: `${ORB2_BASE_X}%`,
+                        top: `${ORB2_BASE_Y}%`,
+                        width: ORB2_SIZE,
+                        height: ORB2_SIZE,
+                        background: `
+                            radial-gradient(ellipse 60% 40% at 70% 30%, oklch(0.80 0.15 25 / 0.35) 0%, transparent 50%),
+                            radial-gradient(ellipse 80% 80% at 50% 50%, oklch(0.60 0.18 25 / 0.2) 0%, oklch(0.50 0.20 25 / 0.12) 50%, transparent 70%),
+                            radial-gradient(circle at 30% 70%, oklch(0.40 0.15 25 / 0.18) 0%, transparent 50%)
+                        `,
+                    }}
+                />
+            </div>
+        );
+    }
 
     return (
         <div className={cn("pointer-events-none absolute inset-0 overflow-hidden", className)} ref={containerRef}>

@@ -49,6 +49,7 @@ export default function UserPage({ userData, userId, baseUrl, error }: UserPageP
                 <UserHeader data={data} />
 
                 <InView
+                    once
                     transition={{ duration: 0.5, ease: "easeOut", delay: 0.2 }}
                     variants={{
                         hidden: { opacity: 0, y: -20 },

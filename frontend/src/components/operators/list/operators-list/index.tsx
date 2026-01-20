@@ -255,18 +255,24 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                             const operatorId = operator.id ?? "";
                             const isCurrentlyHovered = hoveredOperator === operatorId;
                             const shouldGrayscale = isGrayscaleActive && !isCurrentlyHovered;
+                            // Only animate first 6 items for performance - rest appear instantly
+                            const shouldAnimate = index < 6;
 
                             return (
                                 <motion.div
                                     animate={{ opacity: 1, y: 0 }}
                                     className="contain-content"
-                                    initial={{ opacity: 0, y: 8 }}
+                                    initial={shouldAnimate ? { opacity: 0, y: 8 } : false}
                                     key={operatorId}
-                                    transition={{
-                                        duration: 0.2,
-                                        delay: Math.min(index * 0.015, 0.3),
-                                        ease: [0.4, 0, 0.2, 1],
-                                    }}
+                                    transition={
+                                        shouldAnimate
+                                            ? {
+                                                  duration: 0.2,
+                                                  delay: index * 0.015,
+                                                  ease: [0.4, 0, 0.2, 1],
+                                              }
+                                            : { duration: 0 }
+                                    }
                                 >
                                     <OperatorCard isHovered={isCurrentlyHovered} listColumns={listColumns} onHoverChange={hoverHandlers.get(operatorId)} operator={operator} shouldGrayscale={shouldGrayscale} viewMode={viewMode} />
                                 </motion.div>
