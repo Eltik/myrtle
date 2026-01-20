@@ -43,6 +43,11 @@ export function FilterPanel({ settings, setSettings, hasProfile, onFiltersChange
         onFiltersChanged?.();
     };
 
+    const handleReserveOperatorsToggle = (checked: boolean) => {
+        setSettings({ ...settings, allowReserveOperators: checked });
+        onFiltersChanged?.();
+    };
+
     const handleSelectAllClasses = () => {
         setSettings({ ...settings, allowedClasses: [...CLASSES] });
         onFiltersChanged?.();
@@ -171,6 +176,17 @@ export function FilterPanel({ settings, setSettings, hasProfile, onFiltersChange
                         <p className="text-muted-foreground text-xs">Same operator can appear multiple times</p>
                     </div>
                     <Switch checked={settings.allowDuplicates} id="allow-duplicates" onCheckedChange={handleDuplicatesToggle} />
+                </div>
+
+                {/* Allow Reserve Operators */}
+                <div className="flex items-center justify-between rounded-xl border border-border/30 bg-linear-to-br from-secondary/50 to-secondary/30 p-4 shadow-sm backdrop-blur-sm">
+                    <div className="space-y-0.5">
+                        <Label className="font-semibold text-foreground text-sm" htmlFor="allow-duplicates">
+                            Allow Reserve Operators
+                        </Label>
+                        <p className="text-muted-foreground text-xs">Include Reserve Operators in randomized squads</p>
+                    </div>
+                    <Switch checked={settings.allowReserveOperators} id="allow-duplicates" onCheckedChange={handleReserveOperatorsToggle} />
                 </div>
 
                 {/* Only Elite 2 Operators */}
