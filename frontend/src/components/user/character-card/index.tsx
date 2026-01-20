@@ -1,14 +1,16 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { RARITY_COLORS } from "~/components/operators/list/constants";
+import { ImageWithSkeleton } from "~/components/ui/image-with-skeleton";
 import { MorphingDialog, MorphingDialogTrigger } from "~/components/ui/motion-primitives/morphing-dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "~/components/ui/shadcn/accordion";
 import { Card, CardContent } from "~/components/ui/shadcn/card";
 import { Progress } from "~/components/ui/shadcn/progress";
 import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
 import { Separator } from "~/components/ui/shadcn/separator";
+import { useCDNPrefetch } from "~/hooks/use-cdn-prefetch";
 import { formatProfession, getOperatorImageURL, getProfessionIconName, getRarityStarCount } from "~/lib/utils";
 import type { CharacterData, CharacterStatic } from "~/types/api/impl/user";
 import { CharacterDialog } from "./impl/character-dialog";
@@ -27,6 +29,9 @@ export function CharacterCard({ data }: CharacterCardProps) {
     const [levelProgress, setLevelProgress] = useState(0);
     const [trustProgress, setTrustProgress] = useState(0);
     const cardRef = useRef<HTMLDivElement>(null);
+    const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const hasPreloadedRef = useRef(false);
+    const { prefetch } = useCDNPrefetch();
 
     const trustPercentage = operator?.trust ? (operator.trust / 200) * 100 : 0;
     const maxLevel = operator?.phases?.[data.evolvePhase]?.MaxLevel ?? 1;
@@ -58,6 +63,64 @@ export function CharacterCard({ data }: CharacterCardProps) {
     const operatorRarity = operator?.rarity ?? "TIER_1";
     const starCount = getRarityStarCount(operatorRarity);
 
+    // Preload all dialog images when hovering
+    const preloadDialogImages = useCallback(() => {
+        if (hasPreloadedRef.current) return;
+        hasPreloadedRef.current = true;
+
+        const operatorImage = getOperatorImageURL(data.charId, data.skin, data.evolvePhase, data.currentTmpl, data.tmpl as Record<string, { skinId: string }> | null);
+
+        const imagesToPreload: string[] = [
+            // Main character art
+            operatorImage,
+            // UI icons
+            `/api/cdn/upk/arts/rarity_hub/rarity_yellow_${starCount - 1}.png`,
+            `/api/cdn/upk/arts/elite_hub/elite_${data.evolvePhase}.png`,
+            `/api/cdn/upk/arts/potential_hub/potential_${data.potentialRank}.png`,
+        ];
+
+        // Skill icons and mastery badges
+        for (const skill of data.skills) {
+            const skillStatic = skill.static as { iconId?: string; skillId?: string; image?: string } | null;
+            const skillIcon = skillStatic?.image ? `/api/cdn${skillStatic.image}` : `/api/cdn/upk/spritepack/skill_icons_0/skill_icon_${skillStatic?.iconId ?? skillStatic?.skillId ?? skill.skillId}.png`;
+            imagesToPreload.push(skillIcon);
+
+            if (skill.specializeLevel > 0) {
+                imagesToPreload.push(`/api/cdn/upk/arts/specialized_hub/specialized_${skill.specializeLevel}.png`);
+            }
+        }
+
+        // Module images (only unlocked ones)
+        if (operator?.modules) {
+            for (const module of operator.modules) {
+                const equipData = data.equip[module.uniEquipId];
+                const moduleLevel = equipData?.level ?? 0;
+                const isLocked = equipData?.locked === 1;
+
+                if (module.typeName1 !== "ORIGINAL" && moduleLevel > 0 && !isLocked) {
+                    const moduleImage = module.image ? `/api/cdn${module.image}` : `/api/cdn/upk/spritepack/ui_equip_big_img_hub_0/${module.uniEquipIcon}.png`;
+                    imagesToPreload.push(moduleImage);
+                }
+            }
+        }
+
+        prefetch(imagesToPreload, "high");
+    }, [data, operator, starCount, prefetch]);
+
+    const handleMouseEnter = useCallback(() => {
+        setIsHovered(true);
+        // Start preloading after 150ms of hovering (debounce accidental hovers)
+        hoverTimeoutRef.current = setTimeout(preloadDialogImages, 150);
+    }, [preloadDialogImages]);
+
+    const handleMouseLeave = useCallback(() => {
+        setIsHovered(false);
+        if (hoverTimeoutRef.current) {
+            clearTimeout(hoverTimeoutRef.current);
+            hoverTimeoutRef.current = null;
+        }
+    }, []);
+
     // Check if operator is fully maxed
     const isMaxed = (() => {
         // Max potential is 5 (0-indexed, represents potential 6)
@@ -84,8 +147,8 @@ export function CharacterCard({ data }: CharacterCardProps) {
         <MorphingDialog transition={{ type: "spring", bounce: 0.05, duration: 0.25 }}>
             <Card
                 className="fade-in slide-in-from-bottom-4 flex w-full animate-in flex-col gap-0 overflow-hidden border-2 border-muted/30 pb-1 transition-all duration-300 hover:border-muted hover:shadow-lg"
-                onMouseEnter={() => setIsHovered(true)}
-                onMouseLeave={() => setIsHovered(false)}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
                 ref={cardRef}
                 style={isMaxed ? { boxShadow: `0 0 20px ${rarityColor}40, 0 0 40px ${rarityColor}20` } : undefined}
             >
@@ -93,7 +156,7 @@ export function CharacterCard({ data }: CharacterCardProps) {
                 <div className="relative">
                     <MorphingDialogTrigger className="block w-full">
                         <div className="relative h-64 w-full cursor-pointer overflow-hidden">
-                            <Image alt={operatorName} className={`h-full w-full object-contain object-top transition-transform duration-300 ${isHovered ? "scale-105" : "scale-100"}`} height={512} src={operatorImage || "/placeholder.svg"} unoptimized width={512} />
+                            <ImageWithSkeleton alt={operatorName} className={`h-full w-full object-contain object-top transition-transform duration-300 ${isHovered ? "scale-105" : "scale-100"}`} containerClassName="h-full w-full" height={512} src={operatorImage || "/placeholder.svg"} unoptimized width={512} />
                             <div className={`absolute inset-0 bg-linear-to-t from-black/50 to-transparent transition-opacity duration-300 ${isHovered ? "opacity-90" : "opacity-70"}`} />
 
                             {/* Operator Info Overlay */}
