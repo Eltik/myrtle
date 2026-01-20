@@ -1,4 +1,5 @@
 import type { AuthUser } from "~/hooks/use-auth";
+import { canManageUsers } from "~/lib/permissions";
 import type { AdminRole, AdminStats } from "~/types/frontend/admin";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/shadcn/card";
 import { Header } from "./impl/header";
@@ -20,27 +21,21 @@ export function AdminPanel({ user, role, stats, statsLoading, onRefresh }: Admin
             {/* Header */}
             <Header onRefresh={onRefresh} role={role} statsLoading={statsLoading} user={user} />
 
-            {/* Stats Grid */}
-            {statsLoading ? (
-                <div className="flex min-h-[200px] items-center justify-center">
-                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                </div>
-            ) : stats ? (
-                <StatsGrid stats={stats} />
-            ) : (
-                <Card>
-                    <CardHeader>
-                        <CardTitle>No Data Available</CardTitle>
-                        <CardDescription>Backend /admin/stats endpoint needs to be implemented to display statistics.</CardDescription>
-                    </CardHeader>
-                </Card>
-            )}
+            {/* Stats Grid - only visible to super_admin who has full stats access */}
+            {canManageUsers(role) &&
+                (statsLoading ? (
+                    <div className="flex min-h-[200px] items-center justify-center">
+                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                    </div>
+                ) : stats ? (
+                    <StatsGrid role={role} stats={stats} />
+                ) : null)}
 
-            {/* Users Table */}
-            {stats && stats.users.recentUsers.length > 0 && <UsersTable loading={statsLoading} onRefresh={onRefresh} users={stats.users.recentUsers} />}
+            {/* Users Table - only visible to super_admin */}
+            {canManageUsers(role) && stats?.users?.recentUsers && stats.users.recentUsers.length > 0 && <UsersTable loading={statsLoading} onRefresh={onRefresh} users={stats.users.recentUsers} />}
 
             {/* Tier List Management */}
-            <TierListManagement loading={statsLoading} onRefresh={onRefresh} tierLists={stats?.tierLists.tierLists ?? []} />
+            <TierListManagement loading={statsLoading} onRefresh={onRefresh} role={role} tierLists={stats?.tierLists.tierLists ?? []} />
 
             {/* Recent Activity */}
             {stats && stats.recentActivity.length > 0 && (

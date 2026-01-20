@@ -1,9 +1,8 @@
 import { parse } from "cookie";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { backendFetch } from "~/lib/backend-fetch";
+import { isAdminRole } from "~/lib/permissions";
 import type { AdminStats } from "~/types/frontend/admin";
-
-const ADMIN_ROLES = ["super_admin", "tier_list_admin"];
 
 interface VerifyResponse {
     valid: boolean;
@@ -62,12 +61,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         }
 
         // Step 3: Check admin role
-        if (!verifyData.role || !ADMIN_ROLES.includes(verifyData.role)) {
+        if (!isAdminRole(verifyData.role)) {
             return res.status(403).json({
                 success: false,
                 error: "Insufficient permissions",
             });
         }
+
+        const userRole = verifyData.role;
 
         // Step 4: Fetch admin stats from backend (requires backend /admin/stats endpoint)
         const statsResponse = await backendFetch("/admin/stats", {
@@ -78,29 +79,53 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         });
 
         if (!statsResponse.ok) {
-            // If backend endpoint doesn't exist yet, return empty placeholder data
-            if (statsResponse.status === 404) {
+            // If backend endpoint doesn't exist yet or user lacks backend permission,
+            // return placeholder data (tier_list_editor may not have backend /admin/stats access)
+            // Note: Backend returns 400 for permission errors (BadRequest), so we handle that too
+            if (statsResponse.status === 404 || statsResponse.status === 403 || statsResponse.status === 400) {
+                // For tier_list_editor, fetch tier lists separately so they can still manage them
+                let tierListsData: AdminStats["tierLists"] = {
+                    total: 0,
+                    active: 0,
+                    totalVersions: 0,
+                    totalPlacements: 0,
+                    tierLists: [],
+                };
+
+                try {
+                    const tierListsResponse = await backendFetch("/tier-lists", {
+                        method: "GET",
+                    });
+                    if (tierListsResponse.ok) {
+                        const data = await tierListsResponse.json();
+                        const tierLists = data.tier_lists || [];
+                        tierListsData = {
+                            total: tierLists.length,
+                            active: tierLists.filter((t: { is_active: boolean }) => t.is_active).length,
+                            totalVersions: 0,
+                            totalPlacements: 0,
+                            tierLists: tierLists.map((t: { id: string; name: string; slug: string; is_active: boolean; created_at: string; updated_at: string }) => ({
+                                id: t.id,
+                                name: t.name,
+                                slug: t.slug,
+                                isActive: t.is_active,
+                                tierCount: 0,
+                                operatorCount: 0,
+                                versionCount: 0,
+                                createdAt: t.created_at,
+                                updatedAt: t.updated_at,
+                            })),
+                        };
+                    }
+                } catch {
+                    // If fetching tier lists fails, continue with empty list
+                }
+
                 return res.status(200).json({
                     success: true,
                     data: {
-                        users: {
-                            total: 0,
-                            byRole: {
-                                user: 0,
-                                tier_list_editor: 0,
-                                tier_list_admin: 0,
-                                super_admin: 0,
-                            },
-                            byServer: {},
-                            recentUsers: [],
-                        },
-                        tierLists: {
-                            total: 0,
-                            active: 0,
-                            totalVersions: 0,
-                            totalPlacements: 0,
-                            tierLists: [],
-                        },
+                        users: null,
+                        tierLists: tierListsData,
                         recentActivity: [],
                     },
                 });
@@ -113,6 +138,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         }
 
         const statsData: AdminStats = await statsResponse.json();
+
+        // Filter out user data for non-super_admin roles
+        if (userRole !== "super_admin") {
+            return res.status(200).json({
+                success: true,
+                data: {
+                    ...statsData,
+                    users: null,
+                } as unknown as AdminStats,
+            });
+        }
 
         return res.status(200).json({
             success: true,

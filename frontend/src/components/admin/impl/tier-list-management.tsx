@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import type { AdminRole } from "~/lib/permissions";
+import { canCreateTierList, canDeleteTierList, canToggleTierListActive } from "~/lib/permissions";
 import type { TierListResponse } from "~/types/api/impl/tier-list";
 import type { OperatorFromList } from "~/types/api/operators";
 import type { TierListSummary } from "~/types/frontend/admin";
@@ -16,11 +18,15 @@ interface TierListManagementProps {
     tierLists: TierListSummary[];
     loading?: boolean;
     onRefresh?: () => void;
+    role: AdminRole;
 }
 
 type ViewMode = "list" | "editor";
 
-export function TierListManagement({ tierLists, loading = false, onRefresh }: TierListManagementProps) {
+export function TierListManagement({ tierLists, loading = false, onRefresh, role }: TierListManagementProps) {
+    const canCreate = canCreateTierList(role);
+    const canDelete = canDeleteTierList(role);
+    const canToggleActive = canToggleTierListActive(role);
     const [viewMode, setViewMode] = useState<ViewMode>("list");
     const [, setSelectedTierList] = useState<TierListSummary | null>(null);
     const [tierListData, setTierListData] = useState<TierListResponse | null>(null);
@@ -267,7 +273,7 @@ export function TierListManagement({ tierLists, loading = false, onRefresh }: Ti
         <>
             <TransitionPanel activeIndex={viewMode === "list" ? 0 : 1} animateHeight transition={{ duration: 0.3, ease: "easeInOut" }} variants={variants}>
                 {/* List View */}
-                <TierListsTable loading={loading} onCreate={() => setCreateDialogOpen(true)} onDelete={handleDelete} onEdit={handleEdit} onRefresh={onRefresh} onView={handleView} tierLists={tierLists} />
+                <TierListsTable canCreate={canCreate} canDelete={canDelete} loading={loading} onCreate={() => setCreateDialogOpen(true)} onDelete={handleDelete} onEdit={handleEdit} onRefresh={onRefresh} onView={handleView} tierLists={tierLists} />
 
                 {/* Editor View */}
                 {editorLoading ? (
@@ -275,7 +281,7 @@ export function TierListManagement({ tierLists, loading = false, onRefresh }: Ti
                         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                     </div>
                 ) : tierListData ? (
-                    <TierListEditor allOperators={allOperators} onBack={handleBack} onPublish={handleOpenPublishDialog} onSave={handleSave} operatorsData={operatorsData} operatorsLoading={operatorsLoading} tierListData={tierListData} />
+                    <TierListEditor allOperators={allOperators} canToggleActive={canToggleActive} onBack={handleBack} onPublish={handleOpenPublishDialog} onSave={handleSave} operatorsData={operatorsData} operatorsLoading={operatorsLoading} tierListData={tierListData} />
                 ) : null}
             </TransitionPanel>
 

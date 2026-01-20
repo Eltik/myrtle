@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getSiteToken } from "~/lib/auth";
 import { backendFetch } from "~/lib/backend-fetch";
+import { canCreateTierList, isAdminRole } from "~/lib/permissions";
 
 interface TierListFromBackend {
     id: string;
@@ -34,6 +35,25 @@ interface ApiErrorResponse {
 
 type ApiResponse = ApiSuccessResponse | ApiErrorResponse;
 
+interface VerifyResponse {
+    valid: boolean;
+    role?: string;
+}
+
+async function verifyUserRole(token: string): Promise<{ valid: boolean; role: string | null }> {
+    try {
+        const response = await backendFetch("/auth/verify", {
+            method: "POST",
+            body: JSON.stringify({ token }),
+        });
+        if (!response.ok) return { valid: false, role: null };
+        const data: VerifyResponse = await response.json();
+        return { valid: data.valid, role: data.role || null };
+    } catch {
+        return { valid: false, role: null };
+    }
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
     try {
         if (req.method === "GET") {
@@ -57,13 +77,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         }
 
         if (req.method === "POST") {
-            // POST /tier-lists - Create a new tier list (requires TierListAdmin)
+            // POST /tier-lists - Create a new tier list (requires TierListAdmin or SuperAdmin)
             const siteToken = getSiteToken(req);
 
             if (!siteToken) {
                 return res.status(401).json({
                     success: false,
                     error: "Not authenticated",
+                });
+            }
+
+            // Server-side role verification
+            const { valid, role } = await verifyUserRole(siteToken);
+            if (!valid || !isAdminRole(role ?? undefined) || !canCreateTierList(role as Parameters<typeof canCreateTierList>[0])) {
+                return res.status(403).json({
+                    success: false,
+                    error: "You don't have permission to create tier lists",
                 });
             }
 

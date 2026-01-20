@@ -3,9 +3,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::app::error::ApiError;
 use crate::app::state::AppState;
-use crate::database::models::tier_lists::{CreateTierList, TierList};
+use crate::database::models::tier_lists::{CreateTierList, TierList, TierListPermission};
 
-use super::middleware::{require_auth, require_tier_list_admin};
+use super::middleware::{require_any_admin_role, require_auth};
 
 #[derive(Deserialize)]
 pub struct CreateTierListRequest {
@@ -31,7 +31,7 @@ pub struct TierListData {
 }
 
 /// POST /tier-lists
-/// Create a new tier list (requires TierListAdmin or SuperAdmin)
+/// Create a new tier list (requires any admin role)
 pub async fn create_tier_list(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -39,7 +39,7 @@ pub async fn create_tier_list(
 ) -> Result<Json<CreateTierListResponse>, ApiError> {
     // Authenticate and authorize
     let auth = require_auth(&headers, &state.jwt_secret)?;
-    require_tier_list_admin(&auth)?;
+    require_any_admin_role(&auth)?;
 
     // Validate slug format (alphanumeric and hyphens only)
     if !body.slug.chars().all(|c| c.is_alphanumeric() || c == '-') {
@@ -73,6 +73,24 @@ pub async fn create_tier_list(
             eprintln!("Failed to create tier list: {e:?}");
             ApiError::Internal("Failed to create tier list".into())
         })?;
+
+    // Grant Admin permission to the creator (so they can manage their own tier list)
+    // This is especially important for tier_list_editor who don't have global admin access
+    if !auth.role.is_tier_list_admin() {
+        TierListPermission::grant(
+            &state.db,
+            tier_list.id,
+            auth.user_id,
+            "admin",
+            Some(auth.user_id),
+        )
+        .await
+        .map_err(|e| {
+            eprintln!("Failed to grant permission to creator: {e:?}");
+            // Don't fail the request, just log the error
+        })
+        .ok();
+    }
 
     Ok(Json(CreateTierListResponse {
         success: true,

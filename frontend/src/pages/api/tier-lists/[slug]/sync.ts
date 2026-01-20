@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getSiteToken } from "~/lib/auth";
 import { backendFetch } from "~/lib/backend-fetch";
+import { isAdminRole } from "~/lib/permissions";
 
 interface TierData {
     id: string | null;
@@ -34,6 +35,25 @@ interface ApiErrorResponse {
 
 type ApiResponse = ApiSuccessResponse | ApiErrorResponse;
 
+interface VerifyResponse {
+    valid: boolean;
+    role?: string;
+}
+
+async function verifyUserRole(token: string): Promise<{ valid: boolean; role: string | null }> {
+    try {
+        const response = await backendFetch("/auth/verify", {
+            method: "POST",
+            body: JSON.stringify({ token }),
+        });
+        if (!response.ok) return { valid: false, role: null };
+        const data: VerifyResponse = await response.json();
+        return { valid: data.valid, role: data.role || null };
+    } catch {
+        return { valid: false, role: null };
+    }
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
     const { slug } = req.query;
 
@@ -58,6 +78,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         return res.status(401).json({
             success: false,
             error: "Not authenticated",
+        });
+    }
+
+    // Server-side role verification - require any admin role
+    const { valid, role } = await verifyUserRole(siteToken);
+    if (!valid || !isAdminRole(role ?? undefined)) {
+        return res.status(403).json({
+            success: false,
+            error: "You don't have permission to edit tier lists",
         });
     }
 

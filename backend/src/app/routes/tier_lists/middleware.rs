@@ -111,3 +111,14 @@ pub fn require_tier_list_admin(auth: &AuthContext) -> Result<(), ApiError> {
         ))
     }
 }
+
+/// Require user to have any admin role (editor, admin, or super admin)
+pub fn require_any_admin_role(auth: &AuthContext) -> Result<(), ApiError> {
+    if auth.role.is_any_admin_role() {
+        Ok(())
+    } else {
+        Err(ApiError::BadRequest(
+            "This action requires an admin role".into(),
+        ))
+    }
+}

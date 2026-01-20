@@ -91,6 +91,14 @@ impl GlobalRole {
         matches!(self, GlobalRole::SuperAdmin)
     }
 
+    /// Check if this role is any admin role (editor, admin, or super admin)
+    pub fn is_any_admin_role(&self) -> bool {
+        matches!(
+            self,
+            GlobalRole::TierListEditor | GlobalRole::TierListAdmin | GlobalRole::SuperAdmin
+        )
+    }
+
     /// Check if this role can be granted tier list permissions
     pub fn can_have_tier_permissions(&self) -> bool {
         !matches!(self, GlobalRole::User)
@@ -149,11 +157,8 @@ impl AuthContext {
         self.role.is_tier_list_admin()
     }
 
-    /// Check if user can create new tier lists
+    /// Check if user can create new tier lists (any admin role)
     pub fn can_create_tier_list(&self) -> bool {
-        matches!(
-            self.role,
-            GlobalRole::TierListAdmin | GlobalRole::SuperAdmin
-        )
+        self.role.is_any_admin_role()
     }
 }
