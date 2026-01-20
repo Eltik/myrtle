@@ -2,8 +2,65 @@ import type { Stage } from "~/types/api/impl/stage";
 import type { User } from "~/types/api/impl/user";
 import type { Zone } from "~/types/api/impl/zone";
 import type { RandomizerOperator } from "../index";
-import { getActivityIdFromZoneId, getPermanentEventInfo, getPermanentZonePrefix, isActivityCurrentlyOpen } from "./activity-names";
+import { getActivityIdFromZoneId, getPermanentEventInfo, getPermanentZonePrefix, isActivityCurrentlyOpen, PERMANENT_EVENTS } from "./activity-names";
 import type { Challenge } from "./types";
+
+// Heart of Surging Flame activity IDs - these are exempt from the 0 AP cost filter
+// because the event has playable stages that cost 0 sanity
+const HEART_OF_SURGING_FLAME_IDS = new Set(["act3d0", "act11d7"]);
+const HEART_OF_SURGING_FLAME_PERMANENT_PREFIX = "permanent_sidestory_2";
+
+/**
+ * Checks if a stage is from the Heart of Surging Flame event
+ * This event is exempt from the 0 AP cost filter
+ */
+function isHeartOfSurgingFlameStage(zoneId: string): boolean {
+    // Check permanent zone prefix
+    const permanentPrefix = getPermanentZonePrefix(zoneId);
+    if (permanentPrefix === HEART_OF_SURGING_FLAME_PERMANENT_PREFIX) {
+        return true;
+    }
+
+    // Check activity ID
+    const activityId = getActivityIdFromZoneId(zoneId);
+    if (activityId && HEART_OF_SURGING_FLAME_IDS.has(activityId)) {
+        return true;
+    }
+
+    // Check if this activity maps to Heart of Surging Flame permanent event
+    if (activityId) {
+        const permanentInfo = PERMANENT_EVENTS[activityId];
+        if (permanentInfo?.retroId.includes("Heart_Of_Surging_Flame")) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Checks if a stage should be included based on sanity cost
+ * Excludes stages with 0 AP cost, except for Heart of Surging Flame playable stages
+ */
+function shouldIncludeBySanityCost(stage: Stage): boolean {
+    // Stages that cost sanity are always included
+    if (stage.apCost > 0) {
+        return true;
+    }
+
+    // Heart of Surging Flame stages are exempt from the 0 AP filter,
+    // but still exclude story (ST) and tutorial (TR) stages within the event
+    if (isHeartOfSurgingFlameStage(stage.zoneId)) {
+        const code = stage.code.toUpperCase();
+        // Exclude stages with ST (story) or TR (tutorial) in their code
+        if (code.includes("ST") || code.includes("TR")) {
+            return false;
+        }
+        return true;
+    }
+
+    return false;
+}
 
 // Challenge pool based on common Arknights challenge run types
 const CHALLENGES: Challenge[] = [
@@ -142,4 +199,13 @@ export function generateChallenge(): Challenge {
 
 export function getRarityNumber(rarity: string): number {
     return Number.parseInt(rarity.replace("TIER_", ""), 10);
+}
+
+/**
+ * Filters stages to only include playable stages (those that cost sanity)
+ * Excludes tutorial stages, story-only stages, and other 0 AP stages
+ * Exception: Heart of Surging Flame stages are included even with 0 AP
+ */
+export function filterPlayableStages(stages: Stage[]): Stage[] {
+    return stages.filter(shouldIncludeBySanityCost);
 }

@@ -442,18 +442,16 @@ export function ZoneFilterPanel({ allowedZoneTypes, setAllowedZoneTypes, hasProf
                                                         return (
                                                             <AccordionItem className="border-border/50 border-b last:border-b-0" key={event.activityId} value={event.activityId}>
                                                                 <AccordionTrigger className="flex w-full items-center justify-between py-2 text-sm">
-                                                                    <div className="flex flex-col items-start gap-0.5">
-                                                                        <div className="flex items-center gap-2">
-                                                                            <span className="text-foreground">{event.eventName}</span>
-                                                                            {event.isPermanent ? (
-                                                                                <span className="rounded-full bg-blue-500/20 px-1.5 py-0.5 font-medium text-[10px] text-blue-500">{event.permanentType === "BRANCHLINE" ? "INTERMEZZO" : "SIDE STORY"}</span>
-                                                                            ) : event.isOpen ? (
-                                                                                <span className="rounded-full bg-green-500/20 px-1.5 py-0.5 font-medium text-[10px] text-green-500">OPEN</span>
-                                                                            ) : null}
-                                                                        </div>
+                                                                    <div className="flex flex-col items-start gap-0.5 text-left">
+                                                                        <span className="text-foreground">{event.eventName}</span>
                                                                         {event.dateRange && <span className="text-[10px] text-muted-foreground">{event.dateRange}</span>}
                                                                     </div>
-                                                                    <div className="flex items-center gap-2">
+                                                                    <div className="flex shrink-0 items-center gap-2">
+                                                                        {event.isPermanent ? (
+                                                                            <span className="whitespace-nowrap rounded-full bg-blue-500/20 px-1.5 py-0.5 font-medium text-[10px] text-blue-500">{event.permanentType === "BRANCHLINE" ? "INTERMEZZO" : "SIDE STORY"}</span>
+                                                                        ) : event.isOpen ? (
+                                                                            <span className="whitespace-nowrap rounded-full bg-green-500/20 px-1.5 py-0.5 font-medium text-[10px] text-green-500">OPEN</span>
+                                                                        ) : null}
                                                                         <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground text-xs">{eventSelectedCount > 0 ? `${eventSelectedCount} / ${event.totalStages}` : event.totalStages}</span>
                                                                         <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${openEventId === event.activityId ? "rotate-180" : ""}`} />
                                                                     </div>
@@ -466,7 +464,7 @@ export function ZoneFilterPanel({ allowedZoneTypes, setAllowedZoneTypes, hasProf
                                                                                 const zoneSelectedCount = zoneData.stages.filter((s) => safeSelectedStages.includes(s.stageId)).length;
                                                                                 return (
                                                                                     <AccordionItem className="border-border/30 border-b last:border-b-0" key={zoneData.zoneId} value={zoneData.zoneId}>
-                                                                                        <AccordionTrigger className="flex w-full items-center justify-between py-1.5 text-sm">
+                                                                                        <AccordionTrigger className="flex w-full items-center justify-between py-1.5 text-left text-sm">
                                                                                             <span className="text-muted-foreground text-xs">{zoneData.zoneName}</span>
                                                                                             <div className="flex items-center gap-2">
                                                                                                 <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground text-xs">{zoneSelectedCount > 0 ? `${zoneSelectedCount} / ${zoneData.stages.length}` : zoneData.stages.length}</span>

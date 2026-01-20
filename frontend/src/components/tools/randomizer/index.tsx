@@ -15,7 +15,7 @@ import { RosterPanel } from "./impl/roster-panel";
 import { SquadDisplay } from "./impl/squad-display";
 import { StageDisplay } from "./impl/stage-display";
 import type { Challenge, RandomizerSettings } from "./impl/types";
-import { generateChallenge, generateRandomSquad, selectRandomStage } from "./impl/utils";
+import { filterPlayableStages, generateChallenge, generateRandomSquad, selectRandomStage } from "./impl/utils";
 import { ZoneFilterPanel } from "./impl/zone-filter-panel";
 
 export interface RandomizerOperator {
@@ -80,6 +80,10 @@ function isFullUser(user: unknown): user is User {
 
 export function Randomizer({ zones, stages, operators }: RandomizerProps) {
     const { user, loading: authLoading } = useAuth();
+
+    // Filter out non-playable stages (0 AP cost stages like tutorials and story-only stages)
+    // Exception: Heart of Surging Flame stages are kept even with 0 AP
+    const playableStages = useMemo(() => filterPlayableStages(stages), [stages]);
 
     const [roster, setRoster] = useState<Set<string>>(() => new Set(operators.map((op) => op.id).filter((id): id is string => id !== null)));
 
@@ -160,7 +164,7 @@ export function Randomizer({ zones, stages, operators }: RandomizerProps) {
         if (!settings.selectedStages || settings.selectedStages.length === 0) return;
 
         const availableStageIds = new Set(
-            stages
+            playableStages
                 .filter((stage) => {
                     const zone = zones.find((z) => z.zoneId === stage.zoneId);
                     if (!zone || !settings.allowedZoneTypes.includes(zone.type)) return false;
@@ -180,7 +184,7 @@ export function Randomizer({ zones, stages, operators }: RandomizerProps) {
         if (validSelectedStages.length !== settings.selectedStages.length) {
             setSettings((prev) => ({ ...prev, selectedStages: validSelectedStages }));
         }
-    }, [zones, settings.selectedStages, settings.allowedZoneTypes, settings.onlyCompletedStages, fullUser, stages]);
+    }, [zones, settings.selectedStages, settings.allowedZoneTypes, settings.onlyCompletedStages, fullUser, playableStages]);
 
     const handleFiltersChanged = useCallback(() => {
         const validOperatorIds = new Set(availableOperators.map((op) => op.id).filter((id): id is string => id !== null));
@@ -192,7 +196,7 @@ export function Randomizer({ zones, stages, operators }: RandomizerProps) {
     }, [availableOperators, roster]);
 
     const handleRandomizeAll = useCallback(() => {
-        const stage = selectRandomStage(stages, zones, settings.allowedZoneTypes, fullUser, settings.onlyCompletedStages, settings.selectedStages, settings.onlyAvailableStages);
+        const stage = selectRandomStage(playableStages, zones, settings.allowedZoneTypes, fullUser, settings.onlyCompletedStages, settings.selectedStages, settings.onlyAvailableStages);
         setRandomizedStage(stage);
 
         const squad = generateRandomSquad(availableOperators, settings.squadSize, settings.allowDuplicates);
@@ -200,12 +204,12 @@ export function Randomizer({ zones, stages, operators }: RandomizerProps) {
 
         const challenge = generateChallenge();
         setRandomizedChallenge(challenge);
-    }, [stages, zones, availableOperators, settings, fullUser]);
+    }, [playableStages, zones, availableOperators, settings, fullUser]);
 
     const handleRandomizeStage = useCallback(() => {
-        const stage = selectRandomStage(stages, zones, settings.allowedZoneTypes, fullUser, settings.onlyCompletedStages, settings.selectedStages, settings.onlyAvailableStages);
+        const stage = selectRandomStage(playableStages, zones, settings.allowedZoneTypes, fullUser, settings.onlyCompletedStages, settings.selectedStages, settings.onlyAvailableStages);
         setRandomizedStage(stage);
-    }, [stages, zones, settings.allowedZoneTypes, settings.onlyCompletedStages, settings.selectedStages, settings.onlyAvailableStages, fullUser]);
+    }, [playableStages, zones, settings.allowedZoneTypes, settings.onlyCompletedStages, settings.selectedStages, settings.onlyAvailableStages, fullUser]);
 
     const handleRandomizeSquad = useCallback(() => {
         const squad = generateRandomSquad(availableOperators, settings.squadSize, settings.allowDuplicates);
@@ -292,7 +296,7 @@ export function Randomizer({ zones, stages, operators }: RandomizerProps) {
 
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-wrap items-center gap-3">
-                    <Button className="gap-2 shadow-lg shadow-primary/20 transition-all hover:scale-105 hover:shadow-primary/30 hover:shadow-xl" disabled={availableOperators.length === 0 || stages.length === 0} onClick={handleRandomizeAll} size="lg">
+                    <Button className="gap-2 shadow-lg shadow-primary/20 transition-all hover:scale-105 hover:shadow-primary/30 hover:shadow-xl" disabled={availableOperators.length === 0 || playableStages.length === 0} onClick={handleRandomizeAll} size="lg">
                         <Shuffle className="h-5 w-5" />
                         Randomize All
                     </Button>
@@ -341,7 +345,7 @@ export function Randomizer({ zones, stages, operators }: RandomizerProps) {
                         setOnlyAvailableStages={(value) => setSettings({ ...settings, onlyAvailableStages: value })}
                         setOnlyCompletedStages={(value) => setSettings({ ...settings, onlyCompletedStages: value })}
                         setSelectedStages={(stages) => setSettings({ ...settings, selectedStages: stages })}
-                        stages={stages}
+                        stages={playableStages}
                         user={fullUser}
                         zones={zones}
                     />
