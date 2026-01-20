@@ -181,7 +181,7 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                     </motion.div>
 
                     {/* Filter Toggle - Responsive: Dialog on mobile, Popover on desktop */}
-                    <ResponsiveFilterContainer activeFilterCount={activeFilterCount} hasActiveFilters={hasActiveFilters} onOpenChange={setShowFilters} open={showFilters}>
+                    <ResponsiveFilterContainer activeFilterCount={activeFilterCount} hasActiveFilters={hasActiveFilters} onClearFilters={handleClearFilters} onOpenChange={setShowFilters} open={showFilters}>
                         <OperatorFilters
                             artists={filterOptions.artists}
                             birthPlaces={filterOptions.birthPlaces}

@@ -39,6 +39,7 @@ interface OperatorFiltersProps {
     onRaceChange: (races: string[]) => void;
     onArtistChange: (artists: string[]) => void;
     onClearFilters: () => void;
+    hideHeader?: boolean;
 }
 
 export function OperatorFilters({
@@ -70,6 +71,7 @@ export function OperatorFilters({
     onRaceChange,
     onArtistChange,
     onClearFilters,
+    hideHeader = false,
 }: OperatorFiltersProps) {
     const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
 
@@ -85,16 +87,18 @@ export function OperatorFilters({
     return (
         <div className="z-99 min-w-0 overflow-hidden rounded-lg text-foreground">
             <div className="p-3 sm:p-4">
-                {/* Header */}
-                <div className="mb-4 flex items-center justify-between">
-                    <h3 className="font-semibold text-foreground">Filters</h3>
-                    {hasFilters && (
-                        <button className="flex items-center gap-1 text-muted-foreground text-sm transition-colors hover:text-foreground" onClick={onClearFilters} type="button">
-                            <X className="h-3 w-3" />
-                            Clear all
-                        </button>
-                    )}
-                </div>
+                {/* Header - hidden on mobile when using drawer-style header */}
+                {!hideHeader && (
+                    <div className="mb-4 flex items-center justify-between">
+                        <h3 className="font-semibold text-foreground">Filters</h3>
+                        {hasFilters && (
+                            <button className="flex items-center gap-1 text-muted-foreground text-sm transition-colors hover:text-foreground" onClick={onClearFilters} type="button">
+                                <X className="h-3 w-3" />
+                                Clear all
+                            </button>
+                        )}
+                    </div>
+                )}
 
                 <div className="space-y-5">
                     {/* Basic Filters: Class and Rarity */}
