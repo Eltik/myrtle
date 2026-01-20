@@ -90,7 +90,7 @@ export function RosterPanel({ operators, roster, setRoster, onImportProfile, has
                     />
                 </div>
 
-                <div className="max-h-96 space-y-1.5 overflow-y-auto rounded-xl border border-border/30 bg-secondary/20 p-2 shadow-inner backdrop-blur-sm">
+                <div className="max-h-80 space-y-1.5 overflow-y-auto rounded-xl border border-border/30 bg-secondary/20 p-2 shadow-inner backdrop-blur-sm sm:max-h-96 lg:max-h-[520px]">
                     {filteredOperators.map((operator) => {
                         const operatorId = operator.id;
                         if (!operatorId) return null;
