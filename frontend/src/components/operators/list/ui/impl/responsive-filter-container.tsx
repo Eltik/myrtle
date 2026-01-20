@@ -1,7 +1,8 @@
 "use client";
 
 import { SlidersHorizontal, X } from "lucide-react";
-import { MorphingDialog, MorphingDialogClose, MorphingDialogContainer, MorphingDialogContent, MorphingDialogTrigger } from "~/components/ui/motion-primitives/morphing-dialog";
+import React from "react";
+import { MorphingDialog, MorphingDialogContainer, MorphingDialogContent, MorphingDialogTrigger } from "~/components/ui/motion-primitives/morphing-dialog";
 import { MorphingPopover, MorphingPopoverContent, MorphingPopoverTrigger } from "~/components/ui/motion-primitives/morphing-popover";
 import { useIsMobile } from "~/hooks/use-mobile";
 import { cn } from "~/lib/utils";
@@ -11,6 +12,7 @@ interface ResponsiveFilterContainerProps {
     onOpenChange: (open: boolean) => void;
     hasActiveFilters: boolean;
     activeFilterCount: number;
+    onClearFilters: () => void;
     children: React.ReactNode;
 }
 
@@ -24,7 +26,7 @@ function FilterTriggerButton({ isOpen, hasActiveFilters, activeFilterCount }: { 
     );
 }
 
-export function ResponsiveFilterContainer({ open, onOpenChange, hasActiveFilters, activeFilterCount, children }: ResponsiveFilterContainerProps) {
+export function ResponsiveFilterContainer({ open, onOpenChange, hasActiveFilters, activeFilterCount, onClearFilters, children }: ResponsiveFilterContainerProps) {
     const isMobile = useIsMobile();
 
     // Mobile: Use MorphingDialog for full-screen modal experience
@@ -43,11 +45,24 @@ export function ResponsiveFilterContainer({ open, onOpenChange, hasActiveFilters
                     <FilterTriggerButton activeFilterCount={activeFilterCount} hasActiveFilters={hasActiveFilters} isOpen={open} />
                 </MorphingDialogTrigger>
                 <MorphingDialogContainer>
-                    <MorphingDialogContent className="relative max-h-[85vh] w-[calc(100vw-2rem)] overflow-y-auto rounded-xl border border-border bg-card/90 backdrop-blur-md">
-                        <MorphingDialogClose className="absolute top-3 right-3 z-10 flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-secondary/50 text-muted-foreground transition-colors hover:text-foreground">
-                            <X className="h-4 w-4" />
-                        </MorphingDialogClose>
-                        {children}
+                    <MorphingDialogContent className="relative max-h-[85vh] w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-border bg-card/90 backdrop-blur-md">
+                        {/* Mobile Header */}
+                        <div className="flex items-center justify-between border-border border-b bg-card/95 px-4 py-3">
+                            <h3 className="font-semibold text-foreground">Filters</h3>
+                            <div className="flex items-center gap-2">
+                                {hasActiveFilters && (
+                                    <button className="flex items-center gap-1 text-muted-foreground text-sm transition-colors hover:text-foreground" onClick={onClearFilters} type="button">
+                                        <X className="h-3 w-3" />
+                                        Clear all
+                                    </button>
+                                )}
+                                <button className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-secondary/50 text-muted-foreground transition-colors hover:text-foreground" onClick={() => onOpenChange(false)} type="button">
+                                    <X className="h-4 w-4" />
+                                </button>
+                            </div>
+                        </div>
+                        {/* Scrollable content */}
+                        <div className="max-h-[calc(85vh-52px)] overflow-y-auto">{React.isValidElement(children) ? React.cloneElement(children as React.ReactElement<{ hideHeader?: boolean }>, { hideHeader: true }) : children}</div>
                     </MorphingDialogContent>
                 </MorphingDialogContainer>
             </MorphingDialog>
