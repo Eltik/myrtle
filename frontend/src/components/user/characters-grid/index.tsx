@@ -8,8 +8,6 @@ import { CharacterFilters } from "./impl/character-filters";
 import { filterAndSortCharacters } from "./impl/helpers";
 import type { RarityFilter, SortBy, SortOrder, ViewMode } from "./impl/types";
 
-// Performance-optimized card wrapper with CSS containment
-// This allows the browser to skip rendering cards that are off-screen
 const DetailedCardWrapper = memo(function DetailedCardWrapper({ char, isLast, lastRef }: { char: CharacterData; isLast: boolean; lastRef: ((node: HTMLDivElement) => void) | null }) {
     return (
         <div
@@ -26,7 +24,6 @@ const DetailedCardWrapper = memo(function DetailedCardWrapper({ char, isLast, la
 });
 
 const CompactCardWrapper = memo(function CompactCardWrapper({ char, isLast, lastRef }: { char: CharacterData; isLast: boolean; lastRef: ((node: HTMLDivElement) => void) | null }) {
-    // Note: No CSS containment here as compact cards have badges that overflow their bounds
     return (
         <div ref={isLast ? lastRef : null}>
             <CompactCharacterCard data={char} />
