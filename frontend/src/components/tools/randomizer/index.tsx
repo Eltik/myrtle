@@ -44,14 +44,42 @@ const DEFAULT_SETTINGS: RandomizerSettings = {
     allowedZoneTypes: ["MAINLINE", "ACTIVITY"],
     squadSize: 12,
     allowDuplicates: false,
-    allowReserveOperators: true,
+    allowUnplayableOperators: true,
     onlyCompletedStages: true,
     onlyAvailableStages: true,
     onlyE2Operators: false,
     selectedStages: [],
 };
 
-const RESERVE_OPERATOR_IDS = ["char_600_cpione", "char_601_cguard", "char_602_cdfend", "char_603_csnipe", "char_604_ccast", "char_606_csuppo", "char_605_cmedic", "char_607_cspec", "char_504_rguard", "char_514_rdfend", "char_507_rsnipe", "char_506_rmedic", "char_505_rcast"];
+const UNPLAYABLE_OPERATOR_IDS = [
+    "char_609_acguad",
+    "char_608_acpion",
+    "char_610_acfend",
+    "char_611_acnipe",
+    "char_612_accast",
+    "char_614_acsupo",
+    "char_613_acmedc",
+    "char_615_acspec",
+    "char_513_apionr",
+    "char_508_aguard",
+    "char_4025_aprot2",
+    "char_511_asnipe",
+    "char_509_acast",
+    "char_510_amedic",
+    "char_600_cpione",
+    "char_601_cguard",
+    "char_602_cdfend",
+    "char_603_csnipe",
+    "char_604_ccast",
+    "char_606_csuppo",
+    "char_605_cmedic",
+    "char_607_cspec",
+    "char_504_rguard",
+    "char_514_rdfend",
+    "char_507_rsnipe",
+    "char_505_rcast",
+    "char_506_rmedic",
+];
 
 function migrateSettings(saved: RandomizerSettings & { _version?: number }): RandomizerSettings {
     const version = saved._version ?? 1;
@@ -149,7 +177,7 @@ export function Randomizer({ zones, stages, operators }: RandomizerProps) {
 
             if (!settings.allowedClasses.includes(op.profession)) return false;
 
-            if (settings.allowReserveOperators && RESERVE_OPERATOR_IDS.includes(op.id)) return false;
+            if (settings.allowUnplayableOperators && UNPLAYABLE_OPERATOR_IDS.includes(op.id)) return false;
 
             if (settings.onlyE2Operators && fullUser) {
                 const charData = Object.values(fullUser.troop.chars).find((char) => char.charId === op.id);
