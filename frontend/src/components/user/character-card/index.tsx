@@ -146,7 +146,7 @@ export function CharacterCard({ data }: CharacterCardProps) {
     return (
         <MorphingDialog transition={{ type: "spring", bounce: 0.05, duration: 0.25 }}>
             <Card
-                className="fade-in slide-in-from-bottom-4 flex w-full animate-in flex-col gap-0 overflow-hidden border-2 border-muted/30 pb-1 transition-all duration-300 hover:border-muted hover:shadow-lg"
+                className="fade-in slide-in-from-bottom-4 flex w-full animate-in flex-col gap-0 overflow-hidden border-2 border-muted/30 py-0 pb-1 transition-all duration-300 hover:border-muted hover:shadow-lg"
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
                 ref={cardRef}
@@ -164,7 +164,7 @@ export function CharacterCard({ data }: CharacterCardProps) {
                                 <h3 className={`mt-2 max-w-[75%] text-left font-bold text-white text-xl transition-all duration-300 ${isHovered ? "translate-y-0" : "translate-y-1"}`}>{operatorName}</h3>
                                 <div className={`flex items-center justify-between transition-all duration-300 ${isHovered ? "translate-y-0" : "translate-y-1"}`}>
                                     <div className="flex items-center gap-2">
-                                        <Image alt={`${starCount} Star`} className="h-[18px] w-auto object-contain" height={18} src={`/api/cdn/upk/arts/rarity_hub/rarity_yellow_${starCount - 1}.png`} unoptimized width={60} />
+                                        <Image alt={`${starCount} Star`} className="h-4.5 w-auto object-contain" height={18} src={`/api/cdn/upk/arts/rarity_hub/rarity_yellow_${starCount - 1}.png`} unoptimized width={60} />
                                         <div className="flex flex-row items-center gap-1">
                                             <Image alt={operatorProfession} className="h-5 w-5" height={20} src={`/api/cdn/upk/arts/ui/[uc]charcommon/icon_profession_${getProfessionIconName(operator?.profession ?? "")}.png`} unoptimized width={20} />
                                             <span className="text-sm text-white">{operatorProfession}</span>
@@ -258,7 +258,7 @@ export function CharacterCard({ data }: CharacterCardProps) {
                         <AccordionItem className="border-b-0" value="skills">
                             <AccordionTrigger className="py-2 font-medium text-sm">Skills</AccordionTrigger>
                             <AccordionContent>
-                                <ScrollArea className="max-h-[180px] w-full">
+                                <ScrollArea className="max-h-45 w-full">
                                     {data.skills && data.skills.length > 0 ? (
                                         <div className="w-full space-y-2 overflow-hidden">
                                             {data.skills.map((skill, index) => (
