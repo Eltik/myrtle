@@ -150,7 +150,7 @@ export function CharacterCard({ data }: CharacterCardProps) {
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
                 ref={cardRef}
-                style={isMaxed ? { boxShadow: `0 0 20px ${rarityColor}40, 0 0 40px ${rarityColor}20` } : undefined}
+                style={isMaxed ? { boxShadow: `0 0 20px ${rarityColor}60, 0 0 40px ${rarityColor}40` } : undefined}
             >
                 {/* Image area wrapper */}
                 <div className="relative">
@@ -178,7 +178,7 @@ export function CharacterCard({ data }: CharacterCardProps) {
 
                     {/* Maxed indicator */}
                     {isMaxed && (
-                        <div className="absolute -top-3 z-10 rounded-r-md px-2 py-0.5 text-center font-semibold text-xs shadow-md" style={{ color: rarityColor }}>
+                        <div className="absolute top-2 z-10 rounded-r-md px-2 py-0.5 text-center font-semibold text-xs shadow-md" style={{ color: rarityColor }}>
                             Maxed
                         </div>
                     )}

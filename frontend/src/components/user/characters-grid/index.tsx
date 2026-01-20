@@ -5,6 +5,7 @@ import { useCDNPrefetch } from "~/hooks/use-cdn-prefetch";
 import type { CharacterData, User } from "~/types/api/impl/user";
 import { CharacterCard } from "../character-card";
 import { CompactCharacterCard } from "../character-card/compact-card";
+import { checkIsMaxed } from "../character-card/impl/helpers";
 import { CharacterFilters } from "./impl/character-filters";
 import { filterAndSortCharacters } from "./impl/helpers";
 import type { RarityFilter, SortBy, SortOrder, ViewMode } from "./impl/types";
@@ -22,14 +23,25 @@ const STATIC_ICONS = [
 ];
 
 const DetailedCardWrapper = memo(function DetailedCardWrapper({ char, isLast, lastRef }: { char: CharacterData; isLast: boolean; lastRef: ((node: HTMLDivElement) => void) | null }) {
+    const isMaxed = checkIsMaxed(char);
+
     return (
         <div
             className="flex"
             ref={isLast ? lastRef : null}
-            style={{
-                contentVisibility: "auto",
-                containIntrinsicSize: "auto 420px", // Estimated card height for layout calculation
-            }}
+            style={
+                isMaxed
+                    ? {
+                          // For maxed cards: disable contentVisibility to allow glow to escape containment
+                          position: "relative",
+                          zIndex: 10,
+                      }
+                    : {
+                          // For non-maxed cards: use contentVisibility for performance
+                          contentVisibility: "auto",
+                          containIntrinsicSize: "auto 420px",
+                      }
+            }
         >
             <CharacterCard data={char} />
         </div>
@@ -37,8 +49,17 @@ const DetailedCardWrapper = memo(function DetailedCardWrapper({ char, isLast, la
 });
 
 const CompactCardWrapper = memo(function CompactCardWrapper({ char, isLast, lastRef }: { char: CharacterData; isLast: boolean; lastRef: ((node: HTMLDivElement) => void) | null }) {
+    const isMaxed = checkIsMaxed(char);
+
     return (
-        <div ref={isLast ? lastRef : null}>
+        <div
+            ref={isLast ? lastRef : null}
+            style={{
+                // Lift maxed cards above neighbors so glow is visible
+                position: isMaxed ? "relative" : undefined,
+                zIndex: isMaxed ? 10 : undefined,
+            }}
+        >
             <CompactCharacterCard data={char} />
         </div>
     );

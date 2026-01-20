@@ -240,11 +240,11 @@ export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
                         style={{
                             padding: "4px 8px 4px 6px",
                             margin: "2px 4px 4px 10px",
-                            boxShadow: isMaxed ? `0px 0px 8px ${rarityColor}` : "0 1px 3px 0 rgb(0 0 0 / 0.1)",
+                            boxShadow: isMaxed ? `0 0 10px ${rarityColor}, 0 0 20px ${rarityColor}80` : "0 1px 3px 0 rgb(0 0 0 / 0.1)",
                         }}
                     >
                         {/* Operator Name - Top */}
-                        <div className="ml-px flex h-[17px] flex-col justify-center text-left sm:h-5">
+                        <div className="ml-px flex h-4.25 flex-col justify-center text-left sm:h-5">
                             {subtitle && <span className="text-[7px] text-foreground leading-1.5 sm:text-[9px] sm:leading-2">{subtitle}</span>}
                             <span
                                 className="text-foreground"
@@ -259,7 +259,7 @@ export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
 
                         {/* Avatar Container with bottom rarity border */}
                         <div
-                            className="relative box-content aspect-square h-20 sm:h-[120px]"
+                            className="relative box-content aspect-square h-20 sm:h-30"
                             style={{
                                 borderBottom: `4px solid ${rarityColor}`,
                                 filter: isMaxed ? "drop-shadow(0px 0px 8px rgba(255,255,255,0.3))" : undefined,

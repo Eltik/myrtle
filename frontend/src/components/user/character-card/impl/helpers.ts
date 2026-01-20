@@ -1,4 +1,67 @@
+import { getRarityStarCount } from "~/lib/utils";
 import type { CharacterData, CharacterStatic, UserCharacterModule, UserFavorKeyFrame, UserPotentialRank } from "~/types/api/impl/user";
+
+// Max level by rarity for each elite phase [E0, E1, E2]
+const MAX_LEVEL_BY_RARITY: Record<number, number[]> = {
+    6: [50, 80, 90],
+    5: [50, 70, 80],
+    4: [45, 60, 70],
+    3: [40, 55, 55],
+    2: [30, 30, 30],
+    1: [30, 30, 30],
+};
+
+// Max elite phase by rarity
+const MAX_ELITE_BY_RARITY: Record<number, number> = {
+    6: 2,
+    5: 2,
+    4: 2,
+    3: 1,
+    2: 0,
+    1: 0,
+};
+
+/**
+ * Check if an operator is fully maxed (for glow effect).
+ * Maxed means: max potential (6), max elite phase, max level, all skills M3 (or skill 7 for 3-stars),
+ * and all unlocked modules at level 3 for E2 operators.
+ */
+export function checkIsMaxed(data: CharacterData): boolean {
+    const operator = data.static as CharacterStatic | null;
+    const operatorRarity = operator?.rarity ?? "TIER_1";
+    const starCount = getRarityStarCount(operatorRarity);
+
+    const maxElite = MAX_ELITE_BY_RARITY[starCount] ?? 2;
+    const maxLevel = MAX_LEVEL_BY_RARITY[starCount]?.[maxElite] ?? 90;
+
+    // Must be at max elite phase
+    if (data.evolvePhase !== maxElite) return false;
+
+    // Must be at max level for that elite phase
+    if (data.level !== maxLevel) return false;
+
+    // For 3+ star operators, must have skill level 7
+    if (starCount > 2 && data.mainSkillLvl !== 7) return false;
+
+    // For E2 operators, check masteries and modules
+    if (maxElite === 2) {
+        // All skills must be M3
+        if (!data.skills.every((skill) => skill.specializeLevel === 3)) return false;
+
+        // Check modules (all unlocked must be level 3)
+        const unlockedModules =
+            operator?.modules?.filter((mod) => {
+                const equipData = data.equip[mod.uniEquipId];
+                return mod.typeName1 !== "ORIGINAL" && equipData && equipData.level > 0 && equipData.locked !== 1;
+            }) ?? [];
+        if (unlockedModules.length > 0 && !unlockedModules.every((mod) => data.equip[mod.uniEquipId]?.level === 3)) return false;
+    }
+
+    // Must have max potential (potential rank 5 = displayed as +5, representing Pot 6)
+    if (data.potentialRank !== 5) return false;
+
+    return true;
+}
 
 // Linear interpolation helper
 export function linearInterpolateByLevel(level: number, maxLevel: number, baseValue: number, maxValue: number): number {
