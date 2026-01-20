@@ -4,6 +4,7 @@ export interface RandomizerSettings {
     allowedZoneTypes: string[];
     squadSize: number;
     allowDuplicates: boolean;
+    allowReserveOperators: boolean;
     onlyCompletedStages: boolean;
     onlyAvailableStages: boolean; // Only show stages from currently open or permanent events
     onlyE2Operators: boolean;

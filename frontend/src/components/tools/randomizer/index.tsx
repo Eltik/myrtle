@@ -44,11 +44,14 @@ const DEFAULT_SETTINGS: RandomizerSettings = {
     allowedZoneTypes: ["MAINLINE", "ACTIVITY"],
     squadSize: 12,
     allowDuplicates: false,
+    allowReserveOperators: true,
     onlyCompletedStages: true,
     onlyAvailableStages: true,
     onlyE2Operators: false,
     selectedStages: [],
 };
+
+const RESERVE_OPERATOR_IDS = ["char_600_cpione", "char_601_cguard", "char_602_cdfend", "char_603_csnipe", "char_604_ccast", "char_606_csuppo", "char_605_cmedic", "char_607_cspec", "char_504_rguard", "char_514_rdfend", "char_507_rsnipe", "char_506_rmedic", "char_505_rcast"];
 
 function migrateSettings(saved: RandomizerSettings & { _version?: number }): RandomizerSettings {
     const version = saved._version ?? 1;
@@ -141,6 +144,8 @@ export function Randomizer({ zones, stages, operators }: RandomizerProps) {
             if (!settings.allowedRarities.includes(rarityNum)) return false;
 
             if (!settings.allowedClasses.includes(op.profession)) return false;
+
+            if (settings.allowReserveOperators && RESERVE_OPERATOR_IDS.includes(op.id)) return false;
 
             if (settings.onlyE2Operators && fullUser) {
                 const charData = Object.values(fullUser.troop.chars).find((char) => char.charId === op.id);
