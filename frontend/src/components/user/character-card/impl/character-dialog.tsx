@@ -3,6 +3,7 @@
 import { motion, useScroll, useTransform } from "motion/react";
 import Image from "next/image";
 import { useState } from "react";
+import { ImageWithSkeleton } from "~/components/ui/image-with-skeleton";
 import { MorphingDialogClose, MorphingDialogContainer, MorphingDialogContent } from "~/components/ui/motion-primitives/morphing-dialog";
 import { Separator } from "~/components/ui/shadcn/separator";
 import type { CharacterData, CharacterStatic } from "~/types/api/impl/user";
@@ -71,7 +72,7 @@ export function CharacterDialog({ data, operator, operatorName, operatorProfessi
                                 scale: heroImageScale,
                             }}
                         >
-                            <Image alt={operatorName} className="h-full w-full object-contain object-top" height={512} src={operatorImage || "/placeholder.svg"} unoptimized width={512} />
+                            <ImageWithSkeleton alt={operatorName} className="h-full w-full object-contain object-top" containerClassName="h-full w-full" height={512} priority skeletonClassName="rounded-lg" src={operatorImage || "/placeholder.svg"} unoptimized width={512} />
                         </motion.div>
                         {/* Vignette overlay - stays and intensifies */}
                         <motion.div className="pointer-events-none absolute inset-0 rounded-lg bg-linear-to-t from-black via-black/50 to-transparent" style={{ opacity: vignetteOpacity }} />
@@ -85,7 +86,7 @@ export function CharacterDialog({ data, operator, operatorName, operatorProfessi
                         >
                             <h2 className="font-bold text-3xl text-white">{operatorName}</h2>
                             <div className="mt-2 flex items-center gap-3">
-                                <Image alt={`${starCount} Star`} className="h-6 w-auto object-contain" height={24} src={`/api/cdn/upk/arts/rarity_hub/rarity_yellow_${starCount - 1}.png`} unoptimized width={80} />
+                                <Image alt={`${starCount} Star`} className="h-6 w-auto object-contain" height={24} loading="eager" src={`/api/cdn/upk/arts/rarity_hub/rarity_yellow_${starCount - 1}.png`} unoptimized width={80} />
                                 <span className="rounded bg-black/50 px-2 py-0.5 text-sm text-white">{operatorProfession}</span>
                             </div>
                         </motion.div>
@@ -94,14 +95,14 @@ export function CharacterDialog({ data, operator, operatorName, operatorProfessi
                     {/* Quick Stats */}
                     <div className="mb-5 grid grid-cols-4 gap-1.5">
                         <div className="flex items-center justify-center rounded-md bg-muted/30 py-2">
-                            <Image alt={`Elite ${data.evolvePhase}`} className="icon-theme-aware h-6 w-6 object-contain" height={24} src={`/api/cdn/upk/arts/elite_hub/elite_${data.evolvePhase}.png`} unoptimized width={24} />
+                            <Image alt={`Elite ${data.evolvePhase}`} className="icon-theme-aware h-6 w-6 object-contain" height={24} loading="eager" src={`/api/cdn/upk/arts/elite_hub/elite_${data.evolvePhase}.png`} unoptimized width={24} />
                         </div>
                         <div className="flex flex-col items-center justify-center rounded-md bg-muted/30 px-2.5 py-1.5 sm:flex-row sm:justify-between">
                             <span className="text-[10px] text-muted-foreground sm:text-xs">Lvl</span>
                             <span className="font-medium text-sm tabular-nums">{data.level}</span>
                         </div>
                         <div className="flex items-center justify-center rounded-md bg-muted/30 py-2">
-                            <Image alt={`Potential ${data.potentialRank + 1}`} className="h-6 w-6 object-contain" height={24} src={`/api/cdn/upk/arts/potential_hub/potential_${data.potentialRank}.png`} unoptimized width={24} />
+                            <Image alt={`Potential ${data.potentialRank + 1}`} className="h-6 w-6 object-contain" height={24} loading="eager" src={`/api/cdn/upk/arts/potential_hub/potential_${data.potentialRank}.png`} unoptimized width={24} />
                         </div>
                         <div className="flex flex-col items-center justify-center rounded-md bg-muted/30 px-2.5 py-1.5 sm:flex-row sm:justify-between">
                             <span className="text-[10px] text-muted-foreground sm:text-xs">Trust</span>

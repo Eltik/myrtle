@@ -1,12 +1,25 @@
 "use client";
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCDNPrefetch } from "~/hooks/use-cdn-prefetch";
 import type { CharacterData, User } from "~/types/api/impl/user";
 import { CharacterCard } from "../character-card";
 import { CompactCharacterCard } from "../character-card/compact-card";
 import { CharacterFilters } from "./impl/character-filters";
 import { filterAndSortCharacters } from "./impl/helpers";
 import type { RarityFilter, SortBy, SortOrder, ViewMode } from "./impl/types";
+
+// Static UI icons that appear in every dialog
+const STATIC_ICONS = [
+    // Rarity stars (0-5)
+    ...Array.from({ length: 6 }, (_, i) => `/api/cdn/upk/arts/rarity_hub/rarity_yellow_${i}.png`),
+    // Elite badges (0-2)
+    ...Array.from({ length: 3 }, (_, i) => `/api/cdn/upk/arts/elite_hub/elite_${i}.png`),
+    // Potential icons (0-5)
+    ...Array.from({ length: 6 }, (_, i) => `/api/cdn/upk/arts/potential_hub/potential_${i}.png`),
+    // Mastery icons (1-3)
+    ...Array.from({ length: 3 }, (_, i) => `/api/cdn/upk/arts/specialized_hub/specialized_${i + 1}.png`),
+];
 
 const DetailedCardWrapper = memo(function DetailedCardWrapper({ char, isLast, lastRef }: { char: CharacterData; isLast: boolean; lastRef: ((node: HTMLDivElement) => void) | null }) {
     return (
@@ -42,6 +55,21 @@ export function CharactersGrid({ data }: CharactersGridProps) {
     const [searchTerm, setSearchTerm] = useState("");
     const [displayCount, setDisplayCount] = useState(24); // Start smaller for faster initial render
     const [viewMode, setViewMode] = useState<ViewMode>("detailed");
+    const { prefetch } = useCDNPrefetch();
+    const hasPreloadedStaticIcons = useRef(false);
+
+    // Preload static UI icons after initial render
+    useEffect(() => {
+        if (hasPreloadedStaticIcons.current) return;
+        hasPreloadedStaticIcons.current = true;
+
+        // Delay prefetch to not compete with initial render
+        const timeoutId = setTimeout(() => {
+            prefetch(STATIC_ICONS, "low");
+        }, 1500);
+
+        return () => clearTimeout(timeoutId);
+    }, [prefetch]);
 
     const sortedAndFilteredCharacters = useMemo(() => {
         const chars = Object.values(data.troop.chars) as (CharacterData & { static?: { name?: string; rarity?: string } })[];

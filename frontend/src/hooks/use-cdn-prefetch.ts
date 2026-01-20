@@ -3,19 +3,24 @@
 import { useCallback, useEffect, useRef } from "react";
 
 const prefetchedUrls = new Set<string>();
+const preloadedUrls = new Set<string>();
 
 export function useCDNPrefetch() {
-    const prefetch = useCallback((urls: string | string[]) => {
+    const prefetch = useCallback((urls: string | string[], priority: "low" | "high" = "low") => {
         const urlArray = Array.isArray(urls) ? urls : [urls];
+        const urlSet = priority === "high" ? preloadedUrls : prefetchedUrls;
 
         for (const url of urlArray) {
-            if (prefetchedUrls.has(url)) continue;
-            prefetchedUrls.add(url);
+            if (urlSet.has(url)) continue;
+            urlSet.add(url);
 
             const link = document.createElement("link");
-            link.rel = "prefetch";
+            link.rel = priority === "high" ? "preload" : "prefetch";
             link.as = "image";
             link.href = url;
+            if (priority === "high") {
+                link.setAttribute("fetchpriority", "high");
+            }
             document.head.appendChild(link);
         }
     }, []);

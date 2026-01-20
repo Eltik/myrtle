@@ -1,8 +1,11 @@
 "use client";
 
 import Image from "next/image";
+import { useCallback, useEffect, useRef } from "react";
 import { RARITY_COLORS } from "~/components/operators/list/constants";
+import { ImageWithSkeleton } from "~/components/ui/image-with-skeleton";
 import { MorphingDialog, MorphingDialogTrigger } from "~/components/ui/motion-primitives/morphing-dialog";
+import { useCDNPrefetch } from "~/hooks/use-cdn-prefetch";
 import { formatProfession, getRarityStarCount } from "~/lib/utils";
 import type { CharacterData, CharacterStatic } from "~/types/api/impl/user";
 import { CharacterDialog } from "./impl/character-dialog";
@@ -97,6 +100,10 @@ function getOperatorPortraitUrl(charId: string, skin: string, evolvePhase: numbe
 
 export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
     const operator = data.static as CharacterStatic | null;
+    const cardWrapperRef = useRef<HTMLDivElement>(null);
+    const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const hasPreloadedRef = useRef(false);
+    const { prefetch } = useCDNPrefetch();
 
     const operatorName = operator?.name ?? "Unknown Operator";
     const operatorRarity = operator?.rarity ?? "TIER_1";
@@ -104,6 +111,76 @@ export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
     const rarityColor = RARITY_COLORS[starCount] ?? "#ffffff";
 
     const stats = getAttributeStats(data, operator);
+
+    // Preload all dialog images when hovering
+    const preloadDialogImages = useCallback(() => {
+        if (hasPreloadedRef.current) return;
+        hasPreloadedRef.current = true;
+
+        const portraitUrl = getOperatorPortraitUrl(data.charId, data.skin, data.evolvePhase, data.currentTmpl, data.tmpl as Record<string, { skinId: string }> | null);
+
+        const imagesToPreload: string[] = [
+            // Main character art
+            portraitUrl,
+            // UI icons
+            `/api/cdn/upk/arts/rarity_hub/rarity_yellow_${starCount - 1}.png`,
+            `/api/cdn/upk/arts/elite_hub/elite_${data.evolvePhase}.png`,
+            `/api/cdn/upk/arts/potential_hub/potential_${data.potentialRank}.png`,
+        ];
+
+        // Skill icons and mastery badges
+        for (const skill of data.skills) {
+            const skillStatic = skill.static as { iconId?: string; skillId?: string; image?: string } | null;
+            const skillIcon = skillStatic?.image ? `/api/cdn${skillStatic.image}` : `/api/cdn/upk/spritepack/skill_icons_0/skill_icon_${skillStatic?.iconId ?? skillStatic?.skillId ?? skill.skillId}.png`;
+            imagesToPreload.push(skillIcon);
+
+            if (skill.specializeLevel > 0) {
+                imagesToPreload.push(`/api/cdn/upk/arts/specialized_hub/specialized_${skill.specializeLevel}.png`);
+            }
+        }
+
+        // Module images (only unlocked ones)
+        if (operator?.modules) {
+            for (const module of operator.modules) {
+                const equipData = data.equip[module.uniEquipId];
+                const moduleLevel = equipData?.level ?? 0;
+                const isLocked = equipData?.locked === 1;
+
+                if (module.typeName1 !== "ORIGINAL" && moduleLevel > 0 && !isLocked) {
+                    const moduleImage = module.image ? `/api/cdn${module.image}` : `/api/cdn/upk/spritepack/ui_equip_big_img_hub_0/${module.uniEquipIcon}.png`;
+                    imagesToPreload.push(moduleImage);
+                }
+            }
+        }
+
+        prefetch(imagesToPreload, "high");
+    }, [data, operator, starCount, prefetch]);
+
+    const handleMouseEnter = useCallback(() => {
+        // Start preloading after 150ms of hovering (debounce accidental hovers)
+        hoverTimeoutRef.current = setTimeout(preloadDialogImages, 150);
+    }, [preloadDialogImages]);
+
+    const handleMouseLeave = useCallback(() => {
+        if (hoverTimeoutRef.current) {
+            clearTimeout(hoverTimeoutRef.current);
+            hoverTimeoutRef.current = null;
+        }
+    }, []);
+
+    // Attach hover event listeners via ref to avoid lint issues
+    useEffect(() => {
+        const element = cardWrapperRef.current;
+        if (!element) return;
+
+        element.addEventListener("mouseenter", handleMouseEnter);
+        element.addEventListener("mouseleave", handleMouseLeave);
+
+        return () => {
+            element.removeEventListener("mouseenter", handleMouseEnter);
+            element.removeEventListener("mouseleave", handleMouseLeave);
+        };
+    }, [handleMouseEnter, handleMouseLeave]);
 
     // Parse name like Krooster does (handle "the" and parentheses)
     const reg = /( the )|\(/gi;
@@ -154,128 +231,130 @@ export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
     const isAtMaxLevel = data.level === maxLevelForPhase;
 
     return (
-        <MorphingDialog transition={{ type: "spring", bounce: 0.05, duration: 0.25 }}>
-            <MorphingDialogTrigger className="block">
-                {/* Main Container */}
-                <div
-                    className="fade-in slide-in-from-bottom-2 relative flex h-min w-min animate-in cursor-pointer flex-col rounded bg-card transition-transform hover:scale-[1.02]"
-                    style={{
-                        padding: "4px 8px 4px 6px",
-                        margin: "2px 4px 4px 10px",
-                        boxShadow: isMaxed ? `0px 0px 8px ${rarityColor}` : "0 1px 3px 0 rgb(0 0 0 / 0.1)",
-                    }}
-                >
-                    {/* Operator Name - Top */}
-                    <div className="ml-px flex h-[17px] flex-col justify-center text-left sm:h-5">
-                        {subtitle && <span className="text-[7px] text-foreground leading-1.5 sm:text-[9px] sm:leading-2">{subtitle}</span>}
-                        <span
-                            className="text-foreground"
-                            style={{
-                                fontSize: nameIsLong ? "9px" : "12px",
-                                lineHeight: nameIsLong ? "9px" : "17px",
-                            }}
-                        >
-                            {displayName}
-                        </span>
-                    </div>
-
-                    {/* Avatar Container with bottom rarity border */}
+        <div ref={cardWrapperRef}>
+            <MorphingDialog transition={{ type: "spring", bounce: 0.05, duration: 0.25 }}>
+                <MorphingDialogTrigger className="block">
+                    {/* Main Container */}
                     <div
-                        className="relative box-content aspect-square h-20 sm:h-[120px]"
+                        className="fade-in slide-in-from-bottom-2 relative flex h-min w-min animate-in cursor-pointer flex-col rounded bg-card transition-transform hover:scale-[1.02]"
                         style={{
-                            borderBottom: `4px solid ${rarityColor}`,
-                            filter: isMaxed ? "drop-shadow(0px 0px 8px rgba(255,255,255,0.3))" : undefined,
+                            padding: "4px 8px 4px 6px",
+                            margin: "2px 4px 4px 10px",
+                            boxShadow: isMaxed ? `0px 0px 8px ${rarityColor}` : "0 1px 3px 0 rgb(0 0 0 / 0.1)",
                         }}
                     >
-                        <Image alt={operatorName} className="h-full w-full object-contain" height={120} src={avatarUrl} unoptimized width={120} />
+                        {/* Operator Name - Top */}
+                        <div className="ml-px flex h-[17px] flex-col justify-center text-left sm:h-5">
+                            {subtitle && <span className="text-[7px] text-foreground leading-1.5 sm:text-[9px] sm:leading-2">{subtitle}</span>}
+                            <span
+                                className="text-foreground"
+                                style={{
+                                    fontSize: nameIsLong ? "9px" : "12px",
+                                    lineHeight: nameIsLong ? "9px" : "17px",
+                                }}
+                            >
+                                {displayName}
+                            </span>
+                        </div>
 
-                        {/* Maxed Badge */}
-                        {isMaxed && (
-                            <div className="absolute -bottom-1 left-0 rounded-t px-1 font-medium text-xs sm:text-sm" style={{ backgroundColor: rarityColor, color: "#121212" }}>
-                                Maxed
+                        {/* Avatar Container with bottom rarity border */}
+                        <div
+                            className="relative box-content aspect-square h-20 sm:h-[120px]"
+                            style={{
+                                borderBottom: `4px solid ${rarityColor}`,
+                                filter: isMaxed ? "drop-shadow(0px 0px 8px rgba(255,255,255,0.3))" : undefined,
+                            }}
+                        >
+                            <ImageWithSkeleton alt={operatorName} className="h-full w-full object-contain" containerClassName="h-full w-full" height={120} src={avatarUrl} unoptimized width={120} />
+
+                            {/* Maxed Badge */}
+                            {isMaxed && (
+                                <div className="absolute -bottom-1 left-0 rounded-t px-1 font-medium text-xs sm:text-sm" style={{ backgroundColor: rarityColor, color: "#121212" }}>
+                                    Maxed
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Left Side Badges */}
+                        {!isMaxed && (
+                            <div className="absolute -bottom-2 -left-3 z-10 flex flex-col gap-0.5">
+                                {/* Potential Badge */}
+                                {data.potentialRank > 0 && (
+                                    <div className="relative mb-0.5 ml-1 h-4 w-3 sm:mb-2 sm:h-6 sm:w-5">
+                                        <Image alt={`Potential ${data.potentialRank + 1}`} className="h-full w-full object-contain" height={24} src={`/api/cdn/upk/arts/potential_hub/potential_${data.potentialRank}.png`} unoptimized width={20} />
+                                    </div>
+                                )}
+
+                                {/* Elite Badge */}
+                                {data.evolvePhase > 0 && (
+                                    <div className="mb-0 h-5 w-5 sm:mb-1 sm:h-8 sm:w-8">
+                                        <Image alt={`Elite ${data.evolvePhase}`} className="icon-theme-aware h-full w-full object-contain" height={32} src={`/api/cdn/upk/arts/elite_hub/elite_${data.evolvePhase}.png`} unoptimized width={32} />
+                                    </div>
+                                )}
+
+                                {/* Level Circle */}
+                                {(data.evolvePhase > 0 || data.level > 1) && (
+                                    <div
+                                        className="flex aspect-square h-8 flex-col items-center justify-center rounded-full border-2 bg-secondary text-lg leading-none sm:h-12 sm:text-2xl"
+                                        style={{
+                                            borderColor: isAtMaxLevel ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
+                                        }}
+                                    >
+                                        <abbr className="hidden text-[9px] leading-1 no-underline sm:flex" title="Level">
+                                            LV
+                                        </abbr>
+                                        {data.level}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Right Side - Skills */}
+                        {!isMaxed && data.mainSkillLvl > 1 && (
+                            <div className="absolute top-8 right-0 z-10 flex flex-col gap-0.5 sm:-right-3">
+                                {data.skills.map((skill, idx) => {
+                                    // Only show skill if elite phase allows it
+                                    if (data.evolvePhase < idx) return null;
+
+                                    const hasM = skill.specializeLevel > 0;
+                                    return (
+                                        <div className="relative flex h-4 w-4 items-center justify-center sm:h-6 sm:w-6" key={skill.skillId} style={{ marginLeft: `${idx * 4}px` }} title={hasM ? `Skill ${idx + 1}: M${skill.specializeLevel}` : `Skill ${idx + 1}: Lv.${data.mainSkillLvl}`}>
+                                            {hasM ? (
+                                                <Image alt={`M${skill.specializeLevel}`} className="h-full w-full object-contain" height={24} src={`/api/cdn/upk/arts/specialized_hub/specialized_${skill.specializeLevel}.png`} unoptimized width={24} />
+                                            ) : (
+                                                <div className="flex h-full w-full items-center justify-center rounded bg-secondary font-bold text-[10px] text-secondary-foreground sm:text-xs">{data.mainSkillLvl}</div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+
+                        {/* Bottom Right - Modules */}
+                        {!isMaxed && unlockedModules.length > 0 && (
+                            <div className="absolute -right-2 -bottom-3 z-10 flex flex-row-reverse gap-1">
+                                {unlockedModules.map((module) => {
+                                    const moduleLevel = data.equip[module.uniEquipId]?.level ?? 0;
+                                    const typeLetter = module.typeName1?.slice(-1) ?? "X";
+
+                                    return (
+                                        <div className="relative aspect-square h-6 overflow-hidden rounded bg-secondary sm:h-8" key={module.uniEquipId} title={`${module.typeName1} Stage ${moduleLevel}`}>
+                                            <Image alt={module.typeName1 ?? "Module"} className="h-full w-full object-contain" height={32} src={module.image ? `/api/cdn${module.image}` : `/api/cdn/upk/spritepack/ui_equip_big_img_hub_0/${module.uniEquipIcon}.png`} unoptimized width={32} />
+                                            <span className="absolute right-0 bottom-0 rounded-tl bg-secondary/90 px-0.5 font-medium text-[9px] leading-none sm:text-[10px]">
+                                                {typeLetter}
+                                                {moduleLevel}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
+                </MorphingDialogTrigger>
 
-                    {/* Left Side Badges */}
-                    {!isMaxed && (
-                        <div className="absolute -bottom-2 -left-3 z-10 flex flex-col gap-0.5">
-                            {/* Potential Badge */}
-                            {data.potentialRank > 0 && (
-                                <div className="relative mb-0.5 ml-1 h-4 w-3 sm:mb-2 sm:h-6 sm:w-5">
-                                    <Image alt={`Potential ${data.potentialRank + 1}`} className="h-full w-full object-contain" height={24} src={`/api/cdn/upk/arts/potential_hub/potential_${data.potentialRank}.png`} unoptimized width={20} />
-                                </div>
-                            )}
-
-                            {/* Elite Badge */}
-                            {data.evolvePhase > 0 && (
-                                <div className="mb-0 h-5 w-5 sm:mb-1 sm:h-8 sm:w-8">
-                                    <Image alt={`Elite ${data.evolvePhase}`} className="icon-theme-aware h-full w-full object-contain" height={32} src={`/api/cdn/upk/arts/elite_hub/elite_${data.evolvePhase}.png`} unoptimized width={32} />
-                                </div>
-                            )}
-
-                            {/* Level Circle */}
-                            {(data.evolvePhase > 0 || data.level > 1) && (
-                                <div
-                                    className="flex aspect-square h-8 flex-col items-center justify-center rounded-full border-2 bg-secondary text-lg leading-none sm:h-12 sm:text-2xl"
-                                    style={{
-                                        borderColor: isAtMaxLevel ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
-                                    }}
-                                >
-                                    <abbr className="hidden text-[9px] leading-1 no-underline sm:flex" title="Level">
-                                        LV
-                                    </abbr>
-                                    {data.level}
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* Right Side - Skills */}
-                    {!isMaxed && data.mainSkillLvl > 1 && (
-                        <div className="absolute top-8 right-0 z-10 flex flex-col gap-0.5 sm:-right-3">
-                            {data.skills.map((skill, idx) => {
-                                // Only show skill if elite phase allows it
-                                if (data.evolvePhase < idx) return null;
-
-                                const hasM = skill.specializeLevel > 0;
-                                return (
-                                    <div className="relative flex h-4 w-4 items-center justify-center sm:h-6 sm:w-6" key={skill.skillId} style={{ marginLeft: `${idx * 4}px` }} title={hasM ? `Skill ${idx + 1}: M${skill.specializeLevel}` : `Skill ${idx + 1}: Lv.${data.mainSkillLvl}`}>
-                                        {hasM ? (
-                                            <Image alt={`M${skill.specializeLevel}`} className="h-full w-full object-contain" height={24} src={`/api/cdn/upk/arts/specialized_hub/specialized_${skill.specializeLevel}.png`} unoptimized width={24} />
-                                        ) : (
-                                            <div className="flex h-full w-full items-center justify-center rounded bg-secondary font-bold text-[10px] text-secondary-foreground sm:text-xs">{data.mainSkillLvl}</div>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
-
-                    {/* Bottom Right - Modules */}
-                    {!isMaxed && unlockedModules.length > 0 && (
-                        <div className="absolute -right-2 -bottom-3 z-10 flex flex-row-reverse gap-1">
-                            {unlockedModules.map((module) => {
-                                const moduleLevel = data.equip[module.uniEquipId]?.level ?? 0;
-                                const typeLetter = module.typeName1?.slice(-1) ?? "X";
-
-                                return (
-                                    <div className="relative aspect-square h-6 overflow-hidden rounded bg-secondary sm:h-8" key={module.uniEquipId} title={`${module.typeName1} Stage ${moduleLevel}`}>
-                                        <Image alt={module.typeName1 ?? "Module"} className="h-full w-full object-contain" height={32} src={module.image ? `/api/cdn${module.image}` : `/api/cdn/upk/spritepack/ui_equip_big_img_hub_0/${module.uniEquipIcon}.png`} unoptimized width={32} />
-                                        <span className="absolute right-0 bottom-0 rounded-tl bg-secondary/90 px-0.5 font-medium text-[9px] leading-none sm:text-[10px]">
-                                            {typeLetter}
-                                            {moduleLevel}
-                                        </span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
-            </MorphingDialogTrigger>
-
-            {/* Full Details Dialog */}
-            <CharacterDialog data={data} operator={operator} operatorImage={portraitUrl} operatorName={operatorName} operatorProfession={formatProfession(operator?.profession ?? "")} starCount={starCount} stats={stats} />
-        </MorphingDialog>
+                {/* Full Details Dialog */}
+                <CharacterDialog data={data} operator={operator} operatorImage={portraitUrl} operatorName={operatorName} operatorProfession={formatProfession(operator?.profession ?? "")} starCount={starCount} stats={stats} />
+            </MorphingDialog>
+        </div>
     );
 }

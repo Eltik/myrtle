@@ -37,6 +37,7 @@ export function SkillItem({ skill, index, isDefaultSkill, mainSkillLvl, size = "
                 alt="Skill"
                 className={isSmall ? "h-6 w-6 rounded" : "h-7 w-7 rounded-sm"}
                 height={isSmall ? 24 : 28}
+                loading="lazy"
                 src={skillStatic?.image ? `/api/cdn${skillStatic.image}` : `/api/cdn/upk/spritepack/skill_icons_0/skill_icon_${skillStatic?.iconId ?? skillStatic?.skillId ?? skill.skillId}.png`}
                 unoptimized
                 width={isSmall ? 24 : 28}
@@ -46,7 +47,7 @@ export function SkillItem({ skill, index, isDefaultSkill, mainSkillLvl, size = "
             </span>
             <div className="flex items-center gap-1 text-muted-foreground text-xs">
                 <span>Lv.{mainSkillLvl}</span>
-                {skill.specializeLevel > 0 && <Image alt={`M${skill.specializeLevel}`} className="h-4 w-4" height={16} src={`/api/cdn/upk/arts/specialized_hub/specialized_${skill.specializeLevel}.png`} unoptimized width={16} />}
+                {skill.specializeLevel > 0 && <Image alt={`M${skill.specializeLevel}`} className="h-4 w-4" height={16} loading="lazy" src={`/api/cdn/upk/arts/specialized_hub/specialized_${skill.specializeLevel}.png`} unoptimized width={16} />}
             </div>
         </div>
     );
